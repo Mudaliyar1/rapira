@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const Concert = require('../models/Concert');
@@ -8,6 +9,7 @@ const Content = require('../models/Content');
 const Page = require('../models/Page');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
+const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
 const bcrypt = require('bcryptjs');
 
 // Test email route
@@ -1058,6 +1060,148 @@ router.post('/send-direct-email', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Direct email error:', error);
     req.flash('error', 'Failed to send direct email');
     res.redirect('/admin');
+  }
+});
+
+// Storage Management
+router.get('/storage-management', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get all collection stats
+    const stats = await getAllCollectionStats();
+
+    res.render('admin/storage-management-fixed', {
+      layout: 'admin',
+      currentPath: '/admin/storage-management',
+      title: 'Storage Management',
+      stats
+    });
+  } catch (error) {
+    console.error('Storage management error:', error);
+    req.flash('error', 'Failed to load storage statistics');
+    res.redirect('/admin');
+  }
+});
+
+// View collection data
+router.get('/storage-management/view/:collection', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const collectionName = req.params.collection;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Get the MongoDB collection
+    const db = mongoose.connection.db;
+    const collection = db.collection(collectionName);
+
+    // Get total count for pagination
+    const totalDocs = await collection.countDocuments();
+    const totalPages = Math.ceil(totalDocs / limit);
+
+    // Get documents with pagination
+    const documents = await collection.find({})
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    // Get collection stats
+    const stats = await db.command({ collStats: collectionName });
+
+    res.render('admin/collection-view', {
+      layout: 'admin',
+      currentPath: '/admin/storage-management',
+      title: `View Collection: ${collectionName}`,
+      collectionName,
+      documents,
+      stats: {
+        count: stats.count,
+        size: stats.size,
+        formattedSize: formatBytes(stats.size),
+        avgObjSize: stats.avgObjSize ? Math.round(stats.avgObjSize) : 0
+      },
+      pagination: {
+        page,
+        limit,
+        totalDocs,
+        totalPages
+      }
+    });
+  } catch (error) {
+    console.error(`Error viewing collection ${req.params.collection}:`, error);
+    req.flash('error', `Failed to view collection: ${error.message}`);
+    res.redirect('/admin/storage-management');
+  }
+});
+
+// Confirm delete collection data
+router.get('/storage-management/confirm-delete/:collection', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const collectionName = req.params.collection;
+    const previousPage = req.headers.referer || null;
+
+    // Get the MongoDB collection stats
+    const db = mongoose.connection.db;
+    const stats = await db.command({ collStats: collectionName });
+
+    // Check if this is a critical collection
+    const criticalCollections = ['users', 'sessions', 'artists', 'admins'];
+    const isCritical = criticalCollections.includes(collectionName);
+
+    res.render('admin/confirm-delete-collection', {
+      layout: 'admin',
+      currentPath: '/admin/storage-management',
+      title: 'Confirm Delete Collection',
+      collectionName,
+      previousPage,
+      criticalCollection: isCritical,
+      stats: {
+        count: stats.count,
+        size: stats.size,
+        storageSize: stats.storageSize,
+        indexSize: stats.totalIndexSize,
+        formattedSize: formatBytes(stats.size),
+        formattedStorageSize: formatBytes(stats.storageSize),
+        formattedIndexSize: formatBytes(stats.totalIndexSize)
+      }
+    });
+  } catch (error) {
+    console.error(`Error preparing delete confirmation for ${req.params.collection}:`, error);
+    req.flash('error', `Failed to prepare delete confirmation: ${error.message}`);
+    res.redirect('/admin/storage-management');
+  }
+});
+
+// Delete collection data
+router.post('/storage-management/delete/:collection', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const collectionName = req.params.collection;
+    const confirmed = req.body.confirmed === 'true';
+
+    // Ensure the deletion was confirmed
+    if (!confirmed) {
+      return res.redirect(`/admin/storage-management/confirm-delete/${collectionName}`);
+    }
+
+    // Prevent deletion of critical collections
+    const criticalCollections = ['users', 'sessions', 'artists', 'admins'];
+    if (criticalCollections.includes(collectionName)) {
+      req.flash('error', `Cannot delete the ${collectionName} collection as it is critical for system operation`);
+      return res.redirect('/admin/storage-management');
+    }
+
+    // Get the MongoDB collection and delete all documents
+    const db = mongoose.connection.db;
+    const collection = db.collection(collectionName);
+
+    // Delete all documents but keep the collection
+    const result = await collection.deleteMany({});
+
+    req.flash('success', `Successfully deleted ${result.deletedCount} documents from ${collectionName}`);
+    res.redirect('/admin/storage-management');
+  } catch (error) {
+    console.error(`Error deleting collection ${req.params.collection}:`, error);
+    req.flash('error', `Failed to delete collection data: ${error.message}`);
+    res.redirect('/admin/storage-management');
   }
 });
 

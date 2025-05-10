@@ -1,0 +1,262 @@
+<!-- Overview Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-primary-subtle text-primary me-3">
+          <i class="bi bi-database"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.totals.formattedSize %></h3>
+          <p class="text-white-50 mb-0">Total Data Size</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-success-subtle text-success me-3">
+          <i class="bi bi-hdd-stack"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.totals.formattedStorageSize %></h3>
+          <p class="text-white-50 mb-0">Total Storage Size</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-info-subtle text-info me-3">
+          <i class="bi bi-list-columns"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.totals.formattedIndexSize %></h3>
+          <p class="text-white-50 mb-0">Total Index Size</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-warning-subtle text-warning me-3">
+          <i class="bi bi-file-earmark"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.totals.documents.toLocaleString() %></h3>
+          <p class="text-white-50 mb-0">Total Documents</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Storage Distribution Chart -->
+<div class="row mb-4">
+  <div class="col-lg-6">
+    <div class="glass-card-dark h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0 text-white">Storage Distribution by Module</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="storageDistributionChart" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="glass-card-dark h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0 text-white">Document Count by Module</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="documentCountChart" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Module Details -->
+<% Object.keys(stats.groups).forEach(function(groupName) {
+  const group = stats.groups[groupName];
+  if (group.collections.length > 0) {
+%>
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="glass-card-dark">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 text-white"><%= groupName %></h5>
+        <div>
+          <span class="badge bg-primary me-2"><%= group.formattedTotalSize %></span>
+          <span class="badge bg-secondary"><%= group.totalDocuments.toLocaleString() %> docs</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th class="text-white">Collection</th>
+                <th class="text-white text-center">Documents</th>
+                <th class="text-white text-center">Data Size</th>
+                <th class="text-white text-center">Storage Size</th>
+                <th class="text-white text-center">Index Size</th>
+                <th class="text-white text-center">Avg Doc Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% group.collections.forEach(function(collection) { %>
+              <tr>
+                <td class="text-white"><%= collection.name %></td>
+                <td class="text-white text-center"><%= collection.count.toLocaleString() %></td>
+                <td class="text-white text-center"><%= collection.formattedSize %></td>
+                <td class="text-white text-center"><%= collection.formattedStorageSize %></td>
+                <td class="text-white text-center"><%= collection.formattedIndexSize %></td>
+                <td class="text-white text-center"><%= collection.avgObjSize ? Math.round(collection.avgObjSize).toLocaleString() + ' B' : 'N/A' %></td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } }); %>
+
+<!-- Refresh Button -->
+<div class="row mb-4">
+  <div class="col-12 text-center">
+    <button id="refreshStats" class="btn btn-primary">
+      <i class="bi bi-arrow-clockwise me-1"></i> Refresh Statistics
+    </button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Storage Distribution Chart
+    const storageCtx = document.getElementById('storageDistributionChart').getContext('2d');
+    const storageChart = new Chart(storageCtx, {
+      type: 'pie',
+      data: {
+        labels: [
+          <% Object.keys(stats.groups).forEach(function(groupName) { %>
+            '<%= groupName %>',
+          <% }); %>
+        ],
+        datasets: [{
+          data: [
+            <% Object.keys(stats.groups).forEach(function(groupName) { %>
+              <%= stats.groups[groupName].totalSize %>,
+            <% }); %>
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: 'white'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const formattedValue = formatBytes(value);
+                const percentage = ((value / <%= stats.totals.size %>) * 100).toFixed(1);
+                return `${label}: ${formattedValue} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Document Count Chart
+    const docCtx = document.getElementById('documentCountChart').getContext('2d');
+    const docChart = new Chart(docCtx, {
+      type: 'bar',
+      data: {
+        labels: [
+          <% Object.keys(stats.groups).forEach(function(groupName) { %>
+            '<%= groupName %>',
+          <% }); %>
+        ],
+        datasets: [{
+          label: 'Document Count',
+          data: [
+            <% Object.keys(stats.groups).forEach(function(groupName) { %>
+              <%= stats.groups[groupName].totalDocuments %>,
+            <% }); %>
+          ],
+          backgroundColor: 'rgba(75, 192, 192, 0.7)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: 'white'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
+          x: {
+            ticks: {
+              color: 'white'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: 'white'
+            }
+          }
+        }
+      }
+    });
+
+    // Format bytes function
+    function formatBytes(bytes, decimals = 2) {
+      if (bytes === 0) return '0 Bytes';
+
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+    }
+
+    // Refresh button
+    document.getElementById('refreshStats').addEventListener('click', function() {
+      window.location.reload();
+    });
+  });
+</script>

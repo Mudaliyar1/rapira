@@ -1,0 +1,205 @@
+<%- contentFor('body') %>
+
+<!-- Collection Info Card -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="glass-card-dark border border-secondary">
+      <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 text-white">Collection: <%= collectionName %></h5>
+        <div>
+          <a href="/admin/storage-management" class="btn btn-outline-secondary btn-sm me-2">
+            <i class="bi bi-arrow-left"></i> Back to Storage Management
+          </a>
+          <a href="/admin/storage-management/confirm-delete/<%= collectionName %>" class="btn btn-danger btn-sm">
+            <i class="bi bi-trash"></i> Delete All Documents
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="stat-card p-3 mb-3 bg-dark bg-opacity-25 rounded">
+              <h6 class="text-white-50 mb-1">Total Documents</h6>
+              <h3 class="text-white mb-0"><%= stats.count.toLocaleString() %></h3>
+              <small class="text-white-50">How many items are in this collection</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card p-3 mb-3 bg-dark bg-opacity-25 rounded">
+              <h6 class="text-white-50 mb-1">Total Size</h6>
+              <h3 class="text-white mb-0"><%= stats.formattedSize %></h3>
+              <small class="text-white-50">How much space this collection takes up</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card p-3 mb-3 bg-dark bg-opacity-25 rounded">
+              <h6 class="text-white-50 mb-1">Average Document Size</h6>
+              <h3 class="text-white mb-0"><%= stats.avgObjSize.toLocaleString() %> Bytes</h3>
+              <small class="text-white-50">Average size of each item</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info bg-dark text-info border-info mt-3 mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>What you're looking at:</strong> This page shows all the data in the <strong><%= collectionName %></strong> collection.
+          <ul class="mb-0 mt-2">
+            <li>Click "Expand" to see all details of an item</li>
+            <li>Use the page numbers below to browse through all items</li>
+            <li>The "Delete All Documents" button will remove everything from this collection</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Documents Table -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="glass-card-dark border border-secondary">
+      <div class="card-header border-bottom border-secondary">
+        <h5 class="card-title mb-0 text-white">Documents (Page <%= pagination.page %> of <%= pagination.totalPages %>)</h5>
+      </div>
+      <div class="card-body p-0">
+        <% if (documents.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered-dark mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>ID</th>
+                  <th>Document</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% documents.forEach((doc, index) => { %>
+                  <tr>
+                    <td class="text-white"><%= (pagination.page - 1) * pagination.limit + index + 1 %></td>
+                    <td class="text-white"><%= doc._id %></td>
+                    <td>
+                      <div class="document-content">
+                        <pre class="text-white mb-0" style="max-height: 150px; overflow-y: auto; background-color: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px;"><%= JSON.stringify(doc, null, 2) %></pre>
+                        <button class="btn btn-sm btn-outline-info mt-2 toggle-json-view">
+                          <i class="bi bi-arrows-expand"></i> Expand/Collapse
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <div class="p-4 text-center">
+            <p class="text-white-50 mb-0">No documents found in this collection.</p>
+          </div>
+        <% } %>
+      </div>
+      <% if (pagination.totalPages > 1) { %>
+        <div class="card-footer border-top border-secondary">
+          <nav aria-label="Collection pagination">
+            <ul class="pagination justify-content-center mb-0">
+              <% if (pagination.page > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/storage-management/view/<%= collectionName %>?page=1&limit=<%= pagination.limit %>">First</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/storage-management/view/<%= collectionName %>?page=<%= pagination.page - 1 %>&limit=<%= pagination.limit %>">Previous</a>
+                </li>
+              <% } else { %>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">First</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>
+              <% } %>
+
+              <%
+                let startPage = Math.max(1, pagination.page - 2);
+                let endPage = Math.min(pagination.totalPages, pagination.page + 2);
+
+                // Ensure we always show 5 pages if possible
+                if (endPage - startPage < 4 && pagination.totalPages > 4) {
+                  if (startPage === 1) {
+                    endPage = Math.min(5, pagination.totalPages);
+                  } else if (endPage === pagination.totalPages) {
+                    startPage = Math.max(1, pagination.totalPages - 4);
+                  }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+              %>
+                <li class="page-item <%= i === pagination.page ? 'active' : '' %>">
+                  <a class="page-link" href="/admin/storage-management/view/<%= collectionName %>?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                </li>
+              <% } %>
+
+              <% if (pagination.page < pagination.totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/storage-management/view/<%= collectionName %>?page=<%= pagination.page + 1 %>&limit=<%= pagination.limit %>">Next</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="/admin/storage-management/view/<%= collectionName %>?page=<%= pagination.totalPages %>&limit=<%= pagination.limit %>">Last</a>
+                </li>
+              <% } else { %>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">Next</a>
+                </li>
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">Last</a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Items Per Page Selector -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="glass-card-dark border border-secondary p-3">
+      <form class="row g-3 align-items-center" method="GET" action="/admin/storage-management/view/<%= collectionName %>">
+        <div class="col-auto">
+          <label for="limitSelect" class="col-form-label text-white">Items per page:</label>
+        </div>
+        <div class="col-auto">
+          <select class="form-select" id="limitSelect" name="limit" onchange="this.form.submit()">
+            <option value="10" <%= pagination.limit === 10 ? 'selected' : '' %>>10</option>
+            <option value="20" <%= pagination.limit === 20 ? 'selected' : '' %>>20</option>
+            <option value="50" <%= pagination.limit === 50 ? 'selected' : '' %>>50</option>
+            <option value="100" <%= pagination.limit === 100 ? 'selected' : '' %>>100</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for document view -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for expand/collapse buttons
+    const toggleButtons = document.querySelectorAll('.toggle-json-view');
+
+    toggleButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const pre = this.parentElement.querySelector('pre');
+
+        if (pre.style.maxHeight === '150px') {
+          pre.style.maxHeight = 'none';
+          this.innerHTML = '<i class="bi bi-arrows-collapse"></i> Collapse';
+        } else {
+          pre.style.maxHeight = '150px';
+          this.innerHTML = '<i class="bi bi-arrows-expand"></i> Expand';
+        }
+      });
+    });
+  });
+</script>
+
+

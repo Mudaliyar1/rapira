@@ -1,0 +1,94 @@
+<%- contentFor('body') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="glass-card-dark border border-danger">
+      <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Confirm Collection Data Deletion
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-danger">
+          <h4 class="alert-heading">Warning: Destructive Action!</h4>
+          <p>You are about to delete all data from the <strong><%= collectionName %></strong> collection.</p>
+          <p>This action <strong>cannot be undone</strong>. Once deleted, the data cannot be recovered.</p>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="text-white">What Will Happen:</h5>
+          <ul class="text-white-50">
+            <li><strong>All data will be deleted</strong> from this collection</li>
+            <li>The empty collection will still exist, but contain no data</li>
+            <li>This might break features that need this data to work</li>
+            <li>You'll free up storage space</li>
+          </ul>
+
+          <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Think of it like this:</strong> You're emptying a filing cabinet but keeping the cabinet itself.
+            Any documents that referred to these files will now point to nothing.
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h5 class="text-white">Collection Information:</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-dark">
+              <tbody>
+                <tr>
+                  <th style="width: 200px;">Collection Name</th>
+                  <td><%= collectionName %></td>
+                </tr>
+                <tr>
+                  <th>Total Documents</th>
+                  <td><%= stats.count.toLocaleString() %></td>
+                </tr>
+                <tr>
+                  <th>Total Size</th>
+                  <td><%= stats.formattedSize %></td>
+                </tr>
+                <tr>
+                  <th>Storage Size</th>
+                  <td><%= stats.formattedStorageSize %></td>
+                </tr>
+                <tr>
+                  <th>Index Size</th>
+                  <td><%= stats.formattedIndexSize %></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <% if (criticalCollection) { %>
+          <div class="alert alert-warning">
+            <h5 class="alert-heading">Critical Collection Warning</h5>
+            <p>This is a critical system collection. Deleting its data may cause the application to malfunction.</p>
+            <p>It is strongly recommended that you do not proceed with this deletion.</p>
+          </div>
+        <% } %>
+
+        <div class="d-flex justify-content-between mt-4">
+          <% if (previousPage) { %>
+            <a href="<%= previousPage %>" class="btn btn-secondary">
+              <i class="bi bi-arrow-left me-1"></i> Cancel
+            </a>
+          <% } else { %>
+            <a href="/admin/storage-management" class="btn btn-secondary">
+              <i class="bi bi-arrow-left me-1"></i> Cancel
+            </a>
+          <% } %>
+
+          <form action="/admin/storage-management/delete/<%= collectionName %>" method="POST">
+            <input type="hidden" name="confirmed" value="true">
+            <button type="submit" class="btn btn-danger" <%= criticalCollection ? 'disabled' : '' %>>
+              <i class="bi bi-trash me-1"></i> Yes, Delete All Data
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
