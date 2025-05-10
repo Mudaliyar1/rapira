@@ -115,15 +115,44 @@ app.locals.layouts = {
 };
 
 // Middleware
-// Serve static files with proper CORS headers
+// Serve static files with proper CORS headers and content types
 app.use(express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    // Add CORS headers for media files
-    if (path.endsWith('.mp3') || path.endsWith('.mp4') ||
-        path.endsWith('.pdf') || path.endsWith('.wav')) {
+  setHeaders: (res, filePath) => {
+    // Add headers for media files
+    if (filePath.endsWith('.mp3') || filePath.endsWith('.mp4') ||
+        filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
+        filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
+        filePath.endsWith('.png') || filePath.endsWith('.gif')) {
+
+      // Set CORS headers to allow access from any origin
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD');
+      res.setHeader('Access-Control-Allow-Headers', 'Range');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+      // Add content type header if missing
+      if (!res.getHeader('Content-Type')) {
+        if (filePath.endsWith('.mp3')) {
+          res.setHeader('Content-Type', 'audio/mpeg');
+        } else if (filePath.endsWith('.mp4')) {
+          res.setHeader('Content-Type', 'video/mp4');
+        } else if (filePath.endsWith('.pdf')) {
+          res.setHeader('Content-Type', 'application/pdf');
+        } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        } else if (filePath.endsWith('.png')) {
+          res.setHeader('Content-Type', 'image/png');
+        } else if (filePath.endsWith('.gif')) {
+          res.setHeader('Content-Type', 'image/gif');
+        } else if (filePath.endsWith('.wav')) {
+          res.setHeader('Content-Type', 'audio/wav');
+        }
+      }
+
+      // Add Accept-Ranges header for video and audio streaming
+      if (filePath.endsWith('.mp4') || filePath.endsWith('.mp3') || filePath.endsWith('.wav')) {
+        res.setHeader('Accept-Ranges', 'bytes');
+      }
     }
   }
 }));

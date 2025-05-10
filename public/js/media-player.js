@@ -221,11 +221,20 @@ function showAudioPlayer(url, title, artist, thumbnail) {
     const errorContainer = document.createElement('div');
     errorContainer.className = 'alert alert-danger mt-3';
     errorContainer.innerHTML = `
-      <p><strong>Error loading audio file:</strong> Media format not supported by your browser</p>
+      <p><strong>Error loading audio file:</strong> Media format not supported or file not found</p>
       <p>Try downloading the file instead:</p>
       <a href="${url}" class="btn btn-primary" download>Download Audio</a>
     `;
     audioPlayerContainer.appendChild(errorContainer);
+
+    // Add direct link as fallback
+    const fallbackContainer = document.createElement('div');
+    fallbackContainer.className = 'mt-3';
+    fallbackContainer.innerHTML = `
+      <p>If the download button doesn't work, try this direct link:</p>
+      <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Audio in New Tab</a>
+    `;
+    audioPlayerContainer.appendChild(fallbackContainer);
   };
 
   // Load and play audio
@@ -261,11 +270,20 @@ function showVideoPlayer(url) {
     const errorContainer = document.createElement('div');
     errorContainer.className = 'alert alert-danger mt-3';
     errorContainer.innerHTML = `
-      <p><strong>Error loading video file:</strong> Media format not supported by your browser</p>
+      <p><strong>Error loading video file:</strong> Media format not supported or file not found</p>
       <p>Try downloading the file instead:</p>
       <a href="${url}" class="btn btn-primary" download>Download Video</a>
     `;
     videoPlayerContainer.appendChild(errorContainer);
+
+    // Add direct link as fallback
+    const fallbackContainer = document.createElement('div');
+    fallbackContainer.className = 'mt-3';
+    fallbackContainer.innerHTML = `
+      <p>If the download button doesn't work, try this direct link:</p>
+      <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Video in New Tab</a>
+    `;
+    videoPlayerContainer.appendChild(fallbackContainer);
   };
 
   // Load and play video
@@ -326,10 +344,14 @@ function showPdfViewer(url) {
     if (pdfLoading) {
       pdfLoading.innerHTML = `
         <div class="alert alert-danger">
-          <p><strong>Error loading PDF:</strong> Missing PDF file</p>
+          <p><strong>Error loading PDF:</strong> File not found or access denied</p>
           <p>This may be due to CORS restrictions or file access issues.</p>
           <p>Try downloading the file instead:</p>
           <a href="${url}" class="btn btn-primary" download>Download PDF</a>
+        </div>
+        <div class="mt-3">
+          <p>If the download button doesn't work, try this direct link:</p>
+          <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open PDF in New Tab</a>
         </div>
       `;
     }
@@ -357,10 +379,14 @@ function showLyricsViewer(url) {
       console.error('Error loading lyrics:', error);
       lyricsContent.innerHTML = `
         <div class="alert alert-danger">
-          <p><strong>Error loading lyrics:</strong> ${error.message}</p>
+          <p><strong>Error loading lyrics:</strong> File not found or access denied</p>
           <p>This may be due to CORS restrictions or file access issues.</p>
           <p>Try downloading the file instead:</p>
           <a href="${url}" class="btn btn-primary" download>Download Lyrics</a>
+        </div>
+        <div class="mt-3">
+          <p>If the download button doesn't work, try this direct link:</p>
+          <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Lyrics in New Tab</a>
         </div>
       `;
     });

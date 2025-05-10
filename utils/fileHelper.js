@@ -8,15 +8,14 @@ const fs = require('fs');
 
 /**
  * Get the full URL for a file path
- * In production, this prepends the BASE_URL to ensure absolute URLs
- * In development, it returns the relative path
+ * Ensures files are properly served in both development and production
  *
  * @param {string} filePath - The relative file path (e.g., /uploads/content/file.pdf)
  * @returns {string} The full URL to the file
  */
 function getFileUrl(filePath) {
   // If the path is already an absolute URL, return it as is
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+  if (filePath && (filePath.startsWith('http://') || filePath.startsWith('https://'))) {
     return filePath;
   }
 
@@ -25,11 +24,11 @@ function getFileUrl(filePath) {
     return '/images/default-thumbnail.jpg';
   }
 
-  // For production environment, we need to handle this differently
-  // We'll use relative paths for media files to avoid CORS issues
-  // This ensures files are served from the same origin
+  // Make sure the path starts with a slash for proper URL resolution
+  if (!filePath.startsWith('/')) {
+    filePath = '/' + filePath;
+  }
 
-  // For development, return the path as is
   return filePath;
 }
 
