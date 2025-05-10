@@ -1,8 +1,18 @@
 # Dependency directories
 node_modules/
 
-# Environment variables
+# Environment variables and sensitive files
 .env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+.env.backup-*
+*.pem
+*.key
+config.json
+credentials.json
 
 # Logs
 logs

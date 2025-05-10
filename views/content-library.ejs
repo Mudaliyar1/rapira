@@ -74,7 +74,7 @@
           <div class="col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 shadow-sm content-card">
               <div class="position-relative">
-                <img src="<%= item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
+                <img src="<%= item.fullThumbnailUrl || item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
                 <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
                   <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
                   <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
@@ -104,12 +104,12 @@
                 </p>
               </div>
               <div class="card-footer bg-white border-top-0">
-                <a href="<%= item.fileUrl %>"
+                <a href="<%= item.fullFileUrl || item.fileUrl %>"
                    class="btn btn-outline-primary w-100 content-link"
                    data-type="<%= item.type %>"
                    data-title="<%= item.title %>"
                    data-artist="<%= item.artist && item.artist.user ? item.artist.user.name : 'Unknown Artist' %>"
-                   data-thumbnail="<%= item.thumbnailUrl %>">
+                   data-thumbnail="<%= item.fullThumbnailUrl || item.thumbnailUrl %>">
                   <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
                 </a>
               </div>

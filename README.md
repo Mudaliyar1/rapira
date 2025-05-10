@@ -89,6 +89,56 @@ Rapira is a dynamic platform for Indian rap artists to showcase their music, org
 
 6. Open your browser and navigate to `http://localhost:3000`
 
+## Environment Configuration
+
+The application supports both development and production environments. We've provided scripts to easily switch between them:
+
+> **SECURITY NOTE**: Environment files contain sensitive information and should never be committed to version control. See [SECURITY.md](SECURITY.md) for more information.
+
+### Switching Environments
+
+1. To switch to development mode:
+   ```
+   node scripts/switch-env.js dev
+   ```
+
+2. To switch to production mode:
+   ```
+   node scripts/switch-env.js prod
+   ```
+
+### Environment Files
+
+- `.env` - The active environment configuration
+- `.env.development` - Development environment settings
+- `.env.production` - Production environment settings
+
+### Troubleshooting Session Issues
+
+If you experience login issues, you can clear all sessions with:
+```
+node scripts/fix-sessions.js
+```
+
+This script will:
+- Clear all existing sessions in the database
+- Verify your environment configuration
+- Provide diagnostic information
+
+### Security Check
+
+Run the security check to ensure your project doesn't contain sensitive information:
+
+```
+npm run security-check
+```
+
+This will:
+- Check for sensitive files that might be accidentally committed
+- Verify your .gitignore configuration
+- Check for missing or weak environment variables
+- Provide security recommendations
+
 ## Email Configuration
 
 The application uses Brevo (formerly Sendinblue) for sending emails. To set up email functionality:

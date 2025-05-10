@@ -52,6 +52,11 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
         return res.redirect('/auth/login');
       }
 
+      // Log successful login for debugging
+      console.log(`User logged in successfully: ${user.email} (${user.role})`);
+      console.log('Session ID:', req.session.id);
+      console.log('Session cookie settings:', req.session.cookie);
+
       req.flash('success', 'You are now logged in');
       res.redirect('/');
     });

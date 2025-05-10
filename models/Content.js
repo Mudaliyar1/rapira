@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { getFileUrl } = require('../utils/fileHelper');
 
 const ContentSchema = new mongoose.Schema({
   artist: {
@@ -44,5 +45,18 @@ const ContentSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
+
+// Virtual properties for full URLs
+ContentSchema.virtual('fullFileUrl').get(function() {
+  return getFileUrl(this.fileUrl);
+});
+
+ContentSchema.virtual('fullThumbnailUrl').get(function() {
+  return getFileUrl(this.thumbnailUrl);
+});
+
+// Set toJSON and toObject options to include virtuals
+ContentSchema.set('toJSON', { virtuals: true });
+ContentSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Content', ContentSchema);

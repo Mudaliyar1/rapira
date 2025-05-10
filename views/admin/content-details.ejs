@@ -27,7 +27,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Content Preview</h5>
         <div>
-          <a href="<%= content.fileUrl %>" class="btn btn-sm btn-outline-primary" target="_blank">
+          <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-sm btn-outline-primary" target="_blank">
             <i class="bi bi-box-arrow-up-right me-1"></i> Open Original
           </a>
         </div>
@@ -36,22 +36,31 @@
         <div class="content-preview mb-4">
           <% if (content.type === 'video') { %>
             <div class="ratio ratio-16x9 mb-3">
-              <video src="<%= content.fileUrl %>" controls poster="<%= content.thumbnailUrl %>"></video>
+              <video src="<%= content.fullFileUrl || content.fileUrl %>" controls poster="<%= content.fullThumbnailUrl || content.thumbnailUrl %>" onerror="handleMediaError(this, 'video')"></video>
             </div>
           <% } else if (content.type === 'song') { %>
             <div class="d-flex align-items-center mb-3">
-              <img src="<%= content.thumbnailUrl %>" alt="<%= content.title %>" class="img-fluid rounded me-3" style="width: 120px; height: 120px; object-fit: cover;">
-              <audio src="<%= content.fileUrl %>" controls class="w-100"></audio>
+              <img src="<%= content.fullThumbnailUrl || content.thumbnailUrl %>" alt="<%= content.title %>" class="img-fluid rounded me-3" style="width: 120px; height: 120px; object-fit: cover;">
+              <audio src="<%= content.fullFileUrl || content.fileUrl %>" controls class="w-100" onerror="handleMediaError(this, 'audio')"></audio>
             </div>
           <% } else if (content.type === 'lyrics') { %>
             <div class="p-4 bg-light rounded">
-              <pre class="mb-0" style="white-space: pre-wrap;"><%= content.lyrics || 'No lyrics available' %></pre>
+              <% if (content.lyrics) { %>
+                <pre class="mb-0" style="white-space: pre-wrap;"><%= content.lyrics %></pre>
+              <% } else { %>
+                <div class="text-center">
+                  <p>View the PDF file:</p>
+                  <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" target="_blank">
+                    <i class="bi bi-file-pdf me-1"></i> Open PDF
+                  </a>
+                </div>
+              <% } %>
             </div>
           <% } else { %>
             <div class="text-center py-5">
-              <img src="<%= content.thumbnailUrl %>" alt="<%= content.title %>" class="img-fluid rounded mb-3" style="max-height: 300px;">
+              <img src="<%= content.fullThumbnailUrl || content.thumbnailUrl %>" alt="<%= content.title %>" class="img-fluid rounded mb-3" style="max-height: 300px;">
               <div>
-                <a href="<%= content.fileUrl %>" class="btn btn-primary" target="_blank">
+                <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" target="_blank">
                   <i class="bi bi-download me-1"></i> Download File
                 </a>
               </div>
@@ -164,3 +173,30 @@
 </div>
 
 <%- contentFor('title') %>Content: <%= content.title %>
+
+<%- contentFor('scripts') %>
+<script>
+  // Handle media loading errors
+  function handleMediaError(element, mediaType) {
+    console.error(`Error loading ${mediaType}:`, element.error);
+
+    // Create error container
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Error loading ${mediaType} file.</strong> This may be due to:</p>
+      <ul>
+        <li>File not found on the server</li>
+        <li>CORS restrictions</li>
+        <li>Unsupported file format</li>
+      </ul>
+      <p>Try downloading the file instead:</p>
+      <a href="${element.src}" class="btn btn-primary" download>Download ${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}</a>
+    `;
+
+    // Replace the media element with the error message
+    const parent = element.parentNode;
+    parent.appendChild(errorContainer);
+    element.style.display = 'none';
+  }
+</script>

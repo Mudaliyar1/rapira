@@ -8,6 +8,11 @@
     "dev": "nodemon app.js",
     "create-admin": "node scripts/create-admin.js",
     "reset-admin": "node scripts/reset-admin.js",
+    "use:dev": "node scripts/switch-env.js dev && echo \"Switched to development environment\"",
+    "use:prod": "node scripts/switch-env.js prod && echo \"Switched to production environment\"",
+    "fix:sessions": "node scripts/fix-sessions.js",
+    "security-check": "node scripts/check-security.js",
+    "precommit": "npm run security-check",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

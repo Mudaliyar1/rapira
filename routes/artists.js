@@ -8,6 +8,7 @@ const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { getFileUrl, getStoragePath } = require('../utils/fileHelper');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -207,17 +208,20 @@ router.post('/upload-content', isLoggedIn, isArtist,
       }
 
       // Create content
+      const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
+
       const newContent = new Content({
         artist: artist._id,
         title,
         type,
         description: description || '',
-        fileUrl: '/uploads/content/' + req.files.contentFile[0].filename
+        fileUrl: contentFilePath
       });
 
       // Set thumbnail if uploaded
       if (req.files.thumbnailImage) {
-        newContent.thumbnailUrl = '/uploads/thumbnails/' + req.files.thumbnailImage[0].filename;
+        const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
+        newContent.thumbnailUrl = thumbnailPath;
       }
 
       await newContent.save();
@@ -328,12 +332,14 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
 
       // Update content file if uploaded
       if (req.files.contentFile) {
-        content.fileUrl = '/uploads/content/' + req.files.contentFile[0].filename;
+        const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
+        content.fileUrl = contentFilePath;
       }
 
       // Update thumbnail if uploaded
       if (req.files.thumbnailImage) {
-        content.thumbnailUrl = '/uploads/thumbnails/' + req.files.thumbnailImage[0].filename;
+        const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
+        content.thumbnailUrl = thumbnailPath;
       }
 
       await content.save();

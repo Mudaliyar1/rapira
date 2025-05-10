@@ -11,6 +11,13 @@ const expressLayouts = require('express-ejs-layouts');
 // Initialize Express app
 const app = express();
 
+// Trust proxy for secure cookies in production environments
+// This is important for hosting platforms like Render, Heroku, etc.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+  console.log('Proxy trust enabled for production environment');
+}
+
 // Connect to MongoDB with improved error handling and connection options
 const connectWithRetry = () => {
   console.log('Attempting to connect to MongoDB...');
@@ -114,25 +121,60 @@ app.use(express.json());
 app.use(methodOverride('_method'));
 
 // Session configuration
-app.use(session({
+const isProduction = process.env.NODE_ENV === 'production';
+console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+console.log(`BASE_URL: ${process.env.BASE_URL}`);
+
+// Configure session options
+const sessionOptions = {
   secret: process.env.SESSION_SECRET || 'rapira-secret-key',
   resave: false,
-  saveUninitialized: true, // Changed to true to ensure session is always created
+  saveUninitialized: true, // Ensure session is always created
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI,
     ttl: 14 * 24 * 60 * 60, // 14 days
     touchAfter: 24 * 3600, // Only update the session once per 24 hours unless data changes
-    // Removed crypto configuration to fix decryption issues
     autoRemove: 'native', // Use MongoDB's TTL collection feature
-    stringify: true, // Changed to true for better compatibility
+    stringify: true, // Better compatibility
     collectionName: 'sessions' // Use a specific collection name
   }),
   cookie: {
     maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' // Only use secure cookies in production
+    // In development, secure should be false for HTTP
+    secure: isProduction,
+    sameSite: 'lax' // Helps with CSRF protection while allowing normal links
   }
-}));
+};
+
+// In production, set the cookie domain if needed
+if (isProduction) {
+  const baseUrl = process.env.BASE_URL || '';
+  try {
+    // Extract domain from BASE_URL if it exists
+    if (baseUrl) {
+      const url = new URL(baseUrl);
+      // Only set domain for non-localhost domains
+      if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
+        console.log(`Setting cookie domain to: ${url.hostname}`);
+        sessionOptions.cookie.domain = url.hostname;
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing BASE_URL for cookie domain:', e);
+  }
+}
+
+// Log session configuration for debugging
+console.log('Session configuration:', {
+  mode: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
+  secure: sessionOptions.cookie.secure,
+  sameSite: sessionOptions.cookie.sameSite,
+  domain: sessionOptions.cookie.domain || 'not set',
+  baseUrl: process.env.BASE_URL || 'not set'
+});
+
+app.use(session(sessionOptions));
 
 // We've already cleared sessions using the clear-sessions.js script
 console.log('Using new session configuration. Previous sessions have been cleared.');
@@ -219,6 +261,10 @@ const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
+const { ensureUploadDirectories } = require('./utils/fileHelper');
+
+// Ensure upload directories exist
+ensureUploadDirectories();
 
 // Use routes
 app.use('/', indexRoutes);

@@ -6,6 +6,7 @@ const fs = require('fs');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const Content = require('../models/Content');
 const Artist = require('../models/Artist');
+const { getFileUrl, getStoragePath } = require('../utils/fileHelper');
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
@@ -132,13 +133,15 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
     }
 
     // Create new content
+    const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
+
     const newContent = new Content({
       title,
       description: description || '',
       type,
       artist,
       featured: featured === 'on',
-      fileUrl: '/uploads/content/' + req.files.contentFile[0].filename
+      fileUrl: contentFilePath
     });
 
     // Add tags if provided
@@ -158,7 +161,8 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
 
     // Add thumbnail if provided
     if (req.files.thumbnailFile && req.files.thumbnailFile[0]) {
-      newContent.thumbnailUrl = '/uploads/content/' + req.files.thumbnailFile[0].filename;
+      const thumbnailPath = getStoragePath('content', req.files.thumbnailFile[0].filename);
+      newContent.thumbnailUrl = thumbnailPath;
     }
 
     await newContent.save();
@@ -348,12 +352,14 @@ router.post('/:id/update', isLoggedIn, isAdmin, (req, res, next) => {
 
     // Update thumbnail if provided
     if (req.files && req.files.thumbnailFile && req.files.thumbnailFile[0]) {
-      content.thumbnailUrl = '/uploads/content/' + req.files.thumbnailFile[0].filename;
+      const thumbnailPath = getStoragePath('content', req.files.thumbnailFile[0].filename);
+      content.thumbnailUrl = thumbnailPath;
     }
 
     // Update content file if provided
     if (req.files && req.files.contentFile && req.files.contentFile[0]) {
-      content.fileUrl = '/uploads/content/' + req.files.contentFile[0].filename;
+      const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
+      content.fileUrl = contentFilePath;
     }
 
     await content.save();

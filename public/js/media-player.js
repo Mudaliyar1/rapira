@@ -217,7 +217,32 @@ function showAudioPlayer(url, title, artist, thumbnail) {
 
   // Load and play audio
   audioPlayer.load();
-  audioPlayer.play().catch(e => console.error('Error playing audio:', e));
+
+  // Add error handling for audio loading
+  audioPlayer.onerror = function() {
+    console.error('Error loading audio:', audioPlayer.error);
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Error loading audio file:</strong> ${getMediaErrorMessage(audioPlayer.error)}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Audio</a>
+    `;
+    audioPlayerContainer.appendChild(errorContainer);
+  };
+
+  audioPlayer.play().catch(e => {
+    console.error('Error playing audio:', e);
+    // Show error message if play fails
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-warning mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Playback error:</strong> ${e.message}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Audio</a>
+    `;
+    audioPlayerContainer.appendChild(errorContainer);
+  });
 
   // Initialize waveform
   initializeWaveform();
@@ -232,7 +257,32 @@ function showVideoPlayer(url) {
 
   // Load and play video
   videoPlayer.load();
-  videoPlayer.play().catch(e => console.error('Error playing video:', e));
+
+  // Add error handling for video loading
+  videoPlayer.onerror = function() {
+    console.error('Error loading video:', videoPlayer.error);
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Error loading video file:</strong> ${getMediaErrorMessage(videoPlayer.error)}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Video</a>
+    `;
+    videoPlayerContainer.appendChild(errorContainer);
+  };
+
+  videoPlayer.play().catch(e => {
+    console.error('Error playing video:', e);
+    // Show error message if play fails
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-warning mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Playback error:</strong> ${e.message}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Video</a>
+    `;
+    videoPlayerContainer.appendChild(errorContainer);
+  });
 }
 
 // Show PDF viewer
@@ -274,7 +324,14 @@ function showPdfViewer(url) {
   }).catch(function(error) {
     console.error('Error loading PDF:', error);
     if (pdfLoading) {
-      pdfLoading.innerHTML = '<div class="alert alert-danger">Error loading PDF: ' + error.message + '</div>';
+      pdfLoading.innerHTML = `
+        <div class="alert alert-danger">
+          <p><strong>Error loading PDF:</strong> ${error.message}</p>
+          <p>This may be due to CORS restrictions or file access issues.</p>
+          <p>Try downloading the file instead:</p>
+          <a href="${url}" class="btn btn-primary" download>Download PDF</a>
+        </div>
+      `;
     }
   });
 }
@@ -298,7 +355,14 @@ function showLyricsViewer(url) {
     })
     .catch(error => {
       console.error('Error loading lyrics:', error);
-      lyricsContent.innerHTML = '<div class="alert alert-danger">Error loading lyrics</div>';
+      lyricsContent.innerHTML = `
+        <div class="alert alert-danger">
+          <p><strong>Error loading lyrics:</strong> ${error.message}</p>
+          <p>This may be due to CORS restrictions or file access issues.</p>
+          <p>Try downloading the file instead:</p>
+          <a href="${url}" class="btn btn-primary" download>Download Lyrics</a>
+        </div>
+      `;
     });
 }
 
@@ -372,6 +436,30 @@ function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+// Get human-readable error message for media errors
+function getMediaErrorMessage(error) {
+  if (!error) return 'Unknown error';
+
+  // For MediaError objects
+  if (error.code) {
+    switch(error.code) {
+      case 1: // MEDIA_ERR_ABORTED
+        return 'Playback aborted by the user';
+      case 2: // MEDIA_ERR_NETWORK
+        return 'Network error occurred while loading the media';
+      case 3: // MEDIA_ERR_DECODE
+        return 'Media decoding error - the file may be corrupted';
+      case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+        return 'Media format not supported by your browser';
+      default:
+        return `Media error code ${error.code}`;
+    }
+  }
+
+  // For other error objects
+  return error.message || 'Unknown error';
 }
 
 // Initialize audio player
