@@ -215,21 +215,21 @@ function showAudioPlayer(url, title, artist, thumbnail) {
   if (audioArtist) audioArtist.textContent = artist;
   if (audioThumbnail && thumbnail) audioThumbnail.src = thumbnail;
 
-  // Load and play audio
-  audioPlayer.load();
-
   // Add error handling for audio loading
   audioPlayer.onerror = function() {
     console.error('Error loading audio:', audioPlayer.error);
     const errorContainer = document.createElement('div');
     errorContainer.className = 'alert alert-danger mt-3';
     errorContainer.innerHTML = `
-      <p><strong>Error loading audio file:</strong> ${getMediaErrorMessage(audioPlayer.error)}</p>
+      <p><strong>Error loading audio file:</strong> Media format not supported by your browser</p>
       <p>Try downloading the file instead:</p>
       <a href="${url}" class="btn btn-primary" download>Download Audio</a>
     `;
     audioPlayerContainer.appendChild(errorContainer);
   };
+
+  // Load and play audio
+  audioPlayer.load();
 
   audioPlayer.play().catch(e => {
     console.error('Error playing audio:', e);
@@ -255,21 +255,21 @@ function showVideoPlayer(url) {
   // Set video source
   videoPlayer.src = url;
 
-  // Load and play video
-  videoPlayer.load();
-
   // Add error handling for video loading
   videoPlayer.onerror = function() {
     console.error('Error loading video:', videoPlayer.error);
     const errorContainer = document.createElement('div');
     errorContainer.className = 'alert alert-danger mt-3';
     errorContainer.innerHTML = `
-      <p><strong>Error loading video file:</strong> ${getMediaErrorMessage(videoPlayer.error)}</p>
+      <p><strong>Error loading video file:</strong> Media format not supported by your browser</p>
       <p>Try downloading the file instead:</p>
       <a href="${url}" class="btn btn-primary" download>Download Video</a>
     `;
     videoPlayerContainer.appendChild(errorContainer);
   };
+
+  // Load and play video
+  videoPlayer.load();
 
   videoPlayer.play().catch(e => {
     console.error('Error playing video:', e);
@@ -326,7 +326,7 @@ function showPdfViewer(url) {
     if (pdfLoading) {
       pdfLoading.innerHTML = `
         <div class="alert alert-danger">
-          <p><strong>Error loading PDF:</strong> ${error.message}</p>
+          <p><strong>Error loading PDF:</strong> Missing PDF file</p>
           <p>This may be due to CORS restrictions or file access issues.</p>
           <p>Try downloading the file instead:</p>
           <a href="${url}" class="btn btn-primary" download>Download PDF</a>

@@ -10,7 +10,7 @@ const fs = require('fs');
  * Get the full URL for a file path
  * In production, this prepends the BASE_URL to ensure absolute URLs
  * In development, it returns the relative path
- * 
+ *
  * @param {string} filePath - The relative file path (e.g., /uploads/content/file.pdf)
  * @returns {string} The full URL to the file
  */
@@ -20,12 +20,14 @@ function getFileUrl(filePath) {
     return filePath;
   }
 
-  // For production environment, prepend the BASE_URL
-  if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
-    // Remove any leading slash to avoid double slashes
-    const cleanPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
-    return `${process.env.BASE_URL}/${cleanPath}`;
+  // If the path is empty or undefined, return a default
+  if (!filePath) {
+    return '/images/default-thumbnail.jpg';
   }
+
+  // For production environment, we need to handle this differently
+  // We'll use relative paths for media files to avoid CORS issues
+  // This ensures files are served from the same origin
 
   // For development, return the path as is
   return filePath;
@@ -59,7 +61,7 @@ function ensureUploadDirectories() {
 /**
  * Store a file path in the database
  * Ensures consistent format for storing file paths
- * 
+ *
  * @param {string} uploadDir - The upload directory (e.g., 'content', 'thumbnails')
  * @param {string} filename - The filename
  * @returns {string} The relative path to store in the database

@@ -115,7 +115,18 @@ app.locals.layouts = {
 };
 
 // Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files with proper CORS headers
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    // Add CORS headers for media files
+    if (path.endsWith('.mp3') || path.endsWith('.mp4') ||
+        path.endsWith('.pdf') || path.endsWith('.wav')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(methodOverride('_method'));
