@@ -1,0 +1,51 @@
+<%- contentFor('body') %>
+<!-- Add User Form -->
+<div class="glass-card-dark">
+  <div class="card-body p-4">
+    <form action="/admin/users/add" method="POST">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role" required>
+              <option value="user">User</option>
+              <option value="artist">Artist</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="d-flex justify-content-end gap-2">
+            <a href="/admin/users" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Add User</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- contentFor('headerButtons') %>
+<a href="/admin/users" class="btn btn-outline-secondary">
+  <i class="bi bi-arrow-left me-1"></i> Back to Users
+</a>
+
+<%- contentFor('title') %>Add New User

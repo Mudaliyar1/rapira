@@ -1,0 +1,95 @@
+<%- contentFor('body') %>
+<!-- Artists Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">All Artists</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Artist</th>
+            <th class="text-white">User</th>
+            <th class="text-white">Genre</th>
+            <th class="text-white">Status</th>
+            <th class="text-white">Featured</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (artists && artists.length > 0) { %>
+            <% artists.forEach(artist => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (artist.profileImage) { %>
+                      <img src="<%= artist.profileImage %>" alt="<%= artist.stageName %>" class="rounded-circle me-2" width="40" height="40">
+                    <% } else { %>
+                      <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                        <i class="bi bi-music-note-beamed text-light"></i>
+                      </div>
+                    <% } %>
+                    <div>
+                      <h6 class="mb-0 text-white"><%= artist.stageName || (artist.user ? artist.user.name : 'Unknown') %></h6>
+                      <small class="text-primary"><%= artist.genre %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if (artist.user) { %>
+                    <div class="fw-medium text-white"><%= artist.user.name %></div>
+                    <div class="small text-primary"><%= artist.user.email %></div>
+                  <% } else { %>
+                    <span class="text-muted">N/A</span>
+                  <% } %>
+                </td>
+                <td class="text-white"><%= artist.genre %></td>
+                <td>
+                  <span class="badge <%= artist.verified ? 'bg-success' : 'bg-warning' %>">
+                    <%= artist.verified ? 'Verified' : 'Unverified' %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge <%= artist.featuredArtist ? 'bg-primary' : 'bg-secondary' %>">
+                    <%= artist.featuredArtist ? 'Featured' : 'Not Featured' %>
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <form action="/admin/artists/<%= artist._id %>/verify" method="POST" class="me-1">
+                      <button type="submit" class="btn btn-sm <%= artist.verified ? 'btn-outline-warning' : 'btn-outline-success' %>">
+                        <i class="bi <%= artist.verified ? 'bi-x-circle' : 'bi-check-circle' %>"></i>
+                        <%= artist.verified ? 'Unverify' : 'Verify' %>
+                      </button>
+                    </form>
+                    <form action="/admin/artists/<%= artist._id %>/feature" method="POST" class="me-1">
+                      <button type="submit" class="btn btn-sm <%= artist.featuredArtist ? 'btn-outline-secondary' : 'btn-outline-primary' %>">
+                        <i class="bi <%= artist.featuredArtist ? 'bi-star' : 'bi-star-fill' %>"></i>
+                        <%= artist.featuredArtist ? 'Unfeature' : 'Feature' %>
+                      </button>
+                    </form>
+                    <a href="/artists/<%= artist._id %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <form action="/admin/artists/<%= artist._id %>/delete" method="POST" class="me-1" onsubmit="return confirm('Are you sure you want to delete this artist? This will remove all their concerts and content.')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">No artists found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('title') %>Manage Artists

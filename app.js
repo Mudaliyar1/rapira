@@ -1,0 +1,384 @@
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const flash = require('connect-flash');
+const methodOverride = require('method-override');
+const path = require('path');
+const expressLayouts = require('express-ejs-layouts');
+
+// Initialize Express app
+const app = express();
+
+// Connect to MongoDB with improved error handling and connection options
+const connectWithRetry = () => {
+  console.log('Attempting to connect to MongoDB...');
+
+  // Parse the MongoDB URI to check for issues
+  try {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+
+    // Log a sanitized version of the URI (without credentials)
+    const sanitizedUri = uri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+    console.log('Using MongoDB URI:', sanitizedUri);
+
+    // Check if the URI contains the expected domain
+    if (!uri.includes('mongodb.net') && !uri.includes('localhost')) {
+      console.warn('Warning: MongoDB URI does not contain expected domain (mongodb.net or localhost)');
+    }
+  } catch (error) {
+    console.error('Error parsing MongoDB URI:', error.message);
+  }
+
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000, // Increased timeout to 30 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    family: 4, // Use IPv4, skip trying IPv6
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    retryWrites: true, // Retry write operations on network errors
+    retryReads: true, // Retry read operations on network errors
+    heartbeatFrequencyMS: 10000, // Check server status every 10 seconds
+    autoIndex: true, // Build indexes
+    directConnection: false // Use replica set discovery
+  })
+  .then(() => {
+    console.log('MongoDB Connected Successfully');
+  })
+  .catch(err => {
+    console.error('MongoDB Connection Error:', err);
+
+    // Check for specific error types and provide more helpful messages
+    if (err.name === 'MongoServerSelectionError') {
+      if (err.message.includes('getaddrinfo ENOTFOUND')) {
+        console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
+      } else if (err.message.includes('connection timed out')) {
+        console.error('Connection timed out. Check your firewall settings or MongoDB Atlas network access list.');
+      }
+    }
+
+    console.log('Retrying connection in 5 seconds...');
+    setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+  });
+};
+
+// Initial connection
+connectWithRetry();
+
+// Handle MongoDB connection events
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connected to MongoDB');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected from MongoDB');
+});
+
+// Handle application termination
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  console.log('Mongoose connection closed due to application termination');
+  process.exit(0);
+});
+
+// Set up EJS as the view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Set up EJS layouts
+app.use(expressLayouts);
+app.set('layout', 'layouts/main');
+app.set('layout extractScripts', true);
+app.set('layout extractStyles', true);
+
+// Register additional layouts
+app.locals.layouts = {
+  main: 'layouts/main',
+  admin: 'layouts/admin',
+  artist: 'layouts/artist'
+};
+
+// Middleware
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(methodOverride('_method'));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'rapira-secret-key',
+  resave: false,
+  saveUninitialized: true, // Changed to true to ensure session is always created
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    ttl: 14 * 24 * 60 * 60, // 14 days
+    touchAfter: 24 * 3600, // Only update the session once per 24 hours unless data changes
+    // Removed crypto configuration to fix decryption issues
+    autoRemove: 'native', // Use MongoDB's TTL collection feature
+    stringify: true, // Changed to true for better compatibility
+    collectionName: 'sessions' // Use a specific collection name
+  }),
+  cookie: {
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' // Only use secure cookies in production
+  }
+}));
+
+// We've already cleared sessions using the clear-sessions.js script
+console.log('Using new session configuration. Previous sessions have been cleared.');
+
+
+// Flash messages
+app.use(flash());
+
+// Import models for user roles check
+const UserRole = require('./models/UserRole');
+const Role = require('./models/Role');
+
+// Import middleware
+const { isLoggedIn, isAdmin } = require('./middleware/auth');
+
+// Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
+
+// Global variables
+app.use(async (req, res, next) => {
+  try {
+    // Safely access session data
+    const user = req.session && req.session.user ? req.session.user : null;
+
+    // Set default values for all template variables
+    res.locals.currentUser = user;
+    res.locals.isAdmin = user && user.role === 'admin';
+    res.locals.isArtist = user && user.role === 'artist';
+    res.locals.hasRoles = false;
+    res.locals.userRoles = [];
+    res.locals.success = req.flash ? req.flash('success') : [];
+    res.locals.error = req.flash ? req.flash('error') : [];
+    res.locals.path = req.path; // Add current path to all views
+
+    // Check if user has any roles (for messaging functionality)
+    if (user && user.id) {
+      try {
+        const userRoles = await UserRole.find({ user: user.id }).populate('role');
+        res.locals.hasRoles = userRoles.length > 0;
+        res.locals.userRoles = userRoles.map(ur => ur.role.name);
+      } catch (err) {
+        console.error('Error checking user roles:', err);
+        // Default values already set above
+      }
+    }
+  } catch (err) {
+    console.error('Error in global variables middleware:', err);
+    // Ensure defaults are set even if there's an error
+    res.locals.currentUser = null;
+    res.locals.isAdmin = false;
+    res.locals.isArtist = false;
+    res.locals.hasRoles = false;
+    res.locals.userRoles = [];
+    res.locals.success = [];
+    res.locals.error = [];
+    res.locals.path = req.path;
+  }
+
+  next();
+});
+
+// Import routes
+const indexRoutes = require('./routes/index');
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const artistRoutes = require('./routes/artists');
+const concertRoutes = require('./routes/concerts');
+const ticketRoutes = require('./routes/tickets');
+const adminRoutes = require('./routes/admin');
+const adminContentRoutes = require('./routes/admin-content');
+const paymentRoutes = require('./routes/payments');
+const pageRoutes = require('./routes/pages');
+const emailStatusRoutes = require('./routes/email-status');
+const artistApplicationRoutes = require('./routes/artistApplications');
+const roleRoutes = require('./routes/roles');
+const learningRoutes = require('./routes/learning');
+const messageRoutes = require('./routes/messages');
+const artistUpgradeRoutes = require('./routes/artistUpgrade');
+const teamRequirementRoutes = require('./routes/teamRequirement');
+const findMyArtistRoutes = require('./routes/findMyArtist');
+const featuredArtistsRoutes = require('./routes/featuredArtists');
+const roleSlotRoutes = require('./routes/roleSlots');
+const bookingRequestRoutes = require('./routes/bookingRequests');
+const dailyConcertsRoutes = require('./routes/dailyConcerts');
+const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
+const { router: notificationRoutes } = require('./routes/notifications');
+const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
+
+// Use routes
+app.use('/', indexRoutes);
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/artists', artistRoutes);
+app.use('/concerts', concertRoutes);
+app.use('/tickets', ticketRoutes);
+app.use('/admin', adminRoutes);
+app.use('/payments', paymentRoutes);
+app.use('/pages', pageRoutes);
+app.use('/email-status', emailStatusRoutes);
+app.use('/artist-applications', artistApplicationRoutes);
+app.use('/roles', roleRoutes);
+app.use('/learning', learningRoutes);
+app.use('/messages', messageRoutes);
+app.use('/', artistUpgradeRoutes); // Mount artist upgrade routes
+// Mount team requirement routes
+app.use('/team-requirement', teamRequirementRoutes);
+app.use('/admin/team-requirement', teamRequirementRoutes); // Also mount for admin routes
+
+// Mount find my artist routes
+app.use('/find-my-artist', findMyArtistRoutes);
+app.use('/admin/find-my-artist', findMyArtistRoutes); // Also mount for admin routes
+
+// Mount specific admin routes for find my artist
+app.use('/admin/find-my-artist/featured-artists', featuredArtistsRoutes);
+app.use('/admin/find-my-artist/role-slots', roleSlotRoutes);
+app.use('/admin/find-my-artist/booking-requests', bookingRequestRoutes);
+
+// Mount daily concerts routes
+app.use('/daily-concerts', dailyConcertsRoutes);
+app.use('/admin/daily-concerts', adminDailyConcertsRoutes);
+
+// Mount notification routes
+app.use('/admin/notifications', notificationRoutes);
+
+// Mount admin content routes
+app.use('/admin/content', adminContentRoutes);
+
+// 404 route
+app.use((req, res) => {
+  res.status(404).render('error/404');
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).render('error/500');
+});
+
+// Import notification initializer
+const { initializeNotifications } = require('./utils/notificationInitializer');
+
+// Start server
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+
+  // Initialize notifications after server starts
+  setTimeout(async () => {
+    try {
+      const result = await initializeNotifications();
+      console.log(`Notification initialization complete: ${result.created} created, ${result.pending} pending, ${result.unread} unread`);
+    } catch (error) {
+      console.error('Error during notification initialization:', error);
+    }
+  }, 5000); // Wait 5 seconds after server start to initialize notifications
+});
+
+// Schedule cleanup jobs
+const TICKET_CLEANUP_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
+const ARTIST_CLEANUP_INTERVAL = 60 * 60 * 1000; // 60 minutes in milliseconds
+let ticketCleanupTimer = null;
+let artistCleanupTimer = null;
+
+// Function to check if MongoDB is connected and ready
+const isMongoDBConnected = () => {
+  const state = mongoose.connection.readyState;
+  if (state !== 1) {
+    console.log(`MongoDB not connected. Current state: ${state} (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)`);
+    return false;
+  }
+  return true;
+};
+
+// Function to schedule the next ticket cleanup
+const scheduleNextTicketCleanup = () => {
+  if (ticketCleanupTimer) {
+    clearTimeout(ticketCleanupTimer);
+  }
+
+  ticketCleanupTimer = setTimeout(async () => {
+    try {
+      console.log('Running pending ticket cleanup job...');
+      // Check MongoDB connection state before running cleanup
+      if (!isMongoDBConnected()) {
+        console.log('Skipping ticket cleanup job due to MongoDB connection issue.');
+      } else {
+        const removedCount = await cleanupPendingTickets(30, 3); // Remove tickets older than 30 minutes, max 3 retries
+        console.log(`Ticket cleanup job completed. Removed ${removedCount} pending tickets.`);
+      }
+    } catch (error) {
+      console.error('Error in ticket cleanup job:', error);
+      // Log more detailed error information
+      if (error.name === 'MongoServerSelectionError') {
+        console.error('MongoDB server selection error. This may be due to network issues or server unavailability.');
+      }
+    } finally {
+      // Always schedule the next run, even if this one failed
+      scheduleNextTicketCleanup();
+    }
+  }, TICKET_CLEANUP_INTERVAL);
+
+  console.log(`Next ticket cleanup scheduled in ${TICKET_CLEANUP_INTERVAL / 60000} minutes`);
+};
+
+// Function to schedule the next artist cleanup
+const scheduleNextArtistCleanup = () => {
+  if (artistCleanupTimer) {
+    clearTimeout(artistCleanupTimer);
+  }
+
+  artistCleanupTimer = setTimeout(async () => {
+    try {
+      console.log('Running orphaned artist cleanup job...');
+      // Check MongoDB connection state before running cleanup
+      if (!isMongoDBConnected()) {
+        console.log('Skipping artist cleanup job due to MongoDB connection issue.');
+      } else {
+        const removedCount = await cleanupOrphanedArtists(3); // Max 3 retries
+        console.log(`Artist cleanup job completed. Removed ${removedCount} orphaned artist records.`);
+      }
+    } catch (error) {
+      console.error('Error in artist cleanup job:', error);
+      // Log more detailed error information
+      if (error.name === 'MongoServerSelectionError') {
+        console.error('MongoDB server selection error. This may be due to network issues or server unavailability.');
+        if (error.message.includes('getaddrinfo ENOTFOUND')) {
+          console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
+        }
+      }
+    } finally {
+      // Always schedule the next run, even if this one failed
+      scheduleNextArtistCleanup();
+    }
+  }, ARTIST_CLEANUP_INTERVAL);
+
+  console.log(`Next artist cleanup scheduled in ${ARTIST_CLEANUP_INTERVAL / 60000} minutes`);
+};
+
+// Start the cleanup schedules
+scheduleNextTicketCleanup();
+scheduleNextArtistCleanup();
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});

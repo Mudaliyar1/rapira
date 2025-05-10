@@ -1,0 +1,43 @@
+{
+  "name": "rapira",
+  "version": "1.0.0",
+  "description": "A dynamic platform for Indian rap artists",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "create-admin": "node scripts/create-admin.js",
+    "reset-admin": "node scripts/reset-admin.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rap",
+    "music",
+    "concerts",
+    "artists",
+    "india"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "bcryptjs": "^2.4.3",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^5.0.0",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.17.3",
+    "method-override": "^3.0.0",
+    "mongoose": "^7.5.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.4",
+    "razorpay": "^2.9.1",
+    "sib-api-v3-sdk": "^8.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "nodemon": "^3.0.1"
+  }
+}

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= page.title %> - Rapira</title>
+  <meta name="description" content="<%= page.metaDescription %>">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="/">Rapira</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <!-- Discover Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="discoverDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-compass me-1"></i> Discover
+            </a>
+            <ul class="dropdown-menu glass-card-dark" aria-labelledby="discoverDropdown">
+              <li><a class="dropdown-item text-white" href="/"><i class="bi bi-house-door me-2"></i>Home</a></li>
+              <li><a class="dropdown-item text-white" href="/concerts"><i class="bi bi-music-note-beamed me-2"></i>Concerts</a></li>
+              <li><a class="dropdown-item text-white" href="/artists"><i class="bi bi-person-badge me-2"></i>Artists</a></li>
+            </ul>
+          </li>
+
+          <!-- Services Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-gear me-1"></i> Services
+            </a>
+            <ul class="dropdown-menu glass-card-dark" aria-labelledby="servicesDropdown">
+              <li><a class="dropdown-item text-white" href="/team-requirement"><i class="bi bi-people-fill me-2"></i>Team Requirement</a></li>
+              <li><a class="dropdown-item text-white" href="/find-my-artist"><i class="bi bi-search me-2"></i>Find My Artist</a></li>
+            </ul>
+          </li>
+
+          <!-- About & Contact -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="aboutDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-info-circle me-1"></i> About
+            </a>
+            <ul class="dropdown-menu glass-card-dark" aria-labelledby="aboutDropdown">
+              <li><a class="dropdown-item text-white" href="/about"><i class="bi bi-building me-2"></i>About Us</a></li>
+              <li><a class="dropdown-item text-white" href="/contact"><i class="bi bi-envelope me-2"></i>Contact</a></li>
+            </ul>
+          </li>
+          <% if (currentUser) { %>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <%= currentUser.name %>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                <% if (currentUser.role === 'admin') { %>
+                  <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                <% } %>
+                <% if (currentUser.role === 'artist') { %>
+                  <li><a class="dropdown-item" href="/artist/dashboard">Artist Dashboard</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                <% } %>
+                <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+                <li><a class="dropdown-item" href="/tickets">My Tickets</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+              </ul>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register">Register</a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="mb-5">
+          <h1 class="display-4 fw-bold mb-4"><%= page.title %></h1>
+          <hr class="my-4">
+        </div>
+
+        <div class="page-content">
+          <%- page.content %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white py-5 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 mb-4 mb-md-0">
+          <h5 class="mb-3 fw-bold">Rapira</h5>
+          <p class="text-muted">Your ultimate destination for live music events and artist performances.</p>
+          <div class="d-flex gap-3 mt-4">
+            <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
+            <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="text-white"><i class="bi bi-youtube"></i></a>
+          </div>
+        </div>
+        <div class="col-md-2 mb-4 mb-md-0">
+          <h6 class="mb-3 fw-bold">Quick Links</h6>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="/" class="text-muted text-decoration-none">Home</a></li>
+            <li class="mb-2"><a href="/concerts" class="text-muted text-decoration-none">Concerts</a></li>
+            <li class="mb-2"><a href="/artists" class="text-muted text-decoration-none">Artists</a></li>
+            <li class="mb-2"><a href="/about" class="text-muted text-decoration-none">About</a></li>
+            <li class="mb-2"><a href="/contact" class="text-muted text-decoration-none">Contact</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 mb-4 mb-md-0">
+          <h6 class="mb-3 fw-bold">Legal</h6>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="/terms-of-service" class="text-muted text-decoration-none">Terms of Service</a></li>
+            <li class="mb-2"><a href="/privacy-policy" class="text-muted text-decoration-none">Privacy Policy</a></li>
+            <li class="mb-2"><a href="/refund-policy" class="text-muted text-decoration-none">Refund Policy</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6 class="mb-3 fw-bold">Contact Us</h6>
+          <ul class="list-unstyled text-muted">
+            <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> 123 Music Street, Mumbai, India</li>
+            <li class="mb-2"><i class="bi bi-envelope me-2"></i> info@rapira.com</li>
+            <li class="mb-2"><i class="bi bi-telephone me-2"></i> +91 123 456 7890</li>
+          </ul>
+        </div>
+      </div>
+      <hr class="my-4 bg-secondary">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+        <p class="mb-3 mb-md-0 text-muted">© <%= new Date().getFullYear() %> Rapira. All rights reserved.</p>
+        <div>
+          <a href="#" class="text-muted text-decoration-none me-3">Terms</a>
+          <a href="#" class="text-muted text-decoration-none me-3">Privacy</a>
+          <a href="#" class="text-muted text-decoration-none">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

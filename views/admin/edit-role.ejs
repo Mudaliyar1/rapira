@@ -1,0 +1,92 @@
+<%- contentFor('body') %>
+
+<!-- Edit Role Form -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Edit Role</h5>
+    <a href="/roles" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Roles
+    </a>
+  </div>
+  <div class="card-body">
+    <form action="/roles/edit/<%= role._id %>" method="POST">
+      <div class="mb-3">
+        <label for="name" class="form-label text-white">Role Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="<%= role.name %>" required>
+        <div class="form-text">Enter a unique name for this role (e.g., Producer, Guitarist, Drummer)</div>
+      </div>
+      
+      <div class="mb-3">
+        <label for="description" class="form-label text-white">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3"><%= role.description %></textarea>
+        <div class="form-text">Provide a brief description of this role</div>
+      </div>
+      
+      <div class="mb-4">
+        <label for="icon" class="form-label text-white">Icon</label>
+        <select class="form-select" id="icon" name="icon">
+          <option value="bi-person" <%= role.icon === 'bi-person' ? 'selected' : '' %>>Person (Default)</option>
+          <option value="bi-music-note" <%= role.icon === 'bi-music-note' ? 'selected' : '' %>>Music Note</option>
+          <option value="bi-music-note-beamed" <%= role.icon === 'bi-music-note-beamed' ? 'selected' : '' %>>Music Note Beamed</option>
+          <option value="bi-mic" <%= role.icon === 'bi-mic' ? 'selected' : '' %>>Microphone</option>
+          <option value="bi-headphones" <%= role.icon === 'bi-headphones' ? 'selected' : '' %>>Headphones</option>
+          <option value="bi-speaker" <%= role.icon === 'bi-speaker' ? 'selected' : '' %>>Speaker</option>
+          <option value="bi-vinyl" <%= role.icon === 'bi-vinyl' ? 'selected' : '' %>>Vinyl</option>
+          <option value="bi-file-music" <%= role.icon === 'bi-file-music' ? 'selected' : '' %>>Music File</option>
+          <option value="bi-soundwave" <%= role.icon === 'bi-soundwave' ? 'selected' : '' %>>Soundwave</option>
+          <option value="bi-broadcast" <%= role.icon === 'bi-broadcast' ? 'selected' : '' %>>Broadcast</option>
+          <option value="bi-megaphone" <%= role.icon === 'bi-megaphone' ? 'selected' : '' %>>Megaphone</option>
+          <option value="bi-camera-video" <%= role.icon === 'bi-camera-video' ? 'selected' : '' %>>Video</option>
+          <option value="bi-camera" <%= role.icon === 'bi-camera' ? 'selected' : '' %>>Camera</option>
+          <option value="bi-pencil" <%= role.icon === 'bi-pencil' ? 'selected' : '' %>>Pencil</option>
+          <option value="bi-brush" <%= role.icon === 'bi-brush' ? 'selected' : '' %>>Brush</option>
+          <option value="bi-palette" <%= role.icon === 'bi-palette' ? 'selected' : '' %>>Palette</option>
+          <option value="bi-stars" <%= role.icon === 'bi-stars' ? 'selected' : '' %>>Stars</option>
+          <option value="bi-star" <%= role.icon === 'bi-star' ? 'selected' : '' %>>Star</option>
+          <option value="bi-lightning" <%= role.icon === 'bi-lightning' ? 'selected' : '' %>>Lightning</option>
+          <option value="bi-award" <%= role.icon === 'bi-award' ? 'selected' : '' %>>Award</option>
+          <option value="bi-trophy" <%= role.icon === 'bi-trophy' ? 'selected' : '' %>>Trophy</option>
+        </select>
+        <div class="form-text">Select an icon to represent this role</div>
+      </div>
+      
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Update Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Icon Preview -->
+<div class="glass-card-dark border border-secondary mt-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Icon Preview</h5>
+  </div>
+  <div class="card-body">
+    <div class="text-center">
+      <i id="iconPreview" class="bi <%= role.icon %> display-1 text-white mb-3"></i>
+      <p class="text-white" id="iconName"><%= role.icon %></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const iconSelect = document.getElementById('icon');
+    const iconPreview = document.getElementById('iconPreview');
+    const iconName = document.getElementById('iconName');
+    
+    iconSelect.addEventListener('change', function() {
+      const selectedIcon = this.value;
+      
+      // Remove all existing icon classes
+      iconPreview.className = '';
+      
+      // Add the bi class and the selected icon class
+      iconPreview.classList.add('bi', selectedIcon, 'display-1', 'text-white', 'mb-3');
+      
+      // Update the icon name text
+      iconName.textContent = selectedIcon;
+    });
+  });
+</script>

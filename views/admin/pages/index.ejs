@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Pages - Rapira Admin</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <%- include('../../partials/admin-sidebar', { path: '/admin/pages' }) %>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Manage Pages</h1>
+        <div>
+          <a href="/admin/pages/add" class="btn btn-primary me-2">
+            <i class="bi bi-plus-lg me-1"></i> Add Page
+          </a>
+          <button class="btn btn-primary d-md-none" id="adminToggle">
+            <i class="bi bi-list"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pages Table -->
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Title</th>
+                  <th>Slug</th>
+                  <th>Status</th>
+                  <th>Featured</th>
+                  <th>Order</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (pages && pages.length > 0) { %>
+                  <% pages.forEach(page => { %>
+                    <tr>
+                      <td><%= page.title %></td>
+                      <td><code><%= page.slug %></code></td>
+                      <td>
+                        <span class="badge <%= page.status === 'published' ? 'bg-success' : 'bg-warning' %>">
+                          <%= page.status.charAt(0).toUpperCase() + page.status.slice(1) %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (page.featured) { %>
+                          <span class="badge bg-primary"><i class="bi bi-star-fill"></i> Featured</span>
+                        <% } else { %>
+                          <span class="text-muted">-</span>
+                        <% } %>
+                      </td>
+                      <td><%= page.order %></td>
+                      <td><%= new Date(page.createdAt).toLocaleDateString() %></td>
+                      <td>
+                        <div class="dropdown">
+                          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton<%= page._id %>" data-bs-toggle="dropdown" aria-expanded="false">
+                            Actions
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton<%= page._id %>">
+                            <li><a class="dropdown-item" href="/admin/pages/<%= page._id %>/edit">
+                              <i class="bi bi-pencil me-2"></i> Edit
+                            </a></li>
+                            <li><a class="dropdown-item" href="/pages/<%= page.slug %>" target="_blank">
+                              <i class="bi bi-eye me-2"></i> View
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= page._id %>">
+                                <i class="bi bi-trash me-2"></i> Delete
+                              </button>
+                            </li>
+                          </ul>
+                        </div>
+                        
+                        <!-- Delete Modal -->
+                        <div class="modal fade" id="deleteModal<%= page._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= page._id %>" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel<%= page._id %>">Confirm Delete</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>Are you sure you want to delete the page "<strong><%= page.title %></strong>"?</p>
+                                <p class="text-danger mb-0">This action cannot be undone.</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form action="/admin/pages/<%= page._id %>/delete" method="POST">
+                                  <button type="submit" class="btn btn-danger">Delete Page</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="text-center py-4">No pages found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Admin Toggle -->
+  <button class="btn admin-toggle d-md-none" id="adminToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

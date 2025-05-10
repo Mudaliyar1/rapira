@@ -1,0 +1,58 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card text-center">
+        <div class="card-body p-5">
+          <div class="mb-4">
+            <div class="bg-success-subtle text-success d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 100px; height: 100px;">
+              <i class="bi bi-check-lg" style="font-size: 3rem;"></i>
+            </div>
+            <h2 class="fw-bold">Payment Successful!</h2>
+            <p class="text-muted mb-0">Your ticket has been booked successfully.</p>
+          </div>
+          
+          <div class="card bg-light mb-4">
+            <div class="card-body p-4">
+              <div class="row text-start">
+                <div class="col-md-6 mb-3 mb-md-0">
+                  <h5 class="fw-bold mb-3">Concert Details</h5>
+                  <p class="mb-1"><strong><%= ticket.concert.title %></strong></p>
+                  <p class="mb-1">
+                    <i class="bi bi-calendar3 text-primary me-1"></i>
+                    <%= new Date(ticket.concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                  </p>
+                  <p class="mb-1">
+                    <i class="bi bi-clock text-primary me-1"></i>
+                    <%= ticket.concert.time %>
+                  </p>
+                  <p class="mb-0">
+                    <i class="bi bi-geo-alt text-primary me-1"></i>
+                    <%= ticket.concert.venue %>, <%= ticket.concert.city %>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <h5 class="fw-bold mb-3">Ticket Information</h5>
+                  <p class="mb-1"><strong>Ticket Number:</strong> <%= ticket.ticketNumber %></p>
+                  <p class="mb-1"><strong>Quantity:</strong> <%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></p>
+                  <p class="mb-1"><strong>Amount Paid:</strong> ₹<%= ticket.totalAmount %></p>
+                  <p class="mb-0"><strong>Payment ID:</strong> <%= ticket.paymentId %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <p class="mb-4">A confirmation email has been sent to <strong><%= ticket.user.email %></strong> with all the details.</p>
+          
+          <div class="d-flex justify-content-center gap-3">
+            <a href="/tickets/<%= ticket._id %>" class="btn btn-primary px-4">
+              <i class="bi bi-ticket-perforated me-1"></i> View Ticket
+            </a>
+            <a href="/concerts" class="btn btn-outline-primary px-4">
+              <i class="bi bi-calendar-event me-1"></i> Explore More Concerts
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

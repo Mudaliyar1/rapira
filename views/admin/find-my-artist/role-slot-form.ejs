@@ -1,0 +1,89 @@
+<%- contentFor('title') %><%= roleSlot ? 'Edit' : 'Add New' %> Role Slot
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/find-my-artist">Find My Artist Management</a></li>
+    <li class="breadcrumb-item"><a href="/admin/find-my-artist/role-slots">Role Slots</a></li>
+    <li class="breadcrumb-item active"><%= roleSlot ? 'Edit' : 'Add New' %> Role Slot</li>
+  </ol>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-<%= roleSlot ? 'edit' : 'plus' %> me-1"></i>
+          <%= roleSlot ? 'Edit' : 'Add New' %> Role Slot
+        </div>
+        <div class="card-body">
+          <form action="<%= roleSlot ? `/admin/find-my-artist/role-slots/${roleSlot._id}` : '/admin/find-my-artist/role-slots' %>" method="POST">
+            <div class="mb-3">
+              <label for="name" class="form-label">Role Name *</label>
+              <input type="text" class="form-control" id="name" name="name" value="<%= roleSlot ? roleSlot.name : '' %>" required>
+              <div class="form-text">Example: Producer, Guitarist, Drummer, Event Manager, etc.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description *</label>
+              <textarea class="form-control" id="description" name="description" rows="5" required><%= roleSlot ? roleSlot.description : '' %></textarea>
+              <div class="form-text">Provide a detailed description of the role, including responsibilities and requirements.</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="city" class="form-label">City *</label>
+                <input type="text" class="form-control" id="city" name="city" value="<%= roleSlot ? roleSlot.city : '' %>" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="state" class="form-label">State *</label>
+                <input type="text" class="form-control" id="state" name="state" value="<%= roleSlot ? roleSlot.state : '' %>" required>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isActive" name="isActive" <%= roleSlot && roleSlot.isActive ? 'checked' : '' %>>
+                <label class="form-check-label" for="isActive">Active</label>
+              </div>
+              <div class="form-text">Inactive roles will not be displayed on the public page.</div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/admin/find-my-artist/role-slots" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> <%= roleSlot ? 'Update' : 'Create' %> Role Slot
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-info-circle me-1"></i>
+          Help
+        </div>
+        <div class="card-body">
+          <h5>About Role Slots</h5>
+          <p>Role slots are positions that can be booked by event companies and venue owners through the "Find My Artist" page.</p>
+          <p>These roles will be displayed on the public page where visitors can submit booking requests.</p>
+
+          <h5 class="mt-4">Guidelines</h5>
+          <ul>
+            <li>Provide clear and descriptive role names</li>
+            <li>Include detailed information about the role in the description</li>
+            <li>Specify the location accurately</li>
+            <li>Set inactive roles that are temporarily unavailable</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

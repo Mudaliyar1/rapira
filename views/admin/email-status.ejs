@@ -1,0 +1,316 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Email System Status</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Email Status</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Email System Test</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+            Test all email types by sending test emails to a specified address. This helps verify that your email configuration is working correctly.
+          </p>
+
+          <form action="/email-status/test-all" method="POST">
+            <div class="mb-3">
+              <label for="email" class="form-label">Test Email Address</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+              <div class="form-text">Enter the email address where you want to receive the test emails.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-envelope-check me-2"></i> Run All Email Tests
+              </button>
+
+              <button type="submit" class="btn btn-outline-primary" formaction="/email-status/direct-test">
+                <i class="bi bi-lightning-charge me-2"></i> Direct API Test
+              </button>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-info-circle me-2"></i> If you're experiencing issues, try the Direct API Test first to check if your IP is authorized.
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Brevo API Status</h5>
+        </div>
+        <div class="card-body">
+          <div id="apiStatus" class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i> Click the button below to check the Brevo API status.
+          </div>
+
+          <button id="checkApiStatus" class="btn btn-outline-primary">
+            <i class="bi bi-cloud-check me-2"></i> Check API Status
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <% if (locals.session && session.emailTestResults) { %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Test Results</h5>
+            <span class="badge bg-light text-dark">
+              <%= new Date(session.emailTestResults.timestamp).toLocaleString() %>
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-<%= session.emailTestResults.successRate >= 80 ? 'success' : (session.emailTestResults.successRate >= 50 ? 'warning' : 'danger') %>">
+              <i class="bi bi-<%= session.emailTestResults.successRate >= 80 ? 'check-circle' : (session.emailTestResults.successRate >= 50 ? 'exclamation-triangle' : 'x-circle') %>-fill me-2"></i>
+              <strong>Success Rate: <%= session.emailTestResults.successRate %>%</strong>
+              <div class="mt-1 small">Test emails sent to: <%= session.emailTestResults.email %></div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Email Type</th>
+                    <th>Status</th>
+                    <th>Message ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% for (const [type, result] of Object.entries(session.emailTestResults.results)) { %>
+                    <tr>
+                      <td>
+                        <% if (type === 'welcome') { %>
+                          <i class="bi bi-person-plus me-1"></i> Welcome Email
+                        <% } else if (type === 'submission') { %>
+                          <i class="bi bi-calendar-plus me-1"></i> Concert Submission
+                        <% } else if (type === 'approval') { %>
+                          <i class="bi bi-check-circle me-1"></i> Concert Approval
+                        <% } else if (type === 'rejection') { %>
+                          <i class="bi bi-x-circle me-1"></i> Concert Rejection
+                        <% } else if (type === 'ticket') { %>
+                          <i class="bi bi-ticket-perforated me-1"></i> Ticket Purchase
+                        <% } else if (type === 'general') { %>
+                          <i class="bi bi-envelope me-1"></i> General Test
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (result.success) { %>
+                          <span class="badge bg-success">Success</span>
+                        <% } else { %>
+                          <span class="badge bg-danger">Failed</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (result.messageId) { %>
+                          <code class="small"><%= result.messageId %></code>
+                        <% } else if (result.error) { %>
+                          <span class="text-danger small"><%= result.error %></span>
+                        <% } else { %>
+                          <span class="text-muted">N/A</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Troubleshooting Tips</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill text-success me-2"></i> Check your spam/junk folder if you don't see the emails in your inbox
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill text-success me-2"></i> Verify that the sender email (vijaymudaliyar224@gmail.com) is authorized in your Brevo account
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> <strong>Important:</strong> Make sure your current IP address is authorized in Brevo at <a href="https://app.brevo.com/security/authorised_ips" target="_blank" class="btn btn-sm btn-warning"><i class="bi bi-shield-lock me-1"></i>Authorize IP Now</a>
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill text-success me-2"></i> Check the server logs for any error messages
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill text-success me-2"></i> Ensure your Brevo API key is correctly set in the environment variables
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Current Configuration</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <th scope="row">Sender Email</th>
+                  <td>vijaymudaliyar224@gmail.com</td>
+                </tr>
+                <tr>
+                  <th scope="row">Sender Name</th>
+                  <td>Rapira Music Platform</td>
+                </tr>
+                <tr>
+                  <th scope="row">API Key Status</th>
+                  <td id="apiKeyStatus"><span class="badge bg-secondary">Checking...</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">Your Current IP</th>
+                  <td id="currentIp"><span class="badge bg-secondary">Checking...</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">IP Authorization</th>
+                  <td id="ipAuthStatus"><span class="badge bg-secondary">Checking...</span></td>
+                </tr>
+                <tr>
+                  <th scope="row">SMTP Fallback</th>
+                  <td>Configured (Gmail)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const checkApiStatusBtn = document.getElementById('checkApiStatus');
+    const apiStatusDiv = document.getElementById('apiStatus');
+    const apiKeyStatusEl = document.getElementById('apiKeyStatus');
+    const currentIpEl = document.getElementById('currentIp');
+    const ipAuthStatusEl = document.getElementById('ipAuthStatus');
+
+    // Function to check IP address
+    function checkIpAddress() {
+      fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => {
+          currentIpEl.innerHTML = `<code>${data.ip}</code>`;
+          // Store IP for later use
+          window.currentIpAddress = data.ip;
+          checkIpAuthorization(data.ip);
+        })
+        .catch(error => {
+          currentIpEl.innerHTML = `<span class="badge bg-danger">Error: ${error.message}</span>`;
+        });
+    }
+
+    // Function to check if IP is authorized
+    function checkIpAuthorization(ip) {
+      fetch('/email-status/check-ip-auth')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (data.authorized) {
+              ipAuthStatusEl.innerHTML = `<span class="badge bg-success">Authorized</span>`;
+            } else {
+              ipAuthStatusEl.innerHTML = `
+                <span class="badge bg-danger">Not Authorized</span>
+                <a href="https://app.brevo.com/security/authorised_ips" target="_blank" class="btn btn-sm btn-warning ms-2">
+                  <i class="bi bi-shield-lock me-1"></i>Authorize Now
+                </a>
+              `;
+            }
+          } else {
+            ipAuthStatusEl.innerHTML = `<span class="badge bg-warning">Unknown</span>`;
+          }
+        })
+        .catch(error => {
+          ipAuthStatusEl.innerHTML = `<span class="badge bg-danger">Error</span>`;
+        });
+    }
+
+    // Check API key status
+    function checkApiKeyStatus() {
+      apiKeyStatusEl.innerHTML = `<span class="badge bg-secondary">Checking...</span>`;
+
+      fetch('/email-status/api-status')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            apiKeyStatusEl.innerHTML = `<span class="badge bg-success">Valid</span>`;
+          } else {
+            apiKeyStatusEl.innerHTML = `<span class="badge bg-danger">Invalid or Unauthorized</span>`;
+          }
+        })
+        .catch(error => {
+          apiKeyStatusEl.innerHTML = `<span class="badge bg-danger">Error</span>`;
+        });
+    }
+
+    // Run initial checks
+    checkIpAddress();
+    checkApiKeyStatus();
+
+    if (checkApiStatusBtn) {
+      checkApiStatusBtn.addEventListener('click', function() {
+        // Update UI to show loading state
+        checkApiStatusBtn.disabled = true;
+        checkApiStatusBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Checking...';
+        apiStatusDiv.className = 'alert alert-info';
+        apiStatusDiv.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Checking Brevo API status...';
+
+        // Make API request
+        fetch('/email-status/api-status')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              apiStatusDiv.className = 'alert alert-success';
+              apiStatusDiv.innerHTML = `
+                <i class="bi bi-check-circle-fill me-2"></i> <strong>Brevo API is working correctly</strong>
+                <div class="mt-2">
+                  <div><strong>Plan:</strong> ${data.data.plan}</div>
+                  <div><strong>Credits:</strong> ${data.data.credits}</div>
+                  <div><strong>Account:</strong> ${data.data.firstAndLastName} (${data.data.email})</div>
+                </div>
+              `;
+              // Update API key status
+              apiKeyStatusEl.innerHTML = `<span class="badge bg-success">Valid</span>`;
+            } else {
+              apiStatusDiv.className = 'alert alert-danger';
+              apiStatusDiv.innerHTML = `
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>${data.message}</strong>
+                <div class="mt-2 small">${JSON.stringify(data.error)}</div>
+              `;
+              // Update API key status
+              apiKeyStatusEl.innerHTML = `<span class="badge bg-danger">Invalid or Unauthorized</span>`;
+            }
+          })
+          .catch(error => {
+            apiStatusDiv.className = 'alert alert-danger';
+            apiStatusDiv.innerHTML = `
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Failed to check API status</strong>
+              <div class="mt-2 small">${error.message}</div>
+            `;
+          })
+          .finally(() => {
+            // Reset button state
+            checkApiStatusBtn.disabled = false;
+            checkApiStatusBtn.innerHTML = '<i class="bi bi-cloud-check me-2"></i> Check API Status';
+          });
+      });
+    }
+  });
+</script>

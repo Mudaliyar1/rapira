@@ -1,0 +1,67 @@
+<%- contentFor('body') %>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h4 class="card-title mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Delete Account Confirmation
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Warning:</strong> This action cannot be undone!
+          </div>
+          
+          <h5>Are you sure you want to permanently delete your account?</h5>
+          <p>This will:</p>
+          
+          <ul class="list-group list-group-flush mb-4">
+            <li class="list-group-item">
+              <i class="bi bi-person-x me-2 text-danger"></i>
+              Delete all your personal information
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-ticket-perforated me-2 text-danger"></i>
+              Delete all your tickets and bookings
+            </li>
+            <% if (user.role === 'artist') { %>
+              <li class="list-group-item">
+                <i class="bi bi-music-note-beamed me-2 text-danger"></i>
+                Delete your artist profile
+              </li>
+              <li class="list-group-item">
+                <i class="bi bi-calendar-event me-2 text-danger"></i>
+                Delete all concerts you've created
+              </li>
+              <li class="list-group-item">
+                <i class="bi bi-file-earmark me-2 text-danger"></i>
+                Delete all content you've uploaded
+              </li>
+            <% } %>
+            <li class="list-group-item">
+              <i class="bi bi-box-arrow-right me-2 text-danger"></i>
+              Log you out immediately
+            </li>
+          </ul>
+          
+          <p class="fw-bold">You will not be able to recover any of this information later.</p>
+          
+          <div class="d-flex justify-content-end mt-4">
+            <a href="/users/profile" class="btn btn-outline-secondary me-2">
+              <i class="bi bi-arrow-left me-1"></i> Cancel
+            </a>
+            <form action="/users/delete-account" method="POST">
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash me-1"></i> Delete My Account
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

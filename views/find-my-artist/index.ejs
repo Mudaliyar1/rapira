@@ -1,0 +1,350 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="text-center mb-4">Find My Artist</h1>
+      <p class="text-center lead">Find and book artists or specific roles for your event or venue</p>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Search & Filter</h5>
+          <form action="/find-my-artist" method="GET">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label for="artist" class="form-label">Artist Name</label>
+                <input type="text" class="form-control" id="artist" name="artist" value="<%= filters.artist || '' %>" placeholder="Search by artist name">
+              </div>
+              <div class="col-md-3">
+                <label for="role" class="form-label">Role</label>
+                <select class="form-select" id="role" name="role">
+                  <option value="">All Roles</option>
+                  <% filterOptions.roles.forEach(roleName => { %>
+                    <option value="<%= roleName %>" <%= filters.role === roleName ? 'selected' : '' %>><%= roleName %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="city" class="form-label">City</label>
+                <select class="form-select" id="city" name="city">
+                  <option value="">All Cities</option>
+                  <% filterOptions.cities.forEach(city => { %>
+                    <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="state" class="form-label">State</label>
+                <select class="form-select" id="state" name="state">
+                  <option value="">All States</option>
+                  <% filterOptions.states.forEach(state => { %>
+                    <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="/find-my-artist" class="btn btn-outline-secondary ms-2">Reset</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-booking Form -->
+  <form action="/find-my-artist/book-multiple" method="POST" id="bookingForm">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="mb-0 text-white">Select Multiple Artists & Roles</h4>
+                <p class="text-white mt-2 mb-0">Choose multiple artists and roles for your event</p>
+              </div>
+              <button type="submit" class="btn btn-secondary" id="bookSelectedBtn">
+                <i class="bi bi-check2-square me-1"></i> Book Selected Items
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Featured Artists Section -->
+  <% if (featuredArtists && featuredArtists.length > 0) { %>
+    <div class="row mb-5">
+      <div class="col-12">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <h4 class="mb-0 text-white">Featured Artists</h4>
+            <p class="text-white mt-2 mb-0">Book these talented artists for your event</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-5">
+      <% featuredArtists.forEach(featuredArtist => { %>
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 shadow-sm bg-dark">
+            <div class="card-header bg-dark border-secondary d-flex align-items-center">
+              <div class="form-check form-check-inline me-0">
+                <input class="form-check-input selection-checkbox" type="checkbox" name="selectedItems" value="artist-<%= featuredArtist.artist._id %>" id="artist-<%= featuredArtist.artist._id %>" style="width: 1.5em; height: 1.5em; cursor: pointer;">
+                <label class="form-check-label ms-2 fw-bold text-white" for="artist-<%= featuredArtist.artist._id %>"><%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %></label>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="mb-3 text-center">
+                <img src="<%= featuredArtist.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %>" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+              </div>
+              <p class="card-text text-white mb-2">
+                <i class="bi bi-geo-alt-fill"></i>
+                <%= featuredArtist.artist.city && featuredArtist.artist.state ?
+                  `${featuredArtist.artist.city}, ${featuredArtist.artist.state}` :
+                  'Location not specified' %>
+              </p>
+              <p class="card-text text-white">
+                <%= featuredArtist.customDescription || featuredArtist.artist.about || 'No description available' %>
+              </p>
+            </div>
+            <div class="card-footer bg-dark border-secondary">
+              <div class="d-flex justify-content-between align-items-center">
+                <a href="/find-my-artist/book/artist/<%= featuredArtist.artist._id %>" class="btn btn-outline-light">Book Only This</a>
+                <label for="artist-<%= featuredArtist.artist._id %>" class="btn btn-primary mb-0">
+                  <i class="bi bi-plus-circle me-1"></i> Select
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Role Slots Section -->
+  <% if (roleSlots && roleSlots.length > 0) { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <h4 class="mb-0 text-white">Available Roles</h4>
+            <p class="text-white mt-2 mb-0">Book specific roles for your event or venue</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <% roleSlots.forEach(role => { %>
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 shadow-sm bg-dark">
+            <div class="card-header bg-dark border-secondary d-flex align-items-center">
+              <div class="form-check form-check-inline me-0">
+                <input class="form-check-input selection-checkbox" type="checkbox" name="selectedItems" value="role-<%= role._id %>" id="role-<%= role._id %>" style="width: 1.5em; height: 1.5em; cursor: pointer;">
+                <label class="form-check-label ms-2 fw-bold text-white" for="role-<%= role._id %>"><%= role.name %></label>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="card-text text-white mb-2"><i class="bi bi-geo-alt-fill"></i> <%= role.city %>, <%= role.state %></p>
+              <p class="card-text text-white"><%= role.description.length > 120 ? role.description.substring(0, 120) + '...' : role.description %></p>
+            </div>
+            <div class="card-footer bg-dark border-secondary">
+              <div class="d-flex justify-content-between align-items-center">
+                <a href="/find-my-artist/book/role/<%= role._id %>" class="btn btn-outline-light">Book Only This</a>
+                <label for="role-<%= role._id %>" class="btn btn-primary mb-0">
+                  <i class="bi bi-plus-circle me-1"></i> Select
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- No Results Message -->
+  <% if ((!featuredArtists || featuredArtists.length === 0) && (!roleSlots || roleSlots.length === 0)) { %>
+    <div class="row">
+      <div class="col-12 text-center py-5">
+        <div class="alert alert-info">
+          <h4>No artists or roles found</h4>
+          <p>No artists or roles match your search criteria. Please try different filters or check back later.</p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Fixed Bottom Bar for Selected Items -->
+  <div class="fixed-bottom bg-dark p-3 d-none" id="selectedItemsBar">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="text-white">
+          <span id="selectedCount">0</span> items selected
+        </div>
+        <button type="submit" class="btn btn-success" id="bottomBookBtn">
+          <i class="bi bi-check2-square me-1"></i> Book Selected Items
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+
+</div>
+
+<style>
+  .form-check-input:checked {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+  }
+
+  .selection-checkbox:checked + .form-check-label {
+    color: #28a745 !important;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.selection-checkbox');
+    const selectedBar = document.getElementById('selectedItemsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const bookSelectedBtn = document.getElementById('bookSelectedBtn');
+    const bottomBookBtn = document.getElementById('bottomBookBtn');
+
+    // Function to update the selection count and UI
+    function updateSelectionCount() {
+      const count = document.querySelectorAll('.selection-checkbox:checked').length;
+      console.log('Selected count:', count);
+      console.log('Selected items:', Array.from(document.querySelectorAll('.selection-checkbox:checked')).map(cb => cb.value));
+      selectedCount.textContent = count;
+
+      // Update select button styles
+      checkboxes.forEach(function(checkbox) {
+        const label = document.querySelector(`label[for="${checkbox.id}"].btn`);
+        if (label) {
+          if (checkbox.checked) {
+            label.classList.remove('btn-primary');
+            label.classList.add('btn-success');
+            label.innerHTML = '<i class="bi bi-check-circle me-1"></i> Selected';
+          } else {
+            label.classList.remove('btn-success');
+            label.classList.add('btn-primary');
+            label.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Select';
+          }
+        }
+      });
+
+      if (count > 0) {
+        selectedBar.classList.remove('d-none');
+        bottomBookBtn.disabled = false;
+
+        // Update both buttons
+        const btnText = `<i class="bi bi-check2-square me-1"></i> Book Selected (${count})`;
+        bookSelectedBtn.innerHTML = btnText;
+        bottomBookBtn.innerHTML = btnText;
+
+        // Change button styles to indicate active state
+        bookSelectedBtn.classList.remove('btn-secondary');
+        bookSelectedBtn.classList.add('btn-success');
+        console.log('Buttons enabled');
+      } else {
+        selectedBar.classList.add('d-none');
+        bottomBookBtn.disabled = true;
+
+        // Reset both buttons
+        const btnText = `<i class="bi bi-check2-square me-1"></i> Book Selected Items`;
+        bookSelectedBtn.innerHTML = btnText;
+        bottomBookBtn.innerHTML = btnText;
+
+        // Change button styles to indicate inactive state
+        bookSelectedBtn.classList.remove('btn-success');
+        bookSelectedBtn.classList.add('btn-secondary');
+        console.log('Buttons disabled');
+      }
+    }
+
+    // Add event listeners to all checkboxes
+    checkboxes.forEach(function(checkbox) {
+      checkbox.addEventListener('change', updateSelectionCount);
+    });
+
+    // Add click event listeners to buttons
+    bookSelectedBtn.addEventListener('click', function(e) {
+      console.log('Top button clicked');
+      const selectedItems = document.querySelectorAll('.selection-checkbox:checked');
+      if (selectedItems.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one artist or role');
+        console.log('Button click prevented - no items selected');
+      } else {
+        // Log form details before submission
+        const form = document.getElementById('bookingForm');
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        console.log('Selected items:', Array.from(selectedItems).map(item => item.value));
+
+        // Create a hidden input to indicate this is a form submission
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'formSubmitted';
+        hiddenInput.value = 'true';
+        form.appendChild(hiddenInput);
+
+        // Let the form submit naturally
+        console.log('Allowing natural form submission');
+      }
+    });
+
+    bottomBookBtn.addEventListener('click', function(e) {
+      console.log('Bottom button clicked');
+      const selectedItems = document.querySelectorAll('.selection-checkbox:checked');
+      if (selectedItems.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one artist or role');
+        console.log('Button click prevented - no items selected');
+      } else {
+        // Log form details before submission
+        const form = document.getElementById('bookingForm');
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        console.log('Selected items:', Array.from(selectedItems).map(item => item.value));
+
+        // Create a hidden input to indicate this is a form submission
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'formSubmitted';
+        hiddenInput.value = 'true';
+        form.appendChild(hiddenInput);
+
+        // Submit the form
+        form.submit();
+      }
+    });
+
+    // Add form submission listener
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+      const selectedItems = document.querySelectorAll('.selection-checkbox:checked');
+      console.log('Form submitted with', selectedItems.length, 'items');
+      console.log('Form action:', this.action);
+      console.log('Form method:', this.method);
+      console.log('Form elements:', this.elements);
+      console.log('Selected items:', Array.from(selectedItems).map(item => item.value));
+
+      if (selectedItems.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one artist or role');
+        console.log('Form submission prevented - no items selected');
+      } else {
+        console.log('Form submission allowed - items selected');
+      }
+    });
+
+    // Initialize on page load
+    updateSelectionCount();
+  });
+</script>

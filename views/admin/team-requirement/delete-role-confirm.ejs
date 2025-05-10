@@ -1,0 +1,70 @@
+<%- contentFor('title') %>Confirm Delete Role
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/team-requirement/roles">Team Requirement Roles</a></li>
+    <li class="breadcrumb-item active">Confirm Delete</li>
+  </ol>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          Confirm Delete
+        </div>
+        <div class="card-body">
+          <h5 class="card-title mb-4">Are you sure you want to delete this role?</h5>
+
+          <div class="alert alert-warning">
+            <p><strong>Warning:</strong> This action cannot be undone. All associated data will be permanently deleted.</p>
+          </div>
+
+          <div class="mb-4">
+            <h6>Role Details:</h6>
+            <table class="table table-bordered">
+              <tr>
+                <th style="width: 30%">Name</th>
+                <td><%= role.name %></td>
+              </tr>
+              <tr>
+                <th>Description</th>
+                <td><%= role.description %></td>
+              </tr>
+              <tr>
+                <th>Location</th>
+                <td><%= role.city %>, <%= role.state %></td>
+              </tr>
+              <tr>
+                <th>Phone Number</th>
+                <td><%= role.phoneNumber || 'Not provided' %></td>
+              </tr>
+              <tr>
+                <th>Status</th>
+                <td>
+                  <span class="badge <%= role.isActive ? 'bg-success' : 'bg-danger' %>">
+                    <%= role.isActive ? 'Active' : 'Inactive' %>
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a href="/admin/team-requirement/roles" class="btn btn-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Cancel
+            </a>
+            <form action="/admin/team-requirement/roles/<%= role._id %>/delete" method="POST">
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i> Delete Role
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

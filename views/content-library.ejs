@@ -1,0 +1,159 @@
+<%- contentFor('body') %>
+
+<!-- Hero Section -->
+<section class="py-5 bg-gradient-primary text-white">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-3">Content Library</h1>
+        <p class="lead mb-4">Discover music, videos, and more from our talented artists.</p>
+      </div>
+      <div class="col-lg-6">
+        <img src="/images/content-library.svg" alt="Content Library" class="img-fluid d-none d-lg-block">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Filter Section -->
+<section class="py-4 bg-light">
+  <div class="container">
+    <form action="/content" method="GET" class="row g-3 align-items-end">
+      <!-- Content Type Filter -->
+      <div class="col-md-3">
+        <label for="typeFilter" class="form-label">Content Type</label>
+        <select class="form-select" id="typeFilter" name="type">
+          <option value="">All Types</option>
+          <option value="song" <%= currentFilters.type === 'song' ? 'selected' : '' %>>Songs</option>
+          <option value="video" <%= currentFilters.type === 'video' ? 'selected' : '' %>>Videos</option>
+          <option value="lyrics" <%= currentFilters.type === 'lyrics' ? 'selected' : '' %>>Lyrics</option>
+        </select>
+      </div>
+
+      <!-- Artist Filter -->
+      <div class="col-md-3">
+        <label for="artistFilter" class="form-label">Artist</label>
+        <select class="form-select" id="artistFilter" name="artist">
+          <option value="">All Artists</option>
+          <% artists.forEach(artist => { %>
+            <option value="<%= artist._id %>" <%= currentFilters.artist === artist._id.toString() ? 'selected' : '' %>>
+              <%= artist.user ? artist.user.name : 'Unknown Artist' %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <!-- Sort Filter -->
+      <div class="col-md-3">
+        <label for="sortFilter" class="form-label">Sort By</label>
+        <select class="form-select" id="sortFilter" name="sort">
+          <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
+          <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+          <option value="popular" <%= currentFilters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+          <option value="alphabetical" <%= currentFilters.sort === 'alphabetical' ? 'selected' : '' %>>Alphabetical</option>
+        </select>
+      </div>
+
+      <!-- Apply Filters Button -->
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">Apply Filters</button>
+        <a href="/content" class="btn btn-secondary">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Content Grid -->
+<section class="py-5">
+  <div class="container">
+    <% if (content && content.length > 0) { %>
+      <div class="row g-4">
+        <% content.forEach(item => { %>
+          <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="card h-100 shadow-sm content-card">
+              <div class="position-relative">
+                <img src="<%= item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
+                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
+                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
+                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title"><%= item.title %></h5>
+                <p class="card-text text-muted small">
+                  <% if (item.artist && item.artist.user) { %>
+                    By <a href="/artists/<%= item.artist._id %>" class="text-decoration-none">
+                      <%= item.artist.user.name %>
+                    </a>
+                  <% } else { %>
+                    By Unknown Artist
+                  <% } %>
+                </p>
+                <% if (item.description) { %>
+                  <p class="card-text"><%= item.description.length > 100 ? item.description.substring(0, 100) + '...' : item.description %></p>
+                <% } %>
+                <p class="card-text">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar3"></i> <%= new Date(item.createdAt).toLocaleDateString() %>
+                    <% if (item.views > 0) { %>
+                      <span class="ms-2"><i class="bi bi-eye"></i> <%= item.views %> views</span>
+                    <% } %>
+                  </small>
+                </p>
+              </div>
+              <div class="card-footer bg-white border-top-0">
+                <a href="<%= item.fileUrl %>"
+                   class="btn btn-outline-primary w-100 content-link"
+                   data-type="<%= item.type %>"
+                   data-title="<%= item.title %>"
+                   data-artist="<%= item.artist && item.artist.user ? item.artist.user.name : 'Unknown Artist' %>"
+                   data-thumbnail="<%= item.thumbnailUrl %>">
+                  <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Pagination -->
+      <% if (pagination.totalPages > 1) { %>
+        <nav aria-label="Content pagination" class="mt-5">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= pagination.page - 1 %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+
+            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+              <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+
+            <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= pagination.page + 1 %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <% } %>
+    <% } else { %>
+      <div class="text-center py-5">
+        <div class="mb-4">
+          <i class="bi bi-search display-1 text-muted"></i>
+        </div>
+        <h3>No content found</h3>
+        <p class="text-muted">Try adjusting your filters or check back later for new content.</p>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- contentFor('title') %>Content Library

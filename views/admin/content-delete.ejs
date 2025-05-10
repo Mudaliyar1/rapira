@@ -1,0 +1,81 @@
+<%- contentFor('body') %>
+
+<!-- Confirm Delete Content -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Confirm Delete Content</h5>
+    <a href="/admin/content" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Content List
+    </a>
+  </div>
+  <div class="card-body p-4">
+    <div class="text-center mb-4">
+      <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+      <h3 class="text-white mt-3">Are you sure?</h3>
+      <p class="text-white-50">You are about to delete the following content:</p>
+    </div>
+    
+    <div class="d-flex align-items-center mb-4">
+      <div class="me-3">
+        <img src="<%= content.thumbnailUrl || '/images/default-content.jpg' %>" alt="<%= content.title %>" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+      </div>
+      <div>
+        <h4 class="mb-1 text-white"><%= content.title %></h4>
+        <p class="mb-1 text-muted">
+          <span class="badge <%= content.type === 'song' ? 'bg-primary' : content.type === 'video' ? 'bg-danger' : 'bg-info' %>">
+            <i class="bi <%= content.type === 'song' ? 'bi-music-note' : content.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %> me-1"></i>
+            <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>
+          </span>
+          <small class="ms-2">Uploaded on <%= new Date(content.createdAt).toLocaleDateString() %></small>
+        </p>
+        <% if (content.description) { %>
+          <p class="mb-0 small text-white-50"><%= content.description %></p>
+        <% } %>
+      </div>
+    </div>
+    
+    <div class="mb-4">
+      <h5 class="mb-3 text-white">Content Preview</h5>
+      <% if (content.type === 'song') { %>
+        <audio controls class="w-100 mb-2">
+          <source src="<%= content.fileUrl %>" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      <% } else if (content.type === 'video') { %>
+        <video controls class="w-100 mb-2" style="max-height: 300px;">
+          <source src="<%= content.fileUrl %>" type="video/mp4">
+          Your browser does not support the video element.
+        </video>
+      <% } else { %>
+        <a href="<%= content.fileUrl %>" target="_blank" class="btn btn-outline-primary">
+          <i class="bi bi-file-earmark-text me-2"></i> View Content
+        </a>
+      <% } %>
+    </div>
+    
+    <div class="alert alert-danger">
+      <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i> Warning</h5>
+      <p>This action cannot be undone. Once deleted, you will not be able to recover this content.</p>
+    </div>
+    
+    <form action="/admin/content/<%= content._id %>/delete" method="POST">
+      <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+        <label class="form-check-label text-white" for="confirmDelete">
+          I understand that this action cannot be undone and I want to permanently delete this content.
+        </label>
+      </div>
+      
+      <div class="d-flex justify-content-between">
+        <a href="/admin/content" class="btn btn-outline-light">
+          <i class="bi bi-arrow-left me-2"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash me-2"></i> Delete Permanently
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- contentFor('title') %>Confirm Delete Content

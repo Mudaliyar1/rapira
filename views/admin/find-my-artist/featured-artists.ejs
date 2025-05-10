@@ -1,0 +1,195 @@
+<%- contentFor('title') %>Manage Featured Artists
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/find-my-artist">Find My Artist Management</a></li>
+    <li class="breadcrumb-item active">Featured Artists</li>
+  </ol>
+
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <!-- Featured Artists List -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <i class="fas fa-star me-1"></i>
+            Featured Artists
+          </div>
+        </div>
+        <div class="card-body">
+          <% if (featuredArtists.length === 0) { %>
+            <div class="alert alert-info" style="color: #000000 !important; background-color: #cff4fc !important; border: 1px solid #b6effb !important; font-weight: 500 !important;">
+              <span style="color: #000000 !important;">No featured artists found. Use the form on the right to add artists to the featured list.</span>
+            </div>
+          <% } else { %>
+            <p class="mb-3">Drag and drop to reorder artists. Changes will be saved automatically.</p>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th width="50px">#</th>
+                    <th>Artist</th>
+                    <th>Location</th>
+                    <th>Custom Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="featuredArtistsTable">
+                  <% featuredArtists.forEach((featuredArtist, index) => { %>
+                    <tr data-id="<%= featuredArtist._id %>" class="sortable-row">
+                      <td class="text-center">
+                        <i class="fas fa-grip-vertical handle" style="cursor: move;"></i>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <img src="<%= featuredArtist.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %>" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                          <div>
+                            <strong><%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %></strong>
+                            <% if (featuredArtist.artist.genre) { %>
+                              <br><small class="text-muted"><%= featuredArtist.artist.genre %></small>
+                            <% } %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <%= featuredArtist.artist.city && featuredArtist.artist.state ?
+                          `${featuredArtist.artist.city}, ${featuredArtist.artist.state}` :
+                          'Location not specified' %>
+                      </td>
+                      <td>
+                        <%= featuredArtist.customDescription ?
+                          (featuredArtist.customDescription.length > 50 ?
+                            featuredArtist.customDescription.substring(0, 50) + '...' :
+                            featuredArtist.customDescription) :
+                          'No custom description' %>
+                      </td>
+                      <td>
+                        <form action="/admin/find-my-artist/featured-artists/<%= featuredArtist._id %>/remove" method="POST" class="d-inline">
+                          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this artist from the featured list?')">
+                            <i class="fas fa-times"></i> Remove
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Add Featured Artist Form -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-plus me-1"></i>
+          Add Featured Artist
+        </div>
+        <div class="card-body">
+          <form action="/admin/find-my-artist/featured-artists/add" method="POST">
+            <div class="mb-3">
+              <label for="artistId" class="form-label">Select Artist</label>
+              <select class="form-select" id="artistId" name="artistId" required>
+                <option value="">-- Select an Artist --</option>
+                <% availableArtists.forEach(artist => { %>
+                  <option value="<%= artist._id %>">
+                    <%= artist.stageName || artist.user.name %>
+                    <% if (artist.city && artist.state) { %>
+                      (<%= artist.city %>, <%= artist.state %>)
+                    <% } %>
+                  </option>
+                <% }); %>
+              </select>
+              <div class="form-text">Only verified artists who are not already featured are shown.</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="customDescription" class="form-label">Custom Description (Optional)</label>
+              <textarea class="form-control" id="customDescription" name="customDescription" rows="3" placeholder="Enter a custom description for this artist on the Find My Artist page"></textarea>
+              <div class="form-text">If left empty, the artist's own description will be used.</div>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Add to Featured List
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Help Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-info-circle me-1"></i>
+          Help
+        </div>
+        <div class="card-body">
+          <h5>About Featured Artists</h5>
+          <p>Featured artists appear on the public "Find My Artist" page where event companies and venue owners can book them.</p>
+
+          <h5 class="mt-3">Tips</h5>
+          <ul>
+            <li>Only feature artists who are available for bookings</li>
+            <li>Ensure artists have complete profiles with location information</li>
+            <li>You can add a custom description to highlight specific skills or achievements</li>
+            <li>Drag and drop to change the display order</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sortable table
+    const featuredArtistsTable = document.getElementById('featuredArtistsTable');
+
+    if (featuredArtistsTable) {
+      const sortable = new Sortable(featuredArtistsTable, {
+        handle: '.handle',
+        animation: 150,
+        onEnd: function() {
+          // Get the new order
+          const rows = featuredArtistsTable.querySelectorAll('tr.sortable-row');
+          const orders = [];
+
+          rows.forEach((row, index) => {
+            orders.push({
+              id: row.getAttribute('data-id'),
+              order: index + 1
+            });
+          });
+
+          // Send the new order to the server
+          fetch('/admin/find-my-artist/featured-artists/update-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orders })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log('Order updated successfully');
+            } else {
+              console.error('Failed to update order:', data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error updating order:', error);
+          });
+        }
+      });
+    }
+  });
+</script>

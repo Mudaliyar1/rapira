@@ -1,0 +1,63 @@
+<%- contentFor('body') %>
+
+<!-- Assign Role to User -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Assign Role to <%= user.name %></h5>
+    <a href="/roles/user-roles" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to User Roles
+    </a>
+  </div>
+  <div class="card-body">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="glass-card-dark p-3 border-start border-4 border-primary">
+          <h6 class="text-white mb-3">User Information</h6>
+          <p class="mb-2">
+            <span class="fw-medium text-white">Name:</span>
+            <span class="text-white-75"><%= user.name %></span>
+          </p>
+          <p class="mb-2">
+            <span class="fw-medium text-white">Email:</span>
+            <span class="text-white-75"><%= user.email %></span>
+          </p>
+          <p class="mb-0">
+            <span class="fw-medium text-white">Role:</span>
+            <span class="badge <%= user.role === 'admin' ? 'bg-danger' : (user.role === 'artist' ? 'bg-primary' : 'bg-secondary') %>">
+              <%= user.role %>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <% if (availableRoles && availableRoles.length > 0) { %>
+      <form action="/roles/assign" method="POST">
+        <input type="hidden" name="userId" value="<%= user._id %>">
+        
+        <div class="mb-4">
+          <label for="roleId" class="form-label text-white">Select Role to Assign</label>
+          <select class="form-select" id="roleId" name="roleId" required>
+            <option value="" selected disabled>Choose a role...</option>
+            <% availableRoles.forEach(role => { %>
+              <option value="<%= role._id %>"><%= role.name %></option>
+            <% }); %>
+          </select>
+        </div>
+        
+        <div class="d-flex justify-content-end">
+          <a href="/roles/user-roles" class="btn btn-outline-light me-2">Cancel</a>
+          <button type="submit" class="btn btn-primary">Assign Role</button>
+        </div>
+      </form>
+    <% } else { %>
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        This user already has all available roles assigned.
+      </div>
+      <div class="d-flex justify-content-end">
+        <a href="/roles/user-roles" class="btn btn-outline-light">Back to User Roles</a>
+      </div>
+    <% } %>
+  </div>
+</div>

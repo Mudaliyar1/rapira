@@ -1,0 +1,97 @@
+<%- contentFor('body') %>
+
+<!-- Learning Modules Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Manage Learning Modules</h5>
+    <div>
+      <a href="/learning/admin/add" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg"></i> Add New Module
+      </a>
+      <a href="/learning/admin/progress" class="btn btn-sm btn-info">
+        <i class="bi bi-graph-up"></i> View User Progress
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Title</th>
+            <th class="text-white">Type</th>
+            <th class="text-white">Artist Level</th>
+            <th class="text-white">Required</th>
+            <th class="text-white">Order</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (modules && modules.length > 0) { %>
+            <% modules.forEach(module => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= module.thumbnailImage %>" alt="<%= module.title %>" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0 text-white"><%= module.title %></h6>
+                      <small class="text-muted"><%= module.description.substring(0, 50) %><%= module.description.length > 50 ? '...' : '' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary">
+                    <% if (module.contentType === 'video') { %>
+                      <i class="bi bi-camera-video me-1"></i> Video
+                    <% } else if (module.contentType === 'text') { %>
+                      <i class="bi bi-file-text me-1"></i> Text
+                    <% } else if (module.contentType === 'pdf') { %>
+                      <i class="bi bi-file-pdf me-1"></i> PDF
+                    <% } else if (module.contentType === 'link') { %>
+                      <i class="bi bi-link me-1"></i> External Link
+                    <% } %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-primary">
+                    <i class="bi bi-person-badge me-1"></i> <%= module.forArtistLevel %>
+                  </span>
+                </td>
+                <td>
+                  <% if (module.isRequired) { %>
+                    <span class="badge bg-success">Required</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">Optional</span>
+                  <% } %>
+                </td>
+                <td class="text-white"><%= module.order %></td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/learning/module/<%= module._id %>" class="btn btn-sm btn-outline-info" target="_blank">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/learning/admin/edit/<%= module._id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="/learning/admin/confirm-delete/<%= module._id %>" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">
+                <i class="bi bi-journal-x display-4 text-muted mb-3"></i>
+                <p class="mb-0">No learning modules found</p>
+                <a href="/learning/admin/add" class="btn btn-primary mt-3">Add Your First Module</a>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

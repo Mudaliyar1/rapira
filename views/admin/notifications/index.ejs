@@ -1,0 +1,423 @@
+<%- contentFor('body') %>
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center bg-white">
+        <div>
+          <i class="bi bi-bell text-primary me-2"></i>
+          <h5 class="card-title mb-0 text-dark d-inline">Notification Management</h5>
+        </div>
+        <div>
+          <button id="markAllReadBtn" class="btn btn-sm btn-outline-primary me-2">
+            <i class="bi bi-check-all me-1"></i> Mark All as Read
+          </button>
+          <form class="d-inline" action="/admin/notifications/delete-all" method="POST" onsubmit="return confirm('Are you sure you want to delete all notifications with the current filters?');">
+            <!-- Pass current filters as hidden inputs -->
+            <input type="hidden" name="status" id="deleteStatusInput" value="">
+            <input type="hidden" name="module" id="deleteModuleInput" value="">
+            <input type="hidden" name="read" id="deleteReadInput" value="">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash me-1"></i> Delete All
+            </button>
+          </form>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Filters -->
+        <div class="row mb-4">
+          <div class="col-md-12">
+            <div class="card p-3 bg-light">
+              <h6 class="text-dark mb-3"><i class="bi bi-funnel me-2"></i>Filter Notifications</h6>
+              <form id="filterForm" method="GET" action="/admin/notifications">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <label for="moduleFilter" class="form-label text-dark">Module</label>
+                    <select id="moduleFilter" name="module" class="form-select form-select-sm">
+                      <option value="">All Modules</option>
+                      <% modules.forEach(mod => { %>
+                        <option value="<%= mod %>" <%= filter.module === mod ? 'selected' : '' %>><%= mod %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="statusFilter" class="form-label text-dark">Status</label>
+                    <select id="statusFilter" name="status" class="form-select form-select-sm">
+                      <option value="">All Statuses</option>
+                      <option value="Pending" <%= filter.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+                      <option value="Reviewed" <%= filter.status === 'Reviewed' ? 'selected' : '' %>>Reviewed</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label for="readFilter" class="form-label text-dark">Read Status</label>
+                    <select id="readFilter" name="read" class="form-select form-select-sm">
+                      <option value="">All</option>
+                      <option value="true" <%= filter.read === 'true' ? 'selected' : '' %>>Read</option>
+                      <option value="false" <%= filter.read === 'false' ? 'selected' : '' %>>Unread</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm me-2">
+                      <i class="bi bi-search me-1"></i> Apply
+                    </button>
+                    <a href="/admin/notifications" class="btn btn-outline-secondary btn-sm">
+                      <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <div class="stat-card glass-card-dark">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon bg-warning-subtle text-warning me-3">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                  <h3 class="fw-bold mb-0 text-white"><%= counts.pending %></h3>
+                  <p class="text-white-50 mb-0">Pending Actions</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="stat-card glass-card-dark">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon bg-info-subtle text-info me-3">
+                  <i class="bi bi-envelope"></i>
+                </div>
+                <div>
+                  <h3 class="fw-bold mb-0 text-white"><%= counts.unread %></h3>
+                  <p class="text-white-50 mb-0">Unread Notifications</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications List -->
+        <div class="glass-card-dark">
+          <div class="card-header">
+            <h6 class="card-title mb-0 text-white">All Notifications</h6>
+          </div>
+          <div class="card-body p-0">
+            <% if (notifications.length === 0) { %>
+              <div class="text-center py-5">
+                <i class="bi bi-bell-slash text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No notifications found</p>
+              </div>
+            <% } else { %>
+              <div class="list-group list-group-flush notification-list">
+                <% notifications.forEach(notification => { %>
+                  <div class="list-group-item notification-item <%= notification.isRead ? '' : 'unread' %>" data-id="<%= notification._id %>">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center">
+                        <div class="notification-icon me-3">
+                          <% if (notification.module === 'Artist Application') { %>
+                            <i class="bi bi-person-badge text-primary"></i>
+                          <% } else if (notification.module === 'Artist Upgrade') { %>
+                            <i class="bi bi-arrow-up-circle text-success"></i>
+                          <% } else if (notification.module === 'Team Booking') { %>
+                            <i class="bi bi-calendar-check text-info"></i>
+                          <% } else if (notification.module === 'Role Slot') { %>
+                            <i class="bi bi-briefcase text-warning"></i>
+                          <% } else if (notification.module === 'Artist Booking') { %>
+                            <i class="bi bi-music-note-beamed text-danger"></i>
+                          <% } else if (notification.module === 'Concert') { %>
+                            <i class="bi bi-calendar-event text-primary"></i>
+                          <% } else if (notification.module === 'Daily Concert') { %>
+                            <i class="bi bi-calendar-day text-success"></i>
+                          <% } else if (notification.module === 'Learning Module') { %>
+                            <i class="bi bi-book text-info"></i>
+                          <% } else { %>
+                            <i class="bi bi-bell text-secondary"></i>
+                          <% } %>
+                        </div>
+                        <div>
+                          <h6 class="mb-1 text-dark"><%= notification.module %></h6>
+                          <p class="mb-1 text-dark"><%= notification.description %></p>
+                          <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>
+                            <%= new Date(notification.createdAt).toLocaleString() %>
+                          </small>
+                        </div>
+                      </div>
+                      <div class="d-flex">
+                        <span class="badge <%= notification.status === 'Pending' ? 'bg-warning' : 'bg-success' %> me-2">
+                          <%= notification.status %>
+                        </span>
+                        <a href="<%= notification.link %>" class="btn btn-sm btn-primary me-1">
+                          <i class="bi bi-eye me-1"></i> Review
+                        </a>
+                        <form class="d-inline" action="/admin/notifications/delete/<%= notification._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this notification?');">
+                          <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Pagination -->
+          <% if (pagination.totalPages > 1) { %>
+            <div class="card-footer">
+              <nav aria-label="Notification pagination">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                  <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= pagination.page - 1 %>&module=<%= filter.module %>&status=<%= filter.status %>&read=<%= filter.read %>">Previous</a>
+                  </li>
+
+                  <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                    <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                      <a class="page-link" href="?page=<%= i %>&module=<%= filter.module %>&status=<%= filter.status %>&read=<%= filter.read %>"><%= i %></a>
+                    </li>
+                  <% } %>
+
+                  <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                    <a class="page-link" href="?page=<%= pagination.page + 1 %>&module=<%= filter.module %>&status=<%= filter.status %>&read=<%= filter.read %>">Next</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraStyles') %>
+<style>
+  .notification-list .notification-item {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    transition: all 0.3s ease;
+    color: #212529;
+  }
+
+  .notification-list .notification-item:hover {
+    background-color: #e9ecef;
+  }
+
+  .notification-list .notification-item.unread {
+    border-left: 4px solid #0d6efd;
+    background-color: #fff;
+  }
+
+  /* Fix text colors */
+  .notification-list .notification-item h6,
+  .notification-list .notification-item p {
+    color: #212529 !important;
+  }
+
+  .notification-list .notification-item small {
+    color: #6c757d !important;
+  }
+
+  /* Fix list group styling */
+  .list-group-item {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+  }
+
+  .notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Icon colors */
+  .notification-icon .bi-person-badge {
+    color: #0d6efd !important;
+  }
+
+  .notification-icon .bi-arrow-up-circle {
+    color: #198754 !important;
+  }
+
+  .notification-icon .bi-calendar-check {
+    color: #0dcaf0 !important;
+  }
+
+  .notification-icon .bi-briefcase {
+    color: #ffc107 !important;
+  }
+
+  .notification-icon .bi-music-note-beamed {
+    color: #dc3545 !important;
+  }
+
+  .notification-icon .bi-calendar-event {
+    color: #0d6efd !important;
+  }
+
+  .notification-icon .bi-calendar-day {
+    color: #198754 !important;
+  }
+
+  .notification-icon .bi-book {
+    color: #0dcaf0 !important;
+  }
+
+  .notification-icon .bi-bell {
+    color: #adb5bd !important;
+  }
+</style>
+
+<%- contentFor('extraScripts') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Update delete all form with current filter values
+    const statusFilter = document.getElementById('statusFilter');
+    const moduleFilter = document.getElementById('moduleFilter');
+    const readFilter = document.getElementById('readFilter');
+
+    const deleteStatusInput = document.getElementById('deleteStatusInput');
+    const deleteModuleInput = document.getElementById('deleteModuleInput');
+    const deleteReadInput = document.getElementById('deleteReadInput');
+
+    // Set initial values
+    if (statusFilter && deleteStatusInput) deleteStatusInput.value = statusFilter.value || '';
+    if (moduleFilter && deleteModuleInput) deleteModuleInput.value = moduleFilter.value || '';
+    if (readFilter && deleteReadInput) deleteReadInput.value = readFilter.value || '';
+
+    // Update values when filters change
+    if (statusFilter) {
+      statusFilter.addEventListener('change', function() {
+        if (deleteStatusInput) deleteStatusInput.value = this.value || '';
+      });
+    }
+
+    if (moduleFilter) {
+      moduleFilter.addEventListener('change', function() {
+        if (deleteModuleInput) deleteModuleInput.value = this.value || '';
+      });
+    }
+
+    if (readFilter) {
+      readFilter.addEventListener('change', function() {
+        if (deleteReadInput) deleteReadInput.value = this.value || '';
+      });
+    }
+    // Mark notification as read when clicked
+    const notificationItems = document.querySelectorAll('.notification-item');
+    notificationItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        // Don't mark as read if clicking on the Review button or Delete button
+        if (e.target.tagName === 'A' || e.target.tagName === 'I' && e.target.parentNode.tagName === 'A' ||
+            e.target.tagName === 'BUTTON' || e.target.tagName === 'I' && e.target.parentNode.tagName === 'BUTTON') {
+          return;
+        }
+
+        const notificationId = this.dataset.id;
+        markAsRead(notificationId);
+      });
+    });
+
+    // Mark all as read
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+      markAllReadBtn.addEventListener('click', function() {
+        markAllAsRead();
+      });
+    }
+
+
+
+    // Function to mark a notification as read
+    function markAsRead(id) {
+      fetch(`/admin/notifications/mark-read/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update UI
+          const item = document.querySelector(`.notification-item[data-id="${id}"]`);
+          if (item) {
+            item.classList.remove('unread');
+          }
+
+          // Update unread count in sidebar
+          updateUnreadCount();
+        }
+      })
+      .catch(error => {
+        console.error('Error marking notification as read:', error);
+      });
+    }
+
+    // Function to mark all notifications as read
+    function markAllAsRead() {
+      fetch('/admin/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update UI
+          const items = document.querySelectorAll('.notification-item.unread');
+          items.forEach(item => {
+            item.classList.remove('unread');
+          });
+
+          // Update unread count in sidebar
+          updateUnreadCount();
+        }
+      })
+      .catch(error => {
+        console.error('Error marking all notifications as read:', error);
+      });
+    }
+
+    // Function to update unread count in sidebar
+    function updateUnreadCount() {
+      fetch('/admin/notifications/unread-count')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+              badge.textContent = data.count;
+
+              if (data.count === 0) {
+                badge.style.display = 'none';
+              } else {
+                badge.style.display = 'inline-block';
+              }
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error updating unread count:', error);
+        });
+    }
+
+
+
+
+  });
+</script>
+
+

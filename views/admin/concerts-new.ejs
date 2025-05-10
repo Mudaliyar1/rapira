@@ -1,0 +1,104 @@
+<%- contentFor('body') %>
+<!-- Concerts Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">All Concerts</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Title</th>
+            <th class="text-white">Artist</th>
+            <th class="text-white">Date</th>
+            <th class="text-white">Location</th>
+            <th class="text-white">Status</th>
+            <th class="text-white">Tickets</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (concerts && concerts.length > 0) { %>
+            <% concerts.forEach(concert => { %>
+              <tr>
+                <td>
+                  <div class="fw-medium text-white"><%= concert.title %></div>
+                  <div class="small <%= concert.isPaid ? 'text-primary' : 'text-success' %>"><%= concert.isPaid ? `₹${concert.price}` : 'Free' %></div>
+                </td>
+                <td>
+                  <% if (concert.artist && concert.artist.user) { %>
+                    <span class="text-white fw-medium"><%= concert.artist.user.name %></span>
+                  <% } else { %>
+                    <span class="text-muted">Unknown</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="text-white"><%= new Date(concert.date).toLocaleDateString() %></div>
+                  <div class="small text-primary"><%= concert.time %></div>
+                </td>
+                <td>
+                  <div class="text-white"><%= concert.venue %></div>
+                  <div class="small text-primary"><%= concert.city %></div>
+                </td>
+                <td>
+                  <span class="badge <%=
+                    concert.status === 'approved' ? 'bg-success' :
+                    concert.status === 'pending' ? 'bg-warning' :
+                    'bg-danger' %>">
+                    <%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %>
+                  </span>
+                </td>
+                <td>
+                  <span class="text-white fw-medium"><%= concert.ticketsSold %></span> / <span class="<%= concert.maxTickets > 0 ? 'text-primary' : 'text-success' %>"><%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %></span>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-outline-primary me-1">
+                      <i class="bi bi-eye"></i> Details
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= concert._id %>">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-white">No concerts found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modals -->
+<% if (concerts && concerts.length > 0) { %>
+  <% concerts.forEach(concert => { %>
+    <div class="modal fade" id="deleteModal<%= concert._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= concert._id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-white" id="deleteModalLabel<%= concert._id %>">Confirm Delete</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-white">Are you sure you want to delete the concert <strong><%= concert.title %></strong>?</p>
+            <p class="text-danger mb-0">This action cannot be undone. All associated tickets will also be deleted.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/admin/concerts/<%= concert._id %>/delete" method="POST">
+              <button type="submit" class="btn btn-danger">Delete Concert</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- contentFor('title') %>Manage Concerts

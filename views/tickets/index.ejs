@@ -1,0 +1,75 @@
+<!-- My Tickets Page -->
+<section class="py-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <h1 class="fw-bold mb-4">My Tickets</h1>
+
+        <% if (tickets && tickets.length > 0) { %>
+          <div class="row g-4">
+            <% tickets.forEach(ticket => { %>
+              <div class="col-md-6 col-lg-4">
+                <div class="glass-card-dark h-100">
+                  <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold text-white">Ticket #<%= ticket._id.toString().slice(-6).toUpperCase() %></h5>
+                    <span class="badge <%= ticket.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
+                      <%= ticket.paymentStatus === 'completed' ? 'Paid' : 'Pending' %>
+                    </span>
+                  </div>
+                  <div class="card-body">
+                    <% if (ticket.concert) { %>
+                      <h6 class="fw-bold mb-2 text-white"><%= ticket.concert.title %></h6>
+                      <p class="text-white-50 mb-1">
+                        <i class="bi bi-calendar3 me-2 text-primary"></i> <%= new Date(ticket.concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                      </p>
+                      <p class="text-white-50 mb-1">
+                        <i class="bi bi-clock me-2 text-primary"></i> <%= ticket.concert.time %>
+                      </p>
+                      <p class="text-white-50 mb-3">
+                        <i class="bi bi-geo-alt me-2 text-primary"></i> <%= ticket.concert.venue %>, <%= ticket.concert.city %>
+                      </p>
+                    <% } else { %>
+                      <h6 class="fw-bold mb-2 text-white">Concert Unavailable</h6>
+                      <p class="text-white-50 mb-3">
+                        <i class="bi bi-exclamation-triangle me-2 text-warning"></i> This concert has been removed
+                      </p>
+                    <% } %>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="fw-medium text-white">Quantity:</span>
+                      <span class="text-white-50"><%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></span>
+                    </div>
+
+                    <% if (ticket.totalAmount > 0) { %>
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-medium text-white">Amount:</span>
+                        <span class="text-white-50">₹<%= ticket.totalAmount %></span>
+                      </div>
+                    <% } %>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="fw-medium text-white">Purchase Date:</span>
+                      <span class="text-white-50"><%= new Date(ticket.createdAt).toLocaleDateString() %></span>
+                    </div>
+                  </div>
+                  <div class="card-footer border-top border-secondary pt-3">
+                    <a href="/tickets/<%= ticket._id %>" class="btn btn-primary w-100">View Details</a>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-5">
+            <div class="mb-4">
+              <i class="bi bi-ticket-perforated display-1 text-muted"></i>
+            </div>
+            <h3>No Tickets Found</h3>
+            <p class="text-muted mb-4">You haven't booked any tickets yet.</p>
+            <a href="/concerts" class="btn btn-primary">Explore Concerts</a>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>

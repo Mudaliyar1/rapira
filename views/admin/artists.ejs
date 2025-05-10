@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Artists - Rapira Admin</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <%- include('../partials/admin-sidebar', { path: '/admin/artists' }) %>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Manage Artists</h1>
+        <button class="btn btn-primary d-md-none" id="adminToggle">
+          <i class="bi bi-list"></i>
+        </button>
+      </div>
+
+      <!-- Artists Table -->
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Artist</th>
+                  <th>Email</th>
+                  <th>Genre</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (artists && artists.length > 0) { %>
+                  <% artists.forEach(artist => { %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <% if (artist.user && artist.user.profileImage) { %>
+                            <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>" class="rounded-circle me-2" width="40" height="40">
+                          <% } else { %>
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                              <i class="bi bi-person"></i>
+                            </div>
+                          <% } %>
+                          <div>
+                            <div class="fw-medium"><%= artist.user ? artist.user.name : 'Unknown' %></div>
+                            <div class="small text-muted"><%= artist.stageName || artist.user.name %></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><%= artist.user ? artist.user.email : 'Unknown' %></td>
+                      <td><%= artist.genre || 'Not specified' %></td>
+                      <td>
+                        <div class="d-flex flex-column">
+                          <div class="mb-1">
+                            <% if (artist.verified) { %>
+                              <span class="badge bg-success">Verified</span>
+                            <% } else { %>
+                              <span class="badge bg-warning">Unverified</span>
+                            <% } %>
+                          </div>
+                          <div>
+                            <% if (artist.featuredArtist) { %>
+                              <span class="badge bg-primary">Featured</span>
+                            <% } %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <a href="/artists/<%= artist._id %>" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <form action="/admin/artists/<%= artist._id %>/verify" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-<%= artist.verified ? 'warning' : 'success' %>">
+                              <i class="bi <%= artist.verified ? 'bi-x-circle' : 'bi-check-circle' %>"></i>
+                            </button>
+                          </form>
+                          <form action="/admin/artists/<%= artist._id %>/feature" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-<%= artist.featuredArtist ? 'secondary' : 'primary' %>">
+                              <i class="bi <%= artist.featuredArtist ? 'bi-star-fill' : 'bi-star' %>"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center py-4">No artists found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Admin Toggle -->
+  <button class="btn mobile-toggle d-md-none" id="adminToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

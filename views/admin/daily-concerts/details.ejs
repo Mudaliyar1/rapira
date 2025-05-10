@@ -1,0 +1,165 @@
+<!-- Admin Daily Concert Details -->
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Concert Details Card -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-calendar-event me-1"></i>
+            Concert Details
+          </div>
+          <div>
+            <span class="badge <%= dailyConcert.isVisible ? 'bg-success' : 'bg-warning text-dark' %>">
+              <%= dailyConcert.isVisible ? 'Visible' : 'Hidden' %>
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5 class="card-title"><%= dailyConcert.title %></h5>
+              <p class="text-muted mb-0">Created on <%= new Date(dailyConcert.createdAt).toLocaleDateString() %></p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <p class="mb-0">
+                <strong>Event Date:</strong> <%= new Date(dailyConcert.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+              </p>
+              <p class="mb-0">
+                <strong>Event Time:</strong> <%= dailyConcert.eventTime %>
+              </p>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Booking Type:</strong> <%= dailyConcert.bookingType.charAt(0).toUpperCase() + dailyConcert.bookingType.slice(1) %></p>
+              
+              <% if (dailyConcert.bookingType === 'artist' && dailyConcert.artist) { %>
+                <p class="mb-1"><strong>Artist:</strong> <%= dailyConcert.artist.stageName || dailyConcert.artist.user.name %></p>
+                <% if (dailyConcert.artist.genre) { %>
+                  <p class="mb-1"><strong>Genre:</strong> <%= dailyConcert.artist.genre %></p>
+                <% } %>
+              <% } else if (dailyConcert.bookingType === 'role' && dailyConcert.roleSlot) { %>
+                <p class="mb-1"><strong>Role:</strong> <%= dailyConcert.roleSlot.name %></p>
+              <% } %>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Location:</strong> <%= dailyConcert.eventCity %>, <%= dailyConcert.eventState %></p>
+              <p class="mb-1"><strong>Organizer:</strong> <%= dailyConcert.organizerName %></p>
+              <% if (dailyConcert.createdBy) { %>
+                <p class="mb-1"><strong>Added By:</strong> <%= dailyConcert.createdBy.name %></p>
+              <% } %>
+            </div>
+          </div>
+
+          <% if (dailyConcert.description) { %>
+            <div class="mb-3">
+              <h6>Description:</h6>
+              <p class="card-text"><%= dailyConcert.description %></p>
+            </div>
+          <% } %>
+
+          <% if (dailyConcert.bookingRequest) { %>
+            <div class="alert alert-info">
+              <p class="mb-0"><strong>Source:</strong> This concert was automatically created from an approved booking request.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Edit Concert Form -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-pencil-square me-1"></i>
+          Edit Concert
+        </div>
+        <div class="card-body">
+          <form action="/admin/daily-concerts/<%= dailyConcert._id %>/edit" method="POST">
+            <div class="mb-3">
+              <label for="title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="title" name="title" value="<%= dailyConcert.title %>" required>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="eventDate" class="form-label">Event Date</label>
+                <input type="date" class="form-control" id="eventDate" name="eventDate" value="<%= dailyConcert.eventDate.toISOString().split('T')[0] %>" required>
+              </div>
+              <div class="col-md-6">
+                <label for="eventTime" class="form-label">Event Time</label>
+                <input type="time" class="form-control" id="eventTime" name="eventTime" value="<%= dailyConcert.eventTime %>" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="4"><%= dailyConcert.description %></textarea>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Actions Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-gear me-1"></i>
+          Actions
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <form action="/admin/daily-concerts/<%= dailyConcert._id %>/toggle-visibility" method="POST">
+              <button type="submit" class="btn btn-block <%= dailyConcert.isVisible ? 'btn-warning' : 'btn-success' %> w-100 mb-2">
+                <i class="bi <%= dailyConcert.isVisible ? 'bi-eye-slash' : 'bi-eye' %> me-1"></i>
+                <%= dailyConcert.isVisible ? 'Hide Concert' : 'Show Concert' %>
+              </button>
+            </form>
+            
+            <form action="/admin/daily-concerts/<%= dailyConcert._id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this concert? This action cannot be undone.');">
+              <button type="submit" class="btn btn-danger w-100 mb-2">
+                <i class="bi bi-trash me-1"></i> Delete Concert
+              </button>
+            </form>
+            
+            <a href="/daily-concerts" target="_blank" class="btn btn-info w-100 mb-2">
+              <i class="bi bi-globe me-1"></i> View Public Page
+            </a>
+            
+            <a href="/admin/daily-concerts" class="btn btn-secondary w-100">
+              <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-info-circle me-1"></i>
+          Help
+        </div>
+        <div class="card-body">
+          <h6>About Daily Concerts</h6>
+          <p>Daily concerts are public events that are displayed on the Daily Concerts page. They are created automatically when a booking request is approved.</p>
+          
+          <h6 class="mt-3">Tips</h6>
+          <ul>
+            <li>You can edit the concert details to provide more information</li>
+            <li>Use the visibility toggle to control whether the concert appears on the public page</li>
+            <li>Deleting a concert will remove it from the public view but won't affect the original booking request</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

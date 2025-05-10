@@ -1,0 +1,669 @@
+<%- contentFor('title') %>Dashboard
+
+<%- contentFor('body') %>
+<div class="dashboard-container">
+  <!-- Page Title -->
+  <div class="d-flex align-items-center mb-4">
+    <i class="bi bi-speedometer2 fs-3 text-primary me-2"></i>
+    <h3 class="fw-bold mb-0">Dashboard Overview</h3>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-primary-subtle text-primary me-3">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= counts.users %></h3>
+            <p class="text-white-50 mb-0">Users</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-success-subtle text-success me-3">
+            <i class="bi bi-music-note-beamed"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= counts.artists %></h3>
+            <p class="text-white-50 mb-0">Artists</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-warning-subtle text-warning me-3">
+            <i class="bi bi-calendar-event"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= counts.concerts %></h3>
+            <p class="text-white-50 mb-0">Concerts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-danger-subtle text-danger me-3">
+            <i class="bi bi-ticket-perforated"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= counts.tickets %></h3>
+            <p class="text-white-50 mb-0">Tickets</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="glass-card-dark border border-warning">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom border-warning">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-bell-fill text-warning me-2"></i>
+            <h5 class="card-title mb-0 text-white">Pending Notifications</h5>
+          </div>
+          <a href="/admin/notifications" class="btn btn-sm btn-warning">
+            <i class="bi bi-eye me-1"></i> View All Notifications
+          </a>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="d-grid">
+                <a href="/admin/notifications?module=Artist+Application" class="btn btn-outline-info">
+                  <i class="bi bi-person-badge me-2"></i>
+                  Artist Applications <span class="badge bg-danger ms-1 notification-badge" data-module="Artist Application">0</span>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-grid">
+                <a href="/admin/notifications?module=Team+Booking" class="btn btn-outline-info">
+                  <i class="bi bi-calendar-check me-2"></i>
+                  Team Bookings <span class="badge bg-danger ms-1 notification-badge" data-module="Team Booking">0</span>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-grid">
+                <a href="/admin/notifications?module=Artist+Booking" class="btn btn-outline-info">
+                  <i class="bi bi-music-note-beamed me-2"></i>
+                  Artist Bookings <span class="badge bg-danger ms-1 notification-badge" data-module="Artist Booking">0</span>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="d-grid">
+                <a href="/admin/notifications?module=Concert" class="btn btn-outline-info">
+                  <i class="bi bi-calendar-event me-2"></i>
+                  Pending Concerts <span class="badge bg-danger ms-1 notification-badge" data-module="Concert">0</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Row -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="glass-card-dark">
+        <div class="card-header d-flex align-items-center">
+          <i class="bi bi-tools text-primary me-2"></i>
+          <h5 class="card-title mb-0 text-white">Quick Actions</h5>
+        </div>
+        <div class="card-body py-3">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="d-grid">
+                <a href="/admin/concerts/pending" class="btn btn-outline-primary">
+                  <i class="bi bi-hourglass-split me-2"></i>
+                  Pending Concerts <span class="badge bg-danger ms-1"><%= counts.pendingConcerts %></span>
+                </a>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-grid">
+                <a href="/admin/users" class="btn btn-outline-success">
+                  <i class="bi bi-people me-2"></i>
+                  Manage Users
+                </a>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <form action="/admin/test-email" method="GET" class="d-flex">
+                <input type="email" name="email" class="form-control me-2" placeholder="Email address" value="<%= typeof user !== 'undefined' && user.email ? user.email : '' %>">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-envelope me-1"></i> Test Email
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Section Title -->
+  <div class="d-flex align-items-center mb-3 mt-2">
+    <i class="bi bi-graph-up fs-4 text-success me-2"></i>
+    <h4 class="fw-bold mb-0">Analytics & Insights</h4>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="glass-card-dark h-100 border border-secondary">
+        <div class="card-header d-flex align-items-center border-bottom border-secondary">
+          <i class="bi bi-currency-dollar text-primary me-2"></i>
+          <h5 class="card-title mb-0 text-white">Revenue Overview</h5>
+        </div>
+        <div class="card-body p-3">
+          <canvas id="revenueChart" height="250"></canvas>
+        </div>
+        <div class="card-footer border-top border-secondary">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h6 class="mb-0 text-white-50">Total Revenue</h6>
+              <h4 class="fw-bold text-primary">₹<%= totalRevenue.toLocaleString() %></h4>
+            </div>
+            <div>
+              <h6 class="mb-0 text-white-50">Tickets Sold</h6>
+              <h4 class="fw-bold text-success"><%= counts.tickets %></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="glass-card-dark h-100 border border-secondary">
+        <div class="card-header d-flex align-items-center border-bottom border-secondary">
+          <i class="bi bi-pie-chart-fill text-warning me-2"></i>
+          <h5 class="card-title mb-0 text-white">Concert Types</h5>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center p-3">
+          <canvas id="concertTypesChart"></canvas>
+        </div>
+        <div class="card-footer border-top border-secondary">
+          <div class="row text-center">
+            <div class="col-6">
+              <h6 class="mb-0 text-white-50">Paid</h6>
+              <h4 class="fw-bold text-primary"><%= concertStats.paid %></h4>
+            </div>
+            <div class="col-6">
+              <h6 class="mb-0 text-white-50">Free</h6>
+              <h4 class="fw-bold text-warning"><%= concertStats.free %></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Section Title -->
+  <div class="d-flex align-items-center mb-3 mt-4">
+    <i class="bi bi-table fs-4 text-info me-2"></i>
+    <h4 class="fw-bold mb-0">Recent Data</h4>
+  </div>
+
+  <!-- Popular Cities & Recent Tickets -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-5">
+      <div class="glass-card-dark h-100 border border-secondary">
+        <div class="card-header d-flex align-items-center border-bottom border-secondary">
+          <i class="bi bi-geo-alt text-danger me-2"></i>
+          <h5 class="card-title mb-0 text-white">Popular Cities</h5>
+        </div>
+        <div class="card-body p-3">
+          <canvas id="citiesChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="glass-card-dark h-100 border border-secondary">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom border-secondary">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-ticket-perforated-fill text-success me-2"></i>
+            <h5 class="card-title mb-0 text-white">Recent Ticket Purchases</h5>
+          </div>
+          <a href="/admin/tickets" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye me-1"></i> View All
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th>User</th>
+                  <th>Concert</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (recentTickets && recentTickets.length > 0) { %>
+                  <% recentTickets.forEach(ticket => { %>
+                    <tr>
+                      <td><%= ticket.user.name %></td>
+                      <td><%= ticket.concert ? ticket.concert.title : 'N/A' %></td>
+                      <td>₹<%= ticket.totalAmount %></td>
+                      <td><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="4" class="text-center py-3">No recent tickets</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Events Section Title -->
+  <div class="d-flex align-items-center mb-3 mt-4">
+    <i class="bi bi-calendar-event fs-4 text-warning me-2"></i>
+    <h4 class="fw-bold mb-0">Upcoming Events</h4>
+  </div>
+
+  <!-- Upcoming Concerts -->
+  <div class="glass-card-dark mb-4 border border-secondary">
+    <div class="card-header d-flex justify-content-between align-items-center border-bottom border-secondary">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-music-note-list text-primary me-2"></i>
+        <h5 class="card-title mb-0 text-white">Upcoming Concerts</h5>
+      </div>
+      <a href="/admin/concerts" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-list-ul me-1"></i> View All
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Title</th>
+              <th>Artist</th>
+              <th>Date</th>
+              <th>Venue</th>
+              <th>City</th>
+              <th>Tickets Sold</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+              <% upcomingConcerts.forEach(concert => { %>
+                <tr>
+                  <td><%= concert.title %></td>
+                  <td><%= concert.artist.user.name %></td>
+                  <td><%= new Date(concert.date).toLocaleDateString() %></td>
+                  <td><%= concert.venue %></td>
+                  <td><%= concert.city %></td>
+                  <td><%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %></td>
+                  <td>
+                    <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-primary">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="text-center py-3">No upcoming concerts</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div> <!-- Close dashboard-container -->
+
+<%- contentFor('extraScripts') %>
+<script>
+  // Update notification badges
+  document.addEventListener('DOMContentLoaded', function() {
+    // Update pending concerts count badge
+    const pendingCount = document.getElementById('pendingCount');
+    if (pendingCount) {
+      pendingCount.textContent = '<%= counts.pendingConcerts %>';
+    }
+
+    // Update notification badges for each module
+    function updateNotificationBadges() {
+      fetch('/admin/notifications/module-counts')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update each module badge
+            const badges = document.querySelectorAll('.notification-badge');
+            badges.forEach(badge => {
+              const module = badge.getAttribute('data-module');
+              const count = data.counts[module] || 0;
+
+              badge.textContent = count;
+
+              if (count === 0) {
+                badge.style.display = 'none';
+              } else {
+                badge.style.display = 'inline-block';
+              }
+            });
+
+            // Update total notification badge in sidebar
+            const notificationBadge = document.getElementById('notificationBadge');
+            if (notificationBadge) {
+              const totalCount = data.total || 0;
+              notificationBadge.textContent = totalCount;
+
+              if (totalCount === 0) {
+                notificationBadge.style.display = 'none';
+              } else {
+                notificationBadge.style.display = 'inline-block';
+              }
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error updating notification badges:', error);
+        });
+    }
+
+    // Update badges on page load
+    updateNotificationBadges();
+
+    // Update badges every 60 seconds
+    setInterval(updateNotificationBadges, 60000);
+
+    // Initialize charts if Chart.js is available
+    if (typeof Chart !== 'undefined') {
+      // Set global chart options for better dark mode compatibility
+      Chart.defaults.color = '#e2e8f0';
+      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+      // Revenue chart
+      const revenueCtx = document.getElementById('revenueChart');
+      if (revenueCtx) {
+        // Create dummy data for revenue chart
+        const monthlyData = [1200, 1900, 3000, 5000, 2000, 3000, 7000, 8000, 4000, 6000, 9000, 12000];
+
+        const gradientFill = revenueCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        gradientFill.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+        gradientFill.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+        new Chart(revenueCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+              label: 'Revenue',
+              data: monthlyData,
+              borderColor: '#6366f1',
+              backgroundColor: gradientFill,
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointBackgroundColor: '#6366f1',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 10,
+                cornerRadius: 6,
+                displayColors: false,
+                callbacks: {
+                  label: function(context) {
+                    return '₹' + context.parsed.y.toLocaleString();
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.05)'
+                },
+                ticks: {
+                  callback: function(value) {
+                    return '₹' + value.toLocaleString();
+                  }
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }
+              }
+            },
+            interaction: {
+              mode: 'index',
+              intersect: false
+            }
+          }
+        });
+      }
+
+      // Concert types chart
+      const concertTypesCtx = document.getElementById('concertTypesChart');
+      if (concertTypesCtx) {
+        // Create data for concert types
+        const paidCount = 10; // Use actual data from server
+        const freeCount = 5;  // Use actual data from server
+
+        new Chart(concertTypesCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Paid', 'Free'],
+            datasets: [{
+              data: [paidCount, freeCount],
+              backgroundColor: ['#6366f1', '#f59e0b'],
+              borderWidth: 0,
+              hoverOffset: 10
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 10,
+                cornerRadius: 6,
+                displayColors: true
+              }
+            },
+            cutout: '70%',
+            animation: {
+              animateScale: true,
+              animateRotate: true
+            }
+          }
+        });
+      }
+
+      // Cities chart
+      const citiesCtx = document.getElementById('citiesChart');
+      if (citiesCtx) {
+        // Create data for cities
+        const cityLabels = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai'];
+        const cityData = [8, 6, 5, 4, 3];
+
+        new Chart(citiesCtx, {
+          type: 'bar',
+          data: {
+            labels: cityLabels,
+            datasets: [{
+              label: 'Concerts',
+              data: cityData,
+              backgroundColor: [
+                '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6'
+              ],
+              borderRadius: 6,
+              borderWidth: 0,
+              maxBarThickness: 40
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 10,
+                cornerRadius: 6,
+                displayColors: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.05)'
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }
+              }
+            },
+            animation: {
+              delay: function(context) {
+                return context.dataIndex * 100;
+              }
+            }
+          }
+        });
+      }
+    }
+  });
+</script>
+
+<%- contentFor('extraStyles') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  /* Dashboard specific styles */
+  .dashboard-container {
+    padding: 0.5rem;
+  }
+
+  .stat-card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .glass-card-dark {
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-card-dark:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .card-header {
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .table-dark th {
+    background-color: #212529;
+    color: white !important;
+    font-weight: 600;
+    border-color: #373b3e;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+  }
+
+  .btn-outline-primary {
+    border-width: 2px;
+  }
+
+  .btn-outline-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+    }
+
+    .card-header {
+      padding: 0.75rem;
+    }
+
+    .table {
+      font-size: 0.85rem;
+    }
+  }
+</style>

@@ -1,0 +1,105 @@
+<%- contentFor('body') %>
+
+<!-- User Roles Management -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Manage User Roles</h5>
+    <a href="/roles" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Roles
+    </a>
+  </div>
+  <div class="card-body">
+    <% if (roles && roles.length > 0) { %>
+      <!-- Assign Role Form -->
+      <form action="/roles/assign" method="POST" class="mb-4">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label for="userId" class="form-label text-white">Select User</label>
+            <select class="form-select" id="userId" name="userId" required>
+              <option value="" selected disabled>Choose a user...</option>
+              <% users.forEach(user => { %>
+                <option value="<%= user._id %>"><%= user.name %> (<%= user.email %>)</option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label for="roleId" class="form-label text-white">Select Role</label>
+            <select class="form-select" id="roleId" name="roleId" required>
+              <option value="" selected disabled>Choose a role...</option>
+              <% roles.forEach(role => { %>
+                <option value="<%= role._id %>"><%= role.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Assign</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- User Roles Table -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th class="text-white">User</th>
+              <th class="text-white">Assigned Roles</th>
+              <th class="text-white">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(user => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h6 class="mb-0 text-white"><%= user.name %></h6>
+                      <small class="text-muted"><%= user.email %></small>
+                      <span class="badge <%= user.role === 'admin' ? 'bg-danger' : (user.role === 'artist' ? 'bg-primary' : 'bg-secondary') %> ms-2">
+                        <%= user.role %>
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if (userRoleMap[user._id] && userRoleMap[user._id].length > 0) { %>
+                    <div class="d-flex flex-wrap gap-1">
+                      <% roles.forEach(role => { %>
+                        <% if (userRoleMap[user._id] && userRoleMap[user._id].includes(role._id.toString())) { %>
+                          <span class="badge bg-primary">
+                            <i class="bi <%= role.icon %> me-1"></i> <%= role.name %>
+                            <form action="/roles/remove" method="POST" class="d-inline">
+                              <input type="hidden" name="userId" value="<%= user._id %>">
+                              <input type="hidden" name="roleId" value="<%= role._id %>">
+                              <button type="submit" class="btn-close btn-close-white ms-1" style="font-size: 0.5rem;" aria-label="Remove role"></button>
+                            </form>
+                          </span>
+                        <% } %>
+                      <% }); %>
+                    </div>
+                  <% } else { %>
+                    <span class="text-muted">No roles assigned</span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/roles/assign-to-user/<%= user._id %>" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-lg"></i> Add Role
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-tag-fill display-4 text-muted mb-3"></i>
+        <h3 class="text-white">No Roles Available</h3>
+        <p class="text-white-75 mb-4">You need to create roles before you can assign them to users.</p>
+        <a href="/roles/add" class="btn btn-primary">Create Your First Role</a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+

@@ -1,0 +1,160 @@
+// Simple PDF generation script
+window.addEventListener('load', function() {
+  console.log('Simple PDF script loaded');
+
+  // Get the download button
+  const downloadBtn = document.getElementById('downloadTicket');
+  if (!downloadBtn) {
+    console.error('Download button not found');
+    return;
+  }
+
+  console.log('Download button found:', downloadBtn);
+
+  // Remove the onclick attribute that might be interfering
+  downloadBtn.removeAttribute('onclick');
+
+  // Add click event listener
+  downloadBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('Download button clicked');
+
+    // Show loading state
+    downloadBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Generating...';
+    downloadBtn.disabled = true;
+
+    // Use a direct approach with jsPDF
+    try {
+      console.log('jsPDF library check:', typeof window.jspdf);
+
+      // If jsPDF is not defined, try to load it
+      if (typeof window.jspdf === 'undefined') {
+        console.log('Loading jsPDF library dynamically');
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = function() {
+          console.log('jsPDF loaded dynamically');
+          generatePDF();
+        };
+        script.onerror = function() {
+          console.error('Failed to load jsPDF dynamically');
+          alert('Failed to load PDF generation library. Please try again later.');
+          resetButton();
+        };
+        document.head.appendChild(script);
+        return;
+      }
+
+      // Generate the PDF
+      generatePDF();
+
+    } catch (error) {
+      console.error('Error in PDF generation setup:', error);
+      alert('Failed to set up PDF generation: ' + error.message);
+      resetButton();
+    }
+
+    function resetButton() {
+      downloadBtn.innerHTML = '<i class="bi bi-download me-1"></i> Download PDF';
+      downloadBtn.disabled = false;
+    }
+
+    function generatePDF() {
+      try {
+        console.log('Generating PDF...');
+
+        // Create a new PDF document
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        // Add ticket information
+        pdf.setFontSize(22);
+        pdf.text('Rapira Concert Ticket', 105, 20, { align: 'center' });
+
+        pdf.setFontSize(14);
+        pdf.text('This is your official concert ticket', 105, 30, { align: 'center' });
+
+        // Get ticket information from the page
+        const titleElement = document.querySelector('.ticket-title, h4.fw-bold');
+        const concertTitle = titleElement ? titleElement.textContent.trim() : 'Concert';
+
+        const numberElement = document.querySelector('.ticket-number');
+        const ticketNumber = numberElement ? numberElement.textContent.trim() : 'TICKET-123';
+
+        console.log('Found title:', concertTitle);
+        console.log('Found ticket number:', ticketNumber);
+
+        // Get date and venue information
+        const dateElements = document.querySelectorAll('p.text-white-50');
+        let concertDate = 'Date: TBD';
+        let concertVenue = 'Venue: TBD';
+
+        // Try to find elements with specific classes first
+        const dateInfoElement = document.querySelector('.concert-date-info');
+        const venueInfoElement = document.querySelector('.concert-venue-info');
+
+        if (dateInfoElement) {
+          concertDate = dateInfoElement.textContent.replace(/^\s*[\S\s]*?\s{2,}/, '').trim();
+        }
+
+        if (venueInfoElement) {
+          concertVenue = venueInfoElement.textContent.replace(/^\s*[\S\s]*?\s{2,}/, '').trim();
+        }
+
+        // Fallback to searching all text-white-50 paragraphs
+        if (concertDate === 'Date: TBD' || concertVenue === 'Venue: TBD') {
+          dateElements.forEach(el => {
+            const text = el.textContent.trim();
+            if (text.includes('202')) { // Likely a date with year
+              concertDate = text.replace(/^\s*[\S\s]*?\s{2,}/, '').trim();
+            }
+            if (text.includes(',')) { // Likely a venue with city
+              concertVenue = text.replace(/^\s*[\S\s]*?\s{2,}/, '').trim();
+            }
+          });
+        }
+
+        console.log('Found date:', concertDate);
+        console.log('Found venue:', concertVenue);
+
+        // Add concert details
+        pdf.setFontSize(16);
+        pdf.text(concertTitle, 105, 50, { align: 'center' });
+
+        pdf.setFontSize(12);
+        pdf.text('Ticket #: ' + ticketNumber, 105, 60, { align: 'center' });
+        pdf.text(concertDate, 105, 70, { align: 'center' });
+        pdf.text(concertVenue, 105, 80, { align: 'center' });
+
+        // Add QR code placeholder
+        pdf.rect(75, 90, 60, 60);
+        pdf.setFontSize(10);
+        pdf.text('QR Code', 105, 125, { align: 'center' });
+
+        // Add footer
+        pdf.setFontSize(10);
+        pdf.text('This ticket was generated by Rapira Concert Platform', 105, 150, { align: 'center' });
+        pdf.text('Please present this ticket at the venue entrance', 105, 160, { align: 'center' });
+
+        // Clean up the ticket number for the filename
+        let cleanTicketNumber = ticketNumber.replace(/[^a-zA-Z0-9]/g, '');
+        if (!cleanTicketNumber) {
+          cleanTicketNumber = 'TICKET-' + Math.floor(Math.random() * 10000);
+        }
+
+        console.log('Saving PDF with filename: Rapira_Ticket_' + cleanTicketNumber + '.pdf');
+
+        // Save the PDF
+        pdf.save('Rapira_Ticket_' + cleanTicketNumber + '.pdf');
+        console.log('PDF saved successfully');
+
+        // Reset button state
+        resetButton();
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF: ' + error.message);
+        resetButton();
+      }
+    }
+  });
+});

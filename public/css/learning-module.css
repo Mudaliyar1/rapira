@@ -1,0 +1,29 @@
+/* Learning Module Form Styles */
+.content-input-group {
+  margin-bottom: 10px;
+}
+
+#contentInputContainer {
+  width: 100%;
+}
+
+/* Ensure textarea and input fields are properly visible */
+#textContent, #urlContent {
+  width: 100%;
+  background-color: #2b2b2b;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+#textContent:focus, #urlContent:focus {
+  background-color: #333;
+  border-color: #666;
+  box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+}
+
+/* Form text styling */
+.form-text {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}

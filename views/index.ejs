@@ -1,0 +1,180 @@
+<!-- Hero Section -->
+<section class="hero-section text-center">
+  <div class="container">
+    <h1 class="display-3 fw-bold mb-4">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
+    <p class="lead mb-5">Discover artists, book concerts, and connect with the hip-hop community</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
+      <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
+    </div>
+  </div>
+</section>
+
+<!-- Upcoming Concerts Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text">Upcoming Concerts</h2>
+      <a href="/concerts" class="btn btn-outline-primary">View All</a>
+    </div>
+
+    <div class="row g-4">
+      <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+        <% upcomingConcerts.forEach((concert, index) => { %>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+            <div class="glass-card-dark card card-concert h-100">
+              <div class="position-relative overflow-hidden">
+                <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>">
+                <div class="position-absolute top-0 end-0 m-3">
+                  <span class="badge <%= concert.isPaid ? 'bg-gradient-primary' : 'bg-gradient-success' %> px-3 py-2">
+                    <%= concert.isPaid ? (concert.price !== null && concert.price !== undefined ? `₹${concert.price}` : '₹ 0') : 'Free' %>
+                  </span>
+                </div>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title fw-bold"><%= concert.title %></h5>
+                <p class="card-text mb-2">
+                  <i class="bi bi-geo-alt me-2"></i> <%= concert.venue %>, <%= concert.city %>
+                </p>
+                <p class="card-text mb-3">
+                  <i class="bi bi-calendar3 me-2"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+                </p>
+                <p class="card-text mb-3">By
+                <% if (concert.artist) { %>
+                  <a href="/artists/<%= concert.artist._id %>" class="text-decoration-none fw-medium gradient-text">
+                    <%= concert.artist.user ? concert.artist.user.name : 'Unknown Artist' %>
+                  </a>
+                <% } else { %>
+                  <span class="fw-medium">Unknown Artist</span>
+                <% } %>
+                </p>
+              </div>
+              <div class="card-footer">
+                <a href="/concerts/<%= concert._id %>" class="btn btn-gradient-purple w-100">View Details</a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5" data-aos="fade-up">
+          <div class="glass-card-dark p-5 rounded-4">
+            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+            <p class="text-muted">No upcoming concerts at the moment. Check back soon!</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Artists Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text-blue">Featured Artists</h2>
+      <a href="/artists" class="btn btn-outline-primary">View All</a>
+    </div>
+
+    <div class="row g-4">
+      <% if (featuredArtists && featuredArtists.length > 0) { %>
+        <% featuredArtists.forEach((artist, index) => { %>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+            <div class="glass-card-dark card card-artist h-100">
+              <div class="position-relative overflow-hidden">
+                <img src="<%= artist.user.profileImage %>" class="card-img-top" alt="<%= artist.user.name %>">
+                <% if (artist.verified) { %>
+                  <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-gradient-blue px-3 py-2">
+                      <i class="bi bi-patch-check-fill me-1"></i> Verified
+                    </span>
+                  </div>
+                <% } %>
+              </div>
+              <div class="card-body text-center">
+                <h5 class="card-title mb-2"><%= artist.user.name %></h5>
+                <p class="card-text text-muted mb-3"><%= artist.genre %></p>
+              </div>
+              <div class="card-footer text-center">
+                <a href="/artists/<%= artist._id %>" class="btn btn-gradient-blue w-100">View Profile</a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5" data-aos="fade-up">
+          <div class="glass-card-dark p-5 rounded-4">
+            <i class="bi bi-person-x display-1 text-muted mb-3"></i>
+            <p class="text-muted">No featured artists at the moment. Check back soon!</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Latest Content Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text-orange">Latest Releases</h2>
+      <a href="/content" class="btn btn-outline-primary">View All <i class="bi bi-arrow-right ms-1"></i></a>
+    </div>
+
+    <div class="row g-4">
+      <% if (latestContent && latestContent.length > 0) { %>
+        <% latestContent.forEach((content, index) => { %>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+            <div class="glass-card-dark card content-card h-100">
+              <div class="position-relative overflow-hidden">
+                <img src="<%= content.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= content.title %>">
+                <span class="badge <%= content.type === 'song' ? 'bg-gradient-primary' : content.type === 'video' ? 'bg-gradient-danger' : 'bg-gradient-blue' %> content-type-badge px-3 py-2">
+                  <i class="bi <%= content.type === 'song' ? 'bi-music-note' : content.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %> me-1"></i>
+                  <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title"><%= content.title %></h5>
+                <p class="card-text text-muted">
+                  By <span class="gradient-text-orange"><%= content.artist && content.artist.user ? content.artist.user.name : 'Unknown Artist' %></span>
+                </p>
+                <p class="card-text">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar3 me-1"></i> <%= new Date(content.releaseDate).toLocaleDateString() %>
+                  </small>
+                </p>
+              </div>
+              <div class="card-footer bg-transparent border-0 pb-3">
+                <a href="<%= content.fileUrl %>"
+                   class="btn btn-outline-light btn-sm w-100 content-link"
+                   data-type="<%= content.type %>"
+                   data-title="<%= content.title %>"
+                   data-artist="<%= content.artist && content.artist.user ? content.artist.user.name : 'Unknown Artist' %>"
+                   data-thumbnail="<%= content.thumbnailUrl %>">
+                  <%= content.type === 'song' ? 'Listen' : content.type === 'video' ? 'Watch' : 'Read' %>
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5" data-aos="fade-up">
+          <div class="glass-card-dark p-5 rounded-4">
+            <i class="bi bi-music-note-list display-1 text-muted mb-3"></i>
+            <p class="text-muted">No content available at the moment. Check back soon!</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Join as Artist CTA -->
+<section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
+  <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-purple" style="z-index: -1;"></div>
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
+  <div class="container py-4">
+    <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
+    <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
+    <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+  </div>
+</section>

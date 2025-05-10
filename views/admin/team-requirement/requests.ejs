@@ -1,0 +1,181 @@
+<%- contentFor('title') %>Team Booking Requests
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item active">Team Booking Requests</li>
+  </ol>
+
+  <!-- Filter Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="fas fa-filter me-1"></i>
+      Filter Requests
+    </div>
+    <div class="card-body">
+      <form action="/admin/team-requirement/requests" method="GET">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="">All Statuses</option>
+              <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>Approved</option>
+              <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role">
+              <option value="">All Roles</option>
+              <% filterOptions.roles.forEach(role => { %>
+                <option value="<%= role.name %>" <%= filters.role === role.name ? 'selected' : '' %>><%= role.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="city" class="form-label">City</label>
+            <select class="form-select" id="city" name="city">
+              <option value="">All Cities</option>
+              <% filterOptions.cities.forEach(city => { %>
+                <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="state" class="form-label">State</label>
+            <select class="form-select" id="state" name="state">
+              <option value="">All States</option>
+              <% filterOptions.states.forEach(state => { %>
+                <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="/admin/team-requirement/requests" class="btn btn-outline-secondary ms-2">Reset</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- Requests Table -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="fas fa-table me-1"></i>
+      Booking Requests
+    </div>
+    <div class="card-body">
+      <% if (requests.length === 0) { %>
+        <div class="alert alert-info" style="color: #000000 !important; background-color: #cff4fc !important; border: 1px solid #b6effb !important; font-weight: 500 !important;">
+          <span style="color: #000000 !important;">No booking requests found matching your criteria.</span>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover" id="requestsTable" width="100%" cellspacing="0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Location</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requests.forEach(request => { %>
+                <tr>
+                  <td><%= request.name %></td>
+                  <td>
+                    <% if (request.isBulkRequest) { %>
+                      <strong>Bulk Request (<%= request.bulkRoleCount %> roles)</strong><br>
+                      <small>Primary: <%= request.role ? request.role.name : 'Unknown' %></small>
+                      <% if (request.relatedRoles && request.relatedRoles.length > 0) { %>
+                        <div class="mt-1">
+                          <small class="text-muted">
+                            Also includes:
+                            <%= request.relatedRoles.map(r => r.name).join(', ') %>
+                          </small>
+                        </div>
+                      <% } %>
+                    <% } else { %>
+                      <%= request.role ? request.role.name : 'Unknown' %>
+                    <% } %>
+                  </td>
+                  <td><%= request.city %>, <%= request.state %></td>
+                  <td><%= new Date(request.createdAt).toLocaleDateString() %></td>
+                  <td>
+                    <% if (request.status === 'pending') { %>
+                      <span class="badge bg-warning text-dark">Pending</span>
+                    <% } else if (request.status === 'approved') { %>
+                      <span class="badge bg-success">Approved</span>
+                    <% } else if (request.status === 'rejected') { %>
+                      <span class="badge bg-danger">Rejected</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <a href="/admin/team-requirement/requests/<%= request._id %>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <a href="/admin/team-requirement/requests/<%= request._id %>/delete-confirm" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash-alt"></i> Delete
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="/admin/team-requirement/requests?page=<%= pagination.page - 1 %><%= filters.status ? `&status=${filters.status}` : '' %><%= filters.role ? `&role=${filters.role}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>">Previous</a>
+              </li>
+
+              <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                  <a class="page-link" href="/admin/team-requirement/requests?page=<%= i %><%= filters.status ? `&status=${filters.status}` : '' %><%= filters.role ? `&role=${filters.role}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>"><%= i %></a>
+                </li>
+              <% } %>
+
+              <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="/admin/team-requirement/requests?page=<%= pagination.page + 1 %><%= filters.status ? `&status=${filters.status}` : '' %><%= filters.role ? `&role=${filters.role}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>">Next</a>
+              </li>
+            </ul>
+          </nav>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable with simplified configuration
+    const dataTable = $('#requestsTable').DataTable({
+      responsive: true,
+      order: [[3, 'desc']], // Sort by date column descending (adjusted for removed checkbox column)
+      pageLength: 25,
+      dom: 'Bfrtip',
+      buttons: [
+        'copy', 'csv', 'excel', 'pdf', 'print'
+      ],
+      columnDefs: [
+        { orderable: false, targets: [5] } // Disable sorting on actions column
+      ],
+      stateSave: false
+    });
+  });
+</script>

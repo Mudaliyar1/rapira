@@ -1,0 +1,92 @@
+<%- contentFor('body') %>
+
+<!-- Content Management -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="fw-bold">Manage Content</h1>
+  <a href="/admin/content/add" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Add New Content
+  </a>
+</div>
+
+<!-- Content Table -->
+<div class="glass-card-dark">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Title</th>
+            <th>Artist</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (content && content.length > 0) { %>
+            <% content.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= item.thumbnailUrl || '/images/default-content.jpg' %>" alt="<%= item.title %>" class="rounded me-2" width="40" height="40" style="object-fit: cover;">
+                    <div>
+                      <div class="fw-medium"><%= item.title %></div>
+                      <div class="small text-muted"><%= item.description ? item.description.substring(0, 30) + '...' : '' %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= item.artist && item.artist.user ? item.artist.user.name : 'Unknown' %></td>
+                <td>
+                  <% if (item.type === 'song') { %>
+                    <span class="badge bg-primary">Song</span>
+                  <% } else if (item.type === 'video') { %>
+                    <span class="badge bg-danger">Video</span>
+                  <% } else if (item.type === 'blog') { %>
+                    <span class="badge bg-info">Blog</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary"><%= item.type %></span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (item.featured) { %>
+                    <span class="badge bg-primary">Featured</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">Regular</span>
+                  <% } %>
+                </td>
+                <td><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a href="/content/<%= item._id %>" class="btn btn-sm btn-outline-primary" target="_blank" title="View Content">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/admin/content/<%= item._id %>/details" class="btn btn-sm btn-outline-info" title="View Details">
+                      <i class="bi bi-info-circle"></i>
+                    </a>
+                    <a href="/admin/content/<%= item._id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit Content">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form action="/admin/content/<%= item._id %>/feature" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-<%= item.featured ? 'secondary' : 'primary' %>" title="<%= item.featured ? 'Unfeature' : 'Feature' %> Content">
+                        <i class="bi <%= item.featured ? 'bi-star-fill' : 'bi-star' %>"></i>
+                      </button>
+                    </form>
+                    <a href="/admin/content/<%= item._id %>/delete" class="btn btn-sm btn-outline-danger" title="Delete Content">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4">No content found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- contentFor('title') %>Manage Content

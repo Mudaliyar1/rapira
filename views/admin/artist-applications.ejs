@@ -1,0 +1,85 @@
+<%- contentFor('body') %>
+
+<!-- Artist Applications Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Artist Applications</h5>
+    <div>
+      <div class="btn-group">
+        <a href="/artist-applications/admin?status=pending" class="btn btn-sm <%= selectedStatus === 'pending' ? 'btn-warning' : 'btn-outline-warning' %>">
+          Pending
+        </a>
+        <a href="/artist-applications/admin?status=approved" class="btn btn-sm <%= selectedStatus === 'approved' ? 'btn-success' : 'btn-outline-success' %>">
+          Approved
+        </a>
+        <a href="/artist-applications/admin?status=rejected" class="btn btn-sm <%= selectedStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger' %>">
+          Rejected
+        </a>
+        <a href="/artist-applications/admin" class="btn btn-sm <%= selectedStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">
+          All
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">User</th>
+            <th class="text-white">Artist Level</th>
+            <th class="text-white">Phone</th>
+            <th class="text-white">Submitted</th>
+            <th class="text-white">Status</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (applications && applications.length > 0) { %>
+            <% applications.forEach(application => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h6 class="mb-0 text-white"><%= application.user ? application.user.name : 'Unknown User' %></h6>
+                      <small class="text-muted"><%= application.user ? application.user.email : 'No email' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-white"><%= application.artistLevel %></td>
+                <td class="text-white"><%= application.phoneNumber || 'Not provided' %></td>
+                <td class="text-white"><%= new Date(application.createdAt).toLocaleString() %></td>
+                <td>
+                  <% if (application.status === 'pending') { %>
+                    <span class="badge bg-warning">Pending</span>
+                  <% } else if (application.status === 'approved') { %>
+                    <span class="badge bg-success">Approved</span>
+                  <% } else if (application.status === 'rejected') { %>
+                    <span class="badge bg-danger">Rejected</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/artist-applications/admin/<%= application._id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <a href="/artist-applications/admin/<%= application._id %>/confirm-delete" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i> Delete
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">
+                <i class="bi bi-file-earmark-x display-4 text-muted mb-3"></i>
+                <p class="mb-0">No applications found</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

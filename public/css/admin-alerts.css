@@ -1,0 +1,85 @@
+/* Admin Alert Styles - IMPORTANT OVERRIDES */
+
+/* Force black text color for all alerts in admin pages */
+.admin-layout .alert,
+.admin-layout .alert *,
+.admin-layout .card-body .alert,
+.admin-layout .card-body .alert *,
+.admin-layout .alert-info,
+.admin-layout .alert-info *,
+.admin-layout .alert p,
+.admin-layout .alert div,
+.admin-layout .alert span,
+.admin-layout .alert h4,
+.admin-layout .alert h5 {
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+/* Global override for all alert text in admin pages */
+.admin-layout .alert-info,
+.admin-layout .alert-success,
+.admin-layout .alert-danger,
+.admin-layout .alert-warning {
+  color: #000000 !important;
+}
+
+/* Ensure all text inside alerts is black */
+.admin-layout .alert-info *,
+.admin-layout .alert-success *,
+.admin-layout .alert-danger *,
+.admin-layout .alert-warning * {
+  color: #000000 !important;
+}
+
+/* Specific styling for alert-info */
+.admin-layout .alert-info {
+  background-color: #cff4fc !important;
+  border: 1px solid #b6effb !important;
+}
+
+/* Target specific pages */
+.admin-layout .card-body .alert {
+  background-color: #cff4fc !important;
+  border: 1px solid #b6effb !important;
+  color: #000000 !important;
+}
+
+/* Extra specificity for "No data found" messages */
+.admin-layout .card-body > .alert:only-child {
+  color: #000000 !important;
+  font-weight: bold !important;
+  font-size: 1.1rem !important;
+}
+
+/* Target specific pages by their content */
+body:has([href*="team-requirement/roles"]) .alert,
+body:has([href*="team-requirement/requests"]) .alert,
+body:has([href*="find-my-artist"]) .alert,
+body:has([href*="artist/booking-requests"]) .alert,
+body:has([href*="daily-concerts"]) .alert {
+  color: #000000 !important;
+}
+
+/* Ensure all text in alerts is black */
+.alert-success,
+.alert-danger,
+.alert-warning,
+.alert-info {
+  color: #000000 !important;
+}
+
+/* Direct targeting of the empty state messages */
+.card-body:has(.alert:only-child) .alert {
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+/* Specific targeting for Daily Concerts page */
+.admin-layout .card:has([class*="bi-calendar-event"]) .card-body .alert-info,
+.admin-layout .card:has([class*="bi-calendar-event"]) .card-body .alert-info * {
+  color: #000000 !important;
+  background-color: #cff4fc !important;
+  border: 1px solid #b6effb !important;
+  font-weight: 500 !important;
+}

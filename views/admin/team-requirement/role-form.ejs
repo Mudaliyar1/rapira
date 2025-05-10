@@ -1,0 +1,92 @@
+<%- contentFor('title') %><%= role ? 'Edit' : 'Add New' %> Team Requirement Role
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/team-requirement/roles">Team Requirement Roles</a></li>
+    <li class="breadcrumb-item active"><%= role ? 'Edit' : 'Add New' %> Role</li>
+  </ol>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-edit me-1"></i>
+          Role Details
+        </div>
+        <div class="card-body">
+          <form action="<%= role ? `/admin/team-requirement/roles/${role._id}` : '/admin/team-requirement/roles' %>" method="POST">
+            <div class="mb-3">
+              <label for="name" class="form-label">Role Name *</label>
+              <input type="text" class="form-control" id="name" name="name" value="<%= role ? role.name : '' %>" required>
+              <div class="form-text">Enter the name of the role (e.g., Producer, Guitarist, Singer)</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description *</label>
+              <textarea class="form-control" id="description" name="description" rows="5" required><%= role ? role.description : '' %></textarea>
+              <div class="form-text">Provide a detailed description of the role and requirements</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="city" class="form-label">City *</label>
+                <input type="text" class="form-control" id="city" name="city" value="<%= role ? role.city : '' %>" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="state" class="form-label">State *</label>
+                <input type="text" class="form-control" id="state" name="state" value="<%= role ? role.state : '' %>" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="phoneNumber" class="form-label">Contact Phone Number *</label>
+              <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" value="<%= role ? role.phoneNumber : '' %>" required>
+              <div class="form-text">This phone number will be used for internal reference and to prevent duplicate roles. It will not be visible to users.</div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="isActive" name="isActive" <%= role && role.isActive ? 'checked' : '' %>>
+              <label class="form-check-label" for="isActive">Active</label>
+              <div class="form-text">Inactive roles will not be visible on the public page</div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/admin/team-requirement/roles" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">
+                <%= role ? 'Update' : 'Create' %> Role
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-info-circle me-1"></i>
+          Help
+        </div>
+        <div class="card-body">
+          <h5>About Team Requirement Roles</h5>
+          <p>Team requirement roles are positions that can be booked by anyone, including non-registered users.</p>
+          <p>These roles will be displayed on the public Team Requirement page where visitors can submit booking requests.</p>
+
+          <h5 class="mt-4">Guidelines</h5>
+          <ul>
+            <li>Provide clear and descriptive role names</li>
+            <li>Include detailed information about the role in the description</li>
+            <li>Specify the location accurately</li>
+            <li>Set inactive roles that are temporarily unavailable</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

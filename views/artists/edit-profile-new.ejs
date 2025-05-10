@@ -1,0 +1,92 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Edit Profile Form -->
+<div class="card">
+  <div class="card-body p-4">
+    <form action="/artists/update-profile" method="POST" enctype="multipart/form-data">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="stageName" class="form-label">Stage Name</label>
+            <input type="text" class="form-control" id="stageName" name="stageName" value="<%= artist.stageName %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="genre" class="form-label">Primary Genre</label>
+            <select class="form-select" id="genre" name="genre" required>
+              <option value="" disabled>Select genre</option>
+              <option value="Hip-Hop" <%= artist.genre === 'Hip-Hop' ? 'selected' : '' %>>Hip-Hop</option>
+              <option value="Rap" <%= artist.genre === 'Rap' ? 'selected' : '' %>>Rap</option>
+              <option value="Trap" <%= artist.genre === 'Trap' ? 'selected' : '' %>>Trap</option>
+              <option value="Gully Rap" <%= artist.genre === 'Gully Rap' ? 'selected' : '' %>>Gully Rap</option>
+              <option value="Desi Hip-Hop" <%= artist.genre === 'Desi Hip-Hop' ? 'selected' : '' %>>Desi Hip-Hop</option>
+              <option value="Punjabi Hip-Hop" <%= artist.genre === 'Punjabi Hip-Hop' ? 'selected' : '' %>>Punjabi Hip-Hop</option>
+              <option value="Other" <%= artist.genre === 'Other' ? 'selected' : '' %>>Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="yearsActive" class="form-label">Years Active</label>
+            <input type="number" class="form-control" id="yearsActive" name="yearsActive" value="<%= artist.yearsActive || 0 %>" min="0" max="100">
+          </div>
+
+          <div class="mb-3">
+            <label for="about" class="form-label">About</label>
+            <textarea class="form-control" id="about" name="about" rows="5"><%= artist.about %></textarea>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="bannerImage" class="form-label">Banner Image</label>
+            <input type="file" class="form-control" id="bannerImage" name="bannerImage">
+            <div class="form-text">Recommended size: 1200x400px. JPG, PNG, GIF (max 5MB)</div>
+
+            <% if (artist.bannerImage) { %>
+              <div class="mt-2">
+                <p class="mb-1">Current banner:</p>
+                <img src="<%= artist.bannerImage %>" alt="Current banner" class="img-fluid rounded" style="max-height: 150px;">
+              </div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <label for="achievements" class="form-label">Achievements</label>
+            <textarea class="form-control" id="achievements" name="achievements" rows="3" placeholder="Separate achievements with commas"><%= artist.achievements ? artist.achievements.join(', ') : '' %></textarea>
+            <div class="form-text">Example: Best New Artist 2022, 1M+ Streams on Spotify, Featured on BBC Asian Network</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-title">Profile Tips</h6>
+                <ul class="mb-0 small">
+                  <li>A complete profile helps fans discover your music</li>
+                  <li>Use high-quality images for your banner</li>
+                  <li>Keep your bio concise but informative</li>
+                  <li>Highlight your most significant achievements</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <hr>
+          <div class="d-flex justify-content-end gap-2">
+            <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Additional scripts if needed
+</script>
+
+<%- include('../partials/artist-footer') %>

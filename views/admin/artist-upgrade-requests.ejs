@@ -1,0 +1,245 @@
+<%- contentFor('body') %>
+
+<!-- Artist Upgrade Requests -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Artist Upgrade Requests</h5>
+    <a href="/admin" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Filter Section -->
+  <div class="card-body pb-0">
+    <form id="filterForm" method="GET" action="/admin/artist-upgrade-requests" class="mb-3">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="statusFilter" class="form-label text-white">Status</label>
+          <select id="statusFilter" name="status" class="form-select form-select-sm bg-dark text-white border-secondary">
+            <option value="">All Statuses</option>
+            <% filterOptions.statuses.forEach(statusOption => { %>
+              <option value="<%= statusOption %>" <%= filters.status === statusOption ? 'selected' : '' %>>
+                <%= statusOption.charAt(0).toUpperCase() + statusOption.slice(1) %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="currentLevelFilter" class="form-label text-white">Current Level</label>
+          <select id="currentLevelFilter" name="currentLevel" class="form-select form-select-sm bg-dark text-white border-secondary">
+            <option value="">All Current Levels</option>
+            <% filterOptions.artistLevels.forEach(level => { %>
+              <option value="<%= level %>" <%= filters.currentLevel === level ? 'selected' : '' %>><%= level %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="requestedLevelFilter" class="form-label text-white">Requested Level</label>
+          <select id="requestedLevelFilter" name="requestedLevel" class="form-select form-select-sm bg-dark text-white border-secondary">
+            <option value="">All Requested Levels</option>
+            <% filterOptions.artistLevels.forEach(level => { %>
+              <option value="<%= level %>" <%= filters.requestedLevel === level ? 'selected' : '' %>><%= level %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end mt-3">
+        <a href="/admin/artist-upgrade-requests" class="btn btn-sm btn-outline-secondary me-2">
+          <i class="bi bi-x-circle"></i> Clear Filters
+        </a>
+        <button type="submit" class="btn btn-sm btn-primary">
+          <i class="bi bi-filter"></i> Apply Filters
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body p-0">
+    <!-- Results count -->
+    <div class="px-3 py-2 border-bottom border-secondary">
+      <p class="mb-0 text-white-50">
+        <i class="bi bi-list-ul me-1"></i>
+        Showing <span class="text-white"><%= requests.length %></span>
+        <%= requests.length === 1 ? 'request' : 'requests' %>
+        <% if (filters.status || filters.currentLevel || filters.requestedLevel) { %>
+          <span class="text-white-50">with applied filters</span>
+        <% } %>
+      </p>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Artist</th>
+            <th class="text-white">Current Level</th>
+            <th class="text-white">Requested Level</th>
+            <th class="text-white">Date Requested</th>
+            <th class="text-white">Status</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (requests && requests.length > 0) { %>
+            <% requests.forEach(request => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (request.user) { %>
+                      <img src="<%= request.user.profileImage || '/images/default-profile.png' %>" alt="<%= request.user.name %>" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                      <div>
+                        <h6 class="mb-0 text-white"><%= request.user.name %></h6>
+                        <small class="text-muted"><%= request.user.email %></small>
+                      </div>
+                    <% } else { %>
+                      <img src="/images/default-profile.png" alt="User not found" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                      <div>
+                        <h6 class="mb-0 text-white">User not found</h6>
+                        <small class="text-muted">User may have been deleted</small>
+                      </div>
+                    <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"><%= request.currentLevel %></span>
+                </td>
+                <td>
+                  <span class="badge bg-primary"><%= request.requestedLevel %></span>
+                </td>
+                <td class="text-white">
+                  <%= new Date(request.createdAt).toLocaleDateString() %>
+                </td>
+                <td>
+                  <% if (request.status === 'pending') { %>
+                    <span class="badge bg-warning">Pending</span>
+                  <% } else if (request.status === 'approved') { %>
+                    <span class="badge bg-success">Approved</span>
+                  <% } else if (request.status === 'rejected') { %>
+                    <span class="badge bg-danger">Rejected</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/admin/artist-upgrade-requests/<%= request._id %>" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <% if (request.status === 'pending') { %>
+                      <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#approveModal<%= request._id %>">
+                        <i class="bi bi-check-lg"></i> Approve
+                      </button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal<%= request._id %>">
+                        <i class="bi bi-x-lg"></i> Reject
+                      </button>
+                    <% } %>
+                    <a href="/admin/artist-upgrade-requests/<%= request._id %>/confirm-delete" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i> Delete
+                    </a>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Approve Modal -->
+              <div class="modal fade" id="approveModal<%= request._id %>" tabindex="-1" aria-labelledby="approveModalLabel<%= request._id %>" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                      <h5 class="modal-title" id="approveModalLabel<%= request._id %>">Approve Artist Upgrade</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="/admin/artist-upgrade-requests/<%= request._id %>/approve" method="POST">
+                      <div class="modal-body">
+                        <p>Are you sure you want to approve <strong><%= request.user ? request.user.name : 'this user' %></strong>'s request to upgrade from <strong><%= request.currentLevel %></strong> to <strong><%= request.requestedLevel %></strong>?</p>
+                        <div class="mb-3">
+                          <label for="adminNotes<%= request._id %>" class="form-label">Admin Notes (Optional)</label>
+                          <textarea class="form-control" id="adminNotes<%= request._id %>" name="adminNotes" rows="3" placeholder="Add any notes about this approval..."></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Approve Upgrade</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reject Modal -->
+              <div class="modal fade" id="rejectModal<%= request._id %>" tabindex="-1" aria-labelledby="rejectModalLabel<%= request._id %>" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark text-white">
+                    <div class="modal-header border-secondary">
+                      <h5 class="modal-title" id="rejectModalLabel<%= request._id %>">Reject Artist Upgrade</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="/admin/artist-upgrade-requests/<%= request._id %>/reject" method="POST">
+                      <div class="modal-body">
+                        <p>Are you sure you want to reject <strong><%= request.user ? request.user.name : 'this user' %></strong>'s request to upgrade from <strong><%= request.currentLevel %></strong> to <strong><%= request.requestedLevel %></strong>?</p>
+                        <div class="mb-3">
+                          <label for="adminNotes<%= request._id %>Reject" class="form-label">Rejection Reason (Required)</label>
+                          <textarea class="form-control" id="adminNotes<%= request._id %>Reject" name="adminNotes" rows="3" required placeholder="Explain why this request is being rejected..."></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject Upgrade</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">
+                <i class="bi bi-inbox display-4 text-muted mb-3 d-block"></i>
+                <% if (filters.status || filters.currentLevel || filters.requestedLevel) { %>
+                  <p class="mb-2">No upgrade requests found with the selected filters</p>
+                  <a href="/admin/artist-upgrade-requests" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                  </a>
+                <% } else { %>
+                  <p class="mb-0">No upgrade requests found</p>
+                <% } %>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const filterForm = document.getElementById('filterForm');
+    const filterSelects = filterForm.querySelectorAll('select');
+
+    filterSelects.forEach(select => {
+      select.addEventListener('change', function() {
+        filterForm.submit();
+      });
+    });
+
+    // Clear filters button functionality
+    const clearFiltersBtn = document.querySelector('a[href="/admin/artist-upgrade-requests"]');
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', function(e) {
+        // Only prevent default if filters are applied
+        const hasFilters =
+          document.getElementById('statusFilter').value !== '' ||
+          document.getElementById('currentLevelFilter').value !== '' ||
+          document.getElementById('requestedLevelFilter').value !== '';
+
+        if (!hasFilters) {
+          e.preventDefault(); // Don't reload if no filters are applied
+        }
+      });
+    }
+  });
+</script>

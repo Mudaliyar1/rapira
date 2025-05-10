@@ -1,0 +1,366 @@
+<%- contentFor('title') %>Dashboard
+
+<%- contentFor('body') %>
+<!-- Stats Cards -->
+<div class="row g-4 mb-5">
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark">
+      <div class="d-flex align-items-center">
+        <div class="stat-icon bg-primary-subtle text-primary me-3">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= counts.users %></h3>
+          <p class="text-white-50 mb-0">Users</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark">
+      <div class="d-flex align-items-center">
+        <div class="stat-icon bg-success-subtle text-success me-3">
+          <i class="bi bi-music-note-beamed"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= counts.artists %></h3>
+          <p class="text-white-50 mb-0">Artists</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark">
+      <div class="d-flex align-items-center">
+        <div class="stat-icon bg-warning-subtle text-warning me-3">
+          <i class="bi bi-calendar-event"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= counts.concerts %></h3>
+          <p class="text-white-50 mb-0">Concerts</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-card glass-card-dark">
+      <div class="d-flex align-items-center">
+        <div class="stat-icon bg-danger-subtle text-danger me-3">
+          <i class="bi bi-ticket-perforated"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= counts.tickets %></h3>
+          <p class="text-white-50 mb-0">Tickets</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-5">
+  <div class="col-lg-8">
+    <div class="glass-card-dark h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0 text-white">Revenue Overview</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="revenueChart"></canvas>
+      </div>
+      <div class="card-footer">
+        <div class="d-flex justify-content-between">
+          <div>
+            <h6 class="mb-0 text-white">Total Revenue</h6>
+            <h4 class="fw-bold text-primary">₹<%= totalRevenue.toLocaleString() %></h4>
+          </div>
+          <div>
+            <h6 class="mb-0 text-white">Tickets Sold</h6>
+            <h4 class="fw-bold text-success"><%= counts.tickets %></h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="glass-card-dark h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0 text-white">Concert Types</h5>
+      </div>
+      <div class="card-body d-flex justify-content-center align-items-center">
+        <canvas id="concertTypesChart"></canvas>
+      </div>
+      <div class="card-footer">
+        <div class="row text-center">
+          <div class="col-6">
+            <h6 class="mb-0 text-white">Paid</h6>
+            <h4 class="fw-bold text-primary"><%= concertStats.paid %></h4>
+          </div>
+          <div class="col-6">
+            <h6 class="mb-0 text-white">Free</h6>
+            <h4 class="fw-bold text-warning"><%= concertStats.free %></h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popular Cities & Recent Tickets -->
+<div class="row g-4 mb-5">
+  <div class="col-lg-6">
+    <div class="glass-card-dark h-100">
+      <div class="card-header">
+        <h5 class="card-title mb-0 text-white">Popular Cities</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="citiesChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="glass-card-dark h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 text-white">Recent Ticket Purchases</h5>
+        <a href="/admin/tickets" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th class="text-white">User</th>
+                <th class="text-white">Concert</th>
+                <th class="text-white">Amount</th>
+                <th class="text-white">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentTickets && recentTickets.length > 0) { %>
+                <% recentTickets.forEach(ticket => { %>
+                  <tr>
+                    <td class="text-white"><%= ticket.user.name %></td>
+                    <td class="text-white"><%= ticket.concert ? ticket.concert.title : 'N/A' %></td>
+                    <td class="text-white">₹<%= ticket.totalAmount %></td>
+                    <td class="text-white"><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="text-center py-3 text-white">No recent tickets</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- System Tools -->
+<div class="glass-card-dark mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0 text-white">System Tools</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card bg-dark text-white">
+          <div class="card-body">
+            <h5 class="card-title">Email Testing</h5>
+            <p class="card-text">Test email delivery to ensure notifications are working properly.</p>
+            <form action="/admin/test-email" method="GET" class="d-flex">
+              <input type="email" name="email" class="form-control me-2" placeholder="Email address" value="<%= typeof user !== 'undefined' && user.email ? user.email : '' %>">
+              <button type="submit" class="btn btn-primary">Test</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upcoming Concerts -->
+<div class="glass-card-dark mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Upcoming Concerts</h5>
+    <a href="/admin/concerts" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Title</th>
+            <th class="text-white">Artist</th>
+            <th class="text-white">Date</th>
+            <th class="text-white">Venue</th>
+            <th class="text-white">City</th>
+            <th class="text-white">Tickets Sold</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+            <% upcomingConcerts.forEach(concert => { %>
+              <tr>
+                <td class="text-white"><%= concert.title %></td>
+                <td class="text-white"><%= concert.artist.user.name %></td>
+                <td class="text-white"><%= new Date(concert.date).toLocaleDateString() %></td>
+                <td class="text-white"><%= concert.venue %></td>
+                <td class="text-white"><%= concert.city %></td>
+                <td class="text-white"><%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %></td>
+                <td>
+                  <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-3 text-white">No upcoming concerts</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Dashboard data from server
+  var lastMonthRevenue = 9000;
+  var paidConcerts = 15;
+  var freeConcerts = 5;
+  var pendingConcertsCount = 3;
+
+  // City data
+  var cityLabels = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata'];
+  var cityData = [25, 18, 15, 12, 10];
+</script>
+
+<script>
+
+  // Update pending count badge
+  document.addEventListener('DOMContentLoaded', function() {
+    const pendingCount = document.getElementById('pendingCount');
+    if (pendingCount) {
+      pendingCount.textContent = pendingConcertsCount;
+    }
+
+    // Initialize charts if Chart.js is available
+    if (typeof Chart !== 'undefined') {
+      // Revenue chart with dummy data
+      const revenueCtx = document.getElementById('revenueChart');
+      if (revenueCtx) {
+        const monthlyData = [1200, 1900, 3000, 5000, 2000, 3000, 7000, 8000, 4000, 6000, 9000, lastMonthRevenue];
+
+        new Chart(revenueCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+              label: 'Revenue',
+              data: monthlyData,
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: 'rgba(0, 0, 0, 0.05)'
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Concert types chart with real data
+      const concertTypesCtx = document.getElementById('concertTypesChart');
+      if (concertTypesCtx) {
+        new Chart(concertTypesCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Paid', 'Free'],
+            datasets: [{
+              data: [paidConcerts, freeConcerts],
+              backgroundColor: ['#6366f1', '#f59e0b'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+
+      // Cities chart
+      const citiesCtx = document.getElementById('citiesChart');
+      if (citiesCtx) {
+        new Chart(citiesCtx, {
+          type: 'bar',
+          data: {
+            labels: cityLabels,
+            datasets: [{
+              label: 'Concerts',
+              data: cityData,
+              backgroundColor: '#6366f1'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: 'rgba(0, 0, 0, 0.05)'
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  });
+</script>
+
+<%- contentFor('extraStyles') %>

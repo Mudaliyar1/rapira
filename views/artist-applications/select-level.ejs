@@ -1,0 +1,117 @@
+<%- contentFor('body') %>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-5">
+          <h1 class="fw-bold mb-3">Become an Artist</h1>
+          <p class="lead">Select your artist level to get started with your application</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <!-- Beginner Artist Card -->
+      <div class="col-md-4">
+        <div class="glass-card-dark h-100 position-relative overflow-hidden">
+          <div class="card-body p-4">
+            <div class="form-check position-absolute top-0 end-0 m-3">
+              <input class="form-check-input" type="radio" name="artistLevel" id="beginnerRadio" value="Beginner">
+              <label class="form-check-label" for="beginnerRadio"></label>
+            </div>
+            <h3 class="card-title fw-bold text-white mb-3">Beginner Artist</h3>
+            <div class="card-text text-white-75">
+              <p>Perfect for those just starting their musical journey.</p>
+              <ul class="list-unstyled mb-4">
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Access to learning resources</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Artist profile page</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Message producers</li>
+                <li class="mb-2"><i class="bi bi-x-circle-fill text-danger me-2"></i> Cannot create concerts</li>
+              </ul>
+            </div>
+            <a href="/artist-applications/apply/Beginner" class="btn btn-outline-light w-100">Apply as Beginner</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intermediate Artist Card -->
+      <div class="col-md-4">
+        <div class="glass-card-dark h-100 position-relative overflow-hidden">
+          <div class="card-body p-4">
+            <div class="form-check position-absolute top-0 end-0 m-3">
+              <input class="form-check-input" type="radio" name="artistLevel" id="intermediateRadio" value="Intermediate">
+              <label class="form-check-label" for="intermediateRadio"></label>
+            </div>
+            <h3 class="card-title fw-bold text-white mb-3">Intermediate Artist</h3>
+            <div class="card-text text-white-75">
+              <p>For artists with some experience and a growing audience.</p>
+              <ul class="list-unstyled mb-4">
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Access to learning resources</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Artist profile page</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Message all roles</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Create concerts</li>
+              </ul>
+            </div>
+            <a href="/artist-applications/apply/Intermediate" class="btn btn-outline-light w-100">Apply as Intermediate</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Established Artist Card -->
+      <div class="col-md-4">
+        <div class="glass-card-dark h-100 position-relative overflow-hidden">
+          <div class="card-body p-4">
+            <div class="form-check position-absolute top-0 end-0 m-3">
+              <input class="form-check-input" type="radio" name="artistLevel" id="establishedRadio" value="Established">
+              <label class="form-check-label" for="establishedRadio"></label>
+            </div>
+            <h3 class="card-title fw-bold text-white mb-3">Established Artist</h3>
+            <div class="card-text text-white-75">
+              <p>For professional artists with a significant following.</p>
+              <ul class="list-unstyled mb-4">
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Access to learning resources</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Artist profile page</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Message all roles</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Create concerts</li>
+                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Premium features</li>
+              </ul>
+            </div>
+            <a href="/artist-applications/apply/Established" class="btn btn-outline-light w-100">Apply as Established</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <h5><i class="bi bi-info-circle-fill me-2"></i> Important Information</h5>
+          <p class="mb-0">All artist applications are reviewed by our team. You will be notified once your application is approved or rejected. Please ensure you provide accurate information in your application.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Make the entire card clickable
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.glass-card-dark');
+    
+    cards.forEach(card => {
+      card.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        const link = this.querySelector('a.btn');
+        
+        if (radio) {
+          radio.checked = true;
+        }
+        
+        if (link) {
+          window.location.href = link.getAttribute('href');
+        }
+      });
+    });
+  });
+</script>

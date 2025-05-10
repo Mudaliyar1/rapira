@@ -1,0 +1,416 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="card bg-white p-3">
+      <div class="d-flex align-items-center">
+        <div class="me-3 text-center">
+          <div class="bg-primary text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-calendar-event fs-3"></i>
+          </div>
+        </div>
+        <div>
+          <h5 style="color: #000000; font-weight: 700; font-size: 1.25rem;" class="mb-1">Concerts</h5>
+          <p class="text-dark mb-0"><strong><%= upcomingConcerts.length %></strong> Upcoming</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-white p-3">
+      <div class="d-flex align-items-center">
+        <div class="me-3 text-center">
+          <div class="bg-info text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-music-note-beamed fs-3"></i>
+          </div>
+        </div>
+        <div>
+          <h5 style="color: #000000; font-weight: 700; font-size: 1.25rem;" class="mb-1">Content</h5>
+          <p class="text-dark mb-0"><strong><%= content.length %></strong> Uploads</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-white p-3">
+      <div class="d-flex align-items-center">
+        <div class="me-3 text-center">
+          <div class="bg-warning text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-hourglass-split fs-3"></i>
+          </div>
+        </div>
+        <div>
+          <h5 style="color: #000000; font-weight: 700;" class="mb-1">Pending</h5>
+          <p class="text-dark mb-0"><strong><%= pendingConcerts.length %></strong> Approvals</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-5">
+  <div class="card-body">
+    <h5 class="card-title fw-bold mb-4">Quick Actions</h5>
+    <div class="row g-3">
+      <% if (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') { %>
+      <div class="col-md-3">
+        <a href="/concerts/create" class="btn btn-primary w-100 py-3">
+          <i class="bi bi-calendar-plus fs-4 d-block mb-2"></i>
+          Create Concert
+        </a>
+      </div>
+      <% } %>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+        <a href="/learning" class="btn btn-info w-100 py-3 text-white">
+          <i class="bi bi-book fs-4 d-block mb-2"></i>
+          Learning Modules
+        </a>
+      </div>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+        <a href="/artists/manage-concerts" class="btn btn-success w-100 py-3">
+          <i class="bi bi-calendar-event fs-4 d-block mb-2"></i>
+          Manage Concerts
+        </a>
+      </div>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+        <a href="/artists/edit-profile" class="btn btn-primary w-100 py-3 text-white">
+          <i class="bi bi-pencil-square fs-4 d-block mb-2"></i>
+          Edit Profile
+        </a>
+      </div>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+        <a href="/messages/find" class="btn btn-warning w-100 py-3 text-white">
+          <i class="bi bi-people fs-4 d-block mb-2"></i>
+          Connect with Others
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upcoming Concerts -->
+<div class="card mb-5">
+  <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+    <h5 class="card-title fw-bold mb-0">Upcoming Concerts</h5>
+    <% if (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') { %>
+    <a href="/concerts/create" class="btn btn-sm btn-outline-light">Create New</a>
+    <% } else { %>
+    <a href="/learning" class="btn btn-sm btn-outline-light">Complete Learning to Create Concerts</a>
+    <% } %>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Title</th>
+            <th>Date & Time</th>
+            <th>Venue</th>
+            <th>City</th>
+            <th>Type</th>
+            <th>Tickets Sold</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+            <% upcomingConcerts.forEach(concert => { %>
+              <tr>
+                <td><%= concert.title %></td>
+                <td>
+                  <%= new Date(concert.date).toLocaleDateString() %><br>
+                  <small class="text-muted"><%= concert.time %></small>
+                </td>
+                <td><%= concert.venue %></td>
+                <td><%= concert.city %></td>
+                <td>
+                  <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %>">
+                    <%= concert.isPaid ? `₹${concert.price}` : 'Free' %>
+                  </span>
+                </td>
+                <td>
+                  <%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %>
+                </td>
+                <td>
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item" href="/concerts/<%= concert._id %>" target="_blank">
+                        <i class="bi bi-eye me-2"></i> View
+                      </a></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#cancelModal<%= concert._id %>">
+                          <i class="bi bi-x-circle me-2"></i> Cancel
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- Cancel Modal -->
+                  <div class="modal fade" id="cancelModal<%= concert._id %>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Confirm Cancellation</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p>Are you sure you want to cancel the concert "<%= concert.title %>"?</p>
+                          <p class="text-danger mb-0">This action cannot be undone. All ticket holders will be notified.</p>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          <form action="/concerts/<%= concert._id %>/cancel" method="POST">
+                            <button type="submit" class="btn btn-danger">Cancel Concert</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4">No upcoming concerts</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Concerts -->
+<div class="card mb-5">
+  <div class="card-header bg-dark text-white py-3">
+    <h5 class="card-title fw-bold mb-0">Pending Approval</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Title</th>
+            <th>Date & Time</th>
+            <th>Venue</th>
+            <th>City</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (pendingConcerts && pendingConcerts.length > 0) { %>
+            <% pendingConcerts.forEach(concert => { %>
+              <tr>
+                <td><%= concert.title %></td>
+                <td>
+                  <%= new Date(concert.date).toLocaleDateString() %><br>
+                  <small class="text-muted"><%= concert.time %></small>
+                </td>
+                <td><%= concert.venue %></td>
+                <td><%= concert.city %></td>
+                <td>
+                  <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %>">
+                    <%= concert.isPaid ? `₹${concert.price}` : 'Free' %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-warning">Pending</span>
+                </td>
+                <td>
+                  <a href="/concerts/<%= concert._id %>/edit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4">No pending concerts</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Content -->
+<div class="card">
+  <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+    <h5 class="card-title fw-bold mb-0">Recent Content</h5>
+    <div>
+      <a href="/artists/manage-content" class="btn btn-sm btn-outline-light me-2">
+        <i class="bi bi-grid"></i> Manage All
+      </a>
+      <a href="/artists/upload-content" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-plus"></i> Upload New
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row g-4">
+      <% if (content && content.length > 0) { %>
+        <% content.slice(0, 3).forEach(item => { %>
+          <div class="col-md-4">
+            <div class="card content-card h-100">
+              <div class="position-relative">
+                <img src="<%= item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
+                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
+                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
+                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title"><%= item.title %></h5>
+                <% if (item.description) { %>
+                  <p class="card-text"><%= item.description.length > 50 ? item.description.substring(0, 50) + '...' : item.description %></p>
+                <% } %>
+                <p class="card-text">
+                  <small class="text-muted">
+                    <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                  </small>
+                </p>
+              </div>
+              <div class="card-footer bg-dark border-top-0">
+                <div class="d-flex gap-2 mb-2">
+                  <a href="<%= item.fileUrl %>"
+                     class="btn btn-primary flex-grow-1 content-link"
+                     data-type="<%= item.type %>"
+                     data-title="<%= item.title %>"
+                     data-artist="<%= artist.user ? artist.user.name : 'Unknown Artist' %>"
+                     data-thumbnail="<%= item.thumbnailUrl %>">
+                    <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
+                  </a>
+                </div>
+                <div class="d-flex gap-2">
+                  <a href="/artists/content/<%= item._id %>/edit" class="btn btn-secondary flex-grow-1">
+                    <i class="bi bi-pencil"></i> Edit
+                  </a>
+                  <a href="/artists/content/<%= item._id %>/delete" class="btn btn-danger flex-grow-1">
+                    <i class="bi bi-trash"></i> Delete
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+        <% if (content.length > 3) { %>
+          <div class="col-12 text-center mt-3">
+            <a href="/artists/<%= artist._id %>" class="btn btn-outline-primary">View All Content</a>
+          </div>
+        <% } %>
+      <% } else { %>
+        <div class="col-12 text-center py-4">
+          <p class="mb-3">You haven't uploaded any content yet.</p>
+          <a href="/artists/upload-content" class="btn btn-primary">Upload Content</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Additional scripts for the dashboard if needed
+</script>
+
+<style>
+  /* Custom styles for the artist dashboard */
+  .card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .card-header .card-title {
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Stats card styles */
+  .card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .bg-primary {
+    background-color: #6366f1 !important;
+  }
+
+  .bg-info {
+    background-color: #0ea5e9 !important;
+  }
+
+  .bg-warning {
+    background-color: #f59e0b !important;
+  }
+
+  /* Content card styles */
+  .content-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .content-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .content-card .card-footer {
+    padding: 1rem;
+  }
+
+  .content-card .btn {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+  }
+
+  .content-card .btn-danger {
+    background-color: #ef4444;
+    border-color: #ef4444;
+  }
+
+  .content-card .btn-danger:hover {
+    background-color: #dc2626;
+    border-color: #dc2626;
+  }
+
+  .content-card .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+  }
+
+  .content-card .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+  }
+
+  .content-card .btn-primary {
+    background-color: #6366f1;
+    border-color: #6366f1;
+  }
+
+  .content-card .btn-primary:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+  }
+
+  /* Dashboard header styles */
+  .dashboard-header {
+    background: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+    border-radius: 8px;
+  }
+</style>
+
+<%- include('../partials/artist-footer') %>

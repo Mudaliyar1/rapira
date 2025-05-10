@@ -1,0 +1,266 @@
+<!-- Ticket Details -->
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-card-dark mb-4">
+          <div class="ticket-header p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="fw-bold mb-0 text-white">Concert Ticket</h3>
+              <span class="badge bg-light text-dark">
+                <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : ticket.paymentStatus %>
+              </span>
+            </div>
+          </div>
+
+          <div class="ticket-body p-3">
+            <div class="row mb-4">
+              <div class="col-md-8">
+                <% if (isDeletedConcert) { %>
+                  <h4 class="fw-bold mb-2 text-white ticket-title">Concert Unavailable</h4>
+                  <p class="text-white-50 mb-3 concert-date-info">
+                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
+                    This concert has been removed
+                  </p>
+                <% } else { %>
+                  <h4 class="fw-bold mb-2 text-white ticket-title"><%= concert.title %></h4>
+                  <p class="text-white-50 mb-0 concert-date-info">
+                    <i class="bi bi-calendar3 me-2 text-primary"></i>
+                    <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                  </p>
+                  <p class="text-white-50 mb-0">
+                    <i class="bi bi-clock me-2 text-primary"></i>
+                    <%= concert.time %>
+                  </p>
+                  <p class="text-white-50 mb-0 concert-venue-info">
+                    <i class="bi bi-geo-alt me-2 text-primary"></i>
+                    <%= concert.venue %>, <%= concert.city %>
+                  </p>
+                <% } %>
+              </div>
+              <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <% if (!isDeletedConcert) { %>
+                  <div class="concert-date mx-auto mx-md-0 ms-md-auto me-md-0">
+                    <div class="month"><%= new Date(concert.date).toLocaleDateString('en-US', { month: 'short' }) %></div>
+                    <div class="day"><%= new Date(concert.date).getDate() %></div>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <div class="row mb-4">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <h5 class="fw-bold mb-3 text-white">Ticket Information</h5>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Ticket Number:</span><br>
+                  <span class="ticket-number text-white-50"><%= ticket.ticketNumber %></span>
+                </p>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Quantity:</span><br>
+                  <span class="text-white-50"><%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></span>
+                </p>
+                <p class="mb-0">
+                  <span class="fw-medium text-white">Purchase Date:</span><br>
+                  <span class="text-white-50"><%= new Date(ticket.purchaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <h5 class="fw-bold mb-3 text-white">Attendee Details</h5>
+                <% ticket.attendees.forEach((attendee, index) => { %>
+                  <p class="mb-<%= index < ticket.attendees.length - 1 ? '2' : '0' %>">
+                    <span class="fw-medium text-white">Attendee <%= index + 1 %>:</span><br>
+                    <span class="text-white-50"><%= attendee.name %> (Age: <%= attendee.age %>)</span>
+                  </p>
+                <% }); %>
+              </div>
+            </div>
+
+            <% if (ticket.paymentId) { %>
+              <hr class="my-4 border-secondary">
+
+              <div class="mb-0">
+                <h5 class="fw-bold mb-3 text-white">Payment Information</h5>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Payment ID:</span><br>
+                  <span class="text-white-50"><%= ticket.paymentId %></span>
+                </p>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Amount Paid:</span><br>
+                  <span class="text-white-50">₹<%= ticket.totalAmount %></span>
+                </p>
+                <p class="mb-0">
+                  <span class="fw-medium text-white">Payment Status:</span><br>
+                  <span class="badge bg-success">Completed</span>
+                </p>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="ticket-footer p-3 border-top border-secondary">
+            <div class="row align-items-center">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <div class="d-flex align-items-center">
+                  <img src="/images/logo.png" alt="Rapira" height="30" class="me-2">
+                  <span class="fw-bold text-white">Rapira</span>
+                </div>
+              </div>
+              <div class="col-md-6 text-md-end">
+                <div class="d-flex justify-content-start justify-content-md-end gap-2">
+                  <div class="btn-group">
+                    <button type="button" id="downloadTicket" class="btn btn-sm btn-primary">
+                      <i class="bi bi-download me-1"></i> Download PDF
+                    </button>
+                    <button type="button" id="downloadHtmlTicket" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-file-earmark-code me-1"></i> HTML
+                    </button>
+                  </div>
+                  <a href="/tickets" class="btn btn-sm btn-outline-light">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Tickets
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if (!isDeletedConcert) { %>
+        <!-- Artist Information -->
+        <div class="glass-card-dark">
+          <div class="card-body p-3">
+            <h5 class="fw-bold mb-3 text-white">Artist Information</h5>
+            <div class="d-flex align-items-center mb-3">
+              <img src="<%= concert.artist.user.profileImage %>" alt="<%= concert.artist.user.name %>" class="rounded-circle me-3" width="60" height="60">
+              <div>
+                <h6 class="mb-1 text-white"><%= concert.artist.user.name %></h6>
+                <% if (concert.artist.verified) { %>
+                  <span class="badge bg-primary">
+                    <i class="bi bi-patch-check-fill me-1"></i> Verified
+                  </span>
+                <% } %>
+              </div>
+            </div>
+            <a href="/artists/<%= concert.artist._id %>" class="btn btn-primary">View Artist Profile</a>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PDF generation library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- Direct PDF download button -->
+<div id="downloadBtnContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+  <button id="directDownloadBtn" class="btn btn-primary">
+    <i class="bi bi-download me-1"></i> Download Ticket
+  </button>
+</div>
+
+<!-- Simple PDF download script -->
+<script>
+  // Direct download function
+  document.getElementById('directDownloadBtn').addEventListener('click', function() {
+    // Hide the button during generation
+    this.style.display = 'none';
+
+    // Get the ticket container
+    const element = document.querySelector('.glass-card-dark');
+
+    // Set options
+    const options = {
+      margin: [10, 10, 10, 10],
+      filename: 'Rapira_Ticket.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Generate PDF
+    html2pdf()
+      .from(element)
+      .set(options)
+      .save()
+      .then(() => {
+        // Show the button again
+        this.style.display = 'block';
+      })
+      .catch(error => {
+        console.error('PDF generation error:', error);
+        // Show the button again even if there's an error
+        this.style.display = 'block';
+        alert('There was an error generating the PDF. Please try again.');
+      });
+  });
+
+  // Regular buttons
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('downloadTicket').addEventListener('click', function() {
+      // Get the ticket container
+      const element = document.querySelector('.glass-card-dark');
+
+      // Set options
+      const options = {
+        margin: [10, 10, 10, 10],
+        filename: 'Rapira_Ticket.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Generate PDF
+      html2pdf().set(options).from(element).save()
+        .catch(error => {
+          console.error('PDF generation error:', error);
+          alert('There was an error generating the PDF. Please try again.');
+        });
+    });
+
+    // HTML download function
+    document.getElementById('downloadHtmlTicket').addEventListener('click', function() {
+      // Get ticket data
+      var title = document.querySelector('h4.fw-bold').textContent;
+      var number = document.querySelector('.ticket-number').textContent;
+      var dateInfo = document.querySelector('.concert-date-info');
+      var venueInfo = document.querySelector('.concert-venue-info');
+
+      var date = dateInfo ? dateInfo.textContent.replace(/\s+/g, ' ').trim() : 'Concert Removed';
+      var venue = venueInfo ? venueInfo.textContent.replace(/\s+/g, ' ').trim() : 'Venue Information Unavailable';
+
+      // Create HTML content
+      var html = '<!DOCTYPE html><html><head><title>Rapira Ticket</title>';
+      html += '<style>body{font-family:Arial;padding:20px}';
+      html += '.ticket{border:2px solid #6366f1;border-radius:10px;padding:20px;max-width:500px;margin:0 auto}';
+      html += '.header{background:#6366f1;color:white;padding:15px;text-align:center;margin:-20px -20px 20px -20px;border-radius:8px 8px 0 0}';
+      html += '.footer{border-top:1px dashed #ccc;margin-top:20px;padding-top:10px;text-align:center;font-size:12px}</style>';
+      html += '</head><body><div class="ticket"><div class="header"><h1>Rapira Concert Ticket</h1></div>';
+      html += '<h2>' + title + '</h2>';
+      html += '<p><strong>Ticket Number:</strong> ' + number + '</p>';
+      html += '<p><strong>Date:</strong> ' + date + '</p>';
+      html += '<p><strong>Venue:</strong> ' + venue + '</p>';
+      html += '<div class="footer"><p>This ticket was generated by Rapira Concert Platform</p>';
+      html += '<p>Please present this ticket at the venue entrance</p></div></div></body></html>';
+
+      // Create download link
+      var element = document.createElement('a');
+      element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html));
+      element.setAttribute('download', 'Rapira_Ticket.html');
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    });
+  });
+</script>
+
+<!-- Print styles -->
+<style>
+  @media print {
+    #downloadBtnContainer {
+      display: none;
+    }
+  }
+</style>

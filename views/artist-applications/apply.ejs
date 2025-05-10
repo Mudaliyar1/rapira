@@ -1,0 +1,240 @@
+<%- contentFor('body') %>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background-color: rgba(0,0,0,0.7); z-index: 9999;">
+  <div class="d-flex justify-content-center align-items-center h-100">
+    <div class="text-center text-white">
+      <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <h5>Submitting your application...</h5>
+      <p class="text-white-50">Please wait while we process your information.</p>
+    </div>
+  </div>
+</div>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-card-dark">
+          <div class="card-header border-bottom border-secondary">
+            <h2 class="card-title mb-0 text-white"><%= level %> Artist Application</h2>
+          </div>
+          <div class="card-body p-4">
+            <p class="text-white-75 mb-4">Please fill out the form below to apply as a <%= level %> Artist. All fields are required.</p>
+
+            <form action="/artist-applications/apply" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="artistLevel" value="<%= level %>">
+
+              <div class="mb-4">
+                <label for="aadharCard" class="form-label text-white">Aadhaar Card Number</label>
+                <input type="text" class="form-control" id="aadharCard" name="aadharCard" required
+                       pattern="[0-9]{12}" maxlength="12" title="Please enter a valid 12-digit Aadhaar number">
+                <div class="form-text">Enter your 12-digit Aadhaar Card number without spaces</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="state" class="form-label text-white">State</label>
+                <select class="form-select" id="state" name="state" required>
+
+                  <option value="" selected disabled>Select your state</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                  <option value="Chandigarh">Chandigarh</option>
+                  <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                  <option value="Ladakh">Ladakh</option>
+                  <option value="Lakshadweep">Lakshadweep</option>
+                  <option value="Puducherry">Puducherry</option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label for="city" class="form-label text-white">City</label>
+                <input type="text" class="form-control" id="city" name="city" required>
+              </div>
+
+              <div class="mb-4">
+                <label for="age" class="form-label text-white">Age</label>
+                <input type="number" class="form-control" id="age" name="age" min="18" max="120" required>
+                <div class="form-text">You must be at least 18 years old to apply</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="phoneNumber" class="form-label text-white">Phone Number</label>
+                <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required
+                       pattern="[0-9]{10}" maxlength="10" title="Please enter a valid 10-digit phone number">
+                <div class="form-text">Enter your 10-digit phone number without spaces or special characters</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="proofPhoto" class="form-label text-white">Proof Photo Upload</label>
+                <input type="file" class="form-control" id="proofPhoto" name="proofPhoto" accept="image/jpeg,image/png,image/jpg,application/pdf" required>
+                <div class="form-text">Upload a photo of your ID proof or any document that verifies your identity. Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)</div>
+                <div class="invalid-feedback" id="fileError"></div>
+              </div>
+
+              <div class="alert alert-info mb-4">
+                <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Important Information</h5>
+                <p class="mb-0">By submitting this application, you agree to our <a href="/terms-of-service" class="alert-link">Terms of Service</a> and <a href="/privacy-policy" class="alert-link">Privacy Policy</a>. Your application will be reviewed by our team, and you will be notified of the decision via email.</p>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner" role="status" aria-hidden="true"></span>
+                  <span id="submitText">Submit Application</span>
+                </button>
+                <a href="/artist-applications/select-level" class="btn btn-outline-light" id="backBtn">Go Back</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Form validation and submission handling
+  document.addEventListener('DOMContentLoaded', function() {
+    // Aadhaar card validation
+    const aadharInput = document.getElementById('aadharCard');
+
+    aadharInput.addEventListener('input', function() {
+      // Remove any non-numeric characters
+      this.value = this.value.replace(/\D/g, '');
+
+      // Limit to 12 digits
+      if (this.value.length > 12) {
+        this.value = this.value.slice(0, 12);
+      }
+    });
+
+    // Phone number validation
+    const phoneInput = document.getElementById('phoneNumber');
+
+    phoneInput.addEventListener('input', function() {
+      // Remove any non-numeric characters
+      this.value = this.value.replace(/\D/g, '');
+
+      // Limit to 10 digits
+      if (this.value.length > 10) {
+        this.value = this.value.slice(0, 10);
+      }
+    });
+
+    // File upload validation
+    const fileInput = document.getElementById('proofPhoto');
+    const fileError = document.getElementById('fileError');
+    const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+
+    fileInput.addEventListener('change', function() {
+      const file = this.files[0];
+
+      // Reset validation state
+      fileInput.classList.remove('is-invalid');
+      fileError.textContent = '';
+
+      if (file) {
+        // Check file size
+        if (file.size > maxFileSize) {
+          fileInput.classList.add('is-invalid');
+          fileError.textContent = 'File size exceeds 5MB limit. Please choose a smaller file.';
+          this.value = ''; // Clear the file input
+          return;
+        }
+
+        // Check file type
+        const fileType = file.type;
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+
+        if (!validTypes.includes(fileType)) {
+          fileInput.classList.add('is-invalid');
+          fileError.textContent = 'Invalid file type. Please upload a JPG, JPEG, PNG, or PDF file.';
+          this.value = ''; // Clear the file input
+          return;
+        }
+      }
+    });
+
+    // Form submission handling
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const submitText = document.getElementById('submitText');
+    const backBtn = document.getElementById('backBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Prevent accidental form submission when pressing Enter
+    form.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+      // Prevent default submission to do validation
+      e.preventDefault();
+
+      // Check form validity
+      if (form.checkValidity()) {
+        // Show loading state on button
+        submitBtn.disabled = true;
+        backBtn.classList.add('disabled');
+        submitSpinner.classList.remove('d-none');
+        submitText.textContent = 'Submitting...';
+
+        // Show loading overlay
+        loadingOverlay.classList.remove('d-none');
+
+        // Small delay to ensure UI updates before form submission
+        setTimeout(() => {
+          // Submit the form
+          form.submit();
+        }, 100);
+      } else {
+        // Trigger browser's native validation
+        form.reportValidity();
+      }
+    });
+
+    // Prevent double submission
+    window.addEventListener('beforeunload', function() {
+      if (submitBtn.disabled) {
+        // If the form is being submitted, show loading overlay
+        loadingOverlay.classList.remove('d-none');
+      }
+    });
+  });
+</script>

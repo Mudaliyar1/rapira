@@ -1,0 +1,142 @@
+<%- contentFor('body') %>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-4 mb-4 mb-lg-0 d-none d-lg-block">
+        <div class="glass-card-dark h-100">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 text-white">Messages</h5>
+            <a href="/messages/find" class="btn btn-sm btn-primary">
+              <i class="bi bi-search"></i> Find Users
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush border-bottom scrollarea" style="max-height: 600px; overflow-y: auto;">
+              <a href="/messages" class="list-group-item list-group-item-action py-3 lh-tight border-secondary bg-dark text-white">
+                <div class="d-flex w-100 align-items-center justify-content-between">
+                  <strong class="mb-1"><i class="bi bi-arrow-left me-2"></i> Back to Inbox</strong>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-8">
+        <div class="glass-card-dark h-100 d-flex flex-column">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <a href="/messages" class="btn btn-sm btn-outline-light me-2 d-lg-none">
+                <i class="bi bi-arrow-left"></i>
+              </a>
+              <div class="d-flex align-items-center">
+                <img src="<%= otherUser.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-2" width="40" height="40" alt="<%= otherUser.name %>">
+                <div>
+                  <h5 class="card-title mb-0 text-white"><%= otherUser.name %></h5>
+                  <div class="d-flex flex-wrap gap-1">
+                    <% if (otherUser.role === 'artist' && otherUserArtist) { %>
+                      <span class="badge bg-primary">
+                        <%= otherUserArtist.artistLevel %> Artist
+                      </span>
+                    <% } %>
+                    <% if (otherUserRoles && otherUserRoles.length > 0) { %>
+                      <% otherUserRoles.forEach(userRole => { %>
+                        <span class="badge bg-secondary">
+                          <i class="bi <%= userRole.role.icon %> me-1"></i> <%= userRole.role.name %>
+                        </span>
+                      <% }); %>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card-body p-0 flex-grow-1 d-flex flex-column">
+            <div class="chat-messages p-3 scrollarea" style="flex: 1; overflow-y: auto; max-height: 400px;">
+              <% if (messages && messages.length > 0) { %>
+                <% messages.forEach(message => { %>
+                  <div class="message <%= message.sender.toString() === user.id ? 'message-outgoing' : 'message-incoming' %> mb-3">
+                    <div class="message-content <%= message.sender.toString() === user.id ? 'bg-primary' : 'bg-secondary' %> text-white rounded p-3">
+                      <%= message.content %>
+                    </div>
+                    <div class="message-meta text-muted small mt-1 <%= message.sender.toString() === user.id ? 'text-end' : '' %>">
+                      <%= new Date(message.createdAt).toLocaleString() %>
+                      <% if (message.sender.toString() === user.id) { %>
+                        <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <div class="text-center py-5">
+                  <i class="bi bi-chat display-1 text-muted mb-3"></i>
+                  <h3 class="text-white">No Messages Yet</h3>
+                  <p class="text-white-75">Send a message to start the conversation.</p>
+                </div>
+              <% } %>
+            </div>
+            
+            <div class="chat-input p-3 border-top border-secondary">
+              <form action="/messages/send" method="POST">
+                <input type="hidden" name="recipientId" value="<%= otherUser._id %>">
+                <div class="input-group">
+                  <input type="text" class="form-control" name="content" placeholder="Type your message..." required>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .message-outgoing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .message-incoming {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .message-content {
+    max-width: 75%;
+    word-break: break-word;
+  }
+  
+  .scrollarea {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+  
+  .scrollarea::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollarea::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollarea::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Scroll to bottom of chat
+    const chatMessages = document.querySelector('.chat-messages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+</script>

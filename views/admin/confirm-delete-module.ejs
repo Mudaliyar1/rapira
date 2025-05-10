@@ -1,0 +1,89 @@
+<%- contentFor('body') %>
+
+<!-- Confirm Delete Learning Module -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Confirm Delete Learning Module</h5>
+    <a href="/learning/admin" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Modules
+    </a>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-danger">
+      <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i> Warning</h5>
+      <p>Are you sure you want to delete the learning module <strong><%= module.title %></strong>?</p>
+      <p class="mb-0">This action cannot be undone.</p>
+    </div>
+
+    <div class="mb-4">
+      <div class="glass-card-dark p-3 border border-danger rounded">
+        <h6 class="text-white mb-3">Module Information</h6>
+        <div class="row">
+          <div class="col-md-8">
+            <p class="mb-2">
+              <span class="fw-medium text-white">Title:</span>
+              <span class="text-white-75"><%= module.title %></span>
+            </p>
+            <p class="mb-2">
+              <span class="fw-medium text-white">Description:</span>
+              <span class="text-white-75"><%= module.description %></span>
+            </p>
+            <p class="mb-2">
+              <span class="fw-medium text-white">Type:</span>
+              <span class="text-white-75">
+                <% if (module.contentType === 'video') { %>
+                  <i class="bi bi-camera-video me-1"></i> Video
+                <% } else if (module.contentType === 'text') { %>
+                  <i class="bi bi-file-text me-1"></i> Text
+                <% } else if (module.contentType === 'pdf') { %>
+                  <i class="bi bi-file-pdf me-1"></i> PDF
+                <% } else if (module.contentType === 'link') { %>
+                  <i class="bi bi-link me-1"></i> External Link
+                <% } %>
+              </span>
+            </p>
+            <p class="mb-2">
+              <span class="fw-medium text-white">Artist Level:</span>
+              <span class="text-white-75">
+                <i class="bi bi-person-badge me-1"></i> <%= module.forArtistLevel %>
+              </span>
+            </p>
+            <p class="mb-0">
+              <span class="fw-medium text-white">Required:</span>
+              <span class="text-white-75">
+                <% if (module.isRequired) { %>
+                  <span class="badge bg-success">Yes</span>
+                <% } else { %>
+                  <span class="badge bg-secondary">No</span>
+                <% } %>
+              </span>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <div class="text-center">
+              <img src="<%= module.thumbnailImage %>" alt="<%= module.title %>" class="img-fluid rounded" style="max-height: 150px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if (progressCount > 0) { %>
+      <div class="alert alert-warning">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <strong>Note:</strong> This module has been accessed by <%= progressCount %> user<%= progressCount !== 1 ? 's' : '' %>. Deleting it will remove all progress records.
+      </div>
+    <% } %>
+
+    <form action="/learning/admin/delete/<%= module._id %>" method="POST">
+      <div class="d-flex justify-content-end">
+        <a href="/learning/admin" class="btn btn-outline-light me-2">Cancel</a>
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash me-1"></i> Delete Module
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- contentFor('title') %>Confirm Delete Learning Module

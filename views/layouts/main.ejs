@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#121212">
+  <meta name="description" content="Rapira - The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.">
+  <title>Rapira - Indian Rap Music Platform</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- AOS Animation Library -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Favicon -->
+  <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Extra Scripts -->
+  <% if (typeof extraScripts !== 'undefined') { %>
+    <%- extraScripts %>
+  <% } %>
+</head>
+<body>
+  <!-- Header -->
+  <%- include('../partials/navbar') %>
+
+  <!-- Flash Messages -->
+  <%- include('../partials/messages') %>
+
+  <!-- Main Content -->
+  <main class="container-fluid py-4">
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <%- include('../partials/footer') %>
+
+  <!-- Media Player Modal -->
+  <%- include('../partials/media-player-modal') %>
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle-wrapper">
+    <button class="theme-toggle-button" id="themeToggleBtn" aria-label="Toggle theme">
+      <i class="bi bi-sun-fill theme-icon-light"></i>
+      <i class="bi bi-moon-stars-fill theme-icon-dark"></i>
+    </button>
+    <span class="theme-toggle-tooltip">Toggle Theme</span>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- AOS Animation Library -->
+  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 800,
+      easing: 'ease',
+      once: true
+    });
+  </script>
+  <!-- PDF.js for PDF viewing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    // Initialize PDF.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+  <script src="/js/media-player.js"></script>
+
+  <!-- Session check script -->
+  <script>
+    // Check if user is logged in but navbar doesn't reflect it
+    document.addEventListener('DOMContentLoaded', function() {
+      // If we have a success message about being logged in but the navbar still shows login/register
+      const successMessages = document.querySelectorAll('.alert-success');
+      let hasLoginSuccess = false;
+
+      successMessages.forEach(message => {
+        if (message.textContent.includes('logged in')) {
+          hasLoginSuccess = true;
+        }
+      });
+
+      // Check if login button is visible (meaning we're not showing the user profile)
+      const loginButton = document.querySelector('a[href="/auth/login"]');
+
+      if (hasLoginSuccess && loginButton) {
+        console.log('Session state mismatch detected. Refreshing page...');
+        // Wait a moment and refresh to get the correct navbar state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

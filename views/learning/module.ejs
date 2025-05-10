@@ -1,0 +1,118 @@
+<%- contentFor('body') %>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="glass-card-dark">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0 text-white"><%= module.title %></h2>
+            <a href="/learning" class="btn btn-sm btn-outline-light">
+              <i class="bi bi-arrow-left"></i> Back to Learning
+            </a>
+          </div>
+          <div class="card-body p-4">
+            <div class="mb-4">
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge bg-primary p-2">
+                  <i class="bi bi-person-badge me-1"></i> <%= module.forArtistLevel %>
+                </span>
+                <span class="badge bg-secondary p-2">
+                  <% if (module.contentType === 'video') { %>
+                    <i class="bi bi-camera-video me-1"></i> Video
+                  <% } else if (module.contentType === 'text') { %>
+                    <i class="bi bi-file-text me-1"></i> Text
+                  <% } else if (module.contentType === 'pdf') { %>
+                    <i class="bi bi-file-pdf me-1"></i> PDF
+                  <% } else if (module.contentType === 'link') { %>
+                    <i class="bi bi-link me-1"></i> External Link
+                  <% } %>
+                </span>
+                <% if (module.isRequired) { %>
+                  <span class="badge bg-warning p-2">
+                    <i class="bi bi-star-fill me-1"></i> Required
+                  </span>
+                <% } %>
+                <% if (progress && progress.completed) { %>
+                  <span class="badge bg-success p-2">
+                    <i class="bi bi-check-circle-fill me-1"></i> Completed on <%= new Date(progress.completedAt).toLocaleDateString() %>
+                  </span>
+                <% } %>
+              </div>
+
+              <p class="lead text-white-75"><%= module.description %></p>
+            </div>
+
+            <div class="module-content mb-5">
+              <% if (module.contentType === 'video') { %>
+                <div class="ratio ratio-16x9 mb-4">
+                  <% if (module.content.includes('youtube.com') || module.content.includes('youtu.be')) { %>
+                    <%
+                      let videoUrl = module.content;
+                      // Handle youtube.com/watch?v= format
+                      if (videoUrl.includes('youtube.com/watch?v=')) {
+                        videoUrl = videoUrl.replace('watch?v=', 'embed/');
+                      }
+                      // Handle youtu.be/ format
+                      else if (videoUrl.includes('youtu.be/')) {
+                        const videoId = videoUrl.split('youtu.be/')[1];
+                        videoUrl = `https://www.youtube.com/embed/${videoId}`;
+                      }
+                      // Add autoplay=0 and related=0 parameters
+                      if (videoUrl.includes('?')) {
+                        videoUrl += '&autoplay=0&rel=0';
+                      } else {
+                        videoUrl += '?autoplay=0&rel=0';
+                      }
+                    %>
+                    <iframe src="<%= videoUrl %>" title="<%= module.title %>" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                  <% } else { %>
+                    <video controls>
+                      <source src="<%= module.content %>" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                  <% } %>
+                </div>
+              <% } else if (module.contentType === 'text') { %>
+                <div class="text-white">
+                  <%- module.content %>
+                </div>
+              <% } else if (module.contentType === 'pdf') { %>
+                <div class="ratio ratio-16x9 mb-4">
+                  <iframe src="<%= module.content %>" title="<%= module.title %>"></iframe>
+                </div>
+                <div class="d-grid">
+                  <a href="<%= module.content %>" class="btn btn-outline-light" target="_blank">
+                    <i class="bi bi-file-pdf me-2"></i> Open PDF in New Tab
+                  </a>
+                </div>
+              <% } else if (module.contentType === 'link') { %>
+                <div class="d-grid">
+                  <a href="<%= module.content %>" class="btn btn-primary" target="_blank">
+                    <i class="bi bi-box-arrow-up-right me-2"></i> Open External Resource
+                  </a>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (!progress || !progress.completed) { %>
+              <form action="/learning/module/<%= module._id %>/complete" method="POST">
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle-fill me-2"></i> Mark as Completed
+                  </button>
+                </div>
+              </form>
+            <% } else { %>
+              <div class="d-grid">
+                <a href="/learning" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-left me-2"></i> Back to Learning Center
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

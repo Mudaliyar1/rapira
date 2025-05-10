@@ -1,0 +1,80 @@
+<%- contentFor('title') %>Team Requirement Roles
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item active">Team Requirement Roles</li>
+  </ol>
+
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <i class="fas fa-table me-1"></i>
+        Manage Roles
+      </div>
+      <a href="/admin/team-requirement/roles/new" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus"></i> Add New Role
+      </a>
+    </div>
+    <div class="card-body">
+      <% if (roles.length === 0) { %>
+        <div class="alert alert-info" style="color: #000000 !important; background-color: #cff4fc !important; border: 1px solid #b6effb !important; font-weight: 500 !important;">
+          <span style="color: #000000 !important;">No roles found. Click the "Add New Role" button to create your first role.</span>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover" id="rolesTable" width="100%" cellspacing="0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Location</th>
+                <th>Phone Number</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% roles.forEach(role => { %>
+                <tr>
+                  <td><%= role.name %></td>
+                  <td><%= role.description.length > 50 ? role.description.substring(0, 50) + '...' : role.description %></td>
+                  <td><%= role.city %>, <%= role.state %></td>
+                  <td><%= role.phoneNumber || 'Not provided' %></td>
+                  <td>
+                    <span class="badge <%= role.isActive ? 'bg-success' : 'bg-danger' %>">
+                      <%= role.isActive ? 'Active' : 'Inactive' %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <a href="/admin/team-requirement/roles/<%= role._id %>/edit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> Edit
+                      </a>
+                      <a href="/team-requirement/roles/<%= role._id %>/delete-confirm" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('#rolesTable').DataTable({
+      responsive: true,
+      order: [[0, 'asc']]
+    });
+  });
+</script>

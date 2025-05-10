@@ -1,0 +1,123 @@
+<!-- Media Player Modal -->
+<div class="modal fade" id="mediaPlayerModal" tabindex="-1" aria-labelledby="mediaPlayerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="mediaPlayerModalLabel">
+          <span id="mediaTitle">Content</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeMediaPlayer"></button>
+      </div>
+      <div class="modal-body p-0">
+        <!-- Media content will be loaded here -->
+        <div id="mediaContainer" class="position-relative">
+          <!-- Audio Player -->
+          <div id="audioPlayerContainer" class="d-none">
+            <div class="row g-0">
+              <div class="col-md-4">
+                <img id="audioThumbnail" src="/images/default-thumbnail.jpg" alt="Audio Thumbnail" class="img-fluid rounded-start">
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h5 id="audioTitle" class="card-title">Audio Title</h5>
+                  <p id="audioArtist" class="card-text">Artist Name</p>
+                  <div class="audio-player">
+                    <audio id="audioPlayer" controls class="w-100">
+                      <source src="" type="audio/mpeg">
+                      Your browser does not support the audio element.
+                    </audio>
+                    <div class="waveform mt-3" id="waveform"></div>
+                    <div class="d-flex justify-content-between text-muted mt-2">
+                      <span id="currentTime">0:00</span>
+                      <span id="duration">0:00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Player -->
+          <div id="videoPlayerContainer" class="d-none">
+            <video id="videoPlayer" controls class="w-100">
+              <source src="" type="video/mp4">
+              Your browser does not support the video element.
+            </video>
+          </div>
+
+          <!-- PDF Viewer -->
+          <div id="pdfViewerContainer" class="d-none">
+            <div id="pdfViewer" class="pdf-container">
+              <div id="pdfLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading PDF...</p>
+              </div>
+              <div class="canvas-container">
+                <canvas id="pdfCanvas"></canvas>
+              </div>
+              <div class="pdf-controls bg-dark p-2 d-flex justify-content-between align-items-center">
+                <button id="prevPage" class="btn btn-sm btn-outline-light">
+                  <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <div class="text-white">
+                  Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                </div>
+                <button id="nextPage" class="btn btn-sm btn-outline-light">
+                  Next <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lyrics Viewer -->
+          <div id="lyricsViewerContainer" class="d-none">
+            <div class="lyrics-content p-4" id="lyricsContent">
+              <!-- Lyrics will be loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <div class="d-flex justify-content-between w-100">
+          <div>
+            <button type="button" class="btn btn-outline-light" id="downloadContent">
+              <i class="bi bi-download"></i> Download
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mini Player (for audio) -->
+<div id="miniPlayer" class="mini-player d-none">
+  <div class="mini-player-content">
+    <div class="mini-player-thumbnail">
+      <img id="miniPlayerThumbnail" src="/images/default-thumbnail.jpg" alt="Thumbnail">
+    </div>
+    <div class="mini-player-info">
+      <div id="miniPlayerTitle" class="mini-player-title">Song Title</div>
+      <div id="miniPlayerArtist" class="mini-player-artist">Artist Name</div>
+    </div>
+    <div class="mini-player-controls">
+      <button id="miniPlayerPlayPause" class="btn btn-sm btn-link text-white">
+        <i class="bi bi-play-fill"></i>
+      </button>
+      <button id="miniPlayerExpand" class="btn btn-sm btn-link text-white">
+        <i class="bi bi-arrows-angle-expand"></i>
+      </button>
+      <button id="miniPlayerClose" class="btn btn-sm btn-link text-white">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+  <div class="mini-player-progress">
+    <div id="miniPlayerProgressBar" class="mini-player-progress-bar"></div>
+  </div>
+</div>

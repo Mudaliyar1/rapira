@@ -1,0 +1,104 @@
+<%- contentFor('head') %>
+<link rel="stylesheet" href="/css/learning-module.css">
+
+<%- contentFor('body') %>
+
+<!-- Edit Learning Module Form -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Edit Learning Module</h5>
+    <a href="/learning/admin" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Modules
+    </a>
+  </div>
+  <div class="card-body">
+    <form action="/learning/admin/edit/<%= module._id %>" method="POST" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="title" class="form-label text-white">Module Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= module.title %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label text-white">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required><%= module.description %></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="contentType" class="form-label text-white">Content Type</label>
+            <select class="form-select" id="contentType" name="contentType" required>
+              <option value="text" <%= module.contentType === 'text' ? 'selected' : '' %>>Text</option>
+              <option value="video" <%= module.contentType === 'video' ? 'selected' : '' %>>Video</option>
+              <option value="pdf" <%= module.contentType === 'pdf' ? 'selected' : '' %>>PDF</option>
+              <option value="link" <%= module.contentType === 'link' ? 'selected' : '' %>>External Link</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="content" class="form-label text-white">Content</label>
+            <div id="contentInputContainer">
+              <!-- Text content input (for text type) -->
+              <div id="textContentInput" class="content-input-group" <%= module.contentType !== 'text' ? 'style="display: none;"' : '' %>>
+                <textarea class="form-control" id="textContent" name="content" rows="6" placeholder="Enter HTML content here..." <%= module.contentType === 'text' ? 'required' : '' %>><%= module.contentType === 'text' ? module.content : '' %></textarea>
+                <div class="form-text">You can use HTML tags for formatting</div>
+              </div>
+
+              <!-- URL content input (for video, pdf, link types) -->
+              <div id="urlContentInput" class="content-input-group" <%= module.contentType === 'text' ? 'style="display: none;"' : '' %>>
+                <input type="url" class="form-control" id="urlContent" name="content" placeholder="Enter URL here..." value="<%= module.contentType !== 'text' ? module.content : '' %>" <%= module.contentType !== 'text' ? 'required' : '' %>>
+                <div class="form-text">Enter a valid URL (YouTube, PDF link, or external resource)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="forArtistLevel" class="form-label text-white">For Artist Level</label>
+            <select class="form-select" id="forArtistLevel" name="forArtistLevel" required>
+              <option value="Beginner" <%= module.forArtistLevel === 'Beginner' ? 'selected' : '' %>>Beginner</option>
+              <option value="Intermediate" <%= module.forArtistLevel === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+              <option value="Established" <%= module.forArtistLevel === 'Established' ? 'selected' : '' %>>Established</option>
+              <option value="All" <%= module.forArtistLevel === 'All' ? 'selected' : '' %>>All Levels</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="order" class="form-label text-white">Display Order</label>
+            <input type="number" class="form-control" id="order" name="order" min="0" value="<%= module.order %>">
+            <div class="form-text">Lower numbers appear first</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="isRequired" name="isRequired" <%= module.isRequired ? 'checked' : '' %>>
+              <label class="form-check-label text-white" for="isRequired">Required Module</label>
+            </div>
+            <div class="form-text">If checked, this module must be completed by artists of the selected level</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="thumbnailImage" class="form-label text-white">Thumbnail Image</label>
+            <input type="file" class="form-control" id="thumbnailImage" name="thumbnailImage" accept="image/*">
+            <div class="form-text">Leave empty to keep the current image</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-white">Current Thumbnail</label>
+            <div class="border rounded p-2">
+              <img src="<%= module.thumbnailImage %>" alt="<%= module.title %>" class="img-fluid rounded">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-primary">Update Learning Module</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- contentFor('extraScripts') %>
+<script src="/js/learning-module-form.js"></script>

@@ -1,0 +1,83 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow bg-dark">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Book Multiple Roles</h3>
+        </div>
+        <div class="card-body bg-dark text-white">
+          <div class="mb-4">
+            <h5 class="text-white">Selected Roles</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered text-white table-dark">
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% roles.forEach(role => { %>
+                    <tr>
+                      <td><%= role.name %></td>
+                      <td><%= role.city %>, <%= role.state %></td>
+                      <td><%= role.description.length > 100 ? role.description.substring(0, 100) + '...' : role.description %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <hr class="my-4 border-light">
+
+          <h5 class="mb-3 text-white">Your Information</h5>
+          <form action="/team-requirement/book-multiple/submit" method="POST">
+            <!-- Hidden inputs for selected role IDs -->
+            <% roles.forEach(role => { %>
+              <input type="hidden" name="roleIds" value="<%= role._id %>">
+            <% }); %>
+
+            <div class="mb-3">
+              <label for="name" class="form-label text-white">Your Name *</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label text-white">Email Address *</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="phone" class="form-label text-white">Phone Number *</label>
+              <input type="tel" class="form-control" id="phone" name="phone" required>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="city" class="form-label text-white">City *</label>
+                <input type="text" class="form-control" id="city" name="city" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="state" class="form-label text-white">State *</label>
+                <input type="text" class="form-control" id="state" name="state" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="message" class="form-label text-white">Message (Please describe your requirements for each role) *</label>
+              <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">Submit Booking Request</button>
+              <a href="/team-requirement" class="btn btn-outline-light">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

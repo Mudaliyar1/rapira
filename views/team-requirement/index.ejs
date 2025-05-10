@@ -1,0 +1,411 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="text-center mb-4">Team Requirement</h1>
+      <p class="text-center lead">Find and book artists and roles for your project or event</p>
+    </div>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Search & Filter</h5>
+          <form id="filterForm" action="/team-requirement" method="GET">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="role" class="form-label">Role</label>
+                <select class="form-select" id="role" name="role">
+                  <option value="">All Roles</option>
+                  <% roleNames.forEach(roleName => { %>
+                    <option value="<%= roleName %>" <%= filters.role === roleName ? 'selected' : '' %>><%= roleName %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="city" class="form-label">City</label>
+                <select class="form-select" id="city" name="city">
+                  <option value="">All Cities</option>
+                  <% cities.forEach(city => { %>
+                    <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="state" class="form-label">State</label>
+                <select class="form-select" id="state" name="state">
+                  <option value="">All States</option>
+                  <% states.forEach(state => { %>
+                    <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-12 text-center mt-3">
+                <button type="submit" id="applyFiltersBtn" class="btn btn-primary px-4">Apply Filters</button>
+                <a href="/team-requirement" class="btn btn-outline-secondary ms-2">Reset</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-booking Form -->
+  <form action="/team-requirement/book-multiple" method="POST">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card bg-dark">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <h4 class="mb-0 text-white">Available Roles</h4>
+              <button type="submit" class="btn btn-success" id="bookSelectedBtn">
+                <i class="bi bi-check2-square me-1"></i> Book Selected Roles
+              </button>
+            </div>
+            <p class="text-white mt-2 mb-0">Select the checkboxes next to the roles you want to book together.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roles Grid -->
+    <div class="row">
+      <% if (roles.length === 0) { %>
+        <div class="col-12 text-center py-5">
+          <div class="alert alert-info">
+            <h4>No roles found</h4>
+            <p>No roles match your search criteria. Please try different filters or check back later.</p>
+          </div>
+        </div>
+      <% } else { %>
+        <% roles.forEach(role => { %>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm bg-dark">
+              <div class="card-header bg-dark border-secondary d-flex align-items-center">
+                <div class="form-check form-check-inline me-0">
+                  <input class="form-check-input" type="checkbox" name="selectedRoles" value="<%= role._id %>" id="role<%= role._id %>" style="width: 1.5em; height: 1.5em;">
+                  <label class="form-check-label ms-2 fw-bold text-white" for="role<%= role._id %>"><%= role.name %></label>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="card-text text-white mb-2"><i class="bi bi-geo-alt-fill"></i> <%= role.city %>, <%= role.state %></p>
+                <p class="card-text text-white"><%= role.description.length > 120 ? role.description.substring(0, 120) + '...' : role.description %></p>
+              </div>
+              <div class="card-footer bg-dark border-secondary">
+                <div class="d-flex justify-content-between align-items-center">
+                  <a href="/team-requirement/book/<%= role._id %>" class="btn btn-outline-light">Book Only This</a>
+                  <label for="role<%= role._id %>" class="btn btn-primary mb-0">
+                    <i class="bi bi-plus-circle me-1"></i> Select
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+
+    <!-- Fixed Bottom Bar for Selected Roles -->
+    <div class="fixed-bottom bg-dark p-3 d-none" id="selectedRolesBar">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="text-white">
+            <span id="selectedCount">0</span> roles selected
+          </div>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check2-square me-1"></i> Book Selected Roles
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    // Update count when page loads
+    window.onload = function() {
+      const checkedBoxes = document.querySelectorAll('input[name="selectedRoles"]:checked');
+      const count = checkedBoxes.length;
+
+      // No need to update header button count anymore
+
+      // Update count in bottom bar
+      const selectedCount = document.getElementById('selectedCount');
+      if (selectedCount) {
+        selectedCount.textContent = count;
+      }
+
+      console.log('Window loaded, count:', count);
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements for selected roles tracking
+      const selectedBar = document.getElementById('selectedRolesBar');
+      const selectedCount = document.getElementById('selectedCount');
+      const bookSelectedBtn = document.getElementById('bookSelectedBtn');
+
+      // Filter form elements
+      const filterForm = document.getElementById('filterForm');
+      const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+      const roleSelect = document.getElementById('role');
+      const citySelect = document.getElementById('city');
+      const stateSelect = document.getElementById('state');
+
+      // No need to store selected role IDs with our simplified approach
+
+      // Get references to the selected roles tags elements
+      const selectedRolesTags = document.getElementById('selectedRolesTags');
+      const selectedRolesTagsContainer = document.getElementById('selectedRolesTagsContainer');
+      const clearAllSelectedBtn = document.getElementById('clearAllSelectedBtn');
+
+      // Add event listener for the Clear All button
+      clearAllSelectedBtn.addEventListener('click', function() {
+        // Uncheck all checkboxes
+        const checkboxes = document.querySelectorAll('input[name="selectedRoles"]:checked');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+
+        // Update the count and tags
+        updateSelectedCount();
+      });
+
+      // Function to update the selected count and tags
+      function updateSelectedCount() {
+        // Get all checked checkboxes
+        const checkedBoxes = document.querySelectorAll('input[name="selectedRoles"]:checked');
+        const count = checkedBoxes.length;
+
+        // Update count display
+        selectedCount.textContent = count;
+
+        // Update button state and tags visibility
+        if (count > 0) {
+          selectedBar.classList.remove('d-none');
+          bookSelectedBtn.disabled = false;
+          selectedRolesTags.classList.remove('d-none'); // Show the tags container
+        } else {
+          selectedBar.classList.add('d-none');
+          bookSelectedBtn.disabled = true;
+          selectedRolesTags.classList.add('d-none'); // Hide the tags container
+        }
+
+        // Update the selected roles tags
+        updateSelectedRolesTags(checkedBoxes);
+
+        console.log('Selected count:', count);
+      }
+
+      // Function to update the selected roles tags
+      function updateSelectedRolesTags(checkedBoxes) {
+        // Clear the container
+        selectedRolesTagsContainer.innerHTML = '';
+
+        // Add a tag for each selected role
+        checkedBoxes.forEach(checkbox => {
+          const roleId = checkbox.value;
+          // Find the label associated with this checkbox
+          const label = document.querySelector(`label[for="role${roleId}"]`);
+          const roleName = label ? label.textContent.trim() : "Role " + roleId;
+
+          // Create the tag element
+          const tag = document.createElement('div');
+          tag.className = 'badge bg-primary p-2 d-flex align-items-center me-2 mb-2';
+          tag.style.fontSize = '0.9rem';
+          tag.innerHTML = `
+            <span>${roleName}</span>
+            <button type="button" class="btn-close btn-close-white ms-2"
+                    aria-label="Remove ${roleName}" style="font-size: 0.5rem; margin-top: -1px;"></button>
+          `;
+
+          // Add click event to the close button
+          const closeBtn = tag.querySelector('.btn-close');
+          closeBtn.addEventListener('click', function() {
+            // Find and uncheck the corresponding checkbox
+            const checkbox = document.getElementById(`role${roleId}`);
+            if (checkbox) {
+              checkbox.checked = false;
+              updateSelectedCount(); // Update the count and tags
+            }
+          });
+
+          // Add the tag to the container
+          selectedRolesTagsContainer.appendChild(tag);
+        });
+      }
+
+      // Function to add event listeners to checkboxes
+      function addCheckboxListeners() {
+        const checkboxes = document.querySelectorAll('input[name="selectedRoles"]');
+        checkboxes.forEach(function(checkbox) {
+          // Add change event listener
+          checkbox.addEventListener('change', updateSelectedCount);
+        });
+      }
+
+      // Initialize checkbox listeners
+      addCheckboxListeners();
+
+      // Update count immediately and again after a short delay
+      updateSelectedCount();
+      setTimeout(updateSelectedCount, 500);
+
+      // Function to perform filtering
+      function performFiltering() {
+        // Show loading indicator
+        const rolesGrid = document.querySelector('.row');
+        if (rolesGrid && rolesGrid.querySelector('.col-md-6, .col-12.text-center.py-5')) {
+          rolesGrid.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        }
+
+        // Get filter values
+        const role = roleSelect.value;
+        const city = citySelect.value;
+        const state = stateSelect.value;
+
+        // Build query string
+        let queryString = '';
+        if (role) queryString += `role=${encodeURIComponent(role)}&`;
+        if (city) queryString += `city=${encodeURIComponent(city)}&`;
+        if (state) queryString += `state=${encodeURIComponent(state)}&`;
+
+        // Remove trailing & if exists
+        if (queryString.endsWith('&')) {
+          queryString = queryString.slice(0, -1);
+        }
+
+        // Update URL without refreshing page (for bookmarking)
+        const newUrl = window.location.pathname + (queryString ? `?${queryString}` : '');
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        // Fetch filtered results
+        fetch(`/team-requirement/filter?${queryString}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Update the roles grid with new data
+            updateRolesGrid(data.roles);
+
+            // Add event listeners to new checkboxes
+            addCheckboxListeners();
+
+            // Update count after a small delay to ensure DOM is updated
+            setTimeout(updateSelectedCount, 100);
+          })
+          .catch(error => {
+            console.error('Error fetching filtered roles:', error);
+            // Show error message
+            const rows = document.querySelectorAll('.row');
+            let rolesGrid = null;
+
+            // Find the correct row that contains our roles
+            for (const row of rows) {
+              if (row.querySelector('.col-md-6') || row.querySelector('.col-12.text-center.py-5')) {
+                rolesGrid = row;
+                break;
+              }
+            }
+
+            if (rolesGrid) {
+              rolesGrid.innerHTML = '<div class="col-12 text-center py-5"><div class="alert alert-danger">Error loading roles. Please try again.</div></div>';
+            }
+          });
+      }
+
+      // Add debounce function to prevent too many requests
+      function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+      }
+
+      // Create debounced version of performFiltering
+      const debouncedFilter = debounce(performFiltering, 300);
+
+      // Add event listeners for live filtering
+      roleSelect.addEventListener('change', debouncedFilter);
+      citySelect.addEventListener('change', debouncedFilter);
+      stateSelect.addEventListener('change', debouncedFilter);
+
+      // Handle filter form submission (for backward compatibility)
+      filterForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent the default form submission
+        performFiltering();
+      });
+
+      // Reset is now handled by a direct link to /team-requirement
+
+      // Function to update the roles grid with new data
+      function updateRolesGrid(roles) {
+        // Find the roles grid container (the row that contains either role cards or the "no roles found" message)
+        const rows = document.querySelectorAll('.row');
+        let rolesGrid = null;
+
+        // Find the correct row that contains our roles
+        for (const row of rows) {
+          if (row.querySelector('.col-md-6') || row.querySelector('.col-12.text-center.py-5')) {
+            rolesGrid = row;
+            break;
+          }
+        }
+
+        if (!rolesGrid) return;
+
+        if (roles.length === 0) {
+          // No roles found
+          rolesGrid.innerHTML = `
+            <div class="col-12 text-center py-5">
+              <div class="alert alert-info">
+                <h4>No roles found</h4>
+                <p>No roles match your search criteria. Please try different filters or check back later.</p>
+              </div>
+            </div>
+          `;
+        } else {
+          // Build HTML for roles
+          let rolesHTML = '';
+
+          roles.forEach(role => {
+            rolesHTML += `
+              <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm bg-dark">
+                  <div class="card-header bg-dark border-secondary d-flex align-items-center">
+                    <div class="form-check form-check-inline me-0">
+                      <input class="form-check-input" type="checkbox" name="selectedRoles" value="${role._id}" id="role${role._id}" style="width: 1.5em; height: 1.5em;">
+                      <label class="form-check-label ms-2 fw-bold text-white" for="role${role._id}">${role.name}</label>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <p class="card-text text-white mb-2"><i class="bi bi-geo-alt-fill"></i> ${role.city}, ${role.state}</p>
+                    <p class="card-text text-white">${role.description.length > 120 ? role.description.substring(0, 120) + '...' : role.description}</p>
+                  </div>
+                  <div class="card-footer bg-dark border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <a href="/team-requirement/book/${role._id}" class="btn btn-outline-light">Book Only This</a>
+                      <label for="role${role._id}" class="btn btn-primary mb-0">
+                        <i class="bi bi-plus-circle me-1"></i> Select
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          rolesGrid.innerHTML = rolesHTML;
+        }
+      }
+
+      // End of script
+    });
+  </script>
+</div>
+
+

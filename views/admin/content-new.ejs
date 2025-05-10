@@ -1,0 +1,119 @@
+<%- contentFor('body') %>
+<!-- Content Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">All Content</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Title</th>
+            <th class="text-white">Artist</th>
+            <th class="text-white">Type</th>
+            <th class="text-white">Featured</th>
+            <th class="text-white">Date</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (content && content.length > 0) { %>
+            <% content.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (item.thumbnail) { %>
+                      <img src="<%= item.thumbnail %>" alt="<%= item.title %>" class="rounded me-2" width="50" height="50" style="object-fit: cover;">
+                    <% } else { %>
+                      <div class="bg-dark rounded d-flex align-items-center justify-content-center me-2" style="width: 50px; height: 50px;">
+                        <i class="bi bi-file-earmark-music text-light"></i>
+                      </div>
+                    <% } %>
+                    <div>
+                      <h6 class="mb-0 text-white"><%= item.title %></h6>
+                      <small class="text-primary"><%= item.description.substring(0, 50) %><%= item.description.length > 50 ? '...' : '' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <% if (item.artist && item.artist.user) { %>
+                    <span class="text-white"><%= item.artist.user.name %></span>
+                  <% } else { %>
+                    <span class="text-muted">Unknown</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (item.contentType) { %>
+                    <span class="badge <%=
+                      item.contentType === 'audio' ? 'bg-primary' :
+                      item.contentType === 'video' ? 'bg-danger' :
+                      'bg-secondary' %>">
+                      <%= item.contentType.charAt(0).toUpperCase() + item.contentType.slice(1) %>
+                    </span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">Unknown</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge <%= item.featured ? 'bg-success' : 'bg-secondary' %>">
+                    <%= item.featured ? 'Featured' : 'Not Featured' %>
+                  </span>
+                </td>
+                <td class="text-white"><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <div class="btn-group">
+                    <form action="/admin/content/<%= item._id %>/feature" method="POST" class="me-1">
+                      <button type="submit" class="btn btn-sm <%= item.featured ? 'btn-outline-secondary' : 'btn-outline-success' %>">
+                        <i class="bi <%= item.featured ? 'bi-star' : 'bi-star-fill' %>"></i>
+                        <%= item.featured ? 'Unfeature' : 'Feature' %>
+                      </button>
+                    </form>
+                    <a href="/artists/<%= item.artist ? item.artist._id : '' %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye"></i> View Artist
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= item._id %>">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">No content found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modals -->
+<% if (content && content.length > 0) { %>
+  <% content.forEach(item => { %>
+    <div class="modal fade" id="deleteModal<%= item._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= item._id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-white" id="deleteModalLabel<%= item._id %>">Confirm Delete</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-white">Are you sure you want to delete the content <strong><%= item.title %></strong>?</p>
+            <p class="text-danger mb-0">This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/admin/content/<%= item._id %>/delete" method="POST">
+              <button type="submit" class="btn btn-danger">Delete Content</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- contentFor('title') %>Manage Content

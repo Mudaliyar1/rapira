@@ -1,0 +1,183 @@
+<!-- Booking Page -->
+<section class="py-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Booking Form -->
+        <div class="glass-card-dark mb-4">
+          <div class="card-header py-3">
+            <h3 class="card-title fw-bold mb-0">Book Tickets</h3>
+          </div>
+          <div class="card-body p-4">
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <h5 class="fw-bold mb-0"><%= concert.title %></h5>
+                <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %> ms-2">
+                  <%= concert.isPaid ? `₹${concert.price}` : 'Free' %>
+                </span>
+              </div>
+              <p class="text-white mb-0">
+                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+              </p>
+              <p class="text-white mb-0">
+                <i class="bi bi-geo-alt me-1 text-primary"></i> <%= concert.venue %>, <%= concert.city %>
+              </p>
+            </div>
+
+            <hr class="my-4">
+
+            <% if (concert.isPaid) { %>
+              <!-- Paid Concert Booking Form -->
+              <form id="razorpayForm" method="POST">
+                <input type="hidden" name="concertId" value="<%= concert._id %>">
+                <input type="hidden" id="userName" value="<%= currentUser.name %>">
+                <input type="hidden" id="userEmail" value="<%= currentUser.email %>">
+                <!-- This div will hold the attendee data inputs -->
+                <div id="attendeeDataInputs"></div>
+
+                <div class="mb-4">
+                  <label for="ticketQuantity" class="form-label fw-medium text-white">Number of Tickets</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
+                    <select class="form-select" id="ticketQuantity" name="quantity" required>
+                      <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
+                        <option value="<%= i %>"><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="form-text text-primary mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <% if (ticketsRemaining === 'Unlimited') { %>
+                      Unlimited tickets available
+                    <% } else { %>
+                      <%= ticketsRemaining %> tickets remaining
+                    <% } %>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-medium text-white">Attendee Details</label>
+                  <div id="attendeesContainer">
+                    <!-- Attendee forms will be dynamically added here -->
+                  </div>
+                </div>
+
+                <div class="glass-card-dark mb-4 border-gradient">
+                  <div class="border-gradient-content">
+                    <div class="card-body">
+                      <h5 class="card-title fw-bold mb-3 gradient-text-purple">Price Summary</h5>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white">Ticket Price:</span>
+                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= concert.price %>"><%= concert.price %></span> × <span id="ticketCount" class="text-primary fw-bold">1</span></span>
+                      </div>
+                      <hr class="border-secondary">
+                      <div class="d-flex justify-content-between fw-bold">
+                        <span class="text-white">Total Amount:</span>
+                        <span class="gradient-text-purple fs-5">₹<span id="totalAmount"><%= concert.price %></span></span>
+                      </div>
+                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= concert.price %>">
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-gradient-purple btn-lg w-100 animate-pulse"><i class="bi bi-credit-card me-2"></i>Proceed to Payment</button>
+              </form>
+            <% } else { %>
+              <!-- Free Concert Booking Form -->
+              <form action="/tickets/book-free" method="POST">
+                <input type="hidden" name="concertId" value="<%= concert._id %>">
+                <!-- This div will hold the attendee data inputs -->
+                <div id="attendeeDataInputs"></div>
+
+                <div class="mb-4">
+                  <label for="ticketQuantity" class="form-label fw-medium text-white">Number of Tickets</label>
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
+                    <select class="form-select" id="ticketQuantity" name="quantity" required>
+                      <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
+                        <option value="<%= i %>"><%= i %></option>
+                      <% } %>
+                    </select>
+                  </div>
+                  <div class="form-text text-primary mt-2">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <% if (ticketsRemaining === 'Unlimited') { %>
+                      Unlimited tickets available
+                    <% } else { %>
+                      <%= ticketsRemaining %> tickets remaining
+                    <% } %>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-medium text-white">Attendee Details</label>
+                  <div id="attendeesContainer">
+                    <!-- Attendee forms will be dynamically added here -->
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-gradient-purple btn-lg w-100 animate-pulse"><i class="bi bi-ticket-perforated me-2"></i>Book Free Tickets</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <!-- Concert Summary -->
+        <div class="glass-card-dark mb-4 sticky-top" style="top: 20px; z-index: 100;">
+          <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>" style="max-height: 200px; object-fit: cover;">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-3">Concert Details</h5>
+
+            <div class="d-flex align-items-center mb-3">
+              <div class="concert-date me-3">
+                <div class="month"><%= new Date(concert.date).toLocaleDateString('en-US', { month: 'short' }) %></div>
+                <div class="day"><%= new Date(concert.date).getDate() %></div>
+              </div>
+              <div>
+                <h6 class="mb-0 text-white"><%= concert.title %></h6>
+                <p class="text-white-50 mb-0"><%= concert.time %></p>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-geo-alt text-primary me-2"></i>
+                <span class="text-white"><%= concert.venue %>, <%= concert.city %></span>
+              </div>
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-person text-primary me-2"></i>
+                <span class="text-white">By <%= concert.artist && concert.artist.user ? concert.artist.user.name : 'Artist' %></span>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-ticket-perforated text-primary me-2"></i>
+                <span class="text-white">
+                  <% if (ticketsRemaining === 'Unlimited') { %>
+                    Unlimited tickets available
+                  <% } else { %>
+                    <%= ticketsRemaining %> tickets remaining
+                  <% } %>
+                </span>
+              </div>
+            </div>
+
+            <div class="glass-card-dark p-3 mb-0 border-start border-4 border-info">
+              <i class="bi bi-info-circle-fill me-2 text-info"></i>
+              <span class="text-white">
+                <% if (concert.isPaid) { %>
+                  Payment will be processed securely via Razorpay.
+                <% } else { %>
+                  This is a free concert. No payment required.
+                <% } %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Razorpay Script is now loaded in the head section via extraScripts -->
+

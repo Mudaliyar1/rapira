@@ -1,0 +1,199 @@
+<%- contentFor('body') %>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="fw-bold">Edit Content</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/content">Content</a></li>
+        <li class="breadcrumb-item"><a href="/admin/content/<%= content._id %>/details"><%= content.title %></a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+      </ol>
+    </nav>
+  </div>
+  <div>
+    <a href="/admin/content/<%= content._id %>/details" class="btn btn-outline-secondary me-2">
+      <i class="bi bi-arrow-left me-1"></i> Back to Details
+    </a>
+  </div>
+</div>
+
+<!-- Edit Form -->
+<div class="glass-card-dark mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">Edit Content Information</h5>
+  </div>
+  <div class="card-body">
+    <form action="/admin/content/<%= content._id %>/update" method="POST" enctype="multipart/form-data">
+      <div class="row g-4">
+        <!-- Content Preview -->
+        <div class="col-md-4">
+          <div class="text-center mb-3">
+            <img src="<%= content.thumbnailUrl || '/images/default-content.jpg' %>" alt="<%= content.title %>" class="img-fluid rounded mb-3" style="max-height: 200px; width: auto;">
+            <div class="mb-3">
+              <label for="thumbnailFile" class="form-label">Update Thumbnail</label>
+              <input type="file" class="form-control" id="thumbnailFile" name="thumbnailFile" accept="image/*">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="contentType" class="form-label">Content Type</label>
+            <select class="form-select" id="contentType" name="type">
+              <option value="song" <%= content.type === 'song' ? 'selected' : '' %>>Song</option>
+              <option value="video" <%= content.type === 'video' ? 'selected' : '' %>>Video</option>
+              <option value="lyrics" <%= content.type === 'lyrics' ? 'selected' : '' %>>Lyrics</option>
+              <option value="blog" <%= content.type === 'blog' ? 'selected' : '' %>>Blog</option>
+              <option value="other" <%= !['song', 'video', 'lyrics', 'blog'].includes(content.type) ? 'selected' : '' %>>Other</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="contentFile" class="form-label">Update Content File</label>
+            <input type="file" class="form-control" id="contentFile" name="contentFile">
+            <div class="form-text">
+              Current file: <a href="<%= content.fileUrl %>" target="_blank"><%= content.fileUrl.split('/').pop() %></a><br>
+              For songs: MP3, WAV (max 50MB)<br>
+              For videos: MP4, MOV (max 50MB)<br>
+              For lyrics: PDF, DOC, DOCX (max 5MB)
+            </div>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="featured" name="featured" <%= content.featured ? 'checked' : '' %>>
+            <label class="form-check-label" for="featured">Featured Content</label>
+          </div>
+        </div>
+
+        <!-- Content Details -->
+        <div class="col-md-8">
+          <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= content.title %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="4"><%= content.description %></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="artist" class="form-label">Artist</label>
+            <select class="form-select" id="artist" name="artist" required>
+              <% artists.forEach(artist => { %>
+                <option value="<%= artist._id %>" <%= content.artist && content.artist._id.toString() === artist._id.toString() ? 'selected' : '' %>>
+                  <%= artist.user.name %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="mb-3" id="lyricsField" style="<%= content.type === 'lyrics' ? 'display: block;' : 'display: none;' %>">
+            <label for="lyrics" class="form-label">Lyrics</label>
+            <textarea class="form-control" id="lyrics" name="lyrics" rows="10"><%= content.lyrics || '' %></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="tags" class="form-label">Tags (comma separated)</label>
+            <input type="text" class="form-control" id="tags" name="tags" value="<%= content.tags ? content.tags.join(', ') : '' %>">
+          </div>
+
+          <div class="mb-3">
+            <label for="releaseDate" class="form-label">Release Date</label>
+            <input type="date" class="form-control" id="releaseDate" name="releaseDate"
+              value="<%= content.releaseDate ? new Date(content.releaseDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>">
+          </div>
+        </div>
+
+        <div class="col-12">
+          <hr>
+          <div class="d-flex justify-content-end gap-2">
+            <a href="/admin/content/<%= content._id %>/details" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- contentFor('title') %>Edit Content: <%= content.title %>
+
+<%- contentFor('extraScripts') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get form elements
+    const contentTypeSelect = document.getElementById('contentType');
+    const contentFileInput = document.getElementById('contentFile');
+    const uploadForm = document.querySelector('form[action^="/admin/content/"]');
+    const lyricsField = document.getElementById('lyricsField');
+
+    // Define allowed file types for each content type
+    const allowedFileTypes = {
+      song: ['audio/mpeg', 'audio/wav', 'audio/mp3'],
+      video: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
+      lyrics: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    };
+
+    // Define file extensions for error messages
+    const fileExtensions = {
+      song: '.mp3, .wav',
+      video: '.mp4, .mov',
+      lyrics: '.pdf, .doc, .docx'
+    };
+
+    // Function to validate file type
+    function validateFileType() {
+      if (!contentTypeSelect || !contentFileInput) return true;
+
+      const selectedType = contentTypeSelect.value;
+      const file = contentFileInput.files[0];
+
+      // If no file is selected or no content type is selected, return true (no validation needed)
+      if (!file || !selectedType || !allowedFileTypes[selectedType]) return true;
+
+      // Check if file type matches the selected content type
+      const isValidFileType = allowedFileTypes[selectedType].includes(file.type);
+
+      // If not valid, show error message
+      if (!isValidFileType) {
+        const errorMessage = `Invalid file type for ${selectedType}. Please upload ${fileExtensions[selectedType]} files only.`;
+        alert(errorMessage);
+
+        // Clear the file input
+        contentFileInput.value = '';
+        return false;
+      }
+
+      return true;
+    }
+
+    // Add event listener to file input
+    if (contentFileInput) {
+      contentFileInput.addEventListener('change', validateFileType);
+    }
+
+    // Add event listener to form submission
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', function(e) {
+        if (!validateFileType()) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    // Show/hide lyrics field based on content type
+    if (contentTypeSelect) {
+      contentTypeSelect.addEventListener('change', function() {
+        if (this.value === 'lyrics' && lyricsField) {
+          lyricsField.style.display = 'block';
+        } else if (lyricsField) {
+          lyricsField.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
+
+

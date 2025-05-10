@@ -1,0 +1,115 @@
+<%- contentFor('body') %>
+
+<!-- Users Management -->
+<div class="container-fluid px-0">
+  <div class="row">
+    <div class="col-12">
+
+      <!-- Users Table -->
+      <div class="glass-card-dark border border-secondary mb-4">
+        <div class="card-header border-bottom border-secondary">
+          <h5 class="card-title mb-0 text-white">All Users</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="min-width: 800px;">
+              <thead>
+                <tr>
+                  <th class="text-white">Name</th>
+                  <th class="text-white">Email</th>
+                  <th class="text-white">Role</th>
+                  <th class="text-white">Joined</th>
+                  <th class="text-white">Status</th>
+                  <th class="text-white">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (users && users.length > 0) { %>
+                  <% users.forEach(user => { %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <% if (user.profileImage) { %>
+                            <img src="<%= user.profileImage %>" alt="<%= user.name %>" class="rounded-circle me-2" width="40" height="40">
+                          <% } else { %>
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                              <i class="bi bi-person text-secondary"></i>
+                            </div>
+                          <% } %>
+                          <div>
+                            <h6 class="mb-0 text-white"><%= user.name %></h6>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-white"><%= user.email %></td>
+                      <td>
+                        <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                          <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                        </span>
+                      </td>
+                      <td class="text-white"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                      <td>
+                        <span class="badge <%= user.isVerified ? 'bg-success' : 'bg-warning' %>">
+                          <%= user.isVerified ? 'Verified' : 'Unverified' %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/admin/users/<%= user._id %>/edit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                          </a>
+                          <a href="/users/<%= user._id %>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> View
+                          </a>
+                          <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= user._id %>">
+                            <i class="bi bi-trash"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="text-center py-4 text-white">No users found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modals -->
+<% if (users && users.length > 0) { %>
+  <% users.forEach(user => { %>
+    <div class="modal fade" id="deleteModal<%= user._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= user._id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteModalLabel<%= user._id %>">Confirm Delete</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete the user <strong><%= user.name %></strong>?</p>
+            <p class="text-danger mb-0">This action cannot be undone. All associated data will be permanently deleted.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/admin/users/<%= user._id %>/delete" method="POST">
+              <button type="submit" class="btn btn-danger">Delete User</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- contentFor('extraScripts') %>
+<script>
+  // Additional scripts for the users page if needed
+</script>

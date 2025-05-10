@@ -1,0 +1,97 @@
+<%- contentFor('body') %>
+
+<style>
+  .table td, .table th {
+    color: #000 !important;
+    font-weight: 500;
+  }
+  .badge {
+    color: white !important;
+    font-weight: bold !important;
+  }
+</style>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="glass-card-dark" style="background-color: white;">
+          <div class="card-header border-bottom border-secondary" style="background-color: white;">
+            <h2 class="card-title mb-0 text-black">Your Artist Applications</h2>
+          </div>
+          <div class="card-body p-4">
+            <% if (applications && applications.length > 0) { %>
+              <div class="table-responsive">
+                <table class="table align-middle" style="background-color: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                  <thead style="background-color: #f8f9fa;">
+                    <tr>
+                      <th style="color: #000 !important; font-weight: 600;">Artist Level</th>
+                      <th style="color: #000 !important; font-weight: 600;">Submitted</th>
+                      <th style="color: #000 !important; font-weight: 600;">Status</th>
+                      <th style="color: #000 !important; font-weight: 600;">Comments</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% applications.forEach(application => { %>
+                      <tr>
+                        <td style="color: #000 !important; font-weight: 500;"><%= application.artistLevel %></td>
+                        <td style="color: #000 !important; font-weight: 500;"><%= new Date(application.createdAt).toLocaleString() %></td>
+                        <td style="color: #000 !important; font-weight: 500;">
+                          <% if (application.status === 'pending') { %>
+                            <span class="badge" style="background-color: #fd7e14; color: white !important;">Pending</span>
+                          <% } else if (application.status === 'approved') { %>
+                            <span class="badge bg-success">Approved</span>
+                          <% } else if (application.status === 'rejected') { %>
+                            <span class="badge bg-danger">Rejected</span>
+                          <% } %>
+                        </td>
+                        <td style="color: #000 !important; font-weight: 500;">
+                          <% if (application.adminComments) { %>
+                            <span style="color: #000 !important; font-weight: 500;"><%= application.adminComments %></span>
+                          <% } else { %>
+                            <span style="color: #000 !important; font-weight: 500;">No comments</span>
+                          <% } %>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+
+              <% if (applications.some(app => app.status === 'pending')) { %>
+                <div class="alert alert-info mt-4" style="background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;">
+                  <h5 class="alert-heading text-black"><i class="bi bi-info-circle-fill me-2"></i> Application Pending</h5>
+                  <p class="mb-0 text-black">Your application is currently under review. You will be notified via email once a decision has been made.</p>
+                </div>
+              <% } else if (applications.some(app => app.status === 'approved')) { %>
+                <div class="alert alert-success mt-4" style="background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;">
+                  <h5 class="alert-heading text-black"><i class="bi bi-check-circle-fill me-2"></i> Application Approved</h5>
+                  <p class="mb-0 text-black">Congratulations! Your artist application has been approved. You can now access your artist dashboard.</p>
+                  <div class="mt-3">
+                    <a href="/artists/dashboard" class="btn btn-success">Go to Artist Dashboard</a>
+                  </div>
+                </div>
+              <% } else if (applications.every(app => app.status === 'rejected')) { %>
+                <div class="alert alert-warning mt-4" style="background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5;">
+                  <h5 class="alert-heading text-black"><i class="bi bi-exclamation-triangle-fill me-2"></i> Application Rejected</h5>
+                  <p class="text-black">Your application has been rejected. Please review the comments above for more information.</p>
+                  <p class="mb-0 text-black">You can submit a new application with updated information.</p>
+                  <div class="mt-3">
+                    <a href="/artist-applications/select-level" class="btn btn-primary">Apply Again</a>
+                  </div>
+                </div>
+              <% } %>
+            <% } else { %>
+              <div class="text-center py-5">
+                <i class="bi bi-file-earmark-x display-1 text-black mb-3"></i>
+                <h3 class="text-black">No Applications Found</h3>
+                <p class="text-black mb-4">You haven't submitted any artist applications yet.</p>
+                <a href="/artist-applications/select-level" class="btn btn-primary">Apply Now</a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

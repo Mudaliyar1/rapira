@@ -1,0 +1,140 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Edit Concert Form -->
+<div class="card">
+  <div class="card-body p-4">
+    <form action="/concerts/<%= concert._id %>/edit" method="POST" enctype="multipart/form-data">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="title" class="form-label">Concert Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= concert.title %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="description" name="description" rows="4" required><%= concert.description %></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="date" name="date" value="<%= concert.date.toISOString().split('T')[0] %>" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="time" class="form-label">Time <span class="text-danger">*</span></label>
+                <input type="time" class="form-control" id="time" name="time" value="<%= concert.time %>" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="venue" class="form-label">Venue <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="venue" name="venue" value="<%= concert.venue %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="city" name="city" value="<%= concert.city %>" required>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="posterImage" class="form-label">Poster Image</label>
+            <input type="file" class="form-control" id="posterImage" name="posterImage">
+            <div class="form-text">Recommended size: 800x1200px. JPG, PNG, GIF (max 5MB)</div>
+
+            <% if (concert.posterImage) { %>
+              <div class="mt-2">
+                <p class="mb-1">Current poster:</p>
+                <img src="<%= concert.posterImage %>" alt="Current poster" class="img-fluid rounded" style="max-height: 150px;">
+              </div>
+            <% } %>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="isPaid" name="isPaid" <%= concert.isPaid ? 'checked' : '' %>>
+              <label class="form-check-label" for="isPaid">This is a paid concert</label>
+            </div>
+          </div>
+
+          <div id="paidOptions" class="mb-3 <%= concert.isPaid ? '' : 'd-none' %>">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="price" class="form-label">Ticket Price (₹) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="price" name="price" min="1" step="1" value="<%= concert.price %>" <%= concert.isPaid ? 'required' : '' %>>
+              </div>
+              <div class="col-md-6">
+                <label for="maxTickets" class="form-label">Max Tickets</label>
+                <input type="number" class="form-control" id="maxTickets" name="maxTickets" min="0" value="<%= concert.maxTickets %>">
+                <div class="form-text">Leave at 0 for unlimited tickets</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3 mt-4">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-title">Status: <span class="badge bg-<%= concert.status === 'pending' ? 'warning' : concert.status === 'rejected' ? 'danger' : 'success' %>"><%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %></span></h6>
+                <% if (concert.status === 'rejected' && concert.rejectionReason) { %>
+                  <p class="mb-2 small">Rejection reason: <%= concert.rejectionReason %></p>
+                <% } %>
+                <p class="mb-0 small">Your changes will be reviewed again before the concert is published.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <hr>
+          <div class="d-flex justify-content-end gap-2">
+            <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Set minimum date to today and initialize paid options
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').min = today;
+
+    // Toggle paid options
+    const isPaidCheckbox = document.getElementById('isPaid');
+    const paidOptions = document.getElementById('paidOptions');
+
+    // Function to toggle paid options visibility
+    function togglePaidOptions() {
+      if (isPaidCheckbox.checked) {
+        paidOptions.classList.remove('d-none');
+        document.getElementById('price').setAttribute('required', '');
+      } else {
+        paidOptions.classList.add('d-none');
+        document.getElementById('price').removeAttribute('required');
+      }
+    }
+
+    // Add event listener for checkbox changes
+    isPaidCheckbox.addEventListener('change', togglePaidOptions);
+
+    // Initialize state on page load
+    togglePaidOptions();
+
+    // Debug log
+    console.log('Concert edit form initialized');
+  });
+</script>
+
+<%- include('../partials/artist-footer') %>

@@ -1,0 +1,88 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow bg-dark">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Book Multiple Artists & Roles</h3>
+        </div>
+        <div class="card-body bg-dark text-white">
+          <div class="mb-4">
+            <h5 class="text-white">Selected Items</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered text-white table-dark">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% selections.forEach(selection => { %>
+                    <tr>
+                      <td><%= selection.bookingType === 'artist' ? 'Artist' : 'Role' %></td>
+                      <td><%= selection.name %></td>
+                      <td>Details will be shown here</td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <hr class="my-4 border-light">
+
+          <h5 class="mb-3 text-white">Your Information</h5>
+          <form action="/find-my-artist/book/bulk/submit" method="POST">
+            <!-- Hidden inputs for selections -->
+            <% selections.forEach((selection, index) => { %>
+              <input type="hidden" name="selections[<%= index %>][bookingType]" value="<%= selection.bookingType %>">
+              <% if (selection.bookingType === 'artist') { %>
+                <input type="hidden" name="selections[<%= index %>][artistId]" value="<%= selection.artistId %>">
+              <% } else { %>
+                <input type="hidden" name="selections[<%= index %>][roleId]" value="<%= selection.roleId %>">
+              <% } %>
+            <% }); %>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">Your Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input type="tel" class="form-control" id="phone" name="phone" required>
+              </div>
+              <div class="col-md-6">
+                <label for="eventDate" class="form-label">Event Date</label>
+                <input type="date" class="form-control" id="eventDate" name="eventDate" required>
+              </div>
+              <div class="col-md-6">
+                <label for="eventCity" class="form-label">Event City</label>
+                <input type="text" class="form-control" id="eventCity" name="eventCity" required>
+              </div>
+              <div class="col-md-6">
+                <label for="eventState" class="form-label">Event State</label>
+                <input type="text" class="form-control" id="eventState" name="eventState" required>
+              </div>
+              <div class="col-12">
+                <label for="notes" class="form-label">Additional Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Please provide any additional details about your event or specific requirements"></textarea>
+              </div>
+              <div class="col-12 mt-4">
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-primary btn-lg">Submit Booking Request</button>
+                  <a href="/find-my-artist" class="btn btn-outline-light">Cancel</a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<%- contentFor('body') %>
+
+<!-- Roles Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Manage Roles</h5>
+    <a href="/roles/add" class="btn btn-sm btn-primary">
+      <i class="bi bi-plus-lg"></i> Add New Role
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Role</th>
+            <th class="text-white">Description</th>
+            <th class="text-white">Icon</th>
+            <th class="text-white">Created By</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (roles && roles.length > 0) { %>
+            <% roles.forEach(role => { %>
+              <tr>
+                <td class="text-white"><%= role.name %></td>
+                <td class="text-white"><%= role.description || 'No description' %></td>
+                <td class="text-white">
+                  <i class="bi <%= role.icon %>"></i> <%= role.icon %>
+                </td>
+                <td class="text-white"><%= role.createdBy ? role.createdBy.name : 'System' %></td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/roles/edit/<%= role._id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="/roles/confirm-delete/<%= role._id %>" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" class="text-center py-4 text-white">
+                <i class="bi bi-tag-fill display-4 text-muted mb-3"></i>
+                <p class="mb-0">No roles found</p>
+                <a href="/roles/add" class="btn btn-primary mt-3">Add Your First Role</a>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- User Roles Management Button -->
+<div class="mt-4 d-grid">
+  <a href="/roles/user-roles" class="btn btn-primary">
+    <i class="bi bi-people-fill me-2"></i> Manage User Roles
+  </a>
+</div>

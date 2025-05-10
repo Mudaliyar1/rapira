@@ -1,0 +1,69 @@
+<%- contentFor('head') %>
+<style>
+  .completed-module {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-left: 4px solid #198754;
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-card-dark">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0 text-white">Request Artist Level Upgrade</h2>
+            <a href="/learning" class="btn btn-sm btn-outline-light">
+              <i class="bi bi-arrow-left"></i> Back to Learning
+            </a>
+          </div>
+          <div class="card-body p-4">
+            <div class="alert alert-info mb-4">
+              <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Artist Level Upgrade</h5>
+              <p class="mb-0">You are requesting to upgrade from <strong><%= artist.artistLevel %></strong> to <strong><%= artist.artistLevel === 'Beginner' ? 'Intermediate' : 'Established' %></strong> level. Your request will be reviewed by an administrator.</p>
+            </div>
+
+            <form action="/artist-upgrade/request" method="POST">
+              <input type="hidden" name="currentLevel" value="<%= artist.artistLevel %>">
+              <input type="hidden" name="requestedLevel" value="<%= artist.artistLevel === 'Beginner' ? 'Intermediate' : 'Established' %>">
+
+              <div class="mb-4">
+                <h5 class="text-white mb-3">Completed Learning Modules</h5>
+                <div class="list-group">
+                  <% completedModules.forEach(module => { %>
+                    <div class="list-group-item completed-module bg-dark text-white border-secondary">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h6 class="mb-1"><%= module.title %></h6>
+                          <small class="text-muted">Completed on <%= new Date(module.progress.completedAt).toLocaleDateString() %></small>
+                        </div>
+                        <span class="badge bg-success">
+                          <i class="bi bi-check-circle-fill"></i>
+                        </span>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="reason" class="form-label text-white">Why do you want to upgrade your artist level?</label>
+                <textarea class="form-control" id="reason" name="reason" rows="4" required placeholder="Explain why you feel ready to advance to the next artist level..."></textarea>
+                <div class="form-text">Please provide details about your musical journey, achievements, and goals.</div>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <i class="bi bi-arrow-up-circle me-2"></i> Submit Upgrade Request
+                </button>
+                <a href="/learning" class="btn btn-outline-light">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

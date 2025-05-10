@@ -1,0 +1,339 @@
+<%- contentFor('title') %>Booking Request Details
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/find-my-artist">Find My Artist Management</a></li>
+    <li class="breadcrumb-item"><a href="/admin/find-my-artist/booking-requests">Booking Requests</a></li>
+    <li class="breadcrumb-item active">Request Details</li>
+  </ol>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Request Details Card -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <i class="fas fa-info-circle me-1"></i>
+            Booking Request Details
+          </div>
+          <div>
+            <% if (request.status === 'pending') { %>
+              <span class="badge bg-warning text-dark">Pending</span>
+            <% } else if (request.status === 'approved') { %>
+              <span class="badge bg-success">Approved</span>
+            <% } else if (request.status === 'rejected') { %>
+              <span class="badge bg-danger">Rejected</span>
+            <% } %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h5>Requester Information</h5>
+              <table class="table table-bordered">
+                <tr>
+                  <th style="width: 40%;">Name</th>
+                  <td style="color: #000000 !important;"><%= request.name %></td>
+                </tr>
+                <tr>
+                  <th>Email</th>
+                  <td style="color: #000000 !important;"><%= request.email %></td>
+                </tr>
+                <tr>
+                  <th>Phone</th>
+                  <td style="color: #000000 !important;"><%= request.phone %></td>
+                </tr>
+                <tr>
+                  <th>Submitted On</th>
+                  <td style="color: #000000 !important;"><%= new Date(request.createdAt).toLocaleString() %></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h5>Event Information</h5>
+              <table class="table table-bordered">
+                <tr>
+                  <th style="width: 40%;">Event Date</th>
+                  <td style="color: #000000 !important;"><%= new Date(request.eventDate).toLocaleDateString() %></td>
+                </tr>
+                <tr>
+                  <th>Location</th>
+                  <td style="color: #000000 !important;"><%= request.eventCity %>, <%= request.eventState %></td>
+                </tr>
+                <tr>
+                  <th>Notes</th>
+                  <td style="color: #000000 !important;"><%= request.notes || 'No additional notes provided' %></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-12">
+              <h5>Booking Information</h5>
+              <table class="table table-bordered">
+                <tr>
+                  <th style="width: 20%;">Type</th>
+                  <td style="color: #000000 !important;">
+                    <% if (request.bookingType === 'artist') { %>
+                      Artist
+                    <% } else if (request.bookingType === 'role') { %>
+                      Role
+                    <% } else if (request.bookingType === 'bulk') { %>
+                      Bulk Booking
+                    <% } else { %>
+                      Unknown
+                    <% } %>
+                  </td>
+                </tr>
+                <% if (request.bookingType === 'artist' && request.artist) { %>
+                  <tr>
+                    <th>Artist</th>
+                    <td style="color: #000000 !important;">
+                      <div class="d-flex align-items-center">
+                        <img src="<%= request.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= request.artist.stageName || request.artist.user.name %>" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                        <div>
+                          <strong><%= request.artist.stageName || request.artist.user.name %></strong>
+                          <% if (request.artist.genre) { %>
+                            <br><small class="text-muted">Genre: <%= request.artist.genre %></small>
+                          <% } %>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Artist Location</th>
+                    <td style="color: #000000 !important;"><%= request.artist.city && request.artist.state ? `${request.artist.city}, ${request.artist.state}` : 'Location not specified' %></td>
+                  </tr>
+                  <tr>
+                    <th>Email</th>
+                    <td style="color: #000000 !important;"><%= request.artist.user && request.artist.user.email ? request.artist.user.email : 'Email not available' %></td>
+                  </tr>
+                  <% if (request.artist.phoneNumber) { %>
+                  <tr>
+                    <th>Phone</th>
+                    <td style="color: #000000 !important;"><%= request.artist.phoneNumber %></td>
+                  </tr>
+                  <% } %>
+                  <% if (request.artist.about) { %>
+                  <tr>
+                    <th>About</th>
+                    <td style="color: #000000 !important;"><%= request.artist.about %></td>
+                  </tr>
+                  <% } %>
+                <% } else if (request.bookingType === 'role' && request.roleSlot) { %>
+                  <tr>
+                    <th>Role</th>
+                    <td style="color: #000000 !important;"><%= request.roleSlot.name %></td>
+                  </tr>
+                  <tr>
+                    <th>Role Location</th>
+                    <td style="color: #000000 !important;"><%= request.roleSlot.city %>, <%= request.roleSlot.state %></td>
+                  </tr>
+                  <tr>
+                    <th>Role Description</th>
+                    <td style="color: #000000 !important;"><%= request.roleSlot.description %></td>
+                  </tr>
+                  <% if (request.roleSlot.createdBy) { %>
+                  <tr>
+                    <th>Created By</th>
+                    <td style="color: #000000 !important;"><%= request.roleSlot.createdBy.name || 'Unknown' %></td>
+                  </tr>
+                  <% } %>
+                  <tr>
+                    <th>Status</th>
+                    <td style="color: #000000 !important;"><%= request.roleSlot.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>' %></td>
+                  </tr>
+                <% } else if (request.bookingType === 'bulk' && request.isBulkRequest) { %>
+                  <tr>
+                    <th>Selected Items</th>
+                    <td style="color: #000000 !important;">
+                      <% if (request.selections && request.selections.length > 0) { %>
+                        <div class="table-responsive">
+                          <table class="table table-sm table-bordered">
+                            <thead>
+                              <tr>
+                                <th>Type</th>
+                                <th>Details</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <% request.selections.forEach(selection => { %>
+                                <tr>
+                                  <td>
+                                    <% if (selection.bookingType === 'artist') { %>
+                                      <span class="badge bg-primary">Artist</span>
+                                    <% } else if (selection.bookingType === 'role') { %>
+                                      <span class="badge bg-success">Role</span>
+                                    <% } %>
+                                  </td>
+                                  <td>
+                                    <% if (selection.bookingType === 'artist' && selection.artist) { %>
+                                      <% const artist = selection.artist; %>
+                                      <div class="d-flex align-items-center">
+                                        <div>
+                                          <strong><%= artist.stageName || (artist.user ? artist.user.name : 'Unknown Artist') %></strong>
+                                          <% if (artist.genre) { %>
+                                            <br><small class="text-muted">Genre: <%= artist.genre %></small>
+                                          <% } %>
+                                          <% if (artist.city && artist.state) { %>
+                                            <br><small class="text-muted">Location: <%= artist.city %>, <%= artist.state %></small>
+                                          <% } %>
+                                          <% if (artist.user && artist.user.email) { %>
+                                            <br><small class="text-muted">Email: <%= artist.user.email %></small>
+                                          <% } %>
+                                          <% if (artist.phoneNumber) { %>
+                                            <br><small class="text-muted">Phone: <%= artist.phoneNumber %></small>
+                                          <% } %>
+                                        </div>
+                                      </div>
+                                    <% } else if (selection.bookingType === 'role' && selection.roleSlot) { %>
+                                      <strong><%= selection.roleSlot.name %></strong>
+                                      <% if (selection.roleSlot.description) { %>
+                                        <br><small class="text-muted">Description: <%= selection.roleSlot.description %></small>
+                                      <% } %>
+                                      <% if (selection.roleSlot.city && selection.roleSlot.state) { %>
+                                        <br><small class="text-muted">Location: <%= selection.roleSlot.city %>, <%= selection.roleSlot.state %></small>
+                                      <% } %>
+                                    <% } else { %>
+                                      Unknown
+                                    <% } %>
+                                  </td>
+                                </tr>
+                              <% }); %>
+                            </tbody>
+                          </table>
+                        </div>
+                      <% } else { %>
+                        No selections found
+                      <% } %>
+                    </td>
+                  </tr>
+                <% } %>
+              </table>
+            </div>
+          </div>
+
+          <% if (request.status !== 'pending') { %>
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5>Review Information</h5>
+                <table class="table table-bordered">
+                  <tr>
+                    <th style="width: 20%;">Status</th>
+                    <td style="color: #000000 !important;">
+                      <% if (request.status === 'approved') { %>
+                        <span class="badge bg-success">Approved</span>
+                      <% } else if (request.status === 'rejected') { %>
+                        <span class="badge bg-danger">Rejected</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Reviewed By</th>
+                    <td style="color: #000000 !important;"><%= request.reviewedBy ? request.reviewedBy.name : 'Unknown' %></td>
+                  </tr>
+                  <tr>
+                    <th>Reviewed On</th>
+                    <td style="color: #000000 !important;"><%= request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Unknown' %></td>
+                  </tr>
+                  <tr>
+                    <th>Admin Notes</th>
+                    <td style="color: #000000 !important;"><%= request.adminNotes || 'No admin notes provided' %></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          <% } %>
+
+          <div class="d-flex justify-content-between mt-4">
+            <a href="/admin/find-my-artist/booking-requests" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Back to Requests
+            </a>
+            <div>
+              <form action="/admin/find-my-artist/booking-requests/<%= request._id %>/delete" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this booking request?')">
+                  <i class="fas fa-trash-alt me-1"></i> Delete Request
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Action Card -->
+      <% if (request.status === 'pending') { %>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-tasks me-1"></i>
+            Actions
+          </div>
+          <div class="card-body">
+            <div class="mb-4">
+              <h5>Approve Request</h5>
+              <form action="/admin/find-my-artist/booking-requests/<%= request._id %>/approve" method="POST">
+                <div class="mb-3">
+                  <label for="adminNotes" class="form-label">Admin Notes (Optional)</label>
+                  <textarea class="form-control" id="adminNotes" name="adminNotes" rows="3" placeholder="Add any notes or instructions for this approval"></textarea>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check me-1"></i> Approve Request
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <hr>
+
+            <div>
+              <h5>Reject Request</h5>
+              <form action="/admin/find-my-artist/booking-requests/<%= request._id %>/reject" method="POST">
+                <div class="mb-3">
+                  <label for="adminNotes" class="form-label">Reason for Rejection *</label>
+                  <textarea class="form-control" id="adminNotes" name="adminNotes" rows="3" placeholder="Provide a reason for rejecting this request" required></textarea>
+                  <div class="form-text">This will be included in the rejection email sent to the requester.</div>
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times me-1"></i> Reject Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Contact Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-envelope me-1"></i>
+          Contact Requester
+        </div>
+        <div class="card-body">
+          <p>You can contact the requester directly using the following information:</p>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span style="color: #000000 !important;">Email:</span>
+              <a href="mailto:<%= request.email %>" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-envelope me-1"></i> Send Email
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span style="color: #000000 !important;">Phone:</span>
+              <a href="tel:<%= request.phone %>" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-phone me-1"></i> Call
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

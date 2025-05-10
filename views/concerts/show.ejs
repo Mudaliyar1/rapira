@@ -1,0 +1,189 @@
+<!-- Concert Details -->
+<section class="py-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8" data-aos="fade-up">
+        <!-- Concert Image and Details -->
+        <div class="glass-card-dark mb-4 border-gradient">
+          <div class="border-gradient-content">
+            <div class="position-relative">
+              <img src="<%= concert.posterImage %>" class="card-img-top rounded-top" alt="<%= concert.title %>" style="max-height: 400px; object-fit: cover;">
+              <div class="position-absolute top-0 end-0 m-3">
+                <span class="badge <%= concert.isPaid ? 'bg-gradient-primary' : 'bg-gradient-success' %> px-3 py-2 fs-6">
+                  <%= concert.isPaid ? (concert.price ? `₹${concert.price}` : '₹ 0') : 'Free' %>
+                </span>
+              </div>
+            </div>
+            <div class="card-body p-4">
+              <h1 class="card-title fw-bold mb-4 gradient-text-purple"><%= concert.title %></h1>
+
+              <div class="mb-4 row">
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-calendar3 text-primary me-3 fs-4"></i>
+                    <div>
+                      <small class="text-primary d-block">Date</small>
+                      <span class="text-white"><%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-clock text-primary me-3 fs-4"></i>
+                    <div>
+                      <small class="text-primary d-block">Time</small>
+                      <span class="text-white"><%= concert.time %></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-geo-alt text-primary me-3 fs-4"></i>
+                    <div>
+                      <small class="text-primary d-block">Venue</small>
+                      <span class="text-white"><%= concert.venue %>, <%= concert.city %></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-ticket-perforated text-primary me-3 fs-4"></i>
+                    <div>
+                      <small class="text-primary d-block">Availability</small>
+                      <span>
+                        <% if (ticketsRemaining === 'Unlimited') { %>
+                          <span class="text-success">Unlimited tickets available</span>
+                        <% } else if (ticketsRemaining > 0) { %>
+                          <span class="text-success"><%= ticketsRemaining %> tickets remaining</span>
+                        <% } else { %>
+                          <span class="text-danger">Sold Out</span>
+                        <% } %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <h5 class="fw-bold mb-3 gradient-text">About This Concert</h5>
+              <div class="glass-card-dark p-3 rounded-3 mb-4">
+                <p class="card-text mb-0 text-white"><%= concert.description %></p>
+              </div>
+
+              <% if (currentUser) { %>
+                <% if (userTickets && userTickets.length > 0) { %>
+                  <div class="glass-card-dark p-4 rounded-3 mb-4 border-start border-5 border-success">
+                    <h5 class="gradient-text-blue"><i class="bi bi-check-circle-fill me-2"></i> You have tickets for this concert!</h5>
+                    <p class="mb-3">You have already booked <%= userTickets.reduce((sum, ticket) => sum + ticket.quantity, 0) %> tickets for this concert.</p>
+                    <div class="d-flex gap-2">
+                      <a href="/tickets/<%= userTickets[0]._id %>" class="btn btn-gradient-blue">View Ticket</a>
+                      <% if (ticketsRemaining !== 0 && ticketsRemaining !== 'Sold Out') { %>
+                        <a href="/concerts/<%= concert._id %>/book" class="btn btn-outline-primary">Book More Tickets</a>
+                      <% } %>
+                    </div>
+                  </div>
+                <% } else if (new Date(concert.date) < new Date()) { %>
+                  <div class="glass-card-dark p-4 rounded-3 mb-4 border-start border-5 border-warning">
+                    <h5 class="gradient-text-orange"><i class="bi bi-exclamation-triangle-fill me-2"></i> This concert has already taken place.</h5>
+                  </div>
+                <% } else if (ticketsRemaining === 0 || ticketsRemaining === 'Sold Out') { %>
+                  <div class="glass-card-dark p-4 rounded-3 mb-4 border-start border-5 border-danger">
+                    <h5 class="gradient-text-orange"><i class="bi bi-x-circle-fill me-2"></i> This concert is sold out.</h5>
+                  </div>
+                <% } else { %>
+                  <a href="/concerts/<%= concert._id %>/book" class="btn btn-gradient-purple btn-lg px-5 animate-pulse">Book Tickets</a>
+                <% } %>
+              <% } else { %>
+                <div class="glass-card-dark p-4 rounded-3 mb-4 border-start border-5 border-info">
+                  <h5 class="gradient-text-blue"><i class="bi bi-info-circle-fill me-2"></i> Want to book tickets?</h5>
+                  <p class="mb-3">Please <a href="/auth/login" class="gradient-text-blue">login</a> to book tickets for this concert.</p>
+                  <div class="d-flex gap-2">
+                    <a href="/auth/login" class="btn btn-gradient-blue">Login</a>
+                    <a href="/auth/register" class="btn btn-outline-primary">Register</a>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <!-- Artist Card -->
+        <div class="glass-card-dark mb-4" data-aos="fade-up" data-aos-delay="100">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-4 gradient-text-blue">Artist</h5>
+            <div class="d-flex align-items-center mb-4">
+              <% if (concert.artist && concert.artist.user) { %>
+                <div class="position-relative">
+                  <img src="<%= concert.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= concert.artist.user.name || 'Artist' %>" class="rounded-circle me-3" width="80" height="80" style="object-fit: cover; border: 3px solid var(--primary);">
+                  <% if (concert.artist.verified) { %>
+                    <span class="position-absolute bottom-0 end-0 badge bg-gradient-blue rounded-circle p-1" style="width: 24px; height: 24px;">
+                      <i class="bi bi-patch-check-fill"></i>
+                    </span>
+                  <% } %>
+                </div>
+                <div>
+                  <h5 class="mb-1 gradient-text"><%= concert.artist.user.name || 'Artist' %></h5>
+                  <p class="mb-0 text-primary"><%= concert.artist.genre || 'Musician' %></p>
+                </div>
+              <% } else { %>
+                <img src="/images/default-profile.png" alt="Artist" class="rounded-circle me-3" width="80" height="80" style="object-fit: cover; border: 3px solid var(--primary);">
+                <div>
+                  <h5 class="mb-1">Artist</h5>
+                  <p class="mb-0 text-primary">Musician</p>
+                </div>
+              <% } %>
+            </div>
+            <% if (concert.artist && concert.artist._id) { %>
+              <a href="/artists/<%= concert.artist._id %>" class="btn btn-gradient-blue w-100">View Artist Profile</a>
+            <% } else { %>
+              <button class="btn btn-outline-primary w-100" disabled>Artist Profile Unavailable</button>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Share Card -->
+        <div class="glass-card-dark mb-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-3 gradient-text-purple">Share This Concert</h5>
+            <div class="d-flex gap-2">
+              <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent(`${process.env.BASE_URL}/concerts/${concert._id}`) %>" target="_blank" class="btn btn-glass flex-grow-1">
+                <i class="bi bi-facebook me-2"></i> Share
+              </a>
+              <a href="https://twitter.com/intent/tweet?text=Check out <%= concert.title %> on Rapira!&url=<%= encodeURIComponent(`${process.env.BASE_URL}/concerts/${concert._id}`) %>" target="_blank" class="btn btn-glass flex-grow-1">
+                <i class="bi bi-twitter-x me-2"></i> Tweet
+              </a>
+              <a href="https://wa.me/?text=Check out <%= concert.title %> on Rapira! <%= encodeURIComponent(`${process.env.BASE_URL}/concerts/${concert._id}`) %>" target="_blank" class="btn btn-glass flex-grow-1">
+                <i class="bi bi-whatsapp me-2"></i> Share
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location Card -->
+        <div class="glass-card-dark" data-aos="fade-up" data-aos-delay="300">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-3 gradient-text-orange">Venue Location</h5>
+            <div class="ratio ratio-4x3 mb-3 rounded-3 overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=<%= encodeURIComponent(`${concert.venue}, ${concert.city}`) %>"
+                width="100%"
+                height="200"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
+            </div>
+            <div class="glass-card-dark p-3 rounded-3">
+              <p class="mb-0 text-white">
+                <i class="bi bi-geo-alt text-primary me-2"></i>
+                <%= concert.venue %>, <%= concert.city %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

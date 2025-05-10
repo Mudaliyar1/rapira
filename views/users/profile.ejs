@@ -1,0 +1,313 @@
+<div class="container py-5">
+  <div class="row">
+    <div class="col-lg-4 mb-4 mb-lg-0">
+      <div class="card">
+        <div class="card-body text-center p-4">
+          <% if (user.profileImage) { %>
+            <img src="<%= user.profileImage %>" alt="<%= user.name %>" class="rounded-circle img-thumbnail mb-3" width="150" height="150">
+          <% } else { %>
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+              <i class="bi bi-person-circle text-secondary" style="font-size: 5rem;"></i>
+            </div>
+          <% } %>
+
+          <h3 class="fw-bold mb-1"><%= user.name %></h3>
+          <p class="text-muted mb-3">
+            <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+              <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+            </span>
+          </p>
+
+          <% if (user.city) { %>
+            <p class="mb-3">
+              <i class="bi bi-geo-alt text-primary me-1"></i> <%= user.city %>
+            </p>
+          <% } %>
+
+          <div class="d-flex justify-content-center gap-3 mb-4">
+            <% if (user.socialLinks.instagram) { %>
+              <a href="<%= user.socialLinks.instagram %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+                <i class="bi bi-instagram"></i>
+              </a>
+            <% } %>
+            <% if (user.socialLinks.twitter) { %>
+              <a href="<%= user.socialLinks.twitter %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+                <i class="bi bi-twitter-x"></i>
+              </a>
+            <% } %>
+            <% if (user.socialLinks.youtube) { %>
+              <a href="<%= user.socialLinks.youtube %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+                <i class="bi bi-youtube"></i>
+              </a>
+            <% } %>
+            <% if (user.socialLinks.spotify) { %>
+              <a href="<%= user.socialLinks.spotify %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+                <i class="bi bi-spotify"></i>
+              </a>
+            <% } %>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="/users/edit-profile" class="btn btn-primary">
+              <i class="bi bi-pencil-square me-1"></i> Edit Profile
+            </a>
+            <a href="/users/change-password" class="btn btn-outline-secondary">
+              <i class="bi bi-lock me-1"></i> Change Password
+            </a>
+            <% if (canBecomeArtist) { %>
+              <a href="/artist-applications/select-level" class="btn btn-outline-primary">
+                <i class="bi bi-music-note-beamed me-1"></i> Become an Artist
+              </a>
+            <% } %>
+            <% if (pendingApplication) { %>
+              <a href="/artist-applications/status" class="btn btn-outline-info">
+                <i class="bi bi-hourglass-split me-1"></i> View Application Status
+              </a>
+            <% } %>
+            <a href="/users/confirm-delete-account" class="btn btn-outline-danger mt-3">
+              <i class="bi bi-trash me-1"></i> Delete Account
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <% if (user.bio) { %>
+        <div class="card mt-4">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-3">About</h5>
+            <p class="card-text"><%= user.bio %></p>
+          </div>
+        </div>
+      <% } %>
+
+      <% if (user.role === 'artist' && artist) { %>
+        <div class="card mt-4">
+          <div class="card-body p-4">
+            <h5 class="card-title fw-bold mb-3">Artist Profile</h5>
+            <p class="mb-2"><strong>Stage Name:</strong> <%= artist.stageName || user.name %></p>
+            <p class="mb-2"><strong>Genre:</strong> <%= artist.genre %></p>
+            <p class="mb-2"><strong>Years Active:</strong> <%= artist.yearsActive %></p>
+            <div class="d-grid mt-3">
+              <a href="/artists/<%= artist._id %>" class="btn btn-outline-primary">
+                <i class="bi bi-eye me-1"></i> View Artist Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="card-title fw-bold mb-0">My Tickets</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Concert</th>
+                  <th>Date</th>
+                  <th>Venue</th>
+                  <th>Tickets</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ticketsTableBody">
+                <!-- Tickets will be loaded via AJAX -->
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <% if (user.role === 'artist' && artist) { %>
+        <div class="card">
+          <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title fw-bold mb-0">My Concerts</h5>
+            <a href="/artists/dashboard" class="btn btn-sm btn-primary">
+              <i class="bi bi-speedometer2 me-1"></i> Artist Dashboard
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="concertsTableBody">
+                  <!-- Concerts will be loaded via AJAX -->
+                  <tr>
+                    <td colspan="5" class="text-center py-4">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Load tickets
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/tickets')
+      .then(response => response.text())
+      .then(html => {
+        // Extract tickets data from the response
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const tickets = Array.from(doc.querySelectorAll('.ticket-item')).map(ticket => {
+          return {
+            id: ticket.dataset.id,
+            concertTitle: ticket.dataset.title,
+            concertDate: ticket.dataset.date,
+            venue: ticket.dataset.venue,
+            quantity: ticket.dataset.quantity,
+            status: ticket.dataset.status
+          };
+        });
+
+        // Update tickets table
+        const ticketsTableBody = document.getElementById('ticketsTableBody');
+
+        if (tickets.length > 0) {
+          ticketsTableBody.innerHTML = tickets.map(ticket => `
+            <tr>
+              <td>${ticket.concertTitle}</td>
+              <td>${new Date(ticket.concertDate).toLocaleDateString()}</td>
+              <td>${ticket.venue}</td>
+              <td>${ticket.quantity}</td>
+              <td>
+                <span class="badge ${ticket.status === 'completed' ? 'bg-success' : 'bg-warning'}">
+                  ${ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                </span>
+              </td>
+              <td>
+                <a href="/tickets/${ticket.id}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-ticket-perforated me-1"></i> View
+                </a>
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          ticketsTableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="text-center py-4">
+                <p class="mb-0">You haven't booked any tickets yet.</p>
+                <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
+              </td>
+            </tr>
+          `;
+        }
+      })
+      .catch(error => {
+        console.error('Error loading tickets:', error);
+        document.getElementById('ticketsTableBody').innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <p class="text-danger mb-0">Failed to load tickets. Please try again later.</p>
+            </td>
+          </tr>
+        `;
+      });
+
+    // Load concerts for artists
+    const concertsTableBody = document.getElementById('concertsTableBody');
+    if (concertsTableBody) {
+      fetch('/artists/dashboard')
+        .then(response => response.text())
+        .then(html => {
+          // Extract concerts data from the response
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+
+          // Get upcoming and pending concerts
+          const upcomingConcerts = Array.from(doc.querySelectorAll('#upcomingConcertsTable tr[data-id]')).map(concert => {
+            return {
+              id: concert.dataset.id,
+              title: concert.dataset.title,
+              date: concert.dataset.date,
+              venue: concert.dataset.venue,
+              status: 'approved'
+            };
+          });
+
+          const pendingConcerts = Array.from(doc.querySelectorAll('#pendingConcertsTable tr[data-id]')).map(concert => {
+            return {
+              id: concert.dataset.id,
+              title: concert.dataset.title,
+              date: concert.dataset.date,
+              venue: concert.dataset.venue,
+              status: 'pending'
+            };
+          });
+
+          const concerts = [...upcomingConcerts, ...pendingConcerts];
+
+          // Update concerts table
+          if (concerts.length > 0) {
+            concertsTableBody.innerHTML = concerts.map(concert => `
+              <tr>
+                <td>${concert.title}</td>
+                <td>${new Date(concert.date).toLocaleDateString()}</td>
+                <td>${concert.venue}</td>
+                <td>
+                  <span class="badge ${concert.status === 'approved' ? 'bg-success' : 'bg-warning'}">
+                    ${concert.status.charAt(0).toUpperCase() + concert.status.slice(1)}
+                  </span>
+                </td>
+                <td>
+                  <a href="/concerts/${concert.id}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> View
+                  </a>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            concertsTableBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center py-4">
+                  <p class="mb-0">You haven't created any concerts yet.</p>
+                  <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
+                </td>
+              </tr>
+            `;
+          }
+        })
+        .catch(error => {
+          console.error('Error loading concerts:', error);
+          concertsTableBody.innerHTML = `
+            <tr>
+              <td colspan="5" class="text-center py-4">
+                <p class="text-danger mb-0">Failed to load concerts. Please try again later.</p>
+              </td>
+            </tr>
+          `;
+        });
+    }
+  });
+</script>
+
+

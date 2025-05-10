@@ -1,0 +1,65 @@
+<!-- Hero Section -->
+<section class="text-white py-5 mb-4 position-relative overflow-hidden">
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: var(--gradient-purple-pink); z-index: -2;"></div>
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8" data-aos="fade-up">
+        <h1 class="fw-bold mb-3 display-4">Discover <span class="gradient-text-blue">Artists</span></h1>
+        <p class="lead mb-0">Explore the best rap artists from across India</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Artists List -->
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <% if (artists && artists.length > 0) { %>
+        <% artists.forEach((artist, index) => { %>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index % 4 * 100 %>">
+            <div class="glass-card-dark card card-artist h-100">
+              <div class="position-relative overflow-hidden">
+                <img src="<%= artist.user.profileImage %>" class="card-img-top" alt="<%= artist.user.name %>">
+                <% if (artist.verified) { %>
+                  <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-gradient-blue px-3 py-2">
+                      <i class="bi bi-patch-check-fill me-1"></i> Verified
+                    </span>
+                  </div>
+                <% } %>
+              </div>
+              <div class="card-body text-center">
+                <h5 class="card-title mb-2 gradient-text"><%= artist.user.name %></h5>
+                <p class="card-text text-muted mb-3"><%= artist.genre %></p>
+              </div>
+              <div class="card-footer text-center">
+                <a href="/artists/<%= artist._id %>" class="btn btn-gradient-purple w-100">View Profile</a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5" data-aos="fade-up">
+          <div class="glass-card-dark p-5 rounded-4">
+            <i class="bi bi-music-note-beamed display-1 text-muted animate-float"></i>
+            <h3 class="mt-4 gradient-text-purple">No Artists Found</h3>
+            <p class="text-muted mb-4">There are no artists available at the moment.</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Join as Artist CTA -->
+<section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
+  <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-blue" style="z-index: -1;"></div>
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
+  <div class="container py-4">
+    <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
+    <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
+    <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+  </div>
+</section>

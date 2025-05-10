@@ -1,0 +1,100 @@
+<%- contentFor('body') %>
+<!-- Pages Table -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">All Pages</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Title</th>
+            <th class="text-white">URL</th>
+            <th class="text-white">Status</th>
+            <th class="text-white">Navigation</th>
+            <th class="text-white">Created</th>
+            <th class="text-white">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (pages && pages.length > 0) { %>
+            <% pages.forEach(page => { %>
+              <tr>
+                <td>
+                  <div class="fw-medium text-white"><%= page.title %></div>
+                </td>
+                <td>
+                  <a href="/pages/<%= page.slug %>" target="_blank" class="text-decoration-none text-primary">
+                    /pages/<%= page.slug %>
+                  </a>
+                </td>
+                <td>
+                  <span class="badge <%= page.published ? 'bg-success' : 'bg-secondary' %>">
+                    <%= page.published ? 'Published' : 'Draft' %>
+                  </span>
+                </td>
+                <td>
+                  <span class="badge <%= page.showInNavigation ? 'bg-primary' : 'bg-secondary' %>">
+                    <%= page.showInNavigation ? 'Shown' : 'Hidden' %>
+                  </span>
+                </td>
+                <td class="text-white"><%= new Date(page.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/admin/pages/<%= page._id %>/edit" class="btn btn-sm btn-outline-primary me-1">
+                      <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="/pages/<%= page.slug %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= page._id %>">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-4 text-white">No pages found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modals -->
+<% if (pages && pages.length > 0) { %>
+  <% pages.forEach(page => { %>
+    <div class="modal fade" id="deleteModal<%= page._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= page._id %>" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-white" id="deleteModalLabel<%= page._id %>">Confirm Delete</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-white">Are you sure you want to delete the page <strong><%= page.title %></strong>?</p>
+            <p class="text-danger mb-0">This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/admin/pages/<%= page._id %>/delete" method="POST">
+              <button type="submit" class="btn btn-danger">Delete Page</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- contentFor('headerButtons') %>
+<a href="/admin/pages/add" class="btn btn-primary">
+  <i class="bi bi-plus-lg me-1"></i> Add New Page
+</a>
+
+<%- contentFor('title') %>Manage Pages

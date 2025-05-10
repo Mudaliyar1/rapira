@@ -1,0 +1,128 @@
+<%- contentFor('body') %>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="glass-card-dark">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0 text-white">Find Users to Message</h2>
+            <a href="/messages" class="btn btn-outline-light">
+              <i class="bi bi-arrow-left me-2"></i> Back to Messages
+            </a>
+          </div>
+          <div class="card-body">
+            <% if (user.role === 'artist' && currentUserArtist) { %>
+              <div class="alert alert-info mb-4">
+                <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Messaging Permissions</h5>
+                <p class="mb-0">
+                  <% if (currentUserArtist.artistLevel === 'Beginner') { %>
+                    As a <strong>Beginner Artist</strong>, you can only message users with the <strong>Producer</strong> role (any case, like "producer" or "Producer"), including regular users and admins who have been assigned the Producer role.
+                  <% } else if (currentUserArtist.artistLevel === 'Intermediate' || currentUserArtist.artistLevel === 'Established') { %>
+                    As an <strong><%= currentUserArtist.artistLevel %> Artist</strong>, you can message users with any role, as well as regular users and admins.
+                  <% } %>
+                </p>
+              </div>
+            <% } else if (hasRoles) { %>
+              <div class="alert alert-info mb-4">
+                <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Messaging Permissions</h5>
+                <p class="mb-0">
+                  As a user with assigned roles (<strong><%= userRoles.join(', ') %></strong>), you can message any artist on the platform.
+                </p>
+              </div>
+            <% } %>
+
+            <form action="/messages/find" method="GET" class="mb-4">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <label for="role" class="form-label text-white">Filter by Role</label>
+                  <select class="form-select" id="role" name="role">
+                    <option value="">All Roles</option>
+                    <% roles.forEach(role => { %>
+                      <option value="<%= role._id %>" <%= selectedRole && selectedRole._id.toString() === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="col-md-5">
+                  <label for="state" class="form-label text-white">Filter by State</label>
+                  <select class="form-select" id="state" name="state">
+                    <option value="">All States</option>
+                    <% states.forEach(state => { %>
+                      <option value="<%= state %>" <%= selectedState === state ? 'selected' : '' %>><%= state %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                    <a href="/messages/find" class="btn btn-secondary">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <div class="row g-4">
+              <% if (users && users.length > 0) { %>
+                <% users.forEach(user => { %>
+                  <div class="col-md-6 col-lg-4">
+                    <div class="glass-card-dark h-100">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                          <img src="<%= user.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-3" width="50" height="50" alt="<%= user.name %>">
+                          <div>
+                            <h5 class="card-title mb-0 text-white"><%= user.name %></h5>
+                            <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                              <span class="badge bg-primary">
+                                <%= artistMap[user._id.toString()].artistLevel %> Artist
+                              </span>
+                            <% } %>
+                          </div>
+                        </div>
+
+                        <% if (userRoleMap[user._id.toString()]) { %>
+                          <div class="mb-3">
+                            <h6 class="text-white-75 mb-2">Roles:</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                              <% userRoleMap[user._id.toString()].forEach(role => { %>
+                                <span class="badge bg-secondary">
+                                  <i class="bi <%= role.icon %> me-1"></i> <%= role.name %>
+                                </span>
+                              <% }); %>
+                            </div>
+                          </div>
+                        <% } %>
+
+                        <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                          <div class="mb-3">
+                            <h6 class="text-white-75 mb-2">Location:</h6>
+                            <p class="card-text text-white mb-0">
+                              <%= artistMap[user._id.toString()].city %>, <%= artistMap[user._id.toString()].state %>
+                            </p>
+                          </div>
+                        <% } %>
+
+                        <div class="d-grid mt-3">
+                          <a href="/messages/conversation/<%= user._id %>" class="btn btn-outline-light">
+                            <i class="bi bi-chat-text me-2"></i> Message
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <div class="col-12 text-center py-5">
+                  <i class="bi bi-search display-1 text-muted mb-3"></i>
+                  <h3 class="text-white">No Users Found</h3>
+                  <p class="text-white-75 mb-4">Try adjusting your filters or check back later.</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

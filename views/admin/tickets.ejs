@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Tickets - Rapira Admin</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <%- include('../partials/admin-sidebar', { path: '/admin/tickets' }) %>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Manage Tickets</h1>
+        <button class="btn btn-primary d-md-none" id="adminToggle">
+          <i class="bi bi-list"></i>
+        </button>
+      </div>
+
+      <!-- Tickets Table -->
+      <div class="glass-card-dark">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>User</th>
+                  <th>Concert</th>
+                  <th>Quantity</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Purchase Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (tickets && tickets.length > 0) { %>
+                  <% tickets.forEach(ticket => { %>
+                    <tr>
+                      <td><code><%= ticket._id.toString().slice(-6).toUpperCase() %></code></td>
+                      <td>
+                        <div class="d-flex flex-column">
+                          <span class="fw-medium"><%= ticket.user.name %></span>
+                          <span class="small text-muted"><%= ticket.user.email %></span>
+                        </div>
+                      </td>
+                      <td>
+                        <% if (ticket.concert) { %>
+                          <div class="d-flex flex-column">
+                            <span class="fw-medium"><%= ticket.concert.title %></span>
+                            <span class="small text-muted"><%= new Date(ticket.concert.date).toLocaleDateString() %></span>
+                          </div>
+                        <% } else { %>
+                          <span class="text-muted">Concert not found</span>
+                        <% } %>
+                      </td>
+                      <td><%= ticket.quantity %></td>
+                      <td>
+                        <% if (ticket.totalAmount > 0) { %>
+                          ₹<%= ticket.totalAmount %>
+                        <% } else { %>
+                          <span class="badge bg-success">Free</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (ticket.paymentStatus === 'completed') { %>
+                          <span class="badge bg-success">Completed</span>
+                        <% } else if (ticket.paymentStatus === 'pending') { %>
+                          <span class="badge bg-warning">Pending</span>
+                        <% } else { %>
+                          <span class="badge bg-secondary"><%= ticket.paymentStatus %></span>
+                        <% } %>
+                      </td>
+                      <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                      <td>
+                        <a href="/admin/tickets/<%= ticket._id %>" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-eye"></i> View
+                        </a>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="8" class="text-center py-4">No tickets found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Admin Toggle -->
+  <button class="btn admin-toggle d-md-none" id="adminToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle-wrapper">
+    <button class="theme-toggle-button" id="themeToggleBtn" aria-label="Toggle theme">
+      <i class="bi bi-sun-fill theme-icon-light"></i>
+      <i class="bi bi-moon-stars-fill theme-icon-dark"></i>
+    </button>
+    <span class="theme-toggle-tooltip">Toggle Theme</span>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

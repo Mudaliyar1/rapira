@@ -1,0 +1,175 @@
+<%- contentFor('title') %>Booking Request Details
+
+<%- contentFor('body') %>
+
+<div class="container-fluid px-4">
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/team-requirement/requests">Team Booking Requests</a></li>
+    <li class="breadcrumb-item active">Request Details</li>
+  </ol>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <!-- Request Details Card -->
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <i class="fas fa-info-circle me-1"></i>
+            Request Information
+          </div>
+          <span class="badge <%= request.status === 'pending' ? 'bg-warning text-dark' : request.status === 'approved' ? 'bg-success' : 'bg-danger' %>">
+            <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <h5>Requester Information</h5>
+              <p><strong>Name:</strong> <%= request.name %></p>
+              <p><strong>Email:</strong> <a href="mailto:<%= request.email %>"><%= request.email %></a></p>
+              <p><strong>Phone:</strong> <a href="tel:<%= request.phone %>"><%= request.phone %></a></p>
+              <p><strong>Location:</strong> <%= request.city %>, <%= request.state %></p>
+              <p><strong>Submitted:</strong> <%= new Date(request.createdAt).toLocaleString() %></p>
+            </div>
+            <div class="col-md-6">
+              <% if (request.isBulkRequest) { %>
+                <h5>Bulk Request Information</h5>
+                <p><strong>Request Type:</strong> <span class="badge bg-info">Bulk Request</span></p>
+                <p><strong>Number of Roles:</strong> <%= request.bulkRoleCount %></p>
+                <p><strong>Primary Role:</strong> <%= request.role ? request.role.name : 'Unknown' %></p>
+                <p><strong>Primary Role Location:</strong> <%= request.role ? `${request.role.city}, ${request.role.state}` : 'Unknown' %></p>
+                <p><strong>Primary Role Phone:</strong> <%= request.role && request.role.phoneNumber ? request.role.phoneNumber : 'Not provided' %></p>
+              <% } else { %>
+                <h5>Role Information</h5>
+                <p><strong>Role:</strong> <%= request.role ? request.role.name : 'Unknown' %></p>
+                <p><strong>Role Location:</strong> <%= request.role ? `${request.role.city}, ${request.role.state}` : 'Unknown' %></p>
+                <p><strong>Role Phone:</strong> <%= request.role && request.role.phoneNumber ? request.role.phoneNumber : 'Not provided' %></p>
+                <p><strong>Role Description:</strong> <%= request.role ? request.role.description : 'Unknown' %></p>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <h5>Message</h5>
+            <div class="p-3 bg-light rounded" style="color: #000000;">
+              <%= request.message %>
+            </div>
+          </div>
+
+          <% if (typeof relatedRequests !== 'undefined' && relatedRequests.length > 0) { %>
+          <div class="mb-4">
+            <h5>Additional Roles in This Bulk Request</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Role</th>
+                    <th>Location</th>
+                    <th>Phone</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% relatedRequests.forEach(relatedRequest => { %>
+                    <tr>
+                      <td><%= relatedRequest.role ? relatedRequest.role.name : 'Unknown' %></td>
+                      <td><%= relatedRequest.role ? `${relatedRequest.role.city}, ${relatedRequest.role.state}` : 'Unknown' %></td>
+                      <td><%= relatedRequest.role && relatedRequest.role.phoneNumber ? relatedRequest.role.phoneNumber : 'Not provided' %></td>
+                      <td><%= relatedRequest.role ? (relatedRequest.role.description.length > 100 ? relatedRequest.role.description.substring(0, 100) + '...' : relatedRequest.role.description) : 'Unknown' %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <% } %>
+
+          <% if (request.status !== 'pending') { %>
+            <div class="mb-4">
+              <h5>Review Information</h5>
+              <p><strong>Status:</strong>
+                <span class="badge <%= request.status === 'approved' ? 'bg-success' : 'bg-danger' %>">
+                  <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+                </span>
+              </p>
+              <p><strong>Reviewed By:</strong> <%= request.reviewedBy ? request.reviewedBy.name : 'Unknown' %></p>
+              <p><strong>Reviewed On:</strong> <%= request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Unknown' %></p>
+              <% if (request.adminNotes) { %>
+                <p><strong>Admin Notes:</strong></p>
+                <div class="p-3 bg-light rounded" style="color: #000000;">
+                  <%= request.adminNotes %>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Action Card -->
+      <% if (request.status === 'pending') { %>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-tasks me-1"></i>
+            Actions
+          </div>
+          <div class="card-body">
+            <div class="mb-4">
+              <h5>Approve Request</h5>
+              <form action="/admin/team-requirement/requests/<%= request._id %>/approve" method="POST">
+                <div class="mb-3">
+                  <label for="approveNotes" class="form-label">Admin Notes (Optional)</label>
+                  <textarea class="form-control" id="approveNotes" name="adminNotes" rows="3" placeholder="Add any notes or instructions for the requester"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Approve Request</button>
+              </form>
+            </div>
+
+            <hr>
+
+            <div>
+              <h5>Reject Request</h5>
+              <form action="/admin/team-requirement/requests/<%= request._id %>/reject" method="POST">
+                <div class="mb-3">
+                  <label for="rejectNotes" class="form-label">Reason for Rejection *</label>
+                  <textarea class="form-control" id="rejectNotes" name="adminNotes" rows="3" placeholder="Provide a reason for rejecting this request" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger w-100">Reject Request</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Contact Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-envelope me-1"></i>
+          Contact Requester
+        </div>
+        <div class="card-body">
+          <p>You can contact the requester directly using the following options:</p>
+          <div class="d-grid gap-2">
+            <a href="mailto:<%= request.email %>" class="btn btn-primary">
+              <i class="fas fa-envelope me-1"></i> Send Email
+            </a>
+            <a href="tel:<%= request.phone %>" class="btn btn-outline-primary">
+              <i class="fas fa-phone me-1"></i> Call
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Back Button -->
+      <div class="d-grid">
+        <a href="/admin/team-requirement/requests" class="btn btn-secondary">
+          <i class="fas fa-arrow-left me-1"></i> Back to Requests
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+

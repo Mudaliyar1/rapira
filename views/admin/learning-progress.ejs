@@ -1,0 +1,202 @@
+<%- contentFor('body') %>
+
+<style>
+  /* Custom progress bar styles */
+  .progress-bar {
+    transition: width 0.5s ease;
+  }
+
+  /* Set width dynamically with inline style */
+  .progress-bar-custom {
+    width: var(--progress-width);
+  }
+</style>
+
+<!-- User Learning Progress -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">User Learning Progress</h5>
+    <a href="/learning/admin" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Modules
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Artist</th>
+            <th class="text-white">Level</th>
+            <th class="text-white">Progress</th>
+            <th class="text-white">Completed</th>
+            <th class="text-white">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (artists && artists.length > 0) { %>
+            <% artists.forEach(artist => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <h6 class="mb-0 text-white"><%= artist.user.name %></h6>
+                      <small class="text-muted"><%= artist.user.email %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-primary">
+                    <i class="bi bi-person-badge me-1"></i> <%= artist.artistLevel %>
+                  </span>
+                </td>
+                <td>
+                  <%
+                    // Filter modules for this artist's level
+                    const artistModules = modules.filter(m => m.forArtistLevel === artist.artistLevel || m.forArtistLevel === 'All');
+                    const requiredModules = artistModules.filter(m => m.isRequired);
+
+                    // Count completed modules
+                    let completedCount = 0;
+                    let requiredCompletedCount = 0;
+
+                    artistModules.forEach(module => {
+                      // Check if user exists in the progress map and has completed this module
+                      if (artist.user && userProgressMap[artist.user._id] && userProgressMap[artist.user._id][module._id]) {
+                        completedCount++;
+                        if (module.isRequired) {
+                          requiredCompletedCount++;
+                        }
+                      }
+                    });
+
+                    // Calculate percentages
+                    const totalProgress = artistModules.length > 0 ? Math.round((completedCount / artistModules.length) * 100) : 0;
+                    const requiredProgress = requiredModules.length > 0 ? Math.round((requiredCompletedCount / requiredModules.length) * 100) : 0;
+                  %>
+
+                  <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success progress-bar-custom" role="progressbar" aria-valuenow="<%= totalProgress %>" aria-valuemin="0" aria-valuemax="100" style="--progress-width: <%= totalProgress %>%"></div>
+                  </div>
+                  <small class="text-white"><%= completedCount %> / <%= artistModules.length %> modules (<%= totalProgress %>%)</small>
+                </td>
+                <td>
+                  <% if (requiredModules.length > 0) { %>
+                    <div class="progress mb-2" style="height: 8px;">
+                      <div class="progress-bar bg-warning progress-bar-custom" role="progressbar" aria-valuenow="<%= requiredProgress %>" aria-valuemin="0" aria-valuemax="100" style="--progress-width: <%= requiredProgress %>%"></div>
+                    </div>
+                    <small class="text-white"><%= requiredCompletedCount %> / <%= requiredModules.length %> required (<%= requiredProgress %>%)</small>
+                  <% } else { %>
+                    <span class="text-muted">No required modules</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (artist.artistLevel === 'Beginner') { %>
+                    <% if (artist.completedLearning) { %>
+                      <span class="badge bg-success">Completed Learning</span>
+                    <% } else if (requiredModules.length > 0 && requiredCompletedCount === requiredModules.length) { %>
+                      <span class="badge bg-warning">Ready for Upgrade</span>
+                    <% } else { %>
+                      <span class="badge bg-secondary">In Progress</span>
+                    <% } %>
+                  <% } else { %>
+                    <span class="badge bg-info">Advanced Level</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="5" class="text-center py-4 text-white">
+                <i class="bi bi-people display-4 text-muted mb-3"></i>
+                <p class="mb-0">No artists found</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Module Completion Details -->
+<div class="glass-card-dark border border-secondary mt-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Module Completion Details</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-white">Module</th>
+            <th class="text-white">Level</th>
+            <th class="text-white">Required</th>
+            <th class="text-white">Completion Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (modules && modules.length > 0) { %>
+            <% modules.forEach(module => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= module.thumbnailImage %>" alt="<%= module.title %>" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0 text-white"><%= module.title %></h6>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-primary">
+                    <i class="bi bi-person-badge me-1"></i> <%= module.forArtistLevel %>
+                  </span>
+                </td>
+                <td>
+                  <% if (module.isRequired) { %>
+                    <span class="badge bg-warning">Required</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">Optional</span>
+                  <% } %>
+                </td>
+                <td>
+                  <%
+                    // Count artists who should take this module
+                    const eligibleArtists = artists.filter(a =>
+                      module.forArtistLevel === 'All' || a.artistLevel === module.forArtistLevel
+                    );
+
+                    // Count completions
+                    let completionCount = 0;
+
+                    eligibleArtists.forEach(artist => {
+                      if (artist.user && userProgressMap[artist.user._id] && userProgressMap[artist.user._id][module._id]) {
+                        completionCount++;
+                      }
+                    });
+
+                    // Calculate percentage
+                    const completionRate = eligibleArtists.length > 0 ? Math.round((completionCount / eligibleArtists.length) * 100) : 0;
+                  %>
+
+                  <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-info w-<%= completionRate <= 100 ? completionRate : 100 %>" role="progressbar" aria-valuenow="<%= completionRate %>" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <small class="text-white"><%= completionCount %> / <%= eligibleArtists.length %> artists (<%= completionRate %>%)</small>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="text-center py-4 text-white">
+                <i class="bi bi-journal-x display-4 text-muted mb-3"></i>
+                <p class="mb-0">No modules found</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Progress bars are now set directly with inline styles -->
