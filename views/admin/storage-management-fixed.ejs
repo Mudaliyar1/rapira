@@ -1,5 +1,60 @@
 <%- contentFor('body') %>
 
+<!-- MongoDB Atlas Storage Usage -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="glass-card-dark border border-secondary">
+      <div class="card-header border-bottom border-secondary">
+        <h5 class="card-title mb-0 text-white">
+          <i class="bi bi-cloud me-2"></i> MongoDB Atlas Storage Usage
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h6 class="text-white mb-2">Storage Used: <%= stats.dbStats.formattedTotalSize %> of <%= stats.dbStats.formattedAtlasLimit %></h6>
+            <div class="progress" style="height: 25px; background-color: rgba(0,0,0,0.2);">
+              <%
+                let progressClass = "bg-success";
+                if (stats.dbStats.usagePercentage > 70) progressClass = "bg-warning";
+                if (stats.dbStats.usagePercentage > 90) progressClass = "bg-danger";
+              %>
+              <div class="progress-bar <%= progressClass %>" role="progressbar"
+                   style="width: <%= stats.dbStats.usagePercentage %>%;"
+                   aria-valuenow="<%= stats.dbStats.usagePercentage %>"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+                <%= stats.dbStats.usagePercentage %>%
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+              <small class="text-white-50">0 MB</small>
+              <small class="text-white-50"><%= stats.dbStats.formattedAtlasLimit %></small>
+            </div>
+          </div>
+          <div class="col-md-4 text-center">
+            <div class="p-3 bg-dark bg-opacity-25 rounded mt-3 mt-md-0">
+              <h6 class="text-white-50 mb-1">Remaining Storage</h6>
+              <h3 class="text-white mb-0"><%= stats.dbStats.formattedRemainingStorage %></h3>
+              <small class="text-white-50">Free space available</small>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info bg-dark text-info border-info mt-3 mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          <strong>About Your MongoDB Atlas Plan:</strong>
+          Your database is using <%= stats.dbStats.usagePercentage %>% of your 512MB free tier storage limit.
+          <% if (stats.dbStats.usagePercentage > 80) { %>
+            <span class="text-warning">You're approaching your storage limit. Consider deleting unnecessary data or upgrading your plan.</span>
+          <% } else { %>
+            You have <%= stats.dbStats.formattedRemainingStorage %> of free space remaining.
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Overview Cards -->
 <div class="row g-4 mb-4">
   <div class="col-md-6 col-lg-3">
