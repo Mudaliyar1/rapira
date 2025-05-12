@@ -11,6 +11,23 @@
     max-height: 300px;
   }
 
+  .youtube-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  .youtube-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
   .content-header::before {
     content: '';
     position: absolute;
@@ -253,139 +270,116 @@
     <!-- Media Player -->
     <div class="row mb-5">
       <div class="col-12">
-        <% if (content.type === 'song') { %>
-          <div class="audio-player-container p-4">
-            <h4 class="text-white mb-4">Now Playing</h4>
-            <audio id="audioPlayer" controls class="w-100" preload="auto">
-              <source src="<%= content.fullFileUrl || content.fileUrl %>" type="audio/mpeg">
-              Your browser does not support the audio element.
-            </audio>
-            <div id="waveform" class="waveform mt-3">
-              <div class="waveform-progress"></div>
-              <div class="waveform-bars">
-                <% for(let i = 0; i < 100; i++) {
-                    const heightClass = 'waveform-bar-' + (Math.floor(Math.random() * 10) + 1) * 10;
-                  %>
-                  <div class="waveform-bar <%= heightClass %>"></div>
-                <% } %>
+        <% if (content.isYoutubeLink && content.youtubeId) { %>
+          <% if (content.type === 'song') { %>
+            <div class="audio-player-container p-4">
+              <h4 class="text-white mb-4">Now Playing</h4>
+              <div class="youtube-embed-container">
+                <div class="alert alert-info mb-3">
+                  <h5><i class="bi bi-youtube me-2"></i> YouTube Content</h5>
+                  <p>This content is hosted on YouTube. Click the button below to watch it:</p>
+                  <a href="<%= content.fileUrl %>" class="btn btn-primary" target="_blank">
+                    <i class="bi bi-youtube me-1"></i> Watch on YouTube
+                  </a>
+                </div>
+
+                <div class="ratio ratio-16x9 d-none">
+                  <!-- YouTube embed is disabled in local development -->
+                  <iframe
+                    id="youtubeFrame"
+                    src="about:blank"
+                    data-youtube-id="<%= content.youtubeId %>"
+                    title="<%= content.title %>"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+
+                <div class="text-center mt-3">
+                  <img
+                    src="https://img.youtube.com/vi/<%= content.youtubeId %>/maxresdefault.jpg"
+                    alt="<%= content.title %>"
+                    class="img-fluid rounded shadow"
+                    style="max-width: 100%; max-height: 400px;"
+                    onerror="this.src='https://img.youtube.com/vi/<%= content.youtubeId %>/hqdefault.jpg'">
+                </div>
+              </div>
+              <div class="mt-3 text-white-50">
+                <p>
+                  <i class="bi bi-youtube me-2"></i>
+                  <a href="<%= content.fileUrl %>" target="_blank" class="text-white-50">View on YouTube</a>
+                </p>
               </div>
             </div>
-            <div class="d-flex justify-content-between text-muted mt-2">
-              <span id="currentTime">0:00</span>
-              <span id="duration">0:00</span>
-            </div>
-            <div id="audioError" class="error-container mt-3 d-none">
-              <h5 class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Playback Error</h5>
-              <p>There was an error playing this audio file. This may be due to server restart or connection issues.</p>
-              <div class="d-flex flex-wrap gap-2">
-                <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" download>
-                  <i class="bi bi-download me-1"></i> Download Audio
-                </a>
-                <button class="btn btn-outline-light" onclick="window.location.reload()">
-                  <i class="bi bi-arrow-clockwise me-1"></i> Refresh Page
-                </button>
+          <% } else if (content.type === 'video') { %>
+            <div class="video-player-container">
+              <div class="youtube-embed-container">
+                <div class="alert alert-info mb-3">
+                  <h5><i class="bi bi-youtube me-2"></i> YouTube Content</h5>
+                  <p>This content is hosted on YouTube. Click the button below to watch it:</p>
+                  <a href="<%= content.fileUrl %>" class="btn btn-primary" target="_blank">
+                    <i class="bi bi-youtube me-1"></i> Watch on YouTube
+                  </a>
+                </div>
+
+                <div class="ratio ratio-16x9 d-none">
+                  <!-- YouTube embed is disabled in local development -->
+                  <iframe
+                    id="youtubeVideoFrame"
+                    src="about:blank"
+                    data-youtube-id="<%= content.youtubeId %>"
+                    title="<%= content.title %>"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+
+                <div class="text-center mt-3">
+                  <img
+                    src="https://img.youtube.com/vi/<%= content.youtubeId %>/maxresdefault.jpg"
+                    alt="<%= content.title %>"
+                    class="img-fluid rounded shadow"
+                    style="max-width: 100%; max-height: 400px;"
+                    onerror="this.src='https://img.youtube.com/vi/<%= content.youtubeId %>/hqdefault.jpg'">
+                </div>
+              </div>
+              <div class="mt-3 text-white-50 p-3">
+                <p>
+                  <i class="bi bi-youtube me-2"></i>
+                  <a href="<%= content.fileUrl %>" target="_blank" class="text-white-50">View on YouTube</a>
+                </p>
               </div>
             </div>
-          </div>
-        <% } else if (content.type === 'video') { %>
-          <div class="video-player-container">
-            <div class="ratio ratio-16x9">
-              <video id="videoPlayer" controls preload="auto" poster="<%= content.fullThumbnailUrl || content.thumbnailUrl %>" onerror="this.poster='/images/default-thumbnail.jpg'">
-                <source src="<%= content.fullFileUrl || content.fileUrl %>" type="video/mp4">
-                Your browser does not support the video element.
-              </video>
-            </div>
-            <div id="videoError" class="error-container m-3 d-none">
-              <h5 class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Playback Error</h5>
-              <p>There was an error playing this video file. This may be due to server restart or connection issues.</p>
-              <div class="d-flex flex-wrap gap-2">
-                <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" download>
-                  <i class="bi bi-download me-1"></i> Download Video
-                </a>
-                <button class="btn btn-outline-light" onclick="window.location.reload()">
-                  <i class="bi bi-arrow-clockwise me-1"></i> Refresh Page
-                </button>
-              </div>
-            </div>
-          </div>
+          <% } %>
         <% } else { %>
-          <div class="pdf-viewer-container p-4">
-            <!-- Direct PDF Embed (Primary Method) -->
-            <div id="directPdfEmbed">
-              <h4 class="text-white mb-3"><%= content.title %></h4>
-              <div class="ratio ratio-16x9 mb-3">
-                <object
-                  id="pdfObject"
-                  data="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>"
-                  type="application/pdf"
-                  class="rounded shadow w-100 h-100">
-                  <div class="pdf-fallback p-4 text-center bg-light rounded">
-                    <p class="mb-3">Unable to display PDF directly. Please use one of the options below:</p>
-                    <div class="d-flex flex-wrap gap-2 justify-content-center">
-                      <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-primary" download>
-                        <i class="bi bi-download me-1"></i> Download PDF
-                      </a>
-                      <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-outline-dark" target="_blank">
-                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
-                      </a>
-                    </div>
-                  </div>
-                </object>
+          <% if (content.type === 'song') { %>
+            <div class="audio-player-container p-4">
+              <h4 class="text-white mb-4">Now Playing</h4>
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                This content was uploaded before YouTube integration. Please contact the artist to update it.
               </div>
-              <div class="d-flex justify-content-between">
-                <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-primary" download>
-                  <i class="bi bi-download me-1"></i> Download PDF
-                </a>
-                <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-outline-light" target="_blank">
-                  <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
-                </a>
+              <audio id="audioPlayer" controls class="w-100 mt-3" preload="auto">
+                <source src="<%= content.fullFileUrl || content.fileUrl %>" type="audio/mpeg">
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          <% } else if (content.type === 'video') { %>
+            <div class="video-player-container">
+              <div class="alert alert-warning m-3">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                This content was uploaded before YouTube integration. Please contact the artist to update it.
+              </div>
+              <div class="ratio ratio-16x9">
+                <video id="videoPlayer" controls preload="auto" poster="<%= content.fullThumbnailUrl || content.thumbnailUrl %>" onerror="this.poster='/images/default-thumbnail.jpg'">
+                  <source src="<%= content.fullFileUrl || content.fileUrl %>" type="video/mp4">
+                  Your browser does not support the video element.
+                </video>
               </div>
             </div>
-
-            <!-- PDF.js Viewer (Hidden, Alternative Method) -->
-            <div id="pdfJsViewer" class="d-none mt-4">
-              <h5 class="text-white mb-3">PDF Viewer (Alternative)</h5>
-              <div class="pdf-controls d-flex justify-content-between align-items-center mb-3">
-                <button id="prevPage" class="btn btn-outline-light">
-                  <i class="bi bi-chevron-left"></i> Previous
-                </button>
-                <div class="text-white">
-                  Page <span id="currentPage">1</span> of <span id="totalPages">?</span>
-                </div>
-                <button id="nextPage" class="btn btn-outline-light">
-                  Next <i class="bi bi-chevron-right"></i>
-                </button>
-              </div>
-              <div id="pdfLoading" class="loading-container">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="text-white mt-3">Loading PDF...</p>
-              </div>
-              <div class="pdf-canvas-container">
-                <canvas id="pdfCanvas"></canvas>
-              </div>
-              <button id="switchToDirectBtn" class="btn btn-outline-light mt-3">
-                <i class="bi bi-arrow-left-right me-1"></i> Switch to Direct Viewer
-              </button>
-            </div>
-
-            <!-- Error Message -->
-            <div id="pdfError" class="error-container mt-3 d-none">
-              <h5 class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> PDF Loading Error</h5>
-              <p>There was an error loading this PDF file. This may be due to server restart or connection issues.</p>
-              <div class="d-flex flex-wrap gap-2">
-                <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-primary" download>
-                  <i class="bi bi-download me-1"></i> Download PDF
-                </a>
-                <a href="<%= content.fullFileUrl || content.fileUrl %>?t=<%= Date.now() %>" class="btn btn-outline-light" target="_blank">
-                  <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
-                </a>
-                <button class="btn btn-outline-light" onclick="window.location.reload()">
-                  <i class="bi bi-arrow-clockwise me-1"></i> Refresh Page
-                </button>
-              </div>
-            </div>
+          <% } %>
           </div>
         <% } %>
       </div>
@@ -448,12 +442,9 @@
 </div>
 
 <%- contentFor('scripts') %>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // Initialize variables
-    let pdfDoc = null;
-    let pageNum = 1;
     let mediaLoadRetries = 0;
     const MAX_RETRIES = 3;
 
@@ -469,19 +460,8 @@
     // Get elements
     const audioPlayer = document.getElementById('audioPlayer');
     const videoPlayer = document.getElementById('videoPlayer');
-    const pdfCanvas = document.getElementById('pdfCanvas');
-    const currentPage = document.getElementById('currentPage');
-    const totalPages = document.getElementById('totalPages');
-    const prevPage = document.getElementById('prevPage');
-    const nextPage = document.getElementById('nextPage');
-    const pdfLoading = document.getElementById('pdfLoading');
     const audioError = document.getElementById('audioError');
     const videoError = document.getElementById('videoError');
-    const pdfError = document.getElementById('pdfError');
-    const pdfJsViewer = document.getElementById('pdfJsViewer');
-    const directPdfEmbed = document.getElementById('directPdfEmbed');
-    const pdfObject = document.getElementById('pdfObject');
-    const switchToDirectBtn = document.getElementById('switchToDirectBtn');
     const waveform = document.getElementById('waveform');
     const currentTime = document.getElementById('currentTime');
     const duration = document.getElementById('duration');
@@ -523,351 +503,16 @@
       });
     }
 
-    // Initialize PDF handling
-    if ('<%= content.type %>' === 'lyrics' || '<%= content.type %>' === 'pdf') {
-      // Get the PDF object element
-      const pdfObject = document.getElementById('pdfObject');
 
-      if (pdfObject) {
-        // Add loading indicator
-        const loadingIndicator = document.createElement('div');
-        loadingIndicator.className = 'position-absolute top-50 start-50 translate-middle';
-        loadingIndicator.innerHTML = `
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading PDF...</span>
-          </div>
-          <p class="text-white mt-3">Loading PDF...</p>
-        `;
-        pdfObject.parentElement.style.position = 'relative';
-        pdfObject.parentElement.appendChild(loadingIndicator);
 
-        // Add a button to try the alternative PDF.js viewer
-        const viewerSwitchBtn = document.createElement('button');
-        viewerSwitchBtn.className = 'btn btn-outline-light ms-2';
-        viewerSwitchBtn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Try Alternative Viewer';
-        viewerSwitchBtn.addEventListener('click', function() {
-          if (pdfJsViewer) {
-            // Hide direct embed
-            const directEmbed = document.getElementById('directPdfEmbed');
-            if (directEmbed) directEmbed.classList.add('d-none');
 
-            // Show PDF.js viewer
-            pdfJsViewer.classList.remove('d-none');
+    // Format time for audio player
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
 
-            // Initialize PDF.js if not already initialized
-            initPdfViewer('<%= content.fullFileUrl || content.fileUrl %>');
-          }
-        });
-
-        // Add the button to the button container
-        const buttonContainer = document.querySelector('.pdf-viewer-container .d-flex');
-        if (buttonContainer) {
-          buttonContainer.appendChild(viewerSwitchBtn);
-        }
-
-        // Set a timeout to remove the loading indicator
-        setTimeout(() => {
-          if (loadingIndicator) loadingIndicator.remove();
-        }, 3000);
-
-        // Handle PDF loading errors
-        pdfObject.addEventListener('error', function() {
-          console.error('PDF object failed to load');
-          if (loadingIndicator) loadingIndicator.remove();
-
-          // Show the alternative viewer button more prominently
-          const alternativeViewerBtn = document.createElement('div');
-          alternativeViewerBtn.className = 'alert alert-warning mt-3';
-          alternativeViewerBtn.innerHTML = `
-            <h5><i class="bi bi-exclamation-triangle-fill me-2"></i> PDF Viewer Issue</h5>
-            <p>The PDF viewer encountered an issue. Try the alternative viewer:</p>
-            <button id="useAlternativeViewerBtn" class="btn btn-primary">
-              <i class="bi bi-file-earmark-pdf me-1"></i> Use Alternative PDF Viewer
-            </button>
-          `;
-
-          // Add to the container
-          const pdfContainer = document.querySelector('.pdf-viewer-container');
-          if (pdfContainer) {
-            pdfContainer.appendChild(alternativeViewerBtn);
-
-            // Add click event
-            document.getElementById('useAlternativeViewerBtn').addEventListener('click', function() {
-              if (pdfJsViewer) {
-                // Hide direct embed
-                const directEmbed = document.getElementById('directPdfEmbed');
-                if (directEmbed) directEmbed.classList.add('d-none');
-
-                // Show PDF.js viewer
-                pdfJsViewer.classList.remove('d-none');
-
-                // Initialize PDF.js
-                initPdfViewer('<%= content.fullFileUrl || content.fileUrl %>');
-
-                // Remove the alert
-                alternativeViewerBtn.remove();
-              }
-            });
-          }
-        });
-      }
-
-      // Initialize PDF.js as an alternative option
-      if (pdfCanvas) {
-        // We don't auto-initialize PDF.js anymore, it's just an alternative option
-        // User can click a button to switch to it if they want
-      }
-    }
-
-    // Add event listeners for PDF navigation (for PDF.js viewer)
-    if (prevPage) {
-      prevPage.addEventListener('click', function() {
-        if (pageNum <= 1) return;
-        pageNum--;
-        renderPage(pageNum);
-      });
-    }
-
-    if (nextPage) {
-      nextPage.addEventListener('click', function() {
-        if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
-        pageNum++;
-        renderPage(pageNum);
-      });
-    }
-
-    // Add button to switch between viewers
-    if (switchToDirectBtn) {
-      switchToDirectBtn.addEventListener('click', function() {
-        // Hide PDF.js viewer
-        if (pdfJsViewer) pdfJsViewer.classList.add('d-none');
-
-        // Show direct embed
-        if (directPdfEmbed) directPdfEmbed.classList.remove('d-none');
-      });
-    }
-
-    // Add button to try PDF.js viewer
-    const tryPdfJsBtn = document.createElement('button');
-    tryPdfJsBtn.className = 'btn btn-outline-light ms-2';
-    tryPdfJsBtn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Try Alternative Viewer';
-    tryPdfJsBtn.addEventListener('click', function() {
-      // Hide direct embed
-      if (directPdfEmbed) directPdfEmbed.classList.add('d-none');
-
-      // Show PDF.js viewer
-      if (pdfJsViewer) {
-        pdfJsViewer.classList.remove('d-none');
-
-        // Initialize PDF.js if not already initialized
-        if (!pdfDoc) {
-          initPdfViewer('<%= content.fullFileUrl || content.fileUrl %>');
-        }
-      }
-    });
-
-    // Add the button to the direct embed container
-    if (directPdfEmbed) {
-      const buttonContainer = directPdfEmbed.querySelector('.d-flex');
-      if (buttonContainer) {
-        buttonContainer.appendChild(tryPdfJsBtn);
-      }
-    }
-
-    // Initialize PDF viewer
-    function initPdfViewer(url) {
-      if (!pdfjsLib) {
-        console.error('PDF.js library not loaded');
-        if (pdfError) pdfError.classList.remove('d-none');
-        if (pdfLoading) pdfLoading.style.display = 'none';
-
-        // Try to load PDF.js dynamically if it's not available
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-        script.onload = function() {
-          console.log('PDF.js loaded dynamically');
-          // Try initializing again after script loads
-          setTimeout(() => initPdfViewer(url), 500);
-        };
-        script.onerror = function() {
-          console.error('Failed to load PDF.js dynamically');
-          if (pdfError) pdfError.classList.remove('d-none');
-        };
-        document.head.appendChild(script);
-        return;
-      }
-
-      // Set worker source
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-      // Add cache-busting parameter to URL
-      const cacheBuster = `?t=${Date.now()}`;
-      const pdfUrl = url + cacheBuster;
-
-      console.log('Loading PDF from URL:', pdfUrl);
-
-      // Set a timeout to handle stalled loading
-      const pdfLoadTimeout = setTimeout(() => {
-        console.error('PDF loading timed out');
-        if (pdfError) pdfError.classList.remove('d-none');
-        if (pdfLoading) pdfLoading.style.display = 'none';
-      }, 15000); // 15 seconds timeout
-
-      // Load PDF with retry mechanism
-      let retryCount = 0;
-      const maxRetries = 2;
-
-      function loadPdfWithRetry() {
-        // Update loading message
-        if (pdfLoading) {
-          if (retryCount > 0) {
-            pdfLoading.innerHTML = `
-              <div class="spinner-border text-warning" role="status">
-                <span class="visually-hidden">Retrying...</span>
-              </div>
-              <p class="text-white mt-3">Retrying PDF load (${retryCount}/${maxRetries})...</p>
-            `;
-          } else {
-            pdfLoading.innerHTML = `
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-              <p class="text-white mt-3">Loading PDF...</p>
-            `;
-          }
-        }
-
-        // Try to load the PDF
-        pdfjsLib.getDocument({
-          url: pdfUrl,
-          withCredentials: false,
-          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/cmaps/',
-          cMapPacked: true
-        }).promise.then(function(pdf) {
-          // Clear the timeout since loading succeeded
-          clearTimeout(pdfLoadTimeout);
-
-          pdfDoc = pdf;
-          if (totalPages) totalPages.textContent = pdf.numPages;
-
-          // Render first page
-          renderPage(pageNum);
-
-          // Hide loading indicator
-          if (pdfLoading) pdfLoading.style.display = 'none';
-
-          console.log('PDF loaded successfully with', pdf.numPages, 'pages');
-        }).catch(function(error) {
-          console.error('Error loading PDF (attempt ' + (retryCount + 1) + '):', error);
-
-          // Retry if we haven't reached max retries
-          if (retryCount < maxRetries) {
-            retryCount++;
-            console.log('Retrying PDF load, attempt', retryCount);
-            setTimeout(loadPdfWithRetry, 2000); // Wait 2 seconds before retrying
-          } else {
-            // Clear the timeout since we're giving up
-            clearTimeout(pdfLoadTimeout);
-
-            // Show error after max retries
-            if (pdfError) pdfError.classList.remove('d-none');
-            if (pdfLoading) pdfLoading.style.display = 'none';
-
-            // Add direct link as fallback
-            const directLinkContainer = document.createElement('div');
-            directLinkContainer.className = 'mt-3 text-center';
-            directLinkContainer.innerHTML = `
-              <p class="text-white">Try opening the PDF directly:</p>
-              <a href="${url}" class="btn btn-primary" target="_blank">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Open PDF in New Tab
-              </a>
-            `;
-
-            // Add to the PDF viewer container
-            const pdfViewerContainer = document.querySelector('.pdf-viewer-container');
-            if (pdfViewerContainer) {
-              pdfViewerContainer.appendChild(directLinkContainer);
-            }
-          }
-        });
-      }
-
-      // Start the loading process
-      loadPdfWithRetry();
-    }
-
-    // Render PDF page
-    function renderPage(num) {
-      if (!pdfDoc) return;
-
-      // Show loading indicator while rendering page
-      if (pdfLoading) {
-        pdfLoading.style.display = 'block';
-        pdfLoading.innerHTML = `
-          <div class="spinner-border text-info" role="status">
-            <span class="visually-hidden">Rendering page...</span>
-          </div>
-          <p class="text-white mt-3">Rendering page ${num}...</p>
-        `;
-      }
-
-      pdfDoc.getPage(num).then(function(page) {
-        // Calculate scale to fit the container width
-        const container = pdfCanvas.parentElement;
-        const containerWidth = container ? container.clientWidth : 800;
-        const viewport = page.getViewport({ scale: 1.0 });
-        const scale = Math.min(containerWidth / viewport.width, 1.5); // Limit max scale to 1.5
-        const scaledViewport = page.getViewport({ scale: scale });
-
-        // Set canvas dimensions
-        pdfCanvas.height = scaledViewport.height;
-        pdfCanvas.width = scaledViewport.width;
-
-        // Get canvas context
-        const ctx = pdfCanvas.getContext('2d');
-        if (!ctx) {
-          console.error('Could not get canvas context');
-          if (pdfError) pdfError.classList.remove('d-none');
-          if (pdfLoading) pdfLoading.style.display = 'none';
-          return;
-        }
-
-        // Clear canvas before rendering
-        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-
-        // Prepare render context
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: scaledViewport,
-          enableWebGL: true,
-          renderInteractiveForms: true
-        };
-
-        // Render the page
-        const renderTask = page.render(renderContext);
-
-        renderTask.promise.then(function() {
-          // Update page number display
-          if (currentPage) currentPage.textContent = num;
-
-          // Hide loading indicator
-          if (pdfLoading) pdfLoading.style.display = 'none';
-
-          console.log('Page', num, 'rendered successfully');
-        }).catch(function(error) {
-          console.error('Error rendering page:', error);
-
-          // Show error message
-          if (pdfError) pdfError.classList.remove('d-none');
-          if (pdfLoading) pdfLoading.style.display = 'none';
-        });
-      }).catch(function(error) {
-        console.error('Error getting page:', error);
-
-        // Show error message
-        if (pdfError) pdfError.classList.remove('d-none');
-        if (pdfLoading) pdfLoading.style.display = 'none';
-      });
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 
     // Update audio progress
@@ -960,158 +605,50 @@
 
     // Function to check for Chrome blocking message
     function checkForChromeBlocking() {
-      // Check if we're in a PDF/lyrics view
-      if ('<%= content.type %>' === 'lyrics') {
-        // Set a timeout to check for Chrome blocking message
-        setTimeout(() => {
-          // Look for Chrome blocking message in the page
-          const bodyContent = document.body.innerHTML;
-          const isBlocked =
-            bodyContent.includes('This page has been blocked') ||
-            bodyContent.includes('blocked by Chrome');
+      // Check if we're in Chrome
+      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      if (!isChrome) return;
 
-          if (isBlocked) {
-            console.warn('Detected Chrome blocking message');
+      // Check for audio/video players
+      const mediaElements = document.querySelectorAll('audio, video');
+      if (mediaElements.length === 0) return;
 
-            // Find the PDF object
-            const pdfObject = document.getElementById('pdfObject');
-            if (pdfObject) {
-              // Get the parent container
-              const objectContainer = pdfObject.closest('.ratio');
-              if (objectContainer) {
-                // Hide the object container
-                objectContainer.style.display = 'none';
+      // Add a message about potential Chrome autoplay blocking
+      const container = document.querySelector('.content-container');
+      if (container) {
+        const chromeMessage = document.createElement('div');
+        chromeMessage.className = 'alert alert-info alert-dismissible fade show mb-4';
+        chromeMessage.innerHTML = `
+          <h5><i class="bi bi-info-circle-fill me-2"></i> Having trouble playing media?</h5>
+          <p>Chrome sometimes blocks media autoplay. If you're having issues:</p>
+          <ol>
+            <li>Click the site settings icon in your address bar</li>
+            <li>Allow sound for this site</li>
+            <li>Refresh the page</li>
+          </ol>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
 
-                // Create error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-warning mt-3';
-                errorDiv.innerHTML = `
-                  <h5><i class="bi bi-shield-exclamation me-2"></i> PDF Blocked by Browser</h5>
-                  <p>Your browser has blocked the PDF from displaying. Please try one of these options:</p>
-                  <div class="d-flex flex-wrap gap-2 mt-3 justify-content-center">
-                    <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" download>
-                      <i class="bi bi-download me-1"></i> Download PDF
-                    </a>
-                    <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-outline-dark" target="_blank">
-                      <i class="bi bi-box-arrow-up-right me-1"></i> Open in New Tab
-                    </a>
-                    <button id="usePdfJsViewerBtn" class="btn btn-success">
-                      <i class="bi bi-file-earmark-pdf me-1"></i> Use Alternative Viewer
-                    </button>
-                  </div>
-                `;
-
-                // Add error message to the container
-                const pdfContainer = document.querySelector('.pdf-viewer-container');
-                if (pdfContainer) {
-                  // Insert after the object container
-                  objectContainer.parentNode.insertBefore(errorDiv, objectContainer.nextSibling);
-
-                  // Add event listener to the alternative viewer button
-                  setTimeout(() => {
-                    const usePdfJsViewerBtn = document.getElementById('usePdfJsViewerBtn');
-                    if (usePdfJsViewerBtn) {
-                      usePdfJsViewerBtn.addEventListener('click', function() {
-                        if (pdfJsViewer) {
-                          // Hide direct embed
-                          const directEmbed = document.getElementById('directPdfEmbed');
-                          if (directEmbed) directEmbed.classList.add('d-none');
-
-                          // Show PDF.js viewer
-                          pdfJsViewer.classList.remove('d-none');
-
-                          // Initialize PDF.js
-                          initPdfViewer('<%= content.fullFileUrl || content.fileUrl %>');
-
-                          // Remove the error message
-                          errorDiv.remove();
-                        }
-                      });
-                    }
-                  }, 100);
-                }
-              }
-            }
-          }
-        }, 1500);
+        // Insert at the top of the container
+        container.insertBefore(chromeMessage, container.firstChild);
       }
     }
 
-    // Function to check for invalid content like BatteryInfoView
+    // Function to check for invalid content
     function checkForInvalidContent() {
-      // Check if we're in a PDF/lyrics view
-      if ('<%= content.type %>' === 'lyrics') {
-        // Look for specific elements that indicate invalid content
-        setTimeout(() => {
-          // Check for BatteryInfoView content
-          const bodyContent = document.body.innerHTML;
-          const hasBatteryInfo =
-            bodyContent.includes('BatteryInfoView') ||
-            bodyContent.includes('Battery Name') ||
-            bodyContent.includes('Manufacture Name') ||
-            bodyContent.includes('Serial Number');
+      // Check for audio/video players
+      if (audioPlayer) {
+        audioPlayer.addEventListener('error', function() {
+          console.error('Audio player error:', audioPlayer.error);
+          if (audioError) audioError.classList.remove('d-none');
+        });
+      }
 
-          if (hasBatteryInfo) {
-            console.warn('Detected invalid content (BatteryInfoView)');
-
-            // Find the PDF object
-            const pdfObject = document.getElementById('pdfObject');
-            if (pdfObject) {
-              // Get the parent container
-              const objectContainer = pdfObject.closest('.ratio');
-              if (objectContainer) {
-                // Hide the object container
-                objectContainer.style.display = 'none';
-
-                // Create error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger mt-3';
-                errorDiv.innerHTML = `
-                  <h5><i class="bi bi-exclamation-triangle-fill me-2"></i> Invalid Content Detected</h5>
-                  <p>The content appears to be invalid or corrupted. Please try downloading the file directly or contact support.</p>
-                  <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a href="<%= content.fullFileUrl || content.fileUrl %>" class="btn btn-primary" download>
-                      <i class="bi bi-download me-1"></i> Download File
-                    </a>
-                    <button class="btn btn-outline-light" onclick="window.location.reload()">
-                      <i class="bi bi-arrow-clockwise me-1"></i> Refresh Page
-                    </button>
-                    <button id="tryPdfJsBtn" class="btn btn-outline-light">
-                      <i class="bi bi-file-earmark-pdf me-1"></i> Try Alternative Viewer
-                    </button>
-                  </div>
-                `;
-
-                // Add error message to the container
-                const pdfContainer = document.querySelector('.pdf-viewer-container');
-                if (pdfContainer) {
-                  // Insert after the object container
-                  objectContainer.parentNode.insertBefore(errorDiv, objectContainer.nextSibling);
-
-                  // Add event listener to the alternative viewer button
-                  setTimeout(() => {
-                    const tryPdfJsBtn = document.getElementById('tryPdfJsBtn');
-                    if (tryPdfJsBtn) {
-                      tryPdfJsBtn.addEventListener('click', function() {
-                        if (pdfJsViewer) {
-                          // Hide direct embed
-                          const directEmbed = document.getElementById('directPdfEmbed');
-                          if (directEmbed) directEmbed.classList.add('d-none');
-
-                          // Show PDF.js viewer
-                          pdfJsViewer.classList.remove('d-none');
-
-                          // Initialize PDF.js
-                          initPdfViewer('<%= content.fullFileUrl || content.fileUrl %>');
-                        }
-                      });
-                    }
-                  }, 100);
-                }
-              }
-            }
-          }
-        }, 1000);
+      if (videoPlayer) {
+        videoPlayer.addEventListener('error', function() {
+          console.error('Video player error:', videoPlayer.error);
+          if (videoError) videoError.classList.remove('d-none');
+        });
       }
     }
   });

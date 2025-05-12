@@ -204,12 +204,11 @@ router.get('/upload-content', isLoggedIn, isArtist, async (req, res) => {
 // Upload content process
 router.post('/upload-content', isLoggedIn, isArtist,
   upload.fields([
-    { name: 'contentFile', maxCount: 1 },
     { name: 'thumbnailImage', maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      const { title, type, description } = req.body;
+      const { title, type, description, youtubeLink } = req.body;
 
       // Validate input
       if (!title || !type) {
@@ -217,33 +216,38 @@ router.post('/upload-content', isLoggedIn, isArtist,
         return res.redirect('/artists/upload-content');
       }
 
-      if (!req.files.contentFile) {
-        req.flash('error', 'Please upload a file');
+      if (!youtubeLink) {
+        req.flash('error', 'Please provide a YouTube link');
         return res.redirect('/artists/upload-content');
       }
 
-      // Validate file type matches content type
-      const file = req.files.contentFile[0];
-      const fileType = file.mimetype;
+      // Validate YouTube link
+      let youtubeId = '';
+      try {
+        // Clean up the YouTube link (trim whitespace, etc.)
+        const cleanYoutubeLink = youtubeLink.trim();
 
-      // Define allowed file types for each content type
-      const allowedFileTypes = {
-        song: ['audio/mpeg', 'audio/wav', 'audio/mp3'],
-        video: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
-        lyrics: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-      };
+        // Extract YouTube video ID from various YouTube URL formats
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+        const match = cleanYoutubeLink.match(youtubeRegex);
 
-      // Check if file type is allowed for the selected content type
-      if (!allowedFileTypes[type].includes(fileType)) {
-        // Delete the uploaded file
-        try {
-          fs.unlinkSync(file.path);
-        } catch (err) {
-          console.error('Error deleting invalid file:', err);
+        if (!match || !match[1]) {
+          req.flash('error', 'Invalid YouTube link. Please provide a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
+          return res.redirect('/artists/upload-content');
         }
 
-        // Show error message
-        req.flash('error', `Invalid file type for ${type}. Please upload ${type === 'song' ? 'MP3/WAV' : type === 'video' ? 'MP4/MOV' : 'PDF/DOC/DOCX'} files only.`);
+        youtubeId = match[1];
+
+        // Verify the YouTube ID is valid by checking if it's 11 characters
+        if (youtubeId.length !== 11) {
+          req.flash('error', 'Invalid YouTube video ID. Please check your link and try again.');
+          return res.redirect('/artists/upload-content');
+        }
+
+        console.log(`Extracted YouTube ID: ${youtubeId} from link: ${cleanYoutubeLink}`);
+      } catch (err) {
+        console.error('Error parsing YouTube link:', err);
+        req.flash('error', 'Invalid YouTube link format');
         return res.redirect('/artists/upload-content');
       }
 
@@ -255,20 +259,23 @@ router.post('/upload-content', isLoggedIn, isArtist,
       }
 
       // Create content
-      const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
-
       const newContent = new Content({
         artist: artist._id,
         title,
         type,
         description: description || '',
-        fileUrl: contentFilePath
+        fileUrl: youtubeLink,
+        isYoutubeLink: true,
+        youtubeId
       });
 
       // Set thumbnail if uploaded
-      if (req.files.thumbnailImage) {
+      if (req.files && req.files.thumbnailImage) {
         const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
         newContent.thumbnailUrl = thumbnailPath;
+      } else {
+        // Use YouTube thumbnail if no custom thumbnail is provided
+        newContent.thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
       }
 
       await newContent.save();
@@ -317,12 +324,11 @@ router.get('/content/:id/edit', isLoggedIn, isArtist, async (req, res) => {
 // Update content
 router.post('/content/:id/update', isLoggedIn, isArtist,
   upload.fields([
-    { name: 'contentFile', maxCount: 1 },
     { name: 'thumbnailImage', maxCount: 1 }
   ]),
   async (req, res) => {
     try {
-      const { title, description } = req.body;
+      const { title, description, youtubeLink } = req.body;
 
       // Validate input
       if (!title) {
@@ -345,46 +351,53 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
         return res.redirect('/artists/dashboard');
       }
 
-      // Validate file type matches content type if a new file is uploaded
-      if (req.files.contentFile) {
-        const file = req.files.contentFile[0];
-        const fileType = file.mimetype;
-        const contentType = content.type; // Get the existing content type
-
-        // Define allowed file types for each content type
-        const allowedFileTypes = {
-          song: ['audio/mpeg', 'audio/wav', 'audio/mp3'],
-          video: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
-          lyrics: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-        };
-
-        // Check if file type is allowed for the content type
-        if (!allowedFileTypes[contentType].includes(fileType)) {
-          // Delete the uploaded file
-          try {
-            fs.unlinkSync(file.path);
-          } catch (err) {
-            console.error('Error deleting invalid file:', err);
-          }
-
-          // Show error message
-          req.flash('error', `Invalid file type for ${contentType}. Please upload ${contentType === 'song' ? 'MP3/WAV' : contentType === 'video' ? 'MP4/MOV' : 'PDF/DOC/DOCX'} files only.`);
-          return res.redirect(`/artists/content/${req.params.id}/edit`);
-        }
-      }
-
       // Update content fields
       content.title = title;
       content.description = description || '';
 
-      // Update content file if uploaded
-      if (req.files.contentFile) {
-        const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
-        content.fileUrl = contentFilePath;
+      // Update YouTube link if provided
+      if (youtubeLink) {
+        try {
+          // Clean up the YouTube link (trim whitespace, etc.)
+          const cleanYoutubeLink = youtubeLink.trim();
+
+          // Validate YouTube link
+          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+          const match = cleanYoutubeLink.match(youtubeRegex);
+
+          if (!match || !match[1]) {
+            req.flash('error', 'Invalid YouTube link. Please provide a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
+            return res.redirect(`/artists/content/${req.params.id}/edit`);
+          }
+
+          const youtubeId = match[1];
+
+          // Verify the YouTube ID is valid by checking if it's 11 characters
+          if (youtubeId.length !== 11) {
+            req.flash('error', 'Invalid YouTube video ID. Please check your link and try again.');
+            return res.redirect(`/artists/content/${req.params.id}/edit`);
+          }
+
+          console.log(`Updating content with YouTube ID: ${youtubeId} from link: ${cleanYoutubeLink}`);
+
+          // Update content with new YouTube info
+          content.fileUrl = cleanYoutubeLink;
+          content.isYoutubeLink = true;
+          content.youtubeId = youtubeId;
+
+          // If no custom thumbnail is uploaded, use YouTube thumbnail
+          if (!req.files || !req.files.thumbnailImage) {
+            content.thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+          }
+        } catch (err) {
+          console.error('Error parsing YouTube link:', err);
+          req.flash('error', 'Invalid YouTube link format');
+          return res.redirect(`/artists/content/${req.params.id}/edit`);
+        }
       }
 
       // Update thumbnail if uploaded
-      if (req.files.thumbnailImage) {
+      if (req.files && req.files.thumbnailImage) {
         const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
         content.thumbnailUrl = thumbnailPath;
       }

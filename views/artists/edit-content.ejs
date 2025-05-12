@@ -27,28 +27,29 @@
             </div>
 
             <div class="mb-4">
-              <label class="form-label d-block">Current Content</label>
-              <% if (content.type === 'song') { %>
-                <audio controls class="w-100 mb-2">
-                  <source src="<%= content.fileUrl %>" type="audio/mpeg">
-                  Your browser does not support the audio element.
-                </audio>
-              <% } else if (content.type === 'video') { %>
-                <video controls class="w-100 mb-2" style="max-height: 300px;">
-                  <source src="<%= content.fileUrl %>" type="video/mp4">
-                  Your browser does not support the video element.
-                </video>
+              <label class="form-label d-block">Current Content (YouTube)</label>
+              <% if (content.isYoutubeLink && content.youtubeId) { %>
+                <div class="ratio ratio-16x9 mb-2">
+                  <iframe
+                    src="https://www.youtube.com/embed/<%= content.youtubeId %>"
+                    title="<%= content.title %>"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+                <div class="form-text mb-2">Current YouTube Link: <a href="<%= content.fileUrl %>" target="_blank"><%= content.fileUrl %></a></div>
               <% } else { %>
-                <a href="<%= content.fileUrl %>" target="_blank" class="btn btn-outline-primary">
-                  <i class="bi bi-file-earmark-text me-2"></i> View Current File
-                </a>
+                <div class="alert alert-warning">
+                  This content was uploaded before YouTube integration. Please update with a YouTube link.
+                </div>
               <% } %>
             </div>
 
             <div class="mb-4">
-              <label for="contentFile" class="form-label">Replace Content File</label>
-              <input type="file" class="form-control" id="contentFile" name="contentFile">
-              <div class="form-text">Leave empty to keep the current file.</div>
+              <label for="youtubeLink" class="form-label">Update YouTube Link</label>
+              <input type="text" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=...">
+              <div class="form-text">Leave empty to keep the current YouTube link. Enter a new link to update.</div>
             </div>
 
             <div class="row mb-4">
@@ -103,54 +104,32 @@ document.addEventListener('DOMContentLoaded', function() {
   const uploadForm = document.querySelector('form[action^="/artists/content/"]');
   const contentType = '<%= content.type %>'; // Get content type from server
 
-  // Define allowed file types for each content type
-  const allowedFileTypes = {
-    song: ['audio/mpeg', 'audio/wav', 'audio/mp3'],
-    video: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
-    lyrics: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-  };
+  // Function to validate YouTube link
+  function validateYoutubeLink(link) {
+    if (!link) return true; // Empty link is valid (no change)
 
-  // Define file extensions for error messages
-  const fileExtensions = {
-    song: '.mp3, .wav',
-    video: '.mp4, .mov',
-    lyrics: '.pdf, .doc, .docx'
-  };
-
-  // Function to validate file type
-  function validateFileType() {
-    if (!contentFileInput) return true;
-
-    const file = contentFileInput.files[0];
-
-    // If no file is selected, return true (no validation needed)
-    if (!file) return true;
-
-    // Check if file type matches the content type
-    const isValidFileType = allowedFileTypes[contentType].includes(file.type);
-
-    // If not valid, show error message
-    if (!isValidFileType) {
-      const errorMessage = `Invalid file type for ${contentType}. Please upload ${fileExtensions[contentType]} files only.`;
-      alert(errorMessage);
-
-      // Clear the file input
-      contentFileInput.value = '';
-      return false;
-    }
-
-    return true;
+    // YouTube link regex pattern
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    return youtubeRegex.test(link);
   }
 
-  // Add event listener to file input
-  if (contentFileInput) {
-    contentFileInput.addEventListener('change', validateFileType);
+  // Add event listener to form submission
+  const youtubeLinkInput = document.getElementById('youtubeLink');
+
+  if (youtubeLinkInput) {
+    youtubeLinkInput.addEventListener('change', function() {
+      if (this.value && !validateYoutubeLink(this.value)) {
+        alert('Please enter a valid YouTube URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)');
+        this.value = '';
+      }
+    });
   }
 
   // Add event listener to form submission
   if (uploadForm) {
     uploadForm.addEventListener('submit', function(e) {
-      if (!validateFileType()) {
+      if (youtubeLinkInput && youtubeLinkInput.value && !validateYoutubeLink(youtubeLinkInput.value)) {
+        alert('Please enter a valid YouTube URL');
         e.preventDefault();
       }
     });

@@ -19,6 +19,24 @@ router.get('/:id', async (req, res) => {
         populate: { path: 'user', select: 'name profileImage' }
       });
 
+    // Extract YouTube ID if it's a YouTube link but doesn't have youtubeId set
+    if (content && content.fileUrl) {
+      // Check for YouTube links
+      if ((content.fileUrl.includes('youtube.com') || content.fileUrl.includes('youtu.be')) && !content.youtubeId) {
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+        const match = content.fileUrl.match(youtubeRegex);
+
+        if (match && match[1]) {
+          content.youtubeId = match[1];
+          content.isYoutubeLink = true;
+          await content.save();
+          console.log(`Extracted YouTube ID ${content.youtubeId} from ${content.fileUrl}`);
+        } else {
+          console.log(`Failed to extract YouTube ID from ${content.fileUrl}`);
+        }
+      }
+    }
+
     if (!content) {
       req.flash('error', 'Content not found');
       return res.redirect('/content');
@@ -70,15 +88,15 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/like', isLoggedIn, async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
-    
+
     if (!content) {
       return res.status(404).json({ success: false, message: 'Content not found' });
     }
-    
+
     // Increment like count
     content.likes += 1;
     await content.save();
-    
+
     res.json({ success: true, likes: content.likes });
   } catch (error) {
     console.error('Like content error:', error);
