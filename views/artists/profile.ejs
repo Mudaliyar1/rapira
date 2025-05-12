@@ -140,12 +140,7 @@
                       </p>
                     </div>
                     <div class="card-footer bg-white border-top-0">
-                      <a href="<%= item.fullFileUrl || item.fileUrl %>"
-                         class="btn btn-outline-primary w-100 content-link"
-                         data-type="<%= item.type %>"
-                         data-title="<%= item.title %>"
-                         data-artist="<%= artist.user ? artist.user.name : 'Unknown Artist' %>"
-                         data-thumbnail="<%= item.fullThumbnailUrl || item.thumbnailUrl %>">
+                      <a href="/content/<%= item._id %>" class="btn btn-outline-primary w-100">
                         <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
                       </a>
                     </div>

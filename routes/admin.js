@@ -7,7 +7,7 @@ const Concert = require('../models/Concert');
 const Ticket = require('../models/Ticket');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasPagePermission } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
 const bcrypt = require('bcryptjs');
@@ -115,7 +115,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage users
-router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users', isLoggedIn, isAdmin, hasPagePermission('/admin/users'), async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
     res.render('admin/users-new', {
@@ -323,7 +323,7 @@ router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage concerts
-router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts', isLoggedIn, isAdmin, hasPagePermission('/admin/concerts'), async (req, res) => {
   try {
     const concerts = await Concert.find()
       .sort({ createdAt: -1 })
@@ -973,6 +973,15 @@ router.post('/pages/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// Permission denied page
+router.get('/permission-denied', isLoggedIn, isAdmin, (req, res) => {
+  res.render('admin/permission-denied', {
+    layout: 'admin',
+    title: 'Permission Denied',
+    currentPath: '/admin'
+  });
+});
+
 // Create admin user if it doesn't exist
 router.get('/setup', async (req, res) => {
   try {
@@ -1064,7 +1073,7 @@ router.post('/send-direct-email', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Storage Management
-router.get('/storage-management', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/storage-management', isLoggedIn, isAdmin, hasPagePermission('/admin/storage-management'), async (req, res) => {
   try {
     // Get all collection stats
     const stats = await getAllCollectionStats();

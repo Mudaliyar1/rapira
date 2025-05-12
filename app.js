@@ -121,6 +121,8 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -158,13 +160,25 @@ app.use(express.static(path.join(__dirname, 'public'), {
         }
       }
 
+      // Add CORS headers specifically for media files
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
       // Add Accept-Ranges header for video and audio streaming
       if (filePath.endsWith('.mp4') || filePath.endsWith('.mp3') || filePath.endsWith('.wav')) {
         res.setHeader('Accept-Ranges', 'bytes');
       }
 
-      // Set cache control for media files to improve performance after server restart
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+      // Set strong cache control for media files to improve performance after server restart
+      // Use a longer cache time and include ETag for validation
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // Cache for 7 days
+      res.setHeader('Vary', 'Accept-Encoding');
+
+      // Add content disposition header for downloads
+      if (filePath.includes('/uploads/')) {
+        const filename = path.basename(filePath);
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      }
     }
   }
 }));
@@ -238,9 +252,12 @@ app.use(flash());
 // Import models for user roles check
 const UserRole = require('./models/UserRole');
 const Role = require('./models/Role');
+const AdminPage = require('./models/AdminPage');
+const AdminPagePermission = require('./models/AdminPagePermission');
 
 // Import middleware
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
+const { createMediaMiddleware } = require('./middleware/mediaMiddleware');
 
 // Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
 
@@ -252,13 +269,15 @@ app.use(async (req, res, next) => {
 
     // Set default values for all template variables
     res.locals.currentUser = user;
-    res.locals.isAdmin = user && user.role === 'admin';
+    res.locals.isAdmin = user && (user.role === 'admin' || user.role === 'superAdmin');
+    res.locals.isSuperAdmin = user && user.role === 'superAdmin';
     res.locals.isArtist = user && user.role === 'artist';
     res.locals.hasRoles = false;
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
     res.locals.path = req.path; // Add current path to all views
+    res.locals.adminPagePermissions = {}; // Initialize admin page permissions
 
     // Check if user has any roles (for messaging functionality)
     if (user && user.id) {
@@ -270,18 +289,58 @@ app.use(async (req, res, next) => {
         console.error('Error checking user roles:', err);
         // Default values already set above
       }
+
+      // If user is an admin (not super admin), fetch their page permissions
+      if (user.role === 'admin') {
+        try {
+          // Get all admin pages
+          const adminPages = await AdminPage.find({ isActive: true });
+
+          // Get admin's permissions
+          const adminPermission = await AdminPagePermission.findOne({ admin: user.id });
+
+          // Create a map of page paths to permission status
+          const pagePermissions = {};
+
+          adminPages.forEach(page => {
+            // Page is accessible if:
+            // 1. It's marked as always accessible
+            // 2. Admin has explicit permission for this page
+            const hasPermission = page.alwaysAccessible ||
+              (adminPermission && adminPermission.pagePermissions.get(page.slug));
+
+            // Store by path for easy lookup in templates
+            pagePermissions[page.path] = {
+              hasPermission,
+              name: page.name,
+              slug: page.slug,
+              icon: page.icon,
+              category: page.category,
+              alwaysAccessible: page.alwaysAccessible,
+              superAdminOnly: page.superAdminOnly
+            };
+          });
+
+          // Make permissions available to all templates
+          res.locals.adminPagePermissions = pagePermissions;
+        } catch (err) {
+          console.error('Error fetching admin page permissions:', err);
+        }
+      }
     }
   } catch (err) {
     console.error('Error in global variables middleware:', err);
     // Ensure defaults are set even if there's an error
     res.locals.currentUser = null;
     res.locals.isAdmin = false;
+    res.locals.isSuperAdmin = false;
     res.locals.isArtist = false;
     res.locals.hasRoles = false;
     res.locals.userRoles = [];
     res.locals.success = [];
     res.locals.error = [];
     res.locals.path = req.path;
+    res.locals.adminPagePermissions = {};
   }
 
   next();
@@ -296,6 +355,7 @@ const concertRoutes = require('./routes/concerts');
 const ticketRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
 const adminContentRoutes = require('./routes/admin-content');
+const adminAccessControlRoutes = require('./routes/adminAccessControl');
 const paymentRoutes = require('./routes/payments');
 const pageRoutes = require('./routes/pages');
 const emailStatusRoutes = require('./routes/email-status');
@@ -317,6 +377,9 @@ const { ensureUploadDirectories } = require('./utils/fileHelper');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
+
+// Serve files from uploads directory with enhanced media middleware
+app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'uploads')));
 
 // Use routes
 app.use('/', indexRoutes);
@@ -356,6 +419,9 @@ app.use('/admin/notifications', notificationRoutes);
 
 // Mount admin content routes
 app.use('/admin/content', adminContentRoutes);
+
+// Mount admin access control routes
+app.use('/admin/access-control', adminAccessControlRoutes);
 
 // 404 route
 app.use((req, res) => {

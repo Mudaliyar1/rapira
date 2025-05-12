@@ -127,6 +127,49 @@ router.get('/content', async (req, res) => {
   }
 });
 
+// Content viewer page - dedicated page for viewing individual content
+router.get('/content/:id', async (req, res) => {
+  try {
+    // Find the content by ID
+    const content = await Content.findById(req.params.id)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    if (!content) {
+      req.flash('error', 'Content not found');
+      return res.redirect('/content');
+    }
+
+    // Increment view count
+    content.views += 1;
+    await content.save();
+
+    // Get related content from the same artist (excluding current content)
+    const relatedContent = await Content.find({
+      artist: content.artist._id,
+      _id: { $ne: content._id }
+    })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .populate({
+      path: 'artist',
+      populate: { path: 'user', select: 'name' }
+    });
+
+    // Render the content viewer page
+    res.render('content-viewer', {
+      content,
+      relatedContent
+    });
+  } catch (error) {
+    console.error('Content viewer error:', error);
+    req.flash('error', 'Failed to load content');
+    res.redirect('/content');
+  }
+});
+
 // Dynamic pages
 router.get('/page/:slug', async (req, res) => {
   try {
