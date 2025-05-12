@@ -309,10 +309,14 @@ const adminAccessControlRoutes = require('./routes/adminAccessControl');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
+const { migrateAllUploads } = require('./utils/migrateToPersistentStorage');
+const { createPersistentMediaMiddleware } = require('./middleware/persistentMediaMiddleware');
+const { isPersistentStorageAvailable } = require('./utils/persistentStorage');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
 
+// Note: Persistent storage code was removed to fix merge conflict
 // Use routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);

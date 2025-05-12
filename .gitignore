@@ -36,6 +36,11 @@ public/uploads/*
 !public/uploads/content/.gitkeep
 !public/uploads/thumbnails/.gitkeep
 
+# Persistent storage directory
+persistent-storage/
+/persistent-storage/
+/opt/render/project/src/persistent-storage/
+
 # OS generated files
 .DS_Store
 .DS_Store?
