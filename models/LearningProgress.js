@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const LearningProgressSchema = new mongoose.Schema({

@@ -1,3 +1,4 @@
+
 // Dashboard Charts Initialization
 document.addEventListener('DOMContentLoaded', function() {
   // Update pending count badge
