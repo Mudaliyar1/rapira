@@ -6,6 +6,8 @@ const User = require('../models/User');
 const { isLoggedIn } = require('../middleware/auth');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 const { sendTicketEmail } = require('../utils/brevoEmailService');
+const path = require('path');
+const ejs = require('ejs');
 
 // Book free ticket
 router.post('/book-free', isLoggedIn, async (req, res) => {
@@ -400,9 +402,75 @@ router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+// Download ticket as PDF (redirects to HTML version for now)
+router.get('/:id/download', isLoggedIn, async (req, res) => {
+  try {
+    // Redirect to HTML version since PDF generation requires puppeteer
+    return res.redirect(`/tickets/${req.params.id}/download-html`);
+  } catch (error) {
+    console.error('Download ticket error:', error);
+    req.flash('error', 'Failed to generate ticket PDF');
+    res.redirect(`/tickets/${req.params.id}`);
+  }
+});
+
+// Download ticket as HTML
+router.get('/:id/download-html', isLoggedIn, async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('concert')
+      .populate('user');
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/users/profile');
+    }
+
+    // Check if user owns the ticket or is admin
+    if (ticket.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
+      req.flash('error', 'You do not have permission to download this ticket');
+      return res.redirect('/users/profile');
+    }
+
+    // Check if concert exists and handle deleted concerts
+    let concert = null;
+    let isDeletedConcert = false;
+
+    if (ticket.concert) {
+      concert = await Concert.findById(ticket.concert._id);
+      if (!concert) {
+        isDeletedConcert = true;
+      }
+    } else {
+      isDeletedConcert = true;
+    }
+
+    // Render the ticket template to HTML
+    const ticketHtml = await ejs.renderFile(
+      path.join(__dirname, '../views/tickets/html-template.ejs'),
+      { ticket, concert, isDeletedConcert }
+    );
+
+    // Set response headers
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename=Rapira_Ticket_${ticket._id}.html`);
+
+    // Send the HTML
+    res.send(ticketHtml);
+
+  } catch (error) {
+    console.error('Download HTML ticket error:', error);
+    req.flash('error', 'Failed to generate ticket HTML');
+    res.redirect(`/tickets/${req.params.id}`);
+  }
+});
+
 // List user tickets
 router.get('/', isLoggedIn, async (req, res) => {
   try {
+    console.log('Tickets request received from user:', req.session.user.id);
+    console.log('Headers:', req.headers);
+
     // Only show completed tickets
     const tickets = await Ticket.find({
       user: req.session.user.id,
@@ -411,9 +479,44 @@ router.get('/', isLoggedIn, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('concert');
 
+    console.log('Tickets found in database:', tickets.length);
+
+    // Check if the request wants JSON (from profile page AJAX)
+    // More reliable check for JSON request
+    const wantsJson =
+      req.xhr ||
+      (req.headers.accept && req.headers.accept.indexOf('application/json') > -1) ||
+      (req.query.format === 'json');
+
+    if (wantsJson) {
+      // Format tickets for JSON response
+      const formattedTickets = tickets.map(ticket => {
+        return {
+          id: ticket._id,
+          concertTitle: ticket.concert ? ticket.concert.title : 'Concert Unavailable',
+          concertDate: ticket.concert ? ticket.concert.date : null,
+          venue: ticket.concert ? ticket.concert.venue : 'N/A',
+          quantity: ticket.quantity,
+          status: ticket.paymentStatus
+        };
+      });
+
+      // Add debug log
+      console.log('Returning JSON tickets data:', formattedTickets.length, 'tickets found');
+
+      // Set proper content type header
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({ tickets: formattedTickets });
+    }
+
+    // Regular page request
+    console.log('Rendering tickets/index view');
     res.render('tickets/index', { tickets });
   } catch (error) {
     console.error('List tickets error:', error);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ error: 'Failed to load tickets', message: error.message });
+    }
     req.flash('error', 'Failed to load tickets');
     res.redirect('/users/profile');
   }

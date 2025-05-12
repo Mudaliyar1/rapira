@@ -100,30 +100,52 @@
     <div class="col-lg-8">
       <div class="card mb-4">
         <div class="card-header bg-white py-3">
-          <h5 class="card-title fw-bold mb-0">My Tickets</h5>
+          <h5 class="card-title fw-bold mb-0 text-dark">My Tickets</h5>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th>Concert</th>
-                  <th>Date</th>
-                  <th>Venue</th>
-                  <th>Tickets</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th class="text-dark">Concert</th>
+                  <th class="text-dark">Date</th>
+                  <th class="text-dark">Venue</th>
+                  <th class="text-dark">Tickets</th>
+                  <th class="text-dark">Status</th>
+                  <th class="text-dark">Actions</th>
                 </tr>
               </thead>
               <tbody id="ticketsTableBody">
-                <!-- Tickets will be loaded via AJAX -->
-                <tr>
-                  <td colspan="6" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
-                    </div>
-                  </td>
-                </tr>
+                <% if (typeof tickets !== 'undefined' && tickets.length > 0) { %>
+                  <!-- Server-side rendered tickets -->
+                  <% tickets.forEach(ticket => { %>
+                    <tr>
+                      <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
+                      <td><%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= ticket.concert ? ticket.concert.venue : 'N/A' %></td>
+                      <td><%= ticket.quantity %></td>
+                      <td>
+                        <span class="badge <%= ticket.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
+                          <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
+                        </span>
+                      </td>
+                      <td>
+                        <a href="/tickets/<%= ticket._id %>" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-ticket-perforated me-1"></i> View
+                        </a>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <!-- Tickets will be loaded via AJAX -->
+                  <tr>
+                    <td colspan="6" class="text-center py-4">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -133,7 +155,7 @@
       <% if (user.role === 'artist' && artist) { %>
         <div class="card">
           <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="card-title fw-bold mb-0">My Concerts</h5>
+            <h5 class="card-title fw-bold mb-0 text-dark">My Concerts</h5>
             <a href="/artists/dashboard" class="btn btn-sm btn-primary">
               <i class="bi bi-speedometer2 me-1"></i> Artist Dashboard
             </a>
@@ -143,22 +165,43 @@
               <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>Title</th>
-                    <th>Date</th>
-                    <th>Venue</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th class="text-dark">Title</th>
+                    <th class="text-dark">Date</th>
+                    <th class="text-dark">Venue</th>
+                    <th class="text-dark">Status</th>
+                    <th class="text-dark">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="concertsTableBody">
-                  <!-- Concerts will be loaded via AJAX -->
-                  <tr>
-                    <td colspan="5" class="text-center py-4">
-                      <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
-                    </td>
-                  </tr>
+                  <% if (typeof concerts !== 'undefined' && concerts.length > 0) { %>
+                    <!-- Server-side rendered concerts -->
+                    <% concerts.forEach(concert => { %>
+                      <tr>
+                        <td><%= concert.title %></td>
+                        <td><%= new Date(concert.date).toLocaleDateString() %></td>
+                        <td><%= concert.venue %></td>
+                        <td>
+                          <span class="badge <%= concert.status === 'approved' ? 'bg-success' : 'bg-warning' %>">
+                            <%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %>
+                          </span>
+                        </td>
+                        <td>
+                          <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> View
+                          </a>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  <% } else { %>
+                    <!-- Concerts will be loaded via AJAX -->
+                    <tr>
+                      <td colspan="5" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  <% } %>
                 </tbody>
               </table>
             </div>
@@ -172,31 +215,82 @@
 <script>
   // Load tickets
   document.addEventListener('DOMContentLoaded', function() {
-    fetch('/tickets')
-      .then(response => response.text())
-      .then(html => {
-        // Extract tickets data from the response
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const tickets = Array.from(doc.querySelectorAll('.ticket-item')).map(ticket => {
-          return {
-            id: ticket.dataset.id,
-            concertTitle: ticket.dataset.title,
-            concertDate: ticket.dataset.date,
-            venue: ticket.dataset.venue,
-            quantity: ticket.dataset.quantity,
-            status: ticket.dataset.status
-          };
-        });
+    console.log('DOM loaded, fetching tickets data...');
+
+    // Get the tickets table body element
+    const ticketsTableBody = document.getElementById('ticketsTableBody');
+    if (!ticketsTableBody) {
+      console.error('Tickets table body element not found!');
+      return;
+    }
+
+    // Set a timeout to show a message if the AJAX request takes too long
+    const ticketsTimeout = setTimeout(function() {
+      if (ticketsTableBody.innerHTML.includes('spinner-border')) {
+        ticketsTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <p class="mb-0">Loading tickets is taking longer than expected.</p>
+              <p class="mb-0">You can <a href="/tickets">view your tickets here</a> or try refreshing the page.</p>
+            </td>
+          </tr>
+        `;
+      }
+    }, 5000); // 5 seconds timeout
+
+    // Function to update tickets table with no tickets message
+    function showNoTicketsMessage() {
+      ticketsTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-4">
+            <p class="mb-0">You haven't booked any tickets yet.</p>
+            <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Function to update tickets table with error message
+    function showTicketsErrorMessage() {
+      ticketsTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-4">
+            <p class="text-danger mb-0">Failed to load tickets. Please try again later.</p>
+          </td>
+        </tr>
+      `;
+    }
+
+    // Fetch tickets data
+    fetch('/tickets?format=json', {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => {
+        console.log('Tickets response received:', response.status, response.statusText);
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Tickets data received:', data);
+
+        // Clear the timeout since we got a response
+        clearTimeout(ticketsTimeout);
 
         // Update tickets table
-        const ticketsTableBody = document.getElementById('ticketsTableBody');
+        const tickets = data.tickets || [];
+        console.log(`Found ${tickets.length} tickets`);
 
-        if (tickets.length > 0) {
+        // Only update if we have tickets from API and the table is showing a loading spinner
+        // This prevents overwriting server-side rendered content
+        if (tickets.length > 0 && ticketsTableBody.innerHTML.includes('spinner-border')) {
           ticketsTableBody.innerHTML = tickets.map(ticket => `
             <tr>
               <td>${ticket.concertTitle}</td>
-              <td>${new Date(ticket.concertDate).toLocaleDateString()}</td>
+              <td>${ticket.concertDate ? new Date(ticket.concertDate).toLocaleDateString() : 'N/A'}</td>
               <td>${ticket.venue}</td>
               <td>${ticket.quantity}</td>
               <td>
@@ -211,67 +305,88 @@
               </td>
             </tr>
           `).join('');
-        } else {
-          ticketsTableBody.innerHTML = `
-            <tr>
-              <td colspan="6" class="text-center py-4">
-                <p class="mb-0">You haven't booked any tickets yet.</p>
-                <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
-              </td>
-            </tr>
-          `;
+        } else if (tickets.length === 0 && ticketsTableBody.innerHTML.includes('spinner-border')) {
+          // Only show no tickets message if we're currently showing a loading spinner
+          showNoTicketsMessage();
         }
       })
       .catch(error => {
         console.error('Error loading tickets:', error);
-        document.getElementById('ticketsTableBody').innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4">
-              <p class="text-danger mb-0">Failed to load tickets. Please try again later.</p>
-            </td>
-          </tr>
-        `;
+        showTicketsErrorMessage();
       });
 
     // Load concerts for artists
     const concertsTableBody = document.getElementById('concertsTableBody');
     if (concertsTableBody) {
-      fetch('/artists/dashboard')
-        .then(response => response.text())
-        .then(html => {
-          // Extract concerts data from the response
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
+      console.log('Concerts table body found, fetching concerts data...');
 
-          // Get upcoming and pending concerts
-          const upcomingConcerts = Array.from(doc.querySelectorAll('#upcomingConcertsTable tr[data-id]')).map(concert => {
-            return {
-              id: concert.dataset.id,
-              title: concert.dataset.title,
-              date: concert.dataset.date,
-              venue: concert.dataset.venue,
-              status: 'approved'
-            };
-          });
+      // Set a timeout to show a message if the AJAX request takes too long
+      const concertsTimeout = setTimeout(function() {
+        if (concertsTableBody.innerHTML.includes('spinner-border')) {
+          concertsTableBody.innerHTML = `
+            <tr>
+              <td colspan="5" class="text-center py-4">
+                <p class="mb-0">Loading concerts is taking longer than expected.</p>
+                <p class="mb-0">You can <a href="/artists/dashboard">view your concerts here</a> or try refreshing the page.</p>
+              </td>
+            </tr>
+          `;
+        }
+      }, 5000); // 5 seconds timeout
 
-          const pendingConcerts = Array.from(doc.querySelectorAll('#pendingConcertsTable tr[data-id]')).map(concert => {
-            return {
-              id: concert.dataset.id,
-              title: concert.dataset.title,
-              date: concert.dataset.date,
-              venue: concert.dataset.venue,
-              status: 'pending'
-            };
-          });
+      // Function to update concerts table with no concerts message
+      function showNoConcertsMessage() {
+        concertsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-4">
+              <p class="mb-0">You haven't created any concerts yet.</p>
+              <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
+            </td>
+          </tr>
+        `;
+      }
 
-          const concerts = [...upcomingConcerts, ...pendingConcerts];
+      // Function to update concerts table with error message
+      function showConcertsErrorMessage() {
+        concertsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-4">
+              <p class="text-danger mb-0">Failed to load concerts. Please try again later.</p>
+            </td>
+          </tr>
+        `;
+      }
+
+      // Fetch concerts data
+      fetch('/artists/dashboard?format=json', {
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+        .then(response => {
+          console.log('Concerts response received:', response.status, response.statusText);
+          if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Concerts data received:', data);
+
+          // Clear the timeout since we got a response
+          clearTimeout(concertsTimeout);
 
           // Update concerts table
-          if (concerts.length > 0) {
+          const concerts = data.concerts || [];
+          console.log(`Found ${concerts.length} concerts`);
+
+          // Only update if we have concerts from API and the table is showing a loading spinner
+          // This prevents overwriting server-side rendered content
+          if (concerts.length > 0 && concertsTableBody.innerHTML.includes('spinner-border')) {
             concertsTableBody.innerHTML = concerts.map(concert => `
               <tr>
                 <td>${concert.title}</td>
-                <td>${new Date(concert.date).toLocaleDateString()}</td>
+                <td>${concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A'}</td>
                 <td>${concert.venue}</td>
                 <td>
                   <span class="badge ${concert.status === 'approved' ? 'bg-success' : 'bg-warning'}">
@@ -285,27 +400,17 @@
                 </td>
               </tr>
             `).join('');
-          } else {
-            concertsTableBody.innerHTML = `
-              <tr>
-                <td colspan="5" class="text-center py-4">
-                  <p class="mb-0">You haven't created any concerts yet.</p>
-                  <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
-                </td>
-              </tr>
-            `;
+          } else if (concerts.length === 0 && concertsTableBody.innerHTML.includes('spinner-border')) {
+            // Only show no concerts message if we're currently showing a loading spinner
+            showNoConcertsMessage();
           }
         })
         .catch(error => {
           console.error('Error loading concerts:', error);
-          concertsTableBody.innerHTML = `
-            <tr>
-              <td colspan="5" class="text-center py-4">
-                <p class="text-danger mb-0">Failed to load concerts. Please try again later.</p>
-              </td>
-            </tr>
-          `;
+          showConcertsErrorMessage();
         });
+    } else {
+      console.error('Concerts table body element not found!');
     }
   });
 </script>

@@ -112,6 +112,50 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     const content = await Content.find({ artist: artist._id })
       .sort({ createdAt: -1 });
 
+    // Check if the request is from the profile page (AJAX)
+    console.log('Artist dashboard request received from user:', req.session.user.id);
+    console.log('Headers:', req.headers);
+    console.log('Concerts found in database:', concerts.length);
+
+    // More reliable check for JSON request
+    const wantsJson =
+      req.xhr ||
+      (req.headers.accept && req.headers.accept.indexOf('application/json') > -1) ||
+      (req.query.format === 'json');
+
+    if (wantsJson) {
+      // Format concerts for JSON response
+      const upcomingConcerts = concerts
+        .filter(c => new Date(c.date) >= new Date() && c.status === 'approved')
+        .map(concert => ({
+          id: concert._id,
+          title: concert.title,
+          date: concert.date,
+          venue: concert.venue,
+          status: 'approved'
+        }));
+
+      const pendingConcerts = concerts
+        .filter(c => c.status === 'pending')
+        .map(concert => ({
+          id: concert._id,
+          title: concert.title,
+          date: concert.date,
+          venue: concert.venue,
+          status: 'pending'
+        }));
+
+      // Add debug log
+      console.log('Returning JSON concerts data:', upcomingConcerts.length + pendingConcerts.length, 'concerts found');
+
+      // Set proper content type header
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({
+        concerts: [...upcomingConcerts, ...pendingConcerts]
+      });
+    }
+
+    // Regular page request
     res.render('artists/dashboard-new', {
       layout: false,
       currentPath: '/artists/dashboard',
@@ -125,6 +169,9 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     });
   } catch (error) {
     console.error('Artist dashboard error:', error);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ error: 'Failed to load concerts' });
+    }
     req.flash('error', 'Failed to load dashboard');
     res.redirect('/');
   }

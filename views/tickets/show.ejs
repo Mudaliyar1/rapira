@@ -80,7 +80,7 @@
             <% if (ticket.paymentId) { %>
               <hr class="my-4 border-secondary">
 
-              <div class="mb-0">
+              <div class="mb-4">
                 <h5 class="fw-bold mb-3 text-white">Payment Information</h5>
                 <p class="mb-2">
                   <span class="fw-medium text-white">Payment ID:</span><br>
@@ -96,6 +96,18 @@
                 </p>
               </div>
             <% } %>
+
+            <!-- QR Code Section -->
+            <hr class="my-4 border-secondary">
+            <div class="row mb-4">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <h5 class="fw-bold mb-3 text-white">Ticket QR Code</h5>
+                <p class="mb-2 text-white-50">Scan this QR code at the venue entrance for quick verification.</p>
+              </div>
+              <div class="col-md-6 text-center">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= ticket._id %>" alt="Ticket QR Code" class="img-fluid" style="max-width: 150px; background-color: white; padding: 10px; border-radius: 8px;">
+              </div>
+            </div>
           </div>
 
           <div class="ticket-footer p-3 border-top border-secondary">
@@ -109,12 +121,12 @@
               <div class="col-md-6 text-md-end">
                 <div class="d-flex justify-content-start justify-content-md-end gap-2">
                   <div class="btn-group">
-                    <button type="button" id="downloadTicket" class="btn btn-sm btn-primary">
+                    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-sm btn-primary">
                       <i class="bi bi-download me-1"></i> Download PDF
-                    </button>
-                    <button type="button" id="downloadHtmlTicket" class="btn btn-sm btn-outline-primary">
+                    </a>
+                    <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-sm btn-outline-primary">
                       <i class="bi bi-file-earmark-code me-1"></i> HTML
-                    </button>
+                    </a>
                   </div>
                   <a href="/tickets" class="btn btn-sm btn-outline-light">
                     <i class="bi bi-arrow-left me-1"></i> Back to Tickets
@@ -150,111 +162,12 @@
   </div>
 </section>
 
-<!-- PDF generation library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
 <!-- Direct PDF download button -->
 <div id="downloadBtnContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-  <button id="directDownloadBtn" class="btn btn-primary">
+  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
     <i class="bi bi-download me-1"></i> Download Ticket
-  </button>
+  </a>
 </div>
-
-<!-- Simple PDF download script -->
-<script>
-  // Direct download function
-  document.getElementById('directDownloadBtn').addEventListener('click', function() {
-    // Hide the button during generation
-    this.style.display = 'none';
-
-    // Get the ticket container
-    const element = document.querySelector('.glass-card-dark');
-
-    // Set options
-    const options = {
-      margin: [10, 10, 10, 10],
-      filename: 'Rapira_Ticket.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Generate PDF
-    html2pdf()
-      .from(element)
-      .set(options)
-      .save()
-      .then(() => {
-        // Show the button again
-        this.style.display = 'block';
-      })
-      .catch(error => {
-        console.error('PDF generation error:', error);
-        // Show the button again even if there's an error
-        this.style.display = 'block';
-        alert('There was an error generating the PDF. Please try again.');
-      });
-  });
-
-  // Regular buttons
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('downloadTicket').addEventListener('click', function() {
-      // Get the ticket container
-      const element = document.querySelector('.glass-card-dark');
-
-      // Set options
-      const options = {
-        margin: [10, 10, 10, 10],
-        filename: 'Rapira_Ticket.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      // Generate PDF
-      html2pdf().set(options).from(element).save()
-        .catch(error => {
-          console.error('PDF generation error:', error);
-          alert('There was an error generating the PDF. Please try again.');
-        });
-    });
-
-    // HTML download function
-    document.getElementById('downloadHtmlTicket').addEventListener('click', function() {
-      // Get ticket data
-      var title = document.querySelector('h4.fw-bold').textContent;
-      var number = document.querySelector('.ticket-number').textContent;
-      var dateInfo = document.querySelector('.concert-date-info');
-      var venueInfo = document.querySelector('.concert-venue-info');
-
-      var date = dateInfo ? dateInfo.textContent.replace(/\s+/g, ' ').trim() : 'Concert Removed';
-      var venue = venueInfo ? venueInfo.textContent.replace(/\s+/g, ' ').trim() : 'Venue Information Unavailable';
-
-      // Create HTML content
-      var html = '<!DOCTYPE html><html><head><title>Rapira Ticket</title>';
-      html += '<style>body{font-family:Arial;padding:20px}';
-      html += '.ticket{border:2px solid #6366f1;border-radius:10px;padding:20px;max-width:500px;margin:0 auto}';
-      html += '.header{background:#6366f1;color:white;padding:15px;text-align:center;margin:-20px -20px 20px -20px;border-radius:8px 8px 0 0}';
-      html += '.footer{border-top:1px dashed #ccc;margin-top:20px;padding-top:10px;text-align:center;font-size:12px}</style>';
-      html += '</head><body><div class="ticket"><div class="header"><h1>Rapira Concert Ticket</h1></div>';
-      html += '<h2>' + title + '</h2>';
-      html += '<p><strong>Ticket Number:</strong> ' + number + '</p>';
-      html += '<p><strong>Date:</strong> ' + date + '</p>';
-      html += '<p><strong>Venue:</strong> ' + venue + '</p>';
-      html += '<div class="footer"><p>This ticket was generated by Rapira Concert Platform</p>';
-      html += '<p>Please present this ticket at the venue entrance</p></div></div></body></html>';
-
-      // Create download link
-      var element = document.createElement('a');
-      element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(html));
-      element.setAttribute('download', 'Rapira_Ticket.html');
-      element.style.display = 'none';
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-    });
-  });
-</script>
 
 <!-- Print styles -->
 <style>

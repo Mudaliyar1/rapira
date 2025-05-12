@@ -89,6 +89,33 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       status: 'pending'
     });
 
+    // Get user's tickets for server-side rendering fallback
+    const Ticket = require('../models/Ticket');
+    const tickets = await Ticket.find({
+      user: user._id,
+      paymentStatus: 'completed'
+    })
+      .sort({ createdAt: -1 })
+      .populate('concert');
+
+    console.log('Found tickets for server-side rendering:', tickets.length);
+
+    // Get artist's concerts for server-side rendering fallback
+    let concerts = [];
+    if (artist) {
+      const Concert = require('../models/Concert');
+      concerts = await Concert.find({
+        artist: artist._id,
+        $or: [
+          { status: 'approved', date: { $gte: new Date() } },
+          { status: 'pending' }
+        ]
+      })
+        .sort({ date: 1 });
+
+      console.log('Found concerts for server-side rendering:', concerts.length);
+    }
+
     // Debug information
     console.log('User profile debug:');
     console.log('User role:', user.role);
@@ -100,7 +127,9 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       user,
       artist,
       pendingApplication,
-      canBecomeArtist: (user.role !== 'artist' && !artist && !pendingApplication)
+      canBecomeArtist: (user.role !== 'artist' && !artist && !pendingApplication),
+      tickets,
+      concerts
     });
   } catch (error) {
     console.error('Profile error:', error);
