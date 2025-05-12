@@ -14,7 +14,7 @@ const ContentSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['song', 'video', 'lyrics'],
+    enum: ['song', 'video'],
     required: true
   },
   description: {
@@ -24,6 +24,14 @@ const ContentSchema = new mongoose.Schema({
   fileUrl: {
     type: String,
     required: true
+  },
+  isYoutubeLink: {
+    type: Boolean,
+    default: false
+  },
+  youtubeId: {
+    type: String,
+    default: ''
   },
   thumbnailUrl: {
     type: String,

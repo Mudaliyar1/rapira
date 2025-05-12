@@ -15,9 +15,8 @@
             <label for="type" class="form-label">Content Type</label>
             <select class="form-select" id="type" name="type" required>
               <option value="" selected disabled>Select content type</option>
-              <option value="song">Song</option>
-              <option value="video">Video</option>
-              <option value="lyrics">Lyrics</option>
+              <option value="song">Song (YouTube)</option>
+              <option value="video">Video (YouTube)</option>
             </select>
           </div>
 
@@ -29,13 +28,27 @@
 
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="contentFile" class="form-label">Upload File</label>
-            <input type="file" class="form-control" id="contentFile" name="contentFile" required>
+            <label for="youtubeLink" class="form-label">YouTube Link</label>
+            <input type="text" class="form-control" id="youtubeLink" name="youtubeLink" placeholder="https://www.youtube.com/watch?v=..." required>
             <div class="form-text">
-              For songs: MP3, WAV (max 50MB)<br>
-              For videos: MP4, MOV (max 50MB)<br>
-              For lyrics: PDF, DOC (max 5MB)
+              Paste a YouTube link for your song or video content.<br>
+              Supported formats:
+              <ul class="mt-1">
+                <li>https://www.youtube.com/watch?v=dQw4w9WgXcQ</li>
+                <li>https://youtu.be/dQw4w9WgXcQ</li>
+                <li>https://youtube.com/embed/dQw4w9WgXcQ</li>
+              </ul>
             </div>
+          </div>
+
+          <div class="mb-3 alert alert-info">
+            <h6><i class="bi bi-info-circle-fill me-2"></i>YouTube Embedding Tips</h6>
+            <ul class="mb-0">
+              <li>Make sure your YouTube video is set to "Public" or "Unlisted"</li>
+              <li>Videos set to "Private" cannot be embedded</li>
+              <li>For best quality, upload videos in HD (1080p) resolution</li>
+              <li>YouTube automatically generates thumbnails, but you can also upload a custom one below</li>
+            </ul>
           </div>
 
           <div class="mb-3">
