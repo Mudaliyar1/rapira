@@ -1,0 +1,85 @@
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h2 class="mb-0">Test File Upload with Persistent Storage</h2>
+        </div>
+        <div class="card-body">
+          <% if (isPersistentAvailable) { %>
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i> Render's persistent storage is available at <code>/mnt/data/uploads</code>.
+            </div>
+          <% } else { %>
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i> Render's persistent storage is not available. Files will be stored in ephemeral storage only.
+            </div>
+          <% } %>
+
+          <% if (locals.fileInfo) { %>
+            <div class="card mb-4">
+              <div class="card-header bg-success text-white">
+                File Upload Successful
+              </div>
+              <div class="card-body">
+                <h5>File Information:</h5>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"><strong>Original Name:</strong> <%= fileInfo.originalName %></li>
+                  <li class="list-group-item"><strong>Saved As:</strong> <%= fileInfo.filename %></li>
+                  <li class="list-group-item"><strong>Path:</strong> <%= fileInfo.path %></li>
+                  <li class="list-group-item"><strong>Size:</strong> <%= fileInfo.size %></li>
+                  <li class="list-group-item"><strong>Persistent Storage:</strong> <%= fileInfo.persistentStatus %></li>
+                </ul>
+                <div class="mt-3">
+                  <a href="<%= fileInfo.path %>" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i> View File
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <form action="/test-upload/upload" method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="testFile" class="form-label">Select a file to upload</label>
+              <input type="file" class="form-control" id="testFile" name="testFile" required>
+              <div class="form-text">Supported file types: Images (JPEG, PNG, GIF), PDF, Audio (MP3), Video (MP4, WebM)</div>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload File
+              </button>
+              <a href="/test-upload/list" class="btn btn-secondary">
+                <i class="fas fa-list"></i> View All Test Files
+              </a>
+            </div>
+          </form>
+
+          <div class="mt-4">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                How to Test Persistent Storage
+              </div>
+              <div class="card-body">
+                <ol>
+                  <li>Upload a file using the form above</li>
+                  <li>Verify that the file is accessible via the provided link</li>
+                  <li>Restart the server (or wait for a deployment)</li>
+                  <li>Return to this page and check if the file is still accessible</li>
+                  <li>View all test files to see which ones are stored in persistent storage</li>
+                </ol>
+                <div class="alert alert-info">
+                  <strong>Note:</strong> This implementation uses Render's built-in persistent directory at <code>/mnt/data</code> without requiring any YAML configuration or disk setup.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

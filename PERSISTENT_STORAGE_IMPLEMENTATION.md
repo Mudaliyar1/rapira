@@ -64,11 +64,30 @@ The application has been configured to use persistent storage:
 The Render configuration file defines a persistent disk for the application:
 
 ```yaml
-disk:
-  name: persistent-storage
-  mountPath: /opt/render/project/src/persistent-storage
-  sizeGB: 1
+services:
+  - type: web
+    name: rapira
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node app.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PERSISTENT_STORAGE_PATH
+        value: /opt/render/project/src/persistent-storage
+    disk:
+      name: persistent-storage
+      mountPath: /opt/render/project/src/persistent-storage
+      sizeGB: 1
 ```
+
+### 7. Test Endpoint (`routes/test-persistent-storage.js`)
+
+A test endpoint has been added to verify that persistent storage is working correctly:
+
+- `/test-persistent-storage`: Provides a form to upload test files
+- `/test-persistent-storage/list`: Lists all uploaded test files and shows which ones are in persistent storage
 
 ## Deployment
 
@@ -101,7 +120,16 @@ If you prefer to set up your service manually:
 
 After deployment, you can verify that persistent storage is working correctly:
 
-1. Upload a file through your application
+1. Visit the test endpoint at `/test-persistent-storage`
+2. Upload a test file using the provided form
+3. Verify that the file is accessible via the provided link
+4. Restart your service from the Render dashboard
+5. Return to the test page and verify that the file is still accessible
+6. View all test files at `/test-persistent-storage/list` to see which ones are stored in persistent storage
+
+You can also verify through your application's normal upload functionality:
+
+1. Upload a file through your application (e.g., artist profile, content, etc.)
 2. Check the server logs to see that the file was saved to the persistent storage path
 3. Restart your service from the Render dashboard
 4. Verify that the uploaded file is still accessible
