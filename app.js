@@ -240,13 +240,19 @@ app.use(async (req, res, next) => {
 
     // Set default values for all template variables
     res.locals.currentUser = user;
-    res.locals.isAdmin = user && user.role === 'admin';
+    res.locals.isAdmin = user && (user.role === 'admin' || user.role === 'superAdmin');
     res.locals.isArtist = user && user.role === 'artist';
+    res.locals.isSuperAdmin = user && user.role === 'superAdmin';
     res.locals.hasRoles = false;
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
     res.locals.path = req.path; // Add current path to all views
+
+    // Initialize adminPagePermissions (will be populated by the admin routes middleware)
+    if (user && (user.role === 'admin' || user.role === 'superAdmin')) {
+      res.locals.adminPagePermissions = {};
+    }
 
     // Check if user has any roles (for messaging functionality)
     if (user && user.id) {
@@ -299,6 +305,7 @@ const roleSlotRoutes = require('./routes/roleSlots');
 const bookingRequestRoutes = require('./routes/bookingRequests');
 const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
+const adminAccessControlRoutes = require('./routes/adminAccessControl');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
@@ -341,6 +348,68 @@ app.use('/admin/daily-concerts', adminDailyConcertsRoutes);
 
 // Mount notification routes
 app.use('/admin/notifications', notificationRoutes);
+
+// Mount admin access control routes
+app.use('/admin/access-control', adminAccessControlRoutes);
+
+// Load admin page permissions middleware
+const AdminPage = require('./models/AdminPage');
+const AdminPagePermission = require('./models/AdminPagePermission');
+
+// Middleware to load admin page permissions for all admin routes
+app.use('/admin*', async (req, res, next) => {
+  try {
+    // Skip for non-admin users
+    if (!req.session.user || (req.session.user.role !== 'admin' && req.session.user.role !== 'superAdmin')) {
+      return next();
+    }
+
+    // For super admins, create a proxy that returns true for any page
+    if (req.session.user.role === 'superAdmin') {
+      res.locals.adminPagePermissions = new Proxy({}, {
+        get: function(target, prop) {
+          return { hasPermission: true };
+        }
+      });
+      return next();
+    }
+
+    // For regular admins, load their permissions
+    const permissions = await AdminPagePermission.findOne({ admin: req.session.user.id });
+
+    // Get all admin pages
+    const adminPages = await AdminPage.find({ isActive: true });
+
+    // Create a map of page paths to permission objects
+    const adminPagePermissions = {};
+
+    // Process each page
+    for (const page of adminPages) {
+      // If page is always accessible, set to true
+      if (page.alwaysAccessible) {
+        adminPagePermissions[page.path] = { hasPermission: true };
+      }
+      // If permissions exist for this admin, use them
+      else if (permissions && permissions.pagePermissions.get(page.slug)) {
+        adminPagePermissions[page.path] = { hasPermission: true };
+      }
+      // Otherwise, no permission
+      else {
+        adminPagePermissions[page.path] = { hasPermission: false };
+      }
+    }
+
+    // Set the permissions in locals for use in templates
+    res.locals.adminPagePermissions = adminPagePermissions;
+
+    next();
+  } catch (error) {
+    console.error('Error loading admin page permissions:', error);
+    // Continue without permissions if there's an error
+    res.locals.adminPagePermissions = {};
+    next();
+  }
+});
 
 // Mount admin content routes
 app.use('/admin/content', adminContentRoutes);

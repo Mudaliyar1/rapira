@@ -17,7 +17,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'artist', 'admin'],
+    enum: ['user', 'artist', 'admin', 'superAdmin'],
     default: 'user'
   },
   profileImage: {

@@ -1308,6 +1308,17 @@ footer .social-icons a:hover {
   color: #000 !important;
 }
 
+/* Specific fix for admin access control page tables */
+.container-fluid .table-responsive .table tr td,
+.container-fluid .table-responsive .table tr th,
+.container-fluid .table-responsive .table tbody tr td,
+.container-fluid .table-responsive .table tbody tr th {
+  color: #000 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* Override any Bootstrap table text colors */
 .admin-layout .table-dark,
 .admin-layout .table-dark td,
@@ -1331,6 +1342,17 @@ footer .social-icons a:hover {
 .admin-layout .table .text-muted,
 .table .text-muted {
   color: #333 !important;
+}
+
+/* Fix text color in admin access control tables specifically */
+.admin-layout [id^="admin-"] .list-group-item,
+.admin-layout [id^="admin-"] .list-group-item *,
+.admin-layout [id^="admin-"] .form-check-label,
+.admin-layout [id^="admin-"] .text-muted {
+  color: #000 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .admin-layout .card {
@@ -2065,6 +2087,71 @@ a:hover {
 
 .modal {
   z-index: 1050;
+}
+
+/* Fix for admin access control page list groups */
+.admin-layout .card-body .list-group-item,
+.admin-layout .card-body .list-group-item span,
+.admin-layout .card-body .list-group-item small,
+.admin-layout .card-body .form-check-label {
+  color: #000 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for text-muted in list groups */
+.admin-layout .card-body .list-group-item .text-muted,
+.admin-layout .card-body .list-group-item small.text-muted {
+  color: #333 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for About Admin Access Control section */
+.admin-layout .card.bg-light,
+.admin-layout .card.bg-white,
+.admin-layout .card.bg-light .card-body,
+.admin-layout .card.bg-white .card-body,
+.admin-layout .card.bg-light h5,
+.admin-layout .card.bg-white h5,
+.admin-layout .card.bg-light p,
+.admin-layout .card.bg-white p,
+.admin-layout .card.bg-light ul,
+.admin-layout .card.bg-white ul,
+.admin-layout .card.bg-light li,
+.admin-layout .card.bg-white li,
+.admin-layout .card.bg-light strong,
+.admin-layout .card.bg-white strong {
+  color: #000 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for alert messages in admin layout */
+.admin-layout .alert.alert-info,
+.admin-layout .alert.alert-info *,
+.admin-layout .alert.alert-info span,
+.admin-layout .alert.alert-info i,
+.admin-layout .alert.alert-info .text-dark {
+  color: #000 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for card headers in admin layout */
+.admin-layout .card-header.bg-primary .text-white,
+.admin-layout .card-header.bg-primary h5.text-white,
+.admin-layout .card-header.bg-primary h5.mb-0.text-white,
+.admin-layout .card-header.bg-primary i {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .modal-dialog {
