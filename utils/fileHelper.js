@@ -60,7 +60,8 @@ function ensureUploadDirectories() {
     'public/uploads/concerts',
     'public/uploads/proofs',
     'public/uploads/learning',
-    'public/uploads/misc'
+    'public/uploads/misc',
+    'public/uploads/test'
   ];
 
   // Create directories in the standard location

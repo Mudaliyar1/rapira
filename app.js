@@ -372,11 +372,15 @@ const bookingRequestRoutes = require('./routes/bookingRequests');
 const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
 const { router: notificationRoutes } = require('./routes/notifications');
+const testPersistentStorageRoutes = require('./routes/test-persistent-storage');
+const testUploadRoutes = require('./routes/test-upload');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
 const { migrateAllUploads } = require('./utils/migrateToPersistentStorage');
 const { createPersistentMediaMiddleware } = require('./middleware/persistentMediaMiddleware');
 const { isPersistentStorageAvailable } = require('./utils/persistentStorage');
+const { createRenderPersistentMiddleware, createPersistentFallbackMiddleware } = require('./middleware/renderPersistentMiddleware');
+const { isPersistentAvailable } = require('./utils/renderPersistentStorage');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
@@ -398,6 +402,16 @@ if (isPersistentStorageAvailable()) {
   app.use('/persistent', createPersistentMediaMiddleware());
 } else {
   console.log('Persistent storage is not available. Files will be stored in ephemeral storage only.');
+}
+
+// Check if Render's built-in persistent storage is available
+if (isPersistentAvailable()) {
+  console.log('Render\'s built-in persistent storage is available at /mnt/data/uploads');
+
+  // Serve files from Render's persistent storage
+  app.use('/mnt-persistent', createRenderPersistentMiddleware());
+} else {
+  console.log('Render\'s built-in persistent storage is not available.');
 }
 
 // Serve files from uploads directory with enhanced media middleware
@@ -444,6 +458,12 @@ app.use('/admin/content', adminContentRoutes);
 
 // Mount admin access control routes
 app.use('/admin/access-control', adminAccessControlRoutes);
+
+// Mount test persistent storage routes
+app.use('/test-persistent-storage', testPersistentStorageRoutes);
+
+// Mount test upload routes (using Render's built-in persistent storage)
+app.use('/test-upload', testUploadRoutes);
 
 // 404 route
 app.use((req, res) => {

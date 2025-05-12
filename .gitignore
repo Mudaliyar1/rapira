@@ -35,6 +35,7 @@ public/uploads/*
 !public/uploads/concerts/.gitkeep
 !public/uploads/content/.gitkeep
 !public/uploads/thumbnails/.gitkeep
+!public/uploads/test/.gitkeep
 
 # Persistent storage directory
 persistent-storage/
