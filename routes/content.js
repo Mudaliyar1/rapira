@@ -1,0 +1,89 @@
+/**
+ * Content Routes
+ * Handles viewing and interacting with content items
+ */
+
+const express = require('express');
+const router = express.Router();
+const Content = require('../models/Content');
+const Artist = require('../models/Artist');
+const { isLoggedIn } = require('../middleware/auth');
+
+// View individual content
+router.get('/:id', async (req, res) => {
+  try {
+    // Find the content by ID
+    const content = await Content.findById(req.params.id)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name profileImage' }
+      });
+
+    if (!content) {
+      req.flash('error', 'Content not found');
+      return res.redirect('/content');
+    }
+
+    // Increment view count
+    content.views += 1;
+    await content.save();
+
+    // Get more content from the same artist
+    const moreFromArtist = await Content.find({
+      artist: content.artist._id,
+      _id: { $ne: content._id } // Exclude current content
+    })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    // Get similar content (same type)
+    const similarContent = await Content.find({
+      type: content.type,
+      _id: { $ne: content._id }, // Exclude current content
+      artist: { $ne: content.artist._id } // Exclude same artist
+    })
+      .sort({ views: -1 })
+      .limit(4)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    res.render('content-viewer', {
+      title: content.title,
+      content,
+      moreFromArtist,
+      similarContent
+    });
+  } catch (error) {
+    console.error('Content view error:', error);
+    req.flash('error', 'Failed to load content');
+    res.redirect('/content');
+  }
+});
+
+// Like content (requires login)
+router.post('/:id/like', isLoggedIn, async (req, res) => {
+  try {
+    const content = await Content.findById(req.params.id);
+    
+    if (!content) {
+      return res.status(404).json({ success: false, message: 'Content not found' });
+    }
+    
+    // Increment like count
+    content.likes += 1;
+    await content.save();
+    
+    res.json({ success: true, likes: content.likes });
+  } catch (error) {
+    console.error('Like content error:', error);
+    res.status(500).json({ success: false, message: 'Failed to like content' });
+  }
+});
+
+module.exports = router;
