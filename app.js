@@ -114,8 +114,23 @@ app.locals.layouts = {
   artist: 'layouts/artist'
 };
 
-// Middleware
-// Serve static files with proper CORS headers and content types
+// Global CORS middleware for all routes
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
+
+// Middleware for serving static files with proper content types
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     // Add headers for media files
@@ -123,12 +138,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
         filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
         filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
         filePath.endsWith('.png') || filePath.endsWith('.gif')) {
-
-      // Set CORS headers to allow access from any origin
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD');
-      res.setHeader('Access-Control-Allow-Headers', 'Range');
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
       // Add content type header if missing
       if (!res.getHeader('Content-Type')) {
@@ -153,6 +162,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
       if (filePath.endsWith('.mp4') || filePath.endsWith('.mp3') || filePath.endsWith('.wav')) {
         res.setHeader('Accept-Ranges', 'bytes');
       }
+
+      // Set cache control for media files to improve performance after server restart
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     }
   }
 }));
