@@ -374,9 +374,31 @@ const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
+const { migrateAllUploads } = require('./utils/migrateToPersistentStorage');
+const { createPersistentMediaMiddleware } = require('./middleware/persistentMediaMiddleware');
+const { isPersistentStorageAvailable } = require('./utils/persistentStorage');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
+
+// Check if persistent storage is available
+if (isPersistentStorageAvailable()) {
+  console.log('Persistent storage is available. Files will be stored in persistent storage.');
+
+  // Migrate existing files to persistent storage
+  migrateAllUploads()
+    .then(stats => {
+      console.log(`Migration complete: ${stats.copied} files copied, ${stats.failed} failed, ${stats.skipped} skipped`);
+    })
+    .catch(error => {
+      console.error('Error during file migration:', error);
+    });
+
+  // Serve files from persistent storage
+  app.use('/persistent', createPersistentMediaMiddleware());
+} else {
+  console.log('Persistent storage is not available. Files will be stored in ephemeral storage only.');
+}
 
 // Serve files from uploads directory with enhanced media middleware
 app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'uploads')));
