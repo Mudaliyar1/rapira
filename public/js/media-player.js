@@ -113,29 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize click handlers for all media links
 function initializeMediaLinks() {
-  // Find all content links
-  document.querySelectorAll('.content-link').forEach(link => {
-    link.addEventListener('click', function(e) {
-      // Check if this is a YouTube link
-      const isYoutubeLink = this.getAttribute('data-youtube') === 'true';
-
-      if (isYoutubeLink) {
-        // For YouTube links, don't prevent default - let the link redirect to the content page
-        return;
-      }
-
-      // For non-YouTube links, use the modal player
-      e.preventDefault();
-
-      const mediaUrl = this.getAttribute('href');
-      const mediaType = this.getAttribute('data-type');
-      const mediaTitle = this.getAttribute('data-title');
-      const mediaArtist = this.getAttribute('data-artist');
-      const mediaThumbnail = this.getAttribute('data-thumbnail');
-
-      openMedia(mediaUrl, mediaType, mediaTitle, mediaArtist, mediaThumbnail);
-    });
-  });
+  // This function is now deprecated as we're using direct links to content pages
+  console.log('Media links now use direct navigation to content pages');
 }
 
 // Open media in the player

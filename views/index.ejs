@@ -144,12 +144,8 @@
                 </p>
               </div>
               <div class="card-footer bg-transparent border-0 pb-3">
-                <a href="<%= content.fileUrl %>"
-                   class="btn btn-outline-light btn-sm w-100 content-link"
-                   data-type="<%= content.type %>"
-                   data-title="<%= content.title %>"
-                   data-artist="<%= content.artist && content.artist.user ? content.artist.user.name : 'Unknown Artist' %>"
-                   data-thumbnail="<%= content.thumbnailUrl %>">
+                <a href="/content/<%= content._id %>"
+                   class="btn btn-outline-light btn-sm w-100">
                   <%= content.type === 'song' ? 'Listen' : content.type === 'video' ? 'Watch' : 'Read' %>
                 </a>
               </div>

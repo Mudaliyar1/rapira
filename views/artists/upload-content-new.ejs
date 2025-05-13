@@ -133,7 +133,7 @@
                 </p>
               </div>
               <div class="card-footer bg-white border-top-0 d-flex">
-                <a href="<%= item.fileUrl %>" class="btn btn-outline-primary flex-grow-1 me-2" target="_blank">
+                <a href="/content/<%= item._id %>" class="btn btn-outline-primary flex-grow-1 me-2">
                   <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
                 </a>
                 <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= item._id %>">
