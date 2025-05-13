@@ -1,89 +1,372 @@
+<style>
+  /* Custom styles for social media profile layout */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    color: #212529;
+  }
 
-<!-- Artist Banner -->
-<div class="artist-banner" style="background-image: url('<%= artist.bannerImage %>');">
-  <div class="container position-relative" style="height: 100%;">
-    <div class="position-absolute bottom-0 start-0 p-4">
-      <h1 class="text-white fw-bold mb-2"><%= artist.user.name %></h1>
-      <p class="text-white-50 mb-0"><%= artist.genre %></p>
-    </div>
-  </div>
-</div>
+  /* Dark theme overrides */
+  body:not(.light-theme) .glass-card {
+    background: rgba(30, 30, 30, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f9fafb;
+  }
 
-<!-- Artist Profile -->
-<section class="py-5">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-4 text-center text-lg-start">
-        <div class="position-relative d-inline-block">
-          <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>" class="artist-profile-img">
-          <% if (artist.verified) { %>
-            <div class="verified-badge">
-              <i class="bi bi-patch-check-fill"></i>
-            </div>
-          <% } %>
+  body:not(.light-theme) .glass-card .card-header {
+    background: rgba(20, 20, 20, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  body:not(.light-theme) .glass-card .card-header a,
+  body:not(.light-theme) .glass-card .card-header span,
+  body:not(.light-theme) .glass-card .card-header i {
+    color: #f9fafb;
+  }
+
+  body:not(.light-theme) .glass-card .text-dark,
+  body:not(.light-theme) a.text-dark {
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .glass-card .text-muted {
+    color: #d1d5db !important;
+  }
+
+  body:not(.light-theme) .glass-card .list-group-item.bg-transparent {
+    color: #f9fafb;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body:not(.light-theme) .nav-tabs .nav-link {
+    color: #d1d5db;
+  }
+
+  body:not(.light-theme) .nav-tabs .nav-link.active {
+    color: #f9fafb;
+    background-color: rgba(99, 102, 241, 0.1);
+  }
+
+  /* Profile stats dividers */
+  .profile-stats-divider {
+    width: 1px;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  body:not(.light-theme) .profile-stats-divider {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Content grid */
+  .content-grid-item {
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .content-grid-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Tab styling */
+  .nav-tabs {
+    border-bottom: none;
+  }
+
+  .nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-size: 1.2rem;
+  }
+
+  .nav-tabs .nav-link.active {
+    color: #6366f1;
+    background-color: transparent;
+    border-bottom: 2px solid #6366f1;
+  }
+
+  .nav-tabs .nav-link:hover:not(.active) {
+    color: #4f46e5;
+    border-bottom: 2px solid #4f46e5;
+  }
+
+  /* YouTube style video card */
+  .video-card {
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+  }
+
+  .video-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .video-card:hover .play-button i {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .play-button i {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+  }
+
+  /* Dark theme adjustments for video cards */
+  body:not(.light-theme) .video-card h6 {
+    color: #f9fafb;
+  }
+
+  body:not(.light-theme) .video-card .text-muted {
+    color: #d1d5db !important;
+  }
+</style>
+
+<!-- Social Media Style Artist Profile -->
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <!-- Profile Card - Left Column -->
+    <div class="col-md-4">
+      <div class="glass-card" style="border-radius: 15px; overflow: hidden; margin-bottom: 20px;">
+        <!-- Header with back button and options -->
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+          <div class="d-flex align-items-center">
+            <a href="/artists" class="text-dark me-2">
+              <i class="bi bi-arrow-left"></i>
+            </a>
+            <span class="fw-bold"><%= artist.stageName || artist.user.name %></span>
+            <% if (artist.verified) { %>
+              <i class="bi bi-patch-check-fill text-primary ms-1"></i>
+            <% } %>
+          </div>
+          <div>
+            <i class="bi bi-three-dots-vertical"></i>
+          </div>
         </div>
 
-        <div class="mt-4">
-          <h3 class="fw-bold mb-1"><%= artist.stageName || artist.user.name %></h3>
-          <p class="text-muted mb-3"><%= artist.genre %> • <%= artist.yearsActive %> years</p>
+        <!-- Profile Info -->
+        <div class="card-body text-center p-4">
+          <div class="position-relative d-inline-block mb-3">
+            <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>"
+                 class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          </div>
 
-          <div class="d-flex justify-content-center justify-content-lg-start gap-3 mb-4">
+
+
+          <!-- Profile Details -->
+          <h5 class="fw-bold mb-1"><%= artist.stageName || artist.user.name %></h5>
+          <p class="text-muted mb-2"><%= artist.genre %> • <%= artist.yearsActive %> years</p>
+
+          <% if (artist.about) { %>
+            <p class="small mb-3"><%= artist.about.length > 100 ? artist.about.substring(0, 100) + '...' : artist.about %></p>
+          <% } %>
+
+
+
+          <!-- Social Links -->
+          <div class="d-flex justify-content-center gap-3 mb-3">
             <% if (artist.user.socialLinks.instagram) { %>
-              <a href="<%= artist.user.socialLinks.instagram %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+              <a href="<%= artist.user.socialLinks.instagram %>" target="_blank" class="text-dark">
                 <i class="bi bi-instagram"></i>
               </a>
             <% } %>
             <% if (artist.user.socialLinks.twitter) { %>
-              <a href="<%= artist.user.socialLinks.twitter %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+              <a href="<%= artist.user.socialLinks.twitter %>" target="_blank" class="text-dark">
                 <i class="bi bi-twitter-x"></i>
               </a>
             <% } %>
             <% if (artist.user.socialLinks.youtube) { %>
-              <a href="<%= artist.user.socialLinks.youtube %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+              <a href="<%= artist.user.socialLinks.youtube %>" target="_blank" class="text-dark">
                 <i class="bi bi-youtube"></i>
               </a>
             <% } %>
             <% if (artist.user.socialLinks.spotify) { %>
-              <a href="<%= artist.user.socialLinks.spotify %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
+              <a href="<%= artist.user.socialLinks.spotify %>" target="_blank" class="text-dark">
                 <i class="bi bi-spotify"></i>
               </a>
             <% } %>
           </div>
+        </div>
 
-          <% if (artist.about) { %>
-            <div class="card mb-4">
-              <div class="card-body">
-                <h5 class="card-title fw-bold mb-3">About</h5>
-                <p class="card-text"><%= artist.about %></p>
+
+      </div>
+
+      <!-- YouTube Style Video Grid -->
+      <div class="glass-card mb-4" style="border-radius: 15px; overflow: hidden;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Videos</h5>
+            <a href="#" class="text-decoration-none">View all</a>
+          </div>
+
+          <div class="row g-3">
+            <!-- Video 1 -->
+            <div class="col-md-6">
+              <div class="video-card position-relative" style="cursor: pointer;" data-video-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                <div class="position-relative">
+                  <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Video thumbnail"
+                       class="w-100" style="border-radius: 12px; aspect-ratio: 16/9; object-fit: cover;">
+                  <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-danger">
+                      <i class="bi bi-youtube"></i>
+                    </span>
+                  </div>
+                  <div class="position-absolute bottom-0 end-0 m-2">
+                    <span class="badge bg-dark">3:32</span>
+                  </div>
+                  <div class="position-absolute top-50 start-50 translate-middle play-button">
+                    <i class="bi bi-play-circle-fill text-white" style="font-size: 3rem; opacity: 0.8;"></i>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <h6 class="mb-1 text-truncate">Latest Music Video - Official Release</h6>
+                  <p class="mb-0 small text-muted">
+                    <i class="bi bi-eye me-1"></i> 1.2M views •
+                    <i class="bi bi-calendar3 ms-1 me-1"></i> 2 weeks ago
+                  </p>
+                </div>
               </div>
             </div>
-          <% } %>
 
-          <% if (artist.achievements && artist.achievements.length > 0) { %>
-            <div class="card mb-4">
-              <div class="card-body">
-                <h5 class="card-title fw-bold mb-3">Achievements</h5>
-                <ul class="list-group list-group-flush">
-                  <% artist.achievements.forEach(achievement => { %>
-                    <li class="list-group-item px-0"><%= achievement %></li>
-                  <% }); %>
-                </ul>
+            <!-- Video 2 -->
+            <div class="col-md-6">
+              <div class="video-card position-relative" style="cursor: pointer;" data-video-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+                <div class="position-relative">
+                  <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Video thumbnail"
+                       class="w-100" style="border-radius: 12px; aspect-ratio: 16/9; object-fit: cover;">
+                  <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-danger">
+                      <i class="bi bi-youtube"></i>
+                    </span>
+                  </div>
+                  <div class="position-absolute bottom-0 end-0 m-2">
+                    <span class="badge bg-dark">4:15</span>
+                  </div>
+                  <div class="position-absolute top-50 start-50 translate-middle play-button">
+                    <i class="bi bi-play-circle-fill text-white" style="font-size: 3rem; opacity: 0.8;"></i>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <h6 class="mb-1 text-truncate">Behind the Scenes - Studio Session</h6>
+                  <p class="mb-0 small text-muted">
+                    <i class="bi bi-eye me-1"></i> 458K views •
+                    <i class="bi bi-calendar3 ms-1 me-1"></i> 1 month ago
+                  </p>
+                </div>
               </div>
             </div>
-          <% } %>
+          </div>
         </div>
       </div>
 
-      <div class="col-lg-8">
-        <!-- Upcoming Concerts -->
-        <div class="mb-5">
-          <h4 class="fw-bold mb-4">Upcoming Concerts</h4>
+      <!-- Achievements Card -->
+      <% if (artist.achievements && artist.achievements.length > 0) { %>
+        <div class="glass-card mb-4" style="border-radius: 15px; overflow: hidden;">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Achievements</h6>
+            <ul class="list-group list-group-flush">
+              <% artist.achievements.forEach(achievement => { %>
+                <li class="list-group-item px-0 bg-transparent"><%= achievement %></li>
+              <% }); %>
+            </ul>
+          </div>
+        </div>
+      <% } %>
 
+      <!-- Upcoming Concerts Preview -->
+      <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+        <div class="glass-card mb-4" style="border-radius: 15px; overflow: hidden;">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3">Upcoming Concerts</h6>
+            <% upcomingConcerts.slice(0, 2).forEach(concert => { %>
+              <div class="d-flex align-items-center mb-2 pb-2" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <div class="flex-shrink-0">
+                  <img src="<%= concert.posterImage %>" alt="<%= concert.title %>"
+                       style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                </div>
+                <div class="ms-3">
+                  <h6 class="mb-0 small fw-bold"><%= concert.title %></h6>
+                  <p class="mb-0 small text-muted">
+                    <i class="bi bi-calendar3"></i> <%= new Date(concert.date).toLocaleDateString() %>
+                  </p>
+                </div>
+              </div>
+            <% }); %>
+            <a href="#concerts" class="btn btn-sm btn-outline-primary w-100 mt-2">View All</a>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Content Grid - Right Column -->
+    <div class="col-md-8">
+      <!-- Content Tabs -->
+      <div class="glass-card mb-4" style="border-radius: 15px; overflow: hidden;">
+        <div class="card-body p-0">
+          <ul class="nav nav-tabs nav-fill border-0" id="artistContentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active border-0 py-3" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts"
+                      type="button" role="tab" aria-controls="posts" aria-selected="true">
+                <i class="bi bi-grid-3x3"></i>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link border-0 py-3" id="concerts-tab" data-bs-toggle="tab" data-bs-target="#concerts"
+                      type="button" role="tab" aria-controls="concerts" aria-selected="false">
+                <i class="bi bi-calendar-event"></i>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link border-0 py-3" id="about-tab" data-bs-toggle="tab" data-bs-target="#about"
+                      type="button" role="tab" aria-controls="about" aria-selected="false">
+                <i class="bi bi-person"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="artistContentTabsContent">
+        <!-- Posts Tab -->
+        <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+          <% if (content && content.length > 0) { %>
+            <div class="row g-3">
+              <% content.forEach(item => { %>
+                <div class="col-md-4 col-sm-6">
+                  <a href="/content/<%= item._id %>" class="text-decoration-none">
+                    <div class="position-relative" style="aspect-ratio: 1/1; overflow: hidden; border-radius: 8px;">
+                      <img src="<%= item.thumbnailUrl %>" alt="<%= item.title %>"
+                           style="width: 100%; height: 100%; object-fit: cover;">
+                      <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge <%= item.type === 'song' ? 'bg-primary' : 'bg-danger' %>">
+                          <i class="bi <%= item.type === 'song' ? 'bi-music-note' : 'bi-camera-video' %>"></i>
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <div class="text-center py-5">
+              <i class="bi bi-images display-1 text-muted mb-3"></i>
+              <h5 class="text-muted">No content yet</h5>
+              <p class="text-muted">This artist hasn't shared any content yet.</p>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Concerts Tab -->
+        <div class="tab-pane fade" id="concerts" role="tabpanel" aria-labelledby="concerts-tab">
           <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
             <div class="row g-4">
               <% upcomingConcerts.forEach(concert => { %>
                 <div class="col-md-6">
-                  <div class="card h-100">
+                  <div class="glass-card h-100" style="border-radius: 15px; overflow: hidden;">
                     <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>" style="height: 180px; object-fit: cover;">
                     <div class="card-body">
                       <div class="d-flex justify-content-between align-items-start mb-3">
@@ -98,8 +381,6 @@
                       <p class="card-text text-muted mb-3">
                         <i class="bi bi-calendar3"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
                       </p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
                       <a href="/concerts/<%= concert._id %>" class="btn btn-primary w-100">View Details</a>
                     </div>
                   </div>
@@ -107,56 +388,163 @@
               <% }); %>
             </div>
           <% } else { %>
-            <div class="alert alert-light text-center py-4">
-              <p class="mb-0">No upcoming concerts scheduled.</p>
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+              <h5 class="text-muted">No upcoming concerts</h5>
+              <p class="text-muted">This artist doesn't have any upcoming concerts scheduled.</p>
             </div>
           <% } %>
         </div>
 
-        <!-- Content -->
-        <div>
-          <h4 class="fw-bold mb-4">Latest Content</h4>
+        <!-- About Tab -->
+        <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
+          <div class="glass-card" style="border-radius: 15px; overflow: hidden;">
+            <div class="card-body">
+              <h5 class="fw-bold mb-3">About <%= artist.stageName || artist.user.name %></h5>
 
-          <% if (content && content.length > 0) { %>
-            <div class="row g-4">
-              <% content.forEach(item => { %>
-                <div class="col-md-6 col-lg-4">
-                  <div class="card content-card h-100">
-                    <div class="position-relative">
-                      <img src="<%= item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
-                      <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
-                        <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
-                        <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
-                      </span>
-                    </div>
-                    <div class="card-body">
-                      <h5 class="card-title"><%= item.title %></h5>
-                      <% if (item.description) { %>
-                        <p class="card-text"><%= item.description.length > 50 ? item.description.substring(0, 50) + '...' : item.description %></p>
-                      <% } %>
-                      <p class="card-text">
-                        <small class="text-muted">
-                          <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
-                        </small>
-                      </p>
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                      <a href="/content/<%= item._id %>"
-                         class="btn btn-outline-primary w-100">
-                        <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
-                      </a>
-                    </div>
-                  </div>
+              <% if (artist.about) { %>
+                <p><%= artist.about %></p>
+              <% } else { %>
+                <p class="text-muted">No information available.</p>
+              <% } %>
+
+              <div class="row mt-4">
+                <div class="col-md-6">
+                  <h6 class="fw-bold mb-3">Details</h6>
+                  <ul class="list-unstyled">
+                    <li class="mb-2"><i class="bi bi-music-note me-2"></i> Genre: <%= artist.genre %></li>
+                    <li class="mb-2"><i class="bi bi-calendar-check me-2"></i> Years Active: <%= artist.yearsActive %></li>
+                    <% if (artist.city) { %>
+                      <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> Location: <%= artist.city %><%= artist.state ? ', ' + artist.state : '' %></li>
+                    <% } %>
+                  </ul>
                 </div>
-              <% }); %>
+
+                <div class="col-md-6">
+                  <h6 class="fw-bold mb-3">Connect</h6>
+                  <ul class="list-unstyled">
+                    <% if (artist.user.socialLinks.instagram) { %>
+                      <li class="mb-2">
+                        <a href="<%= artist.user.socialLinks.instagram %>" target="_blank" class="text-decoration-none">
+                          <i class="bi bi-instagram me-2"></i> Instagram
+                        </a>
+                      </li>
+                    <% } %>
+                    <% if (artist.user.socialLinks.twitter) { %>
+                      <li class="mb-2">
+                        <a href="<%= artist.user.socialLinks.twitter %>" target="_blank" class="text-decoration-none">
+                          <i class="bi bi-twitter-x me-2"></i> Twitter
+                        </a>
+                      </li>
+                    <% } %>
+                    <% if (artist.user.socialLinks.youtube) { %>
+                      <li class="mb-2">
+                        <a href="<%= artist.user.socialLinks.youtube %>" target="_blank" class="text-decoration-none">
+                          <i class="bi bi-youtube me-2"></i> YouTube
+                        </a>
+                      </li>
+                    <% } %>
+                    <% if (artist.user.socialLinks.spotify) { %>
+                      <li class="mb-2">
+                        <a href="<%= artist.user.socialLinks.spotify %>" target="_blank" class="text-decoration-none">
+                          <i class="bi bi-spotify me-2"></i> Spotify
+                        </a>
+                      </li>
+                    <% } %>
+                  </ul>
+                </div>
+              </div>
+
+              <% if (artist.achievements && artist.achievements.length > 0) { %>
+                <div class="mt-4">
+                  <h6 class="fw-bold mb-3">Achievements</h6>
+                  <ul class="list-group list-group-flush">
+                    <% artist.achievements.forEach(achievement => { %>
+                      <li class="list-group-item px-0 bg-transparent"><%= achievement %></li>
+                    <% }); %>
+                  </ul>
+                </div>
+              <% } %>
             </div>
-          <% } else { %>
-            <div class="alert alert-light text-center py-4">
-              <p class="mb-0">No content available yet.</p>
-            </div>
-          <% } %>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</section>
+</div>
+
+<script>
+  // Initialize Bootstrap tabs
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get all tab buttons
+    const tabButtons = document.querySelectorAll('#artistContentTabs button');
+
+    // Get all tab panes
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    // Add click event listeners to tab buttons
+    tabButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Remove active class from all buttons and panes
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabPanes.forEach(pane => {
+          pane.classList.remove('show');
+          pane.classList.remove('active');
+        });
+
+        // Add active class to clicked button
+        button.classList.add('active');
+
+        // Get target pane id from data-bs-target attribute
+        const targetId = button.getAttribute('data-bs-target').substring(1);
+
+        // Add active class to target pane
+        const targetPane = document.getElementById(targetId);
+        if (targetPane) {
+          targetPane.classList.add('show');
+          targetPane.classList.add('active');
+        }
+      });
+    });
+
+    // Handle direct links to tabs (e.g., from concert preview section)
+    const hash = window.location.hash;
+    if (hash && hash.length > 1) {
+      const tabId = hash.substring(1);
+      const tabButton = document.querySelector(`button[data-bs-target="#${tabId}"]`);
+      if (tabButton) {
+        tabButton.click();
+      }
+    }
+
+    // Video card hover effects
+    const videoCards = document.querySelectorAll('.video-card');
+    videoCards.forEach(card => {
+      // Add hover effect for play button
+      card.addEventListener('mouseenter', function() {
+        const playButton = this.querySelector('.play-button i');
+        if (playButton) {
+          playButton.style.opacity = '1';
+          playButton.style.transform = 'scale(1.1)';
+        }
+      });
+
+      card.addEventListener('mouseleave', function() {
+        const playButton = this.querySelector('.play-button i');
+        if (playButton) {
+          playButton.style.opacity = '0.8';
+          playButton.style.transform = 'scale(1)';
+        }
+      });
+
+      // Handle click to open YouTube in a new tab
+      card.addEventListener('click', function(e) {
+        const url = this.getAttribute('data-video-url') || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        window.open(url, '_blank');
+      });
+    });
+  });
+</script>
+
