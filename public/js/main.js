@@ -497,9 +497,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Check if response is OK
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Payment API error:', response.status, errorText);
-          alert(`Payment initialization failed: ${response.status} ${response.statusText}`);
+          let errorData;
+          try {
+            // Try to parse the error response as JSON
+            errorData = await response.json();
+            console.error('Payment API error:', response.status, errorData);
+          } catch (e) {
+            // If not JSON, get as text
+            const errorText = await response.text();
+            console.error('Payment API error (non-JSON):', response.status, errorText);
+            errorData = { message: `Error ${response.status}: ${response.statusText}` };
+          }
+
+          // Show a more user-friendly error message
+          let errorMessage = errorData.message || `Payment initialization failed (${response.status})`;
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`;
+          }
+
+          // For network errors, suggest checking internet connection
+          if (response.status === 0 || response.status === 503 || response.status === 504) {
+            errorMessage = 'Could not connect to payment service. Please check your internet connection and try again.';
+          }
+
+          alert(errorMessage);
+
+          // Re-enable the submit button
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+
           return;
         }
 
@@ -507,11 +533,77 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Payment order response:', data);
 
         if (!data.success) {
-          alert(data.message || 'Failed to create order');
+          // Handle specific error types
+          let errorMessage = data.message || 'Failed to create order';
+
+          if (data.errorType === 'CONFIGURATION_ERROR') {
+            errorMessage = 'Payment service is not properly configured. Please contact support.';
+          } else if (data.errorType === 'PAYMENT_GATEWAY_ERROR') {
+            errorMessage = 'Payment gateway is currently unavailable. Please try again later.';
+          } else if (data.errorType === 'NETWORK_ERROR') {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+          } else if (data.errorType === 'TIMEOUT') {
+            errorMessage = 'Payment gateway timed out. Please try again.';
+          }
+
+          alert(errorMessage);
+
+          // Re-enable the submit button
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+
           return;
         }
 
-        // Initialize Razorpay
+        // Check if this is a mock order (for development mode)
+        const isMockOrder = data.isMock || (data.order && data.order.id && data.order.id.startsWith('order_mock'));
+
+        if (isMockOrder) {
+          console.log('DEVELOPMENT MODE: Using mock payment flow');
+
+          // Show a message to the user
+          alert('Development Mode: Using mock payment flow. Click OK to simulate a successful payment.');
+
+          // Create a mock response
+          const mockResponse = {
+            razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(2, 15),
+            razorpay_order_id: data.order.id,
+            razorpay_signature: 'mock_signature_' + Math.random().toString(36).substring(2, 15)
+          };
+
+          // Create hidden form for payment verification
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/tickets/verify-payment';
+
+          const fields = {
+            razorpay_payment_id: mockResponse.razorpay_payment_id,
+            razorpay_order_id: mockResponse.razorpay_order_id,
+            razorpay_signature: mockResponse.razorpay_signature,
+            ticket_id: data.ticket,
+            is_mock_payment: 'true'
+          };
+
+          for (const key in fields) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = fields[key];
+            form.appendChild(input);
+          }
+
+          document.body.appendChild(form);
+
+          // Submit the form after a short delay to simulate payment processing
+          setTimeout(() => {
+            console.log('Submitting mock payment verification form');
+            form.submit();
+          }, 1500);
+
+          return;
+        }
+
+        // For real orders, initialize Razorpay
         const options = {
           key: data.key,
           amount: data.order.amount,
@@ -565,14 +657,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
           // Check if Razorpay is defined
           if (typeof Razorpay === 'undefined') {
-            throw new Error('Razorpay SDK is not loaded. Please check your internet connection and try again.');
+            console.error('Razorpay SDK is not loaded');
+
+            // Try to reload the script dynamically
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.async = true;
+            script.onload = function() {
+              console.log('Razorpay script loaded dynamically');
+              try {
+                const rzp = new Razorpay(options);
+                rzp.open();
+              } catch (err) {
+                console.error('Razorpay initialization error after dynamic loading:', err);
+                alert(`Payment initialization failed: ${err.message || 'Could not initialize payment gateway'}`);
+              }
+            };
+            script.onerror = function() {
+              console.error('Failed to load Razorpay script dynamically');
+              alert('Could not connect to payment gateway. Please check your internet connection and try again.');
+            };
+            document.head.appendChild(script);
+            return;
           }
+
+          // Test connection to Razorpay
+          fetch('https://api.razorpay.com/v1/orders', {
+            method: 'HEAD',
+            mode: 'no-cors'
+          }).catch(err => {
+            console.warn('Razorpay API connectivity test failed:', err);
+          });
 
           const rzp = new Razorpay(options);
           rzp.open();
         } catch (razorpayError) {
           console.error('Razorpay initialization error:', razorpayError);
-          alert(`Razorpay initialization failed: ${razorpayError.message}`);
+          alert(`Payment initialization failed: ${razorpayError.message || 'Unknown error connecting to payment gateway'}`);
         }
       } catch (error) {
         console.error('Payment error:', error);

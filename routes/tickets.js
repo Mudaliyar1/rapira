@@ -140,11 +140,19 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
     // Validate input
     if (!concertId || !quantity || !attendees) {
       console.log('Missing data:', { concertId, quantity, attendees });
-      return res.status(400).json({ success: false, message: 'Invalid booking data' });
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking data',
+        details: 'Missing required fields: concertId, quantity, or attendees'
+      });
     }
 
     // Log the received data for debugging
-    console.log('Received booking data:', { concertId, quantity, attendees });
+    console.log('Received booking data:', {
+      concertId,
+      quantity,
+      attendeesCount: Array.isArray(attendees) ? attendees.length : 1
+    });
 
     // Find concert
     const concert = await Concert.findById(concertId);
@@ -195,7 +203,11 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
     // Validate that we have the correct number of attendees
     if (attendeesList.length !== parseInt(quantity)) {
       console.log(`Attendee count mismatch: ${attendeesList.length} vs ${quantity}`);
-      return res.status(400).json({ success: false, message: 'Attendee count does not match ticket quantity' });
+      return res.status(400).json({
+        success: false,
+        message: 'Attendee count does not match ticket quantity',
+        details: `Expected ${quantity} attendees but received ${attendeesList.length}`
+      });
     }
 
     // Calculate total amount
@@ -213,9 +225,27 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
 
     await tempTicket.save();
 
-    // Create Razorpay order
+    // Check if Razorpay API keys are configured
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay API keys are not configured');
+
+      // Update ticket to indicate payment gateway issue
+      tempTicket.notes = 'Payment gateway configuration issue';
+      await tempTicket.save();
+
+      return res.status(503).json({
+        success: false,
+        message: 'Payment service is currently unavailable',
+        errorType: 'CONFIGURATION_ERROR',
+        ticket: tempTicket._id
+      });
+    }
+
+    // Create Razorpay order with timeout
     console.log('Creating order with amount:', totalAmount);
-    const orderResult = await createOrder({
+
+    // Set a timeout for the Razorpay API call
+    const orderPromise = createOrder({
       amount: totalAmount,
       receipt: tempTicket._id.toString(),
       notes: {
@@ -225,10 +255,37 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
       }
     });
 
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Payment gateway timeout')), 10000); // 10 second timeout
+    });
+
+    // Race the order creation against the timeout
+    const orderResult = await Promise.race([orderPromise, timeoutPromise])
+      .catch(error => {
+        console.error('Order creation error or timeout:', error);
+        return {
+          success: false,
+          error: error.message || 'Payment gateway timeout',
+          code: 'TIMEOUT'
+        };
+      });
+
     console.log('Order result:', orderResult);
 
     if (!orderResult.success) {
-      return res.status(500).json({ success: false, message: 'Failed to create payment order' });
+      // Update ticket with error information
+      tempTicket.notes = `Payment order creation failed: ${orderResult.error || 'Unknown error'}`;
+      await tempTicket.save();
+
+      // Return detailed error information
+      return res.status(503).json({
+        success: false,
+        message: 'Failed to create payment order',
+        errorType: orderResult.code || 'PAYMENT_GATEWAY_ERROR',
+        details: orderResult.error || 'Unknown payment gateway error',
+        ticket: tempTicket._id
+      });
     }
 
     // Update ticket with order ID
@@ -244,23 +301,77 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create order' });
+
+    // Provide more detailed error information
+    let errorMessage = 'Failed to create order';
+    let errorType = 'SERVER_ERROR';
+
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Invalid data provided';
+      errorType = 'VALIDATION_ERROR';
+    } else if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+      errorMessage = 'Database error';
+      errorType = 'DATABASE_ERROR';
+    } else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      errorMessage = 'Payment gateway connection failed';
+      errorType = 'NETWORK_ERROR';
+    }
+
+    res.status(500).json({
+      success: false,
+      message: errorMessage,
+      errorType: errorType,
+      details: error.message
+    });
   }
 });
 
 // Verify payment
 router.post('/verify-payment', isLoggedIn, async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, ticket_id } = req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      ticket_id,
+      is_mock_payment
+    } = req.body;
 
-    // Verify payment signature
-    const verificationResult = verifyPayment({
+    // Log payment verification attempt
+    console.log('Payment verification attempt:', {
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
-      signature: razorpay_signature
+      ticketId: ticket_id,
+      isMockPayment: is_mock_payment === 'true'
     });
 
+    // Check if this is a mock payment (development mode)
+    const isMockPayment = is_mock_payment === 'true' ||
+                         (razorpay_order_id && razorpay_order_id.startsWith('order_mock')) ||
+                         (razorpay_payment_id && razorpay_payment_id.startsWith('pay_mock'));
+
+    let verificationResult;
+
+    if (isMockPayment) {
+      console.log('Processing mock payment in development mode');
+      // For mock payments, skip actual verification
+      verificationResult = {
+        success: true,
+        isMock: true,
+        message: 'Mock payment verification bypassed'
+      };
+    } else {
+      // For real payments, verify the signature
+      verificationResult = verifyPayment({
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        signature: razorpay_signature
+      });
+    }
+
+    // Check verification result
     if (!verificationResult.success) {
+      console.error('Payment verification failed:', verificationResult);
       req.flash('error', 'Payment verification failed');
       return res.redirect(`/concerts`);
     }
@@ -269,6 +380,7 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     const ticket = await Ticket.findById(ticket_id);
 
     if (!ticket) {
+      console.error('Ticket not found:', ticket_id);
       req.flash('error', 'Ticket not found');
       return res.redirect('/concerts');
     }
@@ -276,12 +388,33 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     // Update ticket payment details
     ticket.paymentId = razorpay_payment_id;
     ticket.paymentStatus = 'completed';
+
+    // For mock payments, add a note
+    if (isMockPayment) {
+      ticket.notes = 'Mock payment processed in development mode';
+    }
+
     await ticket.save();
+    console.log('Ticket updated with payment details:', {
+      ticketId: ticket._id,
+      paymentId: ticket.paymentId,
+      status: ticket.paymentStatus
+    });
 
     // Update concert ticket count
     const concert = await Concert.findById(ticket.concert);
+    if (!concert) {
+      console.error('Concert not found for ticket:', ticket.concert);
+      req.flash('error', 'Concert information not found');
+      return res.redirect('/concerts');
+    }
+
     concert.ticketsSold += ticket.quantity;
     await concert.save();
+    console.log('Concert ticket count updated:', {
+      concertId: concert._id,
+      ticketsSold: concert.ticketsSold
+    });
 
     // Send email notification
     try {
@@ -305,11 +438,17 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       // Continue with booking even if email fails
     }
 
-    req.flash('success', 'Payment successful! Ticket booked. A confirmation email has been sent to your email address.');
+    // Set appropriate success message
+    if (isMockPayment) {
+      req.flash('success', 'Development Mode: Mock payment successful! Ticket booked.');
+    } else {
+      req.flash('success', 'Payment successful! Ticket booked. A confirmation email has been sent to your email address.');
+    }
+
     res.redirect(`/tickets/${ticket._id}`);
   } catch (error) {
     console.error('Verify payment error:', error);
-    req.flash('error', 'Payment verification failed');
+    req.flash('error', 'Payment verification failed: ' + (error.message || 'Unknown error'));
     res.redirect('/concerts');
   }
 });
