@@ -179,5 +179,8 @@
   </div>
 </section>
 
-<!-- Razorpay Script is now loaded in the head section via extraScripts -->
+<!-- Razorpay Script -->
+<% if (concert.isPaid) { %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
 
