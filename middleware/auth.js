@@ -1,7 +1,5 @@
 // Authentication middleware
 const Artist = require('../models/Artist');
-const AdminPagePermission = require('../models/AdminPagePermission');
-const AdminPage = require('../models/AdminPage');
 
 module.exports = {
   // Check if user is logged in
@@ -38,62 +36,6 @@ module.exports = {
     }
     req.flash('error', 'You must be a super admin to access this page');
     res.redirect('/admin');
-  },
-
-  // Check if admin has permission to access a specific page
-  hasPagePermission: (pagePath) => {
-    return async (req, res, next) => {
-      try {
-        // Super admins always have access to all pages
-        if (req.session.user && req.session.user.role === 'superAdmin') {
-          return next();
-        }
-
-        // Regular admins need permission checks
-        if (req.session.user && req.session.user.role === 'admin') {
-          // Find the page by path
-          const page = await AdminPage.findOne({ path: pagePath });
-
-          if (!page) {
-            console.error(`Page not found for path: ${pagePath}`);
-            req.flash('error', 'Page not found');
-            return res.redirect('/admin');
-          }
-
-          // If page is marked as always accessible, allow access
-          if (page.alwaysAccessible) {
-            return next();
-          }
-
-          // If page is super admin only, deny access
-          if (page.superAdminOnly) {
-            req.flash('error', 'This page is only accessible to Super Admins');
-            return res.redirect('/admin/permission-denied');
-          }
-
-          // Check admin's permissions
-          const permissions = await AdminPagePermission.findOne({ admin: req.session.user.id });
-
-          // If no permissions document exists or no specific permission for this page,
-          // deny access by default
-          if (!permissions || !permissions.pagePermissions.get(page.slug)) {
-            req.flash('error', 'You do not have permission to access this page');
-            return res.redirect('/admin/permission-denied');
-          }
-
-          // Permission granted
-          return next();
-        }
-
-        // Not an admin or super admin
-        req.flash('error', 'You must be an admin to access this page');
-        return res.redirect('/');
-      } catch (error) {
-        console.error('Error in hasPagePermission middleware:', error);
-        req.flash('error', 'An error occurred while checking your permissions');
-        return res.redirect('/admin');
-      }
-    };
   },
 
   // Check if user is not logged in (for login/register pages)

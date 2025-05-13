@@ -17,9 +17,7 @@
       </div>
       <div>
         <h6 class="mb-0 small"><%= currentUser.name %></h6>
-        <small class="text-muted" style="font-size: 0.7rem;">
-          <%= isSuperAdmin ? 'Super Administrator' : 'Administrator' %>
-        </small>
+        <small class="text-muted" style="font-size: 0.7rem;">Administrator</small>
       </div>
     </div>
     <ul class="nav flex-column">
@@ -31,287 +29,167 @@
       </li>
 
       <!-- Notification Management -->
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/notifications'] && adminPagePermissions['/admin/notifications'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/notifications" class="nav-link rounded <%= path === '/admin/notifications' ? 'active bg-primary' : '' %>">
           <i class="bi bi-bell me-1"></i> Notifications
           <span class="badge bg-danger rounded-pill float-end" id="notificationBadge" style="font-size: 0.65rem;"></span>
         </a>
       </li>
-      <% } %>
 
       <!-- User Management Section -->
-      <%
-      // Check if any user management pages are accessible
-      const hasUserManagementPages = isSuperAdmin ||
-        (adminPagePermissions['/admin/users'] && adminPagePermissions['/admin/users'].hasPermission) ||
-        (adminPagePermissions['/admin/artists'] && adminPagePermissions['/admin/artists'].hasPermission) ||
-        (adminPagePermissions['/artist-applications/admin'] && adminPagePermissions['/artist-applications/admin'].hasPermission) ||
-        (adminPagePermissions['/admin/artist-upgrade-requests'] && adminPagePermissions['/admin/artist-upgrade-requests'].hasPermission) ||
-        (adminPagePermissions['/roles'] && adminPagePermissions['/roles'].hasPermission) ||
-        (adminPagePermissions['/roles/user-roles'] && adminPagePermissions['/roles/user-roles'].hasPermission);
-      %>
-      <% if (hasUserManagementPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">User Management</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/users'] && adminPagePermissions['/admin/users'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/users" class="nav-link rounded <%= path === '/admin/users' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people me-1"></i> Users
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/artists'] && adminPagePermissions['/admin/artists'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/artists" class="nav-link rounded <%= path === '/admin/artists' ? 'active bg-primary' : '' %>">
           <i class="bi bi-music-note-beamed me-1"></i> Artists
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/artist-applications/admin'] && adminPagePermissions['/artist-applications/admin'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/artist-applications/admin" class="nav-link rounded <%= path === '/artist-applications/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-person-badge me-1"></i> Artist Applications
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/artist-upgrade-requests'] && adminPagePermissions['/admin/artist-upgrade-requests'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/artist-upgrade-requests" class="nav-link rounded <%= path === '/admin/artist-upgrade-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-arrow-up-circle me-1"></i> Artist Upgrades
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/roles'] && adminPagePermissions['/roles'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/roles" class="nav-link rounded <%= path === '/roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-tags me-1"></i> Roles
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/roles/user-roles'] && adminPagePermissions['/roles/user-roles'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/roles/user-roles" class="nav-link rounded <%= path === '/roles/user-roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people-fill me-1"></i> User Roles
         </a>
       </li>
-      <% } %>
-      <% } %>
 
       <!-- Concert Management Section -->
-      <%
-      // Check if any concert management pages are accessible
-      const hasConcertManagementPages = isSuperAdmin ||
-        (adminPagePermissions['/admin/concerts'] && adminPagePermissions['/admin/concerts'].hasPermission) ||
-        (adminPagePermissions['/admin/concerts/pending'] && adminPagePermissions['/admin/concerts/pending'].hasPermission) ||
-        (adminPagePermissions['/admin/tickets'] && adminPagePermissions['/admin/tickets'].hasPermission) ||
-        (adminPagePermissions['/admin/daily-concerts'] && adminPagePermissions['/admin/daily-concerts'].hasPermission);
-      %>
-      <% if (hasConcertManagementPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Concert Management</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/concerts'] && adminPagePermissions['/admin/concerts'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/concerts" class="nav-link rounded <%= path === '/admin/concerts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-event me-1"></i> Concerts
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/concerts/pending'] && adminPagePermissions['/admin/concerts/pending'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/concerts/pending" class="nav-link rounded <%= path === '/admin/concerts/pending' ? 'active bg-primary' : '' %>">
           <i class="bi bi-hourglass-split me-1"></i> Pending
           <span class="badge bg-danger rounded-pill float-end" id="pendingCount" style="font-size: 0.65rem;"></span>
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/tickets'] && adminPagePermissions['/admin/tickets'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/tickets" class="nav-link rounded <%= path === '/admin/tickets' ? 'active bg-primary' : '' %>">
           <i class="bi bi-ticket-perforated me-1"></i> Tickets
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/daily-concerts'] && adminPagePermissions['/admin/daily-concerts'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/daily-concerts" class="nav-link rounded <%= path === '/admin/daily-concerts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-week me-1"></i> Daily Concerts
         </a>
       </li>
-      <% } %>
-      <% } %>
 
       <!-- Content Management Section -->
-      <%
-      // Check if any content management pages are accessible
-      const hasContentManagementPages = isSuperAdmin ||
-        (adminPagePermissions['/admin/content'] && adminPagePermissions['/admin/content'].hasPermission) ||
-        (adminPagePermissions['/admin/pages'] && adminPagePermissions['/admin/pages'].hasPermission) ||
-        (adminPagePermissions['/learning/admin'] && adminPagePermissions['/learning/admin'].hasPermission);
-      %>
-      <% if (hasContentManagementPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Content Management</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/content'] && adminPagePermissions['/admin/content'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/content" class="nav-link rounded <%= path === '/admin/content' ? 'active bg-primary' : '' %>">
           <i class="bi bi-file-earmark-music me-1"></i> Content
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/pages'] && adminPagePermissions['/admin/pages'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/pages" class="nav-link rounded <%= path === '/admin/pages' ? 'active bg-primary' : '' %>">
           <i class="bi bi-file-earmark-text me-1"></i> Pages
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/learning/admin'] && adminPagePermissions['/learning/admin'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/learning/admin" class="nav-link rounded <%= path === '/learning/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-journal-text me-1"></i> Learning Modules
         </a>
       </li>
-      <% } %>
-      <% } %>
 
       <!-- Booking Management Section -->
-      <%
-      // Check if any booking management pages are accessible
-      const hasBookingManagementPages = isSuperAdmin ||
-        (adminPagePermissions['/admin/team-requirement/roles'] && adminPagePermissions['/admin/team-requirement/roles'].hasPermission) ||
-        (adminPagePermissions['/admin/team-requirement/requests'] && adminPagePermissions['/admin/team-requirement/requests'].hasPermission) ||
-        (adminPagePermissions['/admin/find-my-artist/featured-artists'] && adminPagePermissions['/admin/find-my-artist/featured-artists'].hasPermission) ||
-        (adminPagePermissions['/admin/find-my-artist/role-slots'] && adminPagePermissions['/admin/find-my-artist/role-slots'].hasPermission) ||
-        (adminPagePermissions['/admin/find-my-artist/booking-requests'] && adminPagePermissions['/admin/find-my-artist/booking-requests'].hasPermission);
-      %>
-      <% if (hasBookingManagementPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Booking Management</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/team-requirement/roles'] && adminPagePermissions['/admin/team-requirement/roles'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/team-requirement/roles" class="nav-link rounded <%= path === '/admin/team-requirement/roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-briefcase me-1"></i> Team Roles
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/team-requirement/requests'] && adminPagePermissions['/admin/team-requirement/requests'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/team-requirement/requests" class="nav-link rounded <%= path === '/admin/team-requirement/requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-check me-1"></i> Team Bookings
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/find-my-artist/featured-artists'] && adminPagePermissions['/admin/find-my-artist/featured-artists'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/featured-artists" class="nav-link rounded <%= path === '/admin/find-my-artist/featured-artists' ? 'active bg-primary' : '' %>">
           <i class="bi bi-star me-1"></i> Featured Artists
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/find-my-artist/role-slots'] && adminPagePermissions['/admin/find-my-artist/role-slots'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/role-slots" class="nav-link rounded <%= path === '/admin/find-my-artist/role-slots' ? 'active bg-primary' : '' %>">
           <i class="bi bi-briefcase me-1"></i> Role Slots
         </a>
       </li>
-      <% } %>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/find-my-artist/booking-requests'] && adminPagePermissions['/admin/find-my-artist/booking-requests'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/booking-requests" class="nav-link rounded <%= path === '/admin/find-my-artist/booking-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-check me-1"></i> Artist Bookings
         </a>
       </li>
-      <% } %>
-      <% } %>
 
       <!-- Communication Section -->
-      <%
-      // Check if any communication pages are accessible
-      const hasCommunicationPages = isSuperAdmin ||
-        (adminPagePermissions['/email-status'] && adminPagePermissions['/email-status'].hasPermission) ||
-        (hasRoles && (
-          (adminPagePermissions['/messages'] && adminPagePermissions['/messages'].hasPermission) ||
-          (adminPagePermissions['/messages/find'] && adminPagePermissions['/messages/find'].hasPermission)
-        ));
-      %>
-      <% if (hasCommunicationPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Communication</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/email-status'] && adminPagePermissions['/email-status'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/email-status" class="nav-link rounded <%= path === '/email-status' ? 'active bg-primary' : '' %>">
           <i class="bi bi-envelope-check me-1"></i> Email Status
         </a>
       </li>
-      <% } %>
       <% if (hasRoles) { %>
-        <% if (isSuperAdmin || (adminPagePermissions['/messages'] && adminPagePermissions['/messages'].hasPermission)) { %>
-        <li class="nav-item mb-1">
-          <a href="/messages" class="nav-link rounded <%= path === '/messages' ? 'active bg-primary' : '' %>">
-            <i class="bi bi-chat-dots me-1"></i> Messages
-          </a>
-        </li>
-        <% } %>
-        <% if (isSuperAdmin || (adminPagePermissions['/messages/find'] && adminPagePermissions['/messages/find'].hasPermission)) { %>
-        <li class="nav-item mb-1">
-          <a href="/messages/find" class="nav-link rounded <%= path === '/messages/find' ? 'active bg-primary' : '' %>">
-            <i class="bi bi-people me-1"></i> Connect with Artists
-          </a>
-        </li>
-        <% } %>
-      <% } %>
+      <li class="nav-item mb-1">
+        <a href="/messages" class="nav-link rounded <%= path === '/messages' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-chat-dots me-1"></i> Messages
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/messages/find" class="nav-link rounded <%= path === '/messages/find' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-people me-1"></i> Connect with Artists
+        </a>
+      </li>
       <% } %>
 
       <!-- System Section -->
-      <%
-      // Check if any system pages are accessible
-      const hasSystemPages = isSuperAdmin ||
-        (adminPagePermissions['/admin/storage-management'] && adminPagePermissions['/admin/storage-management'].hasPermission);
-      %>
-      <% if (hasSystemPages) { %>
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">System</span>
         </div>
       </li>
-      <% if (isSuperAdmin || (adminPagePermissions['/admin/storage-management'] && adminPagePermissions['/admin/storage-management'].hasPermission)) { %>
       <li class="nav-item mb-1">
         <a href="/admin/storage-management" class="nav-link rounded <%= path === '/admin/storage-management' ? 'active bg-primary' : '' %>">
           <i class="bi bi-hdd-stack me-1"></i> Storage Management
         </a>
       </li>
-      <% } %>
-      <% } %>
-
-      <% if (isSuperAdmin) { %>
-      <!-- Super Admin Section -->
-      <li class="nav-item mt-3 mb-2">
-        <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
-          <span class="text-muted text-uppercase small">Super Admin</span>
-        </div>
-      </li>
-      <li class="nav-item mb-1">
-        <a href="/admin/access-control" class="nav-link rounded <%= path === '/admin/access-control' ? 'active bg-primary' : '' %>">
-          <i class="bi bi-shield-lock me-1"></i> Admin Access Control
-        </a>
-      </li>
-      <% } %>
 
       <!-- Navigation Section -->
       <li class="nav-item mt-3 mb-2">

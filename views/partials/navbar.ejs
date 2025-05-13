@@ -41,7 +41,7 @@
               <a class="nav-link <%= typeof path !== 'undefined' && path && path.includes('dashboard') ? 'active' : '' %>" href="/artists/dashboard">Artist Dashboard</a>
             </li>
           <% } %>
-          <% if (typeof isAdmin !== 'undefined' && isAdmin || typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
+          <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
             <li class="nav-item">
               <a class="nav-link <%= typeof path !== 'undefined' && path && path.startsWith('/admin') ? 'active' : '' %>" href="/admin">Admin Dashboard</a>
             </li>
@@ -69,9 +69,6 @@
             <ul class="dropdown-menu glass-card-dark dropdown-menu-end" aria-labelledby="navbarDropdown">
               <li><a class="dropdown-item text-white" href="/users/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
               <li><a class="dropdown-item text-white" href="/tickets"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a></li>
-              <% if (typeof isAdmin !== 'undefined' && isAdmin || typeof isSuperAdmin !== 'undefined' && isSuperAdmin) { %>
-              <li><a class="dropdown-item text-white" href="/admin"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</a></li>
-              <% } %>
               <% if (typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
               <li><a class="dropdown-item text-white" href="/messages"><i class="bi bi-chat-dots me-2"></i>Messages</a></li>
               <li><a class="dropdown-item text-white" href="/messages/find"><i class="bi bi-people me-2"></i>Connect with Artists</a></li>
