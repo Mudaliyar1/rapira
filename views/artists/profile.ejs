@@ -22,11 +22,11 @@
             </div>
           <% } %>
         </div>
-
+        
         <div class="mt-4">
           <h3 class="fw-bold mb-1"><%= artist.stageName || artist.user.name %></h3>
           <p class="text-muted mb-3"><%= artist.genre %> • <%= artist.yearsActive %> years</p>
-
+          
           <div class="d-flex justify-content-center justify-content-lg-start gap-3 mb-4">
             <% if (artist.user.socialLinks.instagram) { %>
               <a href="<%= artist.user.socialLinks.instagram %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
@@ -49,7 +49,7 @@
               </a>
             <% } %>
           </div>
-
+          
           <% if (artist.about) { %>
             <div class="card mb-4">
               <div class="card-body">
@@ -58,7 +58,7 @@
               </div>
             </div>
           <% } %>
-
+          
           <% if (artist.achievements && artist.achievements.length > 0) { %>
             <div class="card mb-4">
               <div class="card-body">
@@ -73,12 +73,12 @@
           <% } %>
         </div>
       </div>
-
+      
       <div class="col-lg-8">
         <!-- Upcoming Concerts -->
         <div class="mb-5">
           <h4 class="fw-bold mb-4">Upcoming Concerts</h4>
-
+          
           <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
             <div class="row g-4">
               <% upcomingConcerts.forEach(concert => { %>
@@ -112,11 +112,11 @@
             </div>
           <% } %>
         </div>
-
+        
         <!-- Content -->
         <div>
           <h4 class="fw-bold mb-4">Latest Content</h4>
-
+          
           <% if (content && content.length > 0) { %>
             <div class="row g-4">
               <% content.forEach(item => { %>
@@ -141,7 +141,12 @@
                       </p>
                     </div>
                     <div class="card-footer bg-white border-top-0">
-                      <a href="/content/<%= item._id %>" class="btn btn-outline-primary w-100">
+                      <a href="<%= item.fullFileUrl || item.fileUrl %>"
+                         class="btn btn-outline-primary w-100 content-link"
+                         data-type="<%= item.type %>"
+                         data-title="<%= item.title %>"
+                         data-artist="<%= artist.user ? artist.user.name : 'Unknown Artist' %>"
+                         data-thumbnail="<%= item.fullThumbnailUrl || item.thumbnailUrl %>">
                         <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
                       </a>
                     </div>

@@ -12,8 +12,6 @@ let audioContext = null;
 let audioAnalyser = null;
 let audioSource = null;
 let miniPlayerActive = false;
-let mediaLoadRetries = 0;
-const MAX_RETRIES = 3;
 
 // DOM Elements
 const mediaPlayerModal = document.getElementById('mediaPlayerModal');
@@ -209,123 +207,51 @@ function resetMediaPlayer() {
 function showAudioPlayer(url, title, artist, thumbnail) {
   audioPlayerContainer.classList.remove('d-none');
 
-  // Reset retry counter when starting a new audio
-  mediaLoadRetries = 0;
+  // Set audio source
+  audioPlayer.src = url;
 
   // Set audio metadata
   if (audioTitle) audioTitle.textContent = title;
   if (audioArtist) audioArtist.textContent = artist;
   if (audioThumbnail && thumbnail) audioThumbnail.src = thumbnail;
 
-  // Add loading indicator
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.className = 'alert alert-info mt-3';
-  loadingIndicator.id = 'audioLoadingIndicator';
-  loadingIndicator.innerHTML = `
-    <div class="d-flex align-items-center">
-      <div class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <span>Loading audio file...</span>
-    </div>
-  `;
-  audioPlayerContainer.appendChild(loadingIndicator);
+  // Add error handling for audio loading
+  audioPlayer.onerror = function() {
+    console.error('Error loading audio:', audioPlayer.error);
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Error loading audio file:</strong> Media format not supported or file not found</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Audio</a>
+    `;
+    audioPlayerContainer.appendChild(errorContainer);
 
-  // Function to attempt loading the audio
-  const loadAudio = () => {
-    // Set audio source with cache-busting parameter if retrying
-    const cacheBuster = mediaLoadRetries > 0 ? `?retry=${Date.now()}` : '';
-    audioPlayer.src = url + cacheBuster;
-
-    // Add error handling for audio loading
-    audioPlayer.onerror = function() {
-      console.error(`Error loading audio (attempt ${mediaLoadRetries + 1}):`, audioPlayer.error);
-
-      // Remove loading indicator
-      const indicator = document.getElementById('audioLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      // Try again if under max retries
-      if (mediaLoadRetries < MAX_RETRIES) {
-        mediaLoadRetries++;
-        console.log(`Retrying audio load (${mediaLoadRetries}/${MAX_RETRIES})...`);
-
-        // Show retry message
-        const retryMessage = document.createElement('div');
-        retryMessage.className = 'alert alert-warning mt-3';
-        retryMessage.innerHTML = `
-          <div class="d-flex align-items-center">
-            <div class="spinner-border spinner-border-sm me-2" role="status">
-              <span class="visually-hidden">Retrying...</span>
-            </div>
-            <span>Connection issue detected. Retrying (${mediaLoadRetries}/${MAX_RETRIES})...</span>
-          </div>
-        `;
-        audioPlayerContainer.appendChild(retryMessage);
-
-        // Remove retry message after 2 seconds and try again
-        setTimeout(() => {
-          retryMessage.remove();
-          loadAudio();
-        }, 2000);
-        return;
-      }
-
-      // Show error after max retries
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'alert alert-danger mt-3';
-      errorContainer.innerHTML = `
-        <p><strong>Error loading audio file:</strong> ${getMediaErrorMessage(audioPlayer.error)}</p>
-        <p>This may be due to server restart or connection issues.</p>
-        <p>Try downloading the file instead:</p>
-        <a href="${url}" class="btn btn-primary" download>Download Audio</a>
-      `;
-      audioPlayerContainer.appendChild(errorContainer);
-
-      // Add direct link as fallback
-      const fallbackContainer = document.createElement('div');
-      fallbackContainer.className = 'mt-3';
-      fallbackContainer.innerHTML = `
-        <p>If the download button doesn't work, try this direct link:</p>
-        <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Audio in New Tab</a>
-        <button class="btn btn-outline-primary ms-2" onclick="window.location.reload()">Refresh Page</button>
-      `;
-      audioPlayerContainer.appendChild(fallbackContainer);
-    };
-
-    // Handle successful load
-    audioPlayer.onloadeddata = function() {
-      // Remove loading indicator
-      const indicator = document.getElementById('audioLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      console.log('Audio loaded successfully');
-    };
-
-    // Load and play audio
-    audioPlayer.load();
-
-    audioPlayer.play().catch(e => {
-      console.error('Error playing audio:', e);
-
-      // Remove loading indicator
-      const indicator = document.getElementById('audioLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      // Show error message if play fails
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'alert alert-warning mt-3';
-      errorContainer.innerHTML = `
-        <p><strong>Playback error:</strong> ${e.message}</p>
-        <p>Try downloading the file instead:</p>
-        <a href="${url}" class="btn btn-primary" download>Download Audio</a>
-      `;
-      audioPlayerContainer.appendChild(errorContainer);
-    });
+    // Add direct link as fallback
+    const fallbackContainer = document.createElement('div');
+    fallbackContainer.className = 'mt-3';
+    fallbackContainer.innerHTML = `
+      <p>If the download button doesn't work, try this direct link:</p>
+      <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Audio in New Tab</a>
+    `;
+    audioPlayerContainer.appendChild(fallbackContainer);
   };
 
-  // Start loading the audio
-  loadAudio();
+  // Load and play audio
+  audioPlayer.load();
+
+  audioPlayer.play().catch(e => {
+    console.error('Error playing audio:', e);
+    // Show error message if play fails
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-warning mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Playback error:</strong> ${e.message}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Audio</a>
+    `;
+    audioPlayerContainer.appendChild(errorContainer);
+  });
 
   // Initialize waveform
   initializeWaveform();
@@ -335,139 +261,56 @@ function showAudioPlayer(url, title, artist, thumbnail) {
 function showVideoPlayer(url) {
   videoPlayerContainer.classList.remove('d-none');
 
-  // Reset retry counter when starting a new video
-  mediaLoadRetries = 0;
+  // Set video source
+  videoPlayer.src = url;
 
-  // Add loading indicator
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.className = 'alert alert-info mt-3';
-  loadingIndicator.id = 'videoLoadingIndicator';
-  loadingIndicator.innerHTML = `
-    <div class="d-flex align-items-center">
-      <div class="spinner-border spinner-border-sm me-2" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <span>Loading video file...</span>
-    </div>
-  `;
-  videoPlayerContainer.appendChild(loadingIndicator);
+  // Add error handling for video loading
+  videoPlayer.onerror = function() {
+    console.error('Error loading video:', videoPlayer.error);
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-danger mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Error loading video file:</strong> Media format not supported or file not found</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Video</a>
+    `;
+    videoPlayerContainer.appendChild(errorContainer);
 
-  // Function to attempt loading the video
-  const loadVideo = () => {
-    // Set video source with cache-busting parameter if retrying
-    const cacheBuster = mediaLoadRetries > 0 ? `?retry=${Date.now()}` : '';
-    videoPlayer.src = url + cacheBuster;
-
-    // Add error handling for video loading
-    videoPlayer.onerror = function() {
-      console.error(`Error loading video (attempt ${mediaLoadRetries + 1}):`, videoPlayer.error);
-
-      // Remove loading indicator
-      const indicator = document.getElementById('videoLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      // Try again if under max retries
-      if (mediaLoadRetries < MAX_RETRIES) {
-        mediaLoadRetries++;
-        console.log(`Retrying video load (${mediaLoadRetries}/${MAX_RETRIES})...`);
-
-        // Show retry message
-        const retryMessage = document.createElement('div');
-        retryMessage.className = 'alert alert-warning mt-3';
-        retryMessage.innerHTML = `
-          <div class="d-flex align-items-center">
-            <div class="spinner-border spinner-border-sm me-2" role="status">
-              <span class="visually-hidden">Retrying...</span>
-            </div>
-            <span>Connection issue detected. Retrying (${mediaLoadRetries}/${MAX_RETRIES})...</span>
-          </div>
-        `;
-        videoPlayerContainer.appendChild(retryMessage);
-
-        // Remove retry message after 2 seconds and try again
-        setTimeout(() => {
-          retryMessage.remove();
-          loadVideo();
-        }, 2000);
-        return;
-      }
-
-      // Show error after max retries
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'alert alert-danger mt-3';
-      errorContainer.innerHTML = `
-        <p><strong>Error loading video file:</strong> ${getMediaErrorMessage(videoPlayer.error)}</p>
-        <p>This may be due to server restart or connection issues.</p>
-        <p>Try downloading the file instead:</p>
-        <a href="${url}" class="btn btn-primary" download>Download Video</a>
-      `;
-      videoPlayerContainer.appendChild(errorContainer);
-
-      // Add direct link as fallback
-      const fallbackContainer = document.createElement('div');
-      fallbackContainer.className = 'mt-3';
-      fallbackContainer.innerHTML = `
-        <p>If the download button doesn't work, try this direct link:</p>
-        <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Video in New Tab</a>
-        <button class="btn btn-outline-primary ms-2" onclick="window.location.reload()">Refresh Page</button>
-      `;
-      videoPlayerContainer.appendChild(fallbackContainer);
-    };
-
-    // Handle successful load
-    videoPlayer.onloadeddata = function() {
-      // Remove loading indicator
-      const indicator = document.getElementById('videoLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      console.log('Video loaded successfully');
-    };
-
-    // Load and play video
-    videoPlayer.load();
-
-    videoPlayer.play().catch(e => {
-      console.error('Error playing video:', e);
-
-      // Remove loading indicator
-      const indicator = document.getElementById('videoLoadingIndicator');
-      if (indicator) indicator.remove();
-
-      // Show error message if play fails
-      const errorContainer = document.createElement('div');
-      errorContainer.className = 'alert alert-warning mt-3';
-      errorContainer.innerHTML = `
-        <p><strong>Playback error:</strong> ${e.message}</p>
-        <p>Try downloading the file instead:</p>
-        <a href="${url}" class="btn btn-primary" download>Download Video</a>
-      `;
-      videoPlayerContainer.appendChild(errorContainer);
-    });
+    // Add direct link as fallback
+    const fallbackContainer = document.createElement('div');
+    fallbackContainer.className = 'mt-3';
+    fallbackContainer.innerHTML = `
+      <p>If the download button doesn't work, try this direct link:</p>
+      <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open Video in New Tab</a>
+    `;
+    videoPlayerContainer.appendChild(fallbackContainer);
   };
 
-  // Start loading the video
-  loadVideo();
+  // Load and play video
+  videoPlayer.load();
+
+  videoPlayer.play().catch(e => {
+    console.error('Error playing video:', e);
+    // Show error message if play fails
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'alert alert-warning mt-3';
+    errorContainer.innerHTML = `
+      <p><strong>Playback error:</strong> ${e.message}</p>
+      <p>Try downloading the file instead:</p>
+      <a href="${url}" class="btn btn-primary" download>Download Video</a>
+    `;
+    videoPlayerContainer.appendChild(errorContainer);
+  });
 }
 
 // Show PDF viewer
 function showPdfViewer(url) {
   pdfViewerContainer.classList.remove('d-none');
 
-  // Reset retry counter when starting a new PDF
-  mediaLoadRetries = 0;
-
   // Show loading indicator
   const pdfLoading = document.getElementById('pdfLoading');
   if (pdfLoading) {
     pdfLoading.style.display = 'block';
-    pdfLoading.innerHTML = `
-      <div class="d-flex align-items-center justify-content-center p-3">
-        <div class="spinner-border text-primary me-2" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <span>Loading PDF file...</span>
-      </div>
-    `;
   }
 
   // Initialize PDF.js
@@ -482,76 +325,37 @@ function showPdfViewer(url) {
   // Set workerSrc property to the PDF.js worker file
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-  // Function to attempt loading the PDF
-  const loadPdf = () => {
-    // Add cache-busting parameter if retrying
-    const cacheBuster = mediaLoadRetries > 0 ? `?retry=${Date.now()}` : '';
-    const pdfUrl = url + cacheBuster;
+  // Load the PDF
+  pdfjsLib.getDocument(url).promise.then(function(pdf) {
+    pdfDoc = pdf;
+    if (totalPages) {
+      totalPages.textContent = pdf.numPages;
+    }
 
-    // Update loading message if retrying
-    if (mediaLoadRetries > 0 && pdfLoading) {
+    // Render the first page
+    renderPage(pageNum);
+
+    // Hide loading indicator
+    if (pdfLoading) {
+      pdfLoading.style.display = 'none';
+    }
+  }).catch(function(error) {
+    console.error('Error loading PDF:', error);
+    if (pdfLoading) {
       pdfLoading.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center p-3">
-          <div class="spinner-border text-warning me-2" role="status">
-            <span class="visually-hidden">Retrying...</span>
-          </div>
-          <span>Retrying PDF load (${mediaLoadRetries}/${MAX_RETRIES})...</span>
+        <div class="alert alert-danger">
+          <p><strong>Error loading PDF:</strong> File not found or access denied</p>
+          <p>This may be due to CORS restrictions or file access issues.</p>
+          <p>Try downloading the file instead:</p>
+          <a href="${url}" class="btn btn-primary" download>Download PDF</a>
+        </div>
+        <div class="mt-3">
+          <p>If the download button doesn't work, try this direct link:</p>
+          <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open PDF in New Tab</a>
         </div>
       `;
     }
-
-    // Load the PDF
-    pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
-      pdfDoc = pdf;
-      if (totalPages) {
-        totalPages.textContent = pdf.numPages;
-      }
-
-      // Render the first page
-      renderPage(pageNum);
-
-      // Hide loading indicator
-      if (pdfLoading) {
-        pdfLoading.style.display = 'none';
-      }
-
-      console.log('PDF loaded successfully');
-    }).catch(function(error) {
-      console.error(`Error loading PDF (attempt ${mediaLoadRetries + 1}):`, error);
-
-      // Try again if under max retries
-      if (mediaLoadRetries < MAX_RETRIES) {
-        mediaLoadRetries++;
-        console.log(`Retrying PDF load (${mediaLoadRetries}/${MAX_RETRIES})...`);
-
-        // Wait 2 seconds before retrying
-        setTimeout(() => {
-          loadPdf();
-        }, 2000);
-        return;
-      }
-
-      // Show error after max retries
-      if (pdfLoading) {
-        pdfLoading.innerHTML = `
-          <div class="alert alert-danger">
-            <p><strong>Error loading PDF:</strong> File not found or access denied</p>
-            <p>This may be due to server restart, CORS restrictions, or connection issues.</p>
-            <p>Try downloading the file instead:</p>
-            <a href="${url}" class="btn btn-primary" download>Download PDF</a>
-          </div>
-          <div class="mt-3">
-            <p>If the download button doesn't work, try these options:</p>
-            <a href="${url}" class="btn btn-outline-secondary" target="_blank">Open PDF in New Tab</a>
-            <button class="btn btn-outline-primary ms-2" onclick="window.location.reload()">Refresh Page</button>
-          </div>
-        `;
-      }
-    });
-  };
-
-  // Start loading the PDF
-  loadPdf();
+  });
 }
 
 // Show lyrics viewer
