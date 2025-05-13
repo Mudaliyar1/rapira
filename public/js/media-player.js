@@ -116,6 +116,15 @@ function initializeMediaLinks() {
   // Find all content links
   document.querySelectorAll('.content-link').forEach(link => {
     link.addEventListener('click', function(e) {
+      // Check if this is a YouTube link
+      const isYoutubeLink = this.getAttribute('data-youtube') === 'true';
+
+      if (isYoutubeLink) {
+        // For YouTube links, don't prevent default - let the link redirect to the content page
+        return;
+      }
+
+      // For non-YouTube links, use the modal player
       e.preventDefault();
 
       const mediaUrl = this.getAttribute('href');

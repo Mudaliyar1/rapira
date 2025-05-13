@@ -340,6 +340,7 @@ const roleSlotRoutes = require('./routes/roleSlots');
 const bookingRequestRoutes = require('./routes/bookingRequests');
 const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
+const contentRoutes = require('./routes/content');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
@@ -366,6 +367,7 @@ app.use('/artist-applications', artistApplicationRoutes);
 app.use('/roles', roleRoutes);
 app.use('/learning', learningRoutes);
 app.use('/messages', messageRoutes);
+app.use('/content', contentRoutes); // Mount content routes
 app.use('/', artistUpgradeRoutes); // Mount artist upgrade routes
 // Mount team requirement routes
 app.use('/team-requirement', teamRequirementRoutes);

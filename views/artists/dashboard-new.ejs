@@ -281,12 +281,8 @@
               </div>
               <div class="card-footer bg-dark border-top-0">
                 <div class="d-flex gap-2 mb-2">
-                  <a href="<%= item.fileUrl %>"
-                     class="btn btn-primary flex-grow-1 content-link"
-                     data-type="<%= item.type %>"
-                     data-title="<%= item.title %>"
-                     data-artist="<%= artist.user ? artist.user.name : 'Unknown Artist' %>"
-                     data-thumbnail="<%= item.thumbnailUrl %>">
+                  <a href="/content/<%= item._id %>"
+                     class="btn btn-primary flex-grow-1">
                     <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
                   </a>
                 </div>
