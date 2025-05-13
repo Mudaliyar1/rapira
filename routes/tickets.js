@@ -600,7 +600,7 @@ router.get('/:id/download-html', isLoggedIn, async (req, res) => {
     // Render the ticket template with wrapper to HTML
     const ticketHtml = await ejs.renderFile(
       path.join(__dirname, '../views/tickets/html-template-wrapper.ejs'),
-      { ticket, concert, isDeletedConcert, refundRequest }
+      { ticket, concert, isDeletedConcert, refundRequest, downloadMode: true }
     );
 
     // Set response headers

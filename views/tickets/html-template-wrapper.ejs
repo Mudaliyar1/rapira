@@ -234,6 +234,7 @@
 <body>
   <%- include('html-template', { ticket, concert, isDeletedConcert, refundRequest }) %>
 
+  <% if (typeof downloadMode === 'undefined' || !downloadMode) { %>
   <div class="action-buttons">
     <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
       <a href="/refund-requests/view/<%= refundRequest._id %>" class="btn btn-info">
@@ -247,6 +248,7 @@
       <i class="bi bi-arrow-left"></i> Back to Tickets
     </a>
   </div>
+  <% } %>
 
   <style>
     /* Add Bootstrap Icons */
