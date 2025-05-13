@@ -180,6 +180,34 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin: 0 auto;
     }
+
+    /* Refund alert styles */
+    .refund-alert {
+      background-color: rgba(220, 53, 69, 0.8);
+      color: #ffffff;
+      border: 1px solid rgba(220, 53, 69, 0.9);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .refund-alert h3 {
+      margin-top: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .refund-alert.pending {
+      background-color: #fff3cd;
+      color: #000000;
+      border: 1px solid #ffecb5;
+    }
+
+    .refund-alert.pending h3 {
+      color: #000000;
+    }
   </style>
 </head>
 <body>
@@ -187,11 +215,42 @@
     <div class="ticket-header">
       <h1>Concert Ticket</h1>
       <div class="ticket-status">
-        <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : ticket.paymentStatus %>
+        <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
+          Refunded
+        <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'pending') { %>
+          Refund Pending
+        <% } else { %>
+          <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : ticket.paymentStatus %>
+        <% } %>
       </div>
     </div>
 
     <div class="ticket-body">
+      <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
+        <div class="refund-alert">
+          <h3><i>⚠️</i> Ticket Refunded</h3>
+          <p>This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
+          <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
+            <p style="font-size: 12px; margin-top: 10px;">
+              <strong>Refund Status:</strong> <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
+              <% if (refundRequest.refundedAt) { %>
+                <br><strong>Processed on:</strong> <%= new Date(refundRequest.refundedAt).toLocaleString() %>
+              <% } %>
+              <% if (refundRequest.transactionId) { %>
+                <br><strong>Transaction ID:</strong> <%= refundRequest.transactionId %>
+              <% } %>
+            </p>
+          <% } %>
+        </div>
+      <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'pending') { %>
+        <div class="refund-alert pending">
+          <h3><i>⏳</i> Refund Pending</h3>
+          <p>Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
+          <p style="font-size: 12px; margin-top: 10px;">
+            <strong>Request Date:</strong> <%= new Date(refundRequest.createdAt).toLocaleString() %>
+          </p>
+        </div>
+      <% } %>
       <div class="concert-info">
         <div class="concert-details">
           <% if (isDeletedConcert) { %>

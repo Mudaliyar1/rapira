@@ -134,12 +134,19 @@
             </div>
 
             <div class="d-flex justify-content-between">
-              <a href="/refund-requests/my-requests" class="btn btn-outline-light">
-                <i class="bi bi-arrow-left me-1"></i> Back to My Requests
-              </a>
-              <a href="/tickets/<%= refundRequest.ticket._id %>" class="btn btn-primary">
-                <i class="bi bi-ticket-perforated me-1"></i> View Ticket
-              </a>
+              <div class="d-flex gap-2">
+                <a href="/refund-requests/my-requests" class="btn btn-outline-light" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center;">
+                  <i class="bi bi-arrow-left me-1"></i> Back to My Requests
+                </a>
+                <a href="/tickets/<%= refundRequest.ticket._id %>" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 120px; justify-content: center;">
+                  <i class="bi bi-ticket-perforated me-1"></i> View Ticket
+                </a>
+                <% if (refundRequest.status === 'approved') { %>
+                  <a href="/tickets/<%= refundRequest.ticket._id %>/download" class="btn btn-success" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center;">
+                    <i class="bi bi-download me-1"></i> Download PDF
+                  </a>
+                <% } %>
+              </div>
             </div>
           </div>
         </div>
@@ -149,5 +156,42 @@
 
   <style>
     /* Timeline styles removed as requested */
+
+    /* Responsive styles for mobile devices */
+    @media (max-width: 576px) {
+      .glass-card-dark {
+        padding: 10px;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+      }
+
+      .card-header h4 {
+        margin-bottom: 10px;
+      }
+
+      .d-flex.gap-2 {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn {
+        margin-bottom: 5px;
+        min-width: 120px !important;
+        font-size: 0.8rem !important;
+        height: 34px !important;
+      }
+
+      .d-flex.justify-content-between {
+        flex-direction: column;
+      }
+
+      .d-flex.justify-content-between > * {
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </section>

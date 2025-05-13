@@ -22,12 +22,12 @@
 
           <div class="ticket-body p-3">
             <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
-              <div class="alert alert-danger mb-3">
-                <h5 class="alert-heading text-dark"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ticket Refunded</h5>
-                <p class="mb-0 text-dark">This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
+              <div class="alert alert-danger mb-3" style="background-color: rgba(220, 53, 69, 0.8); border-color: rgba(220, 53, 69, 0.9);">
+                <h5 class="alert-heading text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ticket Refunded</h5>
+                <p class="mb-0 text-white">This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
                 <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
-                  <hr>
-                  <p class="mb-0 text-dark small">
+                  <hr style="border-color: rgba(255, 255, 255, 0.3);">
+                  <p class="mb-0 text-white small">
                     <strong>Refund Status:</strong> <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
                     <% if (refundRequest.refundedAt) { %>
                       <br><strong>Processed on:</strong> <%= new Date(refundRequest.refundedAt).toLocaleString() %>
@@ -39,11 +39,11 @@
                 <% } %>
               </div>
             <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'pending') { %>
-              <div class="alert alert-warning mb-3">
-                <h5 class="alert-heading text-dark"><i class="bi bi-hourglass-split me-2"></i>Refund Pending</h5>
-                <p class="mb-0 text-dark">Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
-                <hr>
-                <p class="mb-0 text-dark small">
+              <div class="alert alert-warning mb-3" style="background-color: rgba(255, 193, 7, 0.7); border-color: rgba(255, 193, 7, 0.8);">
+                <h5 class="alert-heading text-white"><i class="bi bi-hourglass-split me-2"></i>Refund Pending</h5>
+                <p class="mb-0 text-white">Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
+                <hr style="border-color: rgba(255, 255, 255, 0.3);">
+                <p class="mb-0 text-white small">
                   <strong>Request Date:</strong> <%= new Date(refundRequest.createdAt).toLocaleString() %>
                 </p>
               </div>
@@ -176,27 +176,31 @@
                       // Check if a refund request already exists
                       const hasRefundRequest = typeof refundRequest !== 'undefined' && refundRequest;
                     %>
-                    <% if (!isAfterConcert && !hasRefundRequest) { %>
-                      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-sm btn-warning me-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i> Request Refund
-                      </a>
-                    <% } else if (hasRefundRequest) { %>
-                      <a href="/refund-requests/view/<%= refundRequest._id %>" class="btn btn-sm btn-info me-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                        <i class="bi bi-eye me-1"></i> View Refund Request
-                      </a>
-                    <% } %>
+                    <!-- Ticket Action Buttons Container -->
+                    <div class="text-center mt-3 mb-2">
+                      <div class="d-inline-flex flex-wrap justify-content-center" style="gap: 10px;">
+                        <% if (!isAfterConcert && (!hasRefundRequest || (hasRefundRequest && refundRequest.status === 'rejected'))) { %>
+                          <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> <%= hasRefundRequest ? 'Reapply for Refund' : 'Request Refund' %>
+                          </a>
+                        <% } %>
+                        <% if (hasRefundRequest) { %>
+                          <a href="/refund-requests/view/<%= refundRequest._id %>" class="btn btn-info" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
+                            <i class="bi bi-eye me-1"></i> View Refund Request
+                          </a>
+                        <% } %>
+                        <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
+                          <i class="bi bi-download me-1"></i> Download PDF
+                        </a>
+                        <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-outline-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 80px; justify-content: center;">
+                          <i class="bi bi-file-earmark-code me-1"></i> HTML
+                        </a>
+                        <a href="/tickets" class="btn btn-outline-light" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 140px; justify-content: center;">
+                          <i class="bi bi-arrow-left me-1"></i> Back to Tickets
+                        </a>
+                      </div>
+                    </div>
                   <% } %>
-                  <div class="btn-group">
-                    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                      <i class="bi bi-download me-1"></i> Download PDF
-                    </a>
-                    <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                      <i class="bi bi-file-earmark-code me-1"></i> HTML
-                    </a>
-                  </div>
-                  <a href="/tickets" class="btn btn-sm btn-outline-light" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                    <i class="bi bi-arrow-left me-1"></i> Back to Tickets
-                  </a>
                 </div>
               </div>
             </div>
@@ -230,16 +234,50 @@
 
 <!-- Direct PDF download button -->
 <div id="downloadBtnContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
     <i class="bi bi-download me-1"></i> Download Ticket
   </a>
 </div>
 
-<!-- Print styles -->
+<!-- Print and responsive styles -->
 <style>
   @media print {
     #downloadBtnContainer {
       display: none;
+    }
+  }
+
+  /* Responsive styles for mobile devices */
+  @media (max-width: 576px) {
+    .glass-card-dark {
+      padding: 10px;
+    }
+
+    .ticket-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+
+    .ticket-header .d-flex {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn {
+      margin-bottom: 5px;
+    }
+
+    /* Ensure buttons don't overflow on small screens */
+    .d-flex.flex-wrap {
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* Make buttons more mobile-friendly */
+    .btn {
+      min-width: 120px !important;
+      font-size: 0.8rem !important;
+      height: 34px !important;
     }
   }
 </style>

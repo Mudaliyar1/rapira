@@ -6,6 +6,10 @@ const Concert = require('../models/Concert');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const {
+  sendRefundApprovalEmail,
+  sendRefundRejectionEmail
+} = require('../utils/emailService');
 
 // User routes
 
@@ -85,8 +89,14 @@ router.get('/request/:ticketId', isLoggedIn, async (req, res) => {
     // Check if a refund request already exists for this ticket
     const existingRequest = await RefundRequest.findOne({ ticket: ticket._id });
     if (existingRequest) {
-      req.flash('info', 'A refund request for this ticket already exists');
-      return res.redirect(`/tickets/${ticket._id}`);
+      // If the request was rejected, allow the user to reapply
+      if (existingRequest.status === 'rejected') {
+        console.log('Previous refund request was rejected, allowing reapplication');
+      } else {
+        // For pending or approved requests, don't allow reapplication
+        req.flash('info', 'A refund request for this ticket already exists');
+        return res.redirect(`/tickets/${ticket._id}`);
+      }
     }
 
     // Check if the concert date has passed
@@ -143,8 +153,44 @@ router.post('/submit', isLoggedIn, async (req, res) => {
     // Check if a refund request already exists
     const existingRequest = await RefundRequest.findOne({ ticket: ticket._id });
     if (existingRequest) {
-      req.flash('info', 'A refund request for this ticket already exists');
-      return res.redirect(`/tickets/${ticket._id}`);
+      // If the request was rejected, allow the user to reapply by updating the existing request
+      if (existingRequest.status === 'rejected') {
+        console.log('Updating previously rejected refund request');
+
+        // Update the existing request with new information
+        existingRequest.reason = reason;
+        existingRequest.status = 'pending'; // Reset status to pending
+        existingRequest.adminNotes = ''; // Clear previous admin notes
+        existingRequest.reviewedBy = null;
+        existingRequest.reviewedAt = null;
+        existingRequest.bankDetails = {
+          accountName,
+          accountNumber,
+          ifscCode,
+          bankName
+        };
+
+        await existingRequest.save();
+
+        // Create notification for admin about the reapplication
+        const notification = new Notification({
+          module: 'Refund Request',
+          requestId: existingRequest._id,
+          modelRef: 'RefundRequest',
+          description: `Reapplication for refund request for ticket #${ticket.ticketNumber} - ${ticket.concert.title}`,
+          link: `/admin/refund-requests/${existingRequest._id}`,
+          status: 'Pending'
+        });
+
+        await notification.save();
+
+        req.flash('success', 'Refund request resubmitted successfully. You will be notified once it is processed.');
+        return res.redirect(`/tickets/${ticket._id}`);
+      } else {
+        // For pending or approved requests, don't allow reapplication
+        req.flash('info', 'A refund request for this ticket already exists');
+        return res.redirect(`/tickets/${ticket._id}`);
+      }
     }
 
     // Create new refund request
@@ -267,6 +313,16 @@ router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/refund-requests');
     }
 
+    // Get user, ticket, and concert details for email
+    const user = await User.findById(refundRequest.user);
+    const ticket = await Ticket.findById(refundRequest.ticket);
+    const concert = await Concert.findById(refundRequest.concert);
+
+    if (!user || !ticket || !concert) {
+      req.flash('error', 'Could not find all required information');
+      return res.redirect(`/admin/refund-requests/${req.params.id}`);
+    }
+
     // Update refund request
     refundRequest.status = action === 'approve' ? 'approved' : 'rejected';
     refundRequest.adminNotes = adminNotes || '';
@@ -278,13 +334,11 @@ router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
       refundRequest.refundedAt = new Date();
 
       // Update ticket status to refunded (don't delete it)
-      const ticket = await Ticket.findById(refundRequest.ticket);
       if (ticket) {
         ticket.paymentStatus = 'refunded';
         await ticket.save();
 
         // Update concert ticket count
-        const concert = await Concert.findById(refundRequest.concert);
         if (concert) {
           concert.ticketsSold = Math.max(0, concert.ticketsSold - ticket.quantity);
           await concert.save();
@@ -294,7 +348,32 @@ router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
 
     await refundRequest.save();
 
-    req.flash('success', `Refund request ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
+    // Send email notification based on action
+    let emailResult;
+    if (action === 'approve') {
+      // Send approval email
+      emailResult = await sendRefundApprovalEmail(user, refundRequest, ticket, concert);
+      if (emailResult.success) {
+        console.log(`Refund approval email sent to ${user.email}`);
+      } else {
+        console.error(`Failed to send refund approval email to ${user.email}:`, emailResult.error);
+      }
+    } else {
+      // Send rejection email
+      emailResult = await sendRefundRejectionEmail(user, refundRequest, ticket, concert);
+      if (emailResult.success) {
+        console.log(`Refund rejection email sent to ${user.email}`);
+      } else {
+        console.error(`Failed to send refund rejection email to ${user.email}:`, emailResult.error);
+      }
+    }
+
+    // Add email status to flash message
+    const emailStatus = emailResult && emailResult.success
+      ? "Email notification sent to user."
+      : "Note: Email notification could not be sent to user.";
+
+    req.flash('success', `Refund request ${action === 'approve' ? 'approved' : 'rejected'} successfully. ${emailStatus}`);
     res.redirect('/admin/refund-requests');
   } catch (error) {
     console.error('Process refund request error:', error);

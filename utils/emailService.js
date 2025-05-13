@@ -1538,6 +1538,252 @@ const sendTeamBookingRejectionEmail = async (request, role) => {
   }
 };
 
+// Send refund request approval email
+const sendRefundApprovalEmail = async (user, refundRequest, ticket, concert) => {
+  try {
+    console.log('Attempting to send refund approval email to user:', user.email);
+
+    // Format date
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    // Format currency
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR'
+      }).format(amount);
+    };
+
+    // Prepare HTML content for the email
+    const htmlContent = `
+      <html>
+        <body>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #6366f1; padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">Refund Request Approved</h1>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
+              <p>Hello ${user.name || 'User'},</p>
+              <p>Good news! Your refund request has been approved and processed.</p>
+
+              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Refund Details:</h3>
+                <p><strong>Concert:</strong> ${concert.title}</p>
+                <p><strong>Ticket Number:</strong> ${ticket.ticketNumber}</p>
+                <p><strong>Refund Amount:</strong> ${formatCurrency(refundRequest.amount)}</p>
+                <p><strong>Refund Date:</strong> ${formatDate(refundRequest.refundedAt)}</p>
+                ${refundRequest.transactionId ? `<p><strong>Transaction ID:</strong> ${refundRequest.transactionId}</p>` : ''}
+              </div>
+
+              <p>The refund has been processed to the bank account you provided in your request. Please allow 3-5 business days for the amount to be credited to your account.</p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.BASE_URL}/refund-requests/view/${refundRequest._id}" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">View Refund Details</a>
+              </div>
+
+              <p>If you have any questions or concerns about your refund, please contact our support team.</p>
+              <p>Thank you for using Rapira!</p>
+              <p>Best regards,<br>The Rapira Team</p>
+            </div>
+            <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+              <p>&copy; ${new Date().getFullYear()} Rapira. All rights reserved.</p>
+              <p><a href="${process.env.BASE_URL}/terms-of-service" style="color: #6b7280;">Terms of Service</a> | <a href="${process.env.BASE_URL}/privacy-policy" style="color: #6b7280;">Privacy Policy</a></p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const subject = `Your Refund Request for ${concert.title} Has Been Approved`;
+    const textContent = `Good news! Your refund request for ticket #${ticket.ticketNumber} for the concert "${concert.title}" has been approved. The refund amount of ${formatCurrency(refundRequest.amount)} has been processed to your bank account. Please allow 3-5 business days for the amount to be credited.`;
+
+    // Use Brevo API directly - use the correct API URL
+    try {
+      console.log('Using Brevo API for refund approval email');
+
+      // Create a direct email payload
+      const directEmailPayload = {
+        sender: {
+          name: SENDER_NAME,
+          email: SENDER_EMAIL
+        },
+        replyTo: {
+          name: 'Rapira Support',
+          email: SENDER_EMAIL
+        },
+        to: [{
+          email: user.email,
+          name: user.name || 'User'
+        }],
+        subject: subject,
+        htmlContent: htmlContent,
+        textContent: textContent
+      };
+
+      // Log the email being sent
+      console.log('Sending refund approval email to:', user.email);
+
+      // Send direct email using the correct API endpoint
+      const response = await axios.post('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': BREVO_API_KEY
+        }
+      });
+
+      console.log('Refund approval email sent successfully. Response:', response.status, response.statusText);
+      return { success: true, data: response.data, method: 'api' };
+
+    } catch (apiError) {
+      console.error('Failed to send refund approval email:', apiError.message);
+
+      // Log more detailed error information
+      if (apiError.response) {
+        console.error('Error response data:', apiError.response.data);
+        console.error('Error response status:', apiError.response.status);
+      }
+
+      // Return error but don't throw - allow the process to continue
+      return {
+        success: false,
+        error: apiError.message,
+        details: apiError.response?.data || 'No additional details'
+      };
+    }
+  } catch (error) {
+    console.error('Error in sendRefundApprovalEmail:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send refund request rejection email
+const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) => {
+  try {
+    console.log('Attempting to send refund rejection email to user:', user.email);
+
+    // Format date
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    // Format currency
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR'
+      }).format(amount);
+    };
+
+    // Prepare HTML content for the email
+    const htmlContent = `
+      <html>
+        <body>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #6366f1; padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">Refund Request Update</h1>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
+              <p>Hello ${user.name || 'User'},</p>
+              <p>We have reviewed your refund request for the concert "${concert.title}" and we regret to inform you that we are unable to approve it at this time.</p>
+
+              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Request Details:</h3>
+                <p><strong>Concert:</strong> ${concert.title}</p>
+                <p><strong>Ticket Number:</strong> ${ticket.ticketNumber}</p>
+                <p><strong>Requested Amount:</strong> ${formatCurrency(refundRequest.amount)}</p>
+                <p><strong>Request Date:</strong> ${formatDate(refundRequest.createdAt)}</p>
+                ${refundRequest.adminNotes ? `<p><strong>Reason for Rejection:</strong> ${refundRequest.adminNotes}</p>` : ''}
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.BASE_URL}/refund-requests/view/${refundRequest._id}" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">View Request Details</a>
+              </div>
+
+              <p>If you have any questions or would like to discuss this further, please contact our support team.</p>
+              <p>Thank you for your understanding.</p>
+              <p>Best regards,<br>The Rapira Team</p>
+            </div>
+            <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+              <p>&copy; ${new Date().getFullYear()} Rapira. All rights reserved.</p>
+              <p><a href="${process.env.BASE_URL}/terms-of-service" style="color: #6b7280;">Terms of Service</a> | <a href="${process.env.BASE_URL}/privacy-policy" style="color: #6b7280;">Privacy Policy</a></p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const subject = `Update on Your Refund Request for ${concert.title}`;
+    const textContent = `We have reviewed your refund request for ticket #${ticket.ticketNumber} for the concert "${concert.title}" and we regret to inform you that we are unable to approve it at this time. ${refundRequest.adminNotes ? `Reason: ${refundRequest.adminNotes}` : ''}`;
+
+    // Use Brevo API directly with the correct API URL
+    try {
+      console.log('Using Brevo API for refund rejection email');
+
+      // Create a direct email payload
+      const directEmailPayload = {
+        sender: {
+          name: SENDER_NAME,
+          email: SENDER_EMAIL
+        },
+        replyTo: {
+          name: 'Rapira Support',
+          email: SENDER_EMAIL
+        },
+        to: [{
+          email: user.email,
+          name: user.name || 'User'
+        }],
+        subject: subject,
+        htmlContent: htmlContent,
+        textContent: textContent
+      };
+
+      // Log the email being sent
+      console.log('Sending refund rejection email to:', user.email);
+
+      // Send direct email using the correct API endpoint
+      const response = await axios.post('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': BREVO_API_KEY
+        }
+      });
+
+      console.log('Refund rejection email sent successfully. Response:', response.status, response.statusText);
+      return { success: true, data: response.data, method: 'api' };
+
+    } catch (apiError) {
+      console.error('Failed to send refund rejection email:', apiError.message);
+
+      // Log more detailed error information
+      if (apiError.response) {
+        console.error('Error response data:', apiError.response.data);
+        console.error('Error response status:', apiError.response.status);
+      }
+
+      // Return error but don't throw - allow the process to continue
+      return {
+        success: false,
+        error: apiError.message,
+        details: apiError.response?.data || 'No additional details'
+      };
+    }
+  } catch (error) {
+    console.error('Error in sendRefundRejectionEmail:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   templates,
   sendEmail,
@@ -1553,5 +1799,7 @@ module.exports = {
   sendArtistRejectionEmail,
   sendTeamBookingRequestEmail,
   sendTeamBookingApprovalEmail,
-  sendTeamBookingRejectionEmail
+  sendTeamBookingRejectionEmail,
+  sendRefundApprovalEmail,
+  sendRefundRejectionEmail
 };
