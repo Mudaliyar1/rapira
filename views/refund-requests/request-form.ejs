@@ -1,0 +1,93 @@
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-card-dark mb-4">
+          <div class="card-header bg-dark p-4 border-bottom border-secondary">
+            <h2 class="fw-bold mb-0 text-white">Request Ticket Refund</h2>
+          </div>
+          <div class="card-body p-4">
+            <div class="alert alert-info">
+              <h5 class="alert-heading text-dark"><i class="bi bi-info-circle-fill me-2"></i>Refund Information</h5>
+              <p class="mb-0 text-dark">Please note that refund requests are subject to our <a href="/refund-policy" target="_blank" class="alert-link">Refund Policy</a>. Refunds typically take 7-10 business days to process after approval.</p>
+            </div>
+
+            <!-- Ticket Information -->
+            <div class="mb-4 p-3 border border-secondary rounded-3">
+              <h5 class="fw-bold mb-3 text-white">Ticket Information</h5>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Ticket Number:</div>
+                <div class="col-md-8 text-white"><%= ticket.ticketNumber %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Concert:</div>
+                <div class="col-md-8 text-white"><%= ticket.concert.title %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Date:</div>
+                <div class="col-md-8 text-white"><%= new Date(ticket.concert.date).toLocaleDateString() %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Venue:</div>
+                <div class="col-md-8 text-white"><%= ticket.concert.venue %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Quantity:</div>
+                <div class="col-md-8 text-white"><%= ticket.quantity %></div>
+              </div>
+              <div class="row">
+                <div class="col-md-4 text-white-50">Amount:</div>
+                <div class="col-md-8 text-white">₹<%= ticket.totalAmount %></div>
+              </div>
+            </div>
+
+            <!-- Refund Request Form -->
+            <form action="/refund-requests/submit" method="POST">
+              <input type="hidden" name="ticketId" value="<%= ticket._id %>">
+              
+              <div class="mb-4">
+                <label for="reason" class="form-label text-white">Reason for Refund <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="reason" name="reason" rows="4" required></textarea>
+                <div class="form-text text-white-50">Please provide a detailed reason for your refund request.</div>
+              </div>
+
+              <div class="mb-4">
+                <h5 class="fw-bold mb-3 text-white">Bank Account Details for Refund</h5>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="accountName" class="form-label text-white">Account Holder Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="accountName" name="accountName" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="accountNumber" class="form-label text-white">Account Number <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="accountNumber" name="accountNumber" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="ifscCode" class="form-label text-white">IFSC Code <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="ifscCode" name="ifscCode" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="bankName" class="form-label text-white">Bank Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="bankName" name="bankName" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="confirmCheck" required>
+                <label class="form-check-label text-white" for="confirmCheck">
+                  I understand that by requesting a refund, my ticket will be cancelled and I will no longer have access to the concert.
+                </label>
+              </div>
+
+              <div class="d-flex justify-content-between">
+                <a href="/tickets/<%= ticket._id %>" class="btn btn-outline-light">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit Refund Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

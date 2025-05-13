@@ -368,7 +368,7 @@
     <% if (moreFromArtist && moreFromArtist.length > 0) { %>
       <div class="row">
         <div class="col-12 mb-4">
-          <h4>More from <%= content.artist && content.artist.user ? content.artist.user.name : 'this artist' %></h4>
+          <h4 class="text-white">More from <%= content.artist && content.artist.user ? content.artist.user.name : 'this artist' %></h4>
         </div>
         <% moreFromArtist.forEach(item => { %>
           <div class="col-md-4 mb-4">
@@ -382,14 +382,12 @@
                 loading="lazy"
               >
               <div class="card-body">
-                <h5 class="card-title"><%= item.title %></h5>
-                <p class="card-text text-muted">
+                <div class="mb-2">
+                  <span class="text-white" style="font-size: 1.25rem; font-weight: 500;"><%= item.type.toLowerCase() %></span>
+                </div>
+                <p class="card-text text-white">
                   <i class="bi bi-calendar3 me-1"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
                 </p>
-                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %>">
-                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
-                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
-                </span>
               </div>
               <div class="card-footer bg-transparent">
                 <a href="/content/<%= item._id %>" class="btn btn-outline-primary w-100">
@@ -406,7 +404,7 @@
     <% if (similarContent && similarContent.length > 0) { %>
       <div class="row mt-4">
         <div class="col-12 mb-4">
-          <h4>Similar <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>s You Might Like</h4>
+          <h4 class="text-white">Similar <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>s You Might Like</h4>
         </div>
         <% similarContent.forEach(item => { %>
           <div class="col-md-4 mb-4">
@@ -420,14 +418,12 @@
                 loading="lazy"
               >
               <div class="card-body">
-                <h5 class="card-title"><%= item.title %></h5>
-                <p class="card-text text-muted">
+                <div class="mb-2">
+                  <span class="text-white" style="font-size: 1.25rem; font-weight: 500;"><%= item.type.toLowerCase() %></span>
+                </div>
+                <p class="card-text text-white">
                   <i class="bi bi-calendar3 me-1"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
                 </p>
-                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %>">
-                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
-                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
-                </span>
               </div>
               <div class="card-footer bg-transparent">
                 <a href="/content/<%= item._id %>" class="btn btn-outline-primary w-100">

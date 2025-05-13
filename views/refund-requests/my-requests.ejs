@@ -1,0 +1,80 @@
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h1 class="fw-bold text-white">My Refund Requests</h1>
+          <a href="/users/profile" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i> Back to Profile
+          </a>
+        </div>
+
+        <% if (refundRequests && refundRequests.length > 0) { %>
+          <div class="row justify-content-center">
+            <% refundRequests.forEach(request => { %>
+              <div class="col-6 col-md-4 col-lg-3 mb-2">
+                <div class="glass-card-dark h-100" style="max-height: none; overflow: visible; max-width: 250px;">
+                  <div class="card-header bg-dark p-2 border-bottom border-secondary d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-white">Request #<%= request._id.toString().slice(-6).toUpperCase() %></h6>
+                    <span class="badge <%= request.status === 'pending' ? 'bg-warning' : (request.status === 'approved' ? 'bg-success' : 'bg-danger') %>">
+                      <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+                    </span>
+                  </div>
+                  <div class="card-body p-1">
+                    <div class="mb-1">
+                      <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Concert:</p>
+                      <p class="text-white fw-medium mb-1" style="font-size: 0.8rem;"><%= request.concert.title %></p>
+                    </div>
+                    <div class="mb-1">
+                      <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Ticket Number:</p>
+                      <p class="text-white fw-medium mb-1" style="font-size: 0.8rem;"><%= request.ticket.ticketNumber %></p>
+                    </div>
+                    <div class="mb-1">
+                      <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Amount:</p>
+                      <p class="text-white fw-medium mb-1" style="font-size: 0.8rem;">₹<%= request.amount %></p>
+                    </div>
+                    <div class="mb-1">
+                      <p class="text-white-50 mb-0" style="font-size: 0.7rem;">Requested On:</p>
+                      <p class="text-white mb-1" style="font-size: 0.8rem;"><%= new Date(request.createdAt).toLocaleDateString() %></p>
+                    </div>
+
+                    <% if (request.status === 'approved') { %>
+                      <div class="p-1 mb-1" style="background-color: rgba(25, 135, 84, 0.3); border-radius: 4px; border: 1px solid rgba(25, 135, 84, 0.4);">
+                        <h6 class="mb-0 text-white" style="font-size: 0.8rem;">Refund Approved</h6>
+                        <p class="mb-0 text-white small" style="font-size: 0.7rem;">Processed: <%= request.refundedAt ? new Date(request.refundedAt).toLocaleDateString() : 'Processing' %></p>
+                      </div>
+                    <% } else if (request.status === 'rejected') { %>
+                      <div class="p-1 mb-1" style="background-color: rgba(220, 53, 69, 0.3); border-radius: 4px; border: 1px solid rgba(220, 53, 69, 0.4);">
+                        <h6 class="mb-0 text-white" style="font-size: 0.8rem;">Refund Rejected</h6>
+                        <% if (request.adminNotes) { %>
+                          <p class="mb-0 text-white small" style="font-size: 0.7rem;">Reason: <%= request.adminNotes %></p>
+                        <% } %>
+                      </div>
+                    <% } else { %>
+                      <div class="p-1 mb-1" style="background-color: rgba(255, 193, 7, 0.3); border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.4);">
+                        <h6 class="mb-0 text-white" style="font-size: 0.8rem;">Refund Pending</h6>
+                      </div>
+                    <% } %>
+
+                    <a href="/refund-requests/view/<%= request._id %>" class="btn btn-outline-primary btn-sm w-100 mt-1" style="font-size: 0.7rem; padding: 0.15rem 0.25rem;">
+                      <i class="bi bi-eye me-1"></i> Details
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="glass-card-dark text-center py-5">
+            <div class="py-4">
+              <i class="bi bi-inbox text-muted display-1 mb-3"></i>
+              <h3 class="text-white">No Refund Requests</h3>
+              <p class="text-white-50">You haven't made any refund requests yet.</p>
+              <a href="/tickets" class="btn btn-primary mt-3">View My Tickets</a>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>

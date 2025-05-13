@@ -1,0 +1,92 @@
+<!-- Admin Refund Requests List -->
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-white">Refund Requests</h1>
+    <div class="d-flex">
+      <div class="btn-group me-2">
+        <a href="/admin/refund-requests?status=pending" class="btn <%= currentStatus === 'pending' ? 'btn-primary' : 'btn-outline-primary' %>">
+          Pending
+        </a>
+        <a href="/admin/refund-requests?status=approved" class="btn <%= currentStatus === 'approved' ? 'btn-primary' : 'btn-outline-primary' %>">
+          Approved
+        </a>
+        <a href="/admin/refund-requests?status=rejected" class="btn <%= currentStatus === 'rejected' ? 'btn-primary' : 'btn-outline-primary' %>">
+          Rejected
+        </a>
+        <a href="/admin/refund-requests" class="btn <%= currentStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">
+          All
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refund Requests Table -->
+  <div class="glass-card-dark">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Request ID</th>
+              <th>User</th>
+              <th>Concert</th>
+              <th>Ticket #</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (refundRequests && refundRequests.length > 0) { %>
+              <% refundRequests.forEach(request => { %>
+                <tr>
+                  <td><code><%= request._id.toString().slice(-6).toUpperCase() %></code></td>
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span class="fw-medium"><%= request.user.name %></span>
+                      <span class="small text-muted"><%= request.user.email %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (request.concert) { %>
+                      <div class="d-flex flex-column">
+                        <span class="fw-medium"><%= request.concert.title %></span>
+                        <span class="small text-muted"><%= new Date(request.concert.date).toLocaleDateString() %></span>
+                      </div>
+                    <% } else { %>
+                      <span class="text-muted">N/A</span>
+                    <% } %>
+                  </td>
+                  <td><%= request.ticket ? request.ticket.ticketNumber : 'N/A' %></td>
+                  <td>₹<%= request.amount %></td>
+                  <td>
+                    <span class="badge <%= request.status === 'pending' ? 'bg-warning' : (request.status === 'approved' ? 'bg-success' : 'bg-danger') %>">
+                      <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+                    </span>
+                  </td>
+                  <td><%= new Date(request.createdAt).toLocaleDateString() %></td>
+                  <td>
+                    <a href="/admin/refund-requests/<%= request._id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye me-1"></i> View
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center py-4">
+                  <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-inbox text-muted display-4 mb-3"></i>
+                    <p class="mb-0">No refund requests found</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

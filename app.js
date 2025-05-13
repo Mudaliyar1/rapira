@@ -341,6 +341,7 @@ const bookingRequestRoutes = require('./routes/bookingRequests');
 const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
 const contentRoutes = require('./routes/content');
+const refundRequestRoutes = require('./routes/refundRequests');
 const { router: notificationRoutes } = require('./routes/notifications');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
@@ -391,6 +392,10 @@ app.use('/admin/notifications', notificationRoutes);
 
 // Mount admin access control routes
 app.use('/admin/access-control', adminAccessControlRoutes);
+
+// Mount refund request routes
+app.use('/refund-requests', refundRequestRoutes);
+app.use('/admin/refund-requests', refundRequestRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');

@@ -537,7 +537,7 @@ h5.card-title.text-white,
   margin-bottom: 1rem;
   position: relative;
   display: inline-block;
-  color: #ffffff; /* Ensure title is white for maximum contrast */
+  color: #ffffff !important; /* Ensure title is white for maximum contrast */
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Add text shadow for better readability */
 }
 
@@ -1417,7 +1417,9 @@ footer .social-icons a:hover {
 .glass-card-dark h5.card-title,
 .glass-card-dark .card-header h5,
 .border-gradient .card-title,
-.border-gradient h5.card-title {
+.border-gradient h5.card-title,
+.related-content-card .card-title,
+.related-content-card h5.card-title {
   color: white !important;
 }
 
@@ -1863,6 +1865,33 @@ thead.table-light th,
   top: 10px;
   right: 10px;
   z-index: 1;
+}
+
+/* Related Content Card Styles */
+.related-content-card {
+  transition: transform 0.3s ease;
+  background-color: rgba(30, 30, 30, 0.95); /* Darker background for better contrast */
+}
+
+.related-content-card:hover {
+  transform: translateY(-5px);
+}
+
+.related-content-card .card-body {
+  background-color: rgba(30, 30, 30, 0.95);
+}
+
+.related-content-card .card-title {
+  color: #ffffff !important;
+}
+
+/* Ensure all text in related content cards is white */
+.related-content-card h5,
+.related-content-card p,
+.related-content-card span,
+.related-content-card .badge,
+.related-content-card small {
+  color: #ffffff !important;
 }
 
 /* Animation Styles */

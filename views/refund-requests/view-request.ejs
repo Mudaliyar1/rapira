@@ -1,0 +1,153 @@
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h1 class="fw-bold text-white">Refund Request Details</h1>
+          <a href="/refund-requests/my-requests" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i> Back to My Requests
+          </a>
+        </div>
+
+        <div class="glass-card-dark mb-4">
+          <div class="card-header bg-dark p-4 border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h4 class="fw-bold mb-0 text-white">Request #<%= refundRequest._id.toString().slice(-6).toUpperCase() %></h4>
+            <span class="badge <%= refundRequest.status === 'pending' ? 'bg-warning' : (refundRequest.status === 'approved' ? 'bg-success' : 'bg-danger') %> fs-6">
+              <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
+            </span>
+          </div>
+          <div class="card-body p-4">
+            <!-- Status Alert -->
+            <% if (refundRequest.status === 'approved') { %>
+              <div class="alert alert-success mb-4" style="background-color: rgba(25, 135, 84, 0.3); border: 1px solid rgba(25, 135, 84, 0.4);">
+                <h5 class="alert-heading text-white"><i class="bi bi-check-circle-fill me-2"></i>Refund Approved</h5>
+                <p class="mb-0 text-white">Your refund has been approved and processed. The amount will be credited to your bank account within 7-10 business days.</p>
+                <% if (refundRequest.adminNotes) { %>
+                  <hr style="border-color: rgba(255, 255, 255, 0.2);">
+                  <p class="mb-0 text-white small">Admin Note: <%= refundRequest.adminNotes %></p>
+                <% } %>
+              </div>
+            <% } else if (refundRequest.status === 'rejected') { %>
+              <div class="alert alert-danger mb-4" style="background-color: rgba(220, 53, 69, 0.3); border: 1px solid rgba(220, 53, 69, 0.4);">
+                <h5 class="alert-heading text-white"><i class="bi bi-x-circle-fill me-2"></i>Refund Rejected</h5>
+                <p class="mb-0 text-white">Your refund request has been rejected. Please contact support for more information.</p>
+                <% if (refundRequest.adminNotes) { %>
+                  <hr style="border-color: rgba(255, 255, 255, 0.2);">
+                  <p class="mb-0 text-white small">Reason: <%= refundRequest.adminNotes %></p>
+                <% } %>
+              </div>
+            <% } else { %>
+              <div class="alert alert-warning mb-4" style="background-color: rgba(255, 193, 7, 0.3); border: 1px solid rgba(255, 193, 7, 0.4);">
+                <h5 class="alert-heading text-white"><i class="bi bi-hourglass-split me-2"></i>Refund Pending</h5>
+                <p class="mb-0 text-white">Your refund request is currently under review. We'll notify you once it's processed.</p>
+              </div>
+            <% } %>
+
+            <!-- Ticket Information -->
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Ticket Information</h5>
+              <div class="p-3 border border-secondary rounded-3">
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Ticket Number:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.ticket.ticketNumber %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Concert:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.concert.title %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Date:</div>
+                  <div class="col-md-8 text-white"><%= new Date(refundRequest.concert.date).toLocaleDateString() %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Venue:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.concert.venue %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Quantity:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.ticket.quantity %></div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4 text-white-50">Amount:</div>
+                  <div class="col-md-8 text-white">₹<%= refundRequest.amount %></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Refund Reason -->
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Reason for Refund</h5>
+              <div class="p-3 border border-secondary rounded-3 text-white">
+                <%= refundRequest.reason %>
+              </div>
+            </div>
+
+            <!-- Bank Details -->
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Bank Account Details</h5>
+              <div class="p-3 border border-secondary rounded-3">
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Account Holder:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.bankDetails.accountName %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Account Number:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.bankDetails.accountNumber.replace(/\d(?=\d{4})/g, "*") %></div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">IFSC Code:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.bankDetails.ifscCode %></div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4 text-white-50">Bank Name:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.bankDetails.bankName %></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Request Timeline -->
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Request Timeline</h5>
+              <div class="p-4 border border-secondary rounded-3">
+                <div class="mb-4">
+                  <h6 class="text-white mb-1">Request Submitted</h6>
+                  <p class="text-white-50 mb-0"><%= new Date(refundRequest.createdAt).toLocaleString() %></p>
+                </div>
+
+                <% if (refundRequest.status !== 'pending') { %>
+                  <div class="mb-4">
+                    <h6 class="text-white mb-1">Request <%= refundRequest.status === 'approved' ? 'Approved' : 'Rejected' %></h6>
+                    <p class="text-white-50 mb-0"><%= refundRequest.reviewedAt ? new Date(refundRequest.reviewedAt).toLocaleString() : 'N/A' %></p>
+                  </div>
+                <% } %>
+
+                <% if (refundRequest.status === 'approved' && refundRequest.refundedAt) { %>
+                  <div>
+                    <h6 class="text-white mb-1">Refund Processed</h6>
+                    <p class="text-white-50 mb-0"><%= new Date(refundRequest.refundedAt).toLocaleString() %></p>
+                    <% if (refundRequest.transactionId) { %>
+                      <p class="text-white-50 mb-0">Transaction ID: <%= refundRequest.transactionId %></p>
+                    <% } %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/refund-requests/my-requests" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left me-1"></i> Back to My Requests
+              </a>
+              <a href="/tickets/<%= refundRequest.ticket._id %>" class="btn btn-primary">
+                <i class="bi bi-ticket-perforated me-1"></i> View Ticket
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Timeline styles removed as requested */
+  </style>
+</section>

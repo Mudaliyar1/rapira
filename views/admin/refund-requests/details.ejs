@@ -1,0 +1,205 @@
+<!-- Admin Refund Request Details -->
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-white">Refund Request Details</h1>
+    <a href="/admin/refund-requests" class="btn btn-outline-light">
+      <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+  </div>
+
+  <!-- Refund Request Details -->
+  <div class="row">
+    <!-- Left Column: Request Details -->
+    <div class="col-lg-8">
+      <div class="glass-card-dark mb-4">
+        <div class="card-header bg-dark p-4 border-bottom border-secondary d-flex justify-content-between align-items-center">
+          <h4 class="fw-bold mb-0 text-white">Request #<%= refundRequest._id.toString().slice(-6).toUpperCase() %></h4>
+          <span class="badge <%= refundRequest.status === 'pending' ? 'bg-warning' : (refundRequest.status === 'approved' ? 'bg-success' : 'bg-danger') %> fs-6">
+            <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
+          </span>
+        </div>
+        <div class="card-body p-4">
+          <!-- Ticket Information -->
+          <div class="mb-4">
+            <h5 class="fw-bold mb-3 text-white">Ticket Information</h5>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Ticket Number:</div>
+              <div class="col-md-8 text-white"><%= refundRequest.ticket.ticketNumber %></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Concert:</div>
+              <div class="col-md-8 text-white"><%= refundRequest.concert.title %></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Date:</div>
+              <div class="col-md-8 text-white"><%= new Date(refundRequest.concert.date).toLocaleDateString() %></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Venue:</div>
+              <div class="col-md-8 text-white"><%= refundRequest.concert.venue %></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Quantity:</div>
+              <div class="col-md-8 text-white"><%= refundRequest.ticket.quantity %></div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Amount:</div>
+              <div class="col-md-8 text-white">₹<%= refundRequest.amount %></div>
+            </div>
+          </div>
+
+          <!-- Refund Reason -->
+          <div class="mb-4">
+            <h5 class="fw-bold mb-3 text-white">Reason for Refund</h5>
+            <div class="p-3 border border-secondary rounded-3 text-white">
+              <%= refundRequest.reason %>
+            </div>
+          </div>
+
+          <!-- Bank Details -->
+          <div class="mb-4">
+            <h5 class="fw-bold mb-3 text-white">Bank Account Details</h5>
+            <div class="p-3 border border-secondary rounded-3">
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Account Holder:</div>
+                <div class="col-md-8 text-white"><%= refundRequest.bankDetails.accountName %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">Account Number:</div>
+                <div class="col-md-8 text-white"><%= refundRequest.bankDetails.accountNumber %></div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-4 text-white-50">IFSC Code:</div>
+                <div class="col-md-8 text-white"><%= refundRequest.bankDetails.ifscCode %></div>
+              </div>
+              <div class="row">
+                <div class="col-md-4 text-white-50">Bank Name:</div>
+                <div class="col-md-8 text-white"><%= refundRequest.bankDetails.bankName %></div>
+              </div>
+            </div>
+          </div>
+
+          <% if (refundRequest.status !== 'pending') { %>
+            <!-- Admin Notes -->
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Admin Notes</h5>
+              <div class="p-3 border border-secondary rounded-3 text-white">
+                <%= refundRequest.adminNotes || 'No notes provided' %>
+              </div>
+            </div>
+
+            <% if (refundRequest.status === 'approved') { %>
+              <!-- Transaction Details -->
+              <div class="mb-4">
+                <h5 class="fw-bold mb-3 text-white">Transaction Details</h5>
+                <div class="p-3 border border-secondary rounded-3">
+                  <div class="row mb-2">
+                    <div class="col-md-4 text-white-50">Transaction ID:</div>
+                    <div class="col-md-8 text-white"><%= refundRequest.transactionId || 'N/A' %></div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4 text-white-50">Refunded On:</div>
+                    <div class="col-md-8 text-white"><%= refundRequest.refundedAt ? new Date(refundRequest.refundedAt).toLocaleString() : 'N/A' %></div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- Processed By -->
+            <div>
+              <h5 class="fw-bold mb-3 text-white">Processed By</h5>
+              <div class="p-3 border border-secondary rounded-3">
+                <div class="row mb-2">
+                  <div class="col-md-4 text-white-50">Admin:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.reviewedBy ? refundRequest.reviewedBy.name : 'N/A' %></div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4 text-white-50">Processed On:</div>
+                  <div class="col-md-8 text-white"><%= refundRequest.reviewedAt ? new Date(refundRequest.reviewedAt).toLocaleString() : 'N/A' %></div>
+                </div>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- Process Refund Form -->
+            <form action="/admin/refund-requests/<%= refundRequest._id %>/process" method="POST">
+              <div class="mb-4">
+                <label for="adminNotes" class="form-label text-white">Admin Notes</label>
+                <textarea class="form-control" id="adminNotes" name="adminNotes" rows="3"></textarea>
+                <div class="form-text text-white-50">Add any notes about this refund request (optional).</div>
+              </div>
+
+              <div id="approvalFields" class="mb-4" style="display: none;">
+                <label for="transactionId" class="form-label text-white">Transaction ID</label>
+                <input type="text" class="form-control" id="transactionId" name="transactionId">
+                <div class="form-text text-white-50">Enter the transaction ID for the refund (optional).</div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" name="action" value="approve" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this refund request? This will cancel the ticket and process a refund.')">
+                  <i class="bi bi-check-circle me-1"></i> Approve Refund
+                </button>
+                <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this refund request?')">
+                  <i class="bi bi-x-circle me-1"></i> Reject Refund
+                </button>
+              </div>
+            </form>
+
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                const actionButtons = document.querySelectorAll('button[name="action"]');
+                const approvalFields = document.getElementById('approvalFields');
+                
+                actionButtons.forEach(button => {
+                  button.addEventListener('click', function(e) {
+                    if (this.value === 'approve') {
+                      approvalFields.style.display = 'block';
+                    } else {
+                      approvalFields.style.display = 'none';
+                    }
+                  });
+                });
+              });
+            </script>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: User Information -->
+    <div class="col-lg-4">
+      <div class="glass-card-dark mb-4">
+        <div class="card-header bg-dark p-4 border-bottom border-secondary">
+          <h4 class="fw-bold mb-0 text-white">User Information</h4>
+        </div>
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <div class="avatar-lg mx-auto mb-3">
+              <span class="avatar-text rounded-circle bg-primary">
+                <%= refundRequest.user.name.charAt(0).toUpperCase() %>
+              </span>
+            </div>
+            <h5 class="fw-bold text-white"><%= refundRequest.user.name %></h5>
+            <p class="text-white-50"><%= refundRequest.user.email %></p>
+          </div>
+
+          <div class="mb-3">
+            <p class="fw-medium mb-1 text-white-50">User ID:</p>
+            <p class="text-white"><code><%= refundRequest.user._id %></code></p>
+          </div>
+
+          <div class="mb-3">
+            <p class="fw-medium mb-1 text-white-50">Request Date:</p>
+            <p class="text-white"><%= new Date(refundRequest.createdAt).toLocaleString() %></p>
+          </div>
+
+          <div class="mt-4">
+            <a href="/admin/users/<%= refundRequest.user._id %>" class="btn btn-outline-primary w-100">
+              <i class="bi bi-person me-1"></i> View User Profile
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

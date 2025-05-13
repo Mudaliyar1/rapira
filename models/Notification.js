@@ -12,7 +12,8 @@ const NotificationSchema = new mongoose.Schema({
       'Artist Booking',
       'Concert',
       'Daily Concert',
-      'Learning Module'
+      'Learning Module',
+      'Refund Request'
     ]
   },
   requestId: {
@@ -31,7 +32,8 @@ const NotificationSchema = new mongoose.Schema({
       'ArtistBookingRequest',
       'Concert',
       'DailyConcert',
-      'LearningModule'
+      'LearningModule',
+      'RefundRequest'
     ]
   },
   description: {

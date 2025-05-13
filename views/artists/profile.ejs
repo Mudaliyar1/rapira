@@ -22,9 +22,13 @@
   }
 
   body:not(.light-theme) .glass-card .card-header a,
-  body:not(.light-theme) .glass-card .card-header span,
   body:not(.light-theme) .glass-card .card-header i {
     color: #f9fafb;
+  }
+
+  body:not(.light-theme) .glass-card .card-header span.text-dark,
+  body:not(.light-theme) .glass-card .card-header i.text-dark {
+    color: #212529 !important;
   }
 
   body:not(.light-theme) .glass-card .text-dark,
@@ -137,13 +141,13 @@
             <a href="/artists" class="text-dark me-2">
               <i class="bi bi-arrow-left"></i>
             </a>
-            <span class="fw-bold"><%= artist.stageName || artist.user.name %></span>
+            <span class="fw-bold text-dark"><%= artist.stageName || artist.user.name %></span>
             <% if (artist.verified) { %>
               <i class="bi bi-patch-check-fill text-primary ms-1"></i>
             <% } %>
           </div>
           <div>
-            <i class="bi bi-three-dots-vertical"></i>
+            <i class="bi bi-three-dots-vertical text-dark"></i>
           </div>
         </div>
 
@@ -194,73 +198,7 @@
 
       </div>
 
-      <!-- YouTube Style Video Grid -->
-      <div class="glass-card mb-4" style="border-radius: 15px; overflow: hidden;">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Videos</h5>
-            <a href="#" class="text-decoration-none">View all</a>
-          </div>
 
-          <div class="row g-3">
-            <!-- Video 1 -->
-            <div class="col-md-6">
-              <div class="video-card position-relative" style="cursor: pointer;" data-video-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
-                <div class="position-relative">
-                  <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Video thumbnail"
-                       class="w-100" style="border-radius: 12px; aspect-ratio: 16/9; object-fit: cover;">
-                  <div class="position-absolute top-0 end-0 m-2">
-                    <span class="badge bg-danger">
-                      <i class="bi bi-youtube"></i>
-                    </span>
-                  </div>
-                  <div class="position-absolute bottom-0 end-0 m-2">
-                    <span class="badge bg-dark">3:32</span>
-                  </div>
-                  <div class="position-absolute top-50 start-50 translate-middle play-button">
-                    <i class="bi bi-play-circle-fill text-white" style="font-size: 3rem; opacity: 0.8;"></i>
-                  </div>
-                </div>
-                <div class="mt-2">
-                  <h6 class="mb-1 text-truncate">Latest Music Video - Official Release</h6>
-                  <p class="mb-0 small text-muted">
-                    <i class="bi bi-eye me-1"></i> 1.2M views •
-                    <i class="bi bi-calendar3 ms-1 me-1"></i> 2 weeks ago
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Video 2 -->
-            <div class="col-md-6">
-              <div class="video-card position-relative" style="cursor: pointer;" data-video-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
-                <div class="position-relative">
-                  <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" alt="Video thumbnail"
-                       class="w-100" style="border-radius: 12px; aspect-ratio: 16/9; object-fit: cover;">
-                  <div class="position-absolute top-0 end-0 m-2">
-                    <span class="badge bg-danger">
-                      <i class="bi bi-youtube"></i>
-                    </span>
-                  </div>
-                  <div class="position-absolute bottom-0 end-0 m-2">
-                    <span class="badge bg-dark">4:15</span>
-                  </div>
-                  <div class="position-absolute top-50 start-50 translate-middle play-button">
-                    <i class="bi bi-play-circle-fill text-white" style="font-size: 3rem; opacity: 0.8;"></i>
-                  </div>
-                </div>
-                <div class="mt-2">
-                  <h6 class="mb-1 text-truncate">Behind the Scenes - Studio Session</h6>
-                  <p class="mb-0 small text-muted">
-                    <i class="bi bi-eye me-1"></i> 458K views •
-                    <i class="bi bi-calendar3 ms-1 me-1"></i> 1 month ago
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Achievements Card -->
       <% if (artist.achievements && artist.achievements.length > 0) { %>
@@ -519,32 +457,7 @@
       }
     }
 
-    // Video card hover effects
-    const videoCards = document.querySelectorAll('.video-card');
-    videoCards.forEach(card => {
-      // Add hover effect for play button
-      card.addEventListener('mouseenter', function() {
-        const playButton = this.querySelector('.play-button i');
-        if (playButton) {
-          playButton.style.opacity = '1';
-          playButton.style.transform = 'scale(1.1)';
-        }
-      });
 
-      card.addEventListener('mouseleave', function() {
-        const playButton = this.querySelector('.play-button i');
-        if (playButton) {
-          playButton.style.opacity = '0.8';
-          playButton.style.transform = 'scale(1)';
-        }
-      });
-
-      // Handle click to open YouTube in a new tab
-      card.addEventListener('click', function(e) {
-        const url = this.getAttribute('data-video-url') || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-        window.open(url, '_blank');
-      });
-    });
   });
 </script>
 

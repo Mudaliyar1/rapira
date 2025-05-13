@@ -7,13 +7,59 @@
           <div class="ticket-header p-3">
             <div class="d-flex justify-content-between align-items-center">
               <h3 class="fw-bold mb-0 text-white">Concert Ticket</h3>
-              <span class="badge bg-light text-dark">
-                <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : ticket.paymentStatus %>
-              </span>
+              <div>
+                <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
+                  <span class="badge <%= refundRequest.status === 'pending' ? 'bg-warning' : (refundRequest.status === 'approved' ? 'bg-danger' : 'bg-secondary') %> me-2">
+                    Refund <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
+                  </span>
+                <% } %>
+                <span class="badge bg-light text-dark">
+                  <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : (ticket.paymentStatus === 'refunded' ? 'Refunded' : ticket.paymentStatus) %>
+                </span>
+              </div>
             </div>
           </div>
 
           <div class="ticket-body p-3">
+            <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
+              <div class="alert alert-danger mb-3">
+                <h5 class="alert-heading text-dark"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ticket Refunded</h5>
+                <p class="mb-0 text-dark">This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
+                <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
+                  <hr>
+                  <p class="mb-0 text-dark small">
+                    <strong>Refund Status:</strong> <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
+                    <% if (refundRequest.refundedAt) { %>
+                      <br><strong>Processed on:</strong> <%= new Date(refundRequest.refundedAt).toLocaleString() %>
+                    <% } %>
+                    <% if (refundRequest.transactionId) { %>
+                      <br><strong>Transaction ID:</strong> <%= refundRequest.transactionId %>
+                    <% } %>
+                  </p>
+                <% } %>
+              </div>
+            <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'pending') { %>
+              <div class="alert alert-warning mb-3">
+                <h5 class="alert-heading text-dark"><i class="bi bi-hourglass-split me-2"></i>Refund Pending</h5>
+                <p class="mb-0 text-dark">Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
+                <hr>
+                <p class="mb-0 text-dark small">
+                  <strong>Request Date:</strong> <%= new Date(refundRequest.createdAt).toLocaleString() %>
+                </p>
+              </div>
+            <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'rejected') { %>
+              <div class="alert alert-secondary mb-3">
+                <h5 class="alert-heading text-dark"><i class="bi bi-x-circle-fill me-2"></i>Refund Rejected</h5>
+                <p class="mb-0 text-dark">Your refund request for this ticket has been rejected. This ticket is still valid for entry.</p>
+                <% if (refundRequest.adminNotes) { %>
+                  <hr>
+                  <p class="mb-0 text-dark small">
+                    <strong>Reason:</strong> <%= refundRequest.adminNotes %>
+                  </p>
+                <% } %>
+              </div>
+            <% } %>
+
             <div class="row mb-4">
               <div class="col-md-8">
                 <% if (isDeletedConcert) { %>
@@ -120,15 +166,35 @@
               </div>
               <div class="col-md-6 text-md-end">
                 <div class="d-flex justify-content-start justify-content-md-end gap-2">
+                  <% if (ticket.paymentStatus === 'completed' && ticket.totalAmount > 0 && !isDeletedConcert) { %>
+                    <%
+                      // Check if concert date has passed
+                      const concertDate = new Date(concert.date);
+                      const currentDate = new Date();
+                      const isAfterConcert = currentDate > concertDate;
+
+                      // Check if a refund request already exists
+                      const hasRefundRequest = typeof refundRequest !== 'undefined' && refundRequest;
+                    %>
+                    <% if (!isAfterConcert && !hasRefundRequest) { %>
+                      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-sm btn-warning me-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Request Refund
+                      </a>
+                    <% } else if (hasRefundRequest) { %>
+                      <a href="/refund-requests/view/<%= refundRequest._id %>" class="btn btn-sm btn-info me-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                        <i class="bi bi-eye me-1"></i> View Refund Request
+                      </a>
+                    <% } %>
+                  <% } %>
                   <div class="btn-group">
-                    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-sm btn-primary">
+                    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
                       <i class="bi bi-download me-1"></i> Download PDF
                     </a>
-                    <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-sm btn-outline-primary">
+                    <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
                       <i class="bi bi-file-earmark-code me-1"></i> HTML
                     </a>
                   </div>
-                  <a href="/tickets" class="btn btn-sm btn-outline-light">
+                  <a href="/tickets" class="btn btn-sm btn-outline-light" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
                     <i class="bi bi-arrow-left me-1"></i> Back to Tickets
                   </a>
                 </div>
@@ -164,7 +230,7 @@
 
 <!-- Direct PDF download button -->
 <div id="downloadBtnContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
+  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
     <i class="bi bi-download me-1"></i> Download Ticket
   </a>
 </div>

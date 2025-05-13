@@ -496,7 +496,16 @@ router.get('/:id', isLoggedIn, async (req, res) => {
       isDeletedConcert = true;
     }
 
-    res.render('tickets/show', { ticket, concert, isDeletedConcert });
+    // Check if there's a refund request for this ticket
+    const RefundRequest = require('../models/RefundRequest');
+    const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
+
+    res.render('tickets/show', {
+      ticket,
+      concert,
+      isDeletedConcert,
+      refundRequest
+    });
   } catch (error) {
     console.error('View ticket error:', error);
     req.flash('error', 'Failed to load ticket');
@@ -584,10 +593,14 @@ router.get('/:id/download-html', isLoggedIn, async (req, res) => {
       isDeletedConcert = true;
     }
 
-    // Render the ticket template to HTML
+    // Check if there's a refund request for this ticket
+    const RefundRequest = require('../models/RefundRequest');
+    const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
+
+    // Render the ticket template with wrapper to HTML
     const ticketHtml = await ejs.renderFile(
-      path.join(__dirname, '../views/tickets/html-template.ejs'),
-      { ticket, concert, isDeletedConcert }
+      path.join(__dirname, '../views/tickets/html-template-wrapper.ejs'),
+      { ticket, concert, isDeletedConcert, refundRequest }
     );
 
     // Set response headers

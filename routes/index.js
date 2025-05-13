@@ -68,6 +68,11 @@ router.get('/terms-of-service', (req, res) => {
   res.render('terms-of-service');
 });
 
+// Refund policy
+router.get('/refund-policy', (req, res) => {
+  res.render('refund-policy');
+});
+
 // Content library page
 router.get('/content', async (req, res) => {
   try {
