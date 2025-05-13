@@ -36,7 +36,7 @@
               <div class="row g-3">
                 <div class="col-md-5">
                   <label for="role" class="form-label text-white">Filter by Role</label>
-                  <select class="form-select" id="role" name="role">
+                  <select class="form-select bg-dark text-white" id="role" name="role" style="color: white !important; background-color: #2b2b2b !important;">
                     <option value="">All Roles</option>
                     <% roles.forEach(role => { %>
                       <option value="<%= role._id %>" <%= selectedRole && selectedRole._id.toString() === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
@@ -45,7 +45,7 @@
                 </div>
                 <div class="col-md-5">
                   <label for="state" class="form-label text-white">Filter by State</label>
-                  <select class="form-select" id="state" name="state">
+                  <select class="form-select bg-dark text-white" id="state" name="state" style="color: white !important; background-color: #2b2b2b !important;">
                     <option value="">All States</option>
                     <% states.forEach(state => { %>
                       <option value="<%= state %>" <%= selectedState === state ? 'selected' : '' %>><%= state %></option>

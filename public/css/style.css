@@ -867,6 +867,22 @@ h5.card-title.text-white,
   color: var(--text);
 }
 
+/* Dropdown text color fix */
+.form-select {
+  color: white;
+  background-color: #2b2b2b;
+}
+
+.form-select option {
+  color: white;
+  background-color: #2b2b2b;
+}
+
+.form-select:focus option {
+  color: white;
+  background-color: #333;
+}
+
 .form-control::placeholder {
   color: var(--text-muted);
   opacity: 0.7;
@@ -1430,16 +1446,26 @@ footer .social-icons a:hover {
 
 .admin-layout .form-control,
 .admin-layout .form-select {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #2b2b2b;
   border-color: var(--border);
-  color: var(--text);
+  color: white;
 }
 
 .admin-layout .form-control:focus,
 .admin-layout .form-select:focus {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: var(--text);
+  background-color: #333;
+  color: white;
   border-color: var(--primary);
+}
+
+.admin-layout .form-select option {
+  color: white;
+  background-color: #2b2b2b;
+}
+
+.admin-layout .form-select:focus option {
+  color: white;
+  background-color: #333;
 }
 
 .admin-layout .form-control::placeholder {

@@ -15,7 +15,7 @@
         <div class="row g-3">
           <div class="col-md-5">
             <label for="userId" class="form-label text-white">Select User</label>
-            <select class="form-select" id="userId" name="userId" required>
+            <select class="form-select bg-dark text-white" id="userId" name="userId" required style="color: white !important; background-color: #2b2b2b !important;">
               <option value="" selected disabled>Choose a user...</option>
               <% users.forEach(user => { %>
                 <option value="<%= user._id %>"><%= user.name %> (<%= user.email %>)</option>
@@ -24,7 +24,7 @@
           </div>
           <div class="col-md-5">
             <label for="roleId" class="form-label text-white">Select Role</label>
-            <select class="form-select" id="roleId" name="roleId" required>
+            <select class="form-select bg-dark text-white" id="roleId" name="roleId" required style="color: white !important; background-color: #2b2b2b !important;">
               <option value="" selected disabled>Choose a role...</option>
               <% roles.forEach(role => { %>
                 <option value="<%= role._id %>"><%= role.name %></option>

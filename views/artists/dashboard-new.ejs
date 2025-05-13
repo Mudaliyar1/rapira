@@ -3,7 +3,7 @@
 <!-- Stats Cards -->
 <div class="row g-4 mb-5">
   <div class="col-md-4">
-    <div class="card bg-white p-3">
+    <div class="card bg-dark p-3">
       <div class="d-flex align-items-center">
         <div class="me-3 text-center">
           <div class="bg-primary text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
@@ -11,14 +11,14 @@
           </div>
         </div>
         <div>
-          <h5 style="color: #000000; font-weight: 700; font-size: 1.25rem;" class="mb-1">Concerts</h5>
-          <p class="text-dark mb-0"><strong><%= upcomingConcerts.length %></strong> Upcoming</p>
+          <h5 style="color: white !important; font-weight: 700; font-size: 1.25rem;" class="mb-1">Concerts</h5>
+          <p class="mb-0" style="color: #ccc;"><strong><%= upcomingConcerts.length %></strong> Upcoming</p>
         </div>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card bg-white p-3">
+    <div class="card bg-dark p-3">
       <div class="d-flex align-items-center">
         <div class="me-3 text-center">
           <div class="bg-info text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
@@ -26,14 +26,14 @@
           </div>
         </div>
         <div>
-          <h5 style="color: #000000; font-weight: 700; font-size: 1.25rem;" class="mb-1">Content</h5>
-          <p class="text-dark mb-0"><strong><%= content.length %></strong> Uploads</p>
+          <h5 style="color: white !important; font-weight: 700; font-size: 1.25rem;" class="mb-1">Content</h5>
+          <p class="mb-0" style="color: #ccc;"><strong><%= content.length %></strong> Uploads</p>
         </div>
       </div>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card bg-white p-3">
+    <div class="card bg-dark p-3">
       <div class="d-flex align-items-center">
         <div class="me-3 text-center">
           <div class="bg-warning text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
@@ -41,8 +41,8 @@
           </div>
         </div>
         <div>
-          <h5 style="color: #000000; font-weight: 700;" class="mb-1">Pending</h5>
-          <p class="text-dark mb-0"><strong><%= pendingConcerts.length %></strong> Approvals</p>
+          <h5 style="color: white !important; font-weight: 700;" class="mb-1">Pending</h5>
+          <p class="mb-0" style="color: #ccc;"><strong><%= pendingConcerts.length %></strong> Approvals</p>
         </div>
       </div>
     </div>
@@ -51,8 +51,8 @@
 
 <!-- Quick Actions -->
 <div class="card mb-5">
-  <div class="card-body">
-    <h5 class="card-title fw-bold mb-4">Quick Actions</h5>
+  <div class="card-body" style="background-color: #333;">
+    <h5 class="card-title fw-bold mb-4" style="color: white !important;">Quick Actions</h5>
     <div class="row g-3">
       <% if (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') { %>
       <div class="col-md-3">
@@ -93,7 +93,7 @@
 <!-- Upcoming Concerts -->
 <div class="card mb-5">
   <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-    <h5 class="card-title fw-bold mb-0">Upcoming Concerts</h5>
+    <h5 class="card-title fw-bold mb-0" style="color: white !important;">Upcoming Concerts</h5>
     <% if (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') { %>
     <a href="/concerts/create" class="btn btn-sm btn-outline-light">Create New</a>
     <% } else { %>
@@ -189,7 +189,7 @@
 <!-- Pending Concerts -->
 <div class="card mb-5">
   <div class="card-header bg-dark text-white py-3">
-    <h5 class="card-title fw-bold mb-0">Pending Approval</h5>
+    <h5 class="card-title fw-bold mb-0" style="color: white !important;">Pending Approval</h5>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -245,7 +245,7 @@
 <!-- Recent Content -->
 <div class="card">
   <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-    <h5 class="card-title fw-bold mb-0">Recent Content</h5>
+    <h5 class="card-title fw-bold mb-0" style="color: white !important;">Recent Content</h5>
     <div>
       <a href="/artists/manage-content" class="btn btn-sm btn-outline-light me-2">
         <i class="bi bi-grid"></i> Manage All
@@ -268,13 +268,13 @@
                   <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
                 </span>
               </div>
-              <div class="card-body">
-                <h5 class="card-title"><%= item.title %></h5>
+              <div class="card-body" style="background-color: #333;">
+                <h5 class="card-title" style="color: white !important;"><%= item.title %></h5>
                 <% if (item.description) { %>
-                  <p class="card-text"><%= item.description.length > 50 ? item.description.substring(0, 50) + '...' : item.description %></p>
+                  <p class="card-text" style="color: #ccc;"><%= item.description.length > 50 ? item.description.substring(0, 50) + '...' : item.description %></p>
                 <% } %>
                 <p class="card-text">
-                  <small class="text-muted">
+                  <small style="color: #aaa;">
                     <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
                   </small>
                 </p>
@@ -324,7 +324,7 @@
   }
 
   .card-header .card-title {
-    color: white;
+    color: white !important;
     font-weight: 600;
   }
 
