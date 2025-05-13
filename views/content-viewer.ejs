@@ -351,13 +351,13 @@
     <!-- Content Description -->
     <div class="row mb-5">
       <div class="col-12">
-        <div class="card">
+        <div class="card bg-dark">
           <div class="card-body">
-            <h4 class="card-title mb-3">About</h4>
+            <h4 class="card-title mb-3 text-white" style="color: white !important;">About</h4>
             <% if (content.description) { %>
-              <p class="card-text"><%= content.description %></p>
+              <p class="card-text text-white"><%= content.description %></p>
             <% } else { %>
-              <p class="card-text text-muted">No description available.</p>
+              <p class="card-text text-white-50">No description available.</p>
             <% } %>
           </div>
         </div>

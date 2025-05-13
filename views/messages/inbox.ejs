@@ -78,9 +78,9 @@
             <p class="text-white-75 text-center mb-4">Choose a conversation from the list or start a new one by finding users.</p>
 
             <% if (user.role === 'artist' && currentUserArtist) { %>
-              <div class="alert alert-info mt-3">
-                <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Messaging Permissions</h5>
-                <p class="mb-0">
+              <div class="alert mt-3" style="background-color: #f8f9fa; color: #000;">
+                <h5 class="alert-heading" style="color: #000 !important;"><i class="bi bi-info-circle-fill me-2" style="color: #000 !important;"></i> <span style="color: #000 !important;">Messaging Permissions</span></h5>
+                <p class="mb-0 text-black">
                   <% if (currentUserArtist.artistLevel === 'Beginner') { %>
                     As a <strong>Beginner Artist</strong>, you can only message users with the <strong>Producer</strong> role (any case, like "producer" or "Producer"), including regular users and admins who have been assigned the Producer role.
                   <% } else if (currentUserArtist.artistLevel === 'Intermediate' || currentUserArtist.artistLevel === 'Established') { %>
@@ -89,9 +89,9 @@
                 </p>
               </div>
             <% } else if (locals.hasRoles) { %>
-              <div class="alert alert-info mt-3">
-                <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Messaging Permissions</h5>
-                <p class="mb-0">
+              <div class="alert mt-3" style="background-color: #f8f9fa; color: #000;">
+                <h5 class="alert-heading" style="color: #000 !important;"><i class="bi bi-info-circle-fill me-2" style="color: #000 !important;"></i> <span style="color: #000 !important;">Messaging Permissions</span></h5>
+                <p class="mb-0 text-black">
                   As a user with assigned roles (<strong><%= locals.userRoles.join(', ') %></strong>), you can message any artist on the platform.
                 </p>
               </div>
