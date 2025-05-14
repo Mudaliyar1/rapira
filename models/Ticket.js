@@ -33,6 +33,22 @@ const TicketSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  originalAmount: {
+    type: Number
+  },
+  discountApplied: {
+    type: Boolean,
+    default: false
+  },
+  discountPercentage: {
+    type: Number,
+    default: 0
+  },
+  discountType: {
+    type: String,
+    enum: ['none', 'subscription', 'promo', 'other'],
+    default: 'none'
+  },
   paymentId: {
     type: String,
     default: ''

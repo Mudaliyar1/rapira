@@ -1,0 +1,124 @@
+<%- contentFor('body') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white">Subscription Plans</h1>
+  <a href="/admin/subscriptions/plans/add" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i> Add New Plan
+  </a>
+</div>
+
+<div class="card glass-card-dark border border-secondary mb-4">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Duration</th>
+            <th>Discount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (plans.length === 0) { %>
+            <tr>
+              <td colspan="6" class="text-center py-4">
+                <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                No subscription plans found. <a href="/admin/subscriptions/plans/add">Add your first plan</a>.
+              </td>
+            </tr>
+          <% } else { %>
+            <% plans.forEach(plan => { %>
+              <tr>
+                <td><%= plan.name %></td>
+                <td>₹<%= plan.price %></td>
+                <td>
+                  <%= plan.duration %> <%= plan.durationUnit %>
+                  <% if (plan.durationUnit === 'days' && plan.duration >= 30) { %>
+                    <small class="text-muted">(<%= Math.floor(plan.duration / 30) %> month<%= Math.floor(plan.duration / 30) > 1 ? 's' : '' %>)</small>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (plan.discountPercentage > 0) { %>
+                    <span class="badge bg-success"><%= plan.discountPercentage %>%</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">None</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (plan.isActive) { %>
+                    <span class="badge bg-success">Active</span>
+                  <% } else { %>
+                    <span class="badge bg-danger">Inactive</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/admin/subscriptions/plans/edit/<%= plan._id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePlanModal<%= plan._id %>">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+
+                  <!-- Delete Modal -->
+                  <div class="modal fade" id="deletePlanModal<%= plan._id %>" tabindex="-1" aria-labelledby="deletePlanModalLabel<%= plan._id %>" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <div class="modal-content bg-dark text-white">
+                        <div class="modal-header border-secondary">
+                          <h5 class="modal-title" id="deletePlanModalLabel<%= plan._id %>">Confirm Delete</h5>
+                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <p>Are you sure you want to delete the "<%= plan.name %>" subscription plan?</p>
+                          <p class="text-warning"><i class="bi bi-exclamation-triangle me-2"></i>This action cannot be undone.</p>
+                        </div>
+                        <div class="modal-footer border-secondary">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                          <form action="/admin/subscriptions/plans/delete/<%= plan._id %>" method="POST">
+                            <button type="submit" class="btn btn-danger">Delete Plan</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card glass-card-dark border border-secondary">
+  <div class="card-header bg-dark text-white">
+    <h5 class="mb-0">Subscription Management Guide</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-white"><i class="bi bi-lightbulb me-2"></i>Tips for Creating Plans</h6>
+        <ul class="text-white-50">
+          <li>Create plans with different durations to offer flexibility</li>
+          <li>Use clear, descriptive names for your plans</li>
+          <li>Offer higher discounts for longer subscription periods</li>
+          <li>Clearly describe the benefits in simple language</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-white"><i class="bi bi-info-circle me-2"></i>Important Notes</h6>
+        <ul class="text-white-50">
+          <li>You cannot delete plans that have active subscriptions</li>
+          <li>Instead of deleting, you can mark a plan as inactive</li>
+          <li>Inactive plans won't appear on the public subscription page</li>
+          <li>Existing subscribers will keep their benefits until expiry</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

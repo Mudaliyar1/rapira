@@ -1,0 +1,194 @@
+<%- contentFor('body') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white">Subscription Details</h1>
+  <div>
+    <a href="/admin/subscriptions/users" class="btn btn-outline-secondary me-2">
+      <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+
+    <% if (subscription.status === 'active') { %>
+      <form action="/admin/subscriptions/users/deactivate/<%= subscription._id %>" method="POST" class="d-inline">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to deactivate this subscription?')">
+          <i class="bi bi-x-circle me-1"></i> Deactivate Subscription
+        </button>
+      </form>
+    <% } else { %>
+      <form action="/admin/subscriptions/users/reactivate/<%= subscription._id %>" method="POST" class="d-inline">
+        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to reactivate this subscription?')">
+          <i class="bi bi-check-circle me-1"></i> Reactivate Subscription
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4 mb-4">
+    <div class="card glass-card-dark border border-secondary h-100">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-person me-2"></i>User Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <% if (subscription.user.profileImage) { %>
+            <img src="<%= subscription.user.profileImage %>" alt="<%= subscription.user.name %>" class="rounded-circle img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+          <% } else { %>
+            <div class="avatar-placeholder rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+              <span class="text-white fs-1"><%= subscription.user.name.charAt(0).toUpperCase() %></span>
+            </div>
+          <% } %>
+          <h5 class="mt-3 text-white"><%= subscription.user.name %></h5>
+          <p class="text-white-50"><%= subscription.user.email %></p>
+        </div>
+
+        <a href="/admin/users/view/<%= subscription.user._id %>" class="btn btn-outline-primary w-100">
+          <i class="bi bi-person-badge me-1"></i> View User Profile
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8 mb-4">
+    <div class="card glass-card-dark border border-secondary h-100">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-card-list me-2"></i>Subscription Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-white">Plan Information</h6>
+            <ul class="list-group list-group-flush mb-4">
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Plan Name:</span>
+                <span class="fw-bold text-white"><%= subscription.plan.name %></span>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Price:</span>
+                <span class="fw-bold text-white">₹<%= subscription.amount %></span>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Duration:</span>
+                <span>
+                  <%= subscription.plan.duration %> <%= subscription.plan.durationUnit %>
+                  <% if (subscription.plan.durationUnit === 'days' && subscription.plan.duration >= 30) { %>
+                    (<%= Math.floor(subscription.plan.duration / 30) %> month<%= Math.floor(subscription.plan.duration / 30) > 1 ? 's' : '' %>)
+                  <% } %>
+                </span>
+              </li>
+              <% if (subscription.plan.discountPercentage > 0) { %>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                  <span>Ticket Discount:</span>
+                  <span class="text-success"><%= subscription.plan.discountPercentage %>%</span>
+                </li>
+              <% } %>
+            </ul>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-white">Subscription Status</h6>
+            <ul class="list-group list-group-flush mb-4">
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Status:</span>
+                <% if (subscription.status === 'active' && new Date(subscription.expiryDate) > new Date()) { %>
+                  <span class="badge bg-success">Active</span>
+                <% } else { %>
+                  <span class="badge bg-secondary">Expired</span>
+                <% } %>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Purchase Date:</span>
+                <span><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Expiry Date:</span>
+                <span><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Time Remaining:</span>
+                <%
+                  const now = new Date();
+                  const expiryDate = new Date(subscription.expiryDate);
+                  const daysRemaining = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                %>
+                <% if (daysRemaining > 0) { %>
+                  <span><%= daysRemaining %> days</span>
+                <% } else { %>
+                  <span class="text-danger">Expired</span>
+                <% } %>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <h6 class="text-white">Payment Information</h6>
+        <ul class="list-group list-group-flush mb-4">
+          <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+            <span>Payment ID:</span>
+            <span>
+              <%= subscription.paymentId %>
+              <% if (subscription.paymentId === 'admin_assigned') { %>
+                <span class="badge bg-info ms-2">Admin Assigned</span>
+              <% } %>
+            </span>
+          </li>
+          <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+            <span>Order ID:</span>
+            <span><%= subscription.orderId %></span>
+          </li>
+        </ul>
+
+        <% if (subscription.notes) { %>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Notes:</strong> <%= subscription.notes %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card glass-card-dark border border-secondary">
+  <div class="card-header bg-dark text-white">
+    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Administrative Actions</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <% if (subscription.status === 'active') { %>
+          <form action="/admin/subscriptions/users/deactivate/<%= subscription._id %>" method="POST">
+            <div class="d-grid">
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to deactivate this subscription? The user will lose all subscription benefits immediately.')">
+                <i class="bi bi-x-circle me-2"></i> Deactivate Subscription
+              </button>
+            </div>
+            <small class="text-white-50 mt-2">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              This will immediately deactivate the subscription and remove all benefits from the user.
+            </small>
+          </form>
+        <% } else { %>
+          <form action="/admin/subscriptions/users/reactivate/<%= subscription._id %>" method="POST">
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to reactivate this subscription? The user will receive all subscription benefits for the full duration.')">
+                <i class="bi bi-check-circle me-2"></i> Reactivate Subscription
+              </button>
+            </div>
+            <small class="text-white-50 mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              This will reactivate the subscription for the full duration without requiring payment.
+            </small>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="col-md-6">
+        <div class="alert alert-warning">
+          <h6 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Important Note</h6>
+          <p class="mb-0">Administrative actions on subscriptions are logged and should only be performed when necessary. These actions bypass the normal payment flow.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

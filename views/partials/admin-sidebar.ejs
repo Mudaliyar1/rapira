@@ -160,11 +160,33 @@
         </a>
       </li>
 
+      <!-- Subscription Management Section -->
+      <li class="nav-item mt-3 mb-2">
+        <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
+          <span class="text-muted text-uppercase small">Subscription Management</span>
+        </div>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/subscriptions/plans" class="nav-link rounded <%= path === '/admin/subscriptions/plans' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-tags me-1"></i> Subscription Plans
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/subscriptions/users" class="nav-link rounded <%= path === '/admin/subscriptions/users' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-people-fill me-1"></i> User Subscriptions
+        </a>
+      </li>
+
       <!-- Communication Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Communication</span>
         </div>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/contact-messages" class="nav-link rounded <%= path === '/admin/contact-messages' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-envelope me-1"></i> Contact Messages
+        </a>
       </li>
       <li class="nav-item mb-1">
         <a href="/email-status" class="nav-link rounded <%= path === '/email-status' ? 'active bg-primary' : '' %>">

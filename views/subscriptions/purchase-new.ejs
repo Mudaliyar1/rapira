@@ -1,0 +1,219 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="display-5 fw-bold text-center mb-4">Purchase Subscription</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/subscriptions">Subscriptions</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Purchase</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <% if (existingSubscription) { %>
+    <div class="alert alert-warning mb-4">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+        <div>
+          <h5 class="alert-heading">You already have an active subscription</h5>
+          <p class="mb-0">Your current "<%= existingSubscription.plan.name %>" subscription is active until <%= new Date(existingSubscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %>.</p>
+          <p class="mb-0">Purchasing a new subscription will replace your current one.</p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-md-7 mb-4">
+      <div class="card glass-card-dark border border-secondary h-100">
+        <div class="card-header bg-primary text-white">
+          <h3 class="card-title mb-0"><%= plan.name %> Subscription</h3>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <h5 class="text-white">Subscription Details</h5>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Price:</span>
+                <span class="fw-bold text-white">₹<%= plan.price %></span>
+              </li>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                <span>Duration:</span>
+                <span>
+                  <%= plan.duration %> <%= plan.durationUnit %>
+                  <% if (plan.durationUnit === 'days' && plan.duration >= 30) { %>
+                    (<%= Math.floor(plan.duration / 30) %> month<%= Math.floor(plan.duration / 30) > 1 ? 's' : '' %>)
+                  <% } %>
+                </span>
+              </li>
+              <% if (plan.discountPercentage > 0) { %>
+                <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                  <span>Ticket Discount:</span>
+                  <span class="text-success"><%= plan.discountPercentage %>%</span>
+                </li>
+              <% } %>
+              <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                <div class="fw-bold mb-2">Benefits:</div>
+                <div><%= plan.benefits %></div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Your subscription will be active immediately after successful payment.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <div class="card glass-card-dark border border-secondary">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0">Payment Summary</h4>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-white-50"><%= plan.name %> Subscription</span>
+            <span class="text-white">₹<%= plan.price %></span>
+          </div>
+          <hr class="border-secondary">
+          <div class="d-flex justify-content-between mb-4">
+            <span class="fw-bold text-white">Total Amount</span>
+            <span class="fw-bold text-white">₹<%= plan.price %></span>
+          </div>
+
+          <form id="paymentForm" action="/subscriptions/create-order/<%= plan._id %>" method="POST">
+            <button type="submit" id="payButton" class="btn btn-primary w-100 mb-3">
+              <i class="bi bi-credit-card me-2"></i>
+              Pay ₹<%= plan.price %>
+            </button>
+          </form>
+
+          <div class="text-center text-white-50 small">
+            <i class="bi bi-shield-lock me-1"></i>
+            Secure payment powered by Razorpay
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing payment form');
+
+    const paymentForm = document.getElementById('paymentForm');
+
+    if (!paymentForm) {
+      console.error('Payment form not found!');
+      return;
+    }
+
+    paymentForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const payButton = document.getElementById('payButton');
+      if (!payButton) {
+        console.error('Pay button not found!');
+        return;
+      }
+
+      // Disable button to prevent multiple clicks
+      payButton.disabled = true;
+      payButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Processing...';
+
+      try {
+        console.log('Creating order...');
+
+        // Create order
+        const response = await fetch('/subscriptions/create-order/<%= plan._id %>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Server returned ' + response.status + ': ' + response.statusText);
+        }
+
+        const data = await response.json();
+        console.log('Order created:', data);
+
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to create order');
+        }
+
+        // Initialize Razorpay options
+        const options = {
+          key: data.key,
+          amount: data.order.amount,
+          currency: data.order.currency || 'INR',
+          name: 'Rapira',
+          description: '<%= plan.name %> Subscription',
+          order_id: data.order.id,
+          handler: function(response) {
+            console.log('Payment successful:', response);
+
+            // Create hidden form for payment verification
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/subscriptions/verify-payment';
+
+            const fields = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              subscription_id: data.subscription
+            };
+
+            for (const key in fields) {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = fields[key];
+              form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+          },
+          prefill: {
+            name: '<%= currentUser.name %>',
+            email: '<%= currentUser.email %>'
+          },
+          theme: {
+            color: '#6366f1'
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment modal dismissed');
+              // Reset button state
+              payButton.disabled = false;
+              payButton.innerHTML = '<i class="bi bi-credit-card me-2"></i> Pay ₹<%= plan.price %>';
+            }
+          }
+        };
+
+        console.log('Opening Razorpay with options:', options);
+
+        // Create Razorpay instance and open checkout
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment failed: ' + error.message);
+
+        // Reset button state
+        payButton.disabled = false;
+        payButton.innerHTML = '<i class="bi bi-credit-card me-2"></i> Pay ₹<%= plan.price %>';
+      }
+    });
+  });
+</script>

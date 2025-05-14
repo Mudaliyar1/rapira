@@ -136,6 +136,20 @@
                   <span class="fw-medium text-white">Amount Paid:</span><br>
                   <span class="text-white-50">₹<%= ticket.totalAmount %></span>
                 </p>
+                <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Original Price:</span><br>
+                  <span class="text-white-50"><s>₹<%= ticket.originalAmount %></s></span>
+                </p>
+                <p class="mb-2">
+                  <span class="fw-medium text-success">Subscription Discount:</span><br>
+                  <span class="text-success"><%= ticket.discountPercentage %>% off</span>
+                </p>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">You Saved:</span><br>
+                  <span class="text-success">₹<%= ticket.originalAmount - ticket.totalAmount %></span>
+                </p>
+                <% } %>
                 <p class="mb-0">
                   <span class="fw-medium text-white">Payment Status:</span><br>
                   <span class="badge bg-success">Completed</span>

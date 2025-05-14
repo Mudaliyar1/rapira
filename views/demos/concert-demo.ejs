@@ -1,0 +1,377 @@
+<!-- Concert Creation Demo Page -->
+<div class="container-fluid py-4">
+  <!-- Demo Header -->
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h1 class="display-5 fw-bold mb-3">Concert Creation <span class="gradient-text-blue">Demo</span></h1>
+      <p class="lead mb-4">Experience how to create and manage concerts on Rapira</p>
+      <div class="alert alert-info d-inline-block">
+        <i class="bi bi-info-circle-fill me-2"></i> This is a demo. No actual data will be saved.
+      </div>
+    </div>
+  </div>
+
+  <!-- Artist Dashboard Simulation -->
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <!-- Dashboard Header -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="text-white mb-0">Artist Dashboard</h3>
+          <span class="badge bg-success px-3 py-2">Demo Mode</span>
+        </div>
+      </div>
+
+      <!-- Dashboard Tabs -->
+      <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="false">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="concerts-tab" data-bs-toggle="tab" data-bs-target="#concerts" type="button" role="tab" aria-controls="concerts" aria-selected="true">Concerts</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="false">Content</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Profile</button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="dashboardTabsContent">
+        <!-- Overview Tab (not active) -->
+        <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Dashboard Overview</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Concerts tab.</p>
+          </div>
+        </div>
+
+        <!-- Concerts Tab (active) -->
+        <div class="tab-pane fade show active" id="concerts" role="tabpanel" aria-labelledby="concerts-tab">
+          <div class="glass-card-dark p-4 rounded-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4 class="text-white mb-0">My Concerts</h4>
+              <button class="btn btn-gradient-blue" id="createConcertBtn">
+                <i class="bi bi-plus-circle me-2"></i> Create Concert
+              </button>
+            </div>
+
+            <!-- Concert List -->
+            <div class="table-responsive">
+              <table class="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Status</th>
+                    <th>Tickets Sold</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="concertTableBody">
+                  <tr>
+                    <td colspan="6" class="text-center py-4">
+                      <p class="text-muted mb-0">No concerts yet. Click "Create Concert" to get started.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Create Concert Form (initially hidden) -->
+          <div class="glass-card-dark p-4 rounded-4 mb-4" id="createConcertForm" style="display: none;">
+            <h4 class="text-white mb-4">Create New Concert</h4>
+            
+            <form id="concertForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-dark text-white" id="concertTitle" placeholder="Concert Title" required>
+                    <label for="concertTitle">Concert Title</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="date" class="form-control bg-dark text-white" id="concertDate" placeholder="Date" required>
+                    <label for="concertDate">Date</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="time" class="form-control bg-dark text-white" id="concertTime" placeholder="Time" required>
+                    <label for="concertTime">Time</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-dark text-white" id="concertVenue" placeholder="Venue" required>
+                    <label for="concertVenue">Venue</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-dark text-white" id="concertCity" placeholder="City" required>
+                    <label for="concertCity">City</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <select class="form-select bg-dark text-white" id="concertType" required>
+                      <option value="paid">Paid</option>
+                      <option value="free">Free</option>
+                    </select>
+                    <label for="concertType">Concert Type</label>
+                  </div>
+                </div>
+                <div class="col-md-6" id="priceField">
+                  <div class="form-floating mb-3">
+                    <input type="number" class="form-control bg-dark text-white" id="concertPrice" placeholder="Ticket Price" min="0" required>
+                    <label for="concertPrice">Ticket Price (₹)</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="number" class="form-control bg-dark text-white" id="concertCapacity" placeholder="Capacity" min="1" required>
+                    <label for="concertCapacity">Capacity</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-floating mb-3">
+                    <textarea class="form-control bg-dark text-white" id="concertDescription" placeholder="Description" style="height: 100px" required></textarea>
+                    <label for="concertDescription">Description</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label text-white">Concert Poster</label>
+                  <div class="input-group mb-3">
+                    <input type="file" class="form-control bg-dark text-white" id="concertPoster" accept="image/*">
+                    <label class="input-group-text bg-primary text-white" for="concertPoster">Upload</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-light" id="cancelConcertBtn">
+                      <i class="bi bi-x-circle me-2"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-gradient-blue">
+                      <i class="bi bi-check-circle me-2"></i> Submit Concert
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Content Tab (not active) -->
+        <div class="tab-pane fade" id="content" role="tabpanel" aria-labelledby="content-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Content Management</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Concerts tab.</p>
+          </div>
+        </div>
+
+        <!-- Profile Tab (not active) -->
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Artist Profile</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Concerts tab.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Demo Home -->
+  <div class="row mt-4 mb-5">
+    <div class="col-12 text-center">
+      <a href="/demo" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-2"></i> Back to Demo Home
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Demo Notification Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="demoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-primary text-white">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong class="me-auto">Demo Notification</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body bg-dark text-white">
+      This is a demo notification. No actual data is being saved.
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="text-white mb-0">Processing your request...</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize toast
+    const demoToast = new bootstrap.Toast(document.getElementById('demoToast'));
+    
+    // Initialize loading modal
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Create Concert button
+    document.getElementById('createConcertBtn').addEventListener('click', function() {
+      document.getElementById('createConcertForm').style.display = 'block';
+      this.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Cancel Concert button
+    document.getElementById('cancelConcertBtn').addEventListener('click', function() {
+      document.getElementById('createConcertForm').style.display = 'none';
+      document.getElementById('concertForm').reset();
+      document.getElementById('createConcertBtn').scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Toggle price field based on concert type
+    document.getElementById('concertType').addEventListener('change', function() {
+      const priceField = document.getElementById('priceField');
+      if (this.value === 'free') {
+        priceField.style.display = 'none';
+        document.getElementById('concertPrice').removeAttribute('required');
+      } else {
+        priceField.style.display = 'block';
+        document.getElementById('concertPrice').setAttribute('required', 'required');
+      }
+    });
+    
+    // Concert form submission
+    document.getElementById('concertForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Show loading modal
+      loadingModal.show();
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        // Hide loading modal
+        loadingModal.hide();
+        
+        // Get form values
+        const title = document.getElementById('concertTitle').value;
+        const date = document.getElementById('concertDate').value;
+        const time = document.getElementById('concertTime').value;
+        const venue = document.getElementById('concertVenue').value;
+        const city = document.getElementById('concertCity').value;
+        const type = document.getElementById('concertType').value;
+        const price = type === 'paid' ? document.getElementById('concertPrice').value : 0;
+        
+        // Format date for display
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        
+        // Update concert table
+        const tableBody = document.getElementById('concertTableBody');
+        
+        // Clear "no concerts" message if it exists
+        if (tableBody.querySelector('td[colspan="6"]')) {
+          tableBody.innerHTML = '';
+        }
+        
+        // Add new concert row
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+          <td>${title}</td>
+          <td>${formattedDate}</td>
+          <td>${venue}, ${city}</td>
+          <td><span class="badge bg-warning">Pending Approval</span></td>
+          <td>0 / ${document.getElementById('concertCapacity').value}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1 edit-concert-btn">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-concert-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        tableBody.prepend(newRow);
+        
+        // Hide form and reset
+        document.getElementById('createConcertForm').style.display = 'none';
+        document.getElementById('concertForm').reset();
+        
+        // Show success toast
+        document.querySelector('.toast-body').textContent = 'Concert created successfully! It is now pending approval.';
+        demoToast.show();
+        
+        // Scroll to table
+        document.getElementById('concerts-tab').scrollIntoView({ behavior: 'smooth' });
+        
+        // Add event listeners to new buttons
+        addButtonEventListeners();
+      }, 2000);
+    });
+    
+    // Function to add event listeners to edit and delete buttons
+    function addButtonEventListeners() {
+      // Edit concert buttons
+      document.querySelectorAll('.edit-concert-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          document.querySelector('.toast-body').textContent = 'Edit functionality is limited in demo mode.';
+          demoToast.show();
+        });
+      });
+      
+      // Delete concert buttons
+      document.querySelectorAll('.delete-concert-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const row = this.closest('tr');
+          
+          // Show loading modal
+          loadingModal.show();
+          
+          // Simulate processing delay
+          setTimeout(() => {
+            // Hide loading modal
+            loadingModal.hide();
+            
+            // Remove row
+            row.remove();
+            
+            // If no more concerts, show "no concerts" message
+            if (document.getElementById('concertTableBody').children.length === 0) {
+              document.getElementById('concertTableBody').innerHTML = `
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <p class="text-muted mb-0">No concerts yet. Click "Create Concert" to get started.</p>
+                  </td>
+                </tr>
+              `;
+            }
+            
+            // Show success toast
+            document.querySelector('.toast-body').textContent = 'Concert deleted successfully!';
+            demoToast.show();
+          }, 1000);
+        });
+      });
+    }
+  });
+</script>

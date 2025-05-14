@@ -1,0 +1,347 @@
+<!-- Artist Demo Page -->
+<div class="container-fluid py-4">
+  <!-- Demo Header -->
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h1 class="display-5 fw-bold mb-3">Artist Profile <span class="gradient-text-purple">Demo</span></h1>
+      <p class="lead mb-4">Experience how artist profiles work on Rapira</p>
+      <div class="alert alert-info d-inline-block">
+        <i class="bi bi-info-circle-fill me-2"></i> This is a demo. No actual data will be saved.
+      </div>
+    </div>
+  </div>
+
+  <!-- Artist Profile Section -->
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <div class="glass-card-dark p-0 rounded-4 overflow-hidden">
+        <!-- Banner Image -->
+        <div class="position-relative">
+          <div class="banner-image" style="height: 250px; background-image: url('<%= artist.bannerImage %>'); background-size: cover; background-position: center;"></div>
+          <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+            <div class="d-flex align-items-end">
+              <div class="me-3">
+                <img src="<%= artist.profileImage %>" alt="<%= artist.name %>" class="rounded-circle border border-3 border-dark" width="120" height="120" style="object-fit: cover;">
+              </div>
+              <div>
+                <h2 class="text-white mb-0 fw-bold">
+                  <%= artist.name %>
+                  <% if (artist.verified) { %>
+                    <i class="bi bi-patch-check-fill text-primary ms-2"></i>
+                  <% } %>
+                </h2>
+                <p class="text-white-50 mb-0"><%= artist.genre %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Artist Info Tabs -->
+        <ul class="nav nav-tabs" id="artistTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="true">About</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="false">Content</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="concerts-tab" data-bs-toggle="tab" data-bs-target="#concerts" type="button" role="tab" aria-controls="concerts" aria-selected="false">Concerts</button>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content p-4" id="artistTabsContent">
+          <!-- About Tab -->
+          <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+            <div class="row">
+              <div class="col-md-8">
+                <h4 class="text-white mb-3">Biography</h4>
+                <p><%= artist.bio %></p>
+                
+                <h4 class="text-white mt-4 mb-3">Location</h4>
+                <p><i class="bi bi-geo-alt me-2"></i> <%= artist.location %></p>
+                
+                <h4 class="text-white mt-4 mb-3">Followers</h4>
+                <p><i class="bi bi-people me-2"></i> <%= artist.followers.toLocaleString() %> followers</p>
+              </div>
+              <div class="col-md-4">
+                <div class="glass-card p-3 rounded-4 mb-3">
+                  <h5 class="text-white mb-3">Social Media</h5>
+                  <div class="d-flex flex-column gap-2">
+                    <a href="<%= artist.socialLinks.instagram %>" class="btn btn-outline-light" target="_blank">
+                      <i class="bi bi-instagram me-2"></i> Instagram
+                    </a>
+                    <a href="<%= artist.socialLinks.twitter %>" class="btn btn-outline-light" target="_blank">
+                      <i class="bi bi-twitter-x me-2"></i> Twitter
+                    </a>
+                    <a href="<%= artist.socialLinks.youtube %>" class="btn btn-outline-light" target="_blank">
+                      <i class="bi bi-youtube me-2"></i> YouTube
+                    </a>
+                    <a href="<%= artist.socialLinks.spotify %>" class="btn btn-outline-light" target="_blank">
+                      <i class="bi bi-spotify me-2"></i> Spotify
+                    </a>
+                  </div>
+                </div>
+                
+                <div class="glass-card p-3 rounded-4">
+                  <h5 class="text-white mb-3">Actions</h5>
+                  <div class="d-grid gap-2">
+                    <button class="btn btn-gradient-purple" id="followArtistBtn">
+                      <i class="bi bi-person-plus me-2"></i> Follow Artist
+                    </button>
+                    <button class="btn btn-outline-light" id="messageArtistBtn">
+                      <i class="bi bi-chat-dots me-2"></i> Message
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Tab -->
+          <div class="tab-pane fade" id="content" role="tabpanel" aria-labelledby="content-tab">
+            <h4 class="text-white mb-4">Latest Content</h4>
+            
+            <div class="row g-4">
+              <% content.forEach(item => { %>
+                <div class="col-md-6">
+                  <div class="glass-card-dark h-100">
+                    <div class="position-relative">
+                      <img src="<%= item.thumbnailUrl %>" alt="<%= item.title %>" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                      <span class="badge <%= item.type === 'song' ? 'bg-primary' : 'bg-danger' %> position-absolute top-0 end-0 m-2">
+                        <i class="bi <%= item.type === 'song' ? 'bi-music-note' : 'bi-camera-video' %> me-1"></i>
+                        <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
+                      </span>
+                    </div>
+                    <div class="p-3">
+                      <h5 class="text-white"><%= item.title %></h5>
+                      <p class="text-muted small mb-2">
+                        <i class="bi bi-calendar3 me-1"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                        <span class="ms-2"><i class="bi bi-eye me-1"></i> <%= item.views.toLocaleString() %> views</span>
+                      </p>
+                      <p class="mb-3"><%= item.description %></p>
+                      <button class="btn btn-outline-light btn-sm w-100 play-content-btn" data-url="<%= item.youtubeUrl %>" data-title="<%= item.title %>">
+                        <%= item.type === 'song' ? 'Listen Now' : 'Watch Now' %>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+
+          <!-- Concerts Tab -->
+          <div class="tab-pane fade" id="concerts" role="tabpanel" aria-labelledby="concerts-tab">
+            <h4 class="text-white mb-4">Upcoming Concerts</h4>
+            
+            <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+              <div class="row g-4">
+                <% upcomingConcerts.forEach(concert => { %>
+                  <div class="col-md-6">
+                    <div class="glass-card-dark h-100">
+                      <div class="position-relative">
+                        <img src="<%= concert.posterImage %>" alt="<%= concert.title %>" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %> position-absolute top-0 end-0 m-2">
+                          <%= concert.isPaid ? `₹${concert.price}` : 'Free' %>
+                        </span>
+                      </div>
+                      <div class="p-3">
+                        <h5 class="text-white"><%= concert.title %></h5>
+                        <p class="mb-2">
+                          <i class="bi bi-geo-alt me-2"></i> <%= concert.venue %>, <%= concert.city %>
+                        </p>
+                        <p class="mb-3">
+                          <i class="bi bi-calendar3 me-2"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+                        </p>
+                        <p class="mb-3"><%= concert.description %></p>
+                        <button class="btn btn-gradient-purple w-100 view-concert-btn" data-id="<%= concert.id %>">
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <div class="text-center py-5">
+                <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                <p class="text-muted">No upcoming concerts at the moment.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Controls -->
+  <div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h4 class="text-white mb-4">Demo Controls</h4>
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control bg-dark text-white" id="artistName" value="<%= artist.name %>" placeholder="Artist Name">
+              <label for="artistName">Artist Name</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control bg-dark text-white" id="artistGenre" value="<%= artist.genre %>" placeholder="Genre">
+              <label for="artistGenre">Genre</label>
+            </div>
+            <div class="form-floating mb-3">
+              <textarea class="form-control bg-dark text-white" id="artistBio" placeholder="Biography" style="height: 100px"><%= artist.bio %></textarea>
+              <label for="artistBio">Biography</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control bg-dark text-white" id="artistLocation" value="<%= artist.location %>" placeholder="Location">
+              <label for="artistLocation">Location</label>
+            </div>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="verifiedSwitch" <%= artist.verified ? 'checked' : '' %>>
+              <label class="form-check-label text-white" for="verifiedSwitch">Verified Artist</label>
+            </div>
+            <button class="btn btn-gradient-purple w-100 mb-3" id="updateProfileBtn">
+              Update Profile
+            </button>
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle-fill me-2"></i> Changes are for demo purposes only and will reset when you leave this page.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Demo Home -->
+  <div class="row mt-4 mb-5">
+    <div class="col-12 text-center">
+      <a href="/demo" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-2"></i> Back to Demo Home
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Content Player Modal -->
+<div class="modal fade" id="contentPlayerModal" tabindex="-1" aria-labelledby="contentPlayerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="contentPlayerModalLabel">Content Title</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ratio ratio-16x9">
+          <iframe id="contentPlayerFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Demo Notification Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="demoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-primary text-white">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong class="me-auto">Demo Notification</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body bg-dark text-white">
+      This is a demo notification. No actual data is being saved.
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize content player modal
+    const contentPlayerModal = new bootstrap.Modal(document.getElementById('contentPlayerModal'));
+    const contentPlayerFrame = document.getElementById('contentPlayerFrame');
+    const contentPlayerTitle = document.getElementById('contentPlayerModalLabel');
+    
+    // Play content buttons
+    document.querySelectorAll('.play-content-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const url = this.getAttribute('data-url');
+        const title = this.getAttribute('data-title');
+        
+        contentPlayerTitle.textContent = title;
+        contentPlayerFrame.src = url;
+        contentPlayerModal.show();
+      });
+    });
+    
+    // Reset iframe when modal is closed
+    document.getElementById('contentPlayerModal').addEventListener('hidden.bs.modal', function() {
+      contentPlayerFrame.src = '';
+    });
+    
+    // Demo toast
+    const demoToast = new bootstrap.Toast(document.getElementById('demoToast'));
+    
+    // Follow artist button
+    document.getElementById('followArtistBtn').addEventListener('click', function() {
+      this.innerHTML = '<i class="bi bi-person-check me-2"></i> Following';
+      this.classList.remove('btn-gradient-purple');
+      this.classList.add('btn-success');
+      
+      // Show toast
+      document.querySelector('.toast-body').textContent = 'You are now following this artist!';
+      demoToast.show();
+    });
+    
+    // Message artist button
+    document.getElementById('messageArtistBtn').addEventListener('click', function() {
+      // Show toast
+      document.querySelector('.toast-body').textContent = 'Message feature is not available in demo mode.';
+      demoToast.show();
+    });
+    
+    // View concert button
+    document.querySelectorAll('.view-concert-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        // Show toast
+        document.querySelector('.toast-body').textContent = 'Redirecting to concert details page...';
+        demoToast.show();
+        
+        // Simulate redirect
+        setTimeout(() => {
+          window.location.href = '/demo/ticket';
+        }, 1500);
+      });
+    });
+    
+    // Update profile button
+    document.getElementById('updateProfileBtn').addEventListener('click', function() {
+      // Get form values
+      const name = document.getElementById('artistName').value;
+      const genre = document.getElementById('artistGenre').value;
+      const bio = document.getElementById('artistBio').value;
+      const location = document.getElementById('artistLocation').value;
+      const verified = document.getElementById('verifiedSwitch').checked;
+      
+      // Update UI
+      document.querySelector('h2.text-white').textContent = name;
+      if (verified) {
+        if (!document.querySelector('h2.text-white i')) {
+          document.querySelector('h2.text-white').innerHTML += ' <i class="bi bi-patch-check-fill text-primary ms-2"></i>';
+        }
+      } else {
+        const icon = document.querySelector('h2.text-white i');
+        if (icon) icon.remove();
+      }
+      
+      document.querySelector('p.text-white-50').textContent = genre;
+      document.querySelector('#about p:first-of-type').textContent = bio;
+      document.querySelector('#about p:nth-of-type(2)').innerHTML = `<i class="bi bi-geo-alt me-2"></i> ${location}`;
+      
+      // Show toast
+      document.querySelector('.toast-body').textContent = 'Profile updated successfully!';
+      demoToast.show();
+    });
+  });
+</script>

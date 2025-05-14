@@ -45,6 +45,12 @@
                         <span class="fw-medium text-white">Amount:</span>
                         <span class="text-white-50">₹<%= ticket.totalAmount %></span>
                       </div>
+                      <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fw-medium text-success">Discount:</span>
+                        <span class="text-success"><%= ticket.discountPercentage %>% off</span>
+                      </div>
+                      <% } %>
                     <% } %>
 
                     <div class="d-flex justify-content-between align-items-center">

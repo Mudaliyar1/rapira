@@ -76,46 +76,35 @@ const createMockRazorpay = () => {
 };
 
 try {
-  // In development mode with missing keys, use mock implementation
-  if (isDevelopment && (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET)) {
-    razorpay = createMockRazorpay();
-  } else {
-    // Use real Razorpay in production or when keys are available
-    razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET
-    });
+  // Always use real Razorpay implementation
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
 
-    // Log successful initialization (with masked key for security)
-    const maskedKeyId = process.env.RAZORPAY_KEY_ID ?
-      `${process.env.RAZORPAY_KEY_ID.substring(0, 4)}...${process.env.RAZORPAY_KEY_ID.substring(process.env.RAZORPAY_KEY_ID.length - 4)}` :
-      'undefined';
-    console.log(`Razorpay initialized with key_id: ${maskedKeyId}`);
-  }
+  // Log successful initialization (with masked key for security)
+  const maskedKeyId = process.env.RAZORPAY_KEY_ID ?
+    `${process.env.RAZORPAY_KEY_ID.substring(0, 4)}...${process.env.RAZORPAY_KEY_ID.substring(process.env.RAZORPAY_KEY_ID.length - 4)}` :
+    'undefined';
+  console.log(`Razorpay initialized with key_id: ${maskedKeyId}`);
 } catch (error) {
   console.error('Failed to initialize Razorpay:', error);
 
-  // In development mode, fall back to mock implementation
-  if (isDevelopment) {
-    console.log('Falling back to mock implementation in development mode');
-    razorpay = createMockRazorpay();
-  } else {
-    // Create a dummy razorpay object that logs errors instead of crashing
-    razorpay = {
-      orders: {
-        create: async () => {
-          console.error('Attempted to create order but Razorpay is not properly initialized');
-          return Promise.reject(new Error('Razorpay is not properly initialized'));
-        }
-      },
-      payments: {
-        fetch: async () => {
-          console.error('Attempted to fetch payment but Razorpay is not properly initialized');
-          return Promise.reject(new Error('Razorpay is not properly initialized'));
-        }
+  // Create a dummy razorpay object that logs errors instead of crashing
+  razorpay = {
+    orders: {
+      create: async () => {
+        console.error('Attempted to create order but Razorpay is not properly initialized');
+        return Promise.reject(new Error('Razorpay is not properly initialized'));
       }
-    };
-  }
+    },
+    payments: {
+      fetch: async () => {
+        console.error('Attempted to fetch payment but Razorpay is not properly initialized');
+        return Promise.reject(new Error('Razorpay is not properly initialized'));
+      }
+    }
+  };
 }
 
 /**
@@ -152,37 +141,16 @@ const createOrder = async (options) => {
       receipt: receipt.substring(0, 10) + '...' // Truncate for security
     });
 
-    // Convert amount to paise (smallest currency unit)
-    const amountInPaise = Math.round(parseFloat(amount) * 100);
-
-    // Special handling for development mode
-    if (isDevelopment && (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET)) {
-      console.log('Using mock Razorpay implementation in development mode');
-
-      try {
-        // Create the order using our mock implementation
-        const order = await razorpay.orders.create({
-          amount: amountInPaise,
-          currency,
-          receipt,
-          notes,
-          payment_capture: 1
-        });
-
-        console.log('Mock order created:', {
-          id: order.id,
-          amount: order.amount,
-          status: order.status
-        });
-
-        return { success: true, data: order, isMock: true };
-      } catch (mockError) {
-        console.error('Error in mock order creation:', mockError);
-        throw mockError;
-      }
+    // Ensure minimum amount is at least 1 rupee (Razorpay requirement)
+    let finalAmount = parseFloat(amount);
+    if (finalAmount < 1) {
+      console.log(`Amount ${finalAmount} is less than minimum 1 rupee, setting to minimum 1 rupee`);
+      finalAmount = 1;
     }
 
-    // For production or when keys are available
+    // Convert amount to paise (smallest currency unit)
+    const amountInPaise = Math.round(finalAmount * 100);
+
     // Check if Razorpay keys are set
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       throw new Error('Razorpay API keys are not configured. Please check your environment variables.');
@@ -210,46 +178,17 @@ const createOrder = async (options) => {
   } catch (error) {
     console.error('Error creating order:', error);
 
-    // Special handling for development mode
-    if (isDevelopment) {
-      console.log('Development mode: Creating fallback mock order due to error');
-
-      try {
-        // Generate a mock order as fallback
-        const mockOrder = {
-          id: 'order_mock_fallback_' + Math.random().toString(36).substring(2, 10),
-          entity: 'order',
-          amount: options.amount ? Math.round(parseFloat(options.amount) * 100) : 10000,
-          amount_paid: 0,
-          amount_due: options.amount ? Math.round(parseFloat(options.amount) * 100) : 10000,
-          currency: options.currency || 'INR',
-          receipt: options.receipt || 'fallback_receipt',
-          status: 'created',
-          attempts: 0,
-          notes: options.notes || {},
-          created_at: Math.floor(Date.now() / 1000)
-        };
-
-        console.log('Created fallback mock order:', {
-          id: mockOrder.id,
-          amount: mockOrder.amount
-        });
-
-        return {
-          success: true,
-          data: mockOrder,
-          isMock: true,
-          isFailbackMock: true,
-          originalError: error.message
-        };
-      } catch (mockError) {
-        console.error('Error creating fallback mock order:', mockError);
-      }
-    }
-
     // Provide more detailed error information
     let errorMessage = error.message || 'Unknown error';
     let errorCode = error.code || 'UNKNOWN';
+
+    // Check for Razorpay API error response
+    if (error.error) {
+      if (typeof error.error === 'object') {
+        errorMessage = error.error.description || errorMessage;
+        errorCode = error.error.code || errorCode;
+      }
+    }
 
     // Check for specific Razorpay error types
     if (error.description) {
@@ -262,11 +201,14 @@ const createOrder = async (options) => {
       errorCode = 'NETWORK_ERROR';
     }
 
+    // Log the detailed error for debugging
+    console.log('Detailed payment error:', JSON.stringify(error, null, 2));
+
     return {
       success: false,
       error: errorMessage,
       code: errorCode,
-      details: error.toString()
+      details: typeof error === 'object' ? JSON.stringify(error) : error.toString()
     };
   }
 };
@@ -282,32 +224,9 @@ const verifyPayment = (options) => {
   try {
     const { orderId, paymentId, signature } = options;
 
-    // Check if this is a mock order (starts with order_mock)
-    if (isDevelopment && orderId && orderId.startsWith('order_mock')) {
-      console.log('MOCK: Verifying mock payment', { orderId, paymentId });
-      // Always return success for mock orders in development
-      return {
-        success: true,
-        isMock: true,
-        message: 'Mock payment verification successful'
-      };
-    }
-
-    // For real orders, verify the signature
+    // For all orders, verify the signature
     if (!process.env.RAZORPAY_KEY_SECRET) {
       console.error('Missing Razorpay key secret for payment verification');
-
-      // In development, allow proceeding without verification
-      if (isDevelopment) {
-        console.log('DEVELOPMENT MODE: Bypassing payment verification due to missing key');
-        return {
-          success: true,
-          isMock: true,
-          bypassedVerification: true,
-          message: 'Payment verification bypassed in development mode'
-        };
-      }
-
       return {
         success: false,
         error: 'Payment verification configuration error'
@@ -327,19 +246,6 @@ const verifyPayment = (options) => {
     return { success: isValid };
   } catch (error) {
     console.error('Error verifying payment:', error);
-
-    // In development mode, allow proceeding despite errors
-    if (isDevelopment) {
-      console.log('DEVELOPMENT MODE: Bypassing payment verification due to error');
-      return {
-        success: true,
-        isMock: true,
-        bypassedVerification: true,
-        originalError: error.message,
-        message: 'Payment verification bypassed in development mode due to error'
-      };
-    }
-
     return { success: false, error: error.message };
   }
 };
@@ -350,67 +256,11 @@ const verifyPayment = (options) => {
  */
 const getPaymentDetails = async (paymentId) => {
   try {
-    // Check if this is a mock payment ID
-    if (isDevelopment && paymentId && (paymentId.startsWith('pay_mock') || paymentId.startsWith('rzp_mock'))) {
-      console.log('MOCK: Fetching mock payment details for:', paymentId);
-
-      // Return mock payment details
-      return {
-        success: true,
-        data: {
-          id: paymentId,
-          entity: 'payment',
-          amount: 10000,
-          currency: 'INR',
-          status: 'captured',
-          order_id: 'order_mock_123',
-          method: 'card',
-          card_id: null,
-          description: 'Mock Payment',
-          email: 'customer@example.com',
-          contact: '+919999999999',
-          notes: {},
-          fee: 0,
-          tax: 0,
-          error_code: null,
-          error_description: null,
-          created_at: Math.floor(Date.now() / 1000)
-        },
-        isMock: true
-      };
-    }
-
-    // For real payment IDs, fetch from Razorpay
+    // Fetch payment details from Razorpay
     const payment = await razorpay.payments.fetch(paymentId);
     return { success: true, data: payment };
   } catch (error) {
     console.error('Error fetching payment details:', error);
-
-    // In development mode, return mock data as fallback
-    if (isDevelopment) {
-      console.log('DEVELOPMENT MODE: Returning mock payment details due to error');
-      return {
-        success: true,
-        data: {
-          id: paymentId || 'pay_mock_fallback',
-          entity: 'payment',
-          amount: 10000,
-          currency: 'INR',
-          status: 'captured',
-          order_id: 'order_mock_fallback',
-          method: 'card',
-          description: 'Fallback Mock Payment',
-          email: 'customer@example.com',
-          contact: '+919999999999',
-          notes: {},
-          created_at: Math.floor(Date.now() / 1000)
-        },
-        isMock: true,
-        isFallback: true,
-        originalError: error.message
-      };
-    }
-
     return { success: false, error: error.message };
   }
 };

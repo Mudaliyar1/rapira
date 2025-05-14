@@ -1,0 +1,148 @@
+<!-- Flash Messages -->
+<% if (typeof success !== 'undefined' && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<% } %>
+
+<!-- Back Button -->
+<div class="mb-4">
+  <a href="/admin/contact-messages" class="btn btn-outline-primary">
+    <i class="bi bi-arrow-left"></i> Back to Messages
+  </a>
+</div>
+
+<!-- Message Details -->
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Message Details</h5>
+        <span class="badge <%= message.status === 'new' ? 'bg-danger' : message.status === 'read' ? 'bg-info' : message.status === 'replied' ? 'bg-success' : 'bg-secondary' %>">
+          <%= message.status.charAt(0).toUpperCase() + message.status.slice(1) %>
+        </span>
+      </div>
+      <div class="card-body">
+        <h4 class="mb-3"><%= message.subject %></h4>
+
+        <div class="d-flex mb-4">
+          <div class="flex-shrink-0">
+            <div class="bg-primary text-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+              <i class="bi bi-person fs-4"></i>
+            </div>
+          </div>
+          <div class="ms-3">
+            <h5 class="mb-1"><%= message.name %></h5>
+            <p class="mb-0">
+              <a href="mailto:<%= message.email %>" class="text-decoration-none">
+                <i class="bi bi-envelope me-1"></i> <%= message.email %>
+              </a>
+            </p>
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i>
+              <%= new Date(message.createdAt).toLocaleString() %>
+            </small>
+          </div>
+        </div>
+
+        <div class="message-content p-3 bg-light rounded mb-4">
+          <p style="white-space: pre-line; color: #000000;"><%= message.message %></p>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="mailto:<%= message.email %>?subject=Re: <%= message.subject %>" class="btn btn-primary">
+            <i class="bi bi-reply-fill"></i> Reply via Email
+          </a>
+
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="bi bi-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Status Management -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent">
+        <h5 class="mb-0">Update Status</h5>
+      </div>
+      <div class="card-body">
+        <form action="/admin/contact-messages/<%= message._id %>/status" method="POST">
+          <div class="mb-3">
+            <label for="status" class="form-label">Message Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="new" <%= message.status === 'new' ? 'selected' : '' %>>New</option>
+              <option value="read" <%= message.status === 'read' ? 'selected' : '' %>>Read</option>
+              <option value="replied" <%= message.status === 'replied' ? 'selected' : '' %>>Replied</option>
+              <option value="archived" <%= message.status === 'archived' ? 'selected' : '' %>>Archived</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Update Status</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent">
+        <h5 class="mb-0">Quick Actions</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="mailto:<%= message.email %>?subject=Re: <%= message.subject %>" class="btn btn-outline-primary">
+            <i class="bi bi-envelope"></i> Send Email
+          </a>
+
+          <% if (message.status !== 'replied') { %>
+            <form action="/admin/contact-messages/<%= message._id %>/status" method="POST">
+              <input type="hidden" name="status" value="replied">
+              <button type="submit" class="btn btn-outline-success w-100">
+                <i class="bi bi-check-circle"></i> Mark as Replied
+              </button>
+            </form>
+          <% } %>
+
+          <% if (message.status !== 'archived') { %>
+            <form action="/admin/contact-messages/<%= message._id %>/status" method="POST">
+              <input type="hidden" name="status" value="archived">
+              <button type="submit" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-archive"></i> Archive Message
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this message? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form action="/admin/contact-messages/<%= message._id %>?_method=DELETE" method="POST">
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

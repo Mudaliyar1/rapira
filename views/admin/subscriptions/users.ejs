@@ -1,0 +1,195 @@
+<%- contentFor('body') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white">User Subscriptions</h1>
+  <a href="/admin/subscriptions/plans" class="btn btn-outline-primary">
+    <i class="bi bi-gear me-1"></i> Manage Plans
+  </a>
+</div>
+
+<div class="card glass-card-dark border border-secondary mb-4">
+  <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>User Subscriptions</h5>
+    <a href="/admin/subscriptions/assign" class="btn btn-primary btn-sm">
+      <i class="bi bi-gift me-1"></i> Assign Free Subscription
+    </a>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Plan</th>
+            <th>Purchase Date</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (subscriptions.length === 0) { %>
+            <tr>
+              <td colspan="7" class="text-center py-4">
+                <i class="bi bi-exclamation-circle text-warning me-2"></i>
+                No user subscriptions found.
+              </td>
+            </tr>
+          <% } else { %>
+            <% subscriptions.forEach(subscription => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div>
+                      <div class="fw-bold"><%= subscription.user.name %></div>
+                      <div class="small text-muted"><%= subscription.user.email %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= subscription.plan.name %></td>
+                <td><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                <td><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                <td>
+                  <%
+                    const isExpired = new Date(subscription.expiryDate) < new Date();
+                    const daysRemaining = Math.ceil((new Date(subscription.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                  %>
+                  <% if (subscription.status === 'active' && !isExpired) { %>
+                    <span class="badge bg-success">Active</span>
+                    <% if (daysRemaining <= 7) { %>
+                      <span class="badge bg-warning ms-1">Expires soon</span>
+                    <% } %>
+                  <% } else { %>
+                    <span class="badge bg-secondary">Expired</span>
+                  <% } %>
+                </td>
+                <td>₹<%= subscription.amount %></td>
+                <td>
+                  <div class="btn-group">
+                    <a href="/admin/subscriptions/users/view/<%= subscription._id %>" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i>
+                    </a>
+
+                    <% if (subscription.status === 'active') { %>
+                      <form action="/admin/subscriptions/users/deactivate/<%= subscription._id %>" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to deactivate this subscription?')">
+                          <i class="bi bi-x-circle"></i> Deactivate
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <form action="/admin/subscriptions/users/reactivate/<%= subscription._id %>" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Are you sure you want to reactivate this subscription?')">
+                          <i class="bi bi-check-circle"></i> Reactivate
+                        </button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card glass-card-dark border border-secondary h-100">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Subscription Statistics</h5>
+      </div>
+      <div class="card-body">
+        <%
+          // Calculate statistics
+          const activeSubscriptions = subscriptions.filter(sub =>
+            sub.status === 'active' && new Date(sub.expiryDate) > new Date()
+          );
+
+          const totalRevenue = subscriptions.reduce((sum, sub) => sum + sub.amount, 0);
+
+          // Group by plan
+          const planCounts = {};
+          subscriptions.forEach(sub => {
+            const planName = sub.plan.name;
+            planCounts[planName] = (planCounts[planName] || 0) + 1;
+          });
+
+          // Sort plans by popularity
+          const popularPlans = Object.entries(planCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+        %>
+
+        <div class="row g-4">
+          <div class="col-6">
+            <div class="stat-card p-3 bg-dark rounded border border-secondary">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon bg-primary-subtle text-primary me-3">
+                  <i class="bi bi-people"></i>
+                </div>
+                <div>
+                  <h3 class="fw-bold mb-0 text-white"><%= activeSubscriptions.length %></h3>
+                  <p class="text-white-50 mb-0">Active Subscriptions</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-card p-3 bg-dark rounded border border-secondary">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon bg-success-subtle text-success me-3">
+                  <i class="bi bi-currency-rupee"></i>
+                </div>
+                <div>
+                  <h3 class="fw-bold mb-0 text-white">₹<%= totalRevenue.toLocaleString('en-IN') %></h3>
+                  <p class="text-white-50 mb-0">Total Revenue</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if (popularPlans.length > 0) { %>
+          <div class="mt-4">
+            <h6 class="text-white mb-3">Popular Plans</h6>
+            <ul class="list-group">
+              <% popularPlans.forEach(([plan, count]) => { %>
+                <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                  <%= plan %>
+                  <span class="badge bg-primary rounded-pill"><%= count %> users</span>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card glass-card-dark border border-secondary h-100">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Subscription Management</h5>
+      </div>
+      <div class="card-body">
+        <h6 class="text-white">About User Subscriptions</h6>
+        <p class="text-white-50">This page shows all user subscriptions, both active and expired. The system automatically checks for expired subscriptions and updates their status.</p>
+
+        <h6 class="text-white mt-4">Actions You Can Take</h6>
+        <ul class="text-white-50">
+          <li>Create and manage subscription plans from the <a href="/admin/subscriptions/plans" class="text-primary">Plans Management</a> page</li>
+          <li>Monitor subscription revenue and popular plans</li>
+          <li>View detailed user subscription information</li>
+        </ul>
+
+        <div class="alert alert-info mt-4">
+          <i class="bi bi-lightbulb me-2"></i>
+          <strong>Tip:</strong> Encourage users to renew their subscriptions by offering special renewal discounts or bonuses.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -520,6 +520,11 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Could not connect to payment service. Please check your internet connection and try again.';
           }
 
+          // For Razorpay minimum amount errors
+          if (errorData.details && errorData.details.includes('Order amount less than minimum amount allowed')) {
+            errorMessage = 'The payment amount is too small. The minimum amount for payment is ₹1.';
+          }
+
           alert(errorMessage);
 
           // Re-enable the submit button
@@ -546,6 +551,11 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage = 'Payment gateway timed out. Please try again.';
           }
 
+          // For Razorpay minimum amount errors
+          if (data.details && data.details.includes('Order amount less than minimum amount allowed')) {
+            errorMessage = 'The payment amount is too small. The minimum amount for payment is ₹1.';
+          }
+
           alert(errorMessage);
 
           // Re-enable the submit button
@@ -555,53 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
 
-        // Check if this is a mock order (for development mode)
-        const isMockOrder = data.isMock || (data.order && data.order.id && data.order.id.startsWith('order_mock'));
-
-        if (isMockOrder) {
-          console.log('DEVELOPMENT MODE: Using mock payment flow');
-
-          // Show a message to the user
-          alert('Development Mode: Using mock payment flow. Click OK to simulate a successful payment.');
-
-          // Create a mock response
-          const mockResponse = {
-            razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(2, 15),
-            razorpay_order_id: data.order.id,
-            razorpay_signature: 'mock_signature_' + Math.random().toString(36).substring(2, 15)
-          };
-
-          // Create hidden form for payment verification
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = '/tickets/verify-payment';
-
-          const fields = {
-            razorpay_payment_id: mockResponse.razorpay_payment_id,
-            razorpay_order_id: mockResponse.razorpay_order_id,
-            razorpay_signature: mockResponse.razorpay_signature,
-            ticket_id: data.ticket,
-            is_mock_payment: 'true'
-          };
-
-          for (const key in fields) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = fields[key];
-            form.appendChild(input);
-          }
-
-          document.body.appendChild(form);
-
-          // Submit the form after a short delay to simulate payment processing
-          setTimeout(() => {
-            console.log('Submitting mock payment verification form');
-            form.submit();
-          }, 1500);
-
-          return;
-        }
+        // Always use real Razorpay payment flow
 
         // For real orders, initialize Razorpay
         const options = {

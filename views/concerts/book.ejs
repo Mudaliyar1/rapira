@@ -68,14 +68,26 @@
                       <h5 class="card-title fw-bold mb-3 text-white" style="color: white !important;">Price Summary</h5>
                       <div class="d-flex justify-content-between mb-2">
                         <span class="text-white">Ticket Price:</span>
-                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= concert.price %>"><%= concert.price %></span> × <span id="ticketCount" class="text-primary fw-bold">1</span></span>
+                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span> × <span id="ticketCount" class="text-primary fw-bold">1</span></span>
                       </div>
+
+                      <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
+                      <div class="d-flex justify-content-between mb-2 text-success">
+                        <span><i class="bi bi-star-fill me-1"></i> Subscription Discount:</span>
+                        <span><%= subscriptionDiscount %>% off</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Original Price:</span>
+                        <span><s>₹<%= originalPrice %></s></span>
+                      </div>
+                      <% } %>
+
                       <hr class="border-secondary">
                       <div class="d-flex justify-content-between fw-bold">
                         <span class="text-white">Total Amount:</span>
-                        <span class="gradient-text-purple fs-5">₹<span id="totalAmount"><%= concert.price %></span></span>
+                        <span class="gradient-text-purple fs-5">₹<span id="totalAmount"><%= discountedPrice %></span></span>
                       </div>
-                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= concert.price %>">
+                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= discountedPrice %>">
                     </div>
                   </div>
                 </div>
@@ -182,5 +194,181 @@
 <!-- Razorpay Script -->
 <% if (concert.isPaid) { %>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ticketQuantitySelect = document.getElementById('ticketQuantity');
+    const ticketPriceElement = document.getElementById('ticketPrice');
+    const ticketCountElement = document.getElementById('ticketCount');
+    const totalAmountElement = document.getElementById('totalAmount');
+    const totalAmountInput = document.getElementById('totalAmountInput');
+    const razorpayForm = document.getElementById('razorpayForm');
+
+    // Get the ticket price from the data attribute
+    const ticketPrice = parseFloat(ticketPriceElement.getAttribute('data-price'));
+
+    // Update the total amount when the ticket quantity changes
+    ticketQuantitySelect.addEventListener('change', function() {
+      const quantity = parseInt(this.value);
+      const total = ticketPrice * quantity;
+
+      // Update the ticket count
+      ticketCountElement.textContent = quantity;
+
+      // Update the total amount
+      totalAmountElement.textContent = total;
+      totalAmountInput.value = total;
+
+      // Update attendee forms
+      updateAttendeeForms(quantity);
+    });
+
+    // Initialize attendee forms
+    updateAttendeeForms(1);
+
+    // Function to update attendee forms
+    function updateAttendeeForms(count) {
+      const container = document.getElementById('attendeesContainer');
+      const dataInputs = document.getElementById('attendeeDataInputs');
+
+      // Clear existing forms
+      container.innerHTML = '';
+      dataInputs.innerHTML = '';
+
+      // Add forms for each attendee
+      for (let i = 1; i <= count; i++) {
+        const attendeeForm = document.createElement('div');
+        attendeeForm.className = 'glass-card-dark p-3 mb-3';
+        attendeeForm.innerHTML = `
+          <h6 class="mb-3 text-white">Attendee #${i}</h6>
+          <div class="mb-3">
+            <label for="attendeeName${i}" class="form-label">Name</label>
+            <input type="text" class="form-control" id="attendeeName${i}" name="attendeeName${i}" required>
+          </div>
+          <div class="mb-0">
+            <label for="attendeeEmail${i}" class="form-label">Email</label>
+            <input type="email" class="form-control" id="attendeeEmail${i}" name="attendeeEmail${i}" required>
+          </div>
+        `;
+
+        container.appendChild(attendeeForm);
+
+        // Add hidden inputs for form submission
+        const nameInput = document.createElement('input');
+        nameInput.type = 'hidden';
+        nameInput.name = `attendeeName${i}`;
+        nameInput.id = `attendeeNameHidden${i}`;
+
+        const emailInput = document.createElement('input');
+        emailInput.type = 'hidden';
+        emailInput.name = `attendeeEmail${i}`;
+        emailInput.id = `attendeeEmailHidden${i}`;
+
+        dataInputs.appendChild(nameInput);
+        dataInputs.appendChild(emailInput);
+      }
+    }
+
+    // Handle form submission for paid concerts
+    if (razorpayForm) {
+      razorpayForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validate the form
+        if (!this.checkValidity()) {
+          this.reportValidity();
+          return;
+        }
+
+        // Get form data
+        const concertId = this.querySelector('input[name="concertId"]').value;
+        const quantity = parseInt(ticketQuantitySelect.value);
+        const totalAmount = parseFloat(totalAmountInput.value);
+
+        // Collect attendee data
+        const attendeeData = [];
+        for (let i = 1; i <= quantity; i++) {
+          const name = document.getElementById(`attendeeName${i}`).value;
+          const email = document.getElementById(`attendeeEmail${i}`).value;
+
+          // Update hidden inputs
+          document.getElementById(`attendeeNameHidden${i}`).value = name;
+          document.getElementById(`attendeeEmailHidden${i}`).value = email;
+
+          attendeeData.push({ name, email });
+        }
+
+        try {
+          // Create order
+          const response = await fetch('/tickets/create-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              concertId,
+              quantity,
+              totalAmount,
+              attendeeData
+            })
+          });
+
+          const data = await response.json();
+
+          if (!data.success) {
+            throw new Error(data.message || 'Failed to create order');
+          }
+
+          // Initialize Razorpay
+          const options = {
+            key: data.key,
+            amount: data.order.amount,
+            currency: data.order.currency,
+            name: 'Rapira',
+            description: 'Concert Ticket Purchase',
+            order_id: data.order.id,
+            handler: function(response) {
+              // Create hidden form for payment verification
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = '/tickets/verify-payment';
+
+              const fields = {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                ticket_id: data.ticket
+              };
+
+              for (const key in fields) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+              }
+
+              document.body.appendChild(form);
+              form.submit();
+            },
+            prefill: {
+              name: document.getElementById('userName').value,
+              email: document.getElementById('userEmail').value
+            },
+            theme: {
+              color: '#6366f1'
+            }
+          };
+
+          const rzp = new Razorpay(options);
+          rzp.open();
+
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment failed: ' + error.message);
+        }
+      });
+    }
+  });
+</script>
 <% } %>
 

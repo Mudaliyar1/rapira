@@ -1,0 +1,467 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="display-5 fw-bold text-center mb-4">My Subscriptions</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/users/profile">My Profile</a></li>
+          <li class="breadcrumb-item active" aria-current="page">My Subscriptions</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <% if (activeSubscription) { %>
+        <div class="card glass-card-dark border border-secondary mb-5">
+          <div class="card-header bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="card-title mb-0">Active Subscription</h3>
+              <span class="badge bg-light text-dark">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Active
+              </span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h4 class="text-white mb-3"><%= activeSubscription.plan.name %></h4>
+                <ul class="list-group list-group-flush mb-4">
+                  <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                    <span>Purchase Date:</span>
+                    <span><%= new Date(activeSubscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                  </li>
+                  <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                    <span>Expiry Date:</span>
+                    <span><%= new Date(activeSubscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                  </li>
+                  <li class="list-group-item bg-transparent text-white-50 border-secondary">
+                    <div class="mb-2 d-flex align-items-center">
+                      <h6 class="mb-0 text-white">Subscription Time Remaining</h6>
+                      <span class="badge bg-success ms-2 d-flex align-items-center" style="font-size: 0.7em; padding: 0.2em 0.5em;">
+                        <span class="me-1">LIVE</span>
+                        <small id="live-indicator" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #fff;"></small>
+                      </span>
+                    </div>
+
+                    <%
+                      // Calculate initial values for display
+                      const now = new Date();
+                      const expiryDate = new Date(activeSubscription.expiryDate);
+                      const timeRemaining = expiryDate - now;
+
+                      // Calculate all time components
+                      const initialSeconds = Math.floor((timeRemaining / 1000) % 60);
+                      const initialMinutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
+                      const initialHours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
+                      const initialDays = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+
+                      // Calculate remaining time in days for display
+                      const daysRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60 * 24));
+
+                      // Calculate remaining time in the original duration unit
+                      let unitRemaining;
+                      if (activeSubscription.plan.durationUnit === 'seconds') {
+                        unitRemaining = Math.ceil(timeRemaining / 1000);
+                      } else if (activeSubscription.plan.durationUnit === 'minutes') {
+                        unitRemaining = Math.ceil(timeRemaining / (1000 * 60));
+                      } else if (activeSubscription.plan.durationUnit === 'hours') {
+                        unitRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60));
+                      } else {
+                        unitRemaining = daysRemaining;
+                      }
+
+                      // Format with leading zeros
+                      const formattedSeconds = initialSeconds.toString().padStart(2, '0');
+                      const formattedMinutes = initialMinutes.toString().padStart(2, '0');
+                      const formattedHours = initialHours.toString().padStart(2, '0');
+                      const formattedDays = initialDays.toString().padStart(2, '0');
+                    %>
+
+                    <div id="countdown-container"
+                         class="d-flex justify-content-between mt-2"
+                         data-expiry="<%= activeSubscription.expiryDate %>"
+                         data-unit="<%= activeSubscription.plan.durationUnit %>"
+                         data-original-duration="<%= activeSubscription.plan.duration %>">
+
+                      <!-- Days -->
+                      <div class="countdown-box">
+                        <div class="countdown-value" id="countdown-days"><%= formattedDays %></div>
+                        <div class="countdown-label">Days</div>
+                      </div>
+
+                      <!-- Hours -->
+                      <div class="countdown-box">
+                        <div class="countdown-value" id="countdown-hours"><%= formattedHours %></div>
+                        <div class="countdown-label">Hours</div>
+                      </div>
+
+                      <!-- Minutes -->
+                      <div class="countdown-box">
+                        <div class="countdown-value" id="countdown-minutes"><%= formattedMinutes %></div>
+                        <div class="countdown-label">Minutes</div>
+                      </div>
+
+                      <!-- Seconds -->
+                      <div class="countdown-box">
+                        <div class="countdown-value" id="countdown-seconds"><%= formattedSeconds %></div>
+                        <div class="countdown-label">Seconds</div>
+                      </div>
+                    </div>
+                  </li>
+                  <% if (activeSubscription.plan.discountPercentage > 0) { %>
+                    <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
+                      <span>Ticket Discount:</span>
+                      <span class="text-success"><%= activeSubscription.plan.discountPercentage %>%</span>
+                    </li>
+                  <% } %>
+                </ul>
+
+                <div class="mb-4">
+                  <h5 class="text-white">Benefits:</h5>
+                  <p class="text-white-50"><%= activeSubscription.plan.benefits %></p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="subscription-status text-center mb-4">
+                  <!-- Empty div to maintain layout -->
+                </div>
+              </div>
+            </div>
+
+            <%
+              // Show renewal button if less than 7 days remaining or less than 20% of original duration for other units
+              let showRenewal = false;
+              if (activeSubscription.plan.durationUnit === 'days') {
+                showRenewal = initialDays < 7;
+              } else if (activeSubscription.plan.durationUnit === 'hours') {
+                showRenewal = initialHours < (activeSubscription.plan.duration * 0.2);
+              } else if (activeSubscription.plan.durationUnit === 'minutes') {
+                showRenewal = initialMinutes < (activeSubscription.plan.duration * 0.2);
+              } else if (activeSubscription.plan.durationUnit === 'seconds') {
+                showRenewal = initialSeconds < (activeSubscription.plan.duration * 0.2);
+              }
+            %>
+            <% if (showRenewal) { %>
+              <div class="d-flex justify-content-end mt-4">
+                <a href="/subscriptions" class="btn btn-warning">
+                  <i class="bi bi-arrow-repeat me-2"></i>
+                  Renew Subscription
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="card glass-card-dark border border-secondary mb-5">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-exclamation-circle text-warning display-1 mb-3"></i>
+            <h3 class="text-white mb-3">No Active Subscription</h3>
+            <p class="text-white-50 mb-4">You don't have an active subscription at the moment.</p>
+            <a href="/subscriptions" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-2"></i>
+              Browse Subscription Plans
+            </a>
+          </div>
+        </div>
+      <% } %>
+
+      <% if (subscriptionHistory && subscriptionHistory.length > 0) { %>
+        <div class="card glass-card-dark border border-secondary">
+          <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Subscription History</h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th>Plan</th>
+                    <th>Purchase Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% subscriptionHistory.forEach(subscription => { %>
+                    <tr>
+                      <td><%= subscription.plan.name %></td>
+                      <td><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                      <td><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                      <td>
+                        <% if (subscription.status === 'active' && new Date(subscription.expiryDate) > new Date()) { %>
+                          <span class="badge bg-success">Active</span>
+                        <% } else if (subscription.status === 'pending') { %>
+                          <span class="badge bg-warning text-dark">Pending</span>
+                        <% } else if (subscription.status === 'cancelled') { %>
+                          <span class="badge bg-danger">Cancelled</span>
+                        <% } else { %>
+                          <span class="badge bg-secondary">Expired</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+
+  /* Countdown boxes styling */
+  .countdown-box {
+    background-color: #2c3e50;
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .countdown-box:first-child {
+    margin-left: 0;
+  }
+
+  .countdown-box:last-child {
+    margin-right: 0;
+  }
+
+  .countdown-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 2;
+  }
+
+  .countdown-label {
+    font-size: 0.7em;
+    color: #a0aec0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Pulse animation for seconds */
+  @keyframes secondsPulse {
+    0% { background-color: #2c3e50; }
+    50% { background-color: #3a506b; }
+    100% { background-color: #2c3e50; }
+  }
+
+  /* Flip animation for changing digits */
+  @keyframes flipDown {
+    0% { transform: rotateX(0); opacity: 1; }
+    50% { transform: rotateX(90deg); opacity: 0.5; }
+    100% { transform: rotateX(0); opacity: 1; }
+  }
+</style>
+
+<% if (activeSubscription) { %>
+<script>
+  // Execute immediately without waiting for DOMContentLoaded
+  (function() {
+    console.log('Initializing live countdown timer...');
+
+    // Check if we're in an iframe - if so, don't run the timer
+    if (window.self !== window.top) {
+      console.log('Running in iframe, skipping timer initialization');
+      return;
+    }
+
+    // Get the countdown elements
+    const countdownContainer = document.getElementById('countdown-container');
+    const daysElement = document.getElementById('countdown-days');
+    const hoursElement = document.getElementById('countdown-hours');
+    const minutesElement = document.getElementById('countdown-minutes');
+    const secondsElement = document.getElementById('countdown-seconds');
+    const liveIndicator = document.getElementById('live-indicator');
+
+    if (!countdownContainer) {
+      console.error('Countdown container not found!');
+      return;
+    }
+
+    console.log('Countdown elements found, setting up timer...');
+
+    // Get expiry date from data attribute
+    const expiryDate = new Date(countdownContainer.getAttribute('data-expiry'));
+    const unit = countdownContainer.getAttribute('data-unit');
+
+    console.log('Subscription details:', {
+      expiryDate: expiryDate.toISOString(),
+      unit
+    });
+
+    // Store previous values to detect changes
+    let prevSeconds = -1;
+    let prevMinutes = -1;
+    let prevHours = -1;
+    let prevDays = -1;
+
+    // Function to add flip animation to an element
+    function animateChange(element) {
+      if (!element) return;
+
+      // Add the animation class
+      element.style.animation = 'flipDown 0.5s';
+
+      // Remove the animation class after it completes
+      setTimeout(() => {
+        element.style.animation = '';
+      }, 500);
+    }
+
+    // Update countdown in real-time
+    function updateCountdown() {
+      try {
+        // Get current time
+        const now = new Date();
+        const timeRemaining = expiryDate - now;
+
+        // If expired, reload the page to show expired status
+        if (timeRemaining <= 0) {
+          console.log('Subscription expired, reloading page...');
+          location.reload();
+          return;
+        }
+
+        // Calculate all time components
+        const totalSeconds = Math.floor(timeRemaining / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+
+        // Format with leading zeros
+        const formattedDays = days.toString().padStart(2, '0');
+        const formattedHours = hours.toString().padStart(2, '0');
+        const formattedMinutes = minutes.toString().padStart(2, '0');
+        const formattedSeconds = seconds.toString().padStart(2, '0');
+
+        // Update the countdown elements
+        if (daysElement) {
+          if (prevDays !== days) {
+            daysElement.textContent = formattedDays;
+            animateChange(daysElement);
+            prevDays = days;
+          }
+        }
+
+        if (hoursElement) {
+          if (prevHours !== hours) {
+            hoursElement.textContent = formattedHours;
+            animateChange(hoursElement);
+            prevHours = hours;
+          }
+        }
+
+        if (minutesElement) {
+          if (prevMinutes !== minutes) {
+            minutesElement.textContent = formattedMinutes;
+            animateChange(minutesElement);
+            prevMinutes = minutes;
+          }
+        }
+
+        if (secondsElement) {
+          if (prevSeconds !== seconds) {
+            secondsElement.textContent = formattedSeconds;
+            secondsElement.parentElement.style.animation = 'secondsPulse 1s';
+            setTimeout(() => {
+              if (secondsElement.parentElement) {
+                secondsElement.parentElement.style.animation = '';
+              }
+            }, 1000);
+            prevSeconds = seconds;
+          }
+        }
+
+        // Flash the live indicator to show the timer is active
+        if (liveIndicator) {
+          liveIndicator.style.opacity = (Math.floor(Date.now() / 500) % 2) ? '1' : '0.3';
+        }
+
+        // Log updates occasionally to verify it's running
+        if (seconds === 0 && minutes % 5 === 0) {
+          console.log(`Time remaining: ${days}d ${hours}h ${minutes}m ${seconds}s`);
+        }
+      } catch (error) {
+        console.error('Error updating countdown:', error);
+      }
+    }
+
+    // Initial update
+    updateCountdown();
+    console.log('Initial countdown update complete');
+
+    // Update every 100ms for smooth countdown
+    const countdownInterval = setInterval(updateCountdown, 100);
+    console.log('Countdown interval set up, will update every 100ms');
+
+    // Force update every 30 seconds to ensure accuracy with server time
+    const forceUpdateInterval = setInterval(function() {
+      console.log('Forcing countdown update for accuracy');
+      updateCountdown();
+    }, 30000);
+
+    // Reload the page every 30 minutes to ensure we have the latest data
+    const reloadInterval = setInterval(function() {
+      console.log('Reloading page to ensure latest data');
+      location.reload();
+    }, 30 * 60 * 1000);
+
+    // Clean up interval when page is unloaded
+    window.addEventListener('beforeunload', function() {
+      clearInterval(countdownInterval);
+      clearInterval(forceUpdateInterval);
+      clearInterval(reloadInterval);
+      console.log('Cleaning up countdown intervals');
+    });
+
+    // Make sure the timer keeps running even if the tab is inactive
+    if ('hidden' in document) {
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          console.log('Page hidden, storing timestamp');
+          window.lastHiddenTime = Date.now();
+        } else {
+          console.log('Page visible again, checking time difference');
+          const timeDiff = Date.now() - (window.lastHiddenTime || Date.now());
+          if (timeDiff > 2000) {
+            console.log(`Page was hidden for ${timeDiff}ms, forcing update`);
+            updateCountdown();
+          }
+        }
+      });
+    }
+
+    // Add pulse animation to seconds box
+    const secondsBox = secondsElement ? secondsElement.parentElement : null;
+    if (secondsBox) {
+      secondsBox.style.animation = 'secondsPulse 2s infinite';
+    }
+  })();
+</script>
+<% } %>
+

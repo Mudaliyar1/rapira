@@ -55,22 +55,113 @@ router.get('/about', (req, res) => {
 // Contact page
 router.get('/contact', (req, res) => {
   const currentUser = req.session.user || null;
-  res.render('contact', { currentUser });
+  res.render('contact', {
+    currentUser,
+    path: '/contact',
+    title: 'Contact Us - Rapira',
+    description: 'Get in touch with the Rapira team for any questions, feedback, or support.'
+  });
+});
+
+// Contact form submission
+router.post('/contact/submit', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    // Validate input
+    if (!name || !email || !subject || !message) {
+      req.flash('error', 'All fields are required');
+      return res.redirect('/contact');
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      req.flash('error', 'Please enter a valid email address');
+      return res.redirect('/contact');
+    }
+
+    // Import Contact model
+    const Contact = require('../models/Contact');
+
+    // Save to database
+    const newContact = new Contact({
+      name,
+      email,
+      subject,
+      message
+    });
+
+    await newContact.save();
+
+    // Log the submission for debugging
+    console.log('Contact form submission saved:', { name, email, subject });
+
+    // Flash a success message
+    req.flash('success', 'Thank you for your message! We will get back to you soon.');
+
+    // Redirect back to the contact page
+    res.redirect('/contact');
+  } catch (error) {
+    console.error('Error saving contact form submission:', error);
+    req.flash('error', 'There was an error submitting your message. Please try again later.');
+    res.redirect('/contact');
+  }
 });
 
 // Privacy policy
 router.get('/privacy-policy', (req, res) => {
-  res.render('privacy-policy');
+  const currentUser = req.session.user || null;
+  res.render('privacy-policy', {
+    currentUser,
+    path: '/privacy-policy',
+    title: 'Privacy Policy - Rapira',
+    description: 'Rapira privacy policy details how we collect, use, and protect your personal information.'
+  });
 });
 
 // Terms of service
 router.get('/terms-of-service', (req, res) => {
-  res.render('terms-of-service');
+  const currentUser = req.session.user || null;
+  res.render('terms-of-service', {
+    currentUser,
+    path: '/terms-of-service',
+    title: 'Terms of Service - Rapira',
+    description: 'Rapira terms of service outline the rules and guidelines for using our platform.'
+  });
 });
 
 // Refund policy
 router.get('/refund-policy', (req, res) => {
-  res.render('refund-policy');
+  const currentUser = req.session.user || null;
+  res.render('refund-policy', {
+    currentUser,
+    path: '/refund-policy',
+    title: 'Refund Policy - Rapira',
+    description: 'Rapira refund policy details our procedures for ticket refunds and cancellations.'
+  });
+});
+
+// Subscription policy
+router.get('/subscription-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('subscription-policy', {
+    currentUser,
+    path: '/subscription-policy',
+    title: 'Subscription Policy - Rapira',
+    description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.'
+  });
+});
+
+// FAQ page
+router.get('/faq', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('faq', {
+    currentUser,
+    path: '/faq',
+    title: 'Frequently Asked Questions - Rapira',
+    description: 'Find answers to common questions about Rapira, our services, and how to use our platform.'
+  });
 });
 
 // Content library page
@@ -154,6 +245,15 @@ router.get('/page/:slug', async (req, res) => {
 // Email test page
 router.get('/email-test', (req, res) => {
   res.render('email-test');
+});
+
+// Demo page
+router.get('/demo', (req, res) => {
+  res.render('demo', {
+    title: 'Interactive Demo - Rapira',
+    description: 'Try out Rapira features with our interactive demo. Learn how to become an artist, create concerts, purchase tickets, and more.',
+    path: '/demo'
+  });
 });
 
 // Test concert submission email route

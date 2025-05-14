@@ -1,0 +1,81 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="glass-card-dark border border-secondary mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-gift me-2"></i>Assign Free Subscription to User</h5>
+          <a href="/admin/subscriptions/users" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to User Subscriptions
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Admin Feature:</strong> This allows you to assign a subscription to any user without requiring payment.
+            The subscription will be activated immediately and will expire based on the plan's duration.
+          </div>
+          
+          <form action="/admin/subscriptions/assign" method="POST">
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <label for="userId" class="form-label text-white">Select User <span class="text-danger">*</span></label>
+                  <select class="form-select bg-dark text-white border-secondary" id="userId" name="userId" required>
+                    <option value="">-- Select User --</option>
+                    <% users.forEach(user => { %>
+                      <option value="<%= user._id %>"><%= user.name %> (<%= user.email %>)</option>
+                    <% }); %>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <label for="planId" class="form-label text-white">Select Subscription Plan <span class="text-danger">*</span></label>
+                  <select class="form-select bg-dark text-white border-secondary" id="planId" name="planId" required>
+                    <option value="">-- Select Plan --</option>
+                    <% plans.forEach(plan => { %>
+                      <option value="<%= plan._id %>">
+                        <%= plan.name %> - ₹<%= plan.price %> 
+                        (<%= plan.duration %> <%= plan.durationUnit %><% if (plan.durationUnit === 'days' && plan.duration >= 30) { %>, <%= Math.floor(plan.duration / 30) %> month<%= Math.floor(plan.duration / 30) > 1 ? 's' : '' %><% } %>)
+                      </option>
+                    <% }); %>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="form-group mb-3">
+                  <label for="notes" class="form-label text-white">Notes (Optional)</label>
+                  <textarea class="form-control bg-dark text-white border-secondary" id="notes" name="notes" rows="3" placeholder="Enter any notes about this subscription assignment"></textarea>
+                  <div class="form-text text-white-50">
+                    These notes will be visible in the subscription details.
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-12">
+                <div class="alert alert-warning">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Important:</strong> This will create an active subscription for the selected user without requiring payment.
+                  The subscription will be marked as "admin_assigned" in the payment records.
+                </div>
+              </div>
+              
+              <div class="col-12 text-end">
+                <a href="/admin/subscriptions/users" class="btn btn-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-check-circle me-1"></i> Assign Subscription
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('title') %>Assign Subscription to User

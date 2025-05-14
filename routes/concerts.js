@@ -6,6 +6,8 @@ const User = require('../models/User');
 const Ticket = require('../models/Ticket');
 const { isLoggedIn, isArtist, canCreateConcert } = require('../middleware/auth');
 const { sendConcertSubmissionEmail } = require('../utils/emailService');
+const { applySubscriptionDiscount } = require('../middleware/subscription');
+const { getActiveSubscription, applyDiscount } = require('../utils/subscriptionService');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -297,6 +299,21 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
       ? concert.maxTickets - concert.ticketsSold
       : 'Unlimited';
 
+    // Check if user has an active subscription and apply discount if applicable
+    let originalPrice = concert.price;
+    let discountedPrice = originalPrice;
+    let subscriptionDiscount = 0;
+
+    if (concert.isPaid && res.locals.hasActiveSubscription && res.locals.activeSubscription) {
+      // Apply subscription discount
+      const subscription = res.locals.activeSubscription;
+      if (subscription.plan && subscription.plan.discountPercentage > 0) {
+        subscriptionDiscount = subscription.plan.discountPercentage;
+        discountedPrice = applyDiscount(originalPrice, subscription);
+        console.log(`Applied subscription discount: ${subscriptionDiscount}% - Original: ${originalPrice}, Discounted: ${discountedPrice}`);
+      }
+    }
+
     // Add Razorpay script to the head section if it's a paid concert
     const extraScripts = concert.isPaid ?
       '<script src="https://checkout.razorpay.com/v1/checkout.js"></script>' : '';
@@ -307,7 +324,10 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
       maxTicketsPerBooking: concert.maxTickets > 0
         ? Math.min(10, concert.maxTickets - concert.ticketsSold)
         : 10, // Allow up to 10 tickets per booking if unlimited
-      extraScripts: extraScripts
+      extraScripts: extraScripts,
+      originalPrice,
+      discountedPrice,
+      subscriptionDiscount
     });
   } catch (error) {
     console.error('Book concert error:', error);

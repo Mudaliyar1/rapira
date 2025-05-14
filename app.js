@@ -111,7 +111,8 @@ app.set('layout extractStyles', true);
 app.locals.layouts = {
   main: 'layouts/main',
   admin: 'layouts/admin',
-  artist: 'layouts/artist'
+  artist: 'layouts/artist',
+  demo: 'layouts/demo'
 };
 
 // Middleware
@@ -228,6 +229,10 @@ const Role = require('./models/Role');
 // Import middleware
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
 const { createMediaMiddleware } = require('./middleware/mediaMiddleware');
+const { checkSubscription } = require('./middleware/subscription');
+
+// Check subscription status for all requests
+app.use(checkSubscription);
 
 // Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
 
@@ -325,6 +330,7 @@ const ticketRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
 const adminContentRoutes = require('./routes/admin-content');
 const adminAccessControlRoutes = require('./routes/adminAccessControl');
+const adminContactRoutes = require('./routes/adminContact');
 const paymentRoutes = require('./routes/payments');
 const pageRoutes = require('./routes/pages');
 const emailStatusRoutes = require('./routes/email-status');
@@ -340,11 +346,16 @@ const roleSlotRoutes = require('./routes/roleSlots');
 const bookingRequestRoutes = require('./routes/bookingRequests');
 const dailyConcertsRoutes = require('./routes/dailyConcerts');
 const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
+const demoRoutes = require('./routes/demo');
 const contentRoutes = require('./routes/content');
 const refundRequestRoutes = require('./routes/refundRequests');
 const { router: notificationRoutes } = require('./routes/notifications');
+const subscriptionRoutes = require('./routes/subscriptions');
+const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { ensureUploadDirectories } = require('./utils/fileHelper');
+const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
+const { initializeCronJobs } = require('./utils/cronJobs');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
@@ -369,6 +380,7 @@ app.use('/roles', roleRoutes);
 app.use('/learning', learningRoutes);
 app.use('/messages', messageRoutes);
 app.use('/content', contentRoutes); // Mount content routes
+app.use('/demo', demoRoutes); // Mount demo routes
 app.use('/', artistUpgradeRoutes); // Mount artist upgrade routes
 // Mount team requirement routes
 app.use('/team-requirement', teamRequirementRoutes);
@@ -393,9 +405,17 @@ app.use('/admin/notifications', notificationRoutes);
 // Mount admin access control routes
 app.use('/admin/access-control', adminAccessControlRoutes);
 
+// Mount admin contact messages routes
+app.use('/admin/contact-messages', adminContactRoutes);
+
 // Mount refund request routes
 app.use('/refund-requests', refundRequestRoutes);
 app.use('/admin/refund-requests', refundRequestRoutes);
+
+// Mount subscription routes
+app.use('/subscriptions', subscriptionRoutes);
+app.use('/users/subscriptions', (req, res) => res.redirect('/subscriptions/my-subscriptions'));
+app.use('/admin/subscriptions', adminSubscriptionRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');
@@ -485,6 +505,21 @@ const server = app.listen(PORT, () => {
       console.log(`Notification initialization complete: ${result.created} created, ${result.pending} pending, ${result.unread} unread`);
     } catch (error) {
       console.error('Error during notification initialization:', error);
+    }
+
+    // Check for expired subscriptions
+    try {
+      const subscriptionResult = await checkExpiredSubscriptions();
+      console.log(`Subscription check complete: ${subscriptionResult.expired} subscriptions marked as expired`);
+    } catch (error) {
+      console.error('Error checking expired subscriptions:', error);
+    }
+
+    // Initialize cron jobs
+    try {
+      initializeCronJobs();
+    } catch (error) {
+      console.error('Error initializing cron jobs:', error);
     }
   }, 5000); // Wait 5 seconds after server start to initialize notifications
 });

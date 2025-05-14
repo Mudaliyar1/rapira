@@ -1,0 +1,410 @@
+<!-- Subscription Demo Page -->
+<div class="container-fluid py-4">
+  <!-- Demo Header -->
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h1 class="display-5 fw-bold mb-3">Subscription <span class="gradient-text-purple">Demo</span></h1>
+      <p class="lead mb-4">Experience how subscriptions work on Rapira</p>
+      <div class="alert alert-info d-inline-block">
+        <i class="bi bi-info-circle-fill me-2"></i> This is a demo. No actual purchases will be made.
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Plans Section -->
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h3 class="text-white text-center mb-4">Choose Your Subscription Plan</h3>
+        
+        <div class="row g-4 justify-content-center">
+          <% subscriptionPlans.forEach((plan, index) => { %>
+            <div class="col-md-4">
+              <div class="card h-100 subscription-card <%= plan.recommended ? 'border border-3 border-primary' : '' %>" data-plan="<%= plan.id %>">
+                <% if (plan.recommended) { %>
+                  <div class="card-recommended-badge">Recommended</div>
+                <% } %>
+                <div class="card-header text-center <%= plan.recommended ? 'bg-primary text-white' : '' %>">
+                  <h4 class="mb-0"><%= plan.name %></h4>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div class="price-container text-center mb-4">
+                    <span class="currency">₹</span>
+                    <span class="price"><%= plan.price %></span>
+                    <span class="period">/ <%= plan.duration %> days</span>
+                  </div>
+                  
+                  <ul class="feature-list mb-4">
+                    <% plan.features.forEach(feature => { %>
+                      <li><i class="bi bi-check-circle-fill text-success me-2"></i> <%= feature %></li>
+                    <% }); %>
+                  </ul>
+                  
+                  <div class="mt-auto">
+                    <button class="btn <%= plan.recommended ? 'btn-gradient-purple' : 'btn-outline-light' %> w-100 select-plan-btn" data-plan="<%= plan.id %>" data-price="<%= plan.price %>" data-name="<%= plan.name %>">
+                      Select Plan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Benefits Section -->
+  <div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h3 class="text-white text-center mb-4">Subscription Benefits</h3>
+        
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="benefit-card text-center p-4">
+              <div class="benefit-icon mb-3">
+                <i class="bi bi-ticket-perforated-fill"></i>
+              </div>
+              <h5 class="text-white mb-3">Exclusive Ticket Discounts</h5>
+              <p class="mb-0">Get up to 20% off on concert tickets with our subscription plans.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="benefit-card text-center p-4">
+              <div class="benefit-icon mb-3">
+                <i class="bi bi-clock-fill"></i>
+              </div>
+              <h5 class="text-white mb-3">Early Access</h5>
+              <p class="mb-0">Be the first to access new concert tickets before they're available to the public.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="benefit-card text-center p-4">
+              <div class="benefit-icon mb-3">
+                <i class="bi bi-music-note-beamed"></i>
+              </div>
+              <h5 class="text-white mb-3">Exclusive Content</h5>
+              <p class="mb-0">Access exclusive content from your favorite artists not available to non-subscribers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription FAQ Section -->
+  <div class="row mt-5">
+    <div class="col-lg-10 mx-auto">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h3 class="text-white text-center mb-4">Frequently Asked Questions</h3>
+        
+        <div class="accordion" id="subscriptionFAQ">
+          <div class="accordion-item bg-dark text-white border-0 mb-3">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                How do subscriptions work?
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#subscriptionFAQ">
+              <div class="accordion-body">
+                Subscriptions on Rapira provide you with exclusive benefits like ticket discounts, early access to concerts, and exclusive content. Choose a plan that suits your needs, make a payment, and enjoy the benefits for the duration of your subscription.
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item bg-dark text-white border-0 mb-3">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                Can I cancel my subscription?
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#subscriptionFAQ">
+              <div class="accordion-body">
+                Yes, you can cancel your subscription at any time. Your benefits will continue until the end of your current billing period. There are no refunds for partial subscription periods.
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item bg-dark text-white border-0">
+            <h2 class="accordion-header" id="headingThree">
+              <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                How do I apply my ticket discount?
+              </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#subscriptionFAQ">
+              <div class="accordion-body">
+                Your discount will be automatically applied when you're logged in and purchasing tickets. The discounted price will be shown at checkout based on your subscription level.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Demo Home -->
+  <div class="row mt-4 mb-5">
+    <div class="col-12 text-center">
+      <a href="/demo" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-2"></i> Back to Demo Home
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription Checkout Modal -->
+<div class="modal fade" id="subscriptionModal" tabindex="-1" aria-labelledby="subscriptionModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="subscriptionModalLabel">Complete Your Subscription</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 mb-4 mb-md-0">
+            <h6 class="text-white mb-3">Payment Details</h6>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control bg-dark text-white" id="cardName" placeholder="Name on Card" required>
+              <label for="cardName">Name on Card</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control bg-dark text-white" id="cardNumber" placeholder="Card Number" required>
+              <label for="cardNumber">Card Number</label>
+            </div>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="form-floating mb-3">
+                  <input type="text" class="form-control bg-dark text-white" id="cardExpiry" placeholder="MM/YY" required>
+                  <label for="cardExpiry">Expiry (MM/YY)</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-floating mb-3">
+                  <input type="text" class="form-control bg-dark text-white" id="cardCvv" placeholder="CVV" required>
+                  <label for="cardCvv">CVV</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-white mb-3">Subscription Summary</h6>
+            <div class="glass-card p-3 rounded-4 mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Plan</span>
+                <span id="modalPlanName">Basic Plan</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Duration</span>
+                <span>30 days</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Auto-renew</span>
+                <span>Yes</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Total</span>
+                <span id="modalTotal">₹99</span>
+              </div>
+            </div>
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle-fill me-2"></i> This is a demo. No actual payment will be processed.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-gradient-purple" id="completeSubscriptionBtn">
+          <i class="bi bi-lock-fill me-2"></i> Complete Subscription
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-body text-center py-4">
+        <div class="mb-3 text-success">
+          <i class="bi bi-check-circle-fill" style="font-size: 4rem;"></i>
+        </div>
+        <h4 class="text-white mb-3">Subscription Activated!</h4>
+        <p class="mb-4">Your subscription has been activated successfully. You can now enjoy all the benefits of your plan.</p>
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-gradient-purple" id="viewSubscriptionBtn">
+            <i class="bi bi-star me-2"></i> View My Subscription
+          </button>
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="text-white mb-0">Processing payment...</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .subscription-card {
+    background-color: rgba(30, 30, 30, 0.95);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .subscription-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .card-recommended-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-bottom-left-radius: 0.5rem;
+  }
+  
+  .price-container {
+    position: relative;
+  }
+  
+  .currency {
+    font-size: 1.5rem;
+    font-weight: bold;
+    vertical-align: top;
+    position: relative;
+    top: 0.5rem;
+  }
+  
+  .price {
+    font-size: 3rem;
+    font-weight: bold;
+  }
+  
+  .period {
+    font-size: 1rem;
+    color: #aaa;
+  }
+  
+  .feature-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .feature-list li {
+    margin-bottom: 0.75rem;
+  }
+  
+  .benefit-card {
+    background-color: rgba(30, 30, 30, 0.95);
+    border-radius: 1rem;
+    height: 100%;
+    transition: all 0.3s ease;
+  }
+  
+  .benefit-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .benefit-icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+  }
+  
+  .accordion-button:not(.collapsed) {
+    background-color: var(--primary);
+    color: white;
+  }
+  
+  .accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--primary);
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modals
+    const subscriptionModal = new bootstrap.Modal(document.getElementById('subscriptionModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Select plan buttons
+    document.querySelectorAll('.select-plan-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const planName = this.getAttribute('data-name');
+        const planPrice = this.getAttribute('data-price');
+        
+        // Update modal content
+        document.getElementById('modalPlanName').textContent = planName;
+        document.getElementById('modalTotal').textContent = `₹${planPrice}`;
+        
+        // Show subscription modal
+        subscriptionModal.show();
+      });
+    });
+    
+    // Complete subscription button
+    document.getElementById('completeSubscriptionBtn').addEventListener('click', function() {
+      // Hide subscription modal
+      subscriptionModal.hide();
+      
+      // Show loading modal
+      loadingModal.show();
+      
+      // Simulate payment processing
+      setTimeout(() => {
+        // Hide loading modal
+        loadingModal.hide();
+        
+        // Show success modal
+        successModal.show();
+      }, 2000);
+    });
+    
+    // View subscription button
+    document.getElementById('viewSubscriptionBtn').addEventListener('click', function() {
+      // Redirect to subscription page (in demo, just reload the page)
+      window.location.reload();
+    });
+    
+    // Highlight selected plan card
+    document.querySelectorAll('.subscription-card').forEach(card => {
+      card.addEventListener('click', function() {
+        // Remove highlight from all cards
+        document.querySelectorAll('.subscription-card').forEach(c => {
+          c.classList.remove('border', 'border-3', 'border-primary');
+        });
+        
+        // Add highlight to clicked card
+        if (!this.classList.contains('border')) {
+          this.classList.add('border', 'border-3', 'border-primary');
+          
+          // Trigger click on the select plan button
+          this.querySelector('.select-plan-btn').click();
+        }
+      });
+    });
+  });
+</script>

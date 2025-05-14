@@ -64,7 +64,8 @@ const templates = {
   PASSWORD_RESET: 6,
   ARTIST_APPLICATION: 7,
   ARTIST_APPROVAL: 8,
-  ARTIST_REJECTION: 9
+  ARTIST_REJECTION: 9,
+  SUBSCRIPTION_CONFIRMATION: 10
 };
 
 /**
@@ -1803,3 +1804,140 @@ module.exports = {
   sendRefundApprovalEmail,
   sendRefundRejectionEmail
 };
+
+/**
+ * Send subscription confirmation email
+ * @param {Object} user - User object
+ * @param {Object} subscription - Subscription object
+ * @param {Object} plan - Subscription plan object
+ */
+const sendSubscriptionConfirmationEmail = async (user, subscription, plan) => {
+  try {
+    console.log('Attempting to send subscription confirmation email to:', user.email);
+
+    // Format dates
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    // Calculate days remaining
+    const daysRemaining = Math.ceil((new Date(subscription.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+    // Prepare HTML content for the email
+    const htmlContent = `
+      <html>
+        <body>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #6366f1; padding: 20px; text-align: center;">
+              <h1 style="color: white; margin: 0;">Subscription Confirmed!</h1>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
+              <p>Hello ${user.name || 'Valued Customer'},</p>
+              <p>Thank you for subscribing to Rapira! Your subscription has been successfully activated.</p>
+
+              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Subscription Details:</h3>
+                <p><strong>Plan:</strong> ${plan.name}</p>
+                <p><strong>Price:</strong> ₹${plan.price}</p>
+                <p><strong>Purchase Date:</strong> ${formatDate(subscription.purchaseDate)}</p>
+                <p><strong>Expiry Date:</strong> ${formatDate(subscription.expiryDate)} (${daysRemaining} days remaining)</p>
+                <p><strong>Benefits:</strong> ${plan.benefits}</p>
+                ${plan.discountPercentage > 0 ? `<p><strong>Discount:</strong> ${plan.discountPercentage}% off on all ticket purchases</p>` : ''}
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.BASE_URL}/subscriptions/my-subscriptions" style="background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">View My Subscription</a>
+              </div>
+
+              <p>You can now enjoy all the benefits of your subscription. If you have any questions or need assistance, please contact our support team.</p>
+              <p>Best regards,<br>The Rapira Team</p>
+            </div>
+            <div style="background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+              <p>&copy; ${new Date().getFullYear()} Rapira. All rights reserved.</p>
+              <p><a href="${process.env.BASE_URL}/terms-of-service" style="color: #6b7280;">Terms of Service</a> | <a href="${process.env.BASE_URL}/privacy-policy" style="color: #6b7280;">Privacy Policy</a></p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const subject = `Your Rapira ${plan.name} Subscription is Active`;
+
+    // First try: Use Brevo API directly
+    try {
+      console.log('Using direct email for subscription confirmation to ensure delivery');
+
+      // Create a direct email payload
+      const directEmailPayload = {
+        sender: {
+          name: SENDER_NAME,
+          email: SENDER_EMAIL
+        },
+        replyTo: {
+          name: 'Rapira Support',
+          email: SENDER_EMAIL
+        },
+        // Add headers for tracking
+        headers: {
+          'X-Mailin-Tag': 'subscription-confirmation'
+        },
+        to: [{
+          email: user.email,
+          name: user.name || 'Subscriber'
+        }],
+        subject: subject,
+        htmlContent: htmlContent,
+        textContent: `Thank you for subscribing to Rapira! Your ${plan.name} subscription has been successfully activated. Purchase Date: ${formatDate(subscription.purchaseDate)}, Expiry Date: ${formatDate(subscription.expiryDate)} (${daysRemaining} days remaining). Benefits: ${plan.benefits}`
+      };
+
+      // Log the email being sent
+      console.log('Sending subscription confirmation email to:', user.email);
+
+      // Send direct email
+      const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+        headers: {
+          'accept': 'application/json',
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json'
+        }
+      });
+
+      console.log('Direct subscription confirmation email sent successfully. Response:', response.status, response.statusText);
+      return { success: true, data: response.data, method: 'api' };
+
+    } catch (apiError) {
+      // If API fails (e.g., due to IP restrictions), try SMTP fallback
+      console.error('API subscription confirmation email failed:', apiError.message);
+      console.log('Trying SMTP fallback for subscription confirmation email...');
+
+      // Send using SMTP fallback
+      const mailOptions = {
+        from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+        to: `"${user.name || 'Subscriber'}" <${user.email}>`,
+        replyTo: `"Rapira Support" <${SENDER_EMAIL}>`,
+        subject: subject,
+        html: htmlContent,
+        headers: {
+          'X-Mailin-Tag': 'subscription-confirmation-smtp'
+        }
+      };
+
+      // Send mail with defined transport object
+      const info = await transporter.sendMail(mailOptions);
+
+      console.log('SMTP fallback subscription confirmation email sent successfully. Message ID:', info.messageId);
+      return { success: true, data: info, method: 'smtp' };
+    }
+
+  } catch (error) {
+    console.error('Error in sendSubscriptionConfirmationEmail:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Export the subscription confirmation email function
+module.exports.sendSubscriptionConfirmationEmail = sendSubscriptionConfirmationEmail;

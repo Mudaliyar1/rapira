@@ -1,0 +1,107 @@
+<%- contentFor('body') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white"><%= plan ? 'Edit' : 'Add' %> Subscription Plan</h1>
+  <a href="/admin/subscriptions/plans" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Plans
+  </a>
+</div>
+
+<div class="card glass-card-dark border border-secondary">
+  <div class="card-body">
+    <form action="<%= plan ? `/admin/subscriptions/plans/${plan._id}` : '/admin/subscriptions/plans' %>" method="POST">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="name" class="form-label text-white">Plan Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control bg-dark text-white border-secondary" id="name" name="name" value="<%= plan ? plan.name : '' %>" required>
+          <div class="form-text text-white-50">Choose a clear, descriptive name (e.g., "Basic", "Premium", "Pro")</div>
+        </div>
+        <div class="col-md-6">
+          <label for="price" class="form-label text-white">Price (₹) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control bg-dark text-white border-secondary" id="price" name="price" min="0" step="1" value="<%= plan ? plan.price : '' %>" required>
+          <div class="form-text text-white-50">Enter the price in INR (without decimal)</div>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="row">
+            <div class="col-md-8">
+              <label for="duration" class="form-label text-white">Duration <span class="text-danger">*</span></label>
+              <input type="number" class="form-control bg-dark text-white border-secondary" id="duration" name="duration" min="1" step="1" value="<%= plan ? plan.duration : '' %>" required>
+            </div>
+            <div class="col-md-4">
+              <label for="durationUnit" class="form-label text-white">Unit <span class="text-danger">*</span></label>
+              <select class="form-select bg-dark text-white border-secondary" id="durationUnit" name="durationUnit" required>
+                <option value="seconds" <%= plan && plan.durationUnit === 'seconds' ? 'selected' : '' %>>Seconds</option>
+                <option value="minutes" <%= plan && plan.durationUnit === 'minutes' ? 'selected' : '' %>>Minutes</option>
+                <option value="hours" <%= plan && plan.durationUnit === 'hours' ? 'selected' : '' %>>Hours</option>
+                <option value="days" <%= plan && plan.durationUnit === 'days' ? 'selected' : '' || !plan ? 'selected' : '' %>>Days</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-text text-white-50">
+            Common durations: 30 days (1 month), 90 days (3 months), 180 days (6 months), 365 days (1 year)
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label for="discountPercentage" class="form-label text-white">Discount Percentage (%)</label>
+          <input type="number" class="form-control bg-dark text-white border-secondary" id="discountPercentage" name="discountPercentage" min="0" max="100" step="1" value="<%= plan ? plan.discountPercentage : '0' %>">
+          <div class="form-text text-white-50">Percentage discount on ticket purchases (0-100)</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="benefits" class="form-label text-white">Benefits <span class="text-danger">*</span></label>
+        <textarea class="form-control bg-dark text-white border-secondary" id="benefits" name="benefits" rows="4" required><%= plan ? plan.benefits : '' %></textarea>
+        <div class="form-text text-white-50">
+          Describe the benefits of this subscription plan. Be specific and clear.
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="isActive" name="isActive" <%= plan && plan.isActive ? 'checked' : '' %>>
+          <label class="form-check-label text-white" for="isActive">Active</label>
+        </div>
+        <div class="form-text text-white-50">
+          Only active plans will be visible to users on the subscription page
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <a href="/admin/subscriptions/plans" class="btn btn-outline-secondary me-2">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-<%= plan ? 'save' : 'plus-circle' %> me-1"></i>
+          <%= plan ? 'Update' : 'Create' %> Plan
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card glass-card-dark border border-secondary mt-4">
+  <div class="card-header bg-dark text-white">
+    <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips for Effective Subscription Plans</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-white">Pricing Strategy</h6>
+        <ul class="text-white-50">
+          <li>Offer better value for longer subscription periods</li>
+          <li>Consider the average ticket price when setting discounts</li>
+          <li>Price plans competitively but ensure profitability</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h6 class="text-white">Benefits Description</h6>
+        <ul class="text-white-50">
+          <li>Be specific about what subscribers will get</li>
+          <li>Use bullet points in your description for clarity</li>
+          <li>Highlight unique benefits beyond just discounts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

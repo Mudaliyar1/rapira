@@ -26,13 +26,31 @@
 
         <!-- Services Dropdown -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist')) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist') || path.startsWith('/subscriptions')) ? 'active' : '' %>"
              href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-gear me-1"></i> Services
           </a>
           <ul class="dropdown-menu glass-card-dark" aria-labelledby="servicesDropdown">
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/team-requirement') ? 'active' : '' %>" href="/team-requirement"><i class="bi bi-people-fill me-2"></i>Team Requirement</a></li>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/find-my-artist') ? 'active' : '' %>" href="/find-my-artist"><i class="bi bi-search me-2"></i>Find My Artist</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/subscriptions') ? 'active' : '' %>" href="/subscriptions"><i class="bi bi-star me-2"></i>Subscriptions</a></li>
+          </ul>
+        </li>
+
+        <!-- Help & Support Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/demo') ? 'active' : '' %>"
+             href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-question-circle me-1"></i> Help & Support
+          </a>
+          <ul class="dropdown-menu glass-card-dark" aria-labelledby="helpDropdown">
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/demo' ? 'active' : '' %>" href="/demo"><i class="bi bi-play-circle me-2"></i>Interactive Demo</a></li>
+            <li><hr class="dropdown-divider border-secondary"></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/contact' ? 'active' : '' %>" href="/contact"><i class="bi bi-envelope me-2"></i>Contact Us</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/terms-of-service' ? 'active' : '' %>" href="/terms-of-service"><i class="bi bi-file-text me-2"></i>Terms of Service</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/privacy-policy' ? 'active' : '' %>" href="/privacy-policy"><i class="bi bi-shield-lock me-2"></i>Privacy Policy</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/refund-policy' ? 'active' : '' %>" href="/refund-policy"><i class="bi bi-cash-coin me-2"></i>Refund Policy</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/subscription-policy' ? 'active' : '' %>" href="/subscription-policy"><i class="bi bi-star me-2"></i>Subscription Policy</a></li>
           </ul>
         </li>
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>
@@ -69,6 +87,7 @@
             <ul class="dropdown-menu glass-card-dark dropdown-menu-end" aria-labelledby="navbarDropdown">
               <li><a class="dropdown-item text-white" href="/users/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
               <li><a class="dropdown-item text-white" href="/tickets"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a></li>
+              <li><a class="dropdown-item text-white" href="/subscriptions/my-subscriptions"><i class="bi bi-star me-2"></i>My Subscriptions</a></li>
               <% if (typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
               <li><a class="dropdown-item text-white" href="/messages"><i class="bi bi-chat-dots me-2"></i>Messages</a></li>
               <li><a class="dropdown-item text-white" href="/messages/find"><i class="bi bi-people me-2"></i>Connect with Artists</a></li>

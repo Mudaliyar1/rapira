@@ -1,0 +1,405 @@
+<!-- Content Sharing Demo Page -->
+<div class="container-fluid py-4">
+  <!-- Demo Header -->
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h1 class="display-5 fw-bold mb-3">Content Sharing <span class="gradient-text-green">Demo</span></h1>
+      <p class="lead mb-4">Experience how to share your music and videos on Rapira</p>
+      <div class="alert alert-info d-inline-block">
+        <i class="bi bi-info-circle-fill me-2"></i> This is a demo. No actual content will be uploaded.
+      </div>
+    </div>
+  </div>
+
+  <!-- Artist Dashboard Simulation -->
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <!-- Dashboard Header -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="text-white mb-0">Artist Dashboard</h3>
+          <span class="badge bg-success px-3 py-2">Demo Mode</span>
+        </div>
+      </div>
+
+      <!-- Dashboard Tabs -->
+      <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="false">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="concerts-tab" data-bs-toggle="tab" data-bs-target="#concerts" type="button" role="tab" aria-controls="concerts" aria-selected="false">Concerts</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="true">Content</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Profile</button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="dashboardTabsContent">
+        <!-- Overview Tab (not active) -->
+        <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Dashboard Overview</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Content tab.</p>
+          </div>
+        </div>
+
+        <!-- Concerts Tab (not active) -->
+        <div class="tab-pane fade" id="concerts" role="tabpanel" aria-labelledby="concerts-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Concert Management</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Content tab.</p>
+          </div>
+        </div>
+
+        <!-- Content Tab (active) -->
+        <div class="tab-pane fade show active" id="content" role="tabpanel" aria-labelledby="content-tab">
+          <div class="glass-card-dark p-4 rounded-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4 class="text-white mb-0">My Content</h4>
+              <button class="btn btn-gradient-green" id="addContentBtn">
+                <i class="bi bi-plus-circle me-2"></i> Add Content
+              </button>
+            </div>
+
+            <!-- Content List -->
+            <div class="table-responsive">
+              <table class="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th>Thumbnail</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Release Date</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="contentTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center py-4">
+                      <p class="text-muted mb-0">No content yet. Click "Add Content" to get started.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Add Content Form (initially hidden) -->
+          <div class="glass-card-dark p-4 rounded-4 mb-4" id="addContentForm" style="display: none;">
+            <h4 class="text-white mb-4">Add New Content</h4>
+            
+            <form id="contentForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-dark text-white" id="contentTitle" placeholder="Content Title" required>
+                    <label for="contentTitle">Content Title</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <select class="form-select bg-dark text-white" id="contentType" required>
+                      <option value="song">Song</option>
+                      <option value="video">Music Video</option>
+                    </select>
+                    <label for="contentType">Content Type</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="form-floating mb-3">
+                    <textarea class="form-control bg-dark text-white" id="contentDescription" placeholder="Description" style="height: 100px" required></textarea>
+                    <label for="contentDescription">Description</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="date" class="form-control bg-dark text-white" id="releaseDate" placeholder="Release Date" required>
+                    <label for="releaseDate">Release Date</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-floating mb-3">
+                    <input type="text" class="form-control bg-dark text-white" id="youtubeUrl" placeholder="YouTube URL" required>
+                    <label for="youtubeUrl">YouTube URL</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label text-white">Thumbnail Image</label>
+                  <div class="input-group mb-3">
+                    <input type="file" class="form-control bg-dark text-white" id="thumbnailImage" accept="image/*">
+                    <label class="input-group-text bg-primary text-white" for="thumbnailImage">Upload</label>
+                  </div>
+                </div>
+                <div class="col-12 mb-3">
+                  <div class="alert alert-info">
+                    <h5 class="text-dark">YouTube Embedding Tips and Content Guidelines</h5>
+                    <ul class="mb-0 text-dark">
+                      <li>Use YouTube links for your audio and video content</li>
+                      <li>Ensure your content doesn't violate copyright laws</li>
+                      <li>Make sure your YouTube videos are set to "Public" or "Unlisted"</li>
+                      <li>For best results, use high-quality thumbnails (1280x720 pixels)</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-light" id="cancelContentBtn">
+                      <i class="bi bi-x-circle me-2"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-gradient-green">
+                      <i class="bi bi-check-circle me-2"></i> Submit Content
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Profile Tab (not active) -->
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+          <div class="glass-card-dark p-4 rounded-4">
+            <h4 class="text-white mb-3">Artist Profile</h4>
+            <p class="text-muted">This tab is not active in the demo. Please use the Content tab.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Demo Home -->
+  <div class="row mt-4 mb-5">
+    <div class="col-12 text-center">
+      <a href="/demo" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-2"></i> Back to Demo Home
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Content Preview Modal -->
+<div class="modal fade" id="contentPreviewModal" tabindex="-1" aria-labelledby="contentPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="contentPreviewModalLabel">Content Preview</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ratio ratio-16x9">
+          <iframe id="contentPreviewFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Demo Notification Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="demoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-primary text-white">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong class="me-auto">Demo Notification</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body bg-dark text-white">
+      This is a demo notification. No actual data is being saved.
+    </div>
+  </div>
+</div>
+
+<!-- Loading Spinner Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="text-white mb-0">Processing your request...</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize toast
+    const demoToast = new bootstrap.Toast(document.getElementById('demoToast'));
+    
+    // Initialize loading modal
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Initialize content preview modal
+    const contentPreviewModal = new bootstrap.Modal(document.getElementById('contentPreviewModal'));
+    const contentPreviewFrame = document.getElementById('contentPreviewFrame');
+    
+    // Add Content button
+    document.getElementById('addContentBtn').addEventListener('click', function() {
+      document.getElementById('addContentForm').style.display = 'block';
+      this.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Cancel Content button
+    document.getElementById('cancelContentBtn').addEventListener('click', function() {
+      document.getElementById('addContentForm').style.display = 'none';
+      document.getElementById('contentForm').reset();
+      document.getElementById('addContentBtn').scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Set default release date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('releaseDate').value = today;
+    
+    // Content form submission
+    document.getElementById('contentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Show loading modal
+      loadingModal.show();
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        // Hide loading modal
+        loadingModal.hide();
+        
+        // Get form values
+        const title = document.getElementById('contentTitle').value;
+        const type = document.getElementById('contentType').value;
+        const releaseDate = document.getElementById('releaseDate').value;
+        const youtubeUrl = document.getElementById('youtubeUrl').value;
+        
+        // Format date for display
+        const formattedDate = new Date(releaseDate).toLocaleDateString();
+        
+        // Update content table
+        const tableBody = document.getElementById('contentTableBody');
+        
+        // Clear "no content" message if it exists
+        if (tableBody.querySelector('td[colspan="7"]')) {
+          tableBody.innerHTML = '';
+        }
+        
+        // Add new content row
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+          <td>
+            <img src="/images/default-thumbnail.jpg" alt="${title}" width="60" height="40" class="rounded" style="object-fit: cover;">
+          </td>
+          <td>${title}</td>
+          <td><span class="badge ${type === 'song' ? 'bg-primary' : 'bg-danger'}">${type.charAt(0).toUpperCase() + type.slice(1)}</span></td>
+          <td>${formattedDate}</td>
+          <td><span class="badge bg-warning">Pending Approval</span></td>
+          <td>0</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1 preview-content-btn" data-url="${youtubeUrl}">
+              <i class="bi bi-play-fill"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-success me-1 edit-content-btn">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-content-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        tableBody.prepend(newRow);
+        
+        // Hide form and reset
+        document.getElementById('addContentForm').style.display = 'none';
+        document.getElementById('contentForm').reset();
+        document.getElementById('releaseDate').value = today;
+        
+        // Show success toast
+        document.querySelector('.toast-body').textContent = 'Content submitted successfully! It is now pending approval.';
+        demoToast.show();
+        
+        // Scroll to table
+        document.getElementById('content-tab').scrollIntoView({ behavior: 'smooth' });
+        
+        // Add event listeners to new buttons
+        addButtonEventListeners();
+      }, 2000);
+    });
+    
+    // Function to add event listeners to buttons
+    function addButtonEventListeners() {
+      // Preview content buttons
+      document.querySelectorAll('.preview-content-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const url = this.getAttribute('data-url');
+          
+          // Extract video ID from YouTube URL
+          let videoId = '';
+          if (url.includes('youtube.com/watch?v=')) {
+            videoId = url.split('v=')[1].split('&')[0];
+          } else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1];
+          } else {
+            videoId = url; // Assume it's already a video ID
+          }
+          
+          // Set iframe src
+          contentPreviewFrame.src = `https://www.youtube.com/embed/${videoId}`;
+          
+          // Show modal
+          contentPreviewModal.show();
+        });
+      });
+      
+      // Reset iframe when modal is closed
+      document.getElementById('contentPreviewModal').addEventListener('hidden.bs.modal', function() {
+        contentPreviewFrame.src = '';
+      });
+      
+      // Edit content buttons
+      document.querySelectorAll('.edit-content-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          document.querySelector('.toast-body').textContent = 'Edit functionality is limited in demo mode.';
+          demoToast.show();
+        });
+      });
+      
+      // Delete content buttons
+      document.querySelectorAll('.delete-content-btn').forEach(button => {
+        button.addEventListener('click', function() {
+          const row = this.closest('tr');
+          
+          // Show loading modal
+          loadingModal.show();
+          
+          // Simulate processing delay
+          setTimeout(() => {
+            // Hide loading modal
+            loadingModal.hide();
+            
+            // Remove row
+            row.remove();
+            
+            // If no more content, show "no content" message
+            if (document.getElementById('contentTableBody').children.length === 0) {
+              document.getElementById('contentTableBody').innerHTML = `
+                <tr>
+                  <td colspan="7" class="text-center py-4">
+                    <p class="text-muted mb-0">No content yet. Click "Add Content" to get started.</p>
+                  </td>
+                </tr>
+              `;
+            }
+            
+            // Show success toast
+            document.querySelector('.toast-body').textContent = 'Content deleted successfully!';
+            demoToast.show();
+          }, 1000);
+        });
+      });
+    }
+  });
+</script>

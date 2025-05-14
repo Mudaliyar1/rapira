@@ -735,7 +735,7 @@ router.get('/tickets', isLoggedIn, isAdmin, async (req, res) => {
 router.get('/tickets/:id', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
-      .populate('user', 'name email')
+      .populate('user', 'name email profileImage createdAt role')
       .populate({
         path: 'concert',
         populate: {
@@ -755,7 +755,13 @@ router.get('/tickets/:id', isLoggedIn, isAdmin, async (req, res) => {
       populate: { path: 'user', select: 'name' }
     }) : null;
 
-    res.render('admin/ticket-details', { ticket, concert });
+    res.render('admin/ticket-details', {
+      layout: 'admin',
+      currentPath: '/admin/tickets',
+      title: 'Ticket Details',
+      ticket,
+      concert
+    });
   } catch (error) {
     console.error('Ticket details error:', error);
     req.flash('error', 'Failed to load ticket details');

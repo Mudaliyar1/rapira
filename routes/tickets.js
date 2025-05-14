@@ -6,6 +6,7 @@ const User = require('../models/User');
 const { isLoggedIn } = require('../middleware/auth');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 const { sendTicketEmail } = require('../utils/brevoEmailService');
+const { getActiveSubscription, applyDiscount } = require('../utils/subscriptionService');
 const path = require('path');
 const ejs = require('ejs');
 
@@ -210,8 +211,25 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
       });
     }
 
-    // Calculate total amount
-    const totalAmount = concert.price * parseInt(quantity);
+    // Check if user has an active subscription and apply discount if applicable
+    let originalAmount = concert.price * parseInt(quantity);
+    let totalAmount = originalAmount;
+    let discountApplied = false;
+    let discountPercentage = 0;
+    let discountType = 'none';
+
+    // Get active subscription for the user
+    const activeSubscription = await getActiveSubscription(req.session.user.id);
+
+    if (activeSubscription && activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) {
+      // Apply subscription discount
+      discountPercentage = activeSubscription.plan.discountPercentage;
+      totalAmount = applyDiscount(originalAmount, activeSubscription);
+      discountApplied = true;
+      discountType = 'subscription';
+
+      console.log(`Applied subscription discount: ${discountPercentage}% - Original: ${originalAmount}, Discounted: ${totalAmount}`);
+    }
 
     // Create temporary ticket
     const tempTicket = new Ticket({
@@ -220,6 +238,10 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
       attendees: attendeesList,
       quantity: parseInt(quantity),
       totalAmount,
+      originalAmount: discountApplied ? originalAmount : undefined,
+      discountApplied,
+      discountPercentage,
+      discountType,
       paymentStatus: 'pending'
     });
 
@@ -241,23 +263,32 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
       });
     }
 
+    // Ensure minimum amount is at least 1 rupee (Razorpay requirement)
+    let finalAmount = totalAmount;
+    let paymentAmount = totalAmount;
+    if (finalAmount < 1) {
+      console.log(`Amount ${finalAmount} is less than minimum 1 rupee, setting to minimum 1 rupee for payment`);
+      finalAmount = 1;
+    }
+
     // Create Razorpay order with timeout
-    console.log('Creating order with amount:', totalAmount);
+    console.log('Creating order with amount:', finalAmount);
 
     // Set a timeout for the Razorpay API call
     const orderPromise = createOrder({
-      amount: totalAmount,
+      amount: finalAmount,
       receipt: tempTicket._id.toString(),
       notes: {
         concertId: concertId,
         userId: req.session.user.id,
-        quantity: quantity
+        quantity: quantity,
+        originalAmount: paymentAmount // Store the original amount for reference
       }
     });
 
     // Create a timeout promise
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Payment gateway timeout')), 10000); // 10 second timeout
+      setTimeout(() => reject(new Error('Payment gateway timeout')), 15000); // 15 second timeout
     });
 
     // Race the order creation against the timeout
@@ -345,29 +376,12 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       isMockPayment: is_mock_payment === 'true'
     });
 
-    // Check if this is a mock payment (development mode)
-    const isMockPayment = is_mock_payment === 'true' ||
-                         (razorpay_order_id && razorpay_order_id.startsWith('order_mock')) ||
-                         (razorpay_payment_id && razorpay_payment_id.startsWith('pay_mock'));
-
-    let verificationResult;
-
-    if (isMockPayment) {
-      console.log('Processing mock payment in development mode');
-      // For mock payments, skip actual verification
-      verificationResult = {
-        success: true,
-        isMock: true,
-        message: 'Mock payment verification bypassed'
-      };
-    } else {
-      // For real payments, verify the signature
-      verificationResult = verifyPayment({
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
-        signature: razorpay_signature
-      });
-    }
+    // Always verify the payment signature
+    const verificationResult = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
 
     // Check verification result
     if (!verificationResult.success) {
@@ -388,11 +402,6 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     // Update ticket payment details
     ticket.paymentId = razorpay_payment_id;
     ticket.paymentStatus = 'completed';
-
-    // For mock payments, add a note
-    if (isMockPayment) {
-      ticket.notes = 'Mock payment processed in development mode';
-    }
 
     await ticket.save();
     console.log('Ticket updated with payment details:', {
@@ -438,12 +447,8 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       // Continue with booking even if email fails
     }
 
-    // Set appropriate success message
-    if (isMockPayment) {
-      req.flash('success', 'Development Mode: Mock payment successful! Ticket booked.');
-    } else {
-      req.flash('success', 'Payment successful! Ticket booked. A confirmation email has been sent to your email address.');
-    }
+    // Set success message
+    req.flash('success', 'Payment successful! Ticket booked. A confirmation email has been sent to your email address.');
 
     res.redirect(`/tickets/${ticket._id}`);
   } catch (error) {
