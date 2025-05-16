@@ -404,6 +404,325 @@ h5.card-title.text-white,
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.95%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
+/* Internet Speed Display */
+.internet-speed-display {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  min-width: auto;
+  width: auto;
+  height: auto;
+  margin: 0 0.5rem;
+  text-decoration: none !important;
+  display: inline-flex;
+}
+
+.internet-speed-display::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 3s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+.internet-speed-display i {
+  color: var(--success);
+  margin-right: 0.35rem;
+  transition: transform 0.3s ease;
+}
+
+.internet-speed-display:hover i {
+  transform: rotate(30deg);
+}
+
+.light-theme .internet-speed-display {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--light-text);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .internet-speed-display::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+}
+
+/* Speed indicator colors */
+.speed-slow {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.speed-slow i {
+  color: var(--danger);
+}
+
+.speed-medium {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.speed-medium i {
+  color: var(--warning);
+}
+
+.speed-fast {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.speed-fast i {
+  color: var(--success);
+}
+
+.speed-very-fast {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.speed-very-fast i {
+  color: var(--success);
+}
+
+.speed-ultra-fast {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.15));
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+.speed-ultra-fast i {
+  color: #8b5cf6; /* Purple color for ultra-fast */
+}
+
+.light-theme .speed-slow {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.light-theme .speed-medium {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.light-theme .speed-fast {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.light-theme .speed-very-fast {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
+.light-theme .speed-ultra-fast {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Speed bar animations for different speed levels */
+.speed-slow .speed-bar:nth-child(1) {
+  height: 6px;
+  background-color: var(--danger);
+}
+
+.speed-medium .speed-bar:nth-child(1),
+.speed-medium .speed-bar:nth-child(2) {
+  height: 8px;
+  background-color: var(--warning);
+}
+
+.speed-fast .speed-bar:nth-child(1),
+.speed-fast .speed-bar:nth-child(2),
+.speed-fast .speed-bar:nth-child(3) {
+  height: 10px;
+  background-color: var(--success);
+}
+
+.speed-very-fast .speed-bar,
+.speed-ultra-fast .speed-bar {
+  height: 12px;
+  background-color: var(--success);
+}
+
+.speed-ultra-fast .speed-bar {
+  background-color: #8b5cf6; /* Purple for ultra-fast */
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Login Timer Display */
+.login-timer-display {
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  min-width: auto;
+  width: auto;
+  height: auto;
+  margin: 0 0.5rem;
+  text-decoration: none !important;
+  display: inline-flex;
+}
+
+.login-timer-display i {
+  color: var(--info);
+  margin-right: 0.35rem;
+}
+
+.login-timer-display:hover i {
+  animation: spin 2s linear infinite;
+}
+
+.light-theme .login-timer-display {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--light-text);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Auth Button Styles */
+.auth-btn {
+  min-width: 100px;
+  font-weight: 500;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+}
+
+.auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-outline-light {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.light-theme .btn-outline-light {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--dark-bg);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .btn-outline-light:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--dark-bg);
+}
+
+/* Auth buttons container for mobile */
+.auth-buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* Make sure auth buttons stay in a row on mobile */
+@media (max-width: 991.98px) {
+  .auth-buttons-container {
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+
+  .auth-buttons-container .nav-item {
+    margin: 0 0.25rem;
+  }
+
+  .auth-buttons-container .auth-btn {
+    min-width: auto;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Speed indicator bars */
+.speed-indicator {
+  display: inline-flex;
+  align-items: center;
+  height: 12px;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.speed-bar {
+  width: 3px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+/* Fix for speed display in navbar */
+.navbar-nav .nav-item .internet-speed-display {
+  margin: 0 0.5rem;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.navbar-nav .nav-item .login-timer-display {
+  margin: 0 0.5rem;
+  min-width: 100px;
+  justify-content: center;
+}
+
+/* Mobile menu improvements */
+@media (max-width: 991.98px) {
+  .navbar-nav .nav-item .internet-speed-display,
+  .navbar-nav .nav-item .login-timer-display {
+    margin: 0.5rem auto;
+    width: 150px;
+    justify-content: center;
+  }
+
+  .navbar-collapse {
+    padding: 1rem 0;
+  }
+
+  .navbar-nav {
+    align-items: center;
+  }
+}
+
 /* Light theme navbar improvements */
 .light-theme .navbar-brand {
   color: var(--primary-dark) !important;

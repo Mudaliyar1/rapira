@@ -67,6 +67,31 @@
         <% } %>
       </ul>
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <div class="d-flex flex-column flex-lg-row align-items-center">
+          <!-- Internet Speed Display -->
+          <li class="nav-item me-lg-2 d-flex align-items-center">
+            <div class="internet-speed-display" id="internetSpeedDisplay">
+              <i class="bi bi-speedometer2 me-1"></i>
+              <span id="internetSpeedValue">Measuring...</span>
+              <span class="speed-indicator ms-1">
+                <span class="speed-bar"></span>
+                <span class="speed-bar"></span>
+                <span class="speed-bar"></span>
+                <span class="speed-bar"></span>
+              </span>
+            </div>
+          </li>
+
+          <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+          <!-- Login Timer Display -->
+          <li class="nav-item me-lg-2 d-flex align-items-center">
+            <div class="login-timer-display" id="loginTimerDisplay">
+              <i class="bi bi-clock-history me-1"></i>
+              <span id="loginTimerValue">00:00:00</span>
+            </div>
+          </li>
+          <% } %>
+        </div>
         <% if (typeof currentUser !== 'undefined' && currentUser && typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
           <li class="nav-item me-2">
             <a class="nav-link position-relative" href="/messages">
@@ -97,12 +122,14 @@
             </ul>
           </li>
         <% } else { %>
-          <li class="nav-item me-2">
-            <a class="nav-link btn-glass px-3 rounded-pill" href="/auth/login"><i class="bi bi-box-arrow-in-right me-1"></i> Login</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link btn btn-gradient-purple px-3 rounded-pill" href="/auth/register"><i class="bi bi-person-plus me-1"></i> Register</a>
-          </li>
+          <div class="auth-buttons-container d-flex">
+            <li class="nav-item me-2">
+              <a class="btn btn-outline-light px-3 rounded-pill auth-btn" href="/auth/login"><i class="bi bi-box-arrow-in-right me-1"></i> Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="btn btn-gradient-purple px-3 rounded-pill auth-btn" href="/auth/register"><i class="bi bi-person-plus me-1"></i> Register</a>
+            </li>
+          </div>
         <% } %>
       </ul>
     </div>

@@ -1,4 +1,268 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Login Timer Functionality
+  const loginTimerValue = document.getElementById('loginTimerValue');
+  const loginTimerDisplay = document.getElementById('loginTimerDisplay');
+
+  // Function to start the login timer
+  function startLoginTimer() {
+    // Check if the timer element exists (user is logged in)
+    if (!loginTimerValue) return;
+
+    // Get the login time from localStorage or set current time as login time
+    let loginTime = localStorage.getItem('loginTime');
+
+    // If no login time is stored, set it to the current time
+    if (!loginTime) {
+      loginTime = new Date().getTime();
+      localStorage.setItem('loginTime', loginTime);
+    } else {
+      // Convert stored string to number
+      loginTime = parseInt(loginTime);
+    }
+
+    // Update the timer display every second
+    function updateTimer() {
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - loginTime;
+
+      // Convert elapsed time to hours, minutes, seconds
+      const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
+      const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+
+      // Format the time as HH:MM:SS
+      const formattedTime =
+        (hours < 10 ? '0' + hours : hours) + ':' +
+        (minutes < 10 ? '0' + minutes : minutes) + ':' +
+        (seconds < 10 ? '0' + seconds : seconds);
+
+      // Update the display
+      loginTimerValue.textContent = formattedTime;
+
+      // Add tooltip with login date and time if Bootstrap is available
+      if (typeof bootstrap !== 'undefined' && loginTimerDisplay) {
+        const loginDate = new Date(parseInt(loginTime));
+        const loginDateString = loginDate.toLocaleString();
+
+        if (!loginTimerDisplay._tooltip) {
+          loginTimerDisplay.setAttribute('data-bs-toggle', 'tooltip');
+          loginTimerDisplay.setAttribute('data-bs-placement', 'bottom');
+          loginTimerDisplay.setAttribute('title', 'Logged in since: ' + loginDateString);
+          loginTimerDisplay._tooltip = new bootstrap.Tooltip(loginTimerDisplay);
+        }
+      }
+    }
+
+    // Update immediately and then every second
+    updateTimer();
+    setInterval(updateTimer, 1000);
+
+    // Add click handler to reset the timer
+    if (loginTimerDisplay) {
+      loginTimerDisplay.addEventListener('click', function() {
+        // Reset the login time to current time
+        const newLoginTime = new Date().getTime();
+        localStorage.setItem('loginTime', newLoginTime);
+
+        // Show a brief message
+        const originalText = loginTimerValue.textContent;
+        loginTimerValue.textContent = 'Reset!';
+
+        // Restore the timer after a brief delay
+        setTimeout(() => {
+          updateTimer();
+        }, 1000);
+      });
+    }
+  }
+
+  // Initialize the login timer
+  startLoginTimer();
+
+  // Handle logout - clear login time when user logs out
+  const logoutLinks = document.querySelectorAll('a[href="/auth/logout"]');
+  if (logoutLinks.length > 0) {
+    logoutLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        // Clear the login time from localStorage
+        localStorage.removeItem('loginTime');
+      });
+    });
+  }
+
+  // Internet Speed Measurement
+  const internetSpeedValue = document.getElementById('internetSpeedValue');
+
+  // Function to measure internet speed
+  function measureInternetSpeed() {
+    // Check if Network Information API is available
+    if (navigator.connection && navigator.connection.downlink) {
+      // Use Network Information API
+      const speedMbps = navigator.connection.downlink;
+      updateSpeedDisplay(speedMbps);
+
+      // Listen for connection changes
+      navigator.connection.addEventListener('change', function() {
+        updateSpeedDisplay(navigator.connection.downlink);
+      });
+
+      // Even with Network Information API, periodically measure actual speed
+      // as the API sometimes provides theoretical values rather than actual speed
+      setInterval(measureSpeedByDownload, 10000); // Check every 10 seconds
+    } else {
+      // Fallback method - download a test file and measure time
+      measureSpeedByDownload();
+
+      // Update speed more frequently (every 10 seconds) for real-time display
+      setInterval(measureSpeedByDownload, 10000);
+    }
+  }
+
+  // Function to measure speed by downloading a test file
+  function measureSpeedByDownload() {
+    // Use a timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    const startTime = performance.now(); // More precise timing
+
+    // Use multiple test files of different sizes for more accurate measurement
+    const testFiles = [
+      { url: '/images/pattern.png', size: 2.217 }, // 2.217 KB
+      { url: '/images/pattern.svg', size: 0.628 }  // 0.628 KB
+    ];
+
+    // Randomly select a test file to prevent caching patterns
+    const testFile = testFiles[Math.floor(Math.random() * testFiles.length)];
+    const url = testFile.url;
+    const downloadSize = testFile.size; // Size in KB
+
+    // Show measuring indicator
+    if (internetSpeedValue) {
+      internetSpeedValue.textContent = 'Measuring...';
+    }
+
+    fetch(url + '?t=' + timestamp, {
+      cache: 'no-store',
+      mode: 'no-cors',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
+      .then(response => response.blob())
+      .then(data => {
+        const endTime = performance.now(); // More precise timing
+        const duration = (endTime - startTime) / 1000; // seconds
+        const bitsLoaded = downloadSize * 8 * 1024; // convert KB to bits
+        const speedBps = bitsLoaded / duration;
+        const speedKbps = speedBps / 1024;
+        const speedMbps = speedKbps / 1024;
+
+        // Store the last few measurements for smoothing
+        if (!window.speedMeasurements) {
+          window.speedMeasurements = [];
+        }
+
+        // Keep only the last 3 measurements
+        window.speedMeasurements.push(speedMbps);
+        if (window.speedMeasurements.length > 3) {
+          window.speedMeasurements.shift();
+        }
+
+        // Calculate average speed from the last few measurements
+        const avgSpeed = window.speedMeasurements.reduce((sum, speed) => sum + speed, 0) /
+                        window.speedMeasurements.length;
+
+        updateSpeedDisplay(avgSpeed);
+      })
+      .catch(error => {
+        console.error('Error measuring download speed:', error);
+        if (internetSpeedValue) {
+          internetSpeedValue.textContent = 'Offline';
+          internetSpeedValue.parentElement.classList.remove('speed-slow', 'speed-medium', 'speed-fast');
+        }
+      });
+  }
+
+  // Function to update the speed display
+  function updateSpeedDisplay(speedMbps) {
+    if (!internetSpeedValue) return;
+
+    // Remove existing speed classes
+    internetSpeedValue.parentElement.classList.remove('speed-slow', 'speed-medium', 'speed-fast');
+
+    // Format the speed and add appropriate class
+    if (speedMbps < 0.1) {
+      // Very slow connection
+      internetSpeedValue.textContent = (speedMbps * 1000).toFixed(0) + ' Kbps';
+      internetSpeedValue.parentElement.classList.add('speed-slow');
+      internetSpeedValue.parentElement.querySelector('i').className = 'bi bi-speedometer2 me-1';
+    } else if (speedMbps < 1) {
+      // Slow connection
+      internetSpeedValue.textContent = (speedMbps * 1000).toFixed(0) + ' Kbps';
+      internetSpeedValue.parentElement.classList.add('speed-slow');
+      internetSpeedValue.parentElement.querySelector('i').className = 'bi bi-speedometer me-1';
+    } else if (speedMbps < 5) {
+      // Medium connection
+      internetSpeedValue.textContent = speedMbps.toFixed(1) + ' Mbps';
+      internetSpeedValue.parentElement.classList.add('speed-medium');
+      internetSpeedValue.parentElement.querySelector('i').className = 'bi bi-speedometer2 me-1';
+    } else if (speedMbps < 20) {
+      // Fast connection
+      internetSpeedValue.textContent = speedMbps.toFixed(1) + ' Mbps';
+      internetSpeedValue.parentElement.classList.add('speed-fast');
+      internetSpeedValue.parentElement.querySelector('i').className = 'bi bi-speedometer2 me-1';
+    } else {
+      // Very fast connection
+      internetSpeedValue.textContent = speedMbps.toFixed(1) + ' Mbps';
+      internetSpeedValue.parentElement.classList.add('speed-fast');
+      internetSpeedValue.parentElement.querySelector('i').className = 'bi bi-speedometer me-1';
+    }
+
+    // Add a tooltip with connection quality description
+    let connectionQuality = '';
+    if (speedMbps < 1) {
+      connectionQuality = 'Slow connection - Basic browsing only';
+    } else if (speedMbps < 5) {
+      connectionQuality = 'Medium connection - Good for standard streaming';
+    } else if (speedMbps < 20) {
+      connectionQuality = 'Fast connection - Good for HD streaming';
+    } else {
+      connectionQuality = 'Very fast connection - Excellent for all activities';
+    }
+
+    // Update tooltip if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+      if (!internetSpeedValue.parentElement._tooltip) {
+        internetSpeedValue.parentElement.setAttribute('data-bs-toggle', 'tooltip');
+        internetSpeedValue.parentElement.setAttribute('data-bs-placement', 'bottom');
+        internetSpeedValue.parentElement.setAttribute('title', connectionQuality);
+        internetSpeedValue.parentElement._tooltip = new bootstrap.Tooltip(internetSpeedValue.parentElement);
+      } else {
+        internetSpeedValue.parentElement.setAttribute('data-bs-original-title', connectionQuality);
+        internetSpeedValue.parentElement._tooltip.update();
+      }
+    }
+  }
+
+  // Initialize speed measurement if the display element exists
+  if (internetSpeedValue) {
+    // Add click handler to run a new speed test on demand
+    internetSpeedValue.parentElement.addEventListener('click', function() {
+      // Show measuring indicator
+      internetSpeedValue.textContent = 'Testing...';
+
+      // Clear previous measurements to get a fresh reading
+      window.speedMeasurements = [];
+
+      // Run a new speed test
+      measureSpeedByDownload();
+    });
+
+    // Start the automatic speed measurement
+    measureInternetSpeed();
+  }
+
   // Theme toggle functionality
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   const body = document.body;
