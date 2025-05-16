@@ -164,7 +164,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
 console.log(`BASE_URL: ${process.env.BASE_URL}`);
 
-// Configure session options
+// Configure session options based on environment
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || 'rapira-secret-key',
   resave: false,
@@ -175,19 +175,48 @@ const sessionOptions = {
     touchAfter: 24 * 3600, // Only update the session once per 24 hours unless data changes
     autoRemove: 'native', // Use MongoDB's TTL collection feature
     stringify: true, // Better compatibility
-    collectionName: 'sessions' // Use a specific collection name
+    collectionName: 'sessions', // Use a specific collection name
+    autoReconnect: true, // Automatically reconnect to MongoDB if connection is lost
+    mongoOptions: {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000, // Timeout for server selection
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    }
   }),
   cookie: {
     maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
-    httpOnly: true,
-    // In development, secure should be false for HTTP
-    secure: isProduction,
-    sameSite: 'lax' // Helps with CSRF protection while allowing normal links
+    httpOnly: true
   }
 };
 
-// In production, set the cookie domain if needed
+// Set environment-specific cookie options
 if (isProduction) {
+  console.log('Using PRODUCTION session settings');
+  // Production cookie settings
+  sessionOptions.cookie.secure = process.env.PROD_SESSION_COOKIE_SECURE === 'true';
+  sessionOptions.cookie.sameSite = process.env.PROD_SESSION_COOKIE_SAMESITE || 'none';
+
+  // Set domain if provided
+  if (process.env.PROD_SESSION_COOKIE_DOMAIN) {
+    sessionOptions.cookie.domain = process.env.PROD_SESSION_COOKIE_DOMAIN;
+  }
+} else {
+  console.log('Using DEVELOPMENT session settings');
+  // Development cookie settings
+  sessionOptions.cookie.secure = process.env.DEV_SESSION_COOKIE_SECURE === 'true';
+  sessionOptions.cookie.sameSite = process.env.DEV_SESSION_COOKIE_SAMESITE || 'lax';
+
+  // Don't set domain for localhost (causes issues)
+  // Only set if explicitly configured
+  if (process.env.DEV_SESSION_COOKIE_DOMAIN &&
+      process.env.DEV_SESSION_COOKIE_DOMAIN !== 'localhost') {
+    sessionOptions.cookie.domain = process.env.DEV_SESSION_COOKIE_DOMAIN;
+  }
+}
+
+// If no domain is set yet, try to extract it from BASE_URL
+if (!sessionOptions.cookie.domain) {
   const baseUrl = process.env.BASE_URL || '';
   try {
     // Extract domain from BASE_URL if it exists
@@ -195,7 +224,7 @@ if (isProduction) {
       const url = new URL(baseUrl);
       // Only set domain for non-localhost domains
       if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
-        console.log(`Setting cookie domain to: ${url.hostname}`);
+        console.log(`Setting cookie domain from BASE_URL to: ${url.hostname}`);
         sessionOptions.cookie.domain = url.hostname;
       }
     }
@@ -207,10 +236,33 @@ if (isProduction) {
 // Log session configuration for debugging
 console.log('Session configuration:', {
   mode: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-  secure: sessionOptions.cookie.secure,
-  sameSite: sessionOptions.cookie.sameSite,
-  domain: sessionOptions.cookie.domain || 'not set',
-  baseUrl: process.env.BASE_URL || 'not set'
+  cookie: {
+    secure: sessionOptions.cookie.secure,
+    sameSite: sessionOptions.cookie.sameSite,
+    domain: sessionOptions.cookie.domain || 'not set',
+    maxAge: sessionOptions.cookie.maxAge / (1000 * 60 * 60 * 24) + ' days',
+    httpOnly: sessionOptions.cookie.httpOnly
+  },
+  session: {
+    secret: sessionOptions.secret ? 'configured' : 'missing',
+    resave: sessionOptions.resave,
+    saveUninitialized: sessionOptions.saveUninitialized
+  },
+  mongoStore: {
+    url: process.env.MONGODB_URI ? 'configured' : 'missing',
+    ttl: sessionOptions.store.options.ttl / (60 * 60 * 24) + ' days',
+    collection: sessionOptions.store.options.collectionName
+  },
+  environment: {
+    baseUrl: process.env.BASE_URL || 'not set',
+    nodeEnv: process.env.NODE_ENV || 'not set',
+    prodCookieSecure: process.env.PROD_SESSION_COOKIE_SECURE || 'not set',
+    prodCookieSameSite: process.env.PROD_SESSION_COOKIE_SAMESITE || 'not set',
+    prodCookieDomain: process.env.PROD_SESSION_COOKIE_DOMAIN || 'not set',
+    devCookieSecure: process.env.DEV_SESSION_COOKIE_SECURE || 'not set',
+    devCookieSameSite: process.env.DEV_SESSION_COOKIE_SAMESITE || 'not set',
+    devCookieDomain: process.env.DEV_SESSION_COOKIE_DOMAIN || 'not set'
+  }
 });
 
 app.use(session(sessionOptions));

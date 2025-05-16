@@ -4,9 +4,25 @@ const Artist = require('../models/Artist');
 module.exports = {
   // Check if user is logged in
   isLoggedIn: (req, res, next) => {
-    if (req.session.user) {
+    // Check if session exists and has user data
+    if (req.session && req.session.user) {
+      // Log session info for debugging
+      console.log('Session check - User is logged in:', {
+        email: req.session.user.email,
+        role: req.session.user.role,
+        sessionID: req.session.id,
+        cookieMaxAge: req.session.cookie.maxAge
+      });
       return next();
     }
+
+    // Log failed session check
+    console.log('Session check failed - No valid session:', {
+      sessionExists: !!req.session,
+      hasUser: req.session && !!req.session.user,
+      sessionID: req.session ? req.session.id : 'none'
+    });
+
     req.flash('error', 'You must be logged in to access this page');
     res.redirect('/auth/login');
   },
@@ -40,9 +56,24 @@ module.exports = {
 
   // Check if user is not logged in (for login/register pages)
   isNotLoggedIn: (req, res, next) => {
-    if (!req.session.user) {
+    // Check if session exists and has user data
+    if (!req.session || !req.session.user) {
+      // Log session info for debugging
+      console.log('Not logged in check - User is not logged in:', {
+        sessionExists: !!req.session,
+        sessionID: req.session ? req.session.id : 'none'
+      });
       return next();
     }
+
+    // Log session info for already logged in users
+    console.log('Not logged in check - User is already logged in:', {
+      email: req.session.user.email,
+      role: req.session.user.role,
+      sessionID: req.session.id
+    });
+
+    // If user is already logged in, redirect to home
     res.redirect('/');
   },
 

@@ -5,6 +5,76 @@ const Artist = require('../models/Artist');
 const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/brevoEmailService');
 
+// Session health check route (for debugging)
+router.get('/session-check', (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Get MongoDB connection status
+  const mongoStatus = {
+    readyState: require('mongoose').connection.readyState,
+    readyStateText: ['disconnected', 'connected', 'connecting', 'disconnecting'][require('mongoose').connection.readyState] || 'unknown'
+  };
+
+  const sessionInfo = {
+    sessionExists: !!req.session,
+    sessionID: req.session ? req.session.id : 'none',
+    isLoggedIn: req.session && !!req.session.user,
+    cookie: req.session ? {
+      maxAge: req.session.cookie.maxAge,
+      expiresIn: req.session.cookie.maxAge ? Math.floor(req.session.cookie.maxAge / 1000 / 60) + ' minutes' : 'not set',
+      expires: req.session.cookie.expires,
+      secure: req.session.cookie.secure,
+      httpOnly: req.session.cookie.httpOnly,
+      domain: req.session.cookie.domain || 'not set',
+      sameSite: req.session.cookie.sameSite,
+      path: req.session.cookie.path || '/'
+    } : 'no cookie',
+    user: req.session && req.session.user ? {
+      id: req.session.user.id,
+      name: req.session.user.name,
+      email: req.session.user.email,
+      role: req.session.user.role,
+      loginTime: req.session.user.loginTime || 'unknown'
+    } : 'not logged in',
+    environment: {
+      nodeEnv: process.env.NODE_ENV || 'not set',
+      baseUrl: process.env.BASE_URL || 'not set',
+      productionUrl: process.env.PRODUCTION_URL || 'not set',
+      // Production settings
+      prodCookieSecure: process.env.PROD_SESSION_COOKIE_SECURE || 'not set',
+      prodCookieSameSite: process.env.PROD_SESSION_COOKIE_SAMESITE || 'not set',
+      prodCookieDomain: process.env.PROD_SESSION_COOKIE_DOMAIN || 'not set',
+      // Development settings
+      devCookieSecure: process.env.DEV_SESSION_COOKIE_SECURE || 'not set',
+      devCookieSameSite: process.env.DEV_SESSION_COOKIE_SAMESITE || 'not set',
+      devCookieDomain: process.env.DEV_SESSION_COOKIE_DOMAIN || 'not set'
+    },
+    headers: {
+      host: req.headers.host,
+      userAgent: req.headers['user-agent'],
+      referer: req.headers.referer || 'none',
+      cookie: req.headers.cookie ? 'present' : 'not present'
+    },
+    mongodb: mongoStatus,
+    server: {
+      time: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()) + ' seconds'
+    }
+  };
+
+  // Add a test cookie to check if cookies are working
+  res.cookie('test_cookie', 'working', {
+    maxAge: 60000, // 1 minute
+    httpOnly: false // Allow JavaScript to read it
+  });
+
+  res.render('auth/session-check', {
+    sessionInfo: JSON.stringify(sessionInfo, null, 2),
+    isProduction,
+    mongoStatus
+  });
+});
+
 // Login page
 router.get('/login', isNotLoggedIn, (req, res) => {
   res.render('auth/login');
@@ -35,30 +105,81 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       return res.redirect('/auth/login');
     }
 
-    // Create session
+    // Create session with more user data
     req.session.user = {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      profileImage: user.profileImage
+      profileImage: user.profileImage,
+      loginTime: new Date().toISOString()
     };
 
-    // Save the session before redirecting to ensure it's stored
-    req.session.save(err => {
+    // Set a flag to indicate this is a fresh login
+    req.session.freshLogin = true;
+
+    // For development environment, use a simpler approach to avoid issues
+    if (process.env.NODE_ENV !== 'production') {
+      // Save the session directly without regeneration (works better in development)
+      req.session.save(err => {
+        if (err) {
+          console.error('Session save error (development):', err);
+          req.flash('error', 'Login failed - could not save session');
+          return res.redirect('/auth/login');
+        }
+
+        // Log successful login for debugging
+        console.log(`User logged in successfully (development): ${user.email} (${user.role})`);
+        console.log('Session ID:', req.session.id);
+        console.log('Session cookie settings:', JSON.stringify(req.session.cookie));
+        console.log('User in session:', req.session.user ? 'Yes' : 'No');
+
+        req.flash('success', 'You are now logged in');
+        return res.redirect('/');
+      });
+      return; // Exit early for development environment
+    }
+
+    // For production, regenerate the session to prevent session fixation attacks
+    req.session.regenerate(function(err) {
       if (err) {
-        console.error('Session save error:', err);
-        req.flash('error', 'Login failed');
+        console.error('Session regeneration error (production):', err);
+        req.flash('error', 'Login failed - session error');
         return res.redirect('/auth/login');
       }
 
-      // Log successful login for debugging
-      console.log(`User logged in successfully: ${user.email} (${user.role})`);
-      console.log('Session ID:', req.session.id);
-      console.log('Session cookie settings:', req.session.cookie);
+      // Re-add the user data to the new session
+      req.session.user = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        loginTime: new Date().toISOString()
+      };
 
-      req.flash('success', 'You are now logged in');
-      res.redirect('/');
+      // Save the session before redirecting to ensure it's stored
+      req.session.save(err => {
+        if (err) {
+          console.error('Session save error:', err);
+          console.error('Session details:', {
+            id: req.session.id,
+            cookie: req.session.cookie,
+            user: req.session.user ? 'exists' : 'missing'
+          });
+          req.flash('error', 'Login failed - could not save session');
+          return res.redirect('/auth/login');
+        }
+
+        // Log successful login for debugging
+        console.log(`User logged in successfully: ${user.email} (${user.role})`);
+        console.log('Session ID:', req.session.id);
+        console.log('Session cookie settings:', JSON.stringify(req.session.cookie));
+        console.log('User in session:', req.session.user ? 'Yes' : 'No');
+
+        req.flash('success', 'You are now logged in');
+        res.redirect('/');
+      });
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -142,14 +263,68 @@ router.post('/register', isNotLoggedIn, async (req, res) => {
 });
 
 // Logout
-router.get('/logout', isLoggedIn, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-      return res.redirect('/');
+router.get('/logout', (req, res) => {
+  // Get the user info for logging
+  const userEmail = req.session && req.session.user ? req.session.user.email : 'unknown';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Log the logout attempt
+  console.log(`Logout attempt for user ${userEmail} in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+
+  // Different logout strategies for development and production
+  if (!isProduction) {
+    // Development: simpler approach
+    if (req.session) {
+      // Destroy the session
+      req.session.destroy((err) => {
+        if (err) {
+          console.error(`Logout error for user ${userEmail} (development):`, err);
+        } else {
+          console.log(`User logged out successfully (development): ${userEmail}`);
+        }
+
+        // Clear the session cookie
+        res.clearCookie('connect.sid');
+
+        // Redirect to login page
+        res.redirect('/auth/login');
+      });
+    } else {
+      console.log('No session found during logout (development)');
+      res.redirect('/auth/login');
     }
-    res.redirect('/auth/login');
-  });
+  } else {
+    // Production: more thorough approach
+    if (req.session) {
+      // First clear the user property
+      req.session.user = null;
+
+      // Then regenerate the session to ensure complete cleanup
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error(`Logout error for user ${userEmail} (production):`, err);
+          return res.redirect('/');
+        }
+
+        console.log(`User logged out successfully (production): ${userEmail}`);
+
+        // Clear any cookies
+        res.clearCookie('connect.sid');
+        if (process.env.PROD_SESSION_COOKIE_DOMAIN) {
+          res.clearCookie('connect.sid', {
+            domain: process.env.PROD_SESSION_COOKIE_DOMAIN,
+            path: '/'
+          });
+        }
+
+        // Redirect to login page
+        res.redirect('/auth/login');
+      });
+    } else {
+      console.log('No session found during logout (production)');
+      res.redirect('/auth/login');
+    }
+  }
 });
 
 // Forgot password page

@@ -1,0 +1,175 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card glass-card-dark border-gradient">
+        <div class="border-gradient-content">
+          <div class="card-header bg-transparent border-0">
+            <h2 class="card-title fw-bold mb-0 gradient-text-purple">Session Health Check</h2>
+          </div>
+          <div class="card-body">
+            <div class="alert <%= isProduction ? 'alert-warning' : 'alert-info' %> mb-4">
+              <h5 class="alert-heading">
+                <i class="bi <%= isProduction ? 'bi-exclamation-triangle' : 'bi-info-circle' %> me-2"></i>
+                <%= isProduction ? 'Production Environment' : 'Development Environment' %>
+              </h5>
+              <p class="mb-0">
+                <%= isProduction ?
+                  'This is a production environment. Session information is displayed for debugging purposes only.' :
+                  'This is a development environment. Session information is displayed for debugging purposes.' %>
+              </p>
+            </div>
+
+            <h5 class="fw-bold mb-3 gradient-text-blue">MongoDB Status</h5>
+            <div class="glass-card-dark p-3 rounded-3 mb-4">
+              <div class="d-flex align-items-center">
+                <div class="me-3">
+                  <span class="badge <%= mongoStatus.readyState === 1 ? 'bg-success' : 'bg-danger' %> p-2">
+                    <i class="bi <%= mongoStatus.readyState === 1 ? 'bi-database-check' : 'bi-database-x' %>"></i>
+                  </span>
+                </div>
+                <div>
+                  <h6 class="mb-0 gradient-text">Status: <%= mongoStatus.readyStateText %></h6>
+                  <small class="text-muted">Ready State: <%= mongoStatus.readyState %></small>
+                </div>
+              </div>
+            </div>
+
+            <h5 class="fw-bold mb-3 gradient-text-blue">Session Information</h5>
+            <div class="glass-card-dark p-3 rounded-3 mb-4">
+              <pre class="mb-0 text-white" style="white-space: pre-wrap;"><%= sessionInfo %></pre>
+            </div>
+
+            <h5 class="fw-bold mb-3 gradient-text-blue">Test Cookie Status</h5>
+            <div class="glass-card-dark p-3 rounded-3 mb-4">
+              <div id="cookieTestResult">Checking cookie status...</div>
+            </div>
+
+            <h5 class="fw-bold mb-3 gradient-text-orange">Session Actions</h5>
+            <div class="d-flex flex-wrap gap-2 mb-4">
+              <a href="/auth/login" class="btn btn-outline-primary">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Login Page
+              </a>
+              <a href="/auth/logout" class="btn btn-outline-danger">
+                <i class="bi bi-box-arrow-left me-1"></i> Logout
+              </a>
+              <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-1"></i> Home
+              </a>
+              <button class="btn btn-outline-warning" id="clearCookiesBtn">
+                <i class="bi bi-trash me-1"></i> Clear Cookies
+              </button>
+            </div>
+
+            <div id="cookieInfo" class="glass-card-dark p-3 rounded-3 mb-4 d-none">
+              <h6 class="fw-bold mb-2 gradient-text">Cookies</h6>
+              <pre class="mb-0 text-white" style="white-space: pre-wrap;" id="cookieList">Loading cookies...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Check if test cookie is working
+    const cookieTestResult = document.getElementById('cookieTestResult');
+
+    function checkCookies() {
+      const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+      const cookieObj = {};
+
+      cookies.forEach(cookie => {
+        const parts = cookie.split('=');
+        if (parts.length === 2) {
+          cookieObj[parts[0]] = parts[1];
+        }
+      });
+
+      if (cookieObj['test_cookie'] === 'working') {
+        cookieTestResult.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <span class="badge bg-success p-2">
+                <i class="bi bi-check-circle-fill"></i>
+              </span>
+            </div>
+            <div>
+              <h6 class="mb-0 gradient-text">Cookies are working correctly</h6>
+              <small class="text-muted">Test cookie was successfully set and read</small>
+            </div>
+          </div>
+        `;
+      } else {
+        cookieTestResult.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <span class="badge bg-danger p-2">
+                <i class="bi bi-x-circle-fill"></i>
+              </span>
+            </div>
+            <div>
+              <h6 class="mb-0 gradient-text-orange">Cookie test failed</h6>
+              <small class="text-muted">Test cookie could not be set or read. This may indicate a problem with sessions.</small>
+            </div>
+          </div>
+        `;
+      }
+
+      return cookieObj;
+    }
+
+    // Check cookies immediately
+    const cookieObj = checkCookies();
+
+    // Show cookies button
+    const showCookiesBtn = document.createElement('button');
+    showCookiesBtn.className = 'btn btn-outline-info';
+    showCookiesBtn.innerHTML = '<i class="bi bi-cookie me-1"></i> Show Cookies';
+    showCookiesBtn.addEventListener('click', function() {
+      const cookieInfo = document.getElementById('cookieInfo');
+      cookieInfo.classList.toggle('d-none');
+
+      if (!cookieInfo.classList.contains('d-none')) {
+        const cookieList = document.getElementById('cookieList');
+        const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+
+        if (cookies.length === 0 || (cookies.length === 1 && cookies[0] === '')) {
+          cookieList.textContent = 'No cookies found';
+        } else {
+          cookieList.textContent = JSON.stringify(checkCookies(), null, 2);
+        }
+      }
+    });
+
+    document.querySelector('.d-flex.flex-wrap.gap-2').appendChild(showCookiesBtn);
+
+    // Add session test button
+    const testSessionBtn = document.createElement('button');
+    testSessionBtn.className = 'btn btn-outline-primary';
+    testSessionBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Test Session';
+    testSessionBtn.addEventListener('click', function() {
+      // Add a timestamp to force a new request
+      window.location.href = '/auth/session-check?t=' + new Date().getTime();
+    });
+
+    document.querySelector('.d-flex.flex-wrap.gap-2').appendChild(testSessionBtn);
+
+    // Clear cookies button
+    const clearCookiesBtn = document.getElementById('clearCookiesBtn');
+    clearCookiesBtn.addEventListener('click', function() {
+      const cookies = document.cookie.split(';');
+
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      }
+
+      alert('All cookies have been cleared. The page will now reload.');
+      window.location.reload();
+    });
+  });
+</script>
