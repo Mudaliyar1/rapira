@@ -1,0 +1,266 @@
+<div class="container-fluid">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Session Management</h1>
+  </div>
+
+  <div class="row">
+    <!-- Session Stats Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Active Sessions</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800"><%= totalSessions %></div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-users fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Session Management Actions -->
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Session Management Actions</h6>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <strong>Warning:</strong> Clearing sessions will log out all users and require them to log in again.
+            Your admin session will be preserved.
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="card bg-light mb-3">
+                <div class="card-header">Clear All Sessions</div>
+                <div class="card-body">
+                  <p class="card-text">This will clear all user sessions except your current admin session.</p>
+                  <form action="/admin/sessions/clear-all" method="POST">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to clear ALL user sessions? This will log out all users.')">
+                      <i class="fas fa-trash mr-1"></i> Clear All Sessions
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card bg-light mb-3">
+                <div class="card-header">Clear Expired Sessions</div>
+                <div class="card-body">
+                  <p class="card-text">This will only clear sessions that have already expired.</p>
+                  <form action="/admin/sessions/clear-expired" method="POST">
+                    <button type="submit" class="btn btn-warning">
+                      <i class="fas fa-broom mr-1"></i> Clear Expired Sessions
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card bg-light">
+            <div class="card-header">Clear Sessions by User Role</div>
+            <div class="card-body">
+              <p class="card-text">Clear all sessions for users with a specific role.</p>
+              <form action="/admin/sessions/clear-by-role" method="POST">
+                <div class="form-group">
+                  <select class="form-control" name="role" required>
+                    <option value="">Select a role...</option>
+                    <option value="user">Regular Users</option>
+                    <option value="artist">Artists</option>
+                    <option value="admin">Admins (except you)</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-info" onclick="return confirm('Are you sure you want to clear sessions for this role?')">
+                  <i class="fas fa-user-slash mr-1"></i> Clear Sessions by Role
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cookie Management -->
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">Cookie Management</h6>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Note:</strong> These actions affect how cookies work for all users.
+          </div>
+
+          <div class="card bg-light mb-4">
+            <div class="card-header">Force Cookie Refresh</div>
+            <div class="card-body">
+              <p class="card-text">This will change the cookie settings to force all users to get new cookies on their next visit.</p>
+              <button id="refreshCookieBtn" class="btn btn-primary">
+                <i class="fas fa-sync mr-1"></i> Force Cookie Refresh
+              </button>
+              <div id="cookieRefreshResult" class="mt-3 d-none alert alert-success"></div>
+            </div>
+          </div>
+
+          <div class="card bg-light">
+            <div class="card-header">Current Cookie Settings</div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <tbody>
+                    <tr>
+                      <th>Environment</th>
+                      <td><%= process.env.NODE_ENV || 'development' %></td>
+                    </tr>
+                    <tr>
+                      <th>Cookie Secure</th>
+                      <td>
+                        <% if (process.env.NODE_ENV === 'production') { %>
+                          <%= process.env.PROD_SESSION_COOKIE_SECURE || 'false' %>
+                        <% } else { %>
+                          <%= process.env.DEV_SESSION_COOKIE_SECURE || 'false' %>
+                        <% } %>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Cookie SameSite</th>
+                      <td>
+                        <% if (process.env.NODE_ENV === 'production') { %>
+                          <%= process.env.PROD_SESSION_COOKIE_SAMESITE || 'lax' %>
+                        <% } else { %>
+                          <%= process.env.DEV_SESSION_COOKIE_SAMESITE || 'lax' %>
+                        <% } %>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Cookie Domain</th>
+                      <td>
+                        <% if (process.env.NODE_ENV === 'production') { %>
+                          <%= process.env.PROD_SESSION_COOKIE_DOMAIN || 'not set' %>
+                        <% } else { %>
+                          <%= process.env.DEV_SESSION_COOKIE_DOMAIN || 'not set' %>
+                        <% } %>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Sessions Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Recent Sessions</h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered" id="sessionsTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th>Expires</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (sessions && sessions.length > 0) { %>
+              <% sessions.forEach(session => { %>
+                <tr>
+                  <td>
+                    <code class="small"><%= session.id.substring(0, 10) %>...</code>
+                    <% if (session.error) { %>
+                      <span class="badge bg-warning text-dark" title="<%= session.error %>">Error</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (session.user && session.user.name) { %>
+                      <%= session.user.name %>
+                      <% if (session.user.email) { %>
+                        <small class="text-muted">(<%= session.user.email %>)</small>
+                      <% } %>
+                    <% } else if (session.error) { %>
+                      <span class="text-danger">Error parsing session</span>
+                    <% } else { %>
+                      <span class="text-muted">Anonymous</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (session.user && session.user.role) { %>
+                      <span class="badge bg-<%= session.user.role === 'admin' ? 'danger' : (session.user.role === 'artist' ? 'primary' : 'secondary') %>">
+                        <%= session.user.role %>
+                      </span>
+                    <% } else { %>
+                      <span class="text-muted">N/A</span>
+                    <% } %>
+                  </td>
+                  <td><%= session.created %></td>
+                  <td><%= session.expires %></td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="text-center">No sessions found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable with error handling
+    try {
+      $('#sessionsTable').DataTable({
+        order: [[3, 'desc']], // Sort by created date by default (newest first)
+        language: {
+          emptyTable: "No sessions found",
+          zeroRecords: "No matching sessions found"
+        }
+      });
+    } catch (error) {
+      console.error('Error initializing DataTable:', error);
+    }
+
+    // Handle cookie refresh button
+    const refreshCookieBtn = document.getElementById('refreshCookieBtn');
+    const cookieRefreshResult = document.getElementById('cookieRefreshResult');
+
+    if (refreshCookieBtn) {
+      refreshCookieBtn.addEventListener('click', function() {
+        // Generate a random cookie secret
+        const newSecret = Math.random().toString(36).substring(2, 15) +
+                         Math.random().toString(36).substring(2, 15);
+
+        // Show success message with instructions
+        cookieRefreshResult.innerHTML = `
+          <p><strong>Cookie refresh initiated!</strong></p>
+          <p>To complete this action, you need to update your .env file with a new SESSION_SECRET:</p>
+          <pre>SESSION_SECRET=${newSecret}</pre>
+          <p>After updating, restart your server to apply the changes.</p>
+        `;
+        cookieRefreshResult.classList.remove('d-none');
+      });
+    }
+  });
+</script>

@@ -419,6 +419,7 @@ const refundRequestRoutes = require('./routes/refundRequests');
 const { router: notificationRoutes } = require('./routes/notifications');
 const subscriptionRoutes = require('./routes/subscriptions');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
+const adminSessionRoutes = require('./routes/adminSessions');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
@@ -481,6 +482,9 @@ app.use('/admin/refund-requests', refundRequestRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/users/subscriptions', (req, res) => res.redirect('/subscriptions/my-subscriptions'));
 app.use('/admin/subscriptions', adminSubscriptionRoutes);
+
+// Mount session management routes
+app.use('/admin/sessions', adminSessionRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');
