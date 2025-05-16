@@ -475,6 +475,111 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
   }
 });
 
+// Ticket management page
+router.get('/manage-tickets', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id })
+      .populate('user');
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    // Get artist's concerts
+    const concerts = await Concert.find({ artist: artist._id });
+
+    // Get all tickets for the artist's concerts
+    const Ticket = require('../models/Ticket');
+    const tickets = await Ticket.find({
+      concert: { $in: concerts.map(c => c._id) },
+      paymentStatus: 'completed'
+    })
+      .populate('concert')
+      .populate('user', 'name email')
+      .sort({ purchaseDate: -1 });
+
+    res.render('artists/manage-tickets', {
+      layout: false,
+      currentPath: '/artists/manage-tickets',
+      title: 'Manage Tickets',
+      artist,
+      tickets,
+      concerts
+    });
+  } catch (error) {
+    console.error('Manage tickets page error:', error);
+    req.flash('error', 'Failed to load ticket management page');
+    res.redirect('/artists/dashboard');
+  }
+});
+
+// Delete ticket confirmation page
+router.get('/tickets/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const Ticket = require('../models/Ticket');
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('concert')
+      .populate('user', 'name email');
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    // Check if the artist owns the concert associated with this ticket
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist || !ticket.concert || ticket.concert.artist.toString() !== artist._id.toString()) {
+      req.flash('error', 'You do not have permission to delete this ticket');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    res.render('artists/delete-ticket', {
+      layout: false,
+      currentPath: '/artists/tickets/delete',
+      title: 'Delete Ticket Confirmation',
+      artist,
+      ticket
+    });
+  } catch (error) {
+    console.error('Delete ticket confirmation page error:', error);
+    req.flash('error', 'Failed to load delete confirmation page');
+    res.redirect('/artists/manage-tickets');
+  }
+});
+
+// Process ticket deletion
+router.post('/tickets/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const Ticket = require('../models/Ticket');
+    const ticket = await Ticket.findById(req.params.id).populate('concert');
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    // Check if the artist owns the concert associated with this ticket
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist || !ticket.concert || ticket.concert.artist.toString() !== artist._id.toString()) {
+      req.flash('error', 'You do not have permission to delete this ticket');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    // Delete the ticket
+    await Ticket.findByIdAndDelete(req.params.id);
+
+    req.flash('success', 'Ticket deleted successfully');
+    res.redirect('/artists/manage-tickets');
+  } catch (error) {
+    console.error('Delete ticket error:', error);
+    req.flash('error', 'Failed to delete ticket');
+    res.redirect('/artists/manage-tickets');
+  }
+});
+
 // Delete content confirmation page
 router.get('/content/:id/delete', isLoggedIn, isArtist, async (req, res) => {
   try {

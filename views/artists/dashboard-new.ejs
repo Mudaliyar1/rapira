@@ -68,19 +68,25 @@
           Learning Modules
         </a>
       </div>
-      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
         <a href="/artists/manage-concerts" class="btn btn-success w-100 py-3">
           <i class="bi bi-calendar-event fs-4 d-block mb-2"></i>
           Manage Concerts
         </a>
       </div>
-      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
+        <a href="/artists/manage-tickets" class="btn btn-danger w-100 py-3 text-white">
+          <i class="bi bi-ticket-perforated fs-4 d-block mb-2"></i>
+          Manage Tickets
+        </a>
+      </div>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
         <a href="/artists/edit-profile" class="btn btn-primary w-100 py-3 text-white">
           <i class="bi bi-pencil-square fs-4 d-block mb-2"></i>
           Edit Profile
         </a>
       </div>
-      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '4' %>">
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
         <a href="/messages/find" class="btn btn-warning w-100 py-3 text-white">
           <i class="bi bi-people fs-4 d-block mb-2"></i>
           Connect with Others

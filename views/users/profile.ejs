@@ -189,12 +189,11 @@
                     </tr>
                   <% }); %>
                 <% } else { %>
-                  <!-- Tickets will be loaded via AJAX -->
+                  <!-- No tickets message -->
                   <tr>
                     <td colspan="6" class="text-center py-4">
-                      <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
+                      <p class="mb-0 text-dark">You haven't booked any tickets yet.</p>
+                      <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
                     </td>
                   </tr>
                 <% } %>
@@ -245,12 +244,11 @@
                       </tr>
                     <% }); %>
                   <% } else { %>
-                    <!-- Concerts will be loaded via AJAX -->
+                    <!-- No concerts message -->
                     <tr>
                       <td colspan="5" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                        </div>
+                        <p class="mb-0 text-dark">You haven't created any concerts yet.</p>
+                        <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
                       </td>
                     </tr>
                   <% } %>
@@ -313,59 +311,9 @@
       `;
     }
 
-    // Fetch tickets data
-    fetch('/tickets?format=json', {
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-      .then(response => {
-        console.log('Tickets response received:', response.status, response.statusText);
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Tickets data received:', data);
-
-        // Clear the timeout since we got a response
-        clearTimeout(ticketsTimeout);
-
-        // Update tickets table
-        const tickets = data.tickets || [];
-        console.log(`Found ${tickets.length} tickets`);
-
-        // Only update if we have tickets from API and the table is showing a loading spinner
-        // This prevents overwriting server-side rendered content
-        if (tickets.length > 0 && ticketsTableBody.innerHTML.includes('spinner-border')) {
-          ticketsTableBody.innerHTML = tickets.map(ticket => `
-            <tr>
-              <td>${ticket.concertTitle}</td>
-              <td>${ticket.concertDate ? new Date(ticket.concertDate).toLocaleDateString() : 'N/A'}</td>
-              <td>${ticket.venue}</td>
-              <td>${ticket.quantity}</td>
-              <td>
-                <span class="badge ${ticket.status === 'completed' ? 'bg-success' : 'bg-warning'}">
-                  ${ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
-                </span>
-              </td>
-              <td>
-                <a href="/tickets/${ticket.id}" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-ticket-perforated me-1"></i> View
-                </a>
-              </td>
-            </tr>
-          `).join('');
-        } else if (tickets.length === 0 && ticketsTableBody.innerHTML.includes('spinner-border')) {
-          // Only show no tickets message if we're currently showing a loading spinner
-          showNoTicketsMessage();
-        }
-      })
-      .catch(error => {
-        console.error('Error loading tickets:', error);
-        showTicketsErrorMessage();
-      });
+    // We don't need to fetch tickets via AJAX anymore since we're showing the message server-side
+    // This code is kept for reference but won't execute
+    console.log('Server-side rendering of tickets is now used instead of AJAX');
 
     // Load concerts for artists
     const concertsTableBody = document.getElementById('concertsTableBody');
@@ -409,58 +357,9 @@
         `;
       }
 
-      // Fetch concerts data
-      fetch('/artists/dashboard?format=json', {
-        headers: {
-          'Accept': 'application/json'
-        }
-      })
-        .then(response => {
-          console.log('Concerts response received:', response.status, response.statusText);
-          if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Concerts data received:', data);
-
-          // Clear the timeout since we got a response
-          clearTimeout(concertsTimeout);
-
-          // Update concerts table
-          const concerts = data.concerts || [];
-          console.log(`Found ${concerts.length} concerts`);
-
-          // Only update if we have concerts from API and the table is showing a loading spinner
-          // This prevents overwriting server-side rendered content
-          if (concerts.length > 0 && concertsTableBody.innerHTML.includes('spinner-border')) {
-            concertsTableBody.innerHTML = concerts.map(concert => `
-              <tr>
-                <td>${concert.title}</td>
-                <td>${concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A'}</td>
-                <td>${concert.venue}</td>
-                <td>
-                  <span class="badge ${concert.status === 'approved' ? 'bg-success' : 'bg-warning'}">
-                    ${concert.status.charAt(0).toUpperCase() + concert.status.slice(1)}
-                  </span>
-                </td>
-                <td>
-                  <a href="/concerts/${concert.id}" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-eye me-1"></i> View
-                  </a>
-                </td>
-              </tr>
-            `).join('');
-          } else if (concerts.length === 0 && concertsTableBody.innerHTML.includes('spinner-border')) {
-            // Only show no concerts message if we're currently showing a loading spinner
-            showNoConcertsMessage();
-          }
-        })
-        .catch(error => {
-          console.error('Error loading concerts:', error);
-          showConcertsErrorMessage();
-        });
+      // We don't need to fetch concerts via AJAX anymore since we're showing the message server-side
+      // This code is kept for reference but won't execute
+      console.log('Server-side rendering of concerts is now used instead of AJAX');
     } else {
       console.error('Concerts table body element not found!');
     }

@@ -1,0 +1,165 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Ticket Management</h5>
+          <a href="/artists/dashboard" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+        <div class="card-body" style="background-color: #333;">
+          <p class="text-white mb-4">
+            View and manage tickets purchased for your concerts. You can see who purchased tickets and delete ticket records if needed.
+          </p>
+
+          <% if (tickets && tickets.length > 0) { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle table-dark">
+                <thead>
+                  <tr>
+                    <th>Ticket #</th>
+                    <th>Concert</th>
+                    <th>Purchased By</th>
+                    <th>Email</th>
+                    <th>Purchase Date</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% tickets.forEach(ticket => { %>
+                    <tr>
+                      <td><%= ticket.ticketNumber %></td>
+                      <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
+                      <td><%= ticket.user ? ticket.user.name : 'Unknown User' %></td>
+                      <td><%= ticket.user ? ticket.user.email : 'N/A' %></td>
+                      <td><%= new Date(ticket.purchaseDate).toLocaleDateString() %></td>
+                      <td><%= ticket.quantity %></td>
+                      <td>₹<%= ticket.totalAmount %></td>
+                      <td>
+                        <a href="/artists/tickets/<%= ticket._id %>/delete" class="btn btn-sm btn-danger">
+                          <i class="bi bi-trash"></i> Delete
+                        </a>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="alert alert-info text-dark">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>No tickets have been purchased for your concerts yet.</strong>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ticket Statistics -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-dark text-white py-3">
+          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Ticket Statistics by Concert</h5>
+        </div>
+        <div class="card-body" style="background-color: #333;">
+          <% if (concerts && concerts.length > 0) { %>
+            <div class="table-responsive">
+              <table class="table table-hover table-dark">
+                <thead>
+                  <tr>
+                    <th>Concert</th>
+                    <th>Date</th>
+                    <th>Tickets Sold</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% concerts.forEach(concert => { %>
+                    <%
+                      const concertTickets = tickets.filter(t => t.concert && t.concert._id.toString() === concert._id.toString());
+                      const ticketsSold = concertTickets.reduce((sum, t) => sum + t.quantity, 0);
+                      const revenue = concertTickets.reduce((sum, t) => sum + t.totalAmount, 0);
+                    %>
+                    <tr>
+                      <td><%= concert.title %></td>
+                      <td><%= new Date(concert.date).toLocaleDateString() %></td>
+                      <td><%= ticketsSold %></td>
+                      <td>₹<%= revenue %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="alert alert-info text-dark">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>You haven't created any concerts yet.</strong>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-dark text-white py-3">
+          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Recent Ticket Purchases</h5>
+        </div>
+        <div class="card-body" style="background-color: #333;">
+          <% if (tickets && tickets.length > 0) { %>
+            <ul class="list-group">
+              <% tickets.slice(0, 5).forEach(ticket => { %>
+                <li class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong><%= ticket.user ? ticket.user.name : 'Unknown User' %></strong> purchased
+                      <span class="badge bg-primary"><%= ticket.quantity %></span> ticket(s) for
+                      <strong><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></strong>
+                    </div>
+                    <small class="text-muted"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></small>
+                  </div>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <div class="alert alert-info text-dark">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>No recent ticket purchases.</strong>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .table th, .table td {
+    vertical-align: middle;
+  }
+
+  .card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+
+
+</style>
+
+
+
+<%- include('../partials/artist-footer') %>

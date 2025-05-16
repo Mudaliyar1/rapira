@@ -257,8 +257,17 @@ app.use(async (req, res, next) => {
     if (user && user.id) {
       try {
         const userRoles = await UserRole.find({ user: user.id }).populate('role');
+
+        // Check for missing role references
+        const missingRoles = userRoles.filter(ur => !ur.role);
+        if (missingRoles.length > 0) {
+          console.warn(`User ${user.id} has ${missingRoles.length} role assignments with missing role references`);
+        }
+
         res.locals.hasRoles = userRoles.length > 0;
-        res.locals.userRoles = userRoles.map(ur => ur.role.name);
+        res.locals.userRoles = userRoles
+          .filter(ur => ur.role) // Filter out null roles
+          .map(ur => ur.role.name);
       } catch (err) {
         console.error('Error checking user roles:', err);
         // Default values already set above
