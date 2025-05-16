@@ -1,14 +1,118 @@
-<!-- Hero Section -->
-<section class="hero-section text-center">
-  <div class="container">
-    <h1 class="display-3 fw-bold mb-4">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
-    <p class="lead mb-5">Discover artists, book concerts, and connect with the hip-hop community</p>
-    <div class="d-flex justify-content-center gap-3">
-      <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
-      <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
+<!-- Main Slider Section -->
+<section class="main-slider-section">
+  <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
     </div>
+
+    <div class="carousel-inner">
+      <!-- Slide 1 - Main Hero -->
+      <div class="carousel-item active">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-bg bg-dark" style="height: 80vh; min-height: 500px;">
+          <div class="carousel-pattern pattern-dots"></div>
+        </div>
+        <div class="carousel-caption">
+          <div class="container">
+            <div class="row justify-content-center">
+              <div class="col-lg-8 text-center">
+                <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInDown">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
+                <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">Discover artists, book concerts, and connect with the hip-hop community</p>
+                <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                  <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
+                  <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2 - Featured Concert -->
+      <div class="carousel-item">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-bg bg-primary" style="height: 80vh; min-height: 500px;">
+          <div class="carousel-pattern pattern-waves"></div>
+        </div>
+        <div class="carousel-caption">
+          <div class="container">
+            <div class="row justify-content-start">
+              <div class="col-lg-6 text-start">
+                <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown">FEATURED EVENT</div>
+                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Summer Rap Festival 2023</h2>
+                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Join the biggest hip-hop event of the year with top artists performing live!</p>
+                <div class="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                  <a href="/concerts" class="btn btn-danger btn-lg">Book Now</a>
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-calendar-event me-2"></i> June 15-17, 2023
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3 - Premium Subscription -->
+      <div class="carousel-item">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-bg bg-warning" style="height: 80vh; min-height: 500px;">
+          <div class="carousel-pattern pattern-grid"></div>
+        </div>
+        <div class="carousel-caption">
+          <div class="container">
+            <div class="row justify-content-end">
+              <div class="col-lg-6 text-end">
+                <div class="badge bg-warning text-dark mb-3 animate__animated animate__fadeInDown">NEW FEATURE</div>
+                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Go Premium</h2>
+                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Get exclusive access to VIP tickets, backstage passes, and special discounts!</p>
+                <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                  <a href="/subscriptions" class="btn btn-warning btn-lg text-dark">Upgrade Now</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4 - Artist Spotlight -->
+      <div class="carousel-item">
+        <div class="carousel-overlay"></div>
+        <div class="carousel-bg bg-info" style="height: 80vh; min-height: 500px;">
+          <div class="carousel-pattern pattern-circles"></div>
+        </div>
+        <div class="carousel-caption">
+          <div class="container">
+            <div class="row justify-content-center">
+              <div class="col-lg-8 text-center">
+                <div class="badge bg-info mb-3 animate__animated animate__fadeInDown">ARTIST SPOTLIGHT</div>
+                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Become a Featured Artist</h2>
+                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Showcase your talent and reach thousands of fans on our platform!</p>
+                <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                  <a href="/artists/register" class="btn btn-info btn-lg">Join as Artist</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
   </div>
 </section>
+
+
 
 <!-- Upcoming Concerts Section -->
 <section class="py-5">
@@ -163,6 +267,8 @@
     </div>
   </div>
 </section>
+
+
 
 <!-- Join as Artist CTA -->
 <section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">

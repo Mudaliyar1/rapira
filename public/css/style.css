@@ -433,63 +433,409 @@ h5.card-title.text-white,
   border-radius: var(--radius-md);
 }
 
-/* Hero Section */
-.hero-section {
-  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/images/hero-bg.jpg');
-  background-size: cover;
-  background-position: center;
-  color: white;
-  padding: 8rem 0;
+/* Main Slider Section */
+.main-slider-section {
   margin-bottom: 2rem;
   position: relative;
   overflow: hidden;
 }
 
-.hero-section::before {
+.carousel-item {
+  height: 80vh;
+  min-height: 500px;
+  background-color: #000;
+}
+
+.carousel-bg {
+  width: 100%;
+  position: relative;
+}
+
+/* Slide background gradients */
+.carousel-item:nth-child(1) .carousel-bg {
+  background: linear-gradient(135deg, #121212 0%, #2d3748 100%);
+}
+
+.carousel-item:nth-child(2) .carousel-bg {
+  background: linear-gradient(135deg, #4a1d96 0%, #6366f1 100%);
+}
+
+.carousel-item:nth-child(3) .carousel-bg {
+  background: linear-gradient(135deg, #92400e 0%, #f59e0b 100%);
+}
+
+.carousel-item:nth-child(4) .carousel-bg {
+  background: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%);
+}
+
+/* Carousel patterns */
+.carousel-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.1;
+  z-index: 1;
+}
+
+.pattern-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.8) 2px, transparent 2px);
+  background-size: 30px 30px;
+}
+
+.pattern-waves {
+  background: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 25 0, 50 10 T 100 10' stroke='white' fill='none' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 100px 20px;
+  animation: moveWaves 20s linear infinite;
+}
+
+.pattern-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-circles {
+  background-image: radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.5) 2%, transparent 25%);
+  background-size: 50px 50px;
+}
+
+@keyframes moveWaves {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 0;
+  }
+}
+
+.carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+  z-index: 1;
+}
+
+.carousel-caption {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  text-align: left;
+  padding: 0;
+}
+
+.carousel-indicators {
+  z-index: 3;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.carousel-indicators .active {
+  background-color: var(--primary);
+  transform: scale(1.2);
+}
+
+.carousel-control-prev, .carousel-control-next {
+  z-index: 3;
+  width: 5%;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.carousel-control-prev:hover, .carousel-control-next:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.carousel-item h1, .carousel-item h2 {
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-item p {
+  font-size: 1.25rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-item .btn {
+  transition: all var(--transition-normal);
+  transform: translateY(0);
+}
+
+.carousel-item .btn:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.gradient-text-purple {
+  background: var(--gradient-purple-pink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+/* Animation delay classes */
+.animate__delay-1s {
+  animation-delay: 0.3s;
+}
+
+.animate__delay-2s {
+  animation-delay: 0.6s;
+}
+
+/* Premium Features Section */
+.premium-features-section {
+  background-color: var(--dark-bg-alt);
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-features-section::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(236, 72, 153, 0.3));
+  background: url('/images/pattern-dots.svg');
+  opacity: 0.05;
   z-index: 0;
-  animation: gradientShift 10s ease infinite;
 }
 
-.hero-section .container {
+.feature-card {
+  background: rgba(30, 30, 30, 0.6);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all var(--transition-normal);
   position: relative;
   z-index: 1;
+  overflow: hidden;
 }
 
-.hero-section h1 {
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  background: var(--gradient-purple-pink);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  display: inline-block;
-  animation: fadeInUp 1s ease;
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
 }
 
-.hero-section p {
-  font-size: 1.25rem;
-  margin-bottom: 2rem;
-  animation: fadeInUp 1s ease 0.2s;
-  animation-fill-mode: both;
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.hero-section .btn {
-  animation: fadeInUp 1s ease 0.4s;
-  animation-fill-mode: both;
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
   transition: all var(--transition-normal);
-  transform: translateY(0);
 }
 
-.hero-section .btn:hover {
+.feature-card:hover .feature-icon-wrapper {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.feature-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.feature-text {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Trending Section */
+.trending-section {
+  background-color: var(--dark-bg);
+  position: relative;
+}
+
+.trending-main-card {
+  position: relative;
+  height: 100%;
+  transition: all var(--transition-normal);
+}
+
+.trending-main-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+}
+
+.trending-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.trending-image img,
+.trending-placeholder {
+  transition: transform var(--transition-normal);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trending-placeholder {
+  position: relative;
+  overflow: hidden;
+}
+
+.trending-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(255,255,255,.1)' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+  opacity: 0.3;
+}
+
+.trending-main-card:hover .trending-image .trending-placeholder,
+.trending-card:hover .trending-image .trending-placeholder {
+  transform: scale(1.05);
+}
+
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.trending-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
+  display: flex;
+  align-items: flex-end;
+  transition: all var(--transition-normal);
+}
+
+.trending-main-card:hover .trending-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.3) 100%);
+}
+
+.trending-content {
+  width: 100%;
+}
+
+.trending-title {
+  font-weight: 700;
+  color: white;
+  font-size: 1.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.trending-text {
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.trending-card {
+  background: rgba(30, 30, 30, 0.6);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trending-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.trending-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.trending-info {
+  background: rgba(30, 30, 30, 0.9);
+}
+
+.trending-info h5 {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Responsive adjustments for slider */
+@media (max-width: 992px) {
+  .carousel-item {
+    height: 70vh;
+  }
+
+  .carousel-item h1 {
+    font-size: 2.5rem;
+  }
+
+  .carousel-item h2 {
+    font-size: 2rem;
+  }
+
+  .carousel-item p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-item {
+    height: 60vh;
+  }
+
+  .carousel-item .row {
+    justify-content: center !important;
+  }
+
+  .carousel-item .col-lg-6 {
+    text-align: center !important;
+  }
+
+  .carousel-item .d-flex {
+    justify-content: center !important;
+  }
 }
 
 /* Card Styles */
