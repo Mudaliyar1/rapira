@@ -236,6 +236,9 @@ app.use(checkSubscription);
 
 // Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
 
+// Import the getImageUrl function from uploadHelper
+const { getImageUrl } = require('./utils/uploadHelper');
+
 // Global variables
 app.use(async (req, res, next) => {
   try {
@@ -252,6 +255,9 @@ app.use(async (req, res, next) => {
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
     res.locals.path = req.path; // Add current path to all views
+
+    // Make the getImageUrl function available to all views
+    res.locals.getImageUrl = getImageUrl;
 
     // Check if user has any roles (for messaging functionality)
     if (user && user.id) {
@@ -362,17 +368,15 @@ const { router: notificationRoutes } = require('./routes/notifications');
 const subscriptionRoutes = require('./routes/subscriptions');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
-const { ensureUploadDirectories } = require('./utils/fileHelper');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
+const { ensureUploadDirectories } = require('./utils/uploadHelper');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
 
 // Serve files from uploads directory with enhanced media middleware
-app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'uploads')));
-
-// Note: Persistent storage code was removed to fix merge conflict
+app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'public/uploads')));
 // Use routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);

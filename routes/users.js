@@ -8,26 +8,18 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads/profiles');
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
+// Import upload helper
+const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
+
+// Configure multer for profile image uploads
+const upload = createUpload({
+  uploadType: 'profiles',
+  fileSize: 5 * 1024 * 1024, // 5MB limit
+  filenameGenerator: (file) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, 'profile-' + uniqueSuffix + ext);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    return 'profile-' + uniqueSuffix + ext;
+  },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -180,17 +172,16 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
     if (req.file) {
       // Delete old profile image if it's not the default
       if (user.profileImage && user.profileImage !== '/images/default-profile.png') {
-        const oldImagePath = path.join(__dirname, '../public', user.profileImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
+        deleteFileIfExists(user.profileImage);
       }
 
-      // Set new profile image
-      user.profileImage = '/uploads/profiles/' + req.file.filename;
+      // Set new profile image using our helper
+      user.profileImage = getStoragePath('profiles', req.file.filename);
 
       // Update session
       req.session.user.profileImage = user.profileImage;
+
+      console.log(`Updated profile image for user ${user._id} to ${user.profileImage}`);
     }
 
     await user.save();

@@ -8,49 +8,51 @@ const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { getFileUrl, getStoragePath } = require('../utils/fileHelper');
+const { getFileUrl } = require('../utils/fileHelper');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let uploadPath;
+// Import upload helper
+const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
 
-    if (file.fieldname === 'bannerImage') {
-      uploadPath = path.join(__dirname, '../public/uploads/banners');
-    } else if (file.fieldname === 'contentFile') {
-      uploadPath = path.join(__dirname, '../public/uploads/content');
-    } else if (file.fieldname === 'thumbnailImage') {
-      uploadPath = path.join(__dirname, '../public/uploads/thumbnails');
-    } else {
-      uploadPath = path.join(__dirname, '../public/uploads/misc');
-    }
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
+// Configure multer for artist content uploads
+const upload = createUpload({
+  uploadType: 'thumbnails',
+  fileSize: 5 * 1024 * 1024, // 5MB limit
+  filenameGenerator: (file) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
 
     if (file.fieldname === 'bannerImage') {
-      cb(null, 'banner-' + uniqueSuffix + ext);
+      return 'banner-' + uniqueSuffix + ext;
     } else if (file.fieldname === 'contentFile') {
-      cb(null, 'content-' + uniqueSuffix + ext);
+      return 'content-' + uniqueSuffix + ext;
     } else if (file.fieldname === 'thumbnailImage') {
-      cb(null, 'thumbnail-' + uniqueSuffix + ext);
+      return 'thumbnail-' + uniqueSuffix + ext;
     } else {
-      cb(null, 'file-' + uniqueSuffix + ext);
+      return 'file-' + uniqueSuffix + ext;
+    }
+  },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
     }
   }
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+// Configure multer for content uploads with more file types
+const contentUpload = createUpload({
+  uploadType: 'content',
+  fileSize: 50 * 1024 * 1024, // 50MB limit
+  filenameGenerator: (file) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    return 'content-' + uniqueSuffix + ext;
+  },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'contentFile') {
       // For content files, allow audio, video, and document files
@@ -203,7 +205,7 @@ router.get('/upload-content', isLoggedIn, isArtist, async (req, res) => {
 
 // Upload content process
 router.post('/upload-content', isLoggedIn, isArtist,
-  upload.fields([
+  contentUpload.fields([
     { name: 'thumbnailImage', maxCount: 1 }
   ]),
   async (req, res) => {
@@ -323,7 +325,7 @@ router.get('/content/:id/edit', isLoggedIn, isArtist, async (req, res) => {
 
 // Update content
 router.post('/content/:id/update', isLoggedIn, isArtist,
-  upload.fields([
+  contentUpload.fields([
     { name: 'thumbnailImage', maxCount: 1 }
   ]),
   async (req, res) => {

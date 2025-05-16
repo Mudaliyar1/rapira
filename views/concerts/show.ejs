@@ -7,7 +7,11 @@
         <div class="glass-card-dark mb-4 border-gradient">
           <div class="border-gradient-content">
             <div class="position-relative">
-              <img src="<%= concert.posterImage %>" class="card-img-top rounded-top" alt="<%= concert.title %>" style="max-height: 400px; object-fit: cover;">
+              <img src="<%= locals.getImageUrl ? getImageUrl(concert.posterImage, '/images/default-concert.jpg') : concert.posterImage %>"
+                   class="card-img-top rounded-top"
+                   alt="<%= concert.title %>"
+                   style="max-height: 400px; object-fit: cover;"
+                   onerror="this.onerror=null; this.src='/images/default-concert.jpg';">
               <div class="position-absolute top-0 end-0 m-3">
                 <span class="badge <%= concert.isPaid ? 'bg-gradient-primary' : 'bg-gradient-success' %> px-3 py-2 fs-6">
                   <%= concert.isPaid ? (concert.price ? `₹${concert.price}` : '₹ 0') : 'Free' %>
@@ -115,7 +119,12 @@
             <div class="d-flex align-items-center mb-4">
               <% if (concert.artist && concert.artist.user) { %>
                 <div class="position-relative">
-                  <img src="<%= concert.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= concert.artist.user.name || 'Artist' %>" class="rounded-circle me-3" width="80" height="80" style="object-fit: cover; border: 3px solid var(--primary);">
+                  <img src="<%= locals.getImageUrl ? getImageUrl(concert.artist.user.profileImage, '/images/default-profile.png') : (concert.artist.user.profileImage || '/images/default-profile.png') %>"
+                       alt="<%= concert.artist.user.name || 'Artist' %>"
+                       class="rounded-circle me-3"
+                       width="80" height="80"
+                       style="object-fit: cover; border: 3px solid var(--primary);"
+                       onerror="this.onerror=null; this.src='/images/default-profile.png';">
                   <% if (concert.artist.verified) { %>
                     <span class="position-absolute bottom-0 end-0 badge bg-gradient-blue rounded-circle p-1" style="width: 24px; height: 24px;">
                       <i class="bi bi-patch-check-fill"></i>

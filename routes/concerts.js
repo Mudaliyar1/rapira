@@ -12,26 +12,18 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads/concerts');
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
+// Import upload helper
+const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
+
+// Configure multer for concert image uploads
+const upload = createUpload({
+  uploadType: 'concerts',
+  fileSize: 5 * 1024 * 1024, // 5MB limit
+  filenameGenerator: (file) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, 'concert-' + uniqueSuffix + ext);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    return 'concert-' + uniqueSuffix + ext;
+  },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -171,7 +163,8 @@ router.post('/create', isLoggedIn, canCreateConcert, upload.single('posterImage'
 
     // Set poster image if uploaded
     if (req.file) {
-      newConcert.posterImage = '/uploads/concerts/' + req.file.filename;
+      newConcert.posterImage = getStoragePath('concerts', req.file.filename);
+      console.log(`Set concert poster image to: ${newConcert.posterImage}`);
     }
 
     await newConcert.save();
@@ -440,14 +433,12 @@ router.post('/:id/edit', isLoggedIn, isArtist, upload.single('posterImage'), asy
     if (req.file) {
       // Delete old poster image if it's not the default
       if (concert.posterImage && concert.posterImage !== '/images/default-concert.jpg') {
-        const oldImagePath = path.join(__dirname, '../public', concert.posterImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
+        deleteFileIfExists(concert.posterImage);
       }
 
-      // Set new poster image
-      concert.posterImage = '/uploads/concerts/' + req.file.filename;
+      // Set new poster image using our helper
+      concert.posterImage = getStoragePath('concerts', req.file.filename);
+      console.log(`Updated concert poster image to: ${concert.posterImage}`);
     }
 
     await concert.save();
