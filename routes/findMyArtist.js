@@ -843,58 +843,277 @@ router.post('/admin/find-my-artist/role-slots/update-order', isLoggedIn, isAdmin
 // GET /admin/find-my-artist/booking-requests - List all booking requests
 router.get('/admin/find-my-artist/booking-requests', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    // Get filter parameters
-    const { status, type, city, state } = req.query;
+    // Get search parameters
+    const { search, status, type, city, state, dateRange, sortBy, sortOrder } = req.query;
 
     // Build filter object
     const filter = {};
-    if (status) filter.status = status;
-    if (type) filter.bookingType = type;
-    if (city) filter.eventCity = new RegExp(city, 'i');
-    if (state) filter.eventState = new RegExp(state, 'i');
 
-    // Get all booking requests with pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const skip = (page - 1) * limit;
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
 
-    const requests = await ArtistBookingRequest.find(filter)
+    // Type filter
+    if (type && type !== 'all') {
+      filter.bookingType = type;
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      filter.eventCity = new RegExp(city, 'i');
+    }
+
+    // State filter
+    if (state && state !== 'all') {
+      filter.eventState = new RegExp(state, 'i');
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get requests without pagination for search
+    let requests = await ArtistBookingRequest.find(filter)
       .populate([
         { path: 'artist', populate: { path: 'user', select: 'name' } },
         { path: 'roleSlot' },
         { path: 'reviewedBy', select: 'name email' }
       ])
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .sort(sortOptions);
 
-    const totalRequests = await ArtistBookingRequest.countDocuments(filter);
-    const totalPages = Math.ceil(totalRequests / limit);
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const name = (request.name || '').toLowerCase();
+        const email = (request.email || '').toLowerCase();
+        const phone = (request.phone || '').toLowerCase();
+        const eventCity = (request.eventCity || '').toLowerCase();
+        const eventState = (request.eventState || '').toLowerCase();
+        const notes = (request.notes || '').toLowerCase();
+        const artistName = (request.artist && request.artist.user ? request.artist.user.name : '').toLowerCase();
+        const stageName = (request.artist ? request.artist.stageName : '').toLowerCase();
+        const roleSlotName = (request.roleSlot ? request.roleSlot.name : '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               email.includes(searchTerm) ||
+               phone.includes(searchTerm) ||
+               eventCity.includes(searchTerm) ||
+               eventState.includes(searchTerm) ||
+               notes.includes(searchTerm) ||
+               artistName.includes(searchTerm) ||
+               stageName.includes(searchTerm) ||
+               roleSlotName.includes(searchTerm);
+      });
+    }
 
     // Get unique cities, states for filter dropdowns
     const cities = await ArtistBookingRequest.distinct('eventCity');
     const states = await ArtistBookingRequest.distinct('eventState');
+
+    // Get statistics
+    const totalRequests = await ArtistBookingRequest.countDocuments();
+    const pendingRequests = await ArtistBookingRequest.countDocuments({ status: 'pending' });
+    const approvedRequests = await ArtistBookingRequest.countDocuments({ status: 'approved' });
+    const rejectedRequests = await ArtistBookingRequest.countDocuments({ status: 'rejected' });
+    const artistBookings = await ArtistBookingRequest.countDocuments({ bookingType: 'artist' });
+    const roleBookings = await ArtistBookingRequest.countDocuments({ bookingType: 'role' });
+    const bulkBookings = await ArtistBookingRequest.countDocuments({ bookingType: 'bulk' });
 
     res.render('admin/find-my-artist/booking-requests', {
       layout: 'admin',
       title: 'Artist Booking Requests',
       currentPath: '/admin/find-my-artist/booking-requests',
       requests,
-      pagination: {
-        page,
-        totalPages,
-        totalRequests
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        type: type || 'all',
+        city: city || 'all',
+        state: state || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
       },
-      filters: { status, type, city, state },
+      stats: {
+        total: totalRequests,
+        pending: pendingRequests,
+        approved: approvedRequests,
+        rejected: rejectedRequests,
+        artist: artistBookings,
+        role: roleBookings,
+        bulk: bulkBookings,
+        filtered: requests.length
+      },
       filterOptions: {
-        cities,
-        states
+        cities: cities.filter(c => c && c.trim()).sort(),
+        states: states.filter(s => s && s.trim()).sort()
       }
     });
   } catch (error) {
     console.error('Error loading booking requests:', error);
     req.flash('error', 'An error occurred while loading booking requests');
     res.redirect('/admin/find-my-artist');
+  }
+});
+
+// Export artist booking requests to CSV
+router.get('/admin/find-my-artist/booking-requests/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, status, type, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (type && type !== 'all') {
+      filter.bookingType = type;
+    }
+
+    if (city && city !== 'all') {
+      filter.eventCity = new RegExp(city, 'i');
+    }
+
+    if (state && state !== 'all') {
+      filter.eventState = new RegExp(state, 'i');
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get requests
+    let requests = await ArtistBookingRequest.find(filter)
+      .populate([
+        { path: 'artist', populate: { path: 'user', select: 'name' } },
+        { path: 'roleSlot' },
+        { path: 'reviewedBy', select: 'name email' }
+      ])
+      .sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const name = (request.name || '').toLowerCase();
+        const email = (request.email || '').toLowerCase();
+        const phone = (request.phone || '').toLowerCase();
+        const eventCity = (request.eventCity || '').toLowerCase();
+        const eventState = (request.eventState || '').toLowerCase();
+        const notes = (request.notes || '').toLowerCase();
+        const artistName = (request.artist && request.artist.user ? request.artist.user.name : '').toLowerCase();
+        const stageName = (request.artist ? request.artist.stageName : '').toLowerCase();
+        const roleSlotName = (request.roleSlot ? request.roleSlot.name : '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               email.includes(searchTerm) ||
+               phone.includes(searchTerm) ||
+               eventCity.includes(searchTerm) ||
+               eventState.includes(searchTerm) ||
+               notes.includes(searchTerm) ||
+               artistName.includes(searchTerm) ||
+               stageName.includes(searchTerm) ||
+               roleSlotName.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Name,Email,Phone,Booking Type,Booking Target,Event Location,Event Date,Status,Notes,Request Date,Reviewed By,Reviewed Date\n';
+    const csvRows = requests.map(request => {
+      const name = `"${(request.name || '').replace(/"/g, '""')}"`;
+      const email = `"${(request.email || '').replace(/"/g, '""')}"`;
+      const phone = `"${(request.phone || '').replace(/"/g, '""')}"`;
+      const bookingType = request.bookingType || '';
+
+      let bookingTarget = '';
+      if (request.bookingType === 'artist' && request.artist) {
+        bookingTarget = request.artist.stageName || (request.artist.user ? request.artist.user.name : 'Unknown');
+      } else if (request.bookingType === 'role' && request.roleSlot) {
+        bookingTarget = request.roleSlot.name;
+      } else if (request.bookingType === 'bulk') {
+        bookingTarget = 'Bulk Booking';
+      }
+      bookingTarget = `"${bookingTarget.replace(/"/g, '""')}"`;
+
+      const eventLocation = `"${request.eventCity}, ${request.eventState}".replace(/"/g, '""')`;
+      const eventDate = new Date(request.eventDate).toLocaleDateString();
+      const status = request.status || '';
+      const notes = `"${(request.notes || '').replace(/"/g, '""')}"`;
+      const requestDate = new Date(request.createdAt).toLocaleDateString();
+      const reviewedBy = request.reviewedBy ? request.reviewedBy.name : '';
+      const reviewedDate = request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '';
+
+      return `${name},${email},${phone},${bookingType},${bookingTarget},${eventLocation},${eventDate},${status},${notes},${requestDate},"${reviewedBy}",${reviewedDate}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `artist_booking_requests_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export artist booking requests error:', error);
+    req.flash('error', 'Failed to export artist booking requests');
+    res.redirect('/admin/find-my-artist/booking-requests');
   }
 });
 

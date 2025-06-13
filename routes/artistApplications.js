@@ -297,32 +297,174 @@ router.get('/status', isLoggedIn, async (req, res) => {
 // Admin: List all applications
 router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    // Get filter parameters
-    const { status } = req.query;
+    // Get search parameters
+    const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
 
     // Build filter object
     const filter = {};
 
-    if (status) {
+    // Status filter
+    if (status && status !== 'all') {
       filter.status = status;
     }
 
-    // Get applications
-    const applications = await ArtistApplication.find(filter)
-      .sort({ createdAt: -1 })
+    // Artist level filter
+    if (artistLevel && artistLevel !== 'all') {
+      filter.artistLevel = artistLevel;
+    }
+
+    // State filter
+    if (state && state !== 'all') {
+      filter.state = { $regex: state, $options: 'i' };
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get applications with filters
+    let applications = await ArtistApplication.find(filter)
+      .sort(sortOptions)
       .populate('user', 'name email');
+
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      applications = applications.filter(app => {
+        const userName = (app.user ? app.user.name : '').toLowerCase();
+        const userEmail = (app.user ? app.user.email : '').toLowerCase();
+        const state = (app.state || '').toLowerCase();
+        const city = (app.city || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               city.includes(searchTerm);
+      });
+    }
+
+    // Get statistics
+    const totalApplications = await ArtistApplication.countDocuments();
+    const pendingApplications = await ArtistApplication.countDocuments({ status: 'pending' });
+    const approvedApplications = await ArtistApplication.countDocuments({ status: 'approved' });
+    const rejectedApplications = await ArtistApplication.countDocuments({ status: 'rejected' });
+
+    // Get unique states for filter dropdown
+    const allStates = await ArtistApplication.find().distinct('state');
+    const states = allStates.filter(s => s && s.trim()).sort();
 
     res.render('admin/artist-applications', {
       layout: 'admin',
       title: 'Artist Applications',
       currentPath: '/artist-applications/admin',
       applications,
-      selectedStatus: status || 'all'
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        artistLevel: artistLevel || 'all',
+        state: state || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalApplications,
+        pending: pendingApplications,
+        approved: approvedApplications,
+        rejected: rejectedApplications,
+        filtered: applications.length
+      },
+      states
     });
   } catch (error) {
     console.error('Error in admin applications list:', error);
     req.flash('error', 'An error occurred while loading applications');
     res.redirect('/admin');
+  }
+});
+
+// Export artist applications to CSV
+router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main admin route)
+    const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (artistLevel && artistLevel !== 'all') {
+      filter.artistLevel = artistLevel;
+    }
+
+    if (state && state !== 'all') {
+      filter.state = { $regex: state, $options: 'i' };
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get applications with filters
+    let applications = await ArtistApplication.find(filter)
+      .sort(sortOptions)
+      .populate('user', 'name email');
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      applications = applications.filter(app => {
+        const userName = (app.user ? app.user.name : '').toLowerCase();
+        const userEmail = (app.user ? app.user.email : '').toLowerCase();
+        const state = (app.state || '').toLowerCase();
+        const city = (app.city || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               city.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Name,Email,Artist Level,State,City,Age,Phone,Status,Applied Date,Reviewed Date\n';
+    const csvRows = applications.map(app => {
+      const name = `"${(app.user ? app.user.name : '').replace(/"/g, '""')}"`;
+      const email = `"${(app.user ? app.user.email : '').replace(/"/g, '""')}"`;
+      const artistLevel = app.artistLevel || '';
+      const state = `"${(app.state || '').replace(/"/g, '""')}"`;
+      const city = `"${(app.city || '').replace(/"/g, '""')}"`;
+      const age = app.age || '';
+      const phone = app.phoneNumber || '';
+      const status = app.status || '';
+      const appliedDate = new Date(app.createdAt).toLocaleDateString();
+      const reviewedDate = app.reviewedAt ? new Date(app.reviewedAt).toLocaleDateString() : '';
+
+      return `${name},${email},${artistLevel},${state},${city},${age},${phone},${status},${appliedDate},${reviewedDate}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `artist_applications_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export artist applications error:', error);
+    req.flash('error', 'Failed to export artist applications');
+    res.redirect('/artist-applications/admin');
   }
 });
 

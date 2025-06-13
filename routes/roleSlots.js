@@ -8,18 +8,211 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 // GET /admin/find-my-artist/role-slots - Manage role slots
 router.get('/', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const roleSlots = await ArtistRoleSlot.find().sort({ displayOrder: 1, name: 1 });
+    // Get search parameters
+    const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    // Active status filter
+    if (isActive && isActive !== 'all') {
+      filter.isActive = isActive === 'true';
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    // State filter
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { displayOrder: 1, name: 1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'desc' ? -1 : 1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get role slots with filters
+    let roleSlots = await ArtistRoleSlot.find(filter).sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      roleSlots = roleSlots.filter(slot => {
+        const name = (slot.name || '').toLowerCase();
+        const description = (slot.description || '').toLowerCase();
+        const city = (slot.city || '').toLowerCase();
+        const state = (slot.state || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm);
+      });
+    }
+
+    // Get all cities and states for filter dropdown
+    const allCities = await ArtistRoleSlot.distinct('city');
+    const allStates = await ArtistRoleSlot.distinct('state');
+
+    // Get statistics
+    const totalSlots = await ArtistRoleSlot.countDocuments();
+    const activeSlots = await ArtistRoleSlot.countDocuments({ isActive: true });
+    const inactiveSlots = await ArtistRoleSlot.countDocuments({ isActive: false });
 
     res.render('admin/find-my-artist/role-slots', {
       layout: 'admin',
       title: 'Manage Role Slots',
       currentPath: '/admin/find-my-artist/role-slots',
-      roleSlots
+      roleSlots,
+      searchParams: {
+        search: search || '',
+        isActive: isActive || 'all',
+        city: city || 'all',
+        state: state || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'displayOrder',
+        sortOrder: sortOrder || 'asc'
+      },
+      stats: {
+        total: totalSlots,
+        active: activeSlots,
+        inactive: inactiveSlots,
+        filtered: roleSlots.length
+      },
+      filterOptions: {
+        cities: allCities.filter(c => c && c.trim()).sort(),
+        states: allStates.filter(s => s && s.trim()).sort()
+      }
     });
   } catch (error) {
     console.error('Error loading role slots:', error);
     req.flash('error', 'An error occurred while loading role slots');
     res.redirect('/admin/find-my-artist');
+  }
+});
+
+// Export role slots to CSV
+router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (isActive && isActive !== 'all') {
+      filter.isActive = isActive === 'true';
+    }
+
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { displayOrder: 1, name: 1 };
+    if (sortBy) {
+      const order = sortOrder === 'desc' ? -1 : 1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get role slots with filters
+    let roleSlots = await ArtistRoleSlot.find(filter).sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      roleSlots = roleSlots.filter(slot => {
+        const name = (slot.name || '').toLowerCase();
+        const description = (slot.description || '').toLowerCase();
+        const city = (slot.city || '').toLowerCase();
+        const state = (slot.state || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Display Order,Name,Description,Location,Status,Created Date\n';
+    const csvRows = roleSlots.map(slot => {
+      const displayOrder = slot.displayOrder || 0;
+      const name = `"${(slot.name || '').replace(/"/g, '""')}"`;
+      const description = `"${(slot.description || '').replace(/"/g, '""')}"`;
+      const location = `"${slot.city}, ${slot.state}".replace(/"/g, '""')`;
+      const status = slot.isActive ? 'Active' : 'Inactive';
+      const createdDate = new Date(slot.createdAt).toLocaleDateString();
+
+      return `${displayOrder},${name},${description},${location},${status},${createdDate}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `role_slots_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export role slots error:', error);
+    req.flash('error', 'Failed to export role slots');
+    res.redirect('/admin/find-my-artist/role-slots');
   }
 });
 

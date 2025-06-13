@@ -1,8 +1,138 @@
 <%- contentFor('body') %>
+
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Pages</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/pages" id="pageSearchForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="search" class="form-label text-white">Search Pages</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by title, slug, or content..."
+                   value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="published" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="published" name="published">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.published === 'all') ? 'selected' : '' %>>All Pages</option>
+            <option value="true" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.published === 'true') ? 'selected' : '' %>>Published</option>
+            <option value="false" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.published === 'false') ? 'selected' : '' %>>Draft</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="showInNavigation" class="form-label text-white">Navigation</label>
+          <select class="form-select bg-dark border-secondary text-white" id="showInNavigation" name="showInNavigation">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.showInNavigation === 'all') ? 'selected' : '' %>>All</option>
+            <option value="true" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.showInNavigation === 'true') ? 'selected' : '' %>>In Navigation</option>
+            <option value="false" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.showInNavigation === 'false') ? 'selected' : '' %>>Not in Navigation</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+            <option value="today" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'today') ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-month') ? 'selected' : '' %>>This Month</option>
+            <option value="this-year" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-year') ? 'selected' : '' %>>This Year</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Pages
+            </button>
+            <a href="/admin/pages" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Page Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Pages</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.published : 0 %></h4>
+          <small class="text-white-50">Published</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.draft : 0 %></h4>
+          <small class="text-white-50">Drafts</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.navigation : 0 %></h4>
+          <small class="text-white-50">In Navigation</small>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats && stats.total > 0) ? Math.round((stats.published / stats.total) * 100) : 0 %>%</h4>
+          <small class="text-white-50">Published Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Pages Table -->
 <div class="glass-card-dark border border-secondary">
-  <div class="card-header border-bottom border-secondary">
-    <h5 class="card-title mb-0 text-white">All Pages</h5>
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">
+      All Pages
+      <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.published !== 'all' || searchParams.showInNavigation !== 'all' || searchParams.dateRange !== 'all')) { %>
+        <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <button class="btn btn-sm btn-outline-light" id="exportPages">
+      <i class="bi bi-download me-1"></i> Export
+    </button>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -98,3 +228,167 @@
 </a>
 
 <%- contentFor('title') %>Manage Pages
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  if (toggleStatsBtn && statsSection) {
+    toggleStatsBtn.addEventListener('click', function() {
+      if (statsSection.style.display === 'none') {
+        statsSection.style.display = 'block';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+      } else {
+        statsSection.style.display = 'none';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+      }
+    });
+  }
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportPages');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/pages/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= (typeof searchParams !== "undefined" && searchParams) ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const pageRows = document.querySelectorAll('tbody tr');
+
+    pageRows.forEach(row => {
+      const titleCell = row.querySelector('td:first-child .fw-medium');
+      const urlCell = row.querySelector('td:nth-child(2) a');
+
+      [titleCell, urlCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const pageRows = document.querySelectorAll('tbody tr');
+  const hasResults = pageRows.length > 0 && !pageRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify((typeof searchParams !== "undefined" && searchParams) ? searchParams : {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No pages found';
+      if (params.search || params.published !== 'all' || params.showInNavigation !== 'all' || params.dateRange !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-file-earmark-text display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/admin/pages" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-4 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

@@ -246,20 +246,217 @@ router.post('/module/:id/complete', isLoggedIn, async (req, res) => {
 // Admin: Manage learning modules
 router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const modules = await LearningModule.find()
-      .sort({ forArtistLevel: 1, order: 1 })
+    // Get search parameters
+    const { search, contentType, forArtistLevel, isRequired, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    // Content type filter
+    if (contentType && contentType !== 'all') {
+      filter.contentType = contentType;
+    }
+
+    // Artist level filter
+    if (forArtistLevel && forArtistLevel !== 'all') {
+      filter.forArtistLevel = forArtistLevel;
+    }
+
+    // Required filter
+    if (isRequired && isRequired !== 'all') {
+      filter.isRequired = isRequired === 'true';
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { forArtistLevel: 1, order: 1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get modules with filters
+    let modules = await LearningModule.find(filter)
+      .sort(sortOptions)
       .populate('createdBy', 'name');
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      modules = modules.filter(module => {
+        const title = (module.title || '').toLowerCase();
+        const description = (module.description || '').toLowerCase();
+        const content = (module.content || '').toLowerCase();
+        const createdBy = (module.createdBy ? module.createdBy.name : '').toLowerCase();
+
+        return title.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               content.includes(searchTerm) ||
+               createdBy.includes(searchTerm);
+      });
+    }
+
+    // Get statistics
+    const totalModules = await LearningModule.countDocuments();
+    const textModules = await LearningModule.countDocuments({ contentType: 'text' });
+    const videoModules = await LearningModule.countDocuments({ contentType: 'video' });
+    const requiredModules = await LearningModule.countDocuments({ isRequired: true });
+    const beginnerModules = await LearningModule.countDocuments({ forArtistLevel: 'Beginner' });
+    const intermediateModules = await LearningModule.countDocuments({ forArtistLevel: 'Intermediate' });
+    const advancedModules = await LearningModule.countDocuments({ forArtistLevel: 'Advanced' });
 
     res.render('admin/learning-modules', {
       layout: 'admin',
       title: 'Manage Learning Modules',
       currentPath: '/learning/admin',
-      modules
+      modules,
+      searchParams: {
+        search: search || '',
+        contentType: contentType || 'all',
+        forArtistLevel: forArtistLevel || 'all',
+        isRequired: isRequired || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'forArtistLevel',
+        sortOrder: sortOrder || 'asc'
+      },
+      stats: {
+        total: totalModules,
+        text: textModules,
+        video: videoModules,
+        required: requiredModules,
+        beginner: beginnerModules,
+        intermediate: intermediateModules,
+        advanced: advancedModules,
+        filtered: modules.length
+      }
     });
   } catch (error) {
     console.error('Error in admin learning modules:', error);
     req.flash('error', 'An error occurred while loading learning modules');
     res.redirect('/admin');
+  }
+});
+
+// Export learning modules to CSV
+router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, contentType, forArtistLevel, isRequired, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (contentType && contentType !== 'all') {
+      filter.contentType = contentType;
+    }
+
+    if (forArtistLevel && forArtistLevel !== 'all') {
+      filter.forArtistLevel = forArtistLevel;
+    }
+
+    if (isRequired && isRequired !== 'all') {
+      filter.isRequired = isRequired === 'true';
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { forArtistLevel: 1, order: 1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get modules with filters
+    let modules = await LearningModule.find(filter)
+      .sort(sortOptions)
+      .populate('createdBy', 'name');
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      modules = modules.filter(module => {
+        const title = (module.title || '').toLowerCase();
+        const description = (module.description || '').toLowerCase();
+        const content = (module.content || '').toLowerCase();
+        const createdBy = (module.createdBy ? module.createdBy.name : '').toLowerCase();
+
+        return title.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               content.includes(searchTerm) ||
+               createdBy.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Title,Content Type,Artist Level,Order,Required,Created By,Created Date,Description\n';
+    const csvRows = modules.map(module => {
+      const title = `"${(module.title || '').replace(/"/g, '""')}"`;
+      const contentType = module.contentType || '';
+      const artistLevel = module.forArtistLevel || '';
+      const order = module.order || 0;
+      const required = module.isRequired ? 'Yes' : 'No';
+      const createdBy = module.createdBy ? module.createdBy.name : '';
+      const createdDate = new Date(module.createdAt).toLocaleDateString();
+      const description = `"${(module.description || '').replace(/"/g, '""')}"`;
+
+      return `${title},${contentType},${artistLevel},${order},${required},"${createdBy}",${createdDate},${description}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `learning_modules_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export learning modules error:', error);
+    req.flash('error', 'Failed to export learning modules');
+    res.redirect('/learning/admin');
   }
 });
 

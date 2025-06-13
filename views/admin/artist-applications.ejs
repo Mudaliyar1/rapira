@@ -1,21 +1,162 @@
 <%- contentFor('body') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Artist Applications</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/artist-applications/admin" id="applicationSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Applications</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name, email, city, or state..."
+                   value="<%= searchParams ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= (searchParams && searchParams.status === 'all') ? 'selected' : '' %>>All Status</option>
+            <option value="pending" <%= (searchParams && searchParams.status === 'pending') ? 'selected' : '' %>>Pending</option>
+            <option value="approved" <%= (searchParams && searchParams.status === 'approved') ? 'selected' : '' %>>Approved</option>
+            <option value="rejected" <%= (searchParams && searchParams.status === 'rejected') ? 'selected' : '' %>>Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="artistLevel" class="form-label text-white">Artist Level</label>
+          <select class="form-select bg-dark border-secondary text-white" id="artistLevel" name="artistLevel">
+            <option value="all" <%= (searchParams && searchParams.artistLevel === 'all') ? 'selected' : '' %>>All Levels</option>
+            <option value="Beginner" <%= (searchParams && searchParams.artistLevel === 'Beginner') ? 'selected' : '' %>>Beginner</option>
+            <option value="Intermediate" <%= (searchParams && searchParams.artistLevel === 'Intermediate') ? 'selected' : '' %>>Intermediate</option>
+            <option value="Established" <%= (searchParams && searchParams.artistLevel === 'Established') ? 'selected' : '' %>>Established</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="state" class="form-label text-white">State</label>
+          <select class="form-select bg-dark border-secondary text-white" id="state" name="state">
+            <option value="all" <%= (searchParams && searchParams.state === 'all') ? 'selected' : '' %>>All States</option>
+            <% if (states && states.length > 0) { %>
+              <% states.forEach(s => { %>
+                <option value="<%= s %>" <%= (searchParams && searchParams.state === s) ? 'selected' : '' %>><%= s %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= (searchParams && searchParams.sortBy === 'createdAt') ? 'selected' : '' %>>Application Date</option>
+            <option value="status" <%= (searchParams && searchParams.sortBy === 'status') ? 'selected' : '' %>>Status</option>
+            <option value="artistLevel" <%= (searchParams && searchParams.sortBy === 'artistLevel') ? 'selected' : '' %>>Artist Level</option>
+            <option value="state" <%= (searchParams && searchParams.sortBy === 'state') ? 'selected' : '' %>>State</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Applications
+            </button>
+            <a href="/artist-applications/admin" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Application Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Applications</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats ? stats.pending : 0 %></h4>
+          <small class="text-white-50">Pending</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= stats ? stats.approved : 0 %></h4>
+          <small class="text-white-50">Approved</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= stats ? stats.rejected : 0 %></h4>
+          <small class="text-white-50">Rejected</small>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= stats ? Math.round((stats.approved / stats.total) * 100) : 0 %>%</h4>
+          <small class="text-white-50">Approval Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Artist Applications Table -->
 <div class="glass-card-dark border border-secondary">
   <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0 text-white">Artist Applications</h5>
-    <div>
+    <h5 class="card-title mb-0 text-white">
+      Artist Applications
+      <% if (searchParams && (searchParams.search || searchParams.status !== 'all' || searchParams.artistLevel !== 'all' || searchParams.state !== 'all')) { %>
+        <span class="badge bg-info ms-2"><%= stats ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportApplications">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
       <div class="btn-group">
-        <a href="/artist-applications/admin?status=pending" class="btn btn-sm <%= selectedStatus === 'pending' ? 'btn-warning' : 'btn-outline-warning' %>">
+        <a href="/artist-applications/admin?status=pending" class="btn btn-sm <%= (searchParams && searchParams.status === 'pending') ? 'btn-warning' : 'btn-outline-warning' %>">
           Pending
         </a>
-        <a href="/artist-applications/admin?status=approved" class="btn btn-sm <%= selectedStatus === 'approved' ? 'btn-success' : 'btn-outline-success' %>">
+        <a href="/artist-applications/admin?status=approved" class="btn btn-sm <%= (searchParams && searchParams.status === 'approved') ? 'btn-success' : 'btn-outline-success' %>">
           Approved
         </a>
-        <a href="/artist-applications/admin?status=rejected" class="btn btn-sm <%= selectedStatus === 'rejected' ? 'btn-danger' : 'btn-outline-danger' %>">
+        <a href="/artist-applications/admin?status=rejected" class="btn btn-sm <%= (searchParams && searchParams.status === 'rejected') ? 'btn-danger' : 'btn-outline-danger' %>">
           Rejected
         </a>
-        <a href="/artist-applications/admin" class="btn btn-sm <%= selectedStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">
+        <a href="/artist-applications/admin" class="btn btn-sm <%= (!searchParams || searchParams.status === 'all') ? 'btn-primary' : 'btn-outline-primary' %>">
           All
         </a>
       </div>
@@ -28,6 +169,7 @@
           <tr>
             <th class="text-white">User</th>
             <th class="text-white">Artist Level</th>
+            <th class="text-white">Location</th>
             <th class="text-white">Phone</th>
             <th class="text-white">Submitted</th>
             <th class="text-white">Status</th>
@@ -47,6 +189,14 @@
                   </div>
                 </td>
                 <td class="text-white"><%= application.artistLevel %></td>
+                <td class="text-white">
+                  <div>
+                    <span class="fw-medium"><%= application.city || 'Not provided' %></span>
+                    <% if (application.state) { %>
+                      <br><small class="text-muted"><%= application.state %></small>
+                    <% } %>
+                  </div>
+                </td>
                 <td class="text-white"><%= application.phoneNumber || 'Not provided' %></td>
                 <td class="text-white"><%= new Date(application.createdAt).toLocaleString() %></td>
                 <td>
@@ -72,7 +222,7 @@
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="6" class="text-center py-4 text-white">
+              <td colspan="7" class="text-center py-4 text-white">
                 <i class="bi bi-file-earmark-x display-4 text-muted mb-3"></i>
                 <p class="mb-0">No applications found</p>
               </td>
@@ -83,3 +233,188 @@
     </div>
   </div>
 </div>
+
+<%- contentFor('title') %>Artist Applications
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportApplications');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/artist-applications/admin/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const applicationRows = document.querySelectorAll('tbody tr');
+
+    applicationRows.forEach(row => {
+      const nameCell = row.querySelector('td:first-child h6');
+      const emailCell = row.querySelector('td:first-child small');
+      const cityCell = row.querySelector('td:nth-child(3) .fw-medium');
+      const stateCell = row.querySelector('td:nth-child(3) small');
+
+      [nameCell, emailCell, cityCell, stateCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const applicationRows = document.querySelectorAll('tbody tr');
+  const hasResults = applicationRows.length > 0 && !applicationRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams || {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No applications found';
+      if (params.search || params.status !== 'all' || params.artistLevel !== 'all' || params.state !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-file-earmark-x display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/artist-applications/admin" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

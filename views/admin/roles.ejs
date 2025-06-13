@@ -1,12 +1,111 @@
 <%- contentFor('body') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Roles</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/roles" id="roleSearchForm">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="search" class="form-label text-white">Search Roles</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name, description, or creator..."
+                   value="<%= searchParams ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="name" <%= (searchParams && searchParams.sortBy === 'name') ? 'selected' : '' %>>Role Name</option>
+            <option value="createdAt" <%= (searchParams && searchParams.sortBy === 'createdAt') ? 'selected' : '' %>>Created Date</option>
+            <option value="description" <%= (searchParams && searchParams.sortBy === 'description') ? 'selected' : '' %>>Description</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="asc" <%= (searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>A-Z</option>
+            <option value="desc" <%= (searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Z-A</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Roles
+            </button>
+            <a href="/roles" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Role Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Roles</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="text-center">
+          <h4 class="text-success mb-1">
+            <% if (roleUsage && roles) { %>
+              <%= Object.values(roleUsage).reduce((sum, count) => sum + count, 0) %>
+            <% } else { %>
+              0
+            <% } %>
+          </h4>
+          <small class="text-white-50">Total Assignments</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Roles Table -->
 <div class="glass-card-dark border border-secondary">
   <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0 text-white">Manage Roles</h5>
-    <a href="/roles/add" class="btn btn-sm btn-primary">
-      <i class="bi bi-plus-lg"></i> Add New Role
-    </a>
+    <h5 class="card-title mb-0 text-white">
+      Manage Roles
+      <% if (searchParams && searchParams.search) { %>
+        <span class="badge bg-info ms-2"><%= stats ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportRoles">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+      <a href="/roles/add" class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg"></i> Add New Role
+      </a>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -16,6 +115,7 @@
             <th class="text-white">Role</th>
             <th class="text-white">Description</th>
             <th class="text-white">Icon</th>
+            <th class="text-white">Users Assigned</th>
             <th class="text-white">Created By</th>
             <th class="text-white">Actions</th>
           </tr>
@@ -24,18 +124,30 @@
           <% if (roles && roles.length > 0) { %>
             <% roles.forEach(role => { %>
               <tr>
-                <td class="text-white"><%= role.name %></td>
-                <td class="text-white"><%= role.description || 'No description' %></td>
                 <td class="text-white">
-                  <i class="bi <%= role.icon %>"></i> <%= role.icon %>
+                  <h6 class="mb-0"><%= role.name %></h6>
+                </td>
+                <td class="text-white">
+                  <span class="text-truncate" style="max-width: 200px; display: inline-block;" title="<%= role.description || 'No description' %>">
+                    <%= role.description || 'No description' %>
+                  </span>
+                </td>
+                <td class="text-white">
+                  <i class="bi <%= role.icon %> me-2"></i>
+                  <small class="text-muted"><%= role.icon %></small>
+                </td>
+                <td class="text-white">
+                  <span class="badge bg-info">
+                    <%= roleUsage && roleUsage[role._id] ? roleUsage[role._id] : 0 %> users
+                  </span>
                 </td>
                 <td class="text-white"><%= role.createdBy ? role.createdBy.name : 'System' %></td>
                 <td>
                   <div class="btn-group">
-                    <a href="/roles/edit/<%= role._id %>" class="btn btn-sm btn-outline-primary">
+                    <a href="/roles/edit/<%= role._id %>" class="btn btn-sm btn-outline-primary" title="Edit Role">
                       <i class="bi bi-pencil"></i>
                     </a>
-                    <a href="/roles/confirm-delete/<%= role._id %>" class="btn btn-sm btn-outline-danger">
+                    <a href="/roles/confirm-delete/<%= role._id %>" class="btn btn-sm btn-outline-danger" title="Delete Role">
                       <i class="bi bi-trash"></i>
                     </a>
                   </div>
@@ -44,7 +156,7 @@
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="5" class="text-center py-4 text-white">
+              <td colspan="6" class="text-center py-4 text-white">
                 <i class="bi bi-tag-fill display-4 text-muted mb-3"></i>
                 <p class="mb-0">No roles found</p>
                 <a href="/roles/add" class="btn btn-primary mt-3">Add Your First Role</a>
@@ -63,3 +175,199 @@
     <i class="bi bi-people-fill me-2"></i> Manage User Roles
   </a>
 </div>
+
+<%- contentFor('title') %>Manage Roles
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportRoles');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/roles/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const roleRows = document.querySelectorAll('tbody tr');
+
+    roleRows.forEach(row => {
+      const nameCell = row.querySelector('td:first-child h6');
+      const descCell = row.querySelector('td:nth-child(2) .text-truncate');
+      const createdByCell = row.querySelector('td:nth-child(5)');
+
+      [nameCell, descCell, createdByCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const roleRows = document.querySelectorAll('tbody tr');
+  const hasResults = roleRows.length > 0 && !roleRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams || {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No roles found';
+      if (params.search) {
+        message += ' matching your search criteria. Try adjusting your search.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-tag-fill display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <div class="d-flex gap-2 justify-content-center">
+            <a href="/roles" class="btn btn-outline-primary btn-sm">Clear Search</a>
+            <a href="/roles/add" class="btn btn-primary btn-sm">Add New Role</a>
+          </div>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Icon styling */
+.bi {
+  font-size: 1.1em;
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-3, .row.g-3 > .col-md-6 {
+    margin-bottom: 1rem;
+  }
+
+  .text-truncate {
+    max-width: 150px !important;
+  }
+}
+</style>

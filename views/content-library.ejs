@@ -19,50 +19,150 @@
 <!-- Filter Section -->
 <section class="py-4 bg-light">
   <div class="container">
-    <form action="/content" method="GET" class="row g-3 align-items-end">
-      <!-- Content Type Filter -->
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
       <div class="col-md-3">
-        <label for="typeFilter" class="form-label">Content Type</label>
-        <select class="form-select" id="typeFilter" name="type">
-          <option value="">All Types</option>
-          <option value="song" <%= currentFilters.type === 'song' ? 'selected' : '' %>>Songs</option>
-          <option value="video" <%= currentFilters.type === 'video' ? 'selected' : '' %>>Videos</option>
-          <option value="lyrics" <%= currentFilters.type === 'lyrics' ? 'selected' : '' %>>Lyrics</option>
-        </select>
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h5>
+            <p class="card-text text-muted mb-0">Total Content</p>
+          </div>
+        </div>
       </div>
-
-      <!-- Artist Filter -->
       <div class="col-md-3">
-        <label for="artistFilter" class="form-label">Artist</label>
-        <select class="form-select" id="artistFilter" name="artist">
-          <option value="">All Artists</option>
-          <% artists.forEach(artist => { %>
-            <option value="<%= artist._id %>" <%= currentFilters.artist === artist._id.toString() ? 'selected' : '' %>>
-              <%= artist.user ? artist.user.name : 'Unknown Artist' %>
-            </option>
-          <% }); %>
-        </select>
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.songs : 0 %></h5>
+            <p class="card-text text-muted mb-0">Songs</p>
+          </div>
+        </div>
       </div>
-
-      <!-- Sort Filter -->
       <div class="col-md-3">
-        <label for="sortFilter" class="form-label">Sort By</label>
-        <select class="form-select" id="sortFilter" name="sort">
-          <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
-          <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-          <option value="popular" <%= currentFilters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-          <option value="alphabetical" <%= currentFilters.sort === 'alphabetical' ? 'selected' : '' %>>Alphabetical</option>
-        </select>
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.videos : 0 %></h5>
+            <p class="card-text text-muted mb-0">Videos</p>
+          </div>
+        </div>
       </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h5>
+            <p class="card-text text-muted mb-0">Filtered Results</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <!-- Apply Filters Button -->
-      <div class="col-md-3 d-flex gap-2">
-        <button type="submit" class="btn btn-primary flex-grow-1">Apply Filters</button>
-        <a href="/content" class="btn btn-secondary">
-          <i class="bi bi-arrow-counterclockwise"></i> Reset
-        </a>
+    <!-- Search and Filter Form -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">
+          <i class="bi bi-funnel me-2"></i>Search & Filter Content
+        </h5>
       </div>
-    </form>
+      <div class="card-body">
+        <form action="/content" method="GET" id="contentFilterForm">
+          <div class="row g-3">
+            <!-- Search Input -->
+            <div class="col-md-4">
+              <label for="searchInput" class="form-label">Search Content</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="searchInput" name="search"
+                       placeholder="Search by title or description..."
+                       value="<%= currentFilters.search %>">
+              </div>
+            </div>
+
+            <!-- Content Type Filter -->
+            <div class="col-md-2">
+              <label for="typeFilter" class="form-label">Content Type</label>
+              <select class="form-select" id="typeFilter" name="type">
+                <option value="">All Types</option>
+                <option value="song" <%= currentFilters.type === 'song' ? 'selected' : '' %>>Songs</option>
+                <option value="video" <%= currentFilters.type === 'video' ? 'selected' : '' %>>Videos</option>
+              </select>
+            </div>
+
+            <!-- Artist Filter -->
+            <div class="col-md-3">
+              <label for="artistFilter" class="form-label">Artist</label>
+              <select class="form-select" id="artistFilter" name="artist">
+                <option value="">All Artists</option>
+                <% if (artists && artists.length > 0) { %>
+                  <% artists.forEach(artist => { %>
+                    <option value="<%= artist._id %>" <%= currentFilters.artist === artist._id.toString() ? 'selected' : '' %>>
+                      <%= artist.user ? artist.user.name : 'Unknown Artist' %>
+                    </option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+
+            <!-- Sort Filter -->
+            <div class="col-md-3">
+              <label for="sortFilter" class="form-label">Sort By</label>
+              <select class="form-select" id="sortFilter" name="sort">
+                <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
+                <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                <option value="popular" <%= currentFilters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+                <option value="alphabetical" <%= currentFilters.sort === 'alphabetical' ? 'selected' : '' %>>Alphabetical</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="row mt-3">
+            <div class="col-12">
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search me-1"></i> Search & Filter
+                </button>
+                <a href="/content" class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+                </a>
+                <button type="button" class="btn btn-outline-info" id="toggleAdvanced">
+                  <i class="bi bi-gear me-1"></i> Advanced
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced Options (Hidden by default) -->
+          <div id="advancedOptions" class="row mt-3" style="display: none;">
+            <div class="col-12">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6 class="card-title">Advanced Options</h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="featuredOnly" name="featured" value="true">
+                        <label class="form-check-label" for="featuredOnly">
+                          Featured content only
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="hasViews" name="hasViews" value="true">
+                        <label class="form-check-label" for="hasViews">
+                          Content with views only
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -117,24 +217,64 @@
 
       <!-- Pagination -->
       <% if (pagination.totalPages > 1) { %>
+        <%
+          // Build query string for pagination links
+          const buildPaginationUrl = (page) => {
+            const params = new URLSearchParams();
+            if (currentFilters.type) params.set('type', currentFilters.type);
+            if (currentFilters.artist) params.set('artist', currentFilters.artist);
+            if (currentFilters.sort) params.set('sort', currentFilters.sort);
+            if (currentFilters.search) params.set('search', currentFilters.search);
+            params.set('page', page);
+            return '?' + params.toString();
+          };
+        %>
         <nav aria-label="Content pagination" class="mt-5">
           <ul class="pagination justify-content-center">
             <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= pagination.page - 1 %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>" aria-label="Previous">
+              <a class="page-link" href="<%= buildPaginationUrl(pagination.page - 1) %>" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
               </a>
             </li>
 
-            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <%
+              // Show pagination with smart truncation
+              const startPage = Math.max(1, pagination.page - 2);
+              const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+            %>
+
+            <% if (startPage > 1) { %>
+              <li class="page-item">
+                <a class="page-link" href="<%= buildPaginationUrl(1) %>">1</a>
+              </li>
+              <% if (startPage > 2) { %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              <% } %>
+            <% } %>
+
+            <% for (let i = startPage; i <= endPage; i++) { %>
               <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                <a class="page-link" href="?page=<%= i %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>">
+                <a class="page-link" href="<%= buildPaginationUrl(i) %>">
                   <%= i %>
                 </a>
               </li>
             <% } %>
 
+            <% if (endPage < pagination.totalPages) { %>
+              <% if (endPage < pagination.totalPages - 1) { %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              <% } %>
+              <li class="page-item">
+                <a class="page-link" href="<%= buildPaginationUrl(pagination.totalPages) %>"><%= pagination.totalPages %></a>
+              </li>
+            <% } %>
+
             <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= pagination.page + 1 %>&type=<%= currentFilters.type %>&artist=<%= currentFilters.artist %>&sort=<%= currentFilters.sort %>" aria-label="Next">
+              <a class="page-link" href="<%= buildPaginationUrl(pagination.page + 1) %>" aria-label="Next">
                 <span aria-hidden="true">&raquo;</span>
               </a>
             </li>
@@ -154,3 +294,170 @@
 </section>
 
 <%- contentFor('title') %>Content Library
+
+<!-- JavaScript for Enhanced Functionality -->
+<%- contentFor('extraScripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle advanced options
+  const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
+  const advancedOptions = document.getElementById('advancedOptions');
+
+  if (toggleAdvancedBtn && advancedOptions) {
+    toggleAdvancedBtn.addEventListener('click', function() {
+      if (advancedOptions.style.display === 'none') {
+        advancedOptions.style.display = 'block';
+        toggleAdvancedBtn.innerHTML = '<i class="bi bi-gear me-1"></i> Hide Advanced';
+      } else {
+        advancedOptions.style.display = 'none';
+        toggleAdvancedBtn.innerHTML = '<i class="bi bi-gear me-1"></i> Advanced';
+      }
+    });
+  }
+
+  // Search input enhancement
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    // Add search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('contentFilterForm').submit();
+      }
+    });
+
+    // Highlight search terms in results
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm) {
+      highlightSearchTerms(searchTerm);
+    }
+  }
+
+  // Function to highlight search terms
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const contentCards = document.querySelectorAll('.content-card');
+
+    contentCards.forEach(card => {
+      const title = card.querySelector('.card-title');
+      const description = card.querySelector('.card-text');
+
+      if (title && !title.querySelector('mark')) {
+        const originalText = title.textContent;
+        if (regex.test(originalText)) {
+          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+
+      if (description && !description.querySelector('mark')) {
+        const originalText = description.textContent;
+        if (regex.test(originalText)) {
+          description.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+    });
+  }
+
+  // Add loading state to form submission
+  const form = document.getElementById('contentFilterForm');
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
+        submitBtn.disabled = true;
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }, 5000);
+      }
+    });
+  }
+});
+</script>
+
+<style>
+/* Enhanced styles for content library */
+.content-card {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.content-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.content-thumbnail {
+  height: 200px;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.content-card:hover .content-thumbnail {
+  transform: scale(1.05);
+}
+
+.content-type-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.75em;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* Advanced options animation */
+#advancedOptions {
+  transition: all 0.3s ease;
+}
+
+/* Statistics cards enhancement */
+.card {
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .content-card {
+    margin-bottom: 1rem;
+  }
+
+  .pagination {
+    font-size: 0.9em;
+  }
+
+  .content-thumbnail {
+    height: 150px;
+  }
+}
+</style>

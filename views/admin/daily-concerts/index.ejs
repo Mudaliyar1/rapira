@@ -1,13 +1,13 @@
 <!-- Admin Daily Concerts List -->
 <div class="container-fluid">
-  <!-- Stats Cards -->
+  <!-- Quick Stats Cards -->
   <div class="row mb-4">
     <div class="col-md-6 col-lg-3">
       <div class="card bg-primary text-white mb-4">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h5 class="mb-0"><%= pagination.total %></h5>
+              <h5 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h5>
               <div>Total Concerts</div>
             </div>
             <div>
@@ -26,7 +26,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h5 class="mb-0"><%= dailyConcerts.filter(c => c.isVisible).length %></h5>
+              <h5 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.visible : 0 %></h5>
               <div>Visible Concerts</div>
             </div>
             <div>
@@ -45,7 +45,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h5 class="mb-0"><%= dailyConcerts.filter(c => !c.isVisible).length %></h5>
+              <h5 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.hidden : 0 %></h5>
               <div>Hidden Concerts</div>
             </div>
             <div>
@@ -80,70 +80,153 @@
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <i class="bi bi-funnel me-1"></i>
-      <span class="text-white">Filter Concerts</span>
+  <!-- Search and Filter Section -->
+  <div class="glass-card-dark border border-secondary mb-4">
+    <div class="card-header border-bottom border-secondary">
+      <h5 class="card-title mb-0 text-white">Search & Filter Daily Concerts</h5>
     </div>
     <div class="card-body">
-      <form action="/admin/daily-concerts" method="GET" class="row g-3">
-        <!-- Visibility Filter -->
-        <div class="col-md-3">
-          <label for="visible" class="form-label text-white">Visibility</label>
-          <select class="form-select bg-dark text-white" id="visible" name="visible" style="color: white !important; background-color: #2b2b2b !important;">
-            <option value="">All</option>
-            <option value="true" <%= filters.visible === 'true' ? 'selected' : '' %>>Visible</option>
-            <option value="false" <%= filters.visible === 'false' ? 'selected' : '' %>>Hidden</option>
-          </select>
+      <form method="GET" action="/admin/daily-concerts" id="dailyConcertSearchForm">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label for="search" class="form-label text-white">Search Concerts</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-white">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" class="form-control bg-dark border-secondary text-white"
+                     id="search" name="search" placeholder="Search by title, artist, organizer, or location..."
+                     value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <label for="visible" class="form-label text-white">Visibility</label>
+            <select class="form-select bg-dark border-secondary text-white" id="visible" name="visible">
+              <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.visible === 'all') ? 'selected' : '' %>>All</option>
+              <option value="true" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.visible === 'true') ? 'selected' : '' %>>Visible</option>
+              <option value="false" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.visible === 'false') ? 'selected' : '' %>>Hidden</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="dateRange" class="form-label text-white">Date Range</label>
+            <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+              <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+              <option value="today" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'today') ? 'selected' : '' %>>Today</option>
+              <option value="upcoming" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'upcoming') ? 'selected' : '' %>>Upcoming</option>
+              <option value="past" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'past') ? 'selected' : '' %>>Past</option>
+              <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+              <option value="this-month" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-month') ? 'selected' : '' %>>This Month</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="bookingType" class="form-label text-white">Booking Type</label>
+            <select class="form-select bg-dark border-secondary text-white" id="bookingType" name="bookingType">
+              <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.bookingType === 'all') ? 'selected' : '' %>>All Types</option>
+              <option value="artist" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.bookingType === 'artist') ? 'selected' : '' %>>Artist</option>
+              <option value="role" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.bookingType === 'role') ? 'selected' : '' %>>Role</option>
+              <option value="bulk" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.bookingType === 'bulk') ? 'selected' : '' %>>Bulk</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label for="city" class="form-label text-white">City</label>
+            <select class="form-select bg-dark border-secondary text-white" id="city" name="city">
+              <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.city === 'all') ? 'selected' : '' %>>All Cities</option>
+              <% if (typeof filterOptions !== 'undefined' && filterOptions && filterOptions.cities && filterOptions.cities.length > 0) { %>
+                <% filterOptions.cities.forEach(c => { %>
+                  <option value="<%= c %>" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.city === c) ? 'selected' : '' %>><%= c %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-1">
+            <label for="sortOrder" class="form-label text-white">Order</label>
+            <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+              <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Earliest</option>
+              <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Latest</option>
+            </select>
+          </div>
         </div>
-
-        <!-- Date Filter -->
-        <div class="col-md-3">
-          <label for="date" class="form-label text-white">Date</label>
-          <input type="date" class="form-control bg-dark text-white" id="date" name="date" value="<%= filters.date || '' %>" style="color: white !important; background-color: #2b2b2b !important;">
-        </div>
-
-        <!-- City Filter -->
-        <div class="col-md-3">
-          <label for="city" class="form-label text-white">City</label>
-          <select class="form-select bg-dark text-white" id="city" name="city" style="color: white !important; background-color: #2b2b2b !important;">
-            <option value="">All Cities</option>
-            <% filterOptions.cities.forEach(city => { %>
-              <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
-            <% }); %>
-          </select>
-        </div>
-
-        <!-- State Filter -->
-        <div class="col-md-3">
-          <label for="state" class="form-label text-white">State</label>
-          <select class="form-select bg-dark text-white" id="state" name="state" style="color: white !important; background-color: #2b2b2b !important;">
-            <option value="">All States</option>
-            <% filterOptions.states.forEach(state => { %>
-              <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
-            <% }); %>
-          </select>
-        </div>
-
-        <!-- Filter Button -->
-        <div class="col-12">
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-filter me-1"></i> Apply Filters
-          </button>
-          <a href="/admin/daily-concerts" class="btn btn-outline-secondary ms-2">
-            <i class="bi bi-x-circle me-1"></i> Clear Filters
-          </a>
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="d-flex align-items-center gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Search Concerts
+              </button>
+              <a href="/admin/daily-concerts" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+              </a>
+              <button type="button" class="btn btn-outline-info" id="toggleStats">
+                <i class="bi bi-bar-chart me-1"></i> Show Stats
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Statistics Section -->
+  <div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+    <div class="card-header border-bottom border-secondary">
+      <h5 class="card-title mb-0 text-white">Daily Concert Statistics</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+            <small class="text-white-50">Total Concerts</small>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.visible : 0 %></h4>
+            <small class="text-white-50">Visible</small>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-warning mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.hidden : 0 %></h4>
+            <small class="text-white-50">Hidden</small>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.upcoming : 0 %></h4>
+            <small class="text-white-50">Upcoming</small>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-secondary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.artist : 0 %></h4>
+            <small class="text-white-50">Artist Bookings</small>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="text-center">
+            <h4 class="text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+            <small class="text-white-50">Filtered Results</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Concerts Table -->
   <div class="card mb-4">
-    <div class="card-header">
-      <i class="bi bi-calendar-event me-1"></i>
-      <span class="text-white">Daily Concerts</span>
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <i class="bi bi-calendar-event me-1"></i>
+        <span class="text-white">
+          Daily Concerts
+          <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.visible !== 'all' || searchParams.dateRange !== 'all' || searchParams.bookingType !== 'all' || searchParams.city !== 'all')) { %>
+            <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+          <% } %>
+        </span>
+      </div>
+      <button class="btn btn-sm btn-outline-light" id="exportDailyConcerts">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
     </div>
     <div class="card-body">
       <% if (dailyConcerts.length === 0) { %>
@@ -212,41 +295,199 @@
           </table>
         </div>
 
-        <!-- Pagination -->
-        <% if (pagination.pageCount > 1) { %>
-          <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center mt-4">
-              <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
-                <a class="page-link" href="/admin/daily-concerts?page=<%= pagination.page - 1 %><%= filters.visible ? `&visible=${filters.visible}` : '' %><%= filters.date ? `&date=${filters.date}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>">Previous</a>
-              </li>
 
-              <% for (let i = 1; i <= pagination.pageCount; i++) { %>
-                <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                  <a class="page-link" href="/admin/daily-concerts?page=<%= i %><%= filters.visible ? `&visible=${filters.visible}` : '' %><%= filters.date ? `&date=${filters.date}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>"><%= i %></a>
-                </li>
-              <% } %>
-
-              <li class="page-item <%= pagination.page === pagination.pageCount ? 'disabled' : '' %>">
-                <a class="page-link" href="/admin/daily-concerts?page=<%= pagination.page + 1 %><%= filters.visible ? `&visible=${filters.visible}` : '' %><%= filters.date ? `&date=${filters.date}` : '' %><%= filters.city ? `&city=${filters.city}` : '' %><%= filters.state ? `&state=${filters.state}` : '' %>">Next</a>
-              </li>
-            </ul>
-          </nav>
-        <% } %>
       <% } %>
     </div>
   </div>
 </div>
 
-<script>
-  // Apply filters as soon as they change
-  document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.querySelector('form');
-    const filterInputs = filterForm.querySelectorAll('select, input[type="date"]');
+<%- contentFor('title') %>Daily Concerts Management
 
-    filterInputs.forEach(input => {
-      input.addEventListener('change', function() {
-        filterForm.submit();
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  if (toggleStatsBtn && statsSection) {
+    toggleStatsBtn.addEventListener('click', function() {
+      if (statsSection.style.display === 'none') {
+        statsSection.style.display = 'block';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+      } else {
+        statsSection.style.display = 'none';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+      }
+    });
+  }
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportDailyConcerts');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/daily-concerts/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= (typeof searchParams !== "undefined" && searchParams) ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const concertRows = document.querySelectorAll('tbody tr');
+
+    concertRows.forEach(row => {
+      const titleCell = row.querySelector('td:first-child');
+      const artistCell = row.querySelector('td:nth-child(2)');
+      const locationCell = row.querySelector('td:nth-child(4)');
+      const organizerCell = row.querySelector('td:nth-child(5)');
+
+      [titleCell, artistCell, locationCell, organizerCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
       });
     });
-  });
+  }
+
+  // Show/hide empty state message
+  const concertRows = document.querySelectorAll('tbody tr');
+  const hasResults = concertRows.length > 0;
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+      const searchParams = '<%= JSON.stringify((typeof searchParams !== "undefined" && searchParams) ? searchParams : {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No daily concerts found';
+      if (params.search || params.visible !== 'all' || params.dateRange !== 'all' || params.bookingType !== 'all' || params.city !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center py-4">
+            <div class="text-center py-4">
+              <i class="bi bi-calendar-x display-4 text-muted mb-3"></i>
+              <p class="text-white mb-2">${message}</p>
+              <a href="/admin/daily-concerts" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+  }
+});
 </script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

@@ -189,7 +189,9 @@ router.get('/', isLoggedIn, async (req, res) => {
     // Check if current user has any roles
     const currentUserRoles = await UserRole.find({ user: req.session.user.id }).populate('role');
     const hasRoles = currentUserRoles.length > 0;
-    const currentUserRoleNames = currentUserRoles.map(ur => ur.role.name);
+    const currentUserRoleNames = currentUserRoles
+      .filter(ur => ur.role) // Filter out null role references
+      .map(ur => ur.role.name);
 
     res.render('messages/inbox', {
       title: 'Messages',
@@ -261,7 +263,9 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
     // Check if current user has any roles
     const currentUserRoles = await UserRole.find({ user: req.session.user.id }).populate('role');
     const hasRoles = currentUserRoles.length > 0;
-    const currentUserRoleNames = currentUserRoles.map(ur => ur.role.name);
+    const currentUserRoleNames = currentUserRoles
+      .filter(ur => ur.role) // Filter out null role references
+      .map(ur => ur.role.name);
 
     res.render('messages/conversation', {
       title: `Conversation with ${otherUser.name}`,
@@ -311,7 +315,9 @@ router.post('/send', isLoggedIn, async (req, res) => {
     const recipientRoles = await UserRole.find({ user: recipientId })
       .populate('role');
 
-    const roleNames = recipientRoles.map(ur => ur.role.name);
+    const roleNames = recipientRoles
+      .filter(ur => ur.role) // Filter out null role references
+      .map(ur => ur.role.name);
 
     // Check if the current user can message this role
     let canMessage = false;
@@ -349,7 +355,9 @@ router.post('/send', isLoggedIn, async (req, res) => {
       // Check if the current user has any roles
       const currentUserRoles = await UserRole.find({ user: req.session.user.id }).populate('role');
       const hasRoles = currentUserRoles.length > 0;
-      const currentUserRoleNames = currentUserRoles.map(ur => ur.role.name);
+      const currentUserRoleNames = currentUserRoles
+        .filter(ur => ur.role) // Filter out null role references
+        .map(ur => ur.role.name);
 
       console.log('Current user has roles:', hasRoles ? 'Yes' : 'No');
       if (hasRoles) console.log('Current user roles:', currentUserRoleNames);
@@ -404,7 +412,9 @@ router.get('/find', isLoggedIn, async (req, res) => {
     // Check if current user has any roles
     const currentUserRoles = await UserRole.find({ user: req.session.user.id }).populate('role');
     const hasRoles = currentUserRoles.length > 0;
-    const currentUserRoleNames = currentUserRoles.map(ur => ur.role.name);
+    const currentUserRoleNames = currentUserRoles
+      .filter(ur => ur.role) // Filter out null role references
+      .map(ur => ur.role.name);
 
     // Get all roles
     const roles = await Role.find().sort({ name: 1 });
@@ -441,9 +451,9 @@ router.get('/find', isLoggedIn, async (req, res) => {
       const userRoleMap = {};
 
       userRoles.forEach(ur => {
-        // Skip entries with null user references
-        if (!ur.user) {
-          console.log('Found user role with null user reference:', ur);
+        // Skip entries with null user or role references
+        if (!ur.user || !ur.role) {
+          console.log('Found user role with null user or role reference:', ur);
           return;
         }
 
@@ -497,6 +507,12 @@ router.get('/find', isLoggedIn, async (req, res) => {
     // Create a map of user roles for easier access
     const userRoleMap = {};
     userRoles.forEach(ur => {
+      // Skip entries with null role references
+      if (!ur.role) {
+        console.log('Found user role with null role reference:', ur);
+        return;
+      }
+
       if (!userRoleMap[ur.user.toString()]) {
         userRoleMap[ur.user.toString()] = [];
       }

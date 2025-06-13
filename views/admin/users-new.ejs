@@ -1,8 +1,136 @@
 <%- contentFor('body') %>
-<!-- Users Table -->
+
+<!-- Search and Filter Section -->
 <div class="glass-card-dark border border-secondary mb-4">
   <div class="card-header border-bottom border-secondary">
-    <h5 class="card-title mb-0 text-white">All Users</h5>
+    <h5 class="card-title mb-0 text-white">Search & Filter Users</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/users" id="userSearchForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="search" class="form-label text-white">Search Users</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name or email..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="role" class="form-label text-white">Role</label>
+          <select class="form-select bg-dark border-secondary text-white" id="role" name="role">
+            <option value="all" <%= searchParams.role === 'all' ? 'selected' : '' %>>All Roles</option>
+            <option value="user" <%= searchParams.role === 'user' ? 'selected' : '' %>>User</option>
+            <option value="artist" <%= searchParams.role === 'artist' ? 'selected' : '' %>>Artist</option>
+            <option value="admin" <%= searchParams.role === 'admin' ? 'selected' : '' %>>Admin</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= searchParams.status === 'all' ? 'selected' : '' %>>All Status</option>
+            <option value="verified" <%= searchParams.status === 'verified' ? 'selected' : '' %>>Verified</option>
+            <option value="unverified" <%= searchParams.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= searchParams.sortBy === 'createdAt' ? 'selected' : '' %>>Join Date</option>
+            <option value="name" <%= searchParams.sortBy === 'name' ? 'selected' : '' %>>Name</option>
+            <option value="email" <%= searchParams.sortBy === 'email' ? 'selected' : '' %>>Email</option>
+            <option value="role" <%= searchParams.sortBy === 'role' ? 'selected' : '' %>>Role</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= searchParams.sortOrder === 'desc' ? 'selected' : '' %>>Descending</option>
+            <option value="asc" <%= searchParams.sortOrder === 'asc' ? 'selected' : '' %>>Ascending</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary me-2">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+          <a href="/admin/users" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+          </a>
+          <button type="button" class="btn btn-outline-info" id="toggleStats">
+            <i class="bi bi-bar-chart me-1"></i> Show Stats
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">User Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white-50">Total Users</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= stats.verified %></h4>
+          <small class="text-white-50">Verified</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats.artist %></h4>
+          <small class="text-white-50">Artists</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= stats.admin %></h4>
+          <small class="text-white-50">Admins</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats.filtered %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= Math.round((stats.verified / stats.total) * 100) %>%</h4>
+          <small class="text-white-50">Verification Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Users Table -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">
+      All Users
+      <% if (searchParams.search || searchParams.role !== 'all' || searchParams.status !== 'all') { %>
+        <span class="badge bg-info ms-2"><%= stats.filtered %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportUsers">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -105,3 +233,151 @@
 </a>
 
 <%- contentFor('title') %>Manage Users
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Auto-submit form on filter changes (with debounce for search)
+  const searchInput = document.getElementById('search');
+  const roleSelect = document.getElementById('role');
+  const statusSelect = document.getElementById('status');
+  const sortBySelect = document.getElementById('sortBy');
+  const sortOrderSelect = document.getElementById('sortOrder');
+  const form = document.getElementById('userSearchForm');
+
+  let searchTimeout;
+
+  // Debounced search
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      form.submit();
+    }, 500); // 500ms delay
+  });
+
+  // Immediate submit for dropdowns
+  [roleSelect, statusSelect, sortBySelect, sortOrderSelect].forEach(select => {
+    select.addEventListener('change', function() {
+      form.submit();
+    });
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportUsers');
+  exportBtn.addEventListener('click', function() {
+    // Get current search parameters
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'csv');
+
+    // Create download link
+    const downloadUrl = '/admin/users/export?' + params.toString();
+    window.open(downloadUrl, '_blank');
+  });
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams.search %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term})`, 'gi');
+    const userRows = document.querySelectorAll('tbody tr');
+
+    userRows.forEach(row => {
+      const nameCell = row.querySelector('td:first-child h6');
+      const emailCell = row.querySelector('td:nth-child(2)');
+
+      if (nameCell) {
+        nameCell.innerHTML = nameCell.textContent.replace(regex, '<mark class="bg-warning text-dark">$1</mark>');
+      }
+      if (emailCell) {
+        emailCell.innerHTML = emailCell.textContent.replace(regex, '<mark class="bg-warning text-dark">$1</mark>');
+      }
+    });
+  }
+
+  // Show/hide empty state message
+  const userRows = document.querySelectorAll('tbody tr');
+  const hasResults = userRows.length > 0 && !userRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No users found';
+      if (params.search || params.role !== 'all' || params.status !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-person-x display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/admin/users" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Loading state for form submissions */
+.form-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

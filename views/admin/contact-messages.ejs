@@ -13,6 +13,134 @@
   </div>
 <% } %>
 
+<!-- Enhanced Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Contact Messages</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/contact-messages" id="messageSearchForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="search" class="form-label text-white">Search Messages</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name, email, subject, or message..."
+                   value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'all') ? 'selected' : '' %>>All Status</option>
+            <option value="new" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'new') ? 'selected' : '' %>>New</option>
+            <option value="read" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'read') ? 'selected' : '' %>>Read</option>
+            <option value="replied" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'replied') ? 'selected' : '' %>>Replied</option>
+            <option value="archived" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'archived') ? 'selected' : '' %>>Archived</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+            <option value="today" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'today') ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-month') ? 'selected' : '' %>>This Month</option>
+            <option value="this-year" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-year') ? 'selected' : '' %>>This Year</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'createdAt') ? 'selected' : '' %>>Date</option>
+            <option value="name" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'name') ? 'selected' : '' %>>Name</option>
+            <option value="subject" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'subject') ? 'selected' : '' %>>Subject</option>
+            <option value="status" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'status') ? 'selected' : '' %>>Status</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Messages
+            </button>
+            <a href="/admin/contact-messages" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Enhanced Stats
+            </button>
+            <button class="btn btn-outline-primary" id="exportMessages">
+              <i class="bi bi-download me-1"></i> Export
+            </button>
+            <button class="btn btn-outline-warning" id="bulkDeleteBtn" onclick="toggleBulkDelete()">
+              <i class="bi bi-trash me-1"></i> Bulk Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Enhanced Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="enhancedStatsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Enhanced Contact Message Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Messages</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.new : 0 %></h4>
+          <small class="text-white-50">New</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.read : 0 %></h4>
+          <small class="text-white-50">Read</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.replied : 0 %></h4>
+          <small class="text-white-50">Replied</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.archived : 0 %></h4>
+          <small class="text-white-50">Archived</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Status Cards -->
 <div class="row mb-4">
   <div class="col-md-3 mb-3">
@@ -23,7 +151,7 @@
         </div>
         <div>
           <h6 class="mb-0">Total Messages</h6>
-          <h3 class="mb-0"><%= counts.total %></h3>
+          <h3 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h3>
         </div>
       </div>
     </div>
@@ -36,7 +164,7 @@
         </div>
         <div>
           <h6 class="mb-0">New</h6>
-          <h3 class="mb-0"><%= counts.new %></h3>
+          <h3 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.new : 0 %></h3>
         </div>
       </div>
     </div>
@@ -49,7 +177,7 @@
         </div>
         <div>
           <h6 class="mb-0">Replied</h6>
-          <h3 class="mb-0"><%= counts.replied %></h3>
+          <h3 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.replied : 0 %></h3>
         </div>
       </div>
     </div>
@@ -62,40 +190,21 @@
         </div>
         <div>
           <h6 class="mb-0">Archived</h6>
-          <h3 class="mb-0"><%= counts.archived %></h3>
+          <h3 class="mb-0"><%= (typeof stats !== 'undefined' && stats) ? stats.archived : 0 %></h3>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Filters -->
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-body">
-    <form action="/admin/contact-messages" method="GET" class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label for="status" class="form-label">Status</label>
-        <select class="form-select" id="status" name="status">
-          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Messages</option>
-          <option value="new" <%= filters.status === 'new' ? 'selected' : '' %>>New</option>
-          <option value="read" <%= filters.status === 'read' ? 'selected' : '' %>>Read</option>
-          <option value="replied" <%= filters.status === 'replied' ? 'selected' : '' %>>Replied</option>
-          <option value="archived" <%= filters.status === 'archived' ? 'selected' : '' %>>Archived</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label for="sort" class="form-label">Sort By</label>
-        <select class="form-select" id="sort" name="sort">
-          <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-          <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-          <option value="unread" <%= filters.sort === 'unread' ? 'selected' : '' %>>Unread First</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-      </div>
-    </form>
-  </div>
+<!-- Page Header with Results Count -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-gray-800">
+    Contact Messages
+    <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.status !== 'all' || searchParams.dateRange !== 'all')) { %>
+      <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+    <% } %>
+  </h1>
 </div>
 
 <!-- Messages Table -->
@@ -112,7 +221,10 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th>Status</th>
+              <th>
+                <input type="checkbox" id="selectAll" class="form-check-input" style="display: none;">
+                <span id="selectAllLabel">Status</span>
+              </th>
               <th>Name</th>
               <th>Email</th>
               <th>Subject</th>
@@ -124,24 +236,34 @@
             <% messages.forEach(message => { %>
               <tr class="<%= message.status === 'new' ? 'table-primary' : '' %>">
                 <td>
-                  <% if (message.status === 'new') { %>
-                    <span class="badge bg-danger">New</span>
-                  <% } else if (message.status === 'read') { %>
-                    <span class="badge bg-info">Read</span>
-                  <% } else if (message.status === 'replied') { %>
-                    <span class="badge bg-success">Replied</span>
-                  <% } else if (message.status === 'archived') { %>
-                    <span class="badge bg-secondary">Archived</span>
-                  <% } %>
+                  <div class="d-flex align-items-center">
+                    <input type="checkbox" class="form-check-input message-checkbox me-2" value="<%= message._id %>" style="display: none;">
+                    <div>
+                      <% if (message.status === 'new') { %>
+                        <span class="badge bg-danger">New</span>
+                      <% } else if (message.status === 'read') { %>
+                        <span class="badge bg-info">Read</span>
+                      <% } else if (message.status === 'replied') { %>
+                        <span class="badge bg-success">Replied</span>
+                      <% } else if (message.status === 'archived') { %>
+                        <span class="badge bg-secondary">Archived</span>
+                      <% } %>
+                    </div>
+                  </div>
                 </td>
                 <td><%= message.name %></td>
                 <td><a href="mailto:<%= message.email %>"><%= message.email %></a></td>
                 <td><%= message.subject %></td>
                 <td><%= new Date(message.createdAt).toLocaleDateString() %></td>
                 <td>
-                  <a href="/admin/contact-messages/<%= message._id %>" class="btn btn-sm btn-primary">
-                    <i class="bi bi-eye"></i> View
-                  </a>
+                  <div class="btn-group">
+                    <a href="/admin/contact-messages/<%= message._id %>" class="btn btn-sm btn-primary" title="View Message">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/admin/contact-messages/delete/<%= message._id %>/confirm" class="btn btn-sm btn-outline-danger" title="Delete Message">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
                 </td>
               </tr>
             <% }) %>
@@ -153,12 +275,275 @@
 </div>
 
 <script>
-  // Auto-submit form when filters change
-  document.getElementById('status').addEventListener('change', function() {
-    this.form.submit();
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle enhanced statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const enhancedStatsSection = document.getElementById('enhancedStatsSection');
+
+  if (toggleStatsBtn && enhancedStatsSection) {
+    toggleStatsBtn.addEventListener('click', function() {
+      if (enhancedStatsSection.style.display === 'none') {
+        enhancedStatsSection.style.display = 'block';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Enhanced Stats';
+      } else {
+        enhancedStatsSection.style.display = 'none';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Enhanced Stats';
+      }
+    });
+  }
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportMessages');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/contact-messages/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= (typeof searchParams !== "undefined" && searchParams) ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const messageRows = document.querySelectorAll('table tbody tr');
+
+    messageRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      cells.forEach((cell, index) => {
+        if (cell && !cell.querySelector('mark') && !cell.querySelector('button') && index > 0 && index < 5) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Bulk delete functionality for contact messages
+  let bulkDeleteMode = false;
+
+  function toggleBulkDelete() {
+    bulkDeleteMode = !bulkDeleteMode;
+    const bulkBtn = document.getElementById('bulkDeleteBtn');
+    const selectAll = document.getElementById('selectAll');
+    const selectAllLabel = document.getElementById('selectAllLabel');
+    const checkboxes = document.querySelectorAll('.message-checkbox');
+
+    if (bulkDeleteMode) {
+      // Enable bulk delete mode
+      bulkBtn.innerHTML = '<i class="bi bi-x me-1"></i> Cancel Bulk Delete';
+      bulkBtn.className = 'btn btn-outline-secondary';
+      selectAll.style.display = 'inline-block';
+      selectAllLabel.textContent = 'Select All';
+
+      // Show checkboxes in each row
+      checkboxes.forEach(checkbox => {
+        checkbox.style.display = 'inline-block';
+      });
+
+      // Show bulk delete actions
+      showBulkDeleteActions();
+    } else {
+      // Disable bulk delete mode
+      bulkBtn.innerHTML = '<i class="bi bi-trash me-1"></i> Bulk Delete';
+      bulkBtn.className = 'btn btn-outline-warning';
+      selectAll.style.display = 'none';
+      selectAllLabel.textContent = 'Status';
+      selectAll.checked = false;
+
+      // Hide checkboxes
+      checkboxes.forEach(checkbox => {
+        checkbox.style.display = 'none';
+        checkbox.checked = false;
+      });
+
+      // Hide bulk delete actions
+      hideBulkDeleteActions();
+    }
+  }
+
+  function showBulkDeleteActions() {
+    const actionsHtml = `
+      <div id="bulkDeleteActions" class="alert alert-warning mt-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-info-circle me-2"></i>Select messages to delete</span>
+          <button class="btn btn-danger btn-sm" onclick="confirmBulkDelete()" id="bulkDeleteConfirmBtn" disabled>
+            <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+    `;
+
+    const enhancedStatsSection = document.getElementById('enhancedStatsSection');
+    if (enhancedStatsSection) {
+      enhancedStatsSection.insertAdjacentHTML('afterend', actionsHtml);
+    }
+  }
+
+  function hideBulkDeleteActions() {
+    const bulkActions = document.getElementById('bulkDeleteActions');
+    if (bulkActions) {
+      bulkActions.remove();
+    }
+  }
+
+  function updateSelectedCount() {
+    const selectedCheckboxes = document.querySelectorAll('.message-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    const countSpan = document.getElementById('selectedCount');
+    const confirmBtn = document.getElementById('bulkDeleteConfirmBtn');
+
+    if (countSpan) countSpan.textContent = count;
+    if (confirmBtn) confirmBtn.disabled = count === 0;
+  }
+
+  function confirmBulkDelete() {
+    const selectedCheckboxes = document.querySelectorAll('.message-checkbox:checked');
+    const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+    if (selectedIds.length === 0) {
+      alert('Please select at least one message to delete.');
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete ${selectedIds.length} contact message(s)? This action cannot be undone.`;
+
+    if (confirm(confirmMessage)) {
+      // Create a form to submit the bulk delete
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/admin/contact-messages/bulk-delete';
+
+      selectedIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'messageIds[]';
+        input.value = id;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Select all functionality
+  const selectAll = document.getElementById('selectAll');
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('.message-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+      updateSelectedCount();
+    });
+  }
+
+  // Individual checkbox listeners
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('message-checkbox')) {
+      updateSelectedCount();
+
+      // Update select all checkbox
+      const selectAll = document.getElementById('selectAll');
+      const checkboxes = document.querySelectorAll('.message-checkbox');
+      const checkedBoxes = document.querySelectorAll('.message-checkbox:checked');
+
+      if (selectAll) {
+        selectAll.checked = checkboxes.length === checkedBoxes.length;
+        selectAll.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < checkboxes.length;
+      }
+    }
   });
-  
-  document.getElementById('sort').addEventListener('change', function() {
-    this.form.submit();
-  });
+
+  // Make functions global for onclick handlers
+  window.toggleBulkDelete = toggleBulkDelete;
+  window.confirmBulkDelete = confirmBulkDelete;
+});
 </script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#enhancedStatsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-4 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

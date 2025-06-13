@@ -303,18 +303,216 @@ router.get('/filter', async (req, res) => {
 // GET /admin/team-requirement/roles - List all roles
 router.get('/roles', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const roles = await TeamRequirementRole.find().sort({ name: 1 });
+    // Get search parameters
+    const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    // Active status filter
+    if (isActive && isActive !== 'all') {
+      filter.isActive = isActive === 'true';
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    // State filter
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { name: 1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'desc' ? -1 : 1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get roles with filters
+    let roles = await TeamRequirementRole.find(filter).sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      roles = roles.filter(role => {
+        const name = (role.name || '').toLowerCase();
+        const description = (role.description || '').toLowerCase();
+        const city = (role.city || '').toLowerCase();
+        const state = (role.state || '').toLowerCase();
+        const phoneNumber = (role.phoneNumber || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               phoneNumber.includes(searchTerm);
+      });
+    }
+
+    // Get all cities and states for filter dropdown
+    const allCities = await TeamRequirementRole.distinct('city');
+    const allStates = await TeamRequirementRole.distinct('state');
+
+    // Get statistics
+    const totalRoles = await TeamRequirementRole.countDocuments();
+    const activeRoles = await TeamRequirementRole.countDocuments({ isActive: true });
+    const inactiveRoles = await TeamRequirementRole.countDocuments({ isActive: false });
 
     res.render('admin/team-requirement/roles', {
       layout: 'admin',
       title: 'Team Requirement Roles',
       currentPath: '/admin/team-requirement/roles',
-      roles
+      roles,
+      searchParams: {
+        search: search || '',
+        isActive: isActive || 'all',
+        city: city || 'all',
+        state: state || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'name',
+        sortOrder: sortOrder || 'asc'
+      },
+      stats: {
+        total: totalRoles,
+        active: activeRoles,
+        inactive: inactiveRoles,
+        filtered: roles.length
+      },
+      filterOptions: {
+        cities: allCities.filter(c => c && c.trim()).sort(),
+        states: allStates.filter(s => s && s.trim()).sort()
+      }
     });
   } catch (error) {
     console.error('Error loading team requirement roles:', error);
     req.flash('error', 'An error occurred while loading team requirement roles');
     res.redirect('/admin');
+  }
+});
+
+// Export team roles to CSV
+router.get('/roles/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (isActive && isActive !== 'all') {
+      filter.isActive = isActive === 'true';
+    }
+
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { name: 1 };
+    if (sortBy) {
+      const order = sortOrder === 'desc' ? -1 : 1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get roles with filters
+    let roles = await TeamRequirementRole.find(filter).sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      roles = roles.filter(role => {
+        const name = (role.name || '').toLowerCase();
+        const description = (role.description || '').toLowerCase();
+        const city = (role.city || '').toLowerCase();
+        const state = (role.state || '').toLowerCase();
+        const phoneNumber = (role.phoneNumber || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               phoneNumber.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Name,Description,City,State,Phone Number,Status,Created Date\n';
+    const csvRows = roles.map(role => {
+      const name = `"${(role.name || '').replace(/"/g, '""')}"`;
+      const description = `"${(role.description || '').replace(/"/g, '""')}"`;
+      const city = `"${(role.city || '').replace(/"/g, '""')}"`;
+      const state = `"${(role.state || '').replace(/"/g, '""')}"`;
+      const phoneNumber = `"${(role.phoneNumber || '').replace(/"/g, '""')}"`;
+      const status = role.isActive ? 'Active' : 'Inactive';
+      const createdDate = new Date(role.createdAt).toLocaleDateString();
+
+      return `${name},${description},${city},${state},${phoneNumber},${status},${createdDate}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `team_roles_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export team roles error:', error);
+    req.flash('error', 'Failed to export team roles');
+    res.redirect('/admin/team-requirement/roles');
   }
 });
 
@@ -502,45 +700,95 @@ router.post('/roles/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 // GET /admin/team-requirement/requests - List all booking requests
 router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    // Get filter parameters
-    const { status, role, city, state } = req.query;
+    // Get search parameters
+    const { search, status, role, city, state, dateRange, sortBy, sortOrder } = req.query;
 
     // Build filter object
     const filter = {};
-    if (status) filter.status = status;
-    if (city) filter.city = new RegExp(city, 'i');
-    if (state) filter.state = new RegExp(state, 'i');
 
-    // Handle role filter (need to join with TeamRequirementRole)
-    let roleId = null;
-    if (role) {
-      const roleDoc = await TeamRequirementRole.findOne({ name: new RegExp(role, 'i') });
-      if (roleDoc) {
-        roleId = roleDoc._id;
-        filter.role = roleId;
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    // State filter
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    // Role filter
+    if (role && role !== 'all') {
+      filter.role = role;
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
       }
     }
 
-    // Get all booking requests with pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const skip = (page - 1) * limit;
-
     // First, get all main requests (either single requests or bulk main requests)
     const mainRequestsFilter = { ...filter };
-    // Only include requests that are either not part of a bulk request (bulkRequestId is null)
-    // or are the main entry for a bulk request (isBulkRequest is true)
     mainRequestsFilter.$or = [
       { bulkRequestId: null },
       { isBulkRequest: true }
     ];
 
-    const requests = await TeamBookingRequest.find(mainRequestsFilter)
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get requests without pagination for search
+    let requests = await TeamBookingRequest.find(mainRequestsFilter)
       .populate('role')
       .populate('reviewedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .sort(sortOptions);
+
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const name = (request.name || '').toLowerCase();
+        const email = (request.email || '').toLowerCase();
+        const phone = (request.phone || '').toLowerCase();
+        const city = (request.city || '').toLowerCase();
+        const state = (request.state || '').toLowerCase();
+        const roleName = (request.role ? request.role.name : '').toLowerCase();
+        const message = (request.message || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               email.includes(searchTerm) ||
+               phone.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               roleName.includes(searchTerm) ||
+               message.includes(searchTerm);
+      });
+    }
 
     // For bulk requests, fetch all related roles
     for (const request of requests) {
@@ -556,28 +804,44 @@ router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
       }
     }
 
-    const totalRequests = await TeamBookingRequest.countDocuments(mainRequestsFilter);
-    const totalPages = Math.ceil(totalRequests / limit);
-
     // Get unique cities, states, and roles for filter dropdowns
     const cities = await TeamBookingRequest.distinct('city');
     const states = await TeamBookingRequest.distinct('state');
     const roles = await TeamRequirementRole.find().sort({ name: 1 });
+
+    // Get statistics
+    const totalRequests = await TeamBookingRequest.countDocuments(mainRequestsFilter);
+    const pendingRequests = await TeamBookingRequest.countDocuments({ ...mainRequestsFilter, status: 'pending' });
+    const approvedRequests = await TeamBookingRequest.countDocuments({ ...mainRequestsFilter, status: 'approved' });
+    const rejectedRequests = await TeamBookingRequest.countDocuments({ ...mainRequestsFilter, status: 'rejected' });
+    const bulkRequests = await TeamBookingRequest.countDocuments({ ...mainRequestsFilter, isBulkRequest: true });
 
     res.render('admin/team-requirement/requests', {
       layout: 'admin',
       title: 'Team Booking Requests',
       currentPath: '/admin/team-requirement/requests',
       requests,
-      pagination: {
-        page,
-        totalPages,
-        totalRequests
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        role: role || 'all',
+        city: city || 'all',
+        state: state || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
       },
-      filters: { status, role, city, state },
+      stats: {
+        total: totalRequests,
+        pending: pendingRequests,
+        approved: approvedRequests,
+        rejected: rejectedRequests,
+        bulk: bulkRequests,
+        filtered: requests.length
+      },
       filterOptions: {
-        cities,
-        states,
+        cities: cities.filter(c => c && c.trim()).sort(),
+        states: states.filter(s => s && s.trim()).sort(),
         roles
       }
     });
@@ -585,6 +849,130 @@ router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Error loading team booking requests:', error);
     req.flash('error', 'An error occurred while loading team booking requests');
     res.redirect('/admin');
+  }
+});
+
+// Export team booking requests to CSV
+router.get('/requests/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, status, role, city, state, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    if (state && state !== 'all') {
+      filter.state = new RegExp(state, 'i');
+    }
+
+    if (role && role !== 'all') {
+      filter.role = role;
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Get main requests filter
+    const mainRequestsFilter = { ...filter };
+    mainRequestsFilter.$or = [
+      { bulkRequestId: null },
+      { isBulkRequest: true }
+    ];
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get requests
+    let requests = await TeamBookingRequest.find(mainRequestsFilter)
+      .populate('role')
+      .populate('reviewedBy', 'name email')
+      .sort(sortOptions);
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const name = (request.name || '').toLowerCase();
+        const email = (request.email || '').toLowerCase();
+        const phone = (request.phone || '').toLowerCase();
+        const city = (request.city || '').toLowerCase();
+        const state = (request.state || '').toLowerCase();
+        const roleName = (request.role ? request.role.name : '').toLowerCase();
+        const message = (request.message || '').toLowerCase();
+
+        return name.includes(searchTerm) ||
+               email.includes(searchTerm) ||
+               phone.includes(searchTerm) ||
+               city.includes(searchTerm) ||
+               state.includes(searchTerm) ||
+               roleName.includes(searchTerm) ||
+               message.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Name,Email,Phone,Role,Location,Status,Request Type,Message,Request Date,Reviewed By,Reviewed Date\n';
+    const csvRows = requests.map(request => {
+      const name = `"${(request.name || '').replace(/"/g, '""')}"`;
+      const email = `"${(request.email || '').replace(/"/g, '""')}"`;
+      const phone = `"${(request.phone || '').replace(/"/g, '""')}"`;
+      const roleName = request.role ? request.role.name : 'Unknown';
+      const role = `"${roleName.replace(/"/g, '""')}"`;
+      const location = `"${request.city}, ${request.state}".replace(/"/g, '""')`;
+      const status = request.status || '';
+      const requestType = request.isBulkRequest ? `Bulk (${request.bulkRoleCount} roles)` : 'Single';
+      const message = `"${(request.message || '').replace(/"/g, '""')}"`;
+      const requestDate = new Date(request.createdAt).toLocaleDateString();
+      const reviewedBy = request.reviewedBy ? request.reviewedBy.name : '';
+      const reviewedDate = request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '';
+
+      return `${name},${email},${phone},${role},${location},${status},"${requestType}",${message},${requestDate},"${reviewedBy}",${reviewedDate}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `team_booking_requests_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export team booking requests error:', error);
+    req.flash('error', 'Failed to export team booking requests');
+    res.redirect('/admin/team-requirement/requests');
   }
 });
 

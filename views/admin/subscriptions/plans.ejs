@@ -1,10 +1,138 @@
 <%- contentFor('body') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Subscription Plans</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/subscriptions/plans" id="planSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Plans</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name or benefits..."
+                   value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="isActive" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="isActive" name="isActive">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.isActive === 'all') ? 'selected' : '' %>>All Status</option>
+            <option value="true" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.isActive === 'true') ? 'selected' : '' %>>Active</option>
+            <option value="false" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.isActive === 'false') ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="durationUnit" class="form-label text-white">Duration Unit</label>
+          <select class="form-select bg-dark border-secondary text-white" id="durationUnit" name="durationUnit">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.durationUnit === 'all') ? 'selected' : '' %>>All Units</option>
+            <option value="days" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.durationUnit === 'days') ? 'selected' : '' %>>Days</option>
+            <option value="months" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.durationUnit === 'months') ? 'selected' : '' %>>Months</option>
+            <option value="years" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.durationUnit === 'years') ? 'selected' : '' %>>Years</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="priceRange" class="form-label text-white">Price Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="priceRange" name="priceRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === 'all') ? 'selected' : '' %>>All Prices</option>
+            <option value="0-100" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === '0-100') ? 'selected' : '' %>>₹0 - ₹100</option>
+            <option value="101-500" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === '101-500') ? 'selected' : '' %>>₹101 - ₹500</option>
+            <option value="501-1000" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === '501-1000') ? 'selected' : '' %>>₹501 - ₹1000</option>
+            <option value="1001+" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === '1001+') ? 'selected' : '' %>>₹1001+</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Created Date</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+            <option value="today" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'today') ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-month') ? 'selected' : '' %>>This Month</option>
+            <option value="this-year" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-year') ? 'selected' : '' %>>This Year</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Price ↑</option>
+            <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Price ↓</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Plans
+            </button>
+            <a href="/admin/subscriptions/plans" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Subscription Plan Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Plans</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.active : 0 %></h4>
+          <small class="text-white-50">Active</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.inactive : 0 %></h4>
+          <small class="text-white-50">Inactive</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0 text-white">Subscription Plans</h1>
-  <a href="/admin/subscriptions/plans/add" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i> Add New Plan
-  </a>
+  <h1 class="h3 mb-0 text-white">
+    Subscription Plans
+    <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.isActive !== 'all' || searchParams.durationUnit !== 'all' || searchParams.priceRange !== 'all' || searchParams.dateRange !== 'all')) { %>
+      <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+    <% } %>
+  </h1>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-primary" id="exportPlans">
+      <i class="bi bi-download me-1"></i> Export
+    </button>
+    <a href="/admin/subscriptions/plans/add" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i> Add New Plan
+    </a>
+  </div>
 </div>
 
 <div class="card glass-card-dark border border-secondary mb-4">
@@ -59,31 +187,9 @@
                     <a href="/admin/subscriptions/plans/edit/<%= plan._id %>" class="btn btn-sm btn-outline-primary">
                       <i class="bi bi-pencil"></i>
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePlanModal<%= plan._id %>">
+                    <a href="/admin/subscriptions/plans/delete/<%= plan._id %>/confirm" class="btn btn-sm btn-outline-danger">
                       <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-
-                  <!-- Delete Modal -->
-                  <div class="modal fade" id="deletePlanModal<%= plan._id %>" tabindex="-1" aria-labelledby="deletePlanModalLabel<%= plan._id %>" aria-hidden="true">
-                    <div class="modal-dialog">
-                      <div class="modal-content bg-dark text-white">
-                        <div class="modal-header border-secondary">
-                          <h5 class="modal-title" id="deletePlanModalLabel<%= plan._id %>">Confirm Delete</h5>
-                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          <p>Are you sure you want to delete the "<%= plan.name %>" subscription plan?</p>
-                          <p class="text-warning"><i class="bi bi-exclamation-triangle me-2"></i>This action cannot be undone.</p>
-                        </div>
-                        <div class="modal-footer border-secondary">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                          <form action="/admin/subscriptions/plans/delete/<%= plan._id %>" method="POST">
-                            <button type="submit" class="btn btn-danger">Delete Plan</button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
+                    </a>
                   </div>
                 </td>
               </tr>
@@ -122,3 +228,137 @@
     </div>
   </div>
 </div>
+
+<%- contentFor('extraScripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  if (toggleStatsBtn && statsSection) {
+    toggleStatsBtn.addEventListener('click', function() {
+      if (statsSection.style.display === 'none') {
+        statsSection.style.display = 'block';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+      } else {
+        statsSection.style.display = 'none';
+        toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+      }
+    });
+  }
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportPlans');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/subscriptions/plans/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= (typeof searchParams !== "undefined" && searchParams) ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const planRows = document.querySelectorAll('table tbody tr');
+
+    planRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      cells.forEach((cell, index) => {
+        if (cell && !cell.querySelector('mark') && !cell.querySelector('button') && index < 5) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

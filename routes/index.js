@@ -167,24 +167,57 @@ router.get('/faq', (req, res) => {
 // Content library page
 router.get('/content', async (req, res) => {
   try {
-    // Get filter parameters
-    const { type, artist, sort = 'latest' } = req.query;
+    // Get filter parameters with proper defaults
+    const { type, artist, sort = 'latest', search } = req.query;
 
     // Build filter object
     const filter = {};
-    if (type) filter.type = type;
-    if (artist) filter.artist = artist;
+
+    // Content type filter (only allow valid types)
+    if (type && ['song', 'video'].includes(type)) {
+      filter.type = type;
+    }
+
+    // Artist filter
+    if (artist && artist !== '') {
+      filter.artist = artist;
+    }
+
+    // Search filter (search in title and description)
+    if (search && search.trim() !== '') {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex }
+      ];
+    }
 
     // Build sort object
     let sortOption = { createdAt: -1 }; // Default: latest first
-    if (sort === 'oldest') sortOption = { createdAt: 1 };
-    if (sort === 'popular') sortOption = { views: -1 };
-    if (sort === 'alphabetical') sortOption = { title: 1 };
+    switch (sort) {
+      case 'oldest':
+        sortOption = { createdAt: 1 };
+        break;
+      case 'popular':
+        sortOption = { views: -1, createdAt: -1 };
+        break;
+      case 'alphabetical':
+        sortOption = { title: 1 };
+        break;
+      case 'latest':
+      default:
+        sortOption = { createdAt: -1 };
+        break;
+    }
 
-    // Get all artists for filter dropdown
-    const artists = await Artist.find()
+    // Get all artists for filter dropdown (only those with content)
+    const artistsWithContent = await Content.distinct('artist');
+    const artists = await Artist.find({ _id: { $in: artistsWithContent } })
       .populate('user', 'name')
-      .then(artists => artists.filter(artist => artist.user)); // Filter out artists with no user
+      .sort({ 'user.name': 1 });
+
+    // Filter out artists with no user
+    const validArtists = artists.filter(artist => artist.user);
 
     // Get content with pagination
     const page = parseInt(req.query.page) || 1;
@@ -205,16 +238,30 @@ router.get('/content', async (req, res) => {
         populate: { path: 'user', select: 'name' }
       });
 
+    // Get content statistics
+    const stats = {
+      total: await Content.countDocuments(),
+      songs: await Content.countDocuments({ type: 'song' }),
+      videos: await Content.countDocuments({ type: 'video' }),
+      filtered: totalContent
+    };
+
     res.render('content-library', {
       content,
-      artists,
-      currentFilters: { type, artist, sort },
+      artists: validArtists,
+      currentFilters: {
+        type: type || '',
+        artist: artist || '',
+        sort: sort || 'latest',
+        search: search || ''
+      },
       pagination: {
         page,
         totalPages,
         hasNext: page < totalPages,
         hasPrev: page > 1
-      }
+      },
+      stats
     });
   } catch (error) {
     console.error('Content library error:', error);

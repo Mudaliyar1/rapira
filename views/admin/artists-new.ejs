@@ -1,8 +1,164 @@
 <%- contentFor('body') %>
+
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Artists</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/artists" id="artistSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Artists</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name, email, or genre..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="genre" class="form-label text-white">Genre</label>
+          <select class="form-select bg-dark border-secondary text-white" id="genre" name="genre">
+            <option value="all" <%= searchParams.genre === 'all' ? 'selected' : '' %>>All Genres</option>
+            <% if (genres && genres.length > 0) { %>
+              <% genres.forEach(g => { %>
+                <option value="<%= g %>" <%= searchParams.genre === g ? 'selected' : '' %>><%= g %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= searchParams.status === 'all' ? 'selected' : '' %>>All Status</option>
+            <option value="verified" <%= searchParams.status === 'verified' ? 'selected' : '' %>>Verified</option>
+            <option value="unverified" <%= searchParams.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="featured" class="form-label text-white">Featured</label>
+          <select class="form-select bg-dark border-secondary text-white" id="featured" name="featured">
+            <option value="all" <%= searchParams.featured === 'all' ? 'selected' : '' %>>All Artists</option>
+            <option value="featured" <%= searchParams.featured === 'featured' ? 'selected' : '' %>>Featured</option>
+            <option value="not-featured" <%= searchParams.featured === 'not-featured' ? 'selected' : '' %>>Not Featured</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="level" class="form-label text-white">Level</label>
+          <select class="form-select bg-dark border-secondary text-white" id="level" name="level">
+            <option value="all" <%= searchParams.level === 'all' ? 'selected' : '' %>>All Levels</option>
+            <option value="Beginner" <%= searchParams.level === 'Beginner' ? 'selected' : '' %>>Beginner</option>
+            <option value="Intermediate" <%= searchParams.level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+            <option value="Established" <%= searchParams.level === 'Established' ? 'selected' : '' %>>Established</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortBy" class="form-label text-white">Sort</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= searchParams.sortBy === 'createdAt' ? 'selected' : '' %>>Join Date</option>
+            <option value="stageName" <%= searchParams.sortBy === 'stageName' ? 'selected' : '' %>>Name</option>
+            <option value="genre" <%= searchParams.sortBy === 'genre' ? 'selected' : '' %>>Genre</option>
+            <option value="verified" <%= searchParams.sortBy === 'verified' ? 'selected' : '' %>>Status</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Artists
+            </button>
+            <a href="/admin/artists" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Artist Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white-50">Total Artists</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= stats.verified %></h4>
+          <small class="text-white-50">Verified</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats.featured %></h4>
+          <small class="text-white-50">Featured</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats.beginner %></h4>
+          <small class="text-white-50">Beginner</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= stats.intermediate %></h4>
+          <small class="text-white-50">Intermediate</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= stats.established %></h4>
+          <small class="text-white-50">Established</small>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats.filtered %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= Math.round((stats.verified / stats.total) * 100) %>%</h4>
+          <small class="text-white-50">Verification Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Artists Table -->
 <div class="glass-card-dark border border-secondary">
-  <div class="card-header border-bottom border-secondary">
-    <h5 class="card-title mb-0 text-white">All Artists</h5>
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">
+      All Artists
+      <% if (searchParams.search || searchParams.genre !== 'all' || searchParams.status !== 'all' || searchParams.featured !== 'all' || searchParams.level !== 'all') { %>
+        <span class="badge bg-info ms-2"><%= stats.filtered %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportArtists">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -93,3 +249,198 @@
 </div>
 
 <%- contentFor('title') %>Manage Artists
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportArtists');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+      params.set('export', 'csv');
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/artists/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams.search %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const artistRows = document.querySelectorAll('tbody tr');
+
+    artistRows.forEach(row => {
+      const stageNameCell = row.querySelector('td:first-child h6');
+      const userNameCell = row.querySelector('td:nth-child(2) .fw-medium');
+      const emailCell = row.querySelector('td:nth-child(2) .small');
+      const genreCell = row.querySelector('td:nth-child(3)');
+
+      [stageNameCell, userNameCell, emailCell, genreCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const artistRows = document.querySelectorAll('tbody tr');
+  const hasResults = artistRows.length > 0 && !artistRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No artists found';
+      if (params.search || params.genre !== 'all' || params.status !== 'all' || params.featured !== 'all' || params.level !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-person-x display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/admin/artists" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Artist profile image styling */
+.rounded-circle {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.rounded-circle:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: scale(1.05);
+}
+
+/* Button group enhancements */
+.btn-group .btn {
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

@@ -222,43 +222,87 @@ router.post('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) =>
 // Admin: View all upgrade requests
 router.get('/admin/artist-upgrade-requests', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    // Get filter parameters
-    const { status, currentLevel, requestedLevel } = req.query;
+    // Get search parameters
+    const { search, status, currentLevel, requestedLevel, sortBy, sortOrder } = req.query;
 
     // Build filter object
     const filter = {};
 
-    if (status) {
+    // Status filter
+    if (status && status !== 'all') {
       filter.status = status;
     }
 
-    if (currentLevel) {
+    // Current level filter
+    if (currentLevel && currentLevel !== 'all') {
       filter.currentLevel = currentLevel;
     }
 
-    if (requestedLevel) {
+    // Requested level filter
+    if (requestedLevel && requestedLevel !== 'all') {
       filter.requestedLevel = requestedLevel;
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
     }
 
     // Get all artist levels for filter dropdowns
     const artistLevels = ['Beginner', 'Intermediate', 'Established'];
 
     // Get requests with filters applied
-    const requests = await ArtistUpgradeRequest.find(filter)
-      .sort({ createdAt: -1 })
+    let requests = await ArtistUpgradeRequest.find(filter)
+      .sort(sortOptions)
       .populate('user')
       .populate('artist')
       .populate('reviewedBy');
+
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const userName = (request.user ? request.user.name : '').toLowerCase();
+        const userEmail = (request.user ? request.user.email : '').toLowerCase();
+        const currentLevel = (request.currentLevel || '').toLowerCase();
+        const requestedLevel = (request.requestedLevel || '').toLowerCase();
+        const status = (request.status || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               currentLevel.includes(searchTerm) ||
+               requestedLevel.includes(searchTerm) ||
+               status.includes(searchTerm);
+      });
+    }
+
+    // Get statistics
+    const totalRequests = await ArtistUpgradeRequest.countDocuments();
+    const pendingRequests = await ArtistUpgradeRequest.countDocuments({ status: 'pending' });
+    const approvedRequests = await ArtistUpgradeRequest.countDocuments({ status: 'approved' });
+    const rejectedRequests = await ArtistUpgradeRequest.countDocuments({ status: 'rejected' });
 
     res.render('admin/artist-upgrade-requests', {
       layout: 'admin',
       title: 'Artist Upgrade Requests',
       currentPath: '/admin/artist-upgrade-requests',
       requests,
-      filters: {
-        status,
-        currentLevel,
-        requestedLevel
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        currentLevel: currentLevel || 'all',
+        requestedLevel: requestedLevel || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalRequests,
+        pending: pendingRequests,
+        approved: approvedRequests,
+        rejected: rejectedRequests,
+        filtered: requests.length
       },
       filterOptions: {
         statuses: ['pending', 'approved', 'rejected'],
@@ -269,6 +313,92 @@ router.get('/admin/artist-upgrade-requests', isLoggedIn, isAdmin, async (req, re
     console.error('Error in admin upgrade requests:', error);
     req.flash('error', 'An error occurred while loading upgrade requests');
     res.redirect('/admin');
+  }
+});
+
+// Export artist upgrade requests to CSV
+router.get('/admin/artist-upgrade-requests/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main admin route)
+    const { search, status, currentLevel, requestedLevel, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (currentLevel && currentLevel !== 'all') {
+      filter.currentLevel = currentLevel;
+    }
+
+    if (requestedLevel && requestedLevel !== 'all') {
+      filter.requestedLevel = requestedLevel;
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get requests with filters applied
+    let requests = await ArtistUpgradeRequest.find(filter)
+      .sort(sortOptions)
+      .populate('user')
+      .populate('artist')
+      .populate('reviewedBy');
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      requests = requests.filter(request => {
+        const userName = (request.user ? request.user.name : '').toLowerCase();
+        const userEmail = (request.user ? request.user.email : '').toLowerCase();
+        const currentLevel = (request.currentLevel || '').toLowerCase();
+        const requestedLevel = (request.requestedLevel || '').toLowerCase();
+        const status = (request.status || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               currentLevel.includes(searchTerm) ||
+               requestedLevel.includes(searchTerm) ||
+               status.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'User Name,Email,Current Level,Requested Level,Status,Submitted Date,Reviewed Date,Reviewed By,Admin Notes\n';
+    const csvRows = requests.map(request => {
+      const userName = `"${(request.user ? request.user.name : '').replace(/"/g, '""')}"`;
+      const userEmail = `"${(request.user ? request.user.email : '').replace(/"/g, '""')}"`;
+      const currentLevel = request.currentLevel || '';
+      const requestedLevel = request.requestedLevel || '';
+      const status = request.status || '';
+      const submittedDate = new Date(request.createdAt).toLocaleDateString();
+      const reviewedDate = request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '';
+      const reviewedBy = `"${(request.reviewedBy ? request.reviewedBy.name : '').replace(/"/g, '""')}"`;
+      const adminNotes = `"${(request.adminNotes || '').replace(/"/g, '""')}"`;
+
+      return `${userName},${userEmail},${currentLevel},${requestedLevel},${status},${submittedDate},${reviewedDate},${reviewedBy},${adminNotes}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `artist_upgrade_requests_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export artist upgrade requests error:', error);
+    req.flash('error', 'Failed to export artist upgrade requests');
+    res.redirect('/admin/artist-upgrade-requests');
   }
 });
 

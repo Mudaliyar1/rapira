@@ -180,23 +180,230 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
 // Manage content
 router.get('/', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const content = await Content.find()
-      .sort({ createdAt: -1 })
+    // Get search parameters
+    const { search, type, featured, artist, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    // Type filter
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+
+    // Featured filter
+    if (featured && featured !== 'all') {
+      filter.featured = featured === 'true';
+    }
+
+    // Artist filter
+    if (artist && artist !== 'all') {
+      filter.artist = artist;
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get content with filters
+    let content = await Content.find(filter)
+      .sort(sortOptions)
       .populate({
         path: 'artist',
         populate: { path: 'user', select: 'name' }
       });
 
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      content = content.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const description = (item.description || '').toLowerCase();
+        const artistName = (item.artist && item.artist.user ? item.artist.user.name : '').toLowerCase();
+        const stageName = (item.artist ? item.artist.stageName : '').toLowerCase();
+        const tags = (item.tags || []).join(' ').toLowerCase();
+
+        return title.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               artistName.includes(searchTerm) ||
+               stageName.includes(searchTerm) ||
+               tags.includes(searchTerm);
+      });
+    }
+
+    // Get all artists for filter dropdown
+    const allArtists = await Artist.find()
+      .populate('user', 'name')
+      .sort({ 'user.name': 1 });
+
+    // Get statistics
+    const totalContent = await Content.countDocuments();
+    const musicContent = await Content.countDocuments({ type: 'music' });
+    const videoContent = await Content.countDocuments({ type: 'video' });
+    const lyricsContent = await Content.countDocuments({ type: 'lyrics' });
+    const featuredContent = await Content.countDocuments({ featured: true });
+
     res.render('admin/content', {
       layout: 'admin',
       currentPath: '/admin/content',
       title: 'Manage Content',
-      content
+      content,
+      searchParams: {
+        search: search || '',
+        type: type || 'all',
+        featured: featured || 'all',
+        artist: artist || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalContent,
+        music: musicContent,
+        video: videoContent,
+        lyrics: lyricsContent,
+        featured: featuredContent,
+        filtered: content.length
+      },
+      artists: allArtists
     });
   } catch (error) {
     console.error('Manage content error:', error);
     req.flash('error', 'Failed to load content');
     res.redirect('/admin');
+  }
+});
+
+// Export content to CSV
+router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, type, featured, artist, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+
+    if (featured && featured !== 'all') {
+      filter.featured = featured === 'true';
+    }
+
+    if (artist && artist !== 'all') {
+      filter.artist = artist;
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.createdAt = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get content with filters
+    let content = await Content.find(filter)
+      .sort(sortOptions)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      content = content.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const description = (item.description || '').toLowerCase();
+        const artistName = (item.artist && item.artist.user ? item.artist.user.name : '').toLowerCase();
+        const stageName = (item.artist ? item.artist.stageName : '').toLowerCase();
+        const tags = (item.tags || []).join(' ').toLowerCase();
+
+        return title.includes(searchTerm) ||
+               description.includes(searchTerm) ||
+               artistName.includes(searchTerm) ||
+               stageName.includes(searchTerm) ||
+               tags.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Title,Type,Artist,Featured,Tags,Release Date,Created Date,Description\n';
+    const csvRows = content.map(item => {
+      const title = `"${(item.title || '').replace(/"/g, '""')}"`;
+      const type = item.type || '';
+      const artistName = item.artist && item.artist.user ? item.artist.user.name : '';
+      const artist = `"${artistName.replace(/"/g, '""')}"`;
+      const featured = item.featured ? 'Yes' : 'No';
+      const tags = `"${(item.tags || []).join(', ').replace(/"/g, '""')}"`;
+      const releaseDate = item.releaseDate ? new Date(item.releaseDate).toLocaleDateString() : '';
+      const createdDate = new Date(item.createdAt).toLocaleDateString();
+      const description = `"${(item.description || '').replace(/"/g, '""')}"`;
+
+      return `${title},${type},${artist},${featured},${tags},${releaseDate},${createdDate},${description}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `content_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export content error:', error);
+    req.flash('error', 'Failed to export content');
+    res.redirect('/admin/content');
   }
 });
 

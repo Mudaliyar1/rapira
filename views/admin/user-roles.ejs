@@ -1,12 +1,151 @@
 <%- contentFor('body') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter User Roles</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/roles/user-roles" id="userRoleSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Users</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name or email..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="userRole" class="form-label text-white">User Role</label>
+          <select class="form-select bg-dark border-secondary text-white" id="userRole" name="userRole">
+            <option value="all" <%= searchParams.userRole === 'all' ? 'selected' : '' %>>All Users</option>
+            <option value="user" <%= searchParams.userRole === 'user' ? 'selected' : '' %>>Regular Users</option>
+            <option value="artist" <%= searchParams.userRole === 'artist' ? 'selected' : '' %>>Artists</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="assignedRole" class="form-label text-white">Assigned Role</label>
+          <select class="form-select bg-dark border-secondary text-white" id="assignedRole" name="assignedRole">
+            <option value="all" <%= searchParams.assignedRole === 'all' ? 'selected' : '' %>>All Roles</option>
+            <% if (roles && roles.length > 0) { %>
+              <% roles.forEach(role => { %>
+                <option value="<%= role._id %>" <%= searchParams.assignedRole === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="hasRoles" class="form-label text-white">Role Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="hasRoles" name="hasRoles">
+            <option value="all" <%= searchParams.hasRoles === 'all' ? 'selected' : '' %>>All Users</option>
+            <option value="with-roles" <%= searchParams.hasRoles === 'with-roles' ? 'selected' : '' %>>With Roles</option>
+            <option value="without-roles" <%= searchParams.hasRoles === 'without-roles' ? 'selected' : '' %>>Without Roles</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="name" <%= searchParams.sortBy === 'name' ? 'selected' : '' %>>Name</option>
+            <option value="email" <%= searchParams.sortBy === 'email' ? 'selected' : '' %>>Email</option>
+            <option value="role" <%= searchParams.sortBy === 'role' ? 'selected' : '' %>>User Role</option>
+            <option value="createdAt" <%= searchParams.sortBy === 'createdAt' ? 'selected' : '' %>>Join Date</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="asc" <%= searchParams.sortOrder === 'asc' ? 'selected' : '' %>>A-Z</option>
+            <option value="desc" <%= searchParams.sortOrder === 'desc' ? 'selected' : '' %>>Z-A</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search User Roles
+            </button>
+            <a href="/roles/user-roles" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">User Role Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white-50">Total Users</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats.artists %></h4>
+          <small class="text-white-50">Artists</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= stats.regular %></h4>
+          <small class="text-white-50">Regular Users</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= stats.withRoles %></h4>
+          <small class="text-white-50">With Roles</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats.withoutRoles %></h4>
+          <small class="text-white-50">Without Roles</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= stats.filtered %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- User Roles Management -->
 <div class="glass-card-dark border border-secondary">
   <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0 text-white">Manage User Roles</h5>
-    <a href="/roles" class="btn btn-sm btn-outline-light">
-      <i class="bi bi-arrow-left"></i> Back to Roles
-    </a>
+    <h5 class="card-title mb-0 text-white">
+      Manage User Roles
+      <% if (searchParams.search || searchParams.userRole !== 'all' || searchParams.assignedRole !== 'all' || searchParams.hasRoles !== 'all') { %>
+        <span class="badge bg-info ms-2"><%= stats.filtered %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportUserRoles">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+      <a href="/roles" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Back to Roles
+      </a>
+    </div>
   </div>
   <div class="card-body">
     <% if (roles && roles.length > 0) { %>
@@ -102,4 +241,195 @@
   </div>
 </div>
 
+<%- contentFor('title') %>Manage User Roles
 
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportUserRoles');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+      params.set('export', 'csv');
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/roles/user-roles/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams.search %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const userRows = document.querySelectorAll('tbody tr');
+
+    userRows.forEach(row => {
+      const nameCell = row.querySelector('td:first-child h6');
+      const emailCell = row.querySelector('td:first-child small');
+
+      [nameCell, emailCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const userRows = document.querySelectorAll('tbody tr');
+  const hasResults = userRows.length > 0 && !userRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No users found';
+      if (params.search || params.userRole !== 'all' || params.assignedRole !== 'all' || params.hasRoles !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-people-fill display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/roles/user-roles" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Role badge enhancements */
+.badge {
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

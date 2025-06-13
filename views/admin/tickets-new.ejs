@@ -1,8 +1,161 @@
 <%- contentFor('body') %>
+
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Tickets</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/tickets" id="ticketSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Tickets</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by user, email, concert, or ticket number..."
+                   value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Payment Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'all') ? 'selected' : '' %>>All Status</option>
+            <option value="completed" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'completed') ? 'selected' : '' %>>Completed</option>
+            <option value="pending" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'pending') ? 'selected' : '' %>>Pending</option>
+            <option value="failed" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.status === 'failed') ? 'selected' : '' %>>Failed</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Purchase Date</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+            <option value="today" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'today') ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-month') ? 'selected' : '' %>>This Month</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="priceRange" class="form-label text-white">Price Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="priceRange" name="priceRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === 'all') ? 'selected' : '' %>>All Prices</option>
+            <option value="free" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === 'free') ? 'selected' : '' %>>Free</option>
+            <option value="under-500" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === 'under-500') ? 'selected' : '' %>>Under ₹500</option>
+            <option value="500-1000" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === '500-1000') ? 'selected' : '' %>>₹500-₹1000</option>
+            <option value="over-1000" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.priceRange === 'over-1000') ? 'selected' : '' %>>Over ₹1000</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="purchaseDate" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'purchaseDate') ? 'selected' : '' %>>Purchase Date</option>
+            <option value="totalAmount" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'totalAmount') ? 'selected' : '' %>>Amount</option>
+            <option value="quantity" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'quantity') ? 'selected' : '' %>>Quantity</option>
+            <option value="paymentStatus" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'paymentStatus') ? 'selected' : '' %>>Status</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Tickets
+            </button>
+            <a href="/admin/tickets" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Ticket Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Tickets</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.completed : 0 %></h4>
+          <small class="text-white-50">Completed</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.pending : 0 %></h4>
+          <small class="text-white-50">Pending</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.failed : 0 %></h4>
+          <small class="text-white-50">Failed</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.free : 0 %></h4>
+          <small class="text-white-50">Free Tickets</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1">₹<%= (typeof stats !== 'undefined' && stats) ? stats.revenue.toLocaleString() : 0 %></h4>
+          <small class="text-white-50">Total Revenue</small>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= (typeof stats !== 'undefined' && stats && stats.total > 0) ? Math.round((stats.completed / stats.total) * 100) : 0 %>%</h4>
+          <small class="text-white-50">Success Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Tickets Table -->
 <div class="glass-card-dark border border-secondary">
   <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0 text-white">All Tickets</h5>
+    <h5 class="card-title mb-0 text-white">
+      All Tickets
+      <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.status !== 'all' || searchParams.dateRange !== 'all' || searchParams.priceRange !== 'all')) { %>
+        <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <button class="btn btn-sm btn-outline-light" id="exportTickets">
+      <i class="bi bi-download me-1"></i> Export
+    </button>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -75,3 +228,194 @@
     </div>
   </div>
 </div>
+
+<%- contentFor('title') %>Tickets Management
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportTickets');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/tickets/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= (typeof searchParams !== "undefined" && searchParams) ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const ticketRows = document.querySelectorAll('tbody tr');
+
+    ticketRows.forEach(row => {
+      const ticketNumberCell = row.querySelector('td:nth-child(2) .ticket-number');
+      const userNameCell = row.querySelector('td:nth-child(3) .fw-medium');
+      const userEmailCell = row.querySelector('td:nth-child(3) .small');
+      const concertTitleCell = row.querySelector('td:nth-child(4) .fw-medium');
+
+      [ticketNumberCell, userNameCell, userEmailCell, concertTitleCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const ticketRows = document.querySelectorAll('tbody tr');
+  const hasResults = ticketRows.length > 0 && !ticketRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify((typeof searchParams !== "undefined" && searchParams) ? searchParams : {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No tickets found';
+      if (params.search || params.status !== 'all' || params.dateRange !== 'all' || params.priceRange !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-ticket-perforated display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/admin/tickets" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Ticket number styling */
+.ticket-number {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

@@ -1,74 +1,160 @@
 <%- contentFor('body') %>
 
-<!-- Artist Upgrade Requests -->
-<div class="glass-card-dark border border-secondary">
-  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
-    <h5 class="card-title mb-0 text-white">Artist Upgrade Requests</h5>
-    <a href="/admin" class="btn btn-sm btn-outline-light">
-      <i class="bi bi-arrow-left"></i> Back to Dashboard
-    </a>
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Artist Upgrade Requests</h5>
   </div>
-
-  <!-- Filter Section -->
-  <div class="card-body pb-0">
-    <form id="filterForm" method="GET" action="/admin/artist-upgrade-requests" class="mb-3">
+  <div class="card-body">
+    <form method="GET" action="/admin/artist-upgrade-requests" id="upgradeSearchForm">
       <div class="row g-3">
-        <div class="col-md-4">
-          <label for="statusFilter" class="form-label text-white">Status</label>
-          <select id="statusFilter" name="status" class="form-select form-select-sm bg-dark text-white border-secondary">
-            <option value="">All Statuses</option>
-            <% filterOptions.statuses.forEach(statusOption => { %>
-              <option value="<%= statusOption %>" <%= filters.status === statusOption ? 'selected' : '' %>>
-                <%= statusOption.charAt(0).toUpperCase() + statusOption.slice(1) %>
-              </option>
-            <% }); %>
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Requests</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by name, email, or level..."
+                   value="<%= searchParams ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= (searchParams && searchParams.status === 'all') ? 'selected' : '' %>>All Status</option>
+            <option value="pending" <%= (searchParams && searchParams.status === 'pending') ? 'selected' : '' %>>Pending</option>
+            <option value="approved" <%= (searchParams && searchParams.status === 'approved') ? 'selected' : '' %>>Approved</option>
+            <option value="rejected" <%= (searchParams && searchParams.status === 'rejected') ? 'selected' : '' %>>Rejected</option>
           </select>
         </div>
-
-        <div class="col-md-4">
-          <label for="currentLevelFilter" class="form-label text-white">Current Level</label>
-          <select id="currentLevelFilter" name="currentLevel" class="form-select form-select-sm bg-dark text-white border-secondary">
-            <option value="">All Current Levels</option>
-            <% filterOptions.artistLevels.forEach(level => { %>
-              <option value="<%= level %>" <%= filters.currentLevel === level ? 'selected' : '' %>><%= level %></option>
-            <% }); %>
+        <div class="col-md-2">
+          <label for="currentLevel" class="form-label text-white">Current Level</label>
+          <select class="form-select bg-dark border-secondary text-white" id="currentLevel" name="currentLevel">
+            <option value="all" <%= (searchParams && searchParams.currentLevel === 'all') ? 'selected' : '' %>>All Levels</option>
+            <% if (filterOptions && filterOptions.artistLevels) { %>
+              <% filterOptions.artistLevels.forEach(level => { %>
+                <option value="<%= level %>" <%= (searchParams && searchParams.currentLevel === level) ? 'selected' : '' %>><%= level %></option>
+              <% }); %>
+            <% } %>
           </select>
         </div>
-
-        <div class="col-md-4">
-          <label for="requestedLevelFilter" class="form-label text-white">Requested Level</label>
-          <select id="requestedLevelFilter" name="requestedLevel" class="form-select form-select-sm bg-dark text-white border-secondary">
-            <option value="">All Requested Levels</option>
-            <% filterOptions.artistLevels.forEach(level => { %>
-              <option value="<%= level %>" <%= filters.requestedLevel === level ? 'selected' : '' %>><%= level %></option>
-            <% }); %>
+        <div class="col-md-2">
+          <label for="requestedLevel" class="form-label text-white">Requested Level</label>
+          <select class="form-select bg-dark border-secondary text-white" id="requestedLevel" name="requestedLevel">
+            <option value="all" <%= (searchParams && searchParams.requestedLevel === 'all') ? 'selected' : '' %>>All Levels</option>
+            <% if (filterOptions && filterOptions.artistLevels) { %>
+              <% filterOptions.artistLevels.forEach(level => { %>
+                <option value="<%= level %>" <%= (searchParams && searchParams.requestedLevel === level) ? 'selected' : '' %>><%= level %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= (searchParams && searchParams.sortBy === 'createdAt') ? 'selected' : '' %>>Request Date</option>
+            <option value="status" <%= (searchParams && searchParams.sortBy === 'status') ? 'selected' : '' %>>Status</option>
+            <option value="currentLevel" <%= (searchParams && searchParams.sortBy === 'currentLevel') ? 'selected' : '' %>>Current Level</option>
+            <option value="requestedLevel" <%= (searchParams && searchParams.sortBy === 'requestedLevel') ? 'selected' : '' %>>Requested Level</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
           </select>
         </div>
       </div>
-
-      <div class="d-flex justify-content-end mt-3">
-        <a href="/admin/artist-upgrade-requests" class="btn btn-sm btn-outline-secondary me-2">
-          <i class="bi bi-x-circle"></i> Clear Filters
-        </a>
-        <button type="submit" class="btn btn-sm btn-primary">
-          <i class="bi bi-filter"></i> Apply Filters
-        </button>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Requests
+            </button>
+            <a href="/admin/artist-upgrade-requests" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
       </div>
     </form>
   </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Upgrade Request Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= stats ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Requests</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= stats ? stats.pending : 0 %></h4>
+          <small class="text-white-50">Pending</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-success mb-1"><%= stats ? stats.approved : 0 %></h4>
+          <small class="text-white-50">Approved</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-danger mb-1"><%= stats ? stats.rejected : 0 %></h4>
+          <small class="text-white-50">Rejected</small>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= stats ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= stats ? Math.round((stats.approved / stats.total) * 100) : 0 %>%</h4>
+          <small class="text-white-50">Approval Rate</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Artist Upgrade Requests -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">
+      Artist Upgrade Requests
+      <% if (searchParams && (searchParams.search || searchParams.status !== 'all' || searchParams.currentLevel !== 'all' || searchParams.requestedLevel !== 'all')) { %>
+        <span class="badge bg-info ms-2"><%= stats ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-light" id="exportUpgradeRequests">
+        <i class="bi bi-download me-1"></i> Export
+      </button>
+      <a href="/admin" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
 
   <div class="card-body p-0">
-    <!-- Results count -->
-    <div class="px-3 py-2 border-bottom border-secondary">
-      <p class="mb-0 text-white-50">
-        <i class="bi bi-list-ul me-1"></i>
-        Showing <span class="text-white"><%= requests.length %></span>
-        <%= requests.length === 1 ? 'request' : 'requests' %>
-        <% if (filters.status || filters.currentLevel || filters.requestedLevel) { %>
-          <span class="text-white-50">with applied filters</span>
-        <% } %>
-      </p>
-    </div>
 
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
@@ -196,7 +282,7 @@
             <tr>
               <td colspan="6" class="text-center py-4 text-white">
                 <i class="bi bi-inbox display-4 text-muted mb-3 d-block"></i>
-                <% if (filters.status || filters.currentLevel || filters.requestedLevel) { %>
+                <% if (searchParams && (searchParams.search || searchParams.status !== 'all' || searchParams.currentLevel !== 'all' || searchParams.requestedLevel !== 'all')) { %>
                   <p class="mb-2">No upgrade requests found with the selected filters</p>
                   <a href="/admin/artist-upgrade-requests" class="btn btn-sm btn-outline-primary mt-2">
                     <i class="bi bi-x-circle"></i> Clear Filters
@@ -213,33 +299,187 @@
   </div>
 </div>
 
-<%- contentFor('extraScripts') %>
+<%- contentFor('title') %>Artist Upgrade Requests
+
+<%- contentFor('scripts') %>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit form when filters change
-    const filterForm = document.getElementById('filterForm');
-    const filterSelects = filterForm.querySelectorAll('select');
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
 
-    filterSelects.forEach(select => {
-      select.addEventListener('change', function() {
-        filterForm.submit();
-      });
-    });
-
-    // Clear filters button functionality
-    const clearFiltersBtn = document.querySelector('a[href="/admin/artist-upgrade-requests"]');
-    if (clearFiltersBtn) {
-      clearFiltersBtn.addEventListener('click', function(e) {
-        // Only prevent default if filters are applied
-        const hasFilters =
-          document.getElementById('statusFilter').value !== '' ||
-          document.getElementById('currentLevelFilter').value !== '' ||
-          document.getElementById('requestedLevelFilter').value !== '';
-
-        if (!hasFilters) {
-          e.preventDefault(); // Don't reload if no filters are applied
-        }
-      });
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
     }
   });
+
+  // Export functionality
+  const exportBtn = document.getElementById('exportUpgradeRequests');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function() {
+      // Get current search parameters
+      const params = new URLSearchParams(window.location.search);
+
+      // Show export loading
+      const originalText = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<i class="bi bi-download me-1"></i> Exporting...';
+      exportBtn.disabled = true;
+
+      // Create download link
+      const downloadUrl = '/admin/artist-upgrade-requests/export?' + params.toString();
+
+      // Create hidden iframe for download
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+
+      // Reset button after delay
+      setTimeout(() => {
+        exportBtn.innerHTML = originalText;
+        exportBtn.disabled = false;
+        document.body.removeChild(iframe);
+      }, 2000);
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const requestRows = document.querySelectorAll('tbody tr');
+
+    requestRows.forEach(row => {
+      const nameCell = row.querySelector('td:first-child h6');
+      const emailCell = row.querySelector('td:first-child small');
+      const currentLevelCell = row.querySelector('td:nth-child(2) .badge');
+      const requestedLevelCell = row.querySelector('td:nth-child(3) .badge');
+
+      [nameCell, emailCell, currentLevelCell, requestedLevelCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const requestRows = document.querySelectorAll('tbody tr');
+  const hasResults = requestRows.length > 0 && !requestRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams || {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No upgrade requests found';
+      if (params.search || params.status !== 'all' || params.currentLevel !== 'all' || params.requestedLevel !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '.';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <a href="/admin/artist-upgrade-requests" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+        </div>
+      `;
+    }
+  }
+});
 </script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-2, .row.g-3 > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

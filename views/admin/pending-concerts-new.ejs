@@ -1,8 +1,118 @@
 <%- contentFor('body') %>
+
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Pending Concerts</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/concerts/pending" id="pendingConcertSearchForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="search" class="form-label text-white">Search Pending Concerts</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by title, artist, venue, or email..."
+                   value="<%= (typeof searchParams !== 'undefined' && searchParams) ? searchParams.search : '' %>">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'all') ? 'selected' : '' %>>All Dates</option>
+            <option value="upcoming" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'upcoming') ? 'selected' : '' %>>Upcoming</option>
+            <option value="past" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'past') ? 'selected' : '' %>>Past</option>
+            <option value="this-week" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.dateRange === 'this-week') ? 'selected' : '' %>>This Week</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="sortBy" class="form-label text-white">Sort By</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+            <option value="createdAt" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'createdAt') ? 'selected' : '' %>>Submission Date</option>
+            <option value="date" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'date') ? 'selected' : '' %>>Concert Date</option>
+            <option value="title" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortBy === 'title') ? 'selected' : '' %>>Title</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="sortOrder" class="form-label text-white">Order</label>
+          <select class="form-select bg-dark border-secondary text-white" id="sortOrder" name="sortOrder">
+            <option value="desc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'desc') ? 'selected' : '' %>>Newest</option>
+            <option value="asc" <%= (typeof searchParams !== 'undefined' && searchParams && searchParams.sortOrder === 'asc') ? 'selected' : '' %>>Oldest</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search me-1"></i> Search Pending
+            </button>
+            <a href="/admin/concerts/pending" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+            </a>
+            <button type="button" class="btn btn-outline-info" id="toggleStats">
+              <i class="bi bi-bar-chart me-1"></i> Show Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark border border-secondary mb-4" id="statsSection" style="display: none;">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Pending Concert Statistics</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-warning mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h4>
+          <small class="text-white-50">Total Pending</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.upcoming : 0 %></h4>
+          <small class="text-white-50">Upcoming</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-secondary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.past : 0 %></h4>
+          <small class="text-white-50">Past</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-center">
+          <h4 class="text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h4>
+          <small class="text-white-50">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Pending Concerts Table -->
 <div class="glass-card-dark border border-secondary">
-  <div class="card-header border-bottom border-secondary">
-    <h5 class="card-title mb-0 text-white">Pending Approval</h5>
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">
+      Pending Approval
+      <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.dateRange !== 'all')) { %>
+        <span class="badge bg-warning ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
+      <% } %>
+    </h5>
+    <div class="d-flex gap-2">
+      <span class="badge bg-warning fs-6">
+        <i class="bi bi-hourglass-split me-1"></i>
+        <%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %> Awaiting Review
+      </span>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -127,3 +237,187 @@
 <% } %>
 
 <%- contentFor('title') %>Pending Concerts
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle statistics section
+  const toggleStatsBtn = document.getElementById('toggleStats');
+  const statsSection = document.getElementById('statsSection');
+
+  toggleStatsBtn.addEventListener('click', function() {
+    if (statsSection.style.display === 'none') {
+      statsSection.style.display = 'block';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+    } else {
+      statsSection.style.display = 'none';
+      toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+    }
+  });
+
+  // Highlight search terms in results
+  const searchTerm = '<%= searchParams ? searchParams.search : "" %>';
+  if (searchTerm) {
+    highlightSearchTerms(searchTerm);
+  }
+
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const concertRows = document.querySelectorAll('tbody tr');
+
+    concertRows.forEach(row => {
+      const titleCell = row.querySelector('td:first-child .fw-medium');
+      const artistNameCell = row.querySelector('td:nth-child(2) .fw-medium');
+      const artistEmailCell = row.querySelector('td:nth-child(2) .small');
+      const venueCell = row.querySelector('td:nth-child(4) .text-white');
+      const cityCell = row.querySelector('td:nth-child(4) .small');
+
+      [titleCell, artistNameCell, artistEmailCell, venueCell, cityCell].forEach(cell => {
+        if (cell && !cell.querySelector('mark')) {
+          const originalText = cell.textContent;
+          if (regex.test(originalText)) {
+            cell.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show/hide empty state message
+  const concertRows = document.querySelectorAll('tbody tr');
+  const hasResults = concertRows.length > 0 && !concertRows[0].querySelector('td[colspan]');
+
+  if (!hasResults) {
+    // Show helpful message for no results
+    const emptyRow = document.querySelector('tbody tr td[colspan]');
+    if (emptyRow) {
+      const searchParams = '<%= JSON.stringify(searchParams || {}) %>';
+      const params = JSON.parse(searchParams);
+
+      let message = 'No pending concerts found';
+      if (params.search || params.dateRange !== 'all') {
+        message += ' matching your search criteria. Try adjusting your filters.';
+      } else {
+        message += '. All concerts have been reviewed!';
+      }
+
+      emptyRow.innerHTML = `
+        <div class="text-center py-4">
+          <i class="bi bi-calendar-check display-4 text-muted mb-3"></i>
+          <p class="text-white mb-2">${message}</p>
+          <div class="d-flex gap-2 justify-content-center">
+            <a href="/admin/concerts/pending" class="btn btn-outline-primary btn-sm">Clear Filters</a>
+            <a href="/admin/concerts" class="btn btn-primary btn-sm">View All Concerts</a>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Auto-refresh pending count every 30 seconds
+  setInterval(async function() {
+    try {
+      const response = await fetch('/admin/concerts/pending?count=true');
+      const data = await response.json();
+      if (data.count !== undefined) {
+        const badge = document.querySelector('.badge.bg-warning.fs-6');
+        if (badge) {
+          badge.innerHTML = `<i class="bi bi-hourglass-split me-1"></i>${data.count} Awaiting Review`;
+        }
+      }
+    } catch (error) {
+      console.log('Failed to refresh pending count');
+    }
+  }, 30000);
+});
+</script>
+
+<style>
+/* Custom styles for search and filter */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+mark {
+  padding: 0.1em 0.2em;
+  border-radius: 0.2em;
+}
+
+/* Smooth transitions */
+#statsSection {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced table styles */
+tbody tr {
+  transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dark theme enhancements */
+.glass-card-dark {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.8);
+}
+
+/* Button enhancements */
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Pending badge animation */
+.badge.bg-warning {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .row.g-3 > .col-md-3, .row.g-3 > .col-md-4 {
+    margin-bottom: 1rem;
+  }
+}
+</style>

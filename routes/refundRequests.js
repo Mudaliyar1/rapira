@@ -236,31 +236,221 @@ router.post('/submit', isLoggedIn, async (req, res) => {
 // List all refund requests
 router.get('/', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const { status } = req.query;
+    // Get search parameters
+    const { search, status, dateRange, amountRange, sortBy, sortOrder } = req.query;
 
     // Build filter
     const filter = {};
-    if (status) {
+    if (status && status !== 'all') {
       filter.status = status;
     }
 
-    const refundRequests = await RefundRequest.find(filter)
-      .sort({ createdAt: -1 })
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      }
+    }
+
+    // Amount range filter
+    if (amountRange && amountRange !== 'all') {
+      if (amountRange === 'under-500') {
+        filter.amount = { $lt: 500 };
+      } else if (amountRange === '500-1000') {
+        filter.amount = { $gte: 500, $lte: 1000 };
+      } else if (amountRange === 'over-1000') {
+        filter.amount = { $gt: 1000 };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 }; // Default sort
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get refund requests with filters
+    let refundRequests = await RefundRequest.find(filter)
+      .sort(sortOptions)
       .populate('user', 'name email')
       .populate('ticket', 'ticketNumber')
       .populate('concert', 'title date');
+
+    // Apply text search on populated data
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      refundRequests = refundRequests.filter(request => {
+        const userName = (request.user ? request.user.name : '').toLowerCase();
+        const userEmail = (request.user ? request.user.email : '').toLowerCase();
+        const concertTitle = (request.concert ? request.concert.title : '').toLowerCase();
+        const ticketNumber = (request.ticket ? request.ticket.ticketNumber : '').toLowerCase();
+        const reason = (request.reason || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               concertTitle.includes(searchTerm) ||
+               ticketNumber.includes(searchTerm) ||
+               reason.includes(searchTerm);
+      });
+    }
+
+    // Get statistics
+    const totalRequests = await RefundRequest.countDocuments();
+    const pendingRequests = await RefundRequest.countDocuments({ status: 'pending' });
+    const approvedRequests = await RefundRequest.countDocuments({ status: 'approved' });
+    const rejectedRequests = await RefundRequest.countDocuments({ status: 'rejected' });
+    const totalRefundAmount = await RefundRequest.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
 
     res.render('admin/refund-requests/index', {
       layout: 'admin',
       currentPath: '/admin/refund-requests',
       title: 'Refund Requests',
       refundRequests,
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        dateRange: dateRange || 'all',
+        amountRange: amountRange || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalRequests,
+        pending: pendingRequests,
+        approved: approvedRequests,
+        rejected: rejectedRequests,
+        totalAmount: totalRefundAmount.length > 0 ? totalRefundAmount[0].total : 0,
+        filtered: refundRequests.length
+      },
       currentStatus: status || 'all'
     });
   } catch (error) {
     console.error('Admin refund requests list error:', error);
     req.flash('error', 'Failed to load refund requests');
     res.redirect('/admin');
+  }
+});
+
+// Export refund requests to CSV
+router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main route)
+    const { search, status, dateRange, amountRange, sortBy, sortOrder } = req.query;
+
+    // Build filter
+    const filter = {};
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+        filter.createdAt = { $gte: startOfWeek, $lte: endOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
+      }
+    }
+
+    if (amountRange && amountRange !== 'all') {
+      if (amountRange === 'under-500') {
+        filter.amount = { $lt: 500 };
+      } else if (amountRange === '500-1000') {
+        filter.amount = { $gte: 500, $lte: 1000 };
+      } else if (amountRange === 'over-1000') {
+        filter.amount = { $gt: 1000 };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get refund requests with filters
+    let refundRequests = await RefundRequest.find(filter)
+      .sort(sortOptions)
+      .populate('user', 'name email')
+      .populate('ticket', 'ticketNumber')
+      .populate('concert', 'title date')
+      .populate('reviewedBy', 'name');
+
+    // Apply text search
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      refundRequests = refundRequests.filter(request => {
+        const userName = (request.user ? request.user.name : '').toLowerCase();
+        const userEmail = (request.user ? request.user.email : '').toLowerCase();
+        const concertTitle = (request.concert ? request.concert.title : '').toLowerCase();
+        const ticketNumber = (request.ticket ? request.ticket.ticketNumber : '').toLowerCase();
+        const reason = (request.reason || '').toLowerCase();
+
+        return userName.includes(searchTerm) ||
+               userEmail.includes(searchTerm) ||
+               concertTitle.includes(searchTerm) ||
+               ticketNumber.includes(searchTerm) ||
+               reason.includes(searchTerm);
+      });
+    }
+
+    // Generate CSV content
+    const csvHeader = 'Request ID,User Name,Email,Concert,Ticket Number,Amount,Status,Reason,Request Date,Reviewed By,Reviewed Date,Transaction ID\n';
+    const csvRows = refundRequests.map(request => {
+      const requestId = `"${request._id.toString().slice(-6).toUpperCase()}"`;
+      const userName = `"${(request.user ? request.user.name : '').replace(/"/g, '""')}"`;
+      const userEmail = `"${(request.user ? request.user.email : '').replace(/"/g, '""')}"`;
+      const concertTitle = `"${(request.concert ? request.concert.title : '').replace(/"/g, '""')}"`;
+      const ticketNumber = `"${(request.ticket ? request.ticket.ticketNumber : '').replace(/"/g, '""')}"`;
+      const amount = request.amount || 0;
+      const status = request.status || '';
+      const reason = `"${(request.reason || '').replace(/"/g, '""')}"`;
+      const requestDate = new Date(request.createdAt).toLocaleDateString();
+      const reviewedBy = `"${(request.reviewedBy ? request.reviewedBy.name : '').replace(/"/g, '""')}"`;
+      const reviewedDate = request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '';
+      const transactionId = `"${(request.transactionId || '').replace(/"/g, '""')}"`;
+
+      return `${requestId},${userName},${userEmail},${concertTitle},${ticketNumber},${amount},${status},${reason},${requestDate},${reviewedBy},${reviewedDate},${transactionId}`;
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `refund_requests_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export refund requests error:', error);
+    req.flash('error', 'Failed to export refund requests');
+    res.redirect('/admin/refund-requests');
   }
 });
 
