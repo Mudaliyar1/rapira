@@ -1,5 +1,107 @@
 <%- include('../partials/artist-header') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Concerts</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/artists/manage-concerts" id="concertSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Concerts</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by title, venue, city..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="status" class="form-label text-white">Status</label>
+          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all">All Status</option>
+            <option value="pending" <%= searchParams.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="approved" <%= searchParams.status === 'approved' ? 'selected' : '' %>>Approved</option>
+            <option value="rejected" <%= searchParams.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="type" class="form-label text-white">Type</label>
+          <select class="form-select bg-dark border-secondary text-white" id="type" name="type">
+            <option value="all">All Types</option>
+            <option value="paid" <%= searchParams.type === 'paid' ? 'selected' : '' %>>Paid</option>
+            <option value="free" <%= searchParams.type === 'free' ? 'selected' : '' %>>Free</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="city" class="form-label text-white">City</label>
+          <select class="form-select bg-dark border-secondary text-white" id="city" name="city">
+            <option value="all">All Cities</option>
+            <% cities.forEach(cityName => { %>
+              <option value="<%= cityName %>" <%= searchParams.city === cityName ? 'selected' : '' %>><%= cityName %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary me-2">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+          <a href="/artists/manage-concerts" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reset
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="glass-card-dark mb-4" id="statsSection">
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white">Total Concerts</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-success mb-1"><%= stats.upcoming %></h4>
+          <small class="text-white">Upcoming</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-warning mb-1"><%= stats.pending %></h4>
+          <small class="text-white">Pending</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-danger mb-1"><%= stats.rejected %></h4>
+          <small class="text-white">Rejected</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-secondary mb-1"><%= stats.past %></h4>
+          <small class="text-white">Past</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-light mb-1"><%= stats.filtered %></h4>
+          <small class="text-white">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Concert Management -->
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="fw-bold mb-0 section-title">Your Concerts</h2>
@@ -374,6 +476,90 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
   }
+
+  /* Glass card styling */
+  .glass-card-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 0.375rem;
+  }
+
+  /* Form styling */
+  .form-control:focus, .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  }
+
+  .input-group-text {
+    border-color: #495057;
+  }
+
+  /* Stats styling */
+  .stat-item {
+    padding: 1rem;
+    border-radius: 0.375rem;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 0.25rem;
+  }
+
+  /* Smooth transitions */
+  #statsSection {
+    transition: all 0.3s ease;
+  }
+
+  /* Enhanced table styles */
+  tbody tr {
+    transition: all 0.2s ease;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit form on filter changes (with debounce for search)
+  const searchInput = document.getElementById('search');
+  const statusSelect = document.getElementById('status');
+  const typeSelect = document.getElementById('type');
+  const citySelect = document.getElementById('city');
+  const form = document.getElementById('concertSearchForm');
+
+  let searchTimeout;
+
+  // Debounced search
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      form.submit();
+    }, 500); // 500ms delay
+  });
+
+  // Immediate filtering for dropdowns
+  statusSelect.addEventListener('change', () => form.submit());
+  typeSelect.addEventListener('change', () => form.submit());
+  citySelect.addEventListener('change', () => form.submit());
+
+  // Show/hide stats section based on filters
+  function toggleStatsSection() {
+    const hasFilters = searchInput.value ||
+                      statusSelect.value !== 'all' ||
+                      typeSelect.value !== 'all' ||
+                      citySelect.value !== 'all';
+
+    const statsSection = document.getElementById('statsSection');
+    statsSection.style.display = 'block'; // Always show for artist dashboard
+  }
+
+  // Initialize stats section visibility
+  toggleStatsSection();
+
+  // Update stats section when filters change
+  [searchInput, statusSelect, typeSelect, citySelect].forEach(element => {
+    element.addEventListener('change', toggleStatsSection);
+    element.addEventListener('input', toggleStatsSection);
+  });
+});
+</script>
 
 <%- include('../partials/artist-footer') %>

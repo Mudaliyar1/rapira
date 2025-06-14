@@ -41,7 +41,7 @@ const upload = createUpload({
 router.get('/', async (req, res) => {
   try {
     // Get filter parameters
-    const { city, date, type } = req.query;
+    const { city, date, type, search, sort } = req.query;
 
     // Build filter object
     const filter = { status: 'approved' };
@@ -60,7 +60,6 @@ router.get('/', async (req, res) => {
         $lt: nextDay
       };
     }
-    // We'll show all concerts, including past ones, and mark them in the UI
 
     if (type === 'free') {
       filter.isPaid = false;
@@ -68,9 +67,41 @@ router.get('/', async (req, res) => {
       filter.isPaid = true;
     }
 
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { venue: searchRegex },
+        { city: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+
+    // Build sort object
+    let sortObj = { date: 1 }; // Default sort by date ascending
+
+    if (sort) {
+      switch (sort) {
+        case 'title':
+          sortObj = { title: 1 };
+          break;
+        case 'city':
+          sortObj = { city: 1 };
+          break;
+        case 'price':
+          sortObj = { price: 1 };
+          break;
+        case 'date':
+        default:
+          sortObj = { date: 1 };
+          break;
+      }
+    }
+
     // Get concerts
     const concerts = await Concert.find(filter)
-      .sort({ date: 1 })
+      .sort(sortObj)
       .populate({
         path: 'artist',
         populate: { path: 'user', select: 'name profileImage' }
@@ -79,10 +110,35 @@ router.get('/', async (req, res) => {
     // Get unique cities for filter
     const cities = await Concert.distinct('city', { status: 'approved' });
 
+    // Calculate statistics
+    const now = new Date();
+    const totalConcerts = await Concert.countDocuments({ status: 'approved' });
+    const upcomingConcerts = await Concert.countDocuments({
+      status: 'approved',
+      date: { $gte: now }
+    });
+    const freeConcerts = await Concert.countDocuments({
+      status: 'approved',
+      isPaid: false
+    });
+    const paidConcerts = await Concert.countDocuments({
+      status: 'approved',
+      isPaid: true
+    });
+
+    const stats = {
+      total: totalConcerts,
+      upcoming: upcomingConcerts,
+      free: freeConcerts,
+      paid: paidConcerts,
+      filtered: concerts.length
+    };
+
     res.render('concerts/index', {
       concerts,
       cities,
-      filters: { city, date, type }
+      filters: { city, date, type, search, sort: sort || 'date' },
+      stats
     });
   } catch (error) {
     console.error('Concerts list error:', error);

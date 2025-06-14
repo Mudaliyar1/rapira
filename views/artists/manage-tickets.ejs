@@ -1,165 +1,334 @@
 <%- include('../partials/artist-header') %>
 
-<div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Ticket Management</h5>
-          <a href="/artists/dashboard" class="btn btn-sm btn-outline-light">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Tickets</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/artists/manage-tickets" id="ticketSearchForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="search" class="form-label text-white">Search Tickets</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by ticket #, buyer name, email..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="concert" class="form-label text-white">Concert</label>
+          <select class="form-select bg-dark border-secondary text-white" id="concert" name="concert">
+            <option value="all">All Concerts</option>
+            <% concerts.forEach(concertItem => { %>
+              <option value="<%= concertItem._id %>" <%= searchParams.concert === concertItem._id.toString() ? 'selected' : '' %>>
+                <%= concertItem.title %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all">All Time</option>
+            <option value="today" <%= searchParams.dateRange === 'today' ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= searchParams.dateRange === 'this-week' ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= searchParams.dateRange === 'this-month' ? 'selected' : '' %>>This Month</option>
+            <option value="this-year" <%= searchParams.dateRange === 'this-year' ? 'selected' : '' %>>This Year</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary me-2">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+          <a href="/artists/manage-tickets" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reset
           </a>
         </div>
-        <div class="card-body" style="background-color: #333;">
-          <p class="text-white mb-4">
-            View and manage tickets purchased for your concerts. You can see who purchased tickets and delete ticket records if needed.
-          </p>
-
-          <% if (tickets && tickets.length > 0) { %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle table-dark">
-                <thead>
-                  <tr>
-                    <th>Ticket #</th>
-                    <th>Concert</th>
-                    <th>Purchased By</th>
-                    <th>Email</th>
-                    <th>Purchase Date</th>
-                    <th>Quantity</th>
-                    <th>Amount</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% tickets.forEach(ticket => { %>
-                    <tr>
-                      <td><%= ticket.ticketNumber %></td>
-                      <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
-                      <td><%= ticket.user ? ticket.user.name : 'Unknown User' %></td>
-                      <td><%= ticket.user ? ticket.user.email : 'N/A' %></td>
-                      <td><%= new Date(ticket.purchaseDate).toLocaleDateString() %></td>
-                      <td><%= ticket.quantity %></td>
-                      <td>₹<%= ticket.totalAmount %></td>
-                      <td>
-                        <a href="/artists/tickets/<%= ticket._id %>/delete" class="btn btn-sm btn-danger">
-                          <i class="bi bi-trash"></i> Delete
-                        </a>
-                      </td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-              </table>
-            </div>
-          <% } else { %>
-            <div class="alert alert-info text-dark">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>No tickets have been purchased for your concerts yet.</strong>
-            </div>
-          <% } %>
-        </div>
       </div>
-    </div>
+    </form>
   </div>
+</div>
 
-  <!-- Ticket Statistics -->
-  <div class="row">
-    <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header bg-dark text-white py-3">
-          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Ticket Statistics by Concert</h5>
-        </div>
-        <div class="card-body" style="background-color: #333;">
-          <% if (concerts && concerts.length > 0) { %>
-            <div class="table-responsive">
-              <table class="table table-hover table-dark">
-                <thead>
-                  <tr>
-                    <th>Concert</th>
-                    <th>Date</th>
-                    <th>Tickets Sold</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% concerts.forEach(concert => { %>
-                    <%
-                      const concertTickets = tickets.filter(t => t.concert && t.concert._id.toString() === concert._id.toString());
-                      const ticketsSold = concertTickets.reduce((sum, t) => sum + t.quantity, 0);
-                      const revenue = concertTickets.reduce((sum, t) => sum + t.totalAmount, 0);
-                    %>
-                    <tr>
-                      <td><%= concert.title %></td>
-                      <td><%= new Date(concert.date).toLocaleDateString() %></td>
-                      <td><%= ticketsSold %></td>
-                      <td>₹<%= revenue %></td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-              </table>
-            </div>
-          <% } else { %>
-            <div class="alert alert-info text-dark">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>You haven't created any concerts yet.</strong>
-            </div>
-          <% } %>
+<!-- Statistics Section -->
+<div class="glass-card-dark mb-4" id="statsSection">
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col-md-3">
+        <div class="stat-item">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white">Total Tickets</small>
         </div>
       </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-      <div class="card">
-        <div class="card-header bg-dark text-white py-3">
-          <h5 class="card-title fw-bold mb-0" style="color: white !important;">Recent Ticket Purchases</h5>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <h4 class="text-success mb-1">₹<%= stats.revenue %></h4>
+          <small class="text-white">Total Revenue</small>
         </div>
-        <div class="card-body" style="background-color: #333;">
-          <% if (tickets && tickets.length > 0) { %>
-            <ul class="list-group">
-              <% tickets.slice(0, 5).forEach(ticket => { %>
-                <li class="list-group-item">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <strong><%= ticket.user ? ticket.user.name : 'Unknown User' %></strong> purchased
-                      <span class="badge bg-primary"><%= ticket.quantity %></span> ticket(s) for
-                      <strong><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></strong>
-                    </div>
-                    <small class="text-muted"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></small>
-                  </div>
-                </li>
-              <% }); %>
-            </ul>
-          <% } else { %>
-            <div class="alert alert-info text-dark">
-              <i class="bi bi-info-circle me-2"></i>
-              <strong>No recent ticket purchases.</strong>
-            </div>
-          <% } %>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <h4 class="text-info mb-1"><%= stats.quantity %></h4>
+          <small class="text-white">Tickets Sold</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-item">
+          <h4 class="text-light mb-1"><%= stats.filtered %></h4>
+          <small class="text-white">Filtered Results</small>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Ticket Management -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="fw-bold mb-0 section-title">Ticket Management</h2>
+  <a href="/artists/dashboard" class="btn btn-dark">
+    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+  </a>
+</div>
+
+<div class="card mb-5">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-dark text-white">
+          <tr>
+            <th>Ticket #</th>
+            <th>Concert</th>
+            <th>Purchased By</th>
+            <th>Email</th>
+            <th>Purchase Date</th>
+            <th>Quantity</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <% if (tickets && tickets.length > 0) { %>
+            <% tickets.forEach(ticket => { %>
+              <tr class="border-bottom">
+                <td>
+                  <span class="fw-bold text-primary"><%= ticket.ticketNumber %></span>
+                </td>
+                <td>
+                  <div>
+                    <h6 class="mb-0 fw-bold"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></h6>
+                    <small class="text-muted">
+                      <%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : '' %>
+                    </small>
+                  </div>
+                </td>
+                <td><%= ticket.user ? ticket.user.name : 'Unknown User' %></td>
+                <td><%= ticket.user ? ticket.user.email : 'N/A' %></td>
+                <td><%= new Date(ticket.purchaseDate).toLocaleDateString() %></td>
+                <td>
+                  <span class="badge bg-primary rounded-pill"><%= ticket.quantity %></span>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">₹<%= ticket.totalAmount %></span>
+                </td>
+                <td>
+                  <div class="d-flex">
+                    <a href="/artists/tickets/<%= ticket._id %>/view" class="btn btn-sm btn-light me-1" title="View Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/artists/tickets/<%= ticket._id %>/delete" class="btn btn-sm btn-light" title="Delete Ticket">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="bi bi-ticket-perforated fs-1 text-muted mb-3"></i>
+                  <h5 class="fw-bold">No Tickets Found</h5>
+                  <p class="text-muted mb-3">No tickets match your search criteria or no tickets have been purchased yet.</p>
+                </div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Custom CSS for dashboard styling -->
 <style>
-  .table th, .table td {
-    vertical-align: middle;
+  .section-title {
+    position: relative;
+    padding-bottom: 8px;
+    display: inline-block;
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 40px;
+    background-color: #0d6efd;
   }
 
   .card {
+    border: none;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-top: 10px;
   }
 
   .card-header {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    border-bottom: 1px solid #eee;
+    background-color: #fff;
   }
 
+  .table {
+    margin-bottom: 0;
+  }
 
+  .table th {
+    font-weight: 600;
+    border-top: none;
+    border-bottom: none;
+    padding: 12px 15px;
+  }
 
+  .bg-dark {
+    background-color: #212529 !important;
+  }
+
+  .text-white {
+    color: #fff !important;
+  }
+
+  .table td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .badge.rounded-pill {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+  }
+
+  .empty-state {
+    padding: 2rem 0;
+  }
+
+  .btn-light {
+    background-color: #f0f0f0;
+    border-color: #ddd;
+    color: #666;
+  }
+
+  .btn-light:hover {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+    color: #333;
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Glass card styling */
+  .glass-card-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 0.375rem;
+  }
+
+  /* Form styling */
+  .form-control:focus, .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  }
+
+  .input-group-text {
+    border-color: #495057;
+  }
+
+  /* Stats styling */
+  .stat-item {
+    padding: 1rem;
+    border-radius: 0.375rem;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 0.25rem;
+  }
+
+  /* Smooth transitions */
+  #statsSection {
+    transition: all 0.3s ease;
+  }
+
+  /* Enhanced table styles */
+  tbody tr {
+    transition: all 0.2s ease;
+  }
 </style>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit form on filter changes (with debounce for search)
+  const searchInput = document.getElementById('search');
+  const concertSelect = document.getElementById('concert');
+  const dateRangeSelect = document.getElementById('dateRange');
+  const form = document.getElementById('ticketSearchForm');
 
+  let searchTimeout;
+
+  // Debounced search
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      form.submit();
+    }, 500); // 500ms delay
+  });
+
+  // Immediate filtering for dropdowns
+  concertSelect.addEventListener('change', () => form.submit());
+  dateRangeSelect.addEventListener('change', () => form.submit());
+
+  // Show/hide stats section based on filters
+  function toggleStatsSection() {
+    const hasFilters = searchInput.value ||
+                      concertSelect.value !== 'all' ||
+                      dateRangeSelect.value !== 'all';
+
+    const statsSection = document.getElementById('statsSection');
+    statsSection.style.display = 'block'; // Always show for artist dashboard
+  }
+
+  // Initialize stats section visibility
+  toggleStatsSection();
+
+  // Update stats section when filters change
+  [searchInput, concertSelect, dateRangeSelect].forEach(element => {
+    element.addEventListener('change', toggleStatsSection);
+    element.addEventListener('input', toggleStatsSection);
+  });
+});
+</script>
 
 <%- include('../partials/artist-footer') %>

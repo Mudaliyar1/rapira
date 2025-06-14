@@ -1,130 +1,416 @@
-<div class="container py-5">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h1 class="text-center mb-4">Daily Concerts</h1>
-      <p class="text-center lead">Discover upcoming performances and events from our artists</p>
+<!-- Hero Section -->
+<section class="bg-dark text-white py-5 mb-4">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="fw-bold mb-3">Daily Concerts</h1>
+        <p class="lead mb-0">Discover upcoming performances and events from our artists</p>
+      </div>
+      <div class="col-lg-4">
+        <div class="text-center">
+          <i class="bi bi-calendar-event display-1 text-primary"></i>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
-  <!-- Filters -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="glass-card-dark p-4">
-        <form action="/daily-concerts" method="GET" class="row g-3">
-          <!-- Date Filter -->
-          <div class="col-md-4">
-            <label for="date" class="form-label text-white">Date</label>
-            <input type="date" class="form-control bg-dark text-white" id="date" name="date" value="<%= filters.date || '' %>">
+<!-- Filter Section -->
+<section class="py-4 bg-light">
+  <div class="container">
+    <!-- Search and Filter Form -->
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="bi bi-funnel me-2"></i>Search & Filter Daily Concerts
+        </h5>
+      </div>
+      <div class="card-body">
+        <form action="/daily-concerts" method="GET" id="dailyConcertFilterForm">
+          <div class="row g-3">
+            <!-- Search Input -->
+            <div class="col-md-3">
+              <label for="searchInput" class="form-label fw-semibold">Search Concerts</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search text-primary"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
+                       placeholder="Search by title, city, organizer..."
+                       value="<%= filters.search || '' %>">
+              </div>
+            </div>
+
+            <!-- Date Filter -->
+            <div class="col-md-2">
+              <label for="dateFilter" class="form-label fw-semibold">Date</label>
+              <input type="date" class="form-control" id="dateFilter" name="date" value="<%= filters.date || '' %>">
+            </div>
+
+            <!-- City Filter -->
+            <div class="col-md-2">
+              <label for="cityFilter" class="form-label fw-semibold">City</label>
+              <select class="form-select" id="cityFilter" name="city">
+                <option value="">All Cities</option>
+                <% filterOptions.cities.forEach(city => { %>
+                  <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- State Filter -->
+            <div class="col-md-2">
+              <label for="stateFilter" class="form-label fw-semibold">State</label>
+              <select class="form-select" id="stateFilter" name="state">
+                <option value="">All States</option>
+                <% filterOptions.states.forEach(state => { %>
+                  <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
+                <% }); %>
+              </select>
+            </div>
+
+            <!-- Sort Filter -->
+            <div class="col-md-3">
+              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
+              <select class="form-select" id="sortFilter" name="sort">
+                <option value="date" <%= filters.sort === 'date' ? 'selected' : '' %>>Date</option>
+                <option value="title" <%= filters.sort === 'title' ? 'selected' : '' %>>Title</option>
+                <option value="city" <%= filters.sort === 'city' ? 'selected' : '' %>>City</option>
+                <option value="organizer" <%= filters.sort === 'organizer' ? 'selected' : '' %>>Organizer</option>
+              </select>
+            </div>
           </div>
-          
-          <!-- City Filter -->
-          <div class="col-md-4">
-            <label for="city" class="form-label text-white">City</label>
-            <select class="form-select bg-dark text-white" id="city" name="city">
-              <option value="">All Cities</option>
-              <% filterOptions.cities.forEach(city => { %>
-                <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
-              <% }); %>
-            </select>
-          </div>
-          
-          <!-- State Filter -->
-          <div class="col-md-4">
-            <label for="state" class="form-label text-white">State</label>
-            <select class="form-select bg-dark text-white" id="state" name="state">
-              <option value="">All States</option>
-              <% filterOptions.states.forEach(state => { %>
-                <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
-              <% }); %>
-            </select>
-          </div>
-          
-          <!-- Filter Button -->
-          <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary px-4">
-              <i class="bi bi-filter me-2"></i> Filter
-            </button>
-            <a href="/daily-concerts" class="btn btn-outline-secondary ms-2">
-              <i class="bi bi-x-circle me-2"></i> Clear Filters
-            </a>
+
+          <!-- Action Buttons -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                  <i class="bi bi-search me-1"></i> Search
+                </button>
+                <a href="/daily-concerts" class="btn btn-outline-secondary px-4">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </a>
+              </div>
+            </div>
           </div>
         </form>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Daily Concerts List -->
-  <div class="row g-4">
-    <% if (dailyConcerts && dailyConcerts.length > 0) { %>
-      <% dailyConcerts.forEach(concert => { %>
-        <div class="col-md-6 col-lg-4" data-aos="fade-up">
-          <div class="glass-card-dark card h-100">
-            <div class="card-header bg-dark border-secondary">
-              <h5 class="card-title mb-0 text-white"><%= concert.title %></h5>
-            </div>
-            <div class="card-body">
-              <% if (concert.bookingType === 'artist' && concert.artist) { %>
-                <div class="d-flex align-items-center mb-3">
-                  <img src="<%= concert.artist.user.profileImage || '/images/default-profile.png' %>" 
-                       alt="<%= concert.artist.stageName || concert.artist.user.name %>" 
-                       class="rounded-circle me-2" 
-                       style="width: 40px; height: 40px; object-fit: cover;">
-                  <div>
-                    <strong><%= concert.artist.stageName || concert.artist.user.name %></strong>
-                    <% if (concert.artist.genre) { %>
-                      <br><small class="text-muted"><%= concert.artist.genre %></small>
-                    <% } %>
+<!-- Daily Concerts List -->
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <% if (dailyConcerts && dailyConcerts.length > 0) { %>
+        <% dailyConcerts.forEach(concert => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="card daily-concert-card h-100">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><%= concert.title %></h5>
+              </div>
+              <div class="card-body">
+                <% if (concert.bookingType === 'artist' && concert.artist) { %>
+                  <div class="d-flex align-items-center mb-3">
+                    <img src="<%= concert.artist.user.profileImage || '/images/default-profile.png' %>"
+                         alt="<%= concert.artist.stageName || concert.artist.user.name %>"
+                         class="rounded-circle me-2"
+                         style="width: 40px; height: 40px; object-fit: cover;">
+                    <div>
+                      <strong class="text-primary"><%= concert.artist.stageName || concert.artist.user.name %></strong>
+                      <% if (concert.artist.genre) { %>
+                        <br><small class="text-muted"><%= concert.artist.genre %></small>
+                      <% } %>
+                    </div>
                   </div>
-                </div>
-              <% } else if (concert.bookingType === 'role' && concert.roleSlot) { %>
-                <div class="mb-3">
-                  <strong><%= concert.roleSlot.name %></strong>
-                </div>
-              <% } %>
+                <% } else if (concert.bookingType === 'role' && concert.roleSlot) { %>
+                  <div class="mb-3">
+                    <span class="badge bg-info px-3 py-2"><%= concert.roleSlot.name %></span>
+                  </div>
+                <% } %>
 
-              <p class="card-text text-white mb-2">
-                <i class="bi bi-geo-alt me-2"></i> <%= concert.eventCity %>, <%= concert.eventState %>
-              </p>
-              <p class="card-text text-white mb-2">
-                <i class="bi bi-calendar3 me-2"></i> <%= new Date(concert.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
-              </p>
-              <p class="card-text text-white mb-2">
-                <i class="bi bi-clock me-2"></i> <%= concert.eventTime %>
-              </p>
-              <p class="card-text text-white mb-2">
-                <i class="bi bi-person me-2"></i> Organized by: <%= concert.organizerName %>
-              </p>
-              
-              <% if (concert.description) { %>
-                <div class="mt-3">
-                  <h6 class="text-white">Description:</h6>
-                  <p class="card-text text-white-50"><%= concert.description %></p>
+                <div class="concert-details">
+                  <p class="card-text mb-2">
+                    <i class="bi bi-geo-alt me-2 text-primary"></i> <%= concert.eventCity %>, <%= concert.eventState %>
+                  </p>
+                  <p class="card-text mb-2">
+                    <i class="bi bi-calendar3 me-2 text-primary"></i> <%= new Date(concert.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                  </p>
+                  <p class="card-text mb-2">
+                    <i class="bi bi-clock me-2 text-primary"></i> <%= concert.eventTime %>
+                  </p>
+                  <p class="card-text mb-2">
+                    <i class="bi bi-person me-2 text-primary"></i> Organized by: <strong><%= concert.organizerName %></strong>
+                  </p>
+
+                  <% if (concert.description) { %>
+                    <div class="mt-3">
+                      <h6 class="text-primary">Description:</h6>
+                      <p class="card-text text-muted"><%= concert.description %></p>
+                    </div>
+                  <% } %>
                 </div>
-              <% } %>
+              </div>
+              <div class="card-footer">
+                <span class="badge <%= concert.bookingType === 'artist' ? 'bg-success' : 'bg-warning' %> w-100 py-2">
+                  <%= concert.bookingType === 'artist' ? 'Artist Performance' : 'Role Booking' %>
+                </span>
+              </div>
             </div>
           </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5">
+          <div class="py-5">
+            <i class="bi bi-calendar-x display-1 text-muted"></i>
+            <h3 class="mt-4">No Daily Concerts Found</h3>
+            <p class="text-muted mb-4">There are no concerts matching your filters.</p>
+            <a href="/daily-concerts" class="btn btn-primary">Clear Filters</a>
+          </div>
         </div>
-      <% }); %>
-    <% } else { %>
-      <div class="col-12">
-        <div class="alert alert-info text-center">
-          <i class="bi bi-info-circle me-2"></i> No concerts found matching your criteria. Try adjusting your filters or check back later.
-        </div>
-      </div>
-    <% } %>
+      <% } %>
+    </div>
   </div>
-</div>
+</section>
 
+<!-- JavaScript for Enhanced Functionality -->
 <script>
-  // Apply filters as soon as they change
-  document.addEventListener('DOMContentLoaded', function() {
-    const filterForm = document.querySelector('form');
-    const filterInputs = filterForm.querySelectorAll('select, input[type="date"]');
-    
-    filterInputs.forEach(input => {
-      input.addEventListener('change', function() {
-        filterForm.submit();
+document.addEventListener('DOMContentLoaded', function() {
+  // Enhanced form handling with auto-submit for filters
+  const form = document.getElementById('dailyConcertFilterForm');
+  const searchInput = document.getElementById('searchInput');
+  const dateFilter = document.getElementById('dateFilter');
+  const cityFilter = document.getElementById('cityFilter');
+  const stateFilter = document.getElementById('stateFilter');
+  const sortFilter = document.getElementById('sortFilter');
+
+  let searchTimeout;
+
+  // Debounced search input
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        form.submit();
+      }, 800); // 800ms delay for better UX
+    });
+
+    // Immediate search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchTimeout);
+        form.submit();
+      }
+    });
+  }
+
+  // Auto-submit on filter changes
+  [dateFilter, cityFilter, stateFilter, sortFilter].forEach(filter => {
+    if (filter) {
+      filter.addEventListener('change', function() {
+        clearTimeout(searchTimeout);
+        form.submit();
+      });
+    }
+  });
+
+  // Enhanced form submission with loading state
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 5000);
+      }
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= filters.search || "" %>';
+  if (searchTerm.trim()) {
+    highlightSearchTerms(searchTerm.trim());
+  }
+
+  // Function to highlight search terms
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const concertCards = document.querySelectorAll('.daily-concert-card');
+
+    concertCards.forEach(card => {
+      const title = card.querySelector('.card-title');
+      const details = card.querySelectorAll('.card-text');
+
+      if (title && !title.querySelector('mark')) {
+        const originalText = title.textContent;
+        if (regex.test(originalText)) {
+          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+
+      details.forEach(detail => {
+        if (detail && !detail.querySelector('mark')) {
+          const originalText = detail.textContent;
+          if (regex.test(originalText)) {
+            detail.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
       });
     });
-  });
+  }
+
+  // Show active filter indicators
+  function updateFilterIndicators() {
+    const hasFilters = '<%= filters.search || filters.date || filters.city || filters.state || filters.sort !== "date" %>';
+
+    if (hasFilters) {
+      const filterHeader = document.querySelector('.card-header h5');
+      if (filterHeader && !filterHeader.querySelector('.badge')) {
+        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
+      }
+    }
+  }
+
+  updateFilterIndicators();
+});
 </script>
+
+<style>
+/* Enhanced styles for daily concerts page */
+.daily-concert-card {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.daily-concert-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Enhanced form styling */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #dee2e6;
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* Button enhancements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
+}
+
+/* Card enhancements */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Badge styling */
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+}
+
+/* Search highlighting */
+mark {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* Filter indicator */
+.badge.bg-light {
+  color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Concert details styling */
+.concert-details .card-text {
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .daily-concert-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+</style>

@@ -263,37 +263,12 @@ document.addEventListener('DOMContentLoaded', function() {
     measureInternetSpeed();
   }
 
-  // Theme toggle functionality
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  const body = document.body;
-
-  // Check for saved theme preference or use default dark theme
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-
-  // Apply the saved theme or default to dark
-  if (savedTheme === 'light') {
-    body.classList.add('light-theme');
-  }
-
   // Check if artist sidebar is open on mobile and hide the toggle button
   const artistToggle = document.getElementById('artistToggle');
   const artistSidebarElement = document.getElementById('artistSidebar');
 
   if (window.innerWidth < 992 && artistSidebarElement && artistSidebarElement.classList.contains('show') && artistToggle) {
     artistToggle.style.display = 'none';
-  }
-
-  // Handle theme toggle click
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', function() {
-      if (body.classList.contains('light-theme')) {
-        body.classList.remove('light-theme');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        body.classList.add('light-theme');
-        localStorage.setItem('theme', 'light');
-      }
-    });
   }
 
   // Add smooth scroll behavior

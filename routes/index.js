@@ -35,10 +35,14 @@ router.get('/', async (req, res) => {
         populate: { path: 'user', select: 'name' }
       });
 
+    // Get current user data
+    const currentUser = req.session.user || null;
+
     res.render('index', {
       upcomingConcerts,
       featuredArtists,
-      latestContent
+      latestContent,
+      user: currentUser
     });
   } catch (error) {
     console.error('Home page error:', error);

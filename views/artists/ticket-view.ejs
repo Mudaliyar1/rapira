@@ -1,0 +1,232 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Ticket Details -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0 section-title">Ticket Details</h2>
+  <a href="/artists/manage-tickets" class="btn btn-dark">
+    <i class="bi bi-arrow-left me-2"></i> Back to Tickets
+  </a>
+</div>
+
+<!-- Ticket Information Card -->
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-ticket-perforated me-2"></i>
+          Ticket #<%= ticket.ticketNumber %>
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Concert Information</h6>
+            <div class="mb-3">
+              <strong>Concert Title:</strong><br>
+              <span class="text-primary fs-5"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></span>
+            </div>
+            <div class="mb-3">
+              <strong>Date & Time:</strong><br>
+              <% if (ticket.concert) { %>
+                <%= new Date(ticket.concert.date).toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) %> at <%= ticket.concert.time %>
+              <% } else { %>
+                N/A
+              <% } %>
+            </div>
+            <div class="mb-3">
+              <strong>Venue:</strong><br>
+              <%= ticket.concert ? ticket.concert.venue : 'N/A' %>
+            </div>
+            <div class="mb-3">
+              <strong>Location:</strong><br>
+              <%= ticket.concert ? `${ticket.concert.city}, ${ticket.concert.state}` : 'N/A' %>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Ticket Information</h6>
+            <div class="mb-3">
+              <strong>Ticket Number:</strong><br>
+              <span class="badge bg-primary fs-6"><%= ticket.ticketNumber %></span>
+            </div>
+            <div class="mb-3">
+              <strong>Quantity:</strong><br>
+              <span class="badge bg-success fs-6"><%= ticket.quantity %> ticket(s)</span>
+            </div>
+            <div class="mb-3">
+              <strong>Total Amount:</strong><br>
+              <span class="text-success fs-4 fw-bold">₹<%= ticket.totalAmount %></span>
+            </div>
+            <div class="mb-3">
+              <strong>Purchase Date:</strong><br>
+              <%= new Date(ticket.purchaseDate).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+            </div>
+            <div class="mb-3">
+              <strong>Payment Status:</strong><br>
+              <span class="badge bg-<%= ticket.paymentStatus === 'completed' ? 'success' : 'warning' %> fs-6">
+                <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Customer Information -->
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-person me-2"></i>
+          Customer Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Name:</strong><br>
+          <%= ticket.user ? ticket.user.name : 'Unknown User' %>
+        </div>
+        <div class="mb-3">
+          <strong>Email:</strong><br>
+          <a href="mailto:<%= ticket.user ? ticket.user.email : '' %>" class="text-decoration-none">
+            <%= ticket.user ? ticket.user.email : 'N/A' %>
+          </a>
+        </div>
+        <% if (ticket.user && ticket.user.phone) { %>
+        <div class="mb-3">
+          <strong>Phone:</strong><br>
+          <a href="tel:<%= ticket.user.phone %>" class="text-decoration-none">
+            <%= ticket.user.phone %>
+          </a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Payment Information -->
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-credit-card me-2"></i>
+          Payment Details
+        </h5>
+      </div>
+      <div class="card-body">
+        <% if (ticket.paymentId) { %>
+        <div class="mb-3">
+          <strong>Payment ID:</strong><br>
+          <code><%= ticket.paymentId %></code>
+        </div>
+        <% } %>
+        <div class="mb-3">
+          <strong>Payment Method:</strong><br>
+          <%= ticket.paymentMethod || 'Online Payment' %>
+        </div>
+        <div class="mb-3">
+          <strong>Transaction Date:</strong><br>
+          <%= new Date(ticket.purchaseDate).toLocaleDateString() %>
+        </div>
+        <div class="mb-3">
+          <strong>Amount Paid:</strong><br>
+          <span class="text-success fw-bold fs-5">₹<%= ticket.totalAmount %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-gear me-2"></i>
+          Actions
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="/artists/tickets/<%= ticket._id %>/delete" class="btn btn-danger">
+            <i class="bi bi-trash me-2"></i>
+            Delete Ticket
+          </a>
+          <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-2"></i>
+            Print Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+  .section-title {
+    position: relative;
+    padding-bottom: 8px;
+    display: inline-block;
+  }
+
+  .section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 40px;
+    background-color: #0d6efd;
+  }
+
+  .card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+  }
+
+  .badge {
+    font-size: 0.9em;
+    padding: 0.5em 0.8em;
+  }
+
+  code {
+    background-color: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  @media print {
+    .btn, .card-header, .section-title::after {
+      display: none !important;
+    }
+    
+    .card {
+      box-shadow: none;
+      border: 1px solid #ddd;
+    }
+    
+    body {
+      background: white !important;
+    }
+  }
+</style>
+
+<%- include('../partials/artist-footer') %>

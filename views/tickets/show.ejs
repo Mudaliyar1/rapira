@@ -168,6 +168,29 @@
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= ticket._id %>" alt="Ticket QR Code" class="img-fluid" style="max-width: 150px; background-color: white; padding: 10px; border-radius: 8px;">
               </div>
             </div>
+
+            <!-- REFUND SECTION - SIMPLE AND PROMINENT -->
+            <hr class="my-4 border-secondary">
+            <div class="row mb-4">
+              <div class="col-12 text-center">
+                <h5 class="fw-bold mb-4 text-white">Ticket Actions</h5>
+
+                <!-- Simple, always visible refund button -->
+                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                  <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning btn-lg">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i> Request Refund
+                  </a>
+                  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary btn-lg">
+                    <i class="bi bi-download me-2"></i> Download Ticket
+                  </a>
+                  <a href="/tickets" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-arrow-left me-2"></i> Back to Tickets
+                  </a>
+                </div>
+
+
+              </div>
+            </div>
           </div>
 
           <div class="ticket-footer p-3 border-top border-secondary">
@@ -180,41 +203,7 @@
               </div>
               <div class="col-md-6 text-md-end">
                 <div class="d-flex justify-content-start justify-content-md-end gap-2">
-                  <% if (ticket.paymentStatus === 'completed' && ticket.totalAmount > 0 && !isDeletedConcert) { %>
-                    <%
-                      // Check if concert date has passed
-                      const concertDate = new Date(concert.date);
-                      const currentDate = new Date();
-                      const isAfterConcert = currentDate > concertDate;
-
-                      // Check if a refund request already exists
-                      const hasRefundRequest = typeof refundRequest !== 'undefined' && refundRequest;
-                    %>
-                    <!-- Ticket Action Buttons Container -->
-                    <div class="text-center mt-3 mb-2">
-                      <div class="d-inline-flex flex-wrap justify-content-center" style="gap: 10px;">
-                        <% if (!isAfterConcert && (!hasRefundRequest || (hasRefundRequest && refundRequest.status === 'rejected'))) { %>
-                          <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> <%= hasRefundRequest ? 'Reapply for Refund' : 'Request Refund' %>
-                          </a>
-                        <% } %>
-                        <% if (hasRefundRequest) { %>
-                          <a href="/refund-requests/view/<%= refundRequest._id %>" class="btn btn-info" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
-                            <i class="bi bi-eye me-1"></i> View Refund Request
-                          </a>
-                        <% } %>
-                        <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 170px; justify-content: center;">
-                          <i class="bi bi-download me-1"></i> Download PDF
-                        </a>
-                        <a href="/tickets/<%= ticket._id %>/download-html" class="btn btn-outline-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 80px; justify-content: center;">
-                          <i class="bi bi-file-earmark-code me-1"></i> HTML
-                        </a>
-                        <a href="/tickets" class="btn btn-outline-light" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; width: 140px; justify-content: center;">
-                          <i class="bi bi-arrow-left me-1"></i> Back to Tickets
-                        </a>
-                      </div>
-                    </div>
-                  <% } %>
+                  <small class="text-white-50">Ticket verified and ready for use</small>
                 </div>
               </div>
             </div>
@@ -246,17 +235,23 @@
   </div>
 </section>
 
-<!-- Direct PDF download button -->
-<div id="downloadBtnContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-    <i class="bi bi-download me-1"></i> Download Ticket
-  </a>
+<!-- Fixed Action Buttons -->
+<div id="fixedActionContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+  <div class="d-flex flex-column" style="gap: 10px;">
+    <!-- Always show refund button -->
+    <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+      <i class="bi bi-arrow-counterclockwise me-1"></i> Refund
+    </a>
+    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+      <i class="bi bi-download me-1"></i> Download
+    </a>
+  </div>
 </div>
 
 <!-- Print and responsive styles -->
 <style>
   @media print {
-    #downloadBtnContainer {
+    #fixedActionContainer {
       display: none;
     }
   }

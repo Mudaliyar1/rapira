@@ -1,6 +1,107 @@
 <%- include('../partials/artist-header') %>
 
+<!-- Search and Filter Section -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Search & Filter Content</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/artists/manage-content" id="contentSearchForm">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="search" class="form-label text-white">Search Content</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control bg-dark border-secondary text-white"
+                   id="search" name="search" placeholder="Search by title, description, or tags..."
+                   value="<%= searchParams.search %>">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label for="type" class="form-label text-white">Type</label>
+          <select class="form-select bg-dark border-secondary text-white" id="type" name="type">
+            <option value="all">All Types</option>
+            <option value="song" <%= searchParams.type === 'song' ? 'selected' : '' %>>Music</option>
+            <option value="video" <%= searchParams.type === 'video' ? 'selected' : '' %>>Video</option>
+            <option value="lyrics" <%= searchParams.type === 'lyrics' ? 'selected' : '' %>>Lyrics</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="featured" class="form-label text-white">Featured</label>
+          <select class="form-select bg-dark border-secondary text-white" id="featured" name="featured">
+            <option value="all">All Content</option>
+            <option value="true" <%= searchParams.featured === 'true' ? 'selected' : '' %>>Featured</option>
+            <option value="false" <%= searchParams.featured === 'false' ? 'selected' : '' %>>Not Featured</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all">All Time</option>
+            <option value="today" <%= searchParams.dateRange === 'today' ? 'selected' : '' %>>Today</option>
+            <option value="this-week" <%= searchParams.dateRange === 'this-week' ? 'selected' : '' %>>This Week</option>
+            <option value="this-month" <%= searchParams.dateRange === 'this-month' ? 'selected' : '' %>>This Month</option>
+            <option value="this-year" <%= searchParams.dateRange === 'this-year' ? 'selected' : '' %>>This Year</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary me-2">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+          <a href="/artists/manage-content" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reset
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 
+<!-- Statistics Section -->
+<div class="glass-card-dark mb-4" id="statsSection">
+  <div class="card-body">
+    <div class="row text-center">
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-primary mb-1"><%= stats.total %></h4>
+          <small class="text-white">Total Content</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-info mb-1"><%= stats.music %></h4>
+          <small class="text-white">Music</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-danger mb-1"><%= stats.video %></h4>
+          <small class="text-white">Videos</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-warning mb-1"><%= stats.lyrics %></h4>
+          <small class="text-white">Lyrics</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-success mb-1"><%= stats.featured %></h4>
+          <small class="text-white">Featured</small>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="stat-item">
+          <h4 class="text-light mb-1"><%= stats.filtered %></h4>
+          <small class="text-white">Filtered Results</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Content Management -->
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -172,6 +273,94 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
   }
+
+  /* Glass card styling */
+  .glass-card-dark {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-radius: 0.375rem;
+  }
+
+  /* Form styling */
+  .form-control:focus, .form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  }
+
+  .input-group-text {
+    border-color: #495057;
+  }
+
+  /* Stats styling */
+  .stat-item {
+    padding: 1rem;
+    border-radius: 0.375rem;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 0.25rem;
+  }
+
+  /* Smooth transitions */
+  #statsSection {
+    transition: all 0.3s ease;
+  }
+
+  /* Enhanced table styles */
+  tbody tr {
+    transition: all 0.2s ease;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit form on filter changes (with debounce for search)
+  const searchInput = document.getElementById('search');
+  const typeSelect = document.getElementById('type');
+  const featuredSelect = document.getElementById('featured');
+  const dateRangeSelect = document.getElementById('dateRange');
+  const form = document.getElementById('contentSearchForm');
+
+  let searchTimeout;
+
+  // Debounced search
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      form.submit();
+    }, 500); // 500ms delay
+  });
+
+  // Immediate filtering for dropdowns
+  typeSelect.addEventListener('change', () => form.submit());
+  featuredSelect.addEventListener('change', () => form.submit());
+  dateRangeSelect.addEventListener('change', () => form.submit());
+
+  // Show/hide stats section based on filters
+  function toggleStatsSection() {
+    const hasFilters = searchInput.value ||
+                      typeSelect.value !== 'all' ||
+                      featuredSelect.value !== 'all' ||
+                      dateRangeSelect.value !== 'all';
+
+    const statsSection = document.getElementById('statsSection');
+    if (hasFilters) {
+      statsSection.style.display = 'block';
+    } else {
+      statsSection.style.display = 'block'; // Always show for artist dashboard
+    }
+  }
+
+  // Initialize stats section visibility
+  toggleStatsSection();
+
+  // Update stats section when filters change
+  [searchInput, typeSelect, featuredSelect, dateRangeSelect].forEach(element => {
+    element.addEventListener('change', toggleStatsSection);
+    element.addEventListener('input', toggleStatsSection);
+  });
+});
+</script>
 
 <%- include('../partials/artist-footer') %>

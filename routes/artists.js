@@ -82,12 +82,92 @@ const contentUpload = createUpload({
 // List all artists
 router.get('/', async (req, res) => {
   try {
-    // Get only artists with valid user references
-    const artists = await Artist.find()
+    // Get filter parameters
+    const { search, genre, verified, sort } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    // Get only artists with valid user references first
+    let artists = await Artist.find(filter)
       .populate('user', 'name profileImage')
       .then(artists => artists.filter(artist => artist.user));
 
-    res.render('artists/index', { artists });
+    // Apply search filter
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      artists = artists.filter(artist =>
+        searchRegex.test(artist.user.name) ||
+        searchRegex.test(artist.stageName || '') ||
+        searchRegex.test(artist.genre || '') ||
+        searchRegex.test(artist.bio || '')
+      );
+    }
+
+    // Apply genre filter
+    if (genre && genre !== '') {
+      artists = artists.filter(artist =>
+        artist.genre && artist.genre.toLowerCase().includes(genre.toLowerCase())
+      );
+    }
+
+    // Apply verified filter
+    if (verified && verified !== 'all') {
+      const isVerified = verified === 'true';
+      artists = artists.filter(artist => artist.verified === isVerified);
+    }
+
+    // Apply sorting
+    if (sort) {
+      switch (sort) {
+        case 'name':
+          artists.sort((a, b) => a.user.name.localeCompare(b.user.name));
+          break;
+        case 'genre':
+          artists.sort((a, b) => (a.genre || '').localeCompare(b.genre || ''));
+          break;
+        case 'verified':
+          artists.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));
+          break;
+        case 'newest':
+          artists.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          break;
+        case 'oldest':
+        default:
+          artists.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          break;
+      }
+    }
+
+    // Get unique genres for filter
+    const allArtists = await Artist.find()
+      .populate('user', 'name')
+      .then(artists => artists.filter(artist => artist.user));
+
+    const genres = [...new Set(allArtists
+      .map(artist => artist.genre)
+      .filter(genre => genre && genre.trim())
+    )].sort();
+
+    // Calculate statistics
+    const totalArtists = allArtists.length;
+    const verifiedArtists = allArtists.filter(artist => artist.verified).length;
+    const unverifiedArtists = totalArtists - verifiedArtists;
+
+    const stats = {
+      total: totalArtists,
+      verified: verifiedArtists,
+      unverified: unverifiedArtists,
+      filtered: artists.length
+    };
+
+    res.render('artists/index', {
+      artists,
+      genres,
+      filters: { search, genre, verified: verified || 'all', sort: sort || 'oldest' },
+      stats,
+      user: req.session.user || null
+    });
   } catch (error) {
     console.error('Artists list error:', error);
     req.flash('error', 'Failed to load artists');
@@ -426,16 +506,90 @@ router.get('/manage-content', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/');
     }
 
-    // Get artist's content
-    const content = await Content.find({ artist: artist._id })
-      .sort({ createdAt: -1 });
+    // Get search parameters
+    const { search, type, featured, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = { artist: artist._id };
+
+    // Search filter
+    if (search) {
+      filter.$or = [
+        { title: new RegExp(search, 'i') },
+        { description: new RegExp(search, 'i') },
+        { tags: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+
+    // Type filter
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+
+    // Featured filter
+    if (featured && featured !== 'all') {
+      filter.featured = featured === 'true';
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        filter.createdAt = { $gte: startOfDay, $lt: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        filter.createdAt = { $gte: startOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        filter.createdAt = { $gte: startOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        filter.createdAt = { $gte: startOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { createdAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get artist's content with filters
+    const content = await Content.find(filter)
+      .sort(sortOptions);
+
+    // Get stats for the artist's content
+    const totalContent = await Content.countDocuments({ artist: artist._id });
+    const musicContent = await Content.countDocuments({ artist: artist._id, type: 'song' });
+    const videoContent = await Content.countDocuments({ artist: artist._id, type: 'video' });
+    const lyricsContent = await Content.countDocuments({ artist: artist._id, type: 'lyrics' });
+    const featuredContent = await Content.countDocuments({ artist: artist._id, featured: true });
 
     res.render('artists/manage-content', {
       layout: false,
       currentPath: '/artists/manage-content',
       title: 'Manage Content',
       artist,
-      content
+      content,
+      searchParams: {
+        search: search || '',
+        type: type || 'all',
+        featured: featured || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'createdAt',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalContent,
+        music: musicContent,
+        video: videoContent,
+        lyrics: lyricsContent,
+        featured: featuredContent,
+        filtered: content.length
+      }
     });
   } catch (error) {
     console.error('Manage content page error:', error);
@@ -455,9 +609,78 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/');
     }
 
-    // Get artist's concerts
-    const concerts = await Concert.find({ artist: artist._id })
-      .sort({ date: -1 });
+    // Get search parameters
+    const { search, status, type, city, dateRange, sortBy, sortOrder } = req.query;
+
+    // Build filter object
+    const filter = { artist: artist._id };
+
+    // Search filter
+    if (search) {
+      filter.$or = [
+        { title: new RegExp(search, 'i') },
+        { description: new RegExp(search, 'i') },
+        { venue: new RegExp(search, 'i') },
+        { city: new RegExp(search, 'i') }
+      ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Type filter (paid/free)
+    if (type && type !== 'all') {
+      filter.isPaid = type === 'paid';
+    }
+
+    // City filter
+    if (city && city !== 'all') {
+      filter.city = new RegExp(city, 'i');
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'upcoming') {
+        filter.date = { $gte: now };
+      } else if (dateRange === 'past') {
+        filter.date = { $lt: now };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filter.date = { $gte: startOfMonth, $lte: endOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear = new Date(now.getFullYear(), 11, 31);
+        filter.date = { $gte: startOfYear, $lte: endOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { date: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get artist's concerts with filters
+    const concerts = await Concert.find(filter)
+      .sort(sortOptions);
+
+    // Get stats for the artist's concerts
+    const totalConcerts = await Concert.countDocuments({ artist: artist._id });
+    const upcomingConcerts = concerts.filter(c => new Date(c.date) >= new Date() && c.status === 'approved');
+    const pendingConcerts = concerts.filter(c => c.status === 'pending');
+    const rejectedConcerts = concerts.filter(c => c.status === 'rejected');
+    const pastConcerts = concerts.filter(c => new Date(c.date) < new Date() && c.status === 'approved');
+    const paidConcerts = await Concert.countDocuments({ artist: artist._id, isPaid: true });
+    const freeConcerts = await Concert.countDocuments({ artist: artist._id, isPaid: false });
+
+    // Get unique cities for filter dropdown
+    const allConcerts = await Concert.find({ artist: artist._id });
+    const cities = [...new Set(allConcerts.map(c => c.city))].sort();
 
     res.render('artists/manage-concerts', {
       layout: false,
@@ -465,10 +688,30 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
       title: 'Manage Concerts',
       artist,
       concerts,
-      upcomingConcerts: concerts.filter(c => new Date(c.date) >= new Date() && c.status === 'approved'),
-      pendingConcerts: concerts.filter(c => c.status === 'pending'),
-      rejectedConcerts: concerts.filter(c => c.status === 'rejected'),
-      pastConcerts: concerts.filter(c => new Date(c.date) < new Date() && c.status === 'approved')
+      upcomingConcerts,
+      pendingConcerts,
+      rejectedConcerts,
+      pastConcerts,
+      cities,
+      searchParams: {
+        search: search || '',
+        status: status || 'all',
+        type: type || 'all',
+        city: city || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'date',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalConcerts,
+        upcoming: upcomingConcerts.length,
+        pending: pendingConcerts.length,
+        rejected: rejectedConcerts.length,
+        past: pastConcerts.length,
+        paid: paidConcerts,
+        free: freeConcerts,
+        filtered: concerts.length
+      }
     });
   } catch (error) {
     console.error('Manage concerts page error:', error);
@@ -488,18 +731,82 @@ router.get('/manage-tickets', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/');
     }
 
+    // Get search parameters
+    const { search, concert, dateRange, sortBy, sortOrder } = req.query;
+
     // Get artist's concerts
     const concerts = await Concert.find({ artist: artist._id });
 
-    // Get all tickets for the artist's concerts
+    // Build filter object for tickets
     const Ticket = require('../models/Ticket');
-    const tickets = await Ticket.find({
+    const filter = {
       concert: { $in: concerts.map(c => c._id) },
       paymentStatus: 'completed'
-    })
+    };
+
+    // Concert filter
+    if (concert && concert !== 'all') {
+      filter.concert = concert;
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      if (dateRange === 'today') {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        filter.purchaseDate = { $gte: startOfDay, $lt: endOfDay };
+      } else if (dateRange === 'this-week') {
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        filter.purchaseDate = { $gte: startOfWeek };
+      } else if (dateRange === 'this-month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        filter.purchaseDate = { $gte: startOfMonth };
+      } else if (dateRange === 'this-year') {
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        filter.purchaseDate = { $gte: startOfYear };
+      }
+    }
+
+    // Build sort options
+    let sortOptions = { purchaseDate: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    // Get all tickets for the artist's concerts with filters
+    let tickets = await Ticket.find(filter)
       .populate('concert')
       .populate('user', 'name email')
-      .sort({ purchaseDate: -1 });
+      .sort(sortOptions);
+
+    // Apply search filter after population (for user name and concert title)
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      tickets = tickets.filter(ticket =>
+        (ticket.user && searchRegex.test(ticket.user.name)) ||
+        (ticket.user && searchRegex.test(ticket.user.email)) ||
+        (ticket.concert && searchRegex.test(ticket.concert.title)) ||
+        searchRegex.test(ticket.ticketNumber)
+      );
+    }
+
+    // Get stats for the artist's tickets
+    const totalTickets = await Ticket.countDocuments({
+      concert: { $in: concerts.map(c => c._id) },
+      paymentStatus: 'completed'
+    });
+
+    const totalRevenue = await Ticket.aggregate([
+      { $match: { concert: { $in: concerts.map(c => c._id) }, paymentStatus: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+
+    const totalQuantity = await Ticket.aggregate([
+      { $match: { concert: { $in: concerts.map(c => c._id) }, paymentStatus: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$quantity' } } }
+    ]);
 
     res.render('artists/manage-tickets', {
       layout: false,
@@ -507,12 +814,60 @@ router.get('/manage-tickets', isLoggedIn, isArtist, async (req, res) => {
       title: 'Manage Tickets',
       artist,
       tickets,
-      concerts
+      concerts,
+      searchParams: {
+        search: search || '',
+        concert: concert || 'all',
+        dateRange: dateRange || 'all',
+        sortBy: sortBy || 'purchaseDate',
+        sortOrder: sortOrder || 'desc'
+      },
+      stats: {
+        total: totalTickets,
+        revenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0,
+        quantity: totalQuantity.length > 0 ? totalQuantity[0].total : 0,
+        filtered: tickets.length
+      }
     });
   } catch (error) {
     console.error('Manage tickets page error:', error);
     req.flash('error', 'Failed to load ticket management page');
     res.redirect('/artists/dashboard');
+  }
+});
+
+// View ticket details page
+router.get('/tickets/:id/view', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const Ticket = require('../models/Ticket');
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('concert')
+      .populate('user', 'name email phone');
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    // Check if the artist owns the concert associated with this ticket
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist || !ticket.concert || ticket.concert.artist.toString() !== artist._id.toString()) {
+      req.flash('error', 'You do not have permission to view this ticket');
+      return res.redirect('/artists/manage-tickets');
+    }
+
+    res.render('artists/ticket-view', {
+      layout: false,
+      currentPath: '/artists/manage-tickets',
+      title: 'Ticket Details',
+      artist,
+      ticket
+    });
+  } catch (error) {
+    console.error('View ticket page error:', error);
+    req.flash('error', 'Failed to load ticket details');
+    res.redirect('/artists/manage-tickets');
   }
 });
 

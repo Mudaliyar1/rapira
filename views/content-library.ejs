@@ -19,45 +19,9 @@
 <!-- Filter Section -->
 <section class="py-4 bg-light">
   <div class="container">
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title text-primary mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.total : 0 %></h5>
-            <p class="card-text text-muted mb-0">Total Content</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title text-success mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.songs : 0 %></h5>
-            <p class="card-text text-muted mb-0">Songs</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title text-danger mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.videos : 0 %></h5>
-            <p class="card-text text-muted mb-0">Videos</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title text-info mb-1"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %></h5>
-            <p class="card-text text-muted mb-0">Filtered Results</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Search and Filter Form -->
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white">
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
           <i class="bi bi-funnel me-2"></i>Search & Filter Content
         </h5>
@@ -67,12 +31,12 @@
           <div class="row g-3">
             <!-- Search Input -->
             <div class="col-md-4">
-              <label for="searchInput" class="form-label">Search Content</label>
+              <label for="searchInput" class="form-label fw-semibold">Search Content</label>
               <div class="input-group">
-                <span class="input-group-text">
-                  <i class="bi bi-search"></i>
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search text-primary"></i>
                 </span>
-                <input type="text" class="form-control" id="searchInput" name="search"
+                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
                        placeholder="Search by title or description..."
                        value="<%= currentFilters.search %>">
               </div>
@@ -80,7 +44,7 @@
 
             <!-- Content Type Filter -->
             <div class="col-md-2">
-              <label for="typeFilter" class="form-label">Content Type</label>
+              <label for="typeFilter" class="form-label fw-semibold">Content Type</label>
               <select class="form-select" id="typeFilter" name="type">
                 <option value="">All Types</option>
                 <option value="song" <%= currentFilters.type === 'song' ? 'selected' : '' %>>Songs</option>
@@ -90,7 +54,7 @@
 
             <!-- Artist Filter -->
             <div class="col-md-3">
-              <label for="artistFilter" class="form-label">Artist</label>
+              <label for="artistFilter" class="form-label fw-semibold">Artist</label>
               <select class="form-select" id="artistFilter" name="artist">
                 <option value="">All Artists</option>
                 <% if (artists && artists.length > 0) { %>
@@ -105,7 +69,7 @@
 
             <!-- Sort Filter -->
             <div class="col-md-3">
-              <label for="sortFilter" class="form-label">Sort By</label>
+              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
               <select class="form-select" id="sortFilter" name="sort">
                 <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
                 <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
@@ -116,53 +80,26 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="row mt-3">
+          <div class="row mt-4">
             <div class="col-12">
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                  <i class="bi bi-search me-1"></i> Search & Filter
+              <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                  <i class="bi bi-search me-1"></i> Search
                 </button>
-                <a href="/content" class="btn btn-outline-secondary">
-                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All
+                <a href="/content" class="btn btn-outline-secondary px-4">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                 </a>
-                <button type="button" class="btn btn-outline-info" id="toggleAdvanced">
-                  <i class="bi bi-gear me-1"></i> Advanced
-                </button>
+
               </div>
             </div>
           </div>
 
-          <!-- Advanced Options (Hidden by default) -->
-          <div id="advancedOptions" class="row mt-3" style="display: none;">
-            <div class="col-12">
-              <div class="card bg-light">
-                <div class="card-body">
-                  <h6 class="card-title">Advanced Options</h6>
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="featuredOnly" name="featured" value="true">
-                        <label class="form-check-label" for="featuredOnly">
-                          Featured content only
-                        </label>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="hasViews" name="hasViews" value="true">
-                        <label class="form-check-label" for="hasViews">
-                          Content with views only
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+
         </form>
       </div>
     </div>
+
+
   </div>
 </section>
 
@@ -299,38 +236,70 @@
 <%- contentFor('extraScripts') %>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Toggle advanced options
-  const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
-  const advancedOptions = document.getElementById('advancedOptions');
 
-  if (toggleAdvancedBtn && advancedOptions) {
-    toggleAdvancedBtn.addEventListener('click', function() {
-      if (advancedOptions.style.display === 'none') {
-        advancedOptions.style.display = 'block';
-        toggleAdvancedBtn.innerHTML = '<i class="bi bi-gear me-1"></i> Hide Advanced';
-      } else {
-        advancedOptions.style.display = 'none';
-        toggleAdvancedBtn.innerHTML = '<i class="bi bi-gear me-1"></i> Advanced';
+
+  // Enhanced form handling with auto-submit for filters
+  const form = document.getElementById('contentFilterForm');
+  const searchInput = document.getElementById('searchInput');
+  const typeFilter = document.getElementById('typeFilter');
+  const artistFilter = document.getElementById('artistFilter');
+  const sortFilter = document.getElementById('sortFilter');
+
+  let searchTimeout;
+
+  // Debounced search input
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        form.submit();
+      }, 800); // 800ms delay for better UX
+    });
+
+    // Immediate search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchTimeout);
+        form.submit();
       }
     });
   }
 
-  // Search input enhancement
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    // Add search on Enter key
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('contentFilterForm').submit();
+  // Auto-submit on filter changes
+  [typeFilter, artistFilter, sortFilter].forEach(filter => {
+    if (filter) {
+      filter.addEventListener('change', function() {
+        clearTimeout(searchTimeout);
+        form.submit();
+      });
+    }
+  });
+
+  // Enhanced form submission with loading state
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 5000);
       }
     });
+  }
 
-    // Highlight search terms in results
-    const searchTerm = searchInput.value.trim();
-    if (searchTerm) {
-      highlightSearchTerms(searchTerm);
-    }
+  // Highlight search terms in results
+  const searchTerm = '<%= currentFilters.search || "" %>';
+  if (searchTerm.trim()) {
+    highlightSearchTerms(searchTerm.trim());
   }
 
   // Function to highlight search terms
@@ -360,24 +329,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Add loading state to form submission
-  const form = document.getElementById('contentFilterForm');
-  if (form) {
-    form.addEventListener('submit', function() {
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
-        submitBtn.disabled = true;
+  // Show active filter indicators
+  function updateFilterIndicators() {
+    const hasFilters = '<%= currentFilters.search || currentFilters.type || currentFilters.artist || currentFilters.sort !== "latest" || currentFilters.featured || currentFilters.hasViews || currentFilters.recent %>';
 
-        // Re-enable after a delay (in case of errors)
-        setTimeout(() => {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-        }, 5000);
+    if (hasFilters) {
+      const filterHeader = document.querySelector('.card-header h5');
+      if (filterHeader && !filterHeader.querySelector('.badge')) {
+        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
       }
-    });
+    }
   }
+
+  updateFilterIndicators();
 });
 </script>
 
@@ -386,12 +350,13 @@ document.addEventListener('DOMContentLoaded', function() {
 .content-card {
   transition: all 0.3s ease;
   border: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
 .content-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .content-thumbnail {
@@ -409,21 +374,95 @@ document.addEventListener('DOMContentLoaded', function() {
   top: 10px;
   right: 10px;
   font-size: 0.75em;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Enhanced form styling */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #dee2e6;
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* Button enhancements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
+}
+
+/* Card enhancements */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+
+.form-check-input:checked {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.form-check-label {
+  color: #495057;
+}
+
+/* Badge styling */
 .badge {
   font-size: 0.75em;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
 }
 
+/* Search highlighting */
 mark {
-  padding: 0.1em 0.2em;
-  border-radius: 0.2em;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
 }
 
 /* Loading animation */
 @keyframes pulse {
   0% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.6; }
   100% { opacity: 1; }
 }
 
@@ -431,25 +470,17 @@ mark {
   animation: pulse 1.5s infinite;
 }
 
-/* Advanced options animation */
-#advancedOptions {
-  transition: all 0.3s ease;
-}
-
-/* Statistics cards enhancement */
-.card {
-  transition: all 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+/* Filter indicator */
+.badge.bg-light {
+  color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .content-card {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .pagination {
@@ -459,5 +490,22 @@ mark {
   .content-thumbnail {
     height: 150px;
   }
+
+  .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
+
+  #statsSection .row.g-3 > .col-md-2 {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 </style>

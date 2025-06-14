@@ -461,6 +461,13 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
 // View ticket
 router.get('/:id', isLoggedIn, async (req, res) => {
   try {
+    // Validate if the ID is a valid MongoDB ObjectId
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid ticket ID');
+      return res.redirect('/tickets');
+    }
+
     const ticket = await Ticket.findById(req.params.id)
       .populate('concert')
       .populate('user');

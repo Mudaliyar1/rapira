@@ -12,40 +12,134 @@
   </div>
 </section>
 
+<!-- Filter Section -->
+<section class="py-4 bg-light">
+  <div class="container">
+    <!-- Search and Filter Form -->
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="bi bi-funnel me-2"></i>Search & Filter Artists
+        </h5>
+      </div>
+      <div class="card-body">
+        <form action="/artists" method="GET" id="artistFilterForm">
+          <div class="row g-3">
+            <!-- Search Input -->
+            <div class="col-md-4">
+              <label for="searchInput" class="form-label fw-semibold">Search Artists</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search text-primary"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
+                       placeholder="Search by name, stage name, or bio..."
+                       value="<%= filters.search || '' %>">
+              </div>
+            </div>
+
+            <!-- Genre Filter -->
+            <div class="col-md-2">
+              <label for="genreFilter" class="form-label fw-semibold">Genre</label>
+              <select class="form-select" id="genreFilter" name="genre">
+                <option value="">All Genres</option>
+                <% if (genres && genres.length > 0) { %>
+                  <% genres.forEach(genre => { %>
+                    <option value="<%= genre %>" <%= filters.genre === genre ? 'selected' : '' %>><%= genre %></option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+
+            <!-- Verified Filter -->
+            <div class="col-md-2">
+              <label for="verifiedFilter" class="form-label fw-semibold">Status</label>
+              <select class="form-select" id="verifiedFilter" name="verified">
+                <option value="all" <%= filters.verified === 'all' ? 'selected' : '' %>>All Artists</option>
+                <option value="true" <%= filters.verified === 'true' ? 'selected' : '' %>>Verified</option>
+                <option value="false" <%= filters.verified === 'false' ? 'selected' : '' %>>Unverified</option>
+              </select>
+            </div>
+
+            <!-- Sort Filter -->
+            <div class="col-md-4">
+              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
+              <select class="form-select" id="sortFilter" name="sort">
+                <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name (A-Z)</option>
+                <option value="genre" <%= filters.sort === 'genre' ? 'selected' : '' %>>Genre</option>
+                <option value="verified" <%= filters.sort === 'verified' ? 'selected' : '' %>>Verified First</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                  <i class="bi bi-search me-1"></i> Search
+                </button>
+                <a href="/artists" class="btn btn-outline-secondary px-4">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </a>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Artists List -->
 <section class="py-5">
   <div class="container">
     <div class="row g-4">
       <% if (artists && artists.length > 0) { %>
         <% artists.forEach((artist, index) => { %>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index % 4 * 100 %>">
-            <div class="glass-card-dark card card-artist h-100">
+          <div class="col-md-6 col-lg-3">
+            <div class="card artist-card h-100">
               <div class="position-relative overflow-hidden">
-                <img src="<%= artist.user.profileImage %>" class="card-img-top" alt="<%= artist.user.name %>">
+                <img src="<%= artist.user.profileImage %>" class="card-img-top artist-thumbnail" alt="<%= artist.user.name %>">
                 <% if (artist.verified) { %>
                   <div class="position-absolute top-0 end-0 m-3">
-                    <span class="badge bg-gradient-blue px-3 py-2">
+                    <span class="badge bg-success px-3 py-2">
                       <i class="bi bi-patch-check-fill me-1"></i> Verified
                     </span>
                   </div>
                 <% } %>
               </div>
               <div class="card-body text-center">
-                <h5 class="card-title mb-2 gradient-text"><%= artist.user.name %></h5>
-                <p class="card-text text-muted mb-3"><%= artist.genre %></p>
+                <h5 class="card-title mb-2 text-primary"><%= artist.user.name %></h5>
+                <% if (artist.stageName && artist.stageName !== artist.user.name) { %>
+                  <p class="card-text text-muted mb-1"><strong>"<%= artist.stageName %>"</strong></p>
+                <% } %>
+                <p class="card-text text-muted mb-3">
+                  <i class="bi bi-music-note me-1"></i><%= artist.genre || 'Hip-Hop' %>
+                </p>
+                <% if (artist.bio) { %>
+                  <p class="card-text small text-muted mb-3">
+                    <%= artist.bio.length > 80 ? artist.bio.substring(0, 80) + '...' : artist.bio %>
+                  </p>
+                <% } %>
               </div>
               <div class="card-footer text-center">
-                <a href="/artists/<%= artist._id %>" class="btn btn-gradient-purple w-100">View Profile</a>
+                <a href="/artists/<%= artist._id %>" class="btn btn-primary w-100">
+                  <i class="bi bi-person me-1"></i>View Profile
+                </a>
               </div>
             </div>
           </div>
         <% }); %>
       <% } else { %>
-        <div class="col-12 text-center py-5" data-aos="fade-up">
-          <div class="glass-card-dark p-5 rounded-4">
-            <i class="bi bi-music-note-beamed display-1 text-muted animate-float"></i>
-            <h3 class="mt-4 gradient-text-purple">No Artists Found</h3>
-            <p class="text-muted mb-4">There are no artists available at the moment.</p>
+        <div class="col-12 text-center py-5">
+          <div class="py-5">
+            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
+            <h3 class="mt-4">No Artists Found</h3>
+            <p class="text-muted mb-4">There are no artists matching your filters.</p>
+            <a href="/artists" class="btn btn-primary">Clear Filters</a>
           </div>
         </div>
       <% } %>
@@ -53,13 +147,266 @@
   </div>
 </section>
 
-<!-- Join as Artist CTA -->
+<!-- Join as Artist CTA - Only show if user is not an artist -->
+<% if (!user || user.role !== 'artist') { %>
 <section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
   <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-blue" style="z-index: -1;"></div>
   <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
   <div class="container py-4">
     <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
     <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
-    <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+    <% if (!user) { %>
+      <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+    <% } else { %>
+      <a href="/artist-upgrade/request" class="btn btn-glass-dark btn-lg px-5">Upgrade to Artist</a>
+    <% } %>
   </div>
 </section>
+<% } %>
+
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Enhanced form handling with auto-submit for filters
+  const form = document.getElementById('artistFilterForm');
+  const searchInput = document.getElementById('searchInput');
+  const genreFilter = document.getElementById('genreFilter');
+  const verifiedFilter = document.getElementById('verifiedFilter');
+  const sortFilter = document.getElementById('sortFilter');
+
+  let searchTimeout;
+
+  // Debounced search input
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        form.submit();
+      }, 800); // 800ms delay for better UX
+    });
+
+    // Immediate search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchTimeout);
+        form.submit();
+      }
+    });
+  }
+
+  // Auto-submit on filter changes
+  [genreFilter, verifiedFilter, sortFilter].forEach(filter => {
+    if (filter) {
+      filter.addEventListener('change', function() {
+        clearTimeout(searchTimeout);
+        form.submit();
+      });
+    }
+  });
+
+  // Enhanced form submission with loading state
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 5000);
+      }
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= filters.search || "" %>';
+  if (searchTerm.trim()) {
+    highlightSearchTerms(searchTerm.trim());
+  }
+
+  // Function to highlight search terms
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const artistCards = document.querySelectorAll('.artist-card');
+
+    artistCards.forEach(card => {
+      const title = card.querySelector('.card-title');
+      const details = card.querySelectorAll('.card-text');
+
+      if (title && !title.querySelector('mark')) {
+        const originalText = title.textContent;
+        if (regex.test(originalText)) {
+          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+
+      details.forEach(detail => {
+        if (detail && !detail.querySelector('mark')) {
+          const originalText = detail.textContent;
+          if (regex.test(originalText)) {
+            detail.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+
+  // Show active filter indicators
+  function updateFilterIndicators() {
+    const hasFilters = '<%= filters.search || filters.genre || filters.verified !== "all" || filters.sort !== "oldest" %>';
+
+    if (hasFilters) {
+      const filterHeader = document.querySelector('.card-header h5');
+      if (filterHeader && !filterHeader.querySelector('.badge')) {
+        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
+      }
+    }
+  }
+
+  updateFilterIndicators();
+});
+</script>
+
+<style>
+/* Enhanced styles for artists page */
+.artist-card {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.artist-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.artist-thumbnail {
+  height: 200px;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.artist-card:hover .artist-thumbnail {
+  transform: scale(1.05);
+}
+
+/* Enhanced form styling */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #dee2e6;
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* Button enhancements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
+}
+
+/* Card enhancements */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Badge styling */
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+}
+
+/* Search highlighting */
+mark {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* Filter indicator */
+.badge.bg-light {
+  color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .artist-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .artist-thumbnail {
+    height: 150px;
+  }
+
+  .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+</style>

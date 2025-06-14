@@ -270,13 +270,19 @@
 
 
 
-<!-- Join as Artist CTA -->
+<!-- Join as Artist CTA - Only show if user is not an artist -->
+<% if (!user || user.role !== 'artist') { %>
 <section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
   <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-purple" style="z-index: -1;"></div>
   <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
   <div class="container py-4">
     <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
     <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
-    <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+    <% if (!user) { %>
+      <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
+    <% } else { %>
+      <a href="/artist-applications/apply" class="btn btn-glass-dark btn-lg px-5">Apply to Become Artist</a>
+    <% } %>
   </div>
 </section>
+<% } %>

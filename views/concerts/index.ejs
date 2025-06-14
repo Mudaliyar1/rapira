@@ -7,41 +7,90 @@
         <p class="lead mb-0">Discover and book tickets for the hottest rap concerts across India</p>
       </div>
       <div class="col-lg-4">
-        <form action="/concerts" method="GET" class="mt-4 mt-lg-0">
-          <div class="card bg-dark border border-secondary">
-            <div class="card-body">
-              <h5 class="card-title mb-3 text-white" style="color: white !important;">Filter Concerts</h5>
+        <div class="text-center">
+          <i class="bi bi-music-note-beamed display-1 text-primary"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-              <div class="mb-3">
-                <label for="city" class="form-label">City</label>
-                <select class="form-select" id="city" name="city">
-                  <option value="">All Cities</option>
-                  <% if (cities && cities.length > 0) { %>
-                    <% cities.forEach(city => { %>
-                      <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
-                    <% }); %>
-                  <% } %>
-                </select>
+<!-- Filter Section -->
+<section class="py-4 bg-light">
+  <div class="container">
+    <!-- Search and Filter Form -->
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+          <i class="bi bi-funnel me-2"></i>Search & Filter Concerts
+        </h5>
+      </div>
+      <div class="card-body">
+        <form action="/concerts" method="GET" id="concertFilterForm">
+          <div class="row g-3">
+            <!-- Search Input -->
+            <div class="col-md-4">
+              <label for="searchInput" class="form-label fw-semibold">Search Concerts</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search text-primary"></i>
+                </span>
+                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
+                       placeholder="Search by title, artist, or venue..."
+                       value="<%= filters.search || '' %>">
               </div>
+            </div>
 
-              <div class="mb-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control" id="date" name="date" value="<%= filters.date || '' %>">
-              </div>
+            <!-- City Filter -->
+            <div class="col-md-2">
+              <label for="cityFilter" class="form-label fw-semibold">City</label>
+              <select class="form-select" id="cityFilter" name="city">
+                <option value="">All Cities</option>
+                <% if (cities && cities.length > 0) { %>
+                  <% cities.forEach(city => { %>
+                    <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
 
-              <div class="mb-3">
-                <label for="type" class="form-label">Type</label>
-                <select class="form-select" id="type" name="type">
-                  <option value="" <%= !filters.type ? 'selected' : '' %>>All Types</option>
-                  <option value="free" <%= filters.type === 'free' ? 'selected' : '' %>>Free</option>
-                  <option value="paid" <%= filters.type === 'paid' ? 'selected' : '' %>>Paid</option>
-                </select>
-              </div>
+            <!-- Date Filter -->
+            <div class="col-md-2">
+              <label for="dateFilter" class="form-label fw-semibold">Date</label>
+              <input type="date" class="form-control" id="dateFilter" name="date" value="<%= filters.date || '' %>">
+            </div>
 
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1">Apply Filters</button>
-                <a href="/concerts" class="btn btn-secondary">
-                  <i class="bi bi-arrow-counterclockwise"></i> Reset
+            <!-- Type Filter -->
+            <div class="col-md-2">
+              <label for="typeFilter" class="form-label fw-semibold">Type</label>
+              <select class="form-select" id="typeFilter" name="type">
+                <option value="" <%= !filters.type ? 'selected' : '' %>>All Types</option>
+                <option value="free" <%= filters.type === 'free' ? 'selected' : '' %>>Free</option>
+                <option value="paid" <%= filters.type === 'paid' ? 'selected' : '' %>>Paid</option>
+              </select>
+            </div>
+
+            <!-- Sort Filter -->
+            <div class="col-md-2">
+              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
+              <select class="form-select" id="sortFilter" name="sort">
+                <option value="date" <%= filters.sort === 'date' ? 'selected' : '' %>>Date</option>
+                <option value="title" <%= filters.sort === 'title' ? 'selected' : '' %>>Title</option>
+                <option value="city" <%= filters.sort === 'city' ? 'selected' : '' %>>City</option>
+                <option value="price" <%= filters.sort === 'price' ? 'selected' : '' %>>Price</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                  <i class="bi bi-search me-1"></i> Search
+                </button>
+                <a href="/concerts" class="btn btn-outline-secondary px-4">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
                 </a>
               </div>
             </div>
@@ -53,7 +102,7 @@
 </section>
 
 <!-- Concerts List -->
-<section class="py-4">
+<section class="py-5">
   <div class="container">
     <div class="row g-4">
       <% if (concerts && concerts.length > 0) { %>
@@ -61,7 +110,7 @@
           <div class="col-md-6 col-lg-4">
             <div class="card card-concert h-100">
               <div class="position-relative overflow-hidden">
-                <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>">
+                <img src="<%= concert.posterImage %>" class="card-img-top concert-thumbnail" alt="<%= concert.title %>">
                 <div class="position-absolute top-0 end-0 m-2">
                   <% if(new Date(concert.date) < new Date()) { %>
                     <span class="badge bg-secondary me-1 px-3 py-2">Past</span>
@@ -108,3 +157,249 @@
     </div>
   </div>
 </section>
+
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Enhanced form handling with auto-submit for filters
+  const form = document.getElementById('concertFilterForm');
+  const searchInput = document.getElementById('searchInput');
+  const cityFilter = document.getElementById('cityFilter');
+  const dateFilter = document.getElementById('dateFilter');
+  const typeFilter = document.getElementById('typeFilter');
+  const sortFilter = document.getElementById('sortFilter');
+
+  let searchTimeout;
+
+  // Debounced search input
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        form.submit();
+      }, 800); // 800ms delay for better UX
+    });
+
+    // Immediate search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchTimeout);
+        form.submit();
+      }
+    });
+  }
+
+  // Auto-submit on filter changes
+  [cityFilter, dateFilter, typeFilter, sortFilter].forEach(filter => {
+    if (filter) {
+      filter.addEventListener('change', function() {
+        clearTimeout(searchTimeout);
+        form.submit();
+      });
+    }
+  });
+
+  // Enhanced form submission with loading state
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 5000);
+      }
+    });
+  }
+
+  // Highlight search terms in results
+  const searchTerm = '<%= filters.search || "" %>';
+  if (searchTerm.trim()) {
+    highlightSearchTerms(searchTerm.trim());
+  }
+
+  // Function to highlight search terms
+  function highlightSearchTerms(term) {
+    if (!term) return;
+
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const concertCards = document.querySelectorAll('.card-concert');
+
+    concertCards.forEach(card => {
+      const title = card.querySelector('.card-title');
+      const venue = card.querySelector('.card-text');
+
+      if (title && !title.querySelector('mark')) {
+        const originalText = title.textContent;
+        if (regex.test(originalText)) {
+          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+
+      if (venue && !venue.querySelector('mark')) {
+        const originalText = venue.textContent;
+        if (regex.test(originalText)) {
+          venue.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
+        }
+      }
+    });
+  }
+
+  // Show active filter indicators
+  function updateFilterIndicators() {
+    const hasFilters = '<%= filters.search || filters.city || filters.date || filters.type || filters.sort !== "date" %>';
+
+    if (hasFilters) {
+      const filterHeader = document.querySelector('.card-header h5');
+      if (filterHeader && !filterHeader.querySelector('.badge')) {
+        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
+      }
+    }
+  }
+
+  updateFilterIndicators();
+});
+</script>
+
+<style>
+/* Enhanced styles for concerts page */
+.card-concert {
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.card-concert:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.concert-thumbnail {
+  height: 200px;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.card-concert:hover .concert-thumbnail {
+  transform: scale(1.05);
+}
+
+/* Enhanced form styling */
+.form-control:focus, .form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.input-group-text {
+  border-color: #dee2e6;
+}
+
+.form-label {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* Button enhancements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
+}
+
+/* Card enhancements */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Badge styling */
+.badge {
+  font-size: 0.75em;
+  padding: 0.5em 0.75em;
+  border-radius: 6px;
+}
+
+/* Search highlighting */
+mark {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s infinite;
+}
+
+/* Filter indicator */
+.badge.bg-light {
+  color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-concert {
+    margin-bottom: 1.5rem;
+  }
+
+  .concert-thumbnail {
+    height: 150px;
+  }
+
+  .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+</style>

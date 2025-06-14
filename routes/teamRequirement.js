@@ -14,11 +14,19 @@ const { createTeamBookingNotification } = require('../utils/notificationService'
 router.get('/', async (req, res) => {
   try {
     // Get filter parameters
-    const { role, city, state } = req.query;
+    const { search, city, state } = req.query;
 
     // Build filter object
     const filter = { isActive: true };
-    if (role) filter.name = new RegExp(role, 'i');
+
+    // Search filter - search in role name and description
+    if (search) {
+      filter.$or = [
+        { name: new RegExp(search, 'i') },
+        { description: new RegExp(search, 'i') }
+      ];
+    }
+
     if (city) filter.city = new RegExp(city, 'i');
     if (state) filter.state = new RegExp(state, 'i');
 
@@ -28,15 +36,13 @@ router.get('/', async (req, res) => {
     // Get unique cities and states for filter dropdowns
     const cities = await TeamRequirementRole.distinct('city', { isActive: true });
     const states = await TeamRequirementRole.distinct('state', { isActive: true });
-    const roleNames = await TeamRequirementRole.distinct('name', { isActive: true });
 
     res.render('team-requirement/index', {
       title: 'Team Requirement',
       roles,
-      cities,
-      states,
-      roleNames,
-      filters: { role, city, state }
+      cities: cities.sort(),
+      states: states.sort(),
+      filters: { search, city, state }
     });
   } catch (error) {
     console.error('Error loading team requirement page:', error);
@@ -273,11 +279,19 @@ router.get('/thank-you', (req, res) => {
 router.get('/filter', async (req, res) => {
   try {
     // Get filter parameters
-    const { role, city, state } = req.query;
+    const { search, city, state } = req.query;
 
     // Build filter object
     const filter = { isActive: true };
-    if (role) filter.name = new RegExp(role, 'i');
+
+    // Search filter - search in role name and description
+    if (search) {
+      filter.$or = [
+        { name: new RegExp(search, 'i') },
+        { description: new RegExp(search, 'i') }
+      ];
+    }
+
     if (city) filter.city = new RegExp(city, 'i');
     if (state) filter.state = new RegExp(state, 'i');
 

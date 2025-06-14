@@ -9,7 +9,7 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 router.get('/', async (req, res) => {
   try {
     // Get filter parameters
-    const { date, city, state } = req.query;
+    const { date, city, state, search, sort } = req.query;
 
     // Build filter object
     const filter = { isVisible: true };
@@ -33,6 +33,39 @@ router.get('/', async (req, res) => {
       };
     }
 
+    // Add search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { eventCity: searchRegex },
+        { eventState: searchRegex },
+        { organizerName: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+
+    // Build sort object
+    let sortObj = { eventDate: 1 }; // Default sort by date ascending
+
+    if (sort) {
+      switch (sort) {
+        case 'title':
+          sortObj = { title: 1 };
+          break;
+        case 'city':
+          sortObj = { eventCity: 1 };
+          break;
+        case 'organizer':
+          sortObj = { organizerName: 1 };
+          break;
+        case 'date':
+        default:
+          sortObj = { eventDate: 1 };
+          break;
+      }
+    }
+
     // Get all cities and states for filter dropdown
     const allCities = await DailyConcert.distinct('eventCity', { isVisible: true });
     const allStates = await DailyConcert.distinct('eventState', { isVisible: true });
@@ -47,16 +80,41 @@ router.get('/', async (req, res) => {
         { path: 'roleSlot' },
         { path: 'bookingRequest' }
       ])
-      .sort({ eventDate: 1 });
+      .sort(sortObj);
+
+    // Calculate statistics
+    const now = new Date();
+    const totalConcerts = await DailyConcert.countDocuments({ isVisible: true });
+    const upcomingConcerts = await DailyConcert.countDocuments({
+      isVisible: true,
+      eventDate: { $gte: now }
+    });
+    const artistConcerts = await DailyConcert.countDocuments({
+      isVisible: true,
+      bookingType: 'artist'
+    });
+    const roleConcerts = await DailyConcert.countDocuments({
+      isVisible: true,
+      bookingType: 'role'
+    });
+
+    const stats = {
+      total: totalConcerts,
+      upcoming: upcomingConcerts,
+      artist: artistConcerts,
+      role: roleConcerts,
+      filtered: dailyConcerts.length
+    };
 
     res.render('daily-concerts/index', {
       title: 'Daily Concerts',
       dailyConcerts,
-      filters: { date, city, state },
+      filters: { date, city, state, search, sort: sort || 'date' },
       filterOptions: {
         cities: allCities,
         states: allStates
-      }
+      },
+      stats
     });
   } catch (error) {
     console.error('Error loading daily concerts page:', error);
