@@ -1,0 +1,474 @@
+<%- contentFor('body') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<!-- Website Settings Tabs -->
+<div class="glass-card-dark">
+  <div class="card-header border-bottom border-secondary">
+    <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active text-white" id="header-tab" data-bs-toggle="tab" data-bs-target="#header" type="button" role="tab">
+          <i class="bi bi-layout-text-window-reverse me-2"></i>Header & Branding
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu" type="button" role="tab">
+          <i class="bi bi-list me-2"></i>Navigation Menu
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="site-tab" data-bs-toggle="tab" data-bs-target="#site" type="button" role="tab">
+          <i class="bi bi-gear me-2"></i>Site Settings
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="theme-tab" data-bs-toggle="tab" data-bs-target="#theme" type="button" role="tab">
+          <i class="bi bi-palette me-2"></i>Theme Colors
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card-body">
+    <div class="tab-content" id="settingsTabContent">
+      
+      <!-- Header & Branding Tab -->
+      <div class="tab-pane fade show active" id="header" role="tabpanel">
+        <form action="/admin/website-settings/header" method="POST" enctype="multipart/form-data">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-white mb-3">Header Configuration</h5>
+              
+              <!-- Brand Type -->
+              <div class="mb-3">
+                <label class="form-label text-white">Brand Display Type</label>
+                <select class="form-select bg-dark text-white border-secondary" name="brandType" id="brandType">
+                  <option value="text" <%= settings.headerSettings.brandType === 'text' ? 'selected' : '' %>>Text Only</option>
+                  <option value="logo" <%= settings.headerSettings.brandType === 'logo' ? 'selected' : '' %>>Logo Only</option>
+                  <option value="both" <%= settings.headerSettings.brandType === 'both' ? 'selected' : '' %>>Logo + Text</option>
+                </select>
+              </div>
+
+              <!-- Brand Text -->
+              <div class="mb-3" id="brandTextGroup">
+                <label class="form-label text-white">Brand Text</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="brandText" 
+                       value="<%= settings.headerSettings.brandText %>" placeholder="Enter brand name">
+              </div>
+
+              <!-- Logo Upload -->
+              <div class="mb-3" id="logoGroup">
+                <label class="form-label text-white">Logo Image</label>
+                <input type="file" class="form-control bg-dark text-white border-secondary" name="logo" accept="image/*">
+                <small class="text-muted">Supported formats: JPG, PNG, GIF, SVG (Max: 5MB)</small>
+              </div>
+
+              <!-- Logo Height -->
+              <div class="mb-3" id="logoHeightGroup">
+                <label class="form-label text-white">Logo Height (px)</label>
+                <input type="number" class="form-control bg-dark text-white border-secondary" name="logoHeight" 
+                       value="<%= settings.headerSettings.logoHeight %>" min="20" max="100">
+              </div>
+
+              <!-- Show Brand Text (for 'both' type) -->
+              <div class="mb-3" id="showBrandTextGroup">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="showBrandText" id="showBrandText" 
+                         <%= settings.headerSettings.showBrandText ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="showBrandText">
+                    Show brand text alongside logo
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h5 class="text-white mb-3">Current Header Preview</h5>
+              <div class="border border-secondary rounded p-3 bg-dark">
+                <div class="d-flex align-items-center">
+                  <% if (settings.headerSettings.logoUrl && (settings.headerSettings.brandType === 'logo' || settings.headerSettings.brandType === 'both')) { %>
+                    <img src="<%= settings.headerSettings.logoUrl %>" alt="Current Logo" 
+                         style="height: <%= settings.headerSettings.logoHeight %>px; width: auto;" class="me-2">
+                  <% } %>
+                  <% if (settings.headerSettings.showBrandText && (settings.headerSettings.brandType === 'text' || settings.headerSettings.brandType === 'both')) { %>
+                    <span class="fs-4 fw-bold gradient-text-purple"><%= settings.headerSettings.brandText %></span>
+                  <% } %>
+                </div>
+              </div>
+
+              <% if (settings.headerSettings.logoUrl) { %>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLogo()">
+                    <i class="bi bi-trash me-1"></i>Remove Current Logo
+                  </button>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Header Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Navigation Menu Tab -->
+      <div class="tab-pane fade" id="menu" role="tabpanel">
+        <form action="/admin/website-settings/menu" method="POST">
+          <div class="row">
+            <!-- Discover Menu -->
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Discover Menu</h5>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="discoverMenuEnabled" id="discoverMenuEnabled" 
+                         <%= settings.menuSettings.discoverMenu.enabled ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold" for="discoverMenuEnabled">
+                    Enable Discover Menu
+                  </label>
+                </div>
+              </div>
+              
+              <div class="ms-3">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="discoverHome" 
+                         <%= settings.menuSettings.discoverMenu.items.home ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Home</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="discoverContentLibrary" 
+                         <%= settings.menuSettings.discoverMenu.items.contentLibrary ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Content Library</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="discoverConcerts" 
+                         <%= settings.menuSettings.discoverMenu.items.concerts ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Concerts</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="discoverDailyConcerts" 
+                         <%= settings.menuSettings.discoverMenu.items.dailyConcerts ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Daily Concerts</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="discoverArtists" 
+                         <%= settings.menuSettings.discoverMenu.items.artists ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Artists</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Services Menu -->
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Services Menu</h5>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="servicesMenuEnabled" 
+                         <%= settings.menuSettings.servicesMenu.enabled ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold">
+                    Enable Services Menu
+                  </label>
+                </div>
+              </div>
+              
+              <div class="ms-3">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="servicesTeamRequirement" 
+                         <%= settings.menuSettings.servicesMenu.items.teamRequirement ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Team Requirement</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="servicesFindMyArtist" 
+                         <%= settings.menuSettings.servicesMenu.items.findMyArtist ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Find My Artist</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="servicesSubscriptions" 
+                         <%= settings.menuSettings.servicesMenu.items.subscriptions ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Subscriptions</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Help & Support Menu -->
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Help & Support Menu</h5>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="helpSupportMenuEnabled" 
+                         <%= settings.menuSettings.helpSupportMenu.enabled ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold">
+                    Enable Help & Support Menu
+                  </label>
+                </div>
+              </div>
+              
+              <div class="ms-3">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportDemo" 
+                         <%= settings.menuSettings.helpSupportMenu.items.demo ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Interactive Demo</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportContact" 
+                         <%= settings.menuSettings.helpSupportMenu.items.contact ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Contact Us</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportTerms" 
+                         <%= settings.menuSettings.helpSupportMenu.items.termsOfService ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Terms of Service</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportPrivacy" 
+                         <%= settings.menuSettings.helpSupportMenu.items.privacyPolicy ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Privacy Policy</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportRefund" 
+                         <%= settings.menuSettings.helpSupportMenu.items.refundPolicy ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Refund Policy</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="helpSupportSubscriptionPolicy" 
+                         <%= settings.menuSettings.helpSupportMenu.items.subscriptionPolicy ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">Subscription Policy</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Menu Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Site Settings Tab -->
+      <div class="tab-pane fade" id="site" role="tabpanel">
+        <form action="/admin/website-settings/site" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">General Site Settings</h5>
+              
+              <div class="mb-3">
+                <label class="form-label text-white">Site Name</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="siteName" 
+                       value="<%= settings.siteSettings.siteName %>">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-white">Site Description</label>
+                <textarea class="form-control bg-dark text-white border-secondary" name="siteDescription" rows="3"><%= settings.siteSettings.siteDescription %></textarea>
+              </div>
+
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="maintenanceMode" 
+                         <%= settings.siteSettings.maintenanceMode ? 'checked' : '' %>>
+                  <label class="form-check-label text-white">
+                    Enable Maintenance Mode
+                  </label>
+                  <small class="d-block text-muted">When enabled, only admins can access the site</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Site Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Theme Colors Tab -->
+      <div class="tab-pane fade" id="theme" role="tabpanel">
+        <form action="/admin/website-settings/theme" method="POST">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-white mb-3">Color Scheme</h5>
+              
+              <div class="mb-3">
+                <label class="form-label text-white">Primary Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color bg-dark border-secondary" name="primaryColor" 
+                         value="<%= settings.themeSettings.primaryColor %>">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" 
+                         value="<%= settings.themeSettings.primaryColor %>" readonly>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-white">Secondary Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color bg-dark border-secondary" name="secondaryColor" 
+                         value="<%= settings.themeSettings.secondaryColor %>">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" 
+                         value="<%= settings.themeSettings.secondaryColor %>" readonly>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-white">Accent Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color bg-dark border-secondary" name="accentColor" 
+                         value="<%= settings.themeSettings.accentColor %>">
+                  <input type="text" class="form-control bg-dark text-white border-secondary" 
+                         value="<%= settings.themeSettings.accentColor %>" readonly>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <h5 class="text-white mb-3">Color Preview</h5>
+              <div class="border border-secondary rounded p-3 bg-dark">
+                <div class="mb-2">
+                  <span class="badge" style="background-color: <%= settings.themeSettings.primaryColor %>">Primary Color</span>
+                </div>
+                <div class="mb-2">
+                  <span class="badge" style="background-color: <%= settings.themeSettings.secondaryColor %>">Secondary Color</span>
+                </div>
+                <div class="mb-2">
+                  <span class="badge" style="background-color: <%= settings.themeSettings.accentColor %>">Accent Color</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Theme Settings
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="resetThemeColors()">
+              <i class="bi bi-arrow-clockwise me-1"></i>Reset Preview
+            </button>
+          </div>
+        </form>
+
+        <!-- Server-side Reset Form -->
+        <form action="/admin/website-settings/theme/reset" method="POST" class="mt-3">
+          <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to reset theme colors to default and save? This action cannot be undone.')">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset & Save to Default Colors
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Handle brand type changes
+document.getElementById('brandType').addEventListener('change', function() {
+  const brandType = this.value;
+  const brandTextGroup = document.getElementById('brandTextGroup');
+  const logoGroup = document.getElementById('logoGroup');
+  const logoHeightGroup = document.getElementById('logoHeightGroup');
+  const showBrandTextGroup = document.getElementById('showBrandTextGroup');
+
+  // Show/hide elements based on brand type
+  if (brandType === 'text') {
+    brandTextGroup.style.display = 'block';
+    logoGroup.style.display = 'none';
+    logoHeightGroup.style.display = 'none';
+    showBrandTextGroup.style.display = 'none';
+  } else if (brandType === 'logo') {
+    brandTextGroup.style.display = 'none';
+    logoGroup.style.display = 'block';
+    logoHeightGroup.style.display = 'block';
+    showBrandTextGroup.style.display = 'none';
+  } else if (brandType === 'both') {
+    brandTextGroup.style.display = 'block';
+    logoGroup.style.display = 'block';
+    logoHeightGroup.style.display = 'block';
+    showBrandTextGroup.style.display = 'block';
+  }
+});
+
+// Initialize on page load
+document.getElementById('brandType').dispatchEvent(new Event('change'));
+
+// Remove logo function
+function removeLogo() {
+  if (confirm('Are you sure you want to remove the current logo?')) {
+    fetch('/admin/website-settings/logo', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Failed to remove logo: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while removing the logo');
+    });
+  }
+}
+
+// Color picker sync
+document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+  colorInput.addEventListener('change', function() {
+    const textInput = this.parentElement.querySelector('input[type="text"]');
+    if (textInput) {
+      textInput.value = this.value;
+    }
+  });
+});
+
+// Reset theme colors to default
+function resetThemeColors() {
+  if (confirm('Are you sure you want to reset all theme colors to default values?')) {
+    // Default theme colors
+    const defaultColors = {
+      primaryColor: '#6f42c1',
+      secondaryColor: '#e91e63',
+      accentColor: '#ff9800'
+    };
+
+    // Update color inputs
+    document.querySelector('input[name="primaryColor"]').value = defaultColors.primaryColor;
+    document.querySelector('input[name="secondaryColor"]').value = defaultColors.secondaryColor;
+    document.querySelector('input[name="accentColor"]').value = defaultColors.accentColor;
+
+    // Update text inputs
+    document.querySelector('input[name="primaryColor"]').parentElement.querySelector('input[type="text"]').value = defaultColors.primaryColor;
+    document.querySelector('input[name="secondaryColor"]').parentElement.querySelector('input[type="text"]').value = defaultColors.secondaryColor;
+    document.querySelector('input[name="accentColor"]').parentElement.querySelector('input[type="text"]').value = defaultColors.accentColor;
+
+    // Update preview badges
+    const previewContainer = document.querySelector('.col-md-6:has(.badge)');
+    if (previewContainer) {
+      const badges = previewContainer.querySelectorAll('.badge');
+      if (badges[0]) badges[0].style.backgroundColor = defaultColors.primaryColor;
+      if (badges[1]) badges[1].style.backgroundColor = defaultColors.secondaryColor;
+      if (badges[2]) badges[2].style.backgroundColor = defaultColors.accentColor;
+    }
+  }
+}
+</script>

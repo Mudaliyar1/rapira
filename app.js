@@ -282,9 +282,13 @@ const Role = require('./models/Role');
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
 const { createMediaMiddleware } = require('./middleware/mediaMiddleware');
 const { checkSubscription } = require('./middleware/subscription');
+const { loadWebsiteSettings } = require('./middleware/websiteSettings');
 
 // Check subscription status for all requests
 app.use(checkSubscription);
+
+// Load website settings for all requests
+app.use(loadWebsiteSettings);
 
 // Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
 
@@ -420,6 +424,7 @@ const { router: notificationRoutes } = require('./routes/notifications');
 const subscriptionRoutes = require('./routes/subscriptions');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const adminSessionRoutes = require('./routes/adminSessions');
+const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
@@ -485,6 +490,9 @@ app.use('/admin/subscriptions', adminSubscriptionRoutes);
 
 // Mount session management routes
 app.use('/admin/sessions', adminSessionRoutes);
+
+// Mount website settings routes
+app.use('/admin/website-settings', adminWebsiteSettingsRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');

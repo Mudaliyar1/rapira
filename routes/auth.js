@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/brevoEmailService');
+const WebsiteSettings = require('../models/WebsiteSettings');
 
 // Session health check route (for debugging)
 router.get('/session-check', (req, res) => {
@@ -185,6 +186,93 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     console.error('Login error:', error);
     req.flash('error', 'Login failed');
     res.redirect('/auth/login');
+  }
+});
+
+// Maintenance mode admin login (API endpoint)
+router.post('/maintenance-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if maintenance mode is enabled
+    const settings = await WebsiteSettings.getSettings();
+    if (!settings.siteSettings.maintenanceMode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Maintenance mode is not enabled'
+      });
+    }
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials'
+      });
+    }
+
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required during maintenance mode.'
+      });
+    }
+
+    // Check password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials'
+      });
+    }
+
+    // Create session for admin
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      loginTime: new Date().toISOString(),
+      maintenanceLogin: true // Flag to indicate this was a maintenance login
+    };
+
+    // Save session
+    req.session.save(err => {
+      if (err) {
+        console.error('Maintenance login session save error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Login failed - session error'
+        });
+      }
+
+      console.log(`Admin logged in during maintenance mode: ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Admin login successful',
+        redirectUrl: '/admin'
+      });
+    });
+
+  } catch (error) {
+    console.error('Maintenance login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Login failed. Please try again.'
+    });
   }
 });
 

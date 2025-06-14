@@ -1,0 +1,88 @@
+require('dotenv').config();
+const mongoose = require('mongoose');
+const WebsiteSettings = require('../models/WebsiteSettings');
+
+async function initializeWebsiteSettings() {
+  try {
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Connected to MongoDB');
+
+    // Check if settings already exist
+    let settings = await WebsiteSettings.findOne();
+    
+    if (!settings) {
+      // Create default settings
+      settings = new WebsiteSettings({
+        headerSettings: {
+          brandType: 'text',
+          brandText: 'RAPIRA',
+          logoUrl: '',
+          logoHeight: 45,
+          showBrandText: true
+        },
+        menuSettings: {
+          discoverMenu: {
+            enabled: true,
+            items: {
+              home: true,
+              contentLibrary: true,
+              concerts: true,
+              dailyConcerts: true,
+              artists: true
+            }
+          },
+          servicesMenu: {
+            enabled: true,
+            items: {
+              teamRequirement: true,
+              findMyArtist: true,
+              subscriptions: true
+            }
+          },
+          helpSupportMenu: {
+            enabled: true,
+            items: {
+              demo: true,
+              contact: true,
+              termsOfService: true,
+              privacyPolicy: true,
+              refundPolicy: true,
+              subscriptionPolicy: true
+            }
+          }
+        },
+        siteSettings: {
+          siteName: 'Rapira - Indian Rap Music Platform',
+          siteDescription: 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.',
+          favicon: '/images/favicon.ico',
+          maintenanceMode: false
+        },
+        themeSettings: {
+          primaryColor: '#6f42c1',
+          secondaryColor: '#e91e63',
+          accentColor: '#ff9800'
+        }
+      });
+
+      await settings.save();
+      console.log('Default website settings created successfully');
+    } else {
+      console.log('Website settings already exist');
+    }
+
+    console.log('Current settings:', JSON.stringify(settings, null, 2));
+    
+  } catch (error) {
+    console.error('Error initializing website settings:', error);
+  } finally {
+    await mongoose.connection.close();
+    console.log('Database connection closed');
+  }
+}
+
+// Run the initialization
+initializeWebsiteSettings();

@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#121212">
-  <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Rapira - The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.' %>">
-  <title><%= typeof title !== 'undefined' ? title : 'Rapira - Indian Rap Music Platform' %></title>
+  <meta name="description" content="<%= typeof description !== 'undefined' ? description : (typeof siteSettings !== 'undefined' && siteSettings ? siteSettings.siteDescription : 'Rapira - The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.') %>">
+  <title><%= typeof title !== 'undefined' ? title : (typeof siteSettings !== 'undefined' && siteSettings ? siteSettings.siteName : 'Rapira - Indian Rap Music Platform') %></title>
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->

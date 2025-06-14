@@ -147,9 +147,11 @@
                 </div>
 
                 <div class="mb-3">
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="isPaid" name="isPaid" <%= concert.isPaid ? 'checked' : '' %> onclick="$('#priceContainer').toggle(this.checked); $('#price').prop('required', this.checked);">
-                    <label class="form-check-label" for="isPaid">This is a paid concert</label>
+                  <div class="highlighted-toggle-section">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input enhanced-toggle" type="checkbox" id="isPaid" name="isPaid" <%= concert.isPaid ? 'checked' : '' %> onclick="$('#priceContainer').toggle(this.checked); $('#price').prop('required', this.checked);">
+                      <label class="form-check-label highlighted-label" for="isPaid">This is a paid concert</label>
+                    </div>
                   </div>
                 </div>
 

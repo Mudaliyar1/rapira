@@ -326,7 +326,11 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/users');
     }
 
-    res.render('admin/edit-user', { user });
+    res.render('admin/edit-user', {
+      user,
+      layout: 'admin',
+      currentPath: '/admin/users'
+    });
   } catch (error) {
     console.error('Edit user error:', error);
     req.flash('error', 'Failed to load user');
