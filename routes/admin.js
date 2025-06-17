@@ -1920,6 +1920,21 @@ router.post('/pages/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// Project Documentation Page
+router.get('/documentation', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    res.render('admin/documentation', {
+      layout: 'admin',
+      currentPath: '/admin/documentation',
+      title: 'Project Documentation'
+    });
+  } catch (error) {
+    console.error('Documentation page error:', error);
+    req.flash('error', 'Failed to load documentation page');
+    res.redirect('/admin');
+  }
+});
+
 // Create admin user if it doesn't exist
 router.get('/setup', async (req, res) => {
   try {

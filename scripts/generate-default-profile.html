@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Default Profile Image</title>
+</head>
+<body>
+    <canvas id="canvas" width="150" height="150" style="border: 1px solid #ccc;"></canvas>
+    <br><br>
+    <button onclick="downloadImage()">Download PNG</button>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set background
+        ctx.fillStyle = '#6c757d';
+        ctx.beginPath();
+        ctx.arc(75, 75, 75, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw person icon
+        ctx.fillStyle = '#ffffff';
+        
+        // Head
+        ctx.beginPath();
+        ctx.arc(75, 60, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Body
+        ctx.beginPath();
+        ctx.moveTo(40, 125);
+        ctx.quadraticCurveTo(40, 105, 50, 105);
+        ctx.lineTo(100, 105);
+        ctx.quadraticCurveTo(110, 105, 110, 125);
+        ctx.lineTo(110, 150);
+        ctx.lineTo(40, 150);
+        ctx.closePath();
+        ctx.fill();
+        
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'default-profile.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

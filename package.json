@@ -42,7 +42,9 @@
     "nodemailer": "^6.9.4",
     "puppeteer": "^24.8.2",
     "razorpay": "^2.9.1",
-    "sib-api-v3-sdk": "^8.5.0"
+    "sharp": "^0.34.2",
+    "sib-api-v3-sdk": "^8.5.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

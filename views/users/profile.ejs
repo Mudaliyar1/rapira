@@ -3,17 +3,12 @@
     <div class="col-lg-4 mb-4 mb-lg-0">
       <div class="card">
         <div class="card-body text-center p-4">
-          <% if (user.profileImage) { %>
-            <img src="<%= locals.getImageUrl ? getImageUrl(user.profileImage, '/images/default-profile.png') : user.profileImage %>"
-                 alt="<%= user.name %>"
-                 class="rounded-circle img-thumbnail mb-3"
-                 width="150" height="150"
-                 onerror="this.onerror=null; this.src='/images/default-profile.png';">
-          <% } else { %>
-            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
-              <i class="bi bi-person-circle text-secondary" style="font-size: 5rem;"></i>
-            </div>
-          <% } %>
+          <img src="<%= locals.getImageUrl ? getImageUrl(user.profileImage, '/images/default-profile.svg') : (user.profileImage || '/images/default-profile.svg') %>"
+               alt="<%= user.name %>"
+               class="rounded-circle img-thumbnail mb-3"
+               width="150" height="150"
+               style="object-fit: cover;"
+               onerror="this.onerror=null; this.src='/images/default-profile.svg';">
 
           <h3 class="fw-bold mb-1"><%= user.name %></h3>
           <p class="text-muted mb-3">

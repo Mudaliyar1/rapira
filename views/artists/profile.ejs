@@ -154,8 +154,11 @@
         <!-- Profile Info -->
         <div class="card-body text-center p-4">
           <div class="position-relative d-inline-block mb-3">
-            <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>"
-                 class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <img src="<%= artist.user.profileImage || '/images/default-profile.svg' %>"
+                 alt="<%= artist.user.name %>"
+                 class="rounded-circle"
+                 style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"
+                 onerror="this.onerror=null; this.src='/images/default-profile.svg';">
           </div>
 
 

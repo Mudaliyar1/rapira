@@ -171,7 +171,7 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
     // Update profile image if uploaded
     if (req.file) {
       // Delete old profile image if it's not the default
-      if (user.profileImage && user.profileImage !== '/images/default-profile.png') {
+      if (user.profileImage && user.profileImage !== '/images/default-profile.svg' && user.profileImage !== '/images/default-profile.png') {
         deleteFileIfExists(user.profileImage);
       }
 

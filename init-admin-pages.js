@@ -212,6 +212,17 @@ async function initializeAdminPages() {
         displayOrder: 3,
         alwaysAccessible: false,
         superAdminOnly: false
+      },
+      {
+        name: 'Project Documentation',
+        slug: 'documentation',
+        description: 'View complete project documentation',
+        path: '/admin/documentation',
+        icon: 'bi-file-earmark-text',
+        category: 'system',
+        displayOrder: 4,
+        alwaysAccessible: true, // All admins can access documentation
+        superAdminOnly: false
       }
     ];
     

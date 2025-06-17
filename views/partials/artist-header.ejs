@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/profile-images.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <% if (typeof extraStyles !== 'undefined') { %>
@@ -29,11 +30,12 @@
       <div class="p-3">
         <div class="admin-profile d-flex align-items-center mb-4">
           <div class="admin-avatar me-3">
-            <% if (artist.user.profileImage) { %>
-              <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>" class="rounded-circle" width="48" height="48">
-            <% } else { %>
-              <i class="bi bi-person-circle fs-1"></i>
-            <% } %>
+            <img src="<%= artist.user.profileImage || '/images/default-profile.svg' %>"
+                 alt="<%= artist.user.name %>"
+                 class="rounded-circle"
+                 width="48" height="48"
+                 style="object-fit: cover;"
+                 onerror="this.onerror=null; this.src='/images/default-profile.svg';">
           </div>
           <div>
             <h6 class="mb-0"><%= artist.user.name %></h6>

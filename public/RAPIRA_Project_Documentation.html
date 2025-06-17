@@ -1,0 +1,2975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPIRA Platform - Complete Project Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #000;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            background: white;
+        }
+
+        .header {
+            text-align: center;
+            background: #f8f9fa;
+            color: #000;
+            padding: 30px 20px;
+            margin: -30px -30px 40px -30px;
+            border: 2px solid #000;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #333;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+
+        .section h2 {
+            color: #000;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .section h3 {
+            color: #000;
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+            font-weight: bold;
+        }
+
+        .section h4 {
+            color: #000;
+            font-size: 1.1em;
+            margin: 20px 0 10px 0;
+            font-weight: bold;
+        }
+
+        .company-info {
+            background: #f8f9fa;
+            color: #000;
+            padding: 25px;
+            border: 1px solid #ccc;
+            margin-bottom: 30px;
+        }
+
+        .company-info h3 {
+            color: #000;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h4 {
+            color: #000;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .feature-card ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .feature-card li {
+            padding: 3px 0;
+            color: #000;
+        }
+        
+        .uml-diagram {
+            background: #f8f9fa;
+            border: 1px solid #000;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .uml-diagram pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 11px;
+            line-height: 1.3;
+            color: #000;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border: 1px solid #000;
+        }
+
+        .data-table th {
+            background: #f0f0f0;
+            color: #000;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            color: #000;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .dashboard-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+
+        .dashboard-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .menu-item {
+            background: white;
+            padding: 15px;
+            border: 1px solid #ccc;
+        }
+
+        .menu-item h5 {
+            color: #000;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .menu-item ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .menu-item li {
+            padding: 2px 0;
+            color: #000;
+            font-size: 0.9em;
+        }
+        
+        .screen-layout {
+            background: #f8f9fa;
+            border: 1px solid #000;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ccc;
+            text-align: center;
+            color: #000;
+        }
+
+        .tech-item h5 {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .conclusion-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border: 1px solid #000;
+            color: #000;
+            margin: 30px 0;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #000;
+            margin: 20px 0;
+        }
+
+        .toc h3 {
+            color: #000;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .toc ul {
+            list-style-type: decimal;
+            padding-left: 20px;
+        }
+
+        .toc li {
+            padding: 5px 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .toc a {
+            color: #000;
+            text-decoration: none;
+            font-weight: normal;
+        }
+
+        .toc a:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 15px;
+            }
+            .section {
+                page-break-inside: avoid;
+                margin-bottom: 25px;
+            }
+            .download-buttons {
+                display: none !important;
+            }
+            .header {
+                margin: -15px -15px 25px -15px;
+                padding: 20px;
+            }
+            .data-table {
+                font-size: 10px;
+            }
+            .uml-diagram pre {
+                font-size: 9px;
+                line-height: 1.2;
+            }
+            .feature-card, .menu-item {
+                break-inside: avoid;
+                margin-bottom: 10px;
+            }
+        }
+
+        .college-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #000;
+            background: white;
+        }
+
+        .college-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .college-header h2 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: normal;
+        }
+
+        .college-header .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .college-header .details div {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+        
+        .download-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .download-btn {
+            background: #f8f9fa;
+            color: #000;
+            padding: 10px 15px;
+            border: 1px solid #000;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            min-width: 140px;
+            font-size: 12px;
+        }
+
+        .download-btn:hover {
+            background: #e9ecef;
+            color: #000;
+            text-decoration: none;
+        }
+
+        .download-btn.pdf {
+            background: #f8f9fa;
+            border-color: #000;
+        }
+
+        .download-btn.html {
+            background: #f8f9fa;
+            border-color: #000;
+        }
+
+        .download-btn.print {
+            background: #f8f9fa;
+            border-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="download-buttons">
+        <button class="download-btn pdf" onclick="downloadAsPDF()">Download PDF</button>
+        <button class="download-btn html" onclick="downloadAsHTML()">Save HTML</button>
+        <button class="download-btn print" onclick="window.print()">Print Document</button>
+    </div>
+
+    <div class="container">
+        <!-- College Project Header -->
+        <div class="college-header">
+            <h1>RAPIRA - DIGITAL ENTERTAINMENT PLATFORM</h1>
+            <h2>Complete Project Documentation</h2>
+            <p><strong>A Comprehensive Web-Based Platform for Artists, Event Organizers, and Music Enthusiasts</strong></p>
+
+            <div style="margin-top: 20px;">
+                <strong>Academic Year:</strong> 2024-25<br>
+                <strong>Platform Type:</strong> Digital Entertainment Hub<br>
+                <strong>Technology Stack:</strong> Node.js, MongoDB, Express.js, Bootstrap 5
+            </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#company-profile">1. Company Profile</a></li>
+                <li><a href="#project-profile">2. Project Profile</a></li>
+                <li><a href="#uml-diagrams">3. UML Diagrams</a></li>
+                <li><a href="#data-dictionary">4. Data Dictionary</a></li>
+                <li><a href="#system-modules">5. System Modules</a></li>
+                <li><a href="#admin-dashboard">6. Admin Dashboard Management</a></li>
+                <li><a href="#artist-dashboard">7. Artist Dashboard Management</a></li>
+                <li><a href="#screen-layouts">8. Screen Layouts</a></li>
+                <li><a href="#system-architecture">9. System Architecture</a></li>
+                <li><a href="#api-endpoints">10. API Endpoints</a></li>
+                <li><a href="#conclusion">11. Conclusion</a></li>
+            </ul>
+        </div>
+
+        <!-- Company Profile -->
+        <div class="section" id="company-profile">
+            <h2>1. Company Profile</h2>
+            <div class="company-info">
+                <h3>Valrein Groups</h3>
+                <p><strong>Address:</strong> WARD NO. 14, Ajay Vachan Colony, Suraj Ganj, Itarsi - 461111, Dist: Hoshangabad, Madhya Pradesh, India</p>
+                <p><strong>Contact Number:</strong> +91 7880009340</p>
+                <p><strong>Platform Name:</strong> RAPIRA Digital Entertainment Platform</p>
+                <p><strong>Industry:</strong> Digital Entertainment and Music Technology</p>
+                <p><strong>Company Mission:</strong> To create a digital hub that seamlessly brings together artists, event organizers, and general users, providing a comprehensive platform for discovering, promoting, and engaging with entertainment content and live events while supporting role booking, ticket purchasing, and subscription-based services.</p>
+                <p><strong>Vision:</strong> To become the leading digital entertainment platform that streamlines the experience for both content creators and consumers, fostering growth and innovation in the entertainment industry through integrated technology solutions.</p>
+            </div>
+        </div>
+
+        <!-- Project Profile -->
+        <div class="section" id="project-profile">
+            <h2>2. Project Profile</h2>
+            
+            <h3>2.1 Project Overview</h3>
+            <p><strong>RAPIRA</strong> is a digital hub that brings together artists, event organizers, and general users, offering a space to discover, promote, and engage with entertainment content and live events. It allows users to explore artist portfolios, book roles, purchase event tickets, and access exclusive media. The platform also supports subscriptions and event management, creating a streamlined experience for both content creators and consumers within the entertainment industry.</p>
+
+            <p>The platform serves as a comprehensive solution for the digital entertainment ecosystem, providing tools and features that facilitate seamless interaction between all stakeholders in the entertainment industry. RAPIRA bridges the gap between traditional entertainment management and modern digital solutions, offering an integrated approach to content distribution, event management, and audience engagement.</p>
+
+            <div class="dashboard-section">
+                <h4>Platform Objectives</h4>
+                <div class="dashboard-menu">
+                    <div class="menu-item">
+                        <h5>Artist Empowerment</h5>
+                        <ul>
+                            <li>Comprehensive artist portfolio management and showcase</li>
+                            <li>Direct fan engagement and community building tools</li>
+                            <li>Multiple monetization opportunities through content and live events</li>
+                            <li>Role booking system for collaborative opportunities</li>
+                            <li>Career development support with learning resources</li>
+                            <li>Professional networking and collaboration features</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>User Experience</h5>
+                        <ul>
+                            <li>Intuitive artist portfolio exploration and discovery</li>
+                            <li>Streamlined event ticket purchasing system</li>
+                            <li>Role booking functionality for event participation</li>
+                            <li>Access to exclusive media content and entertainment</li>
+                            <li>Subscription-based premium features and benefits</li>
+                            <li>Personalized content recommendations and user preferences</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>Business Solutions</h5>
+                        <ul>
+                            <li>End-to-end event management and organization tools</li>
+                            <li>Integrated payment processing for tickets and subscriptions</li>
+                            <li>Role booking management for event organizers</li>
+                            <li>Advanced analytics and performance reporting</li>
+                            <li>Automated communication and notification systems</li>
+                            <li>Flexible subscription models and pricing strategies</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>Industry Impact</h5>
+                        <ul>
+                            <li>Digital transformation of entertainment industry processes</li>
+                            <li>Streamlined experience for content creators and consumers</li>
+                            <li>Enhanced collaboration between artists and event organizers</li>
+                            <li>Creation of sustainable revenue models for entertainment professionals</li>
+                            <li>Improved accessibility to entertainment content and live events</li>
+                            <li>Support for emerging talent and independent content creators</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h4>Platform Statistics & Capabilities</h4>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>User Management</h4>
+                    <ul>
+                        <li><strong>Multi-role System:</strong> General Users, Artists, Event Organizers, Admins</li>
+                        <li><strong>Portfolio Management:</strong> Comprehensive artist portfolio creation and management</li>
+                        <li><strong>Role Booking:</strong> System for booking specific roles in events and projects</li>
+                        <li><strong>Profile Customization:</strong> Rich media profiles with social integration</li>
+                        <li><strong>Verification System:</strong> Authenticated accounts for trusted interactions</li>
+                        <li><strong>Activity Tracking:</strong> Comprehensive user engagement analytics</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Content Ecosystem</h4>
+                    <ul>
+                        <li><strong>Exclusive Media Access:</strong> Premium content for subscribers and users</li>
+                        <li><strong>Multi-format Support:</strong> Audio, Video, Images, Documents</li>
+                        <li><strong>Content Discovery:</strong> Advanced search and filtering for entertainment content</li>
+                        <li><strong>Portfolio Showcase:</strong> Artist portfolio display and management</li>
+                        <li><strong>Quality Control:</strong> Admin moderation and content approval system</li>
+                        <li><strong>Engagement Tracking:</strong> Views, likes, and user interaction analytics</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Event Management</h4>
+                    <ul>
+                        <li><strong>Live Event Creation:</strong> Comprehensive event setup and management</li>
+                        <li><strong>Ticket Purchasing:</strong> Streamlined ticket sales and distribution system</li>
+                        <li><strong>Role Booking:</strong> Event-specific role assignments and bookings</li>
+                        <li><strong>Event Discovery:</strong> Platform for users to discover and engage with live events</li>
+                        <li><strong>Payment Processing:</strong> Secure transaction handling for tickets and services</li>
+                        <li><strong>Event Analytics:</strong> Performance metrics and attendance tracking</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3>2.2 Key Features</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>General User Features</h4>
+                    <ul>
+                        <li>Artist portfolio exploration and discovery</li>
+                        <li>Event ticket purchasing system</li>
+                        <li>Role booking for event participation</li>
+                        <li>Access to exclusive media content</li>
+                        <li>Subscription plans with premium benefits</li>
+                        <li>User profile management and customization</li>
+                        <li>Event discovery and filtering capabilities</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Artist Features</h4>
+                    <ul>
+                        <li>Comprehensive portfolio creation and management</li>
+                        <li>Media content upload and showcase</li>
+                        <li>Event creation and management tools</li>
+                        <li>Role availability posting and management</li>
+                        <li>Performance analytics and insights</li>
+                        <li>Fan engagement and communication tools</li>
+                        <li>Revenue tracking and financial management</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Event Organizer Features</h4>
+                    <ul>
+                        <li>Comprehensive event management system</li>
+                        <li>Artist and role booking coordination</li>
+                        <li>Ticket sales and distribution management</li>
+                        <li>Event promotion and marketing tools</li>
+                        <li>Attendee management and communication</li>
+                        <li>Financial tracking and reporting</li>
+                        <li>Post-event analytics and feedback</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3>2.3 Technology Stack</h3>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <h5>Backend Technologies</h5>
+                    <p>Node.js Runtime Environment<br>Express.js Web Framework<br>MongoDB Database<br>Mongoose ODM</p>
+                </div>
+                <div class="tech-item">
+                    <h5>Frontend Technologies</h5>
+                    <p>Bootstrap 5 Framework<br>EJS Templating Engine<br>JavaScript ES6+<br>Chart.js for Analytics</p>
+                </div>
+                <div class="tech-item">
+                    <h5>Payment Integration</h5>
+                    <p>Razorpay Payment Gateway<br>Secure Transaction Processing<br>Order Management System</p>
+                </div>
+                <div class="tech-item">
+                    <h5>Communication Services</h5>
+                    <p>Brevo Email API<br>Automated Notifications<br>Template Management</p>
+                </div>
+            </div>
+
+            <h3>2.4 Platform Benefits</h3>
+            <div class="conclusion-box">
+                <p>RAPIRA serves as a comprehensive digital solution that addresses the key challenges in the entertainment industry by providing:</p>
+                <ul>
+                    <li><strong>Centralized Hub:</strong> Single platform for all entertainment-related activities</li>
+                    <li><strong>Streamlined Experience:</strong> Simplified processes for both creators and consumers</li>
+                    <li><strong>Enhanced Discovery:</strong> Improved visibility for artists and content</li>
+                    <li><strong>Efficient Management:</strong> Comprehensive tools for event and content management</li>
+                    <li><strong>Revenue Generation:</strong> Multiple monetization opportunities for all stakeholders</li>
+                    <li><strong>Professional Networking:</strong> Platform for industry collaboration and growth</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- UML Diagrams -->
+        <div class="section" id="uml-diagrams">
+            <h2>3. UML Diagrams</h2>
+
+            <h3>3.1 Use Case Diagram</h3>
+            <div class="uml-diagram">
+                <pre>
+                    🎭 RAPIRA Platform Use Cases
+
+    👨‍💼 Admin                    🎤 Artist                    👤 User
+      │                        │                        │
+      ├── Manage Users         ├── Create Profile       ├── Register/Login
+      ├── Approve Concerts     ├── Upload Content       ├── Browse Concerts
+      ├── Manage Content       ├── Submit Concerts      ├── Book Tickets
+      ├── Process Refunds      ├── Track Sales          ├── Purchase Subscriptions
+      ├── Create Subscriptions ├── View Analytics       ├── View Content
+      ├── Monitor Platform     ├── Manage Bookings      ├── Contact Support
+      ├── Send Notifications   ├── Complete Learning    ├── Update Profile
+      ├── Featured Artists     ├── Role Management      ├── Social Integration
+      ├── Team Management      ├── Booking Requests     ├── Email Notifications
+      └── System Settings      └── Dashboard Access     └── Mobile Access
+                </pre>
+            </div>
+
+            <h3>3.2 Class Diagram</h3>
+            <div class="uml-diagram">
+                <pre>
+┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
+│       User          │    │      Artist         │    │      Concert        │
+├─────────────────────┤    ├─────────────────────┤    ├─────────────────────┤
+│ _id: ObjectId       │    │ _id: ObjectId       │    │ _id: ObjectId       │
+│ name: String        │◄───┤ user: ObjectId      │◄───┤ artist: ObjectId    │
+│ email: String       │    │ stageName: String   │    │ title: String       │
+│ password: String    │    │ genre: String       │    │ description: String │
+│ role: String        │    │ artistLevel: String │    │ date: Date          │
+│ profileImage: String│    │ verified: Boolean   │    │ time: String        │
+│ bio: String         │    │ featuredArtist: Bool│    │ venue: String       │
+│ city: String        │    │ about: String       │    │ city: String        │
+│ socialLinks: Object │    │ achievements: Array │    │ isPaid: Boolean     │
+│ createdAt: Date     │    │ bannerImage: String │    │ price: Number       │
+│ isVerified: Boolean │    │ aadharCard: String  │    │ posterImage: String │
+└─────────────────────┘    └─────────────────────┘    │ status: String      │
+                                                      │ maxTickets: Number  │
+┌─────────────────────┐    ┌─────────────────────┐    │ ticketsSold: Number │
+│      Ticket         │    │  SubscriptionPlan   │    └─────────────────────┘
+├─────────────────────┤    ├─────────────────────┤
+│ _id: ObjectId       │    │ _id: ObjectId       │    ┌─────────────────────┐
+│ concert: ObjectId   │    │ name: String        │    │   UserSubscription  │
+│ user: ObjectId      │    │ price: Number       │    ├─────────────────────┤
+│ attendees: Array    │    │ duration: Number    │    │ _id: ObjectId       │
+│ quantity: Number    │    │ durationUnit: String│    │ user: ObjectId      │
+│ totalAmount: Number │    │ benefits: String    │    │ plan: ObjectId      │
+│ paymentId: String   │    │ discountPercentage: │    │ purchaseDate: Date  │
+│ orderId: String     │    │ isActive: Boolean   │    │ expiryDate: Date    │
+│ paymentStatus: String│   │ createdBy: ObjectId │    │ status: String      │
+│ purchaseDate: Date  │    └─────────────────────┘    │ paymentId: String   │
+└─────────────────────┘                              │ amount: Number      │
+                                                      └─────────────────────┘
+                </pre>
+            </div>
+
+            <h3>3.3 Sequence Diagram - Ticket Booking Process</h3>
+            <div class="uml-diagram">
+                <pre>
+👤 User    🌐 Platform    🗄️ Database    💳 Razorpay    📧 Email Service
+   │           │             │             │              │
+   │ Browse     │             │             │              │
+   │ Concerts   │             │             │              │
+   ├──────────►│             │             │              │
+   │           │ Fetch       │             │              │
+   │           │ Concerts    │             │              │
+   │           ├────────────►│             │              │
+   │           │◄────────────┤             │              │
+   │           │ Concert     │             │              │
+   │           │ List        │             │              │
+   │◄──────────┤             │             │              │
+   │           │             │             │              │
+   │ Select &  │             │             │              │
+   │ Book      │             │             │              │
+   ├──────────►│             │             │              │
+   │           │ Create      │             │              │
+   │           │ Payment     │             │              │
+   │           │ Order       │             │              │
+   │           ├─────────────────────────►│              │
+   │           │◄─────────────────────────┤              │
+   │           │ Payment     │             │              │
+   │           │ Form        │             │              │
+   │◄──────────┤             │             │              │
+   │           │             │             │              │
+   │ Submit    │             │             │              │
+   │ Payment   │             │             │              │
+   ├───────────────────────────────────────►              │
+   │           │             │             │              │
+   │           │ Payment     │             │              │
+   │           │ Callback    │             │              │
+   │           │◄─────────────────────────┤              │
+   │           │ Verify &    │             │              │
+   │           │ Save Ticket │             │              │
+   │           ├────────────►│             │              │
+   │           │◄────────────┤             │              │
+   │           │ Send        │             │              │
+   │           │ Confirmation│             │              │
+   │           ├─────────────────────────────────────────►│
+   │           │             │             │              │
+   │           │ Success     │             │              │
+   │           │ Page        │             │              │
+   │◄──────────┤             │             │              │
+   │           │             │             │    Email     │
+   │◄──────────────────────────────────────────────────────┤
+                </pre>
+            </div>
+
+            <h3>3.4 Activity Diagram - Artist Content Upload</h3>
+            <div class="uml-diagram">
+                <pre>
+                    🎤 Artist Content Upload Flow
+
+                         ⭕ Start
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Login as Artist │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Check Artist    │
+                    │ Verification    │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Access Upload   │
+                    │ Form            │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Select Content  │
+                    │ Type (Song/Video)│
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Upload Media    │
+                    │ File            │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Add Title &     │
+                    │ Description     │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Add Tags &      │
+                    │ Release Date    │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Submit for      │
+                    │ Review          │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Admin Approval  │
+                    │ Process         │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Content         │
+                    │ Published       │
+                    └─────────────────┘
+                           │
+                           ▼
+                    ┌─────────────────┐
+                    │ Notify Artist   │
+                    └─────────────────┘
+                           │
+                           ▼
+                         ⭕ End
+                </pre>
+            </div>
+
+            <h3>3.5 Entity Relationship Diagram</h3>
+            <div class="uml-diagram">
+                <pre>
+                    🗄️ RAPIRA Complete Database Relationships
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           RAPIRA DATABASE SCHEMA                               │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+    👤 Users ──────────────── 🎤 Artists ──────────────── 🎵 Concerts
+      │                         │                          │
+      │ 1:1                     │ 1:N                      │ 1:N
+      │                         │                          │
+      │                       📝 Content                 🎫 Tickets
+      │                         │                          │
+      │ 1:N                     │                          │ N:1
+      │                         │                          │
+    💳 UserSubscriptions        │                          │
+      │                         │                          │
+      │ N:1                     │                          │
+      │                         │                          │
+    📋 SubscriptionPlans        │                          │
+                               │                          │
+    📄 ArtistApplications ──────┘                          │
+      │                                                   │
+      │ 1:N                                               │
+      │                                                   │
+    👤 Users ────────────────────────────────────────────┘
+      │
+      │ 1:N
+      │
+    🔐 UserRoles ────── 👥 Roles
+      │                   │
+      │ N:1               │
+      │                   │
+    📚 LearningProgress   │
+      │                   │
+      │ N:1               │
+      │                   │
+    📖 LearningModules ───┘
+      │
+      │ N:1
+      │
+    📅 ArtistBookingRequests ────── 🎭 ArtistRoleSlots
+      │                              │
+      │ 1:N                          │ N:1
+      │                              │
+    🗓️ DailyConcerts ───────────────┘
+      │
+      │ N:1
+      │
+    💰 RefundRequests ──── 🎫 Tickets
+      │                      │
+      │ 1:1                  │ 1:N
+      │                      │
+    📧 ContactMessages       👤 Users
+      │                      │
+      │ N:1                  │ 1:N
+      │                      │
+    📊 EmailStatus ──────────┘
+      │
+      │ N:1
+      │
+    🌐 WebsiteSettings
+      │
+      │ 1:1
+      │
+    👨‍💼 Admin (Users)
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        RELATIONSHIP DETAILS                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Users can have one Artist profile (1:1)                                      │
+│ • Artists can create multiple Concerts (1:N)                                   │
+│ • Artists can upload multiple Content items (1:N)                              │
+│ • Users can purchase multiple Tickets (1:N)                                    │
+│ • Users can have multiple Subscriptions (1:N)                                  │
+│ • Users can have multiple Roles (N:M through UserRoles)                        │
+│ • Artists can receive multiple Booking Requests (1:N)                          │
+│ • Concerts generate multiple Tickets (1:N)                                     │
+│ • Tickets can have Refund Requests (1:1)                                       │
+│ • Users can send multiple Contact Messages (1:N)                               │
+│ • System tracks Email Status for communications (1:N)                          │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <h3>3.6 Database Architecture Flow</h3>
+            <div class="uml-diagram">
+                <pre>
+                    🏗️ Data Flow Architecture
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Layer    │    │  Artist Layer   │    │  Admin Layer    │
+├─────────────────┤    ├─────────────────┤    ├─────────────────┤
+│ • Registration  │    │ • Profile Mgmt  │    │ • User Mgmt     │
+│ • Authentication│    │ • Content Upload│    │ • Content Review│
+│ • Profile Mgmt  │    │ • Concert Create│    │ • Concert Approval│
+│ • Ticket Booking│    │ • Analytics View│    │ • System Config │
+│ • Subscriptions │    │ • Learning Modules│  │ • Reports       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Business Logic Layer                         │
+├─────────────────────────────────────────────────────────────────┤
+│ • Authentication & Authorization                                │
+│ • Content Management & Moderation                               │
+│ • Payment Processing & Subscription Management                  │
+│ • Event Management & Ticket Sales                               │
+│ • Communication & Notification System                           │
+│ • Analytics & Reporting Engine                                  │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Data Access Layer                           │
+├─────────────────────────────────────────────────────────────────┤
+│ • Mongoose ODM with Schema Validation                           │
+│ • Query Optimization & Indexing                                 │
+│ • Transaction Management                                         │
+│ • Data Aggregation & Analytics                                  │
+│ • Backup & Recovery Procedures                                   │
+└─────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      MongoDB Database                           │
+├─────────────────────────────────────────────────────────────────┤
+│ 📚 Collections: Users, Artists, Concerts, Tickets, Content     │
+│ 🔗 References: ObjectId relationships between documents         │
+│ 📊 Indexes: Optimized queries for performance                   │
+│ 🔒 Security: Authentication, authorization, data encryption     │
+│ 📈 Scaling: Replica sets, sharding for high availability       │
+└─────────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+        </div>
+
+        <!-- Data Dictionary -->
+        <div class="section" id="data-dictionary">
+            <h2>4. Data Dictionary</h2>
+
+            <h3>4.1 Users Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for user</td><td>Primary Key</td></tr>
+                    <tr><td>name</td><td>String</td><td>Full name of the user</td><td>Required</td></tr>
+                    <tr><td>email</td><td>String</td><td>Email address</td><td>Required, Unique</td></tr>
+                    <tr><td>password</td><td>String</td><td>Encrypted password</td><td>Required</td></tr>
+                    <tr><td>role</td><td>String</td><td>User role</td><td>Enum: user/artist/admin</td></tr>
+                    <tr><td>profileImage</td><td>String</td><td>Profile image file path</td><td>Default: default-profile.svg</td></tr>
+                    <tr><td>bio</td><td>String</td><td>User biography</td><td>Optional</td></tr>
+                    <tr><td>city</td><td>String</td><td>User's city</td><td>Optional</td></tr>
+                    <tr><td>socialLinks</td><td>Object</td><td>Social media links</td><td>Instagram, Twitter, YouTube, Spotify</td></tr>
+                    <tr><td>createdAt</td><td>Date</td><td>Account creation date</td><td>Default: Date.now</td></tr>
+                    <tr><td>isVerified</td><td>Boolean</td><td>Email verification status</td><td>Default: false</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.2 Artists Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for artist</td><td>Primary Key</td></tr>
+                    <tr><td>user</td><td>ObjectId</td><td>Reference to User document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>stageName</td><td>String</td><td>Artist's stage name</td><td>Required</td></tr>
+                    <tr><td>genre</td><td>String</td><td>Music genre</td><td>Required</td></tr>
+                    <tr><td>artistLevel</td><td>String</td><td>Skill level</td><td>Enum: Beginner/Intermediate/Established</td></tr>
+                    <tr><td>yearsActive</td><td>Number</td><td>Years of experience</td><td>Default: 0</td></tr>
+                    <tr><td>verified</td><td>Boolean</td><td>Admin verification status</td><td>Default: false</td></tr>
+                    <tr><td>featuredArtist</td><td>Boolean</td><td>Featured artist status</td><td>Default: false</td></tr>
+                    <tr><td>about</td><td>String</td><td>Artist description</td><td>Optional</td></tr>
+                    <tr><td>achievements</td><td>Array</td><td>List of achievements</td><td>Array of Strings</td></tr>
+                    <tr><td>bannerImage</td><td>String</td><td>Banner image path</td><td>Default: default-banner.jpg</td></tr>
+                    <tr><td>aadharCard</td><td>String</td><td>Aadhaar card number</td><td>12 digits</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.3 Concerts Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for concert</td><td>Primary Key</td></tr>
+                    <tr><td>artist</td><td>ObjectId</td><td>Reference to Artist document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>title</td><td>String</td><td>Concert title</td><td>Required</td></tr>
+                    <tr><td>description</td><td>String</td><td>Concert description</td><td>Required</td></tr>
+                    <tr><td>date</td><td>Date</td><td>Concert date</td><td>Required</td></tr>
+                    <tr><td>time</td><td>String</td><td>Concert time</td><td>Required</td></tr>
+                    <tr><td>venue</td><td>String</td><td>Venue name</td><td>Required</td></tr>
+                    <tr><td>city</td><td>String</td><td>Concert city</td><td>Required</td></tr>
+                    <tr><td>isPaid</td><td>Boolean</td><td>Paid/free concert flag</td><td>Default: false</td></tr>
+                    <tr><td>price</td><td>Number</td><td>Ticket price</td><td>Default: 0</td></tr>
+                    <tr><td>posterImage</td><td>String</td><td>Concert poster path</td><td>Default: default-concert.jpg</td></tr>
+                    <tr><td>status</td><td>String</td><td>Approval status</td><td>Enum: pending/approved/rejected/completed/cancelled</td></tr>
+                    <tr><td>maxTickets</td><td>Number</td><td>Maximum tickets available</td><td>Default: 0 (unlimited)</td></tr>
+                    <tr><td>ticketsSold</td><td>Number</td><td>Number of tickets sold</td><td>Default: 0</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.4 Tickets Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for ticket</td><td>Primary Key</td></tr>
+                    <tr><td>concert</td><td>ObjectId</td><td>Reference to Concert document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>user</td><td>ObjectId</td><td>Reference to User document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>attendees</td><td>Array</td><td>List of attendee details</td><td>Array of Objects</td></tr>
+                    <tr><td>quantity</td><td>Number</td><td>Number of tickets</td><td>Required, Default: 1</td></tr>
+                    <tr><td>totalAmount</td><td>Number</td><td>Total payment amount</td><td>Required</td></tr>
+                    <tr><td>paymentId</td><td>String</td><td>Razorpay payment ID</td><td>Optional</td></tr>
+                    <tr><td>orderId</td><td>String</td><td>Razorpay order ID</td><td>Optional</td></tr>
+                    <tr><td>paymentStatus</td><td>String</td><td>Payment status</td><td>Enum: pending/completed/failed/refunded</td></tr>
+                    <tr><td>purchaseDate</td><td>Date</td><td>Ticket purchase date</td><td>Default: Date.now</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.5 SubscriptionPlans Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for plan</td><td>Primary Key</td></tr>
+                    <tr><td>name</td><td>String</td><td>Subscription plan name</td><td>Required</td></tr>
+                    <tr><td>price</td><td>Number</td><td>Plan price</td><td>Required, Min: 0</td></tr>
+                    <tr><td>duration</td><td>Number</td><td>Plan duration value</td><td>Required, Min: 1</td></tr>
+                    <tr><td>durationUnit</td><td>String</td><td>Duration unit</td><td>Enum: seconds/minutes/hours/days</td></tr>
+                    <tr><td>benefits</td><td>String</td><td>Plan benefits description</td><td>Required</td></tr>
+                    <tr><td>discountPercentage</td><td>Number</td><td>Discount on tickets</td><td>Default: 0, Max: 100</td></tr>
+                    <tr><td>isActive</td><td>Boolean</td><td>Plan availability status</td><td>Default: true</td></tr>
+                    <tr><td>createdBy</td><td>ObjectId</td><td>Admin who created plan</td><td>Foreign Key</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.6 UserSubscriptions Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for subscription</td><td>Primary Key</td></tr>
+                    <tr><td>user</td><td>ObjectId</td><td>Reference to User document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>plan</td><td>ObjectId</td><td>Reference to SubscriptionPlan</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>purchaseDate</td><td>Date</td><td>Subscription purchase date</td><td>Default: Date.now</td></tr>
+                    <tr><td>expiryDate</td><td>Date</td><td>Subscription expiry date</td><td>Required</td></tr>
+                    <tr><td>status</td><td>String</td><td>Subscription status</td><td>Enum: pending/active/expired/cancelled</td></tr>
+                    <tr><td>paymentId</td><td>String</td><td>Razorpay payment ID</td><td>Required</td></tr>
+                    <tr><td>orderId</td><td>String</td><td>Razorpay order ID</td><td>Required</td></tr>
+                    <tr><td>amount</td><td>Number</td><td>Amount paid</td><td>Required</td></tr>
+                    <tr><td>notes</td><td>String</td><td>Additional notes</td><td>Optional</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.7 Content Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for content</td><td>Primary Key</td></tr>
+                    <tr><td>artist</td><td>ObjectId</td><td>Reference to Artist document</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>title</td><td>String</td><td>Content title</td><td>Required</td></tr>
+                    <tr><td>type</td><td>String</td><td>Content type</td><td>Enum: song/video</td></tr>
+                    <tr><td>description</td><td>String</td><td>Content description</td><td>Optional</td></tr>
+                    <tr><td>fileUrl</td><td>String</td><td>Media file path</td><td>Required</td></tr>
+                    <tr><td>thumbnailUrl</td><td>String</td><td>Thumbnail image path</td><td>Default: default-thumbnail.jpg</td></tr>
+                    <tr><td>releaseDate</td><td>Date</td><td>Content release date</td><td>Default: Date.now</td></tr>
+                    <tr><td>likes</td><td>Number</td><td>Number of likes</td><td>Default: 0</td></tr>
+                    <tr><td>views</td><td>Number</td><td>Number of views</td><td>Default: 0</td></tr>
+                    <tr><td>featured</td><td>Boolean</td><td>Featured content flag</td><td>Default: false</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.8 LearningModules Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for module</td><td>Primary Key</td></tr>
+                    <tr><td>title</td><td>String</td><td>Module title</td><td>Required</td></tr>
+                    <tr><td>description</td><td>String</td><td>Module description</td><td>Required</td></tr>
+                    <tr><td>contentType</td><td>String</td><td>Type of content</td><td>Enum: video/text/pdf/link</td></tr>
+                    <tr><td>content</td><td>String</td><td>Module content/URL</td><td>Required</td></tr>
+                    <tr><td>thumbnailImage</td><td>String</td><td>Module thumbnail</td><td>Default: default-learning.jpg</td></tr>
+                    <tr><td>forArtistLevel</td><td>String</td><td>Target artist level</td><td>Enum: Beginner/Intermediate/Established/All</td></tr>
+                    <tr><td>order</td><td>Number</td><td>Display order</td><td>Default: 0</td></tr>
+                    <tr><td>isRequired</td><td>Boolean</td><td>Mandatory module flag</td><td>Default: true</td></tr>
+                    <tr><td>createdBy</td><td>ObjectId</td><td>Admin who created module</td><td>Foreign Key</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.9 ArtistBookingRequests Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for booking request</td><td>Primary Key</td></tr>
+                    <tr><td>requester</td><td>ObjectId</td><td>Reference to User who made request</td><td>Required, Foreign Key</td></tr>
+                    <tr><td>eventTitle</td><td>String</td><td>Event title</td><td>Required</td></tr>
+                    <tr><td>eventDate</td><td>Date</td><td>Event date</td><td>Required</td></tr>
+                    <tr><td>notes</td><td>String</td><td>Additional notes</td><td>Optional</td></tr>
+                    <tr><td>bookingType</td><td>String</td><td>Type of booking</td><td>Enum: artist/role/bulk</td></tr>
+                    <tr><td>artist</td><td>ObjectId</td><td>Reference to Artist</td><td>Optional, Foreign Key</td></tr>
+                    <tr><td>roleSlot</td><td>ObjectId</td><td>Reference to ArtistRoleSlot</td><td>Optional, Foreign Key</td></tr>
+                    <tr><td>status</td><td>String</td><td>Request status</td><td>Enum: pending/approved/rejected</td></tr>
+                    <tr><td>adminNotes</td><td>String</td><td>Admin review notes</td><td>Optional</td></tr>
+                    <tr><td>reviewedBy</td><td>ObjectId</td><td>Admin who reviewed</td><td>Optional, Foreign Key</td></tr>
+                    <tr><td>reviewedAt</td><td>Date</td><td>Review date</td><td>Optional</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4.10 Roles Collection</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Data Type</th>
+                        <th>Description</th>
+                        <th>Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>_id</td><td>ObjectId</td><td>Unique identifier for role</td><td>Primary Key</td></tr>
+                    <tr><td>name</td><td>String</td><td>Role name</td><td>Required, Unique</td></tr>
+                    <tr><td>description</td><td>String</td><td>Role description</td><td>Optional</td></tr>
+                    <tr><td>icon</td><td>String</td><td>Role icon class</td><td>Default: bi-person</td></tr>
+                    <tr><td>createdBy</td><td>ObjectId</td><td>Admin who created role</td><td>Foreign Key</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- System Modules -->
+        <div class="section" id="system-modules">
+            <h2>5. System Modules</h2>
+
+            <h3>5.1 Core Platform Modules</h3>
+            <p>The RAPIRA platform is built using a modular architecture that ensures scalability, maintainability, and efficient development. Each module serves specific functionality while integrating seamlessly with other components.</p>
+
+            <h4>5.1.1 Authentication & Authorization Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages user authentication, session management, and role-based access control across the platform.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>User Registration:</strong> Account creation with email verification</li>
+                    <li><strong>Login System:</strong> Secure authentication with session management</li>
+                    <li><strong>Password Management:</strong> Reset and recovery functionality</li>
+                    <li><strong>Role-Based Access:</strong> Different access levels for Users, Artists, Event Organizers, and Admins</li>
+                    <li><strong>Session Security:</strong> Secure session handling and timeout management</li>
+                    <li><strong>Multi-factor Authentication:</strong> Enhanced security for sensitive operations</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Built using Express.js middleware, bcrypt for password hashing, and session-based authentication with secure cookies.</p>
+            </div>
+
+            <h4>5.1.2 User Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive user profile management and account administration.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Profile Creation:</strong> Detailed user profiles with media uploads</li>
+                    <li><strong>Profile Customization:</strong> Bio, social links, preferences, and settings</li>
+                    <li><strong>Account Verification:</strong> Email verification and identity confirmation</li>
+                    <li><strong>Privacy Controls:</strong> User privacy settings and data management</li>
+                    <li><strong>Account Deactivation:</strong> Temporary and permanent account suspension</li>
+                    <li><strong>User Analytics:</strong> Activity tracking and engagement metrics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> MongoDB user schema with Mongoose validation, file upload handling with Multer, and image processing capabilities.</p>
+            </div>
+
+            <h4>5.1.3 Artist Portfolio Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive artist portfolio creation, management, and showcase system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Portfolio Creation:</strong> Professional artist profile setup</li>
+                    <li><strong>Media Management:</strong> Upload and organize songs, videos, images, and documents</li>
+                    <li><strong>Achievement Showcase:</strong> Display awards, certifications, and accomplishments</li>
+                    <li><strong>Performance History:</strong> Track and display past performances and events</li>
+                    <li><strong>Skill Documentation:</strong> Artist level progression and skill development</li>
+                    <li><strong>Portfolio Analytics:</strong> Views, engagement, and performance metrics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Artist schema with embedded documents, file storage system, and analytics tracking with aggregation pipelines.</p>
+            </div>
+
+            <h4>5.1.4 Content Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages all content creation, upload, moderation, and distribution across the platform.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Content Upload:</strong> Multi-format media upload (audio, video, images, documents)</li>
+                    <li><strong>Content Moderation:</strong> Admin review and approval system</li>
+                    <li><strong>Metadata Management:</strong> Title, description, tags, and categorization</li>
+                    <li><strong>Content Discovery:</strong> Search and filtering capabilities</li>
+                    <li><strong>Featured Content:</strong> Promotional highlighting and curation</li>
+                    <li><strong>Content Analytics:</strong> Views, likes, shares, and engagement tracking</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Content schema with file references, admin approval workflow, search indexing, and engagement tracking.</p>
+            </div>
+
+            <h4>5.1.5 Event Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive event creation, management, and coordination system for live events and performances.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Event Creation:</strong> Detailed event setup with venue, date, time, and description</li>
+                    <li><strong>Event Approval:</strong> Admin review and approval workflow</li>
+                    <li><strong>Event Discovery:</strong> Public event listing and search functionality</li>
+                    <li><strong>Event Promotion:</strong> Marketing tools and promotional features</li>
+                    <li><strong>Event Analytics:</strong> Performance metrics and attendance tracking</li>
+                    <li><strong>Event Communication:</strong> Automated notifications and updates</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Event schema with status management, approval workflow, and integration with ticket and role booking systems.</p>
+            </div>
+
+            <h4>5.1.6 Ticket Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Complete ticket purchasing, distribution, and management system for events.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Ticket Purchasing:</strong> Streamlined ticket buying process with multiple attendee support</li>
+                    <li><strong>Payment Processing:</strong> Secure payment integration with Razorpay</li>
+                    <li><strong>Ticket Distribution:</strong> Digital ticket generation and delivery</li>
+                    <li><strong>Ticket Verification:</strong> QR code generation and validation system</li>
+                    <li><strong>Refund Management:</strong> Ticket refund processing and approval</li>
+                    <li><strong>Sales Analytics:</strong> Ticket sales tracking and revenue reporting</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Ticket schema with payment integration, QR code generation, and refund processing workflow.</p>
+            </div>
+
+            <h4>5.1.7 Role Booking Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Specialized system for booking specific roles in events and collaborative projects.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Role Definition:</strong> Create and manage different role types and requirements</li>
+                    <li><strong>Role Availability:</strong> Artists can post available roles and time slots</li>
+                    <li><strong>Role Booking:</strong> Users can book specific roles for events</li>
+                    <li><strong>Role Management:</strong> Track role assignments and availability</li>
+                    <li><strong>Role Communication:</strong> Messaging between role bookers and providers</li>
+                    <li><strong>Role Analytics:</strong> Performance tracking and booking statistics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Role schema with booking system, availability management, and communication features.</p>
+            </div>
+
+            <h3>5.2 Business Logic Modules</h3>
+
+            <h4>5.2.1 Subscription Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive subscription system for premium features and exclusive content access.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Subscription Plans:</strong> Create and manage different subscription tiers</li>
+                    <li><strong>Plan Purchase:</strong> Secure subscription purchasing with payment processing</li>
+                    <li><strong>Subscription Benefits:</strong> Access control for premium features and content</li>
+                    <li><strong>Renewal Management:</strong> Automatic and manual subscription renewals</li>
+                    <li><strong>Subscription Analytics:</strong> Revenue tracking and subscriber metrics</li>
+                    <li><strong>Discount Management:</strong> Promotional codes and special offers</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Subscription schema with payment integration, benefit management, and automated renewal system.</p>
+            </div>
+
+            <h4>5.2.2 Payment Processing Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Secure payment processing for tickets, subscriptions, and other platform services.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Payment Gateway Integration:</strong> Razorpay integration for secure transactions</li>
+                    <li><strong>Order Management:</strong> Create and track payment orders</li>
+                    <li><strong>Payment Verification:</strong> Secure payment confirmation and validation</li>
+                    <li><strong>Refund Processing:</strong> Automated and manual refund handling</li>
+                    <li><strong>Transaction History:</strong> Complete payment and transaction records</li>
+                    <li><strong>Financial Reporting:</strong> Revenue analytics and financial insights</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Razorpay SDK integration, order schema, payment verification, and financial tracking.</p>
+            </div>
+
+            <h4>5.2.3 Communication Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Automated communication system for notifications, emails, and user engagement.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Email Notifications:</strong> Automated email sending for various platform events</li>
+                    <li><strong>Template Management:</strong> Email template creation and customization</li>
+                    <li><strong>Notification System:</strong> In-app notifications and alerts</li>
+                    <li><strong>Contact Management:</strong> User inquiry and support message handling</li>
+                    <li><strong>Communication Analytics:</strong> Email delivery tracking and engagement metrics</li>
+                    <li><strong>Bulk Communication:</strong> Mass email and notification capabilities</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Brevo API integration, email templates, notification schema, and delivery tracking.</p>
+            </div>
+
+            <h4>5.2.4 Learning Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Educational content system for artist skill development and career advancement.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Learning Content:</strong> Educational modules, videos, and resources</li>
+                    <li><strong>Progress Tracking:</strong> User learning progress and completion status</li>
+                    <li><strong>Skill Assessment:</strong> Evaluation and certification system</li>
+                    <li><strong>Learning Paths:</strong> Structured learning sequences for different skill levels</li>
+                    <li><strong>Achievement System:</strong> Badges and certificates for completed modules</li>
+                    <li><strong>Learning Analytics:</strong> Progress tracking and performance metrics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Learning module schema, progress tracking, assessment system, and achievement management.</p>
+            </div>
+
+            <h3>5.3 Administrative Modules</h3>
+
+            <h4>5.3.1 Analytics & Reporting Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive analytics and reporting system for platform performance and user insights.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>User Analytics:</strong> User engagement, activity, and behavior tracking</li>
+                    <li><strong>Content Analytics:</strong> Content performance, views, and engagement metrics</li>
+                    <li><strong>Financial Analytics:</strong> Revenue tracking, payment analytics, and financial reporting</li>
+                    <li><strong>Event Analytics:</strong> Event performance, attendance, and success metrics</li>
+                    <li><strong>Platform Analytics:</strong> Overall platform usage and performance statistics</li>
+                    <li><strong>Custom Reports:</strong> Configurable reporting for specific business needs</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> MongoDB aggregation pipelines, Chart.js visualization, and automated report generation.</p>
+            </div>
+
+            <h4>5.3.2 System Configuration Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Platform configuration and system settings management for administrators.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Website Settings:</strong> Platform configuration and customization options</li>
+                    <li><strong>Storage Management:</strong> File storage monitoring and management</li>
+                    <li><strong>Session Management:</strong> User session monitoring and control</li>
+                    <li><strong>Security Settings:</strong> Platform security configuration and monitoring</li>
+                    <li><strong>Performance Monitoring:</strong> System performance tracking and optimization</li>
+                    <li><strong>Backup Management:</strong> Data backup and recovery procedures</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Configuration schema, file system monitoring, session tracking, and system health monitoring.</p>
+            </div>
+
+            <h4>5.3.3 Search & Discovery Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Advanced search and content discovery system for enhanced user experience.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Content Search:</strong> Full-text search across all platform content</li>
+                    <li><strong>Artist Discovery:</strong> Advanced filtering and search for artist portfolios</li>
+                    <li><strong>Event Search:</strong> Location-based and category-based event discovery</li>
+                    <li><strong>Recommendation Engine:</strong> Personalized content and event recommendations</li>
+                    <li><strong>Filter System:</strong> Advanced filtering options for all content types</li>
+                    <li><strong>Search Analytics:</strong> Search behavior tracking and optimization</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> MongoDB text indexing, search algorithms, recommendation logic, and filter implementation.</p>
+            </div>
+
+            <h3>5.4 Integration Modules</h3>
+
+            <h4>5.4.1 Third-Party Integration Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Integration with external services and APIs for enhanced functionality.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Payment Gateway:</strong> Razorpay integration for secure payments</li>
+                    <li><strong>Email Service:</strong> Brevo API for email communications</li>
+                    <li><strong>Social Media:</strong> Integration with social media platforms</li>
+                    <li><strong>Cloud Storage:</strong> External storage solutions for media files</li>
+                    <li><strong>Analytics Services:</strong> Third-party analytics and tracking tools</li>
+                    <li><strong>API Management:</strong> External API integration and management</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> API integration, webhook handling, external service configuration, and error handling.</p>
+            </div>
+
+            <h4>5.4.2 Security Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive security system for platform protection and user data safety.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Data Encryption:</strong> User data and sensitive information encryption</li>
+                    <li><strong>Input Validation:</strong> XSS and injection attack prevention</li>
+                    <li><strong>File Security:</strong> Secure file upload and validation</li>
+                    <li><strong>Rate Limiting:</strong> API rate limiting and abuse prevention</li>
+                    <li><strong>Audit Logging:</strong> Security event logging and monitoring</li>
+                    <li><strong>Compliance:</strong> Data protection and privacy compliance</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> bcrypt encryption, input sanitization, file validation, rate limiting middleware, and audit trail system.</p>
+            </div>
+
+            <h3>5.5 Specialized Feature Modules</h3>
+
+            <h4>5.5.1 Artist Application Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages the complete artist application and verification process for users wanting to become artists.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Application Submission:</strong> User application form with personal and artistic details</li>
+                    <li><strong>Document Upload:</strong> Aadhaar card and portfolio document submission</li>
+                    <li><strong>Admin Review:</strong> Application review and approval/rejection system</li>
+                    <li><strong>Status Tracking:</strong> Real-time application status updates</li>
+                    <li><strong>Notification System:</strong> Email notifications for application status changes</li>
+                    <li><strong>Artist Profile Creation:</strong> Automatic artist profile generation upon approval</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> ArtistApplication schema with file upload, admin workflow, and automated profile creation.</p>
+            </div>
+
+            <h4>5.5.2 Artist Upgrade Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Handles artist level progression from Beginner to Intermediate to Established status.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Upgrade Requests:</strong> Artist-initiated level upgrade applications</li>
+                    <li><strong>Criteria Validation:</strong> Automatic validation of upgrade requirements</li>
+                    <li><strong>Admin Approval:</strong> Manual review and approval process</li>
+                    <li><strong>Level Management:</strong> Artist level tracking and progression</li>
+                    <li><strong>Achievement Tracking:</strong> Performance metrics for upgrade eligibility</li>
+                    <li><strong>Notification System:</strong> Status updates and approval notifications</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> ArtistUpgradeRequest schema with criteria checking, admin workflow, and level update automation.</p>
+            </div>
+
+            <h4>5.5.3 Team Requirement Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages team role requirements and collaborative project coordination.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Role Definition:</strong> Create and manage different team role types</li>
+                    <li><strong>Requirement Posting:</strong> Post team requirements for specific projects</li>
+                    <li><strong>Role Matching:</strong> Match artists with suitable team roles</li>
+                    <li><strong>Application Management:</strong> Handle role applications and selections</li>
+                    <li><strong>Team Coordination:</strong> Communication and project management tools</li>
+                    <li><strong>Performance Tracking:</strong> Team collaboration analytics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> TeamRequirementRole schema with role matching algorithms, application workflow, and team management features.</p>
+            </div>
+
+            <h4>5.5.4 Artist Role Slot Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages available artist role slots for events and collaborative opportunities.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Slot Creation:</strong> Artists can create available role slots</li>
+                    <li><strong>Availability Management:</strong> Time slot and capacity management</li>
+                    <li><strong>Booking System:</strong> Users can book specific artist role slots</li>
+                    <li><strong>Schedule Coordination:</strong> Calendar integration and scheduling</li>
+                    <li><strong>Payment Integration:</strong> Pricing and payment for role bookings</li>
+                    <li><strong>Performance Analytics:</strong> Role booking statistics and performance</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> ArtistRoleSlot schema with availability tracking, booking system, and payment integration.</p>
+            </div>
+
+            <h4>5.5.5 Artist Booking Request Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive booking request system for artist services and event participation.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Booking Requests:</strong> Event organizers can request artist bookings</li>
+                    <li><strong>Request Management:</strong> Artists can view and respond to booking requests</li>
+                    <li><strong>Negotiation System:</strong> Price and terms negotiation features</li>
+                    <li><strong>Contract Management:</strong> Booking agreement and contract handling</li>
+                    <li><strong>Status Tracking:</strong> Real-time booking status updates</li>
+                    <li><strong>Payment Coordination:</strong> Booking payment and financial management</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> ArtistBookingRequest schema with negotiation workflow, contract management, and payment coordination.</p>
+            </div>
+
+            <h4>5.5.6 Daily Concerts Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages daily concert scheduling and automated event creation from booking requests.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Daily Scheduling:</strong> Automated daily concert schedule generation</li>
+                    <li><strong>Booking Integration:</strong> Convert approved bookings to daily concerts</li>
+                    <li><strong>Event Coordination:</strong> Coordinate multiple events per day</li>
+                    <li><strong>Visibility Control:</strong> Manage public visibility of daily events</li>
+                    <li><strong>Organizer Management:</strong> Track event organizers and responsibilities</li>
+                    <li><strong>Calendar Integration:</strong> Daily concert calendar and scheduling</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> DailyConcert schema with automated scheduling, booking integration, and calendar management.</p>
+            </div>
+
+            <h3>5.6 Communication & Notification Modules</h3>
+
+            <h4>5.6.1 Notification Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive notification system for real-time user communication and updates.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Notification Creation:</strong> Automated and manual notification generation</li>
+                    <li><strong>Multi-Channel Delivery:</strong> In-app, email, and push notifications</li>
+                    <li><strong>User Targeting:</strong> Role-based and personalized notification targeting</li>
+                    <li><strong>Notification History:</strong> Complete notification tracking and history</li>
+                    <li><strong>Read Status:</strong> Track notification read/unread status</li>
+                    <li><strong>Bulk Notifications:</strong> Mass notification capabilities for announcements</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Notification schema with delivery tracking, user targeting, and multi-channel integration.</p>
+            </div>
+
+            <h4>5.6.2 Contact Message Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages user inquiries, support requests, and communication with platform administrators.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Contact Form:</strong> User inquiry submission system</li>
+                    <li><strong>Message Categorization:</strong> Automatic categorization of inquiries</li>
+                    <li><strong>Admin Response:</strong> Admin reply and resolution system</li>
+                    <li><strong>Status Tracking:</strong> Inquiry status management (open/in-progress/resolved)</li>
+                    <li><strong>Priority Management:</strong> Urgent inquiry prioritization</li>
+                    <li><strong>Response Analytics:</strong> Support performance metrics and analytics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> ContactMessage schema with categorization, status management, and response tracking.</p>
+            </div>
+
+            <h4>5.6.3 Email Status Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Tracks email delivery status and manages email communication analytics.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Delivery Tracking:</strong> Monitor email delivery success/failure rates</li>
+                    <li><strong>Bounce Management:</strong> Handle email bounces and invalid addresses</li>
+                    <li><strong>Open Tracking:</strong> Track email open rates and engagement</li>
+                    <li><strong>Click Tracking:</strong> Monitor email link clicks and interactions</li>
+                    <li><strong>Template Performance:</strong> Email template effectiveness analytics</li>
+                    <li><strong>Delivery Reports:</strong> Comprehensive email delivery reporting</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> EmailStatus schema with delivery tracking, analytics integration, and reporting capabilities.</p>
+            </div>
+
+            <h3>5.7 Administrative Control Modules</h3>
+
+            <h4>5.7.1 Website Settings Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Centralized platform configuration and website customization management.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Site Configuration:</strong> Basic website settings and information</li>
+                    <li><strong>Theme Management:</strong> Color schemes and visual customization</li>
+                    <li><strong>Feature Toggles:</strong> Enable/disable platform features</li>
+                    <li><strong>Maintenance Mode:</strong> Platform maintenance and downtime management</li>
+                    <li><strong>SEO Settings:</strong> Meta tags and search engine optimization</li>
+                    <li><strong>Social Media Integration:</strong> Social platform connection settings</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> WebsiteSettings schema with configuration management, theme controls, and feature toggles.</p>
+            </div>
+
+            <h4>5.7.2 Admin Page Permission Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Granular access control for admin dashboard pages and features.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Page Access Control:</strong> Define access permissions for admin pages</li>
+                    <li><strong>Role-Based Permissions:</strong> Assign permissions based on admin roles</li>
+                    <li><strong>Feature Restrictions:</strong> Control access to specific features</li>
+                    <li><strong>Permission Inheritance:</strong> Hierarchical permission management</li>
+                    <li><strong>Access Logging:</strong> Track admin page access and activities</li>
+                    <li><strong>Dynamic Permissions:</strong> Runtime permission checking and enforcement</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> AdminPagePermission schema with role-based access control, permission inheritance, and access logging.</p>
+            </div>
+
+            <h4>5.7.3 Session Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive user session monitoring and management system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Session Tracking:</strong> Monitor active user sessions across the platform</li>
+                    <li><strong>Session Analytics:</strong> User activity and engagement analytics</li>
+                    <li><strong>Session Security:</strong> Detect and prevent suspicious session activities</li>
+                    <li><strong>Session Cleanup:</strong> Automatic cleanup of expired sessions</li>
+                    <li><strong>Concurrent Sessions:</strong> Manage multiple sessions per user</li>
+                    <li><strong>Session Termination:</strong> Admin ability to terminate user sessions</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Session schema with activity tracking, security monitoring, and administrative controls.</p>
+            </div>
+
+            <h3>5.8 Content & Media Modules</h3>
+
+            <h4>5.8.1 Page Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Dynamic website page creation and content management system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Page Creation:</strong> Create custom website pages with rich content</li>
+                    <li><strong>Content Editor:</strong> WYSIWYG editor for page content creation</li>
+                    <li><strong>SEO Management:</strong> Meta titles, descriptions, and SEO optimization</li>
+                    <li><strong>Navigation Control:</strong> Manage page visibility in navigation menus</li>
+                    <li><strong>Page Ordering:</strong> Control page display order and hierarchy</li>
+                    <li><strong>Publishing Control:</strong> Draft/published status management</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Page schema with content management, SEO features, and navigation control.</p>
+            </div>
+
+            <h4>5.8.2 Media Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive file upload, storage, and media management system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>File Upload:</strong> Multi-format file upload with validation</li>
+                    <li><strong>Storage Management:</strong> Organized file storage and directory structure</li>
+                    <li><strong>Image Processing:</strong> Automatic image resizing and optimization</li>
+                    <li><strong>File Security:</strong> Secure file access and permission control</li>
+                    <li><strong>Storage Analytics:</strong> Storage usage monitoring and reporting</li>
+                    <li><strong>CDN Integration:</strong> Content delivery network support</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Multer middleware with file validation, storage optimization, and security controls.</p>
+            </div>
+
+            <h4>5.8.3 Demo System Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Interactive demo system for showcasing platform features to new users.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Demo Scenarios:</strong> Pre-configured demo scenarios for different user types</li>
+                    <li><strong>Interactive Tours:</strong> Guided tours of platform features</li>
+                    <li><strong>Sample Data:</strong> Demo data for realistic user experience</li>
+                    <li><strong>Feature Showcase:</strong> Highlight key platform capabilities</li>
+                    <li><strong>User Onboarding:</strong> New user introduction and training</li>
+                    <li><strong>Demo Analytics:</strong> Track demo usage and effectiveness</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Demo controller with scenario management, sample data, and user onboarding flows.</p>
+            </div>
+
+            <h3>5.9 Financial & Transaction Modules</h3>
+
+            <h4>5.9.1 Refund Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive refund processing and financial dispute resolution system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Refund Requests:</strong> User-initiated refund request submission</li>
+                    <li><strong>Admin Review:</strong> Administrative review and approval process</li>
+                    <li><strong>Automated Processing:</strong> Automatic refund processing for approved requests</li>
+                    <li><strong>Status Tracking:</strong> Real-time refund status monitoring</li>
+                    <li><strong>Financial Reconciliation:</strong> Refund accounting and financial tracking</li>
+                    <li><strong>Dispute Resolution:</strong> Handle refund disputes and appeals</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> RefundRequest schema with approval workflow, payment gateway integration, and financial tracking.</p>
+            </div>
+
+            <h4>5.9.2 Revenue Analytics Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive financial analytics and revenue tracking system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Revenue Tracking:</strong> Real-time revenue monitoring and reporting</li>
+                    <li><strong>Financial Dashboards:</strong> Visual revenue analytics and insights</li>
+                    <li><strong>Payment Analytics:</strong> Transaction analysis and payment method performance</li>
+                    <li><strong>Subscription Revenue:</strong> Subscription-based revenue tracking</li>
+                    <li><strong>Artist Earnings:</strong> Individual artist revenue and commission tracking</li>
+                    <li><strong>Financial Forecasting:</strong> Revenue prediction and trend analysis</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Aggregation pipelines with financial calculations, Chart.js visualization, and reporting systems.</p>
+            </div>
+
+            <h3>5.10 User Experience Modules</h3>
+
+            <h4>5.10.1 Find My Artist Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Advanced artist discovery and matching system for users and event organizers.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Artist Search:</strong> Advanced search with multiple filter criteria</li>
+                    <li><strong>Matching Algorithm:</strong> Intelligent artist-user matching based on preferences</li>
+                    <li><strong>Location-Based Search:</strong> Geographic artist discovery</li>
+                    <li><strong>Skill-Based Filtering:</strong> Filter artists by skills and experience level</li>
+                    <li><strong>Availability Checking:</strong> Real-time artist availability verification</li>
+                    <li><strong>Recommendation Engine:</strong> Personalized artist recommendations</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Advanced search algorithms, geolocation services, and recommendation engine with machine learning capabilities.</p>
+            </div>
+
+            <h4>5.10.2 Featured Artists Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Artist promotion and highlighting system for increased visibility.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Feature Selection:</strong> Admin-controlled artist featuring system</li>
+                    <li><strong>Promotional Placement:</strong> Strategic placement of featured artists</li>
+                    <li><strong>Rotation Management:</strong> Automatic rotation of featured content</li>
+                    <li><strong>Performance Tracking:</strong> Featured artist engagement analytics</li>
+                    <li><strong>Promotion Scheduling:</strong> Time-based featuring campaigns</li>
+                    <li><strong>Revenue Impact:</strong> Track revenue impact of artist featuring</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Featured artist schema with rotation algorithms, analytics tracking, and promotional management.</p>
+            </div>
+
+            <h3>5.11 Advanced Feature Modules</h3>
+
+            <h4>5.11.1 Learning Progress Tracking Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Tracks individual user progress through learning modules and educational content.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Progress Tracking:</strong> Individual module completion tracking</li>
+                    <li><strong>Achievement System:</strong> Badges and certificates for completed modules</li>
+                    <li><strong>Learning Analytics:</strong> User learning behavior and performance analysis</li>
+                    <li><strong>Completion Certificates:</strong> Automated certificate generation</li>
+                    <li><strong>Learning Paths:</strong> Structured learning sequence management</li>
+                    <li><strong>Progress Reports:</strong> Detailed learning progress reporting</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> LearningProgress schema with completion tracking, achievement system, and analytics integration.</p>
+            </div>
+
+            <h4>5.11.2 Team Booking Request Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Manages collaborative team booking requests for multi-artist events and projects.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Team Formation:</strong> Create and manage multi-artist teams</li>
+                    <li><strong>Collaborative Booking:</strong> Book multiple artists for single events</li>
+                    <li><strong>Team Coordination:</strong> Coordinate schedules and requirements</li>
+                    <li><strong>Bulk Negotiations:</strong> Negotiate terms for entire teams</li>
+                    <li><strong>Team Performance:</strong> Track team collaboration success</li>
+                    <li><strong>Revenue Sharing:</strong> Manage payment distribution among team members</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> TeamBookingRequest schema with multi-artist coordination, payment distribution, and team management.</p>
+            </div>
+
+            <h4>5.11.3 Storage Management Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Comprehensive file storage monitoring, optimization, and management system.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Storage Monitoring:</strong> Real-time storage usage tracking</li>
+                    <li><strong>File Organization:</strong> Automated file organization and cleanup</li>
+                    <li><strong>Storage Optimization:</strong> File compression and optimization</li>
+                    <li><strong>Backup Management:</strong> Automated backup and recovery systems</li>
+                    <li><strong>Storage Analytics:</strong> Storage usage patterns and optimization recommendations</li>
+                    <li><strong>Quota Management:</strong> User and system storage quota enforcement</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> File system monitoring, automated cleanup scripts, and storage analytics with optimization algorithms.</p>
+            </div>
+
+            <h4>5.11.4 QR Code Generation Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Generates and manages QR codes for tickets, events, and verification purposes.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>QR Code Generation:</strong> Dynamic QR code creation for various purposes</li>
+                    <li><strong>Ticket Verification:</strong> QR code-based ticket validation system</li>
+                    <li><strong>Event Check-in:</strong> QR code scanning for event attendance</li>
+                    <li><strong>Security Features:</strong> Encrypted QR codes with anti-fraud measures</li>
+                    <li><strong>Batch Generation:</strong> Bulk QR code generation for events</li>
+                    <li><strong>Analytics Tracking:</strong> QR code usage and scanning analytics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> QR code library integration with encryption, validation systems, and analytics tracking.</p>
+            </div>
+
+            <h3>5.12 Integration & API Modules</h3>
+
+            <h4>5.12.1 Razorpay Integration Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Complete Razorpay payment gateway integration for secure financial transactions.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Payment Processing:</strong> Secure payment order creation and processing</li>
+                    <li><strong>Payment Verification:</strong> Signature verification and payment confirmation</li>
+                    <li><strong>Refund Processing:</strong> Automated and manual refund handling</li>
+                    <li><strong>Webhook Management:</strong> Payment status webhook handling</li>
+                    <li><strong>Transaction Logging:</strong> Complete transaction history and logging</li>
+                    <li><strong>Error Handling:</strong> Payment failure handling and retry mechanisms</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Razorpay SDK integration with webhook handling, signature verification, and comprehensive error management.</p>
+            </div>
+
+            <h4>5.12.2 Brevo Email Integration Module</h4>
+            <div class="feature-card">
+                <h4>Module Overview</h4>
+                <p><strong>Purpose:</strong> Email service integration for automated notifications and marketing communications.</p>
+                <p><strong>Key Components:</strong></p>
+                <ul>
+                    <li><strong>Email Sending:</strong> Automated email dispatch for various platform events</li>
+                    <li><strong>Template Management:</strong> Dynamic email template system</li>
+                    <li><strong>Delivery Tracking:</strong> Email delivery status monitoring</li>
+                    <li><strong>Bounce Handling:</strong> Email bounce and failure management</li>
+                    <li><strong>Bulk Emailing:</strong> Mass email capabilities for announcements</li>
+                    <li><strong>Email Analytics:</strong> Open rates, click tracking, and engagement metrics</li>
+                </ul>
+                <p><strong>Technical Implementation:</strong> Brevo API integration with template engine, delivery tracking, and analytics reporting.</p>
+            </div>
+
+            <h3>5.13 Module Summary</h3>
+            <div class="conclusion-box">
+                <h4>Complete Module Architecture</h4>
+                <p>The RAPIRA platform consists of <strong>25+ specialized modules</strong> that work together to provide a comprehensive digital entertainment ecosystem:</p>
+                <ul>
+                    <li><strong>Core Modules (7):</strong> Authentication, User Management, Artist Portfolio, Content Management, Event Management, Ticket Management, Role Booking</li>
+                    <li><strong>Business Logic Modules (4):</strong> Subscription Management, Payment Processing, Communication, Learning Management</li>
+                    <li><strong>Administrative Modules (3):</strong> Analytics & Reporting, System Configuration, Search & Discovery</li>
+                    <li><strong>Integration Modules (2):</strong> Third-Party Integration, Security</li>
+                    <li><strong>Specialized Feature Modules (6):</strong> Artist Application, Artist Upgrade, Team Requirement, Artist Role Slot, Artist Booking Request, Daily Concerts</li>
+                    <li><strong>Communication & Notification Modules (3):</strong> Notification Management, Contact Message, Email Status</li>
+                    <li><strong>Administrative Control Modules (3):</strong> Website Settings, Admin Page Permission, Session Management</li>
+                    <li><strong>Content & Media Modules (3):</strong> Page Management, Media Management, Demo System</li>
+                    <li><strong>Financial & Transaction Modules (2):</strong> Refund Management, Revenue Analytics</li>
+                    <li><strong>User Experience Modules (2):</strong> Find My Artist, Featured Artists</li>
+                    <li><strong>Advanced Feature Modules (4):</strong> Learning Progress Tracking, Team Booking Request, Storage Management, QR Code Generation</li>
+                    <li><strong>Integration & API Modules (2):</strong> Razorpay Integration, Brevo Email Integration</li>
+                </ul>
+                <p>Each module is designed with scalability, maintainability, and security in mind, ensuring robust platform performance and user experience.</p>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard Management -->
+        <div class="section" id="admin-dashboard">
+            <h2>6. Admin Dashboard Management</h2>
+
+            <div class="dashboard-section">
+                <h3>6.1 Complete Admin Dashboard Structure</h3>
+                <p>The admin dashboard provides comprehensive control over all platform operations with the following management sections:</p>
+
+                <div class="dashboard-menu">
+                    <div class="menu-item">
+                        <h5>📊 Dashboard</h5>
+                        <ul>
+                            <li>Platform Statistics Overview</li>
+                            <li>Revenue Analytics</li>
+                            <li>User Growth Charts</li>
+                            <li>Concert Performance Metrics</li>
+                            <li>Recent Activities Feed</li>
+                            <li>Quick Action Buttons</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🔔 Notifications</h5>
+                        <ul>
+                            <li>System Notifications</li>
+                            <li>User Activity Alerts</li>
+                            <li>Payment Notifications</li>
+                            <li>Concert Approval Requests</li>
+                            <li>Artist Application Alerts</li>
+                            <li>Email Status Updates</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>👥 User Management</h5>
+                        <ul>
+                            <li><strong>Users:</strong> View, edit, delete user accounts</li>
+                            <li><strong>Artists:</strong> Manage artist profiles and verification</li>
+                            <li><strong>Artist Applications:</strong> Review and approve applications</li>
+                            <li><strong>Artist Upgrades:</strong> Handle level upgrade requests</li>
+                            <li><strong>Roles:</strong> Create and manage user roles</li>
+                            <li><strong>User Roles:</strong> Assign roles to users</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎵 Concert Management</h5>
+                        <ul>
+                            <li><strong>Concerts:</strong> View all concerts and manage status</li>
+                            <li><strong>Pending:</strong> Review and approve concert submissions</li>
+                            <li><strong>Tickets:</strong> Monitor ticket sales and bookings</li>
+                            <li><strong>Refund Requests:</strong> Process ticket refunds</li>
+                            <li><strong>Daily Concerts:</strong> Manage daily event scheduling</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📝 Content Management</h5>
+                        <ul>
+                            <li><strong>Content:</strong> Manage songs, videos, and media</li>
+                            <li><strong>Pages:</strong> Create and edit website pages</li>
+                            <li><strong>Learning Modules:</strong> Educational content for artists</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📅 Booking Management</h5>
+                        <ul>
+                            <li><strong>Team Roles:</strong> Define team positions and requirements</li>
+                            <li><strong>Team Bookings:</strong> Manage team booking requests</li>
+                            <li><strong>Featured Artists:</strong> Promote and highlight artists</li>
+                            <li><strong>Role Slots:</strong> Manage available role positions</li>
+                            <li><strong>Artist Bookings:</strong> Handle artist booking requests</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>💳 Subscription Management</h5>
+                        <ul>
+                            <li><strong>Subscription Plans:</strong> Create and manage plans</li>
+                            <li><strong>User Subscriptions:</strong> Monitor active subscriptions</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📧 Communication</h5>
+                        <ul>
+                            <li><strong>Contact Messages:</strong> Handle user inquiries</li>
+                            <li><strong>Email Status:</strong> Monitor email delivery</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>⚙️ System</h5>
+                        <ul>
+                            <li><strong>Website Settings:</strong> Configure platform settings</li>
+                            <li><strong>Storage Management:</strong> Manage file uploads</li>
+                            <li><strong>Session Management:</strong> Monitor user sessions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>6.2 Admin Dashboard Features</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>📊 Analytics & Reporting</h4>
+                    <ul>
+                        <li>Real-time platform statistics</li>
+                        <li>Revenue tracking and forecasting</li>
+                        <li>User engagement metrics</li>
+                        <li>Concert performance analysis</li>
+                        <li>Subscription analytics</li>
+                        <li>Geographic distribution charts</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>👤 User & Artist Control</h4>
+                    <ul>
+                        <li>User account management</li>
+                        <li>Artist verification system</li>
+                        <li>Role-based access control</li>
+                        <li>Profile moderation tools</li>
+                        <li>Bulk user operations</li>
+                        <li>Activity monitoring</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🎵 Content & Event Control</h4>
+                    <ul>
+                        <li>Concert approval workflow</li>
+                        <li>Content moderation system</li>
+                        <li>Featured content management</li>
+                        <li>Event scheduling tools</li>
+                        <li>Ticket sales oversight</li>
+                        <li>Refund processing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artist Dashboard Management -->
+        <div class="section" id="artist-dashboard">
+            <h2>7. Artist Dashboard Management</h2>
+
+            <div class="dashboard-section">
+                <h3>7.1 Complete Artist Dashboard Structure</h3>
+                <p>The artist dashboard provides comprehensive tools for artists to manage their profiles, content, and performances:</p>
+
+                <div class="dashboard-menu">
+                    <div class="menu-item">
+                        <h5>📊 Dashboard Overview</h5>
+                        <ul>
+                            <li>Artist Performance Analytics</li>
+                            <li>Content Views and Engagement</li>
+                            <li>Concert Ticket Sales</li>
+                            <li>Revenue Tracking</li>
+                            <li>Fan Interaction Metrics</li>
+                            <li>Recent Activity Feed</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>👤 Profile Management</h5>
+                        <ul>
+                            <li>Artist Profile Editing</li>
+                            <li>Stage Name and Bio Updates</li>
+                            <li>Banner Image Management</li>
+                            <li>Social Media Links</li>
+                            <li>Achievement Showcase</li>
+                            <li>Verification Status</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎵 Content Management</h5>
+                        <ul>
+                            <li><strong>Songs:</strong> Upload and manage music tracks</li>
+                            <li><strong>Videos:</strong> Upload music videos and performances</li>
+                            <li><strong>Lyrics:</strong> Add and edit song lyrics</li>
+                            <li><strong>Media Library:</strong> Organize all uploaded content</li>
+                            <li><strong>Featured Content:</strong> Highlight best works</li>
+                            <li><strong>Content Analytics:</strong> Track views and engagement</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎪 Concert Management</h5>
+                        <ul>
+                            <li><strong>Create Concerts:</strong> Submit new concert proposals</li>
+                            <li><strong>Upcoming Events:</strong> Manage scheduled concerts</li>
+                            <li><strong>Past Concerts:</strong> View concert history</li>
+                            <li><strong>Concert Analytics:</strong> Performance metrics</li>
+                            <li><strong>Venue Management:</strong> Preferred venues</li>
+                            <li><strong>Event Promotion:</strong> Marketing tools</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎫 Ticket Management</h5>
+                        <ul>
+                            <li><strong>Sales Overview:</strong> Ticket sales dashboard</li>
+                            <li><strong>Pricing Control:</strong> Set ticket prices</li>
+                            <li><strong>Attendee Lists:</strong> View ticket holders</li>
+                            <li><strong>Revenue Reports:</strong> Financial analytics</li>
+                            <li><strong>Refund Requests:</strong> Handle ticket refunds</li>
+                            <li><strong>QR Code Management:</strong> Ticket verification</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📚 Learning & Development</h5>
+                        <ul>
+                            <li><strong>Learning Modules:</strong> Access educational content</li>
+                            <li><strong>Skill Development:</strong> Artist level progression</li>
+                            <li><strong>Progress Tracking:</strong> Learning completion status</li>
+                            <li><strong>Certificates:</strong> Achievement recognition</li>
+                            <li><strong>Mentorship:</strong> Connect with experienced artists</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📅 Booking & Collaboration</h5>
+                        <ul>
+                            <li><strong>Booking Requests:</strong> Receive event invitations</li>
+                            <li><strong>Team Collaborations:</strong> Work with other artists</li>
+                            <li><strong>Role Applications:</strong> Apply for specific roles</li>
+                            <li><strong>Availability Calendar:</strong> Manage schedule</li>
+                            <li><strong>Contract Management:</strong> Handle agreements</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>💬 Communication</h5>
+                        <ul>
+                            <li><strong>Fan Messages:</strong> Interact with audience</li>
+                            <li><strong>Notifications:</strong> Platform updates</li>
+                            <li><strong>Email Preferences:</strong> Communication settings</li>
+                            <li><strong>Social Integration:</strong> Cross-platform sharing</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📈 Analytics & Insights</h5>
+                        <ul>
+                            <li><strong>Performance Metrics:</strong> Detailed analytics</li>
+                            <li><strong>Audience Demographics:</strong> Fan base analysis</li>
+                            <li><strong>Content Performance:</strong> Track popular content</li>
+                            <li><strong>Revenue Analytics:</strong> Financial insights</li>
+                            <li><strong>Growth Tracking:</strong> Career progression</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>7.2 Artist Dashboard Features</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>🎵 Content Creation Tools</h4>
+                    <ul>
+                        <li>Multi-format media upload</li>
+                        <li>Content scheduling system</li>
+                        <li>Automatic thumbnail generation</li>
+                        <li>Metadata management</li>
+                        <li>Version control for tracks</li>
+                        <li>Collaborative editing tools</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>📊 Performance Analytics</h4>
+                    <ul>
+                        <li>Real-time engagement metrics</li>
+                        <li>Audience growth tracking</li>
+                        <li>Revenue performance charts</li>
+                        <li>Concert attendance analytics</li>
+                        <li>Content popularity insights</li>
+                        <li>Comparative performance data</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🎪 Event Management</h4>
+                    <ul>
+                        <li>Concert proposal system</li>
+                        <li>Venue booking integration</li>
+                        <li>Ticket pricing optimization</li>
+                        <li>Event promotion tools</li>
+                        <li>Attendee communication</li>
+                        <li>Post-event analytics</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen Layouts -->
+        <div class="section" id="screen-layouts">
+            <h2>8. Screen Layouts</h2>
+
+            <h3>8.1 User-Facing Pages</h3>
+
+            <h4>Home Page Layout</h4>
+            <div class="screen-layout">
+[Header with Logo] [Navigation Menu] [Login/Register]
+═══════════════════════════════════════════════════════
+[Hero Section with Featured Content and Call-to-Action]
+═══════════════════════════════════════════════════════
+[Featured Artists Carousel with Profile Cards]
+═══════════════════════════════════════════════════════
+[Upcoming Concerts Grid - 3 columns]
+│ Concert Card 1  │ Concert Card 2  │ Concert Card 3  │
+│ - Poster Image  │ - Poster Image  │ - Poster Image  │
+│ - Title/Artist  │ - Title/Artist  │ - Title/Artist  │
+│ - Date/Venue    │ - Date/Venue    │ - Date/Venue    │
+│ - Book Button   │ - Book Button   │ - Book Button   │
+═══════════════════════════════════════════════════════
+[Latest Music/Videos Section - Grid Layout]
+═══════════════════════════════════════════════════════
+[Subscription Plans Preview - 3 Plan Cards]
+═══════════════════════════════════════════════════════
+[Footer with Links, Contact Info, and Social Media]
+            </div>
+
+            <h4>Artist Gallery Layout</h4>
+            <div class="screen-layout">
+[Search Bar] [Genre Filter] [Level Filter] [City Filter]
+═══════════════════════════════════════════════════════
+[Artist Cards Grid - 4 columns responsive]
+│ Artist Card 1   │ Artist Card 2   │ Artist Card 3   │
+│ - Profile Image │ - Profile Image │ - Profile Image │
+│ - Stage Name    │ - Stage Name    │ - Stage Name    │
+│ - Genre         │ - Genre         │ - Genre         │
+│ - Verified Badge│ - Verified Badge│ - Verified Badge│
+│ - View Profile  │ - View Profile  │ - View Profile  │
+═══════════════════════════════════════════════════════
+[Load More Button] [Pagination Controls]
+            </div>
+
+            <h4>Concert Booking Layout</h4>
+            <div class="screen-layout">
+[Concert Header with Poster and Details]
+═══════════════════════════════════════════════════════
+[Ticket Selection Section]
+│ Quantity: [Dropdown] │ Price per ticket: ₹XXX │
+═══════════════════════════════════════════════════════
+[Attendee Information Form]
+│ Attendee 1: [Name] [Email] [Phone]                   │
+│ Attendee 2: [Name] [Email] [Phone]                   │
+═══════════════════════════════════════════════════════
+[Price Summary]
+│ Tickets: X × ₹XXX = ₹XXX                            │
+│ Discount: -₹XXX (if applicable)                      │
+│ Total: ₹XXX                                          │
+═══════════════════════════════════════════════════════
+[Payment Section]
+│ [Terms & Conditions Checkbox]                        │
+│ [Proceed to Payment Button]                          │
+            </div>
+
+            <h3>8.2 Admin Dashboard Layouts</h3>
+
+            <h4>Admin Dashboard Overview</h4>
+            <div class="screen-layout">
+[Admin Header] [User Profile] [Logout]
+═══════════════════════════════════════════════════════
+[Sidebar Navigation Menu]
+│ Dashboard                                             │
+│ User Management                                       │
+│ Concert Management                                    │
+│ Content Management                                    │
+│ Subscription Management                               │
+│ System Settings                                       │
+═══════════════════════════════════════════════════════
+[Main Content Area]
+[Statistics Cards Row]
+│ Total Users │ Total Artists │ Total Concerts │ Revenue │
+═══════════════════════════════════════════════════════
+[Charts Section]
+│ Revenue Chart (Left)    │ Concert Stats (Right)      │
+═══════════════════════════════════════════════════════
+[Recent Activities Table]
+│ Time │ User │ Action │ Details │ Status │
+═══════════════════════════════════════════════════════
+[Quick Actions Panel]
+            </div>
+
+            <h4>User Management Layout</h4>
+            <div class="screen-layout">
+[Page Header: User Management]
+═══════════════════════════════════════════════════════
+[Search and Filter Controls]
+│ [Search Box] [Role Filter] [Status Filter] [Date Range] │
+═══════════════════════════════════════════════════════
+[Action Buttons]
+│ [Add User] [Export Data] [Bulk Actions]               │
+═══════════════════════════════════════════════════════
+[Users Data Table]
+│ Avatar │ Name │ Email │ Role │ Status │ Joined │ Actions │
+│   👤   │ John │ john@ │ User │ Active │ 2024   │ Edit Del│
+│   👤   │ Jane │ jane@ │Artist│ Active │ 2024   │ Edit Del│
+═══════════════════════════════════════════════════════
+[Pagination] [Items per page selector]
+            </div>
+        </div>
+
+        <!-- System Architecture -->
+        <div class="section" id="system-architecture">
+            <h2>9. System Architecture</h2>
+
+            <h3>9.1 Application Architecture</h3>
+            <div class="uml-diagram">
+                <pre>
+                    🏗️ RAPIRA System Architecture
+
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend Layer                           │
+├─────────────────────────────────────────────────────────────┤
+│ 🎨 User Interface (Bootstrap 5 + Custom CSS)               │
+│ 📱 Responsive Design │ 🎭 EJS Templates │ 📊 Chart.js      │
+│ 🖱️ Interactive JS    │ 🎪 Media Players │ 📋 Forms         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Application Layer                         │
+├─────────────────────────────────────────────────────────────┤
+│ 🚀 Node.js Runtime Environment                             │
+│ 🌐 Express.js Web Framework                                │
+│ 🔐 Session Management │ 🛡️ Authentication │ 📁 File Upload │
+│ 🔄 Middleware Stack   │ 🎯 Route Handlers │ 📧 Email Service│
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Business Logic Layer                     │
+├─────────────────────────────────────────────────────────────┤
+│ 👥 User Management    │ 🎤 Artist Management                │
+│ 🎵 Concert Management │ 🎫 Ticket Management               │
+│ 💳 Payment Processing │ 📧 Notification System             │
+│ 📊 Analytics Engine   │ 🔍 Search & Filter                 │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Data Access Layer                       │
+├─────────────────────────────────────────────────────────────┤
+│ 🗄️ Mongoose ODM                                            │
+│ 📝 Schema Validation │ 🔗 Relationship Management          │
+│ 🔍 Query Optimization│ 📊 Aggregation Pipelines           │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Database Layer                          │
+├─────────────────────────────────────────────────────────────┤
+│ 🗄️ MongoDB Database                                        │
+│ 📚 Document Collections │ 🔗 References │ 📊 Indexes       │
+│ 🔄 Replication Support  │ 📈 Scaling    │ 🔒 Security      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   External Services                         │
+├─────────────────────────────────────────────────────────────┤
+│ 💳 Razorpay Payment Gateway │ 📧 Brevo Email Service       │
+│ 📁 File Storage System      │ 🔔 Push Notifications        │
+│ 📊 Analytics Services       │ 🌐 CDN Services              │
+└─────────────────────────────────────────────────────────────┘
+                </pre>
+            </div>
+
+            <h3>9.2 Database Design</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>🗄️ MongoDB Features</h4>
+                    <ul>
+                        <li>NoSQL document database</li>
+                        <li>Flexible schema design</li>
+                        <li>Horizontal scaling support</li>
+                        <li>Rich query capabilities</li>
+                        <li>Built-in replication</li>
+                        <li>Automatic sharding</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🔗 Data Relationships</h4>
+                    <ul>
+                        <li>Referenced documents</li>
+                        <li>Embedded subdocuments</li>
+                        <li>One-to-many relationships</li>
+                        <li>Many-to-many associations</li>
+                        <li>Cascade operations</li>
+                        <li>Data integrity constraints</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>⚡ Performance Optimization</h4>
+                    <ul>
+                        <li>Strategic indexing</li>
+                        <li>Query optimization</li>
+                        <li>Aggregation pipelines</li>
+                        <li>Connection pooling</li>
+                        <li>Caching strategies</li>
+                        <li>Load balancing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="section" id="api-endpoints">
+            <h2>10. API Endpoints</h2>
+
+            <h3>10.1 Authentication Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>POST</td><td>/auth/register</td><td>User registration</td><td>Public</td></tr>
+                    <tr><td>POST</td><td>/auth/login</td><td>User login</td><td>Public</td></tr>
+                    <tr><td>GET</td><td>/auth/logout</td><td>User logout</td><td>Authenticated</td></tr>
+                    <tr><td>POST</td><td>/auth/forgot-password</td><td>Password reset request</td><td>Public</td></tr>
+                    <tr><td>POST</td><td>/auth/reset-password</td><td>Password reset confirmation</td><td>Public</td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.2 User Management Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>GET</td><td>/users/profile</td><td>View user profile</td><td>User</td></tr>
+                    <tr><td>POST</td><td>/users/profile</td><td>Update user profile</td><td>User</td></tr>
+                    <tr><td>POST</td><td>/users/upload-image</td><td>Upload profile image</td><td>User</td></tr>
+                    <tr><td>GET</td><td>/users/dashboard</td><td>User dashboard</td><td>User</td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.3 Artist Management Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>GET</td><td>/artists</td><td>List all artists</td><td>Public</td></tr>
+                    <tr><td>GET</td><td>/artists/:id</td><td>View artist profile</td><td>Public</td></tr>
+                    <tr><td>POST</td><td>/artists/apply</td><td>Submit artist application</td><td>User</td></tr>
+                    <tr><td>GET</td><td>/artists/dashboard</td><td>Artist dashboard</td><td>Artist</td></tr>
+                    <tr><td>POST</td><td>/artists/upload-content</td><td>Upload songs/videos</td><td>Artist</td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.4 Concert & Ticket Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>GET</td><td>/concerts</td><td>List concerts</td><td>Public</td></tr>
+                    <tr><td>GET</td><td>/concerts/:id</td><td>View concert details</td><td>Public</td></tr>
+                    <tr><td>POST</td><td>/concerts/create</td><td>Create new concert</td><td>Artist</td></tr>
+                    <tr><td>PUT</td><td>/concerts/:id</td><td>Update concert</td><td>Artist</td></tr>
+                    <tr><td>POST</td><td>/tickets/book</td><td>Book tickets</td><td>User</td></tr>
+                    <tr><td>GET</td><td>/tickets/my-tickets</td><td>User's tickets</td><td>User</td></tr>
+                    <tr><td>POST</td><td>/tickets/refund</td><td>Request refund</td><td>User</td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.5 Payment & Subscription Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>POST</td><td>/payments/create-order</td><td>Create payment order</td><td>User</td></tr>
+                    <tr><td>POST</td><td>/payments/verify</td><td>Verify payment</td><td>User</td></tr>
+                    <tr><td>GET</td><td>/subscriptions/plans</td><td>List subscription plans</td><td>Public</td></tr>
+                    <tr><td>POST</td><td>/subscriptions/purchase</td><td>Purchase subscription</td><td>User</td></tr>
+                    <tr><td>POST</td><td>/subscriptions/verify-payment</td><td>Verify subscription payment</td><td>User</td></tr>
+                </tbody>
+            </table>
+
+            <h3>10.6 Admin Routes</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>GET</td><td>/admin/dashboard</td><td>Admin dashboard</td><td>Admin</td></tr>
+                    <tr><td>GET</td><td>/admin/users</td><td>Manage users</td><td>Admin</td></tr>
+                    <tr><td>GET</td><td>/admin/artists</td><td>Manage artists</td><td>Admin</td></tr>
+                    <tr><td>GET</td><td>/admin/concerts</td><td>Manage concerts</td><td>Admin</td></tr>
+                    <tr><td>POST</td><td>/admin/approve-concert/:id</td><td>Approve concert</td><td>Admin</td></tr>
+                    <tr><td>POST</td><td>/admin/reject-concert/:id</td><td>Reject concert</td><td>Admin</td></tr>
+                    <tr><td>GET</td><td>/admin/subscriptions</td><td>Manage subscriptions</td><td>Admin</td></tr>
+                    <tr><td>POST</td><td>/admin/create-plan</td><td>Create subscription plan</td><td>Admin</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="section" id="conclusion">
+            <h2>11. Conclusion</h2>
+
+            <div class="conclusion-box">
+                <h3>🚀 Project Success & Impact</h3>
+                <p>The RAPIRA platform successfully addresses the growing need for a comprehensive digital entertainment ecosystem in the Indian rap music industry. By providing a centralized platform that connects artists, event organizers, and music enthusiasts, RAPIRA facilitates seamless interaction and business growth across the entertainment sector.</p>
+            </div>
+
+            <h3>11.1 Key Benefits Achieved</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>🎤 For Artists</h4>
+                    <ul>
+                        <li>Professional platform for showcasing talent</li>
+                        <li>Streamlined concert organization</li>
+                        <li>Revenue generation opportunities</li>
+                        <li>Learning and skill development</li>
+                        <li>Fan base building and engagement</li>
+                        <li>Career progression tracking</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>👥 For Users</h4>
+                    <ul>
+                        <li>Easy discovery of local artists and events</li>
+                        <li>Convenient ticket booking system</li>
+                        <li>Access to exclusive content</li>
+                        <li>Subscription benefits and discounts</li>
+                        <li>Community engagement features</li>
+                        <li>Personalized recommendations</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🏢 For Event Organizers</h4>
+                    <ul>
+                        <li>Efficient artist booking system</li>
+                        <li>Integrated payment processing</li>
+                        <li>Comprehensive event management</li>
+                        <li>Real-time analytics and reporting</li>
+                        <li>Automated communication tools</li>
+                        <li>Revenue optimization features</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>11.2 Technical Achievements</h3>
+            <div class="dashboard-section">
+                <div class="dashboard-menu">
+                    <div class="menu-item">
+                        <h5>🏗️ Architecture Excellence</h5>
+                        <ul>
+                            <li>Scalable MVC architecture</li>
+                            <li>RESTful API design</li>
+                            <li>Responsive web design</li>
+                            <li>Cross-platform compatibility</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🔒 Security Implementation</h5>
+                        <ul>
+                            <li>Secure authentication system</li>
+                            <li>Payment gateway integration</li>
+                            <li>Data encryption and protection</li>
+                            <li>Input validation and sanitization</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📊 Performance Optimization</h5>
+                        <ul>
+                            <li>Database query optimization</li>
+                            <li>Efficient file management</li>
+                            <li>Caching strategies</li>
+                            <li>Load balancing support</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎨 User Experience</h5>
+                        <ul>
+                            <li>Intuitive interface design</li>
+                            <li>Mobile-responsive layouts</li>
+                            <li>Fast loading times</li>
+                            <li>Accessibility compliance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Future Scope -->
+        <div class="section">
+            <h3>11.3 Future Scope & Enhancements</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>📱 Mobile Development</h4>
+                    <ul>
+                        <li>Native iOS application</li>
+                        <li>Android mobile app</li>
+                        <li>Progressive Web App (PWA)</li>
+                        <li>Offline functionality</li>
+                        <li>Push notifications</li>
+                        <li>Mobile payment integration</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🤖 AI & Machine Learning</h4>
+                    <ul>
+                        <li>Personalized recommendations</li>
+                        <li>Content discovery algorithms</li>
+                        <li>Predictive analytics</li>
+                        <li>Automated content moderation</li>
+                        <li>Smart pricing optimization</li>
+                        <li>Voice recognition features</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <h4>🌐 Advanced Features</h4>
+                    <ul>
+                        <li>Live streaming capabilities</li>
+                        <li>Virtual concert experiences</li>
+                        <li>Blockchain integration</li>
+                        <li>NFT marketplace</li>
+                        <li>Multi-language support</li>
+                        <li>Global expansion features</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="conclusion-box">
+                <h3>🎵 Platform Impact Summary</h3>
+                <p>RAPIRA successfully digitizes entertainment event management, ticketing, and artist promotions in one centralized, user-friendly system. The platform contributes significantly to the growth and organization of the Indian rap music industry while providing a solid foundation for future technological advancements and market expansion.</p>
+
+                <p><strong>The platform demonstrates successful implementation of modern web technologies, secure payment processing, comprehensive user management, and scalable architecture that can adapt to the evolving needs of the digital entertainment industry.</strong></p>
+            </div>
+        </div>
+
+        <!-- Bibliography -->
+        <div class="section">
+            <h2>12. Bibliography & References</h2>
+
+            <h3>12.1 Primary Sources</h3>
+            <div class="dashboard-section">
+                <div class="dashboard-menu">
+                    <div class="menu-item">
+                        <h5>🔬 Research & Development</h5>
+                        <ul>
+                            <li>Self-developed system using research and practical logic</li>
+                            <li>Industry best practices for web application development</li>
+                            <li>User experience design principles</li>
+                            <li>Digital entertainment platform analysis</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>📖 Technical Documentation</h5>
+                        <ul>
+                            <li>MongoDB official documentation and best practices</li>
+                            <li>Node.js and Express.js framework documentation</li>
+                            <li>Bootstrap 5 framework guidelines</li>
+                            <li>Razorpay payment gateway integration manual</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🏗️ Architecture References</h5>
+                        <ul>
+                            <li>RESTful API design principles</li>
+                            <li>MVC architecture patterns</li>
+                            <li>Database design and optimization techniques</li>
+                            <li>Web security best practices</li>
+                        </ul>
+                    </div>
+
+                    <div class="menu-item">
+                        <h5>🎯 Industry Analysis</h5>
+                        <ul>
+                            <li>Music industry digitization trends</li>
+                            <li>Event management system requirements</li>
+                            <li>Payment gateway integration standards</li>
+                            <li>Email marketing and notification systems</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Footer -->
+        <!-- <div class="section">
+            <div class="conclusion-box">
+                <h3>📄 Document Information</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <div>
+                        <strong>📅 Document Version:</strong> 1.0<br>
+                        <strong>📅 Last Updated:</strong> June 2025<br>
+                        <strong>👥 Prepared by:</strong> Valrein Development Team
+                    </div>
+                    <div>
+                        <strong>🏢 Company:</strong> Valrein<br>
+                        <strong>🎵 Platform:</strong> RAPIRA<br>
+                        <strong>📍 Location:</strong> Itarsi, Madhya Pradesh, India
+                    </div>
+                    <div>
+                        <strong>📞 Contact:</strong> +91 7880009340<br>
+                        <strong>🌐 Platform Type:</strong> Digital Entertainment<br>
+                        <strong>🎯 Industry:</strong> Music & Events
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid rgba(255,255,255,0.3);">
+                    <h4>🎵 Thank you for reviewing the RAPIRA Platform Documentation! 🎵</h4>
+                    <p><em>Connecting Artists, Empowering Music, Building Communities</em></p>
+                </div>
+            </div>
+        </div> -->
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // Enhanced PDF Download Function
+        function downloadAsPDF() {
+            const element = document.querySelector('.container');
+            const downloadButtons = document.querySelector('.download-buttons');
+
+            // Hide download buttons during PDF generation
+            if (downloadButtons) {
+                downloadButtons.style.display = 'none';
+            }
+
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: 'RAPIRA_Project_Documentation.pdf',
+                image: {
+                    type: 'jpeg',
+                    quality: 0.95
+                },
+                html2canvas: {
+                    scale: 1.5,
+                    useCORS: true,
+                    letterRendering: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    width: element.scrollWidth,
+                    height: element.scrollHeight
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait'
+                },
+                pagebreak: {
+                    mode: ['avoid-all', 'css'],
+                    before: '.section'
+                }
+            };
+
+            // Create loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'pdf-loading';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border: 2px solid #000;
+                z-index: 9999;
+                text-align: center;
+            `;
+            loadingDiv.innerHTML = '<h3>Generating PDF...</h3><p>Please wait while we create your document.</p>';
+            document.body.appendChild(loadingDiv);
+
+            // Generate PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Remove loading and show buttons again
+                document.body.removeChild(loadingDiv);
+                if (downloadButtons) {
+                    downloadButtons.style.display = 'flex';
+                }
+                alert('PDF downloaded successfully!');
+            }).catch((error) => {
+                console.error('PDF generation failed:', error);
+                document.body.removeChild(loadingDiv);
+                if (downloadButtons) {
+                    downloadButtons.style.display = 'flex';
+                }
+                alert('PDF generation failed. Please try using the Print option (Ctrl+P) and save as PDF from your browser.');
+            });
+        }
+
+        // HTML Download Function
+        function downloadAsHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'RAPIRA_Project_Documentation.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('✅ HTML file downloaded successfully!');
+        }
+
+        // Enhanced Print Function
+        function printDocument() {
+            window.print();
+        }
+
+        // Add smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add print optimization
+        window.addEventListener('beforeprint', function() {
+            document.body.style.fontSize = '11px';
+            document.body.style.lineHeight = '1.4';
+            document.querySelectorAll('.download-buttons').forEach(btn => {
+                btn.style.display = 'none';
+            });
+            document.querySelectorAll('.uml-diagram pre').forEach(pre => {
+                pre.style.fontSize = '10px';
+                pre.style.lineHeight = '1.2';
+            });
+        });
+
+        window.addEventListener('afterprint', function() {
+            document.body.style.fontSize = '';
+            document.body.style.lineHeight = '';
+            document.querySelectorAll('.download-buttons').forEach(btn => {
+                btn.style.display = 'flex';
+            });
+            document.querySelectorAll('.uml-diagram pre').forEach(pre => {
+                pre.style.fontSize = '';
+                pre.style.lineHeight = '';
+            });
+        });
+
+        // Add table of contents functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section[id]');
+            const tocLinks = document.querySelectorAll('.toc a');
+
+            // Highlight current section in TOC
+            function highlightCurrentSection() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (window.pageYOffset >= sectionTop - 200) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.style.color = '#333';
+                    if (link.getAttribute('href') === '#' + current) {
+                        link.style.color = '#667eea';
+                        link.style.fontWeight = 'bold';
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', highlightCurrentSection);
+
+            // Add loading animation for PDF generation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .loading-spinner {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #667eea;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+P for print
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+            // Ctrl+S for save HTML
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                downloadAsHTML();
+            }
+            // Ctrl+D for download PDF
+            if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                downloadAsPDF();
+            }
+        });
+
+        // Show keyboard shortcuts info
+        console.log(`
+        🎵 RAPIRA Documentation Keyboard Shortcuts:
+        📄 Ctrl+D - Download PDF
+        💾 Ctrl+S - Save HTML
+        🖨️ Ctrl+P - Print Document
+        `);
+    </script>
+</body>
+</html>

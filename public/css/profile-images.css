@@ -1,0 +1,145 @@
+/**
+ * Profile Image Styles
+ * Consistent styling for profile images and their fallbacks
+ */
+
+/* Base profile image styles */
+.profile-image,
+.user-avatar,
+img[alt*="Profile"],
+img[alt*="profile"] {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.profile-image:hover,
+.user-avatar:hover {
+    border-color: var(--primary, #007bff);
+    transform: scale(1.05);
+}
+
+/* Default profile image fallback styles */
+.default-profile-fallback {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Size variants */
+.profile-image-small {
+    width: 32px;
+    height: 32px;
+}
+
+.profile-image-medium {
+    width: 48px;
+    height: 48px;
+}
+
+.profile-image-large {
+    width: 100px;
+    height: 100px;
+}
+
+.profile-image-xlarge {
+    width: 150px;
+    height: 150px;
+}
+
+/* Navbar profile image specific styles */
+.navbar .profile-image,
+.navbar img[alt*="Profile"] {
+    border: 2px solid var(--primary, #007bff);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Admin sidebar profile image */
+.admin-sidebar .profile-image,
+.admin-sidebar img[alt*="Admin"] {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Artist header profile image */
+.artist-header .profile-image {
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Profile page specific styles */
+.profile-page .profile-image {
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading state for profile images */
+.profile-image-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Error state styling */
+.profile-image-error {
+    background-color: #dc3545;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+}
+
+.profile-image-error::before {
+    content: "!";
+    font-weight: bold;
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .profile-image,
+    .user-avatar {
+        background-color: #343a40;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .default-profile-fallback {
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .profile-image-xlarge {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .profile-image-large {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* Accessibility improvements */
+.profile-image:focus,
+.user-avatar:focus {
+    outline: 2px solid var(--primary, #007bff);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .profile-image,
+    .user-avatar {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+}

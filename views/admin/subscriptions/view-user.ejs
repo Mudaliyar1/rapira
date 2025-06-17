@@ -31,10 +31,11 @@
       </div>
       <div class="card-body">
         <div class="text-center mb-4">
-          <% if (subscription.user.profileImage) { %>
-            <img src="<%= subscription.user.profileImage %>" alt="<%= subscription.user.name %>" class="rounded-circle img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
-          <% } else { %>
-            <div class="avatar-placeholder rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+          <img src="<%= subscription.user.profileImage || '/images/default-profile.svg' %>"
+               alt="<%= subscription.user.name %>"
+               class="rounded-circle img-thumbnail"
+               style="width: 100px; height: 100px; object-fit: cover;"
+               onerror="this.onerror=null; this.src='/images/default-profile.svg';">
               <span class="text-white fs-1"><%= subscription.user.name.charAt(0).toUpperCase() %></span>
             </div>
           <% } %>

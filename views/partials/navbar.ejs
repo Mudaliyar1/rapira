@@ -152,11 +152,12 @@
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <% if (currentUser.profileImage) { %>
-                <img src="<%= currentUser.profileImage %>" alt="Profile" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover; border: 2px solid var(--primary);">
-              <% } else { %>
-                <i class="bi bi-person-circle me-2"></i>
-              <% } %>
+              <img src="<%= currentUser.profileImage || '/images/default-profile.svg' %>"
+                   alt="Profile"
+                   class="rounded-circle me-2"
+                   width="32" height="32"
+                   style="object-fit: cover; border: 2px solid var(--primary);"
+                   onerror="this.onerror=null; this.src='/images/default-profile.svg';">
               <%= currentUser.name %>
             </a>
             <ul class="dropdown-menu glass-card-dark dropdown-menu-end" aria-labelledby="navbarDropdown">
