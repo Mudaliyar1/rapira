@@ -39,6 +39,11 @@
           <i class="bi bi-palette me-2"></i>Theme Colors
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+          <i class="bi bi-gear me-2"></i>Admin Settings
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -372,6 +377,72 @@
         </form>
       </div>
 
+      <!-- Admin Settings Tab -->
+      <div class="tab-pane fade" id="admin" role="tabpanel">
+        <form action="/admin/website-settings/admin" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Development & Testing Settings</h5>
+
+              <div class="mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="showDummyData" id="showDummyData"
+                         <%= (settings.adminSettings && settings.adminSettings.showDummyData) ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold" for="showDummyData">
+                    Enable Dummy Data Display
+                  </label>
+                  <small class="d-block text-muted mt-1">
+                    When enabled, dummy data will be displayed alongside real data in all admin management sections.
+                    This is useful for testing and demonstration purposes.
+                  </small>
+                </div>
+              </div>
+
+              <div class="mb-3" id="dummyDataCountGroup">
+                <label class="form-label text-white">Number of Dummy Records</label>
+                <input type="number" class="form-control bg-dark text-white border-secondary"
+                       name="dummyDataCount" min="5" max="50"
+                       value="<%= (settings.adminSettings && settings.adminSettings.dummyDataCount) ? settings.adminSettings.dummyDataCount : 10 %>">
+                <small class="text-muted">Controls how many dummy records to generate for each section (5-50)</small>
+              </div>
+
+              <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Note:</strong> Dummy data is clearly marked and does not interfere with real data operations.
+                It will be displayed with a "dummy" indicator and can be toggled on/off without affecting your actual data.
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Dummy Data Sections</h5>
+              <div class="border border-secondary rounded p-3 bg-dark">
+                <small class="text-white-50 mb-2 d-block">Dummy data will be shown in:</small>
+                <ul class="list-unstyled text-white small">
+                  <li><i class="bi bi-check-circle text-success me-1"></i> User Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Artist Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Concert Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Ticket Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Content Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Page Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Booking Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Subscription Management</li>
+                  <li><i class="bi bi-check-circle text-success me-1"></i> Contact Messages</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Admin Settings
+            </button>
+            <button type="button" class="btn btn-outline-info ms-2" onclick="previewDummyData()">
+              <i class="bi bi-eye me-1"></i>Preview Dummy Data
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   </div>
 </div>
@@ -470,5 +541,133 @@ function resetThemeColors() {
       if (badges[2]) badges[2].style.backgroundColor = defaultColors.accentColor;
     }
   }
+}
+
+// Admin settings functionality
+document.getElementById('showDummyData').addEventListener('change', function() {
+  const dummyDataCountGroup = document.getElementById('dummyDataCountGroup');
+  if (this.checked) {
+    dummyDataCountGroup.style.display = 'block';
+  } else {
+    dummyDataCountGroup.style.display = 'none';
+  }
+});
+
+// Initialize admin settings on page load
+document.addEventListener('DOMContentLoaded', function() {
+  const showDummyDataCheckbox = document.getElementById('showDummyData');
+  if (showDummyDataCheckbox) {
+    showDummyDataCheckbox.dispatchEvent(new Event('change'));
+  }
+});
+
+// Preview dummy data function
+function previewDummyData() {
+  const count = document.querySelector('input[name="dummyDataCount"]').value;
+
+  // Show loading state
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Generating Preview...';
+  btn.disabled = true;
+
+  fetch('/admin/website-settings/preview-dummy-data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ count: parseInt(count) })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Create modal to show preview
+      showDummyDataPreview(data.preview);
+    } else {
+      alert('Failed to generate preview: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred while generating preview');
+  })
+  .finally(() => {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
+}
+
+// Show dummy data preview in modal
+function showDummyDataPreview(preview) {
+  const modalHtml = `
+    <div class="modal fade" id="dummyDataPreviewModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-white">Dummy Data Preview</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-white">Sample Users (${preview.users.length})</h6>
+                <div class="bg-dark p-2 rounded mb-3" style="max-height: 150px; overflow-y: auto;">
+                  ${preview.users.slice(0, 3).map(user => `
+                    <small class="text-white d-block">${user.name} - ${user.email}</small>
+                  `).join('')}
+                  ${preview.users.length > 3 ? `<small class="text-muted">...and ${preview.users.length - 3} more</small>` : ''}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-white">Sample Artists (${preview.artists.length})</h6>
+                <div class="bg-dark p-2 rounded mb-3" style="max-height: 150px; overflow-y: auto;">
+                  ${preview.artists.slice(0, 3).map(artist => `
+                    <small class="text-white d-block">${artist.stageName} - ${artist.city}</small>
+                  `).join('')}
+                  ${preview.artists.length > 3 ? `<small class="text-muted">...and ${preview.artists.length - 3} more</small>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-white">Sample Concerts (${preview.concerts.length})</h6>
+                <div class="bg-dark p-2 rounded mb-3" style="max-height: 150px; overflow-y: auto;">
+                  ${preview.concerts.slice(0, 3).map(concert => `
+                    <small class="text-white d-block">${concert.title} - ${concert.city}</small>
+                  `).join('')}
+                  ${preview.concerts.length > 3 ? `<small class="text-muted">...and ${preview.concerts.length - 3} more</small>` : ''}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-white">Sample Content (${preview.content.length})</h6>
+                <div class="bg-dark p-2 rounded mb-3" style="max-height: 150px; overflow-y: auto;">
+                  ${preview.content.slice(0, 3).map(content => `
+                    <small class="text-white d-block">${content.title} - ${content.type}</small>
+                  `).join('')}
+                  ${preview.content.length > 3 ? `<small class="text-muted">...and ${preview.content.length - 3} more</small>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Remove existing modal if any
+  const existingModal = document.getElementById('dummyDataPreviewModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // Add modal to body
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('dummyDataPreviewModal'));
+  modal.show();
 }
 </script>

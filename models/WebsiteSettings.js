@@ -79,6 +79,20 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Admin Development Settings
+  adminSettings: {
+    showDummyData: {
+      type: Boolean,
+      default: false
+    },
+    dummyDataCount: {
+      type: Number,
+      default: 10,
+      min: 5,
+      max: 50
+    }
+  },
+
   // Theme Settings
   themeSettings: {
     primaryColor: {

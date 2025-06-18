@@ -126,6 +126,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 // Manage users
 router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
   try {
+    const dummyDataHelper = require('../utils/dummyDataHelper');
+
     // Get search parameters
     const { search, role, status, sortBy, sortOrder } = req.query;
 
@@ -157,10 +159,13 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
       sortOptions = { [sortBy]: order };
     }
 
-    // Execute query
-    const users = await User.find(query).sort(sortOptions);
+    // Execute query for real users
+    const realUsers = await User.find(query).sort(sortOptions);
 
-    // Get total counts for stats
+    // Merge with dummy data if enabled
+    const userResult = await dummyDataHelper.mergeWithDummyData(realUsers, 'users', { shuffle: true });
+
+    // Get total counts for stats (only real data)
     const totalUsers = await User.countDocuments();
     const verifiedUsers = await User.countDocuments({ isVerified: true });
     const adminUsers = await User.countDocuments({ role: 'admin' });
@@ -169,7 +174,7 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
     res.render('admin/users-new', {
       layout: 'admin',
       currentPath: '/admin/users',
-      users,
+      users: userResult.data,
       searchParams: {
         search: search || '',
         role: role || 'all',
@@ -182,8 +187,11 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
         verified: verifiedUsers,
         admin: adminUsers,
         artist: artistUsers,
-        filtered: users.length
-      }
+        filtered: userResult.totalCount,
+        realCount: userResult.realCount,
+        dummyCount: userResult.dummyCount
+      },
+      hasDummyData: userResult.hasDummyData
     });
   } catch (error) {
     console.error('Manage users error:', error);
@@ -459,6 +467,8 @@ router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 // Manage concerts
 router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
   try {
+    const dummyDataHelper = require('../utils/dummyDataHelper');
+
     // Get search parameters
     const { search, status, dateRange, venue, sortBy, sortOrder } = req.query;
 
@@ -491,8 +501,8 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
       sortOptions = { [sortBy]: order };
     }
 
-    // Get concerts with filters
-    let concerts = await Concert.find(filter)
+    // Get real concerts with filters
+    let realConcerts = await Concert.find(filter)
       .sort(sortOptions)
       .populate({
         path: 'artist',
@@ -502,7 +512,7 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
     // Apply text search on populated data
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
-      concerts = concerts.filter(concert => {
+      realConcerts = realConcerts.filter(concert => {
         const title = (concert.title || '').toLowerCase();
         const venue = (concert.venue || '').toLowerCase();
         const city = (concert.city || '').toLowerCase();
@@ -517,12 +527,15 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
 
     // Venue filter (after population)
     if (venue && venue !== 'all') {
-      concerts = concerts.filter(concert =>
+      realConcerts = realConcerts.filter(concert =>
         (concert.venue || '').toLowerCase().includes(venue.toLowerCase())
       );
     }
 
-    // Get statistics
+    // Merge with dummy data if enabled
+    const concertResult = await dummyDataHelper.mergeWithDummyData(realConcerts, 'concerts', { shuffle: true });
+
+    // Get statistics (only real data)
     const totalConcerts = await Concert.countDocuments();
     const approvedConcerts = await Concert.countDocuments({ status: 'approved' });
     const pendingConcerts = await Concert.countDocuments({ status: 'pending' });
@@ -540,7 +553,7 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
       layout: 'admin',
       currentPath: '/admin/concerts',
       title: 'Manage Concerts',
-      concerts,
+      concerts: concertResult.data,
       searchParams: {
         search: search || '',
         status: status || 'all',
@@ -555,9 +568,12 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
         pending: pendingConcerts,
         rejected: rejectedConcerts,
         upcoming: upcomingConcerts,
-        filtered: concerts.length
+        filtered: concertResult.totalCount,
+        realCount: concertResult.realCount,
+        dummyCount: concertResult.dummyCount
       },
-      venues
+      venues,
+      hasDummyData: concertResult.hasDummyData
     });
   } catch (error) {
     console.error('Manage concerts error:', error);
@@ -1590,6 +1606,8 @@ router.post('/tickets/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
 // Manage pages
 router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
   try {
+    const dummyDataHelper = require('../utils/dummyDataHelper');
+
     // Get search parameters
     const { search, published, showInNavigation, dateRange, sortBy, sortOrder } = req.query;
 
@@ -1635,13 +1653,13 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
       sortOptions = { [sortBy]: order };
     }
 
-    // Get pages with filters
-    let pages = await Page.find(filter).sort(sortOptions);
+    // Get real pages with filters
+    let realPages = await Page.find(filter).sort(sortOptions);
 
     // Apply text search
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
-      pages = pages.filter(page => {
+      realPages = realPages.filter(page => {
         const title = (page.title || '').toLowerCase();
         const slug = (page.slug || '').toLowerCase();
         const content = (page.content || '').toLowerCase();
@@ -1654,7 +1672,10 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
       });
     }
 
-    // Get statistics
+    // Merge with dummy data if enabled
+    const pageResult = await dummyDataHelper.mergeWithDummyData(realPages, 'pages', { shuffle: true });
+
+    // Get statistics (only real data)
     const totalPages = await Page.countDocuments();
     const publishedPages = await Page.countDocuments({ published: true });
     const draftPages = await Page.countDocuments({ published: false });
@@ -1664,7 +1685,7 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
       layout: 'admin',
       currentPath: '/admin/pages',
       title: 'Manage Pages',
-      pages,
+      pages: pageResult.data,
       searchParams: {
         search: search || '',
         published: published || 'all',
@@ -1678,8 +1699,11 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
         published: publishedPages,
         draft: draftPages,
         navigation: navigationPages,
-        filtered: pages.length
-      }
+        filtered: pageResult.totalCount,
+        realCount: pageResult.realCount,
+        dummyCount: pageResult.dummyCount
+      },
+      hasDummyData: pageResult.hasDummyData
     });
   } catch (error) {
     console.error('Manage pages error:', error);

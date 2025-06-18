@@ -157,6 +157,44 @@
     </div>
   </div>
 
+  <!-- Dummy Data Status -->
+  <% if (typeof siteSettings !== 'undefined' && siteSettings && siteSettings.adminSettings && siteSettings.adminSettings.showDummyData) { %>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="glass-card-dark border border-warning">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom border-warning">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-gear-fill text-warning me-2"></i>
+            <h5 class="card-title mb-0 text-white">Dummy Data Mode Active</h5>
+          </div>
+          <a href="/admin/website-settings#admin" class="btn btn-sm btn-warning">
+            <i class="bi bi-gear me-1"></i> Settings
+          </a>
+        </div>
+        <div class="card-body py-3">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <p class="text-white mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Dummy data is currently enabled for testing purposes. All management sections will show additional dummy records alongside real data.
+                Dummy records are clearly marked and do not affect real operations.
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <div class="d-flex align-items-center justify-content-end">
+                <span class="text-white-50 me-2">Records per section:</span>
+                <span class="badge bg-warning text-dark fs-6">
+                  <%= (siteSettings.adminSettings && siteSettings.adminSettings.dummyDataCount) ? siteSettings.adminSettings.dummyDataCount : 10 %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
   <!-- Analytics Section Title -->
   <div class="d-flex align-items-center mb-3 mt-2">
     <i class="bi bi-graph-up fs-4 text-success me-2"></i>

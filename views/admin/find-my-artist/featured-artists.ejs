@@ -147,8 +147,8 @@
           <% } else { %>
             <p class="mb-3">Drag and drop to reorder artists. Changes will be saved automatically.</p>
             <div class="table-responsive">
-              <table class="table table-bordered table-hover">
-                <thead>
+              <table class="table table-dark table-striped table-hover">
+                <thead class="table-dark">
                   <tr>
                     <th width="50px" class="text-white">#</th>
                     <th class="text-white">Artist</th>
@@ -160,36 +160,36 @@
                 <tbody id="featuredArtistsTable">
                   <% featuredArtists.forEach((featuredArtist, index) => { %>
                     <tr data-id="<%= featuredArtist._id %>" class="sortable-row">
-                      <td class="text-center">
-                        <i class="fas fa-grip-vertical handle" style="cursor: move;"></i>
+                      <td class="text-center text-white">
+                        <i class="bi bi-grip-vertical handle text-white" style="cursor: move;"></i>
                       </td>
-                      <td>
+                      <td class="text-white">
                         <div class="d-flex align-items-center">
                           <img src="<%= featuredArtist.artist.user.profileImage || '/images/default-profile.png' %>" alt="<%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %>" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
                           <div>
-                            <strong><%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %></strong>
+                            <strong class="text-white"><%= featuredArtist.artist.stageName || featuredArtist.artist.user.name %></strong>
                             <% if (featuredArtist.artist.genre) { %>
-                              <br><small class="text-muted"><%= featuredArtist.artist.genre %></small>
+                              <br><small class="text-white-50"><%= featuredArtist.artist.genre %></small>
                             <% } %>
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td class="text-white">
                         <%= featuredArtist.artist.city && featuredArtist.artist.state ?
                           `${featuredArtist.artist.city}, ${featuredArtist.artist.state}` :
                           'Location not specified' %>
                       </td>
-                      <td>
+                      <td class="text-white">
                         <%= featuredArtist.customDescription ?
                           (featuredArtist.customDescription.length > 50 ?
                             featuredArtist.customDescription.substring(0, 50) + '...' :
                             featuredArtist.customDescription) :
                           'No custom description' %>
                       </td>
-                      <td>
+                      <td class="text-white">
                         <form action="/admin/find-my-artist/featured-artists/<%= featuredArtist._id %>/remove" method="POST" class="d-inline">
                           <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to remove this artist from the featured list?')">
-                            <i class="fas fa-times"></i> Remove
+                            <i class="bi bi-x-lg"></i> Remove
                           </button>
                         </form>
                       </td>
@@ -205,38 +205,46 @@
 
     <div class="col-lg-4">
       <!-- Add Featured Artist Form -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <i class="fas fa-plus me-1"></i>
-          <span class="text-white">Add Featured Artist</span>
+      <div class="glass-card-dark border border-secondary mb-4">
+        <div class="card-header border-bottom border-secondary">
+          <h5 class="card-title mb-0 text-white">
+            <i class="bi bi-plus-circle me-2"></i>Add Featured Artist
+          </h5>
         </div>
         <div class="card-body">
           <form action="/admin/find-my-artist/featured-artists/add" method="POST">
             <div class="mb-3">
               <label for="artistId" class="form-label text-white">Select Artist</label>
-              <select class="form-select bg-dark text-white" id="artistId" name="artistId" required style="color: white !important; background-color: #2b2b2b !important;">
+              <select class="form-select bg-dark text-white border-secondary" id="artistId" name="artistId" required style="color: white !important; background-color: #2b2b2b !important;">
                 <option value="">-- Select an Artist --</option>
-                <% availableArtists.forEach(artist => { %>
-                  <option value="<%= artist._id %>">
-                    <%= artist.stageName || artist.user.name %>
-                    <% if (artist.city && artist.state) { %>
-                      (<%= artist.city %>, <%= artist.state %>)
-                    <% } %>
-                  </option>
-                <% }); %>
+                <% if (typeof availableArtists !== 'undefined' && availableArtists && availableArtists.length > 0) { %>
+                  <% availableArtists.forEach(artist => { %>
+                    <option value="<%= artist._id %>">
+                      <%= artist.stageName || artist.user.name %>
+                      <% if (artist.city && artist.state) { %>
+                        (<%= artist.city %>, <%= artist.state %>)
+                      <% } %>
+                    </option>
+                  <% }); %>
+                <% } %>
               </select>
-              <div class="form-text">Only verified artists who are not already featured are shown.</div>
+              <div class="form-text text-white-50">Only verified artists who are not already featured are shown.</div>
             </div>
 
             <div class="mb-3">
               <label for="customDescription" class="form-label text-white">Custom Description (Optional)</label>
-              <textarea class="form-control bg-dark text-white" id="customDescription" name="customDescription" rows="3" placeholder="Enter a custom description for this artist on the Find My Artist page" style="color: white !important; background-color: #2b2b2b !important;"></textarea>
-              <div class="form-text">If left empty, the artist's own description will be used.</div>
+              <textarea class="form-control bg-dark text-white border-secondary"
+                        id="customDescription"
+                        name="customDescription"
+                        rows="3"
+                        placeholder="Enter a custom description for this artist on the Find My Artist page"
+                        style="color: white !important; background-color: #2b2b2b !important;"></textarea>
+              <div class="form-text text-white-50">If left empty, the artist's own description will be used.</div>
             </div>
 
             <div class="d-grid">
               <button type="submit" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i> Add to Featured List
+                <i class="bi bi-plus-circle me-1"></i> Add to Featured List
               </button>
             </div>
           </form>
@@ -404,6 +412,8 @@ mark {
   padding: 0.1em 0.2em;
   border-radius: 0.2em;
 }
+
+
 
 /* Smooth transitions */
 #statsSection {

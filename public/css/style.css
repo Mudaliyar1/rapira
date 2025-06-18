@@ -257,42 +257,99 @@ h5.card-title.text-white,
 
 /* Glass Card Styles for Admin */
 .glass-card-dark {
-  background: rgba(30, 30, 30, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 10px;
+  background: rgba(30, 30, 30, 0.95) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .glass-card-dark .card-header {
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1rem 1.5rem;
-  color: var(--text);
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 1.25rem 1.5rem;
+  color: #ffffff !important;
+}
+
+.glass-card-dark .card-body {
+  background: transparent !important;
+  padding: 1.5rem;
+  color: #ffffff !important;
 }
 
 .glass-card-dark .card-footer {
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 1.25rem 1.5rem;
+  color: #ffffff !important;
 }
 
 .glass-card-dark .card-title {
-  color: var(--text);
+  color: #ffffff !important;
   margin-bottom: 0;
+  font-weight: 600;
 }
 
 .glass-card-dark .table {
   margin-bottom: 0;
+  background: transparent !important;
 }
 
 .glass-card-dark .table td,
 .glass-card-dark .table th {
-  color: var(--text) !important;
-  border-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+}
+
+.glass-card-dark .table thead th {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.glass-card-dark .table tbody tr {
+  background: transparent !important;
+}
+
+.glass-card-dark .table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix form controls in glass cards */
+.glass-card-dark .form-control,
+.glass-card-dark .form-select {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.glass-card-dark .form-control:focus,
+.glass-card-dark .form-select:focus {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+}
+
+.glass-card-dark .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-card-dark .form-label {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+.glass-card-dark .input-group-text {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
 }
 
 /* Navbar Styles */
@@ -1761,6 +1818,70 @@ footer .social-icons a:hover {
     margin-left: 0;
     padding: 1rem;
   }
+
+  /* Improve glass cards on mobile */
+  .glass-card-dark {
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+
+  .glass-card-dark .card-header {
+    padding: 1rem;
+  }
+
+  .glass-card-dark .card-body {
+    padding: 1rem;
+  }
+
+  /* Better table responsiveness */
+  .table-responsive {
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    margin-bottom: 0.25rem;
+    border-radius: 6px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-content {
+    padding: 0.75rem;
+  }
+
+  .glass-card-dark .card-header {
+    padding: 0.75rem;
+  }
+
+  .glass-card-dark .card-body {
+    padding: 0.75rem;
+  }
+
+  /* Stack form elements on mobile */
+  .row.g-3 > .col-md-2,
+  .row.g-3 > .col-md-4 {
+    margin-bottom: 0.75rem;
+  }
+
+  .d-flex.align-items-center.gap-2 {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  .d-flex.align-items-center.gap-2 .btn {
+    width: 100%;
+  }
 }
 
 .admin-content.expanded {
@@ -1894,114 +2015,128 @@ footer .social-icons a:hover {
 
 /* Improve table readability in dark mode */
 .admin-layout .table {
-  color: var(--text);
+  color: #ffffff !important;
+  background: transparent !important;
 }
 
 .admin-layout .table thead {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 .admin-layout .table thead th {
-  color: var(--text) !important;
+  color: #ffffff !important;
   font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .admin-layout .table tbody td {
-  color: var(--text) !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-layout .table tbody tr {
+  background: transparent !important;
 }
 
 .admin-layout .table-hover tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Fix table light header in dark mode */
 .admin-layout .table-light,
 .admin-layout .table thead.table-light th,
 .admin-layout .table thead th {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: var(--text) !important;
-  border-color: var(--border);
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Ensure all table cells have proper text color */
 .admin-layout .table td,
 .admin-layout .table th {
-  color: var(--text) !important;
+  color: #ffffff !important;
+  background: transparent !important;
 }
 
 /* Make sure all table text is visible */
 .admin-layout .table .text-white {
-  color: var(--text) !important;
+  color: #ffffff !important;
+}
+
+/* Fix specific table elements */
+.admin-layout .table .fw-medium,
+.admin-layout .table .fw-bold {
+  color: #ffffff !important;
+}
+
+.admin-layout .table a {
+  color: #6366f1 !important;
+}
+
+.admin-layout .table a:hover {
+  color: #8b5cf6 !important;
 }
 
 
-/* Fix users table specifically */
-.admin-layout .table tbody tr td,
-.admin-layout .table tbody tr td *,
-.admin-layout .table tbody tr td h6,
-.admin-layout .table tbody tr td div,
-.admin-layout .table tbody tr td span:not(.badge) {
-  color: #000 !important;
+/* Fix page management table specifically - override previous black text rules */
+.admin-layout .glass-card-dark .table tbody tr td,
+.admin-layout .glass-card-dark .table tbody tr td *,
+.admin-layout .glass-card-dark .table tbody tr td h6,
+.admin-layout .glass-card-dark .table tbody tr td div,
+.admin-layout .glass-card-dark .table tbody tr td span:not(.badge) {
+  color: #ffffff !important;
   font-weight: 500 !important;
 }
 
-/* Override text-white class in tables */
-.admin-layout .table .text-white,
-.admin-layout .table h6.text-white,
-.admin-layout .table td.text-white {
-  color: #000 !important;
+/* Override text-white class in glass card tables */
+.admin-layout .glass-card-dark .table .text-white,
+.admin-layout .glass-card-dark .table h6.text-white,
+.admin-layout .glass-card-dark .table td.text-white {
+  color: #ffffff !important;
   font-weight: 500 !important;
 }
 
-/* Force all table text to be visible always with dark black color */
-.admin-layout .table tbody td,
-.admin-layout .table tbody td *,
-.admin-layout .table tbody td span,
-.admin-layout .table tbody td div,
-.admin-layout .table tbody tr,
-.admin-layout .table tbody tr *,
-.admin-layout .table tbody tr span,
-.admin-layout .table tbody tr div {
-  color: #000 !important;
+/* Force all glass card table text to be white */
+.admin-layout .glass-card-dark .table tbody td,
+.admin-layout .glass-card-dark .table tbody td *,
+.admin-layout .glass-card-dark .table tbody td span,
+.admin-layout .glass-card-dark .table tbody td div,
+.admin-layout .glass-card-dark .table tbody tr,
+.admin-layout .glass-card-dark .table tbody tr *,
+.admin-layout .glass-card-dark .table tbody tr span,
+.admin-layout .glass-card-dark .table tbody tr div {
+  color: #ffffff !important;
   opacity: 1 !important;
   visibility: visible !important;
   font-weight: 500 !important;
 }
 
-/* Ensure all text in tables is visible */
-.admin-layout .table,
-.admin-layout .table td,
-.admin-layout .table th,
-.admin-layout .table tr,
-.admin-layout .table h6,
-.admin-layout .table div,
-.admin-layout .table span:not(.badge) {
-  color: #000 !important;
+/* Ensure all text in glass card tables is white */
+.admin-layout .glass-card-dark .table,
+.admin-layout .glass-card-dark .table td,
+.admin-layout .glass-card-dark .table th,
+.admin-layout .glass-card-dark .table tr,
+.admin-layout .glass-card-dark .table h6,
+.admin-layout .glass-card-dark .table div,
+.admin-layout .glass-card-dark .table span:not(.badge) {
+  color: #ffffff !important;
 }
 
-/* Override any Bootstrap table text colors */
-.admin-layout .table-dark,
-.admin-layout .table-dark td,
-.admin-layout .table-dark th,
-.admin-layout .table-dark tr,
-.admin-layout .table tr,
-.admin-layout .table tr td,
-.admin-layout .table tr th,
-.admin-layout .table tr span,
-.admin-layout .table tr div,
-.table tr,
-.table tr td,
-.table tr th,
-.table tr span,
-.table tr div {
+/* Override any text-muted classes in glass card tables */
+.admin-layout .glass-card-dark .table .text-muted {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Keep black text for non-glass card tables (like user management) */
+.admin-layout .table:not(.glass-card-dark .table) tbody tr td,
+.admin-layout .table:not(.glass-card-dark .table) tbody tr td *,
+.admin-layout .table:not(.glass-card-dark .table) tbody tr td h6,
+.admin-layout .table:not(.glass-card-dark .table) tbody tr td div,
+.admin-layout .table:not(.glass-card-dark .table) tbody tr td span:not(.badge) {
   color: #000 !important;
   font-weight: 500 !important;
-}
-
-/* Override any text-muted classes in tables */
-.admin-layout .table .text-muted,
-.table .text-muted {
-  color: #333 !important;
 }
 
 .admin-layout .card {

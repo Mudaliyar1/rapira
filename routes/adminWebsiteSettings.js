@@ -252,4 +252,70 @@ router.delete('/logo', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST - Update Admin Settings
+router.post('/admin', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const settings = await WebsiteSettings.getSettings();
+    const { showDummyData, dummyDataCount } = req.body;
+
+    // Initialize adminSettings if it doesn't exist
+    if (!settings.adminSettings) {
+      settings.adminSettings = {};
+    }
+
+    settings.adminSettings.showDummyData = showDummyData === 'on';
+    settings.adminSettings.dummyDataCount = parseInt(dummyDataCount) || 10;
+
+    // Validate dummy data count
+    if (settings.adminSettings.dummyDataCount < 5) {
+      settings.adminSettings.dummyDataCount = 5;
+    } else if (settings.adminSettings.dummyDataCount > 50) {
+      settings.adminSettings.dummyDataCount = 50;
+    }
+
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    // Clear cache to force reload of settings
+    clearSettingsCache();
+
+    req.flash('success', 'Admin settings updated successfully');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating admin settings:', error);
+    req.flash('error', 'Failed to update admin settings');
+    res.redirect('/admin/website-settings');
+  }
+});
+
+// POST - Preview Dummy Data
+router.post('/preview-dummy-data', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { count } = req.body;
+    const DummyDataGenerator = require('../utils/dummyDataGenerator');
+    const generator = new DummyDataGenerator();
+
+    const dummyCount = Math.min(Math.max(parseInt(count) || 10, 5), 50);
+    const preview = generator.generateAllDummyData(dummyCount);
+
+    res.json({
+      success: true,
+      preview: {
+        users: preview.users.slice(0, 5),
+        artists: preview.artists.slice(0, 5),
+        concerts: preview.concerts.slice(0, 5),
+        content: preview.content.slice(0, 5),
+        tickets: preview.tickets.slice(0, 5),
+        subscriptions: preview.subscriptions.slice(0, 5)
+      }
+    });
+  } catch (error) {
+    console.error('Error generating dummy data preview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate dummy data preview'
+    });
+  }
+});
+
 module.exports = router;

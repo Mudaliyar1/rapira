@@ -65,6 +65,10 @@ async function initializeWebsiteSettings() {
           primaryColor: '#6f42c1',
           secondaryColor: '#e91e63',
           accentColor: '#ff9800'
+        },
+        adminSettings: {
+          showDummyData: false,
+          dummyDataCount: 10
         }
       });
 

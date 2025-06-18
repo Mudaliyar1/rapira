@@ -129,6 +129,11 @@
       <% if (typeof searchParams !== 'undefined' && searchParams && (searchParams.search || searchParams.published !== 'all' || searchParams.showInNavigation !== 'all' || searchParams.dateRange !== 'all')) { %>
         <span class="badge bg-info ms-2"><%= (typeof stats !== 'undefined' && stats) ? stats.filtered : 0 %> results</span>
       <% } %>
+      <% if (typeof hasDummyData !== 'undefined' && hasDummyData && typeof stats !== 'undefined' && stats && stats.dummyCount > 0) { %>
+        <span class="badge bg-warning text-dark ms-2" title="<%= stats.dummyCount %> dummy records included for testing">
+          <i class="bi bi-gear"></i> +<%= stats.dummyCount %> Dummy
+        </span>
+      <% } %>
     </h5>
     <button class="btn btn-sm btn-outline-light" id="exportPages">
       <i class="bi bi-download me-1"></i> Export
@@ -152,12 +157,23 @@
             <% pages.forEach(page => { %>
               <tr>
                 <td>
-                  <div class="fw-medium text-white"><%= page.title %></div>
+                  <div class="fw-medium text-white">
+                    <%= page.title %>
+                    <% if (page.isDummy) { %>
+                      <span class="badge bg-warning text-dark ms-2" title="This is dummy data for testing purposes">
+                        <i class="bi bi-gear"></i> DUMMY
+                      </span>
+                    <% } %>
+                  </div>
                 </td>
                 <td>
-                  <a href="/pages/<%= page.slug %>" target="_blank" class="text-decoration-none text-primary">
-                    /pages/<%= page.slug %>
-                  </a>
+                  <% if (page.isDummy) { %>
+                    <span class="text-muted">/pages/<%= page.slug %></span>
+                  <% } else { %>
+                    <a href="/pages/<%= page.slug %>" target="_blank" class="text-decoration-none text-primary">
+                      /pages/<%= page.slug %>
+                    </a>
+                  <% } %>
                 </td>
                 <td>
                   <span class="badge <%= page.published ? 'bg-success' : 'bg-secondary' %>">
@@ -171,17 +187,23 @@
                 </td>
                 <td class="text-white"><%= new Date(page.createdAt).toLocaleDateString() %></td>
                 <td>
-                  <div class="btn-group">
-                    <a href="/admin/pages/<%= page._id %>/edit" class="btn btn-sm btn-outline-primary me-1">
-                      <i class="bi bi-pencil"></i> Edit
-                    </a>
-                    <a href="/pages/<%= page.slug %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
-                      <i class="bi bi-eye"></i> View
-                    </a>
-                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= page._id %>">
-                      <i class="bi bi-trash"></i> Delete
-                    </button>
-                  </div>
+                  <% if (page.isDummy) { %>
+                    <span class="text-muted small">
+                      <i class="bi bi-info-circle"></i> Dummy Data
+                    </span>
+                  <% } else { %>
+                    <div class="btn-group">
+                      <a href="/admin/pages/<%= page._id %>/edit" class="btn btn-sm btn-outline-primary me-1">
+                        <i class="bi bi-pencil"></i> Edit
+                      </a>
+                      <a href="/pages/<%= page.slug %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                        <i class="bi bi-eye"></i> View
+                      </a>
+                      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= page._id %>">
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </div>
+                  <% } %>
                 </td>
               </tr>
             <% }); %>
@@ -336,23 +358,51 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* Custom styles for search and filter */
-.form-control:focus, .form-select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+/* Page Management Specific Styles */
+.glass-card-dark {
+  background: rgba(30, 30, 30, 0.95) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.input-group-text {
-  border-color: #495057;
+/* Custom styles for search and filter */
+.glass-card-dark .form-control:focus,
+.glass-card-dark .form-select:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.glass-card-dark .form-control,
+.glass-card-dark .form-select {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.glass-card-dark .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-card-dark .input-group-text {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
 }
 
 .badge {
   font-size: 0.75em;
+  font-weight: 500;
 }
 
 mark {
   padding: 0.1em 0.2em;
   border-radius: 0.2em;
+  background-color: #ffc107 !important;
+  color: #000 !important;
 }
 
 /* Smooth transitions */
@@ -361,34 +411,81 @@ mark {
 }
 
 /* Enhanced table styles */
-tbody tr {
+.glass-card-dark tbody tr {
   transition: all 0.2s ease;
+  background: transparent !important;
 }
 
-tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Dark theme enhancements */
-.glass-card-dark {
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.glass-card-dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Button enhancements */
 .btn {
   transition: all 0.2s ease;
+  border-radius: 8px;
 }
 
 .btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-group .btn {
+  border-radius: 6px;
+  margin-right: 4px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Modal improvements */
+.modal-content {
+  background: rgba(30, 30, 30, 0.95) !important;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px;
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .row.g-3 > .col-md-2, .row.g-3 > .col-md-4 {
     margin-bottom: 1rem;
+  }
+
+  .glass-card-dark .card-body {
+    padding: 1rem;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-group .btn {
+    margin-bottom: 4px;
+    margin-right: 0;
+  }
+}
+
+/* Fix table responsiveness */
+@media (max-width: 992px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .btn-group .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
   }
 }
 </style>
