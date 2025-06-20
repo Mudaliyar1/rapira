@@ -286,7 +286,8 @@
   </div>
 </section>
 
-<!-- Call to Action Section -->
+<!-- Call to Action Section - Only show if user is not logged in -->
+<% if (typeof currentUser === 'undefined' || !currentUser) { %>
 <section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
   <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-purple" style="z-index: -1;"></div>
   <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
@@ -299,6 +300,7 @@
     </div>
   </div>
 </section>
+<% } %>
 
 
 

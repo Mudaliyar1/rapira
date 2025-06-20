@@ -52,8 +52,34 @@ router.get('/', async (req, res) => {
 });
 
 // About page
-router.get('/about', (req, res) => {
-  res.render('about');
+router.get('/about', async (req, res) => {
+  try {
+    const currentUser = req.session.user || null;
+
+    // Import TeamMember model
+    const TeamMember = require('../models/TeamMember');
+
+    // Get active team members ordered by display order
+    const teamMembers = await TeamMember.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
+
+    res.render('about', {
+      currentUser,
+      teamMembers,
+      path: '/about',
+      title: 'About Us - Rapira',
+      description: 'Learn about Rapira, the ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.'
+    });
+  } catch (error) {
+    console.error('Error loading about page:', error);
+    const currentUser = req.session.user || null;
+    res.render('about', {
+      currentUser,
+      teamMembers: [],
+      path: '/about',
+      title: 'About Us - Rapira',
+      description: 'Learn about Rapira, the ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.'
+    });
+  }
 });
 
 // Contact page
@@ -300,10 +326,12 @@ router.get('/email-test', (req, res) => {
 
 // Demo page
 router.get('/demo', (req, res) => {
+  const currentUser = req.session.user || null;
   res.render('demo', {
     title: 'Interactive Demo - Rapira',
     description: 'Try out Rapira features with our interactive demo. Learn how to become an artist, create concerts, purchase tickets, and more.',
-    path: '/demo'
+    path: '/demo',
+    currentUser
   });
 });
 

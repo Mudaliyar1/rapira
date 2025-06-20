@@ -425,6 +425,7 @@ const subscriptionRoutes = require('./routes/subscriptions');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const adminSessionRoutes = require('./routes/adminSessions');
 const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
+const adminAboutRoutes = require('./routes/adminAbout');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
@@ -493,6 +494,9 @@ app.use('/admin/sessions', adminSessionRoutes);
 
 // Mount website settings routes
 app.use('/admin/website-settings', adminWebsiteSettingsRoutes);
+
+// Mount admin about routes
+app.use('/admin/about', adminAboutRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');

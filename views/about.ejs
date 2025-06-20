@@ -1,0 +1,162 @@
+<%- contentFor('title') %>About Us - Rapira
+
+<%- contentFor('body') %>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Hero Section -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold mb-4">About <span class="gradient-text-purple">Rapira</span></h1>
+        <p class="lead text-muted">The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.</p>
+      </div>
+
+      <!-- Mission Section -->
+      <div class="glass-card-dark mb-5">
+        <div class="card-body p-4 p-md-5">
+          <h2 class="fw-bold mb-4 gradient-text-blue">Our Mission</h2>
+          <p class="mb-4">
+            Rapira is dedicated to empowering the Indian rap and hip-hop community by providing a comprehensive platform 
+            where artists can showcase their talent, connect with fans, and build their careers. We believe in the power 
+            of music to bring people together and create meaningful experiences.
+          </p>
+          <p class="mb-0">
+            Our mission is to bridge the gap between emerging artists and music lovers, creating opportunities for 
+            discovery, collaboration, and growth within the vibrant Indian rap scene.
+          </p>
+        </div>
+      </div>
+
+      <!-- Features Section -->
+      <div class="glass-card-dark mb-5">
+        <div class="card-body p-4 p-md-5">
+          <h2 class="fw-bold mb-4 gradient-text-green">What We Offer</h2>
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 me-3">
+                  <div class="bg-gradient-purple rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-person-badge text-white"></i>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="fw-bold">Artist Profiles</h5>
+                  <p class="text-muted mb-0">Create comprehensive profiles to showcase your music, style, and journey as an artist.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 me-3">
+                  <div class="bg-gradient-blue rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-calendar-event text-white"></i>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="fw-bold">Concert Management</h5>
+                  <p class="text-muted mb-0">Organize and promote your concerts with our integrated event management system.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 me-3">
+                  <div class="bg-gradient-orange rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-ticket-perforated text-white"></i>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="fw-bold">Ticket Sales</h5>
+                  <p class="text-muted mb-0">Seamless ticket purchasing experience for fans with secure payment processing.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 me-3">
+                  <div class="bg-gradient-green rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-music-note-beamed text-white"></i>
+                  </div>
+                </div>
+                <div>
+                  <h5 class="fw-bold">Content Sharing</h5>
+                  <p class="text-muted mb-0">Share your music, videos, and creative content with a growing community of fans.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Section -->
+      <div class="glass-card-dark mb-5">
+        <div class="card-body p-4 p-md-5">
+          <h2 class="fw-bold mb-4 gradient-text-orange">Our Team</h2>
+          <p class="mb-4">
+            Rapira is built by a passionate team of music enthusiasts, developers, and industry professionals
+            who understand the unique challenges and opportunities in the Indian rap scene.
+          </p>
+
+          <% if (typeof teamMembers !== 'undefined' && teamMembers && teamMembers.length > 0) { %>
+            <!-- Team Members Grid -->
+            <div class="row g-4 mt-4">
+              <% teamMembers.forEach(member => { %>
+                <div class="col-lg-4 col-md-6">
+                  <div class="text-center">
+                    <img src="<%= member.image %>"
+                         alt="<%= member.name %>"
+                         class="rounded-circle mb-3"
+                         style="width: 150px; height: 150px; object-fit: cover;">
+                    <h5 class="fw-bold text-white mb-1"><%= member.name %></h5>
+                    <p class="text-primary mb-3"><%= member.position %></p>
+                    <p class="text-muted mb-3"><%= member.bio %></p>
+
+                    <!-- Social Links -->
+                    <% if (member.socialLinks.linkedin || member.socialLinks.twitter || member.socialLinks.instagram || member.socialLinks.email) { %>
+                      <div class="d-flex justify-content-center gap-2">
+                        <% if (member.socialLinks.linkedin) { %>
+                          <a href="<%= member.socialLinks.linkedin %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-linkedin"></i>
+                          </a>
+                        <% } %>
+                        <% if (member.socialLinks.twitter) { %>
+                          <a href="<%= member.socialLinks.twitter %>" target="_blank" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-twitter"></i>
+                          </a>
+                        <% } %>
+                        <% if (member.socialLinks.instagram) { %>
+                          <a href="<%= member.socialLinks.instagram %>" target="_blank" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-instagram"></i>
+                          </a>
+                        <% } %>
+                        <% if (member.socialLinks.email) { %>
+                          <a href="mailto:<%= member.socialLinks.email %>" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-envelope"></i>
+                          </a>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="mb-0">
+              We're committed to continuously improving our platform based on feedback from artists and fans,
+              ensuring that Rapira remains the go-to destination for Indian rap music.
+            </p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Contact CTA -->
+      <div class="text-center">
+        <h3 class="fw-bold mb-3">Ready to Join the Community?</h3>
+        <p class="text-muted mb-4">Whether you're an artist looking to share your music or a fan eager to discover new talent, Rapira is here for you.</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+          <a href="/auth/register" class="btn btn-gradient-purple btn-lg">Get Started</a>
+          <a href="/contact" class="btn btn-outline-light btn-lg">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

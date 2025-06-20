@@ -5,10 +5,12 @@
 
 // Demo home page
 exports.demoHome = (req, res) => {
+  const currentUser = req.session.user || null;
   res.render('demo', {
     title: 'Interactive Demo - Rapira',
     description: 'Try out Rapira features with our interactive demo. Learn how to become an artist, create concerts, purchase tickets, and more.',
     path: '/demo',
+    currentUser,
     layout: 'layouts/demo' // Use the demo layout
   });
 };

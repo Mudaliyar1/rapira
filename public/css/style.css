@@ -2139,6 +2139,160 @@ footer .social-icons a:hover {
   font-weight: 500 !important;
 }
 
+/* Artist Dashboard Table Readability Fix */
+/* Override admin-layout styles for artist dashboard tables */
+body:has([href*="/artists/dashboard"]) .admin-layout .table,
+body:has([href*="/artists/manage-content"]) .admin-layout .table,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table {
+  color: #212529 !important;
+  background-color: #ffffff !important;
+}
+
+/* Artist dashboard table headers */
+body:has([href*="/artists/dashboard"]) .admin-layout .table thead th,
+body:has([href*="/artists/manage-content"]) .admin-layout .table thead th,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table thead th,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table thead th {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  font-weight: 600 !important;
+}
+
+/* Artist dashboard table body cells */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td {
+  color: #212529 !important;
+  background-color: #ffffff !important;
+  border-color: #dee2e6 !important;
+}
+
+/* Artist dashboard table text elements */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td *,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td *,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td *,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td * {
+  color: #212529 !important;
+}
+
+/* Artist dashboard table specific elements */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td h6,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td h6,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td h6,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td h6 {
+  color: #212529 !important;
+  font-weight: 600 !important;
+}
+
+/* Artist dashboard table small text */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td small,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td small,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td small,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td small {
+  color: #6c757d !important;
+}
+
+/* Artist dashboard table hover effects */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr:hover,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr:hover,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr:hover,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Artist dashboard table hover text */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr:hover td,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr:hover td,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr:hover td,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr:hover td {
+  color: #212529 !important;
+}
+
+/* Artist dashboard table links */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td a,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td a,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td a,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td a {
+  color: #0d6efd !important;
+}
+
+/* Artist dashboard table buttons */
+body:has([href*="/artists/dashboard"]) .admin-layout .table tbody tr td .btn-light,
+body:has([href*="/artists/manage-content"]) .admin-layout .table tbody tr td .btn-light,
+body:has([href*="/artists/manage-concerts"]) .admin-layout .table tbody tr td .btn-light,
+body:has([href*="/artists/manage-tickets"]) .admin-layout .table tbody tr td .btn-light {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  color: #212529 !important;
+}
+
+/* Alternative approach: Target artist dashboard by body class or specific containers */
+.artist-dashboard .admin-layout .table,
+.artist-content .admin-layout .table {
+  color: #212529 !important;
+  background-color: #ffffff !important;
+}
+
+.artist-dashboard .admin-layout .table thead th,
+.artist-content .admin-layout .table thead th {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  font-weight: 600 !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr td,
+.artist-content .admin-layout .table tbody tr td {
+  color: #212529 !important;
+  background-color: #ffffff !important;
+  border-color: #dee2e6 !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr td *,
+.artist-content .admin-layout .table tbody tr td * {
+  color: #212529 !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr td h6,
+.artist-content .admin-layout .table tbody tr td h6 {
+  color: #212529 !important;
+  font-weight: 600 !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr td small,
+.artist-content .admin-layout .table tbody tr td small {
+  color: #6c757d !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr:hover,
+.artist-content .admin-layout .table tbody tr:hover {
+  background-color: #f8f9fa !important;
+}
+
+.artist-dashboard .admin-layout .table tbody tr:hover td,
+.artist-content .admin-layout .table tbody tr:hover td {
+  color: #212529 !important;
+}
+
+/* Ensure badges maintain their colors */
+.artist-dashboard .admin-layout .table .badge,
+.artist-content .admin-layout .table .badge,
+body:has([href*="/artists/"]) .admin-layout .table .badge {
+  color: #ffffff !important;
+}
+
+/* Ensure dropdown buttons work properly */
+.artist-dashboard .admin-layout .table .dropdown-toggle,
+.artist-content .admin-layout .table .dropdown-toggle,
+body:has([href*="/artists/"]) .admin-layout .table .dropdown-toggle {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+}
+
 .admin-layout .card {
   background-color: var(--dark-bg-alt);
   border: 1px solid var(--border);

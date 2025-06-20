@@ -1,0 +1,167 @@
+<%- contentFor('body') %>
+
+<!-- Add Team Member -->
+<div class="container-fluid px-0">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h3 mb-0 text-white">Add Team Member</h1>
+          <p class="text-muted mb-0">Add a new team member to the About Us page</p>
+        </div>
+        <a href="/admin/about" class="btn btn-outline-light">
+          <i class="bi bi-arrow-left me-2"></i>Back to Team Members
+        </a>
+      </div>
+
+      <!-- Add Form -->
+      <div class="glass-card-dark">
+        <div class="card-body p-4">
+          <form method="POST" action="/admin/about/add" enctype="multipart/form-data">
+            <div class="row g-4">
+              <!-- Basic Information -->
+              <div class="col-12">
+                <h5 class="text-white mb-3">
+                  <i class="bi bi-person me-2"></i>Basic Information
+                </h5>
+              </div>
+
+              <div class="col-md-6">
+                <label for="name" class="form-label text-white">Full Name *</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" 
+                       id="name" name="name" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="position" class="form-label text-white">Position/Role *</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" 
+                       id="position" name="position" placeholder="e.g., CEO, Developer, Designer" required>
+              </div>
+
+              <div class="col-12">
+                <label for="bio" class="form-label text-white">Bio/Description *</label>
+                <textarea class="form-control bg-dark text-white border-secondary" 
+                          id="bio" name="bio" rows="4" 
+                          placeholder="Brief description about the team member..." required></textarea>
+              </div>
+
+              <!-- Profile Image -->
+              <div class="col-12">
+                <h5 class="text-white mb-3 mt-4">
+                  <i class="bi bi-image me-2"></i>Profile Image
+                </h5>
+              </div>
+
+              <div class="col-12">
+                <label for="image" class="form-label text-white">Profile Image</label>
+                <input type="file" class="form-control bg-dark text-white border-secondary" 
+                       id="image" name="image" accept="image/*">
+                <div class="form-text text-muted">
+                  Upload a square image (1:1 ratio) for best results. Max size: 5MB
+                </div>
+              </div>
+
+              <!-- Social Links -->
+              <div class="col-12">
+                <h5 class="text-white mb-3 mt-4">
+                  <i class="bi bi-share me-2"></i>Social Links (Optional)
+                </h5>
+              </div>
+
+              <div class="col-md-6">
+                <label for="linkedin" class="form-label text-white">
+                  <i class="bi bi-linkedin me-1"></i>LinkedIn URL
+                </label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" 
+                       id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/username">
+              </div>
+
+              <div class="col-md-6">
+                <label for="twitter" class="form-label text-white">
+                  <i class="bi bi-twitter me-1"></i>Twitter URL
+                </label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" 
+                       id="twitter" name="twitter" placeholder="https://twitter.com/username">
+              </div>
+
+              <div class="col-md-6">
+                <label for="instagram" class="form-label text-white">
+                  <i class="bi bi-instagram me-1"></i>Instagram URL
+                </label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" 
+                       id="instagram" name="instagram" placeholder="https://instagram.com/username">
+              </div>
+
+              <div class="col-md-6">
+                <label for="email" class="form-label text-white">
+                  <i class="bi bi-envelope me-1"></i>Email Address
+                </label>
+                <input type="email" class="form-control bg-dark text-white border-secondary" 
+                       id="email" name="email" placeholder="email@example.com">
+              </div>
+
+              <!-- Display Settings -->
+              <div class="col-12">
+                <h5 class="text-white mb-3 mt-4">
+                  <i class="bi bi-gear me-2"></i>Display Settings
+                </h5>
+              </div>
+
+              <div class="col-md-6">
+                <label for="order" class="form-label text-white">Display Order</label>
+                <input type="number" class="form-control bg-dark text-white border-secondary" 
+                       id="order" name="order" value="0" min="0">
+                <div class="form-text text-muted">
+                  Lower numbers appear first. Use 0 for default ordering.
+                </div>
+              </div>
+
+              <!-- Submit Buttons -->
+              <div class="col-12">
+                <hr class="border-secondary my-4">
+                <div class="d-flex gap-3">
+                  <button type="submit" class="btn btn-gradient-purple">
+                    <i class="bi bi-plus-circle me-2"></i>Add Team Member
+                  </button>
+                  <a href="/admin/about" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                  </a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="glass-card-dark mt-4">
+        <div class="card-body">
+          <h5 class="text-white mb-3">
+            <i class="bi bi-eye me-2"></i>Preview Tips
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-image text-primary me-2"></i>
+                <small class="text-muted">Use square images for consistent display</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-type text-success me-2"></i>
+                <small class="text-muted">Keep bio concise and engaging</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-sort-numeric-up text-warning me-2"></i>
+                <small class="text-muted">Use order to control team member sequence</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
