@@ -95,58 +95,58 @@
             Rapira is built by a passionate team of music enthusiasts, developers, and industry professionals
             who understand the unique challenges and opportunities in the Indian rap scene.
           </p>
-
-          <% if (typeof teamMembers !== 'undefined' && teamMembers && teamMembers.length > 0) { %>
-            <!-- Team Members Grid -->
-            <div class="row g-4 mt-4">
-              <% teamMembers.forEach(member => { %>
-                <div class="col-lg-4 col-md-6">
-                  <div class="text-center">
-                    <img src="<%= member.image %>"
-                         alt="<%= member.name %>"
-                         class="rounded-circle mb-3"
-                         style="width: 150px; height: 150px; object-fit: cover;">
-                    <h5 class="fw-bold text-white mb-1"><%= member.name %></h5>
-                    <p class="text-primary mb-3"><%= member.position %></p>
-                    <p class="text-muted mb-3"><%= member.bio %></p>
-
-                    <!-- Social Links -->
-                    <% if (member.socialLinks.linkedin || member.socialLinks.twitter || member.socialLinks.instagram || member.socialLinks.email) { %>
-                      <div class="d-flex justify-content-center gap-2">
-                        <% if (member.socialLinks.linkedin) { %>
-                          <a href="<%= member.socialLinks.linkedin %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-linkedin"></i>
-                          </a>
-                        <% } %>
-                        <% if (member.socialLinks.twitter) { %>
-                          <a href="<%= member.socialLinks.twitter %>" target="_blank" class="btn btn-sm btn-outline-info">
-                            <i class="bi bi-twitter"></i>
-                          </a>
-                        <% } %>
-                        <% if (member.socialLinks.instagram) { %>
-                          <a href="<%= member.socialLinks.instagram %>" target="_blank" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-instagram"></i>
-                          </a>
-                        <% } %>
-                        <% if (member.socialLinks.email) { %>
-                          <a href="mailto:<%= member.socialLinks.email %>" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-envelope"></i>
-                          </a>
-                        <% } %>
-                      </div>
-                    <% } %>
-                  </div>
-                </div>
-              <% }); %>
-            </div>
-          <% } else { %>
-            <p class="mb-0">
-              We're committed to continuously improving our platform based on feedback from artists and fans,
-              ensuring that Rapira remains the go-to destination for Indian rap music.
-            </p>
-          <% } %>
         </div>
       </div>
+
+      <% if (typeof teamMembers !== 'undefined' && teamMembers && teamMembers.length > 0) { %>
+        <!-- Team Members Grid -->
+        <div class="row g-4 mb-5">
+          <% teamMembers.forEach(member => { %>
+            <div class="col-lg-4 col-md-6">
+              <div class="glass-card-dark">
+                <div class="card-body p-4 text-center">
+                  <img src="<%= member.image || '/images/default-profile.svg' %>"
+                       alt="<%= member.name %>"
+                       class="rounded-circle mb-3"
+                       style="width: 150px; height: 150px; object-fit: cover;"
+                       onerror="this.onerror=null; this.src='/images/default-profile.svg';">
+                  <h5 class="fw-bold text-white mb-1"><%= member.name %></h5>
+                  <p class="text-primary mb-3"><%= member.position %></p>
+                  <% if (member.bio && member.bio.trim()) { %>
+                    <p class="text-muted mb-3"><%= member.bio %></p>
+                  <% } %>
+
+                  <!-- Social Links -->
+                  <% if (member.socialLinks.linkedin || member.socialLinks.twitter || member.socialLinks.instagram || member.socialLinks.email) { %>
+                    <div class="d-flex justify-content-center gap-2 mt-auto">
+                      <% if (member.socialLinks.linkedin) { %>
+                        <a href="<%= member.socialLinks.linkedin %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-linkedin"></i>
+                        </a>
+                      <% } %>
+                      <% if (member.socialLinks.twitter) { %>
+                        <a href="<%= member.socialLinks.twitter %>" target="_blank" class="btn btn-sm btn-outline-info">
+                          <i class="bi bi-twitter"></i>
+                        </a>
+                      <% } %>
+                      <% if (member.socialLinks.instagram) { %>
+                        <a href="<%= member.socialLinks.instagram %>" target="_blank" class="btn btn-sm btn-outline-danger">
+                          <i class="bi bi-instagram"></i>
+                        </a>
+                      <% } %>
+                      <% if (member.socialLinks.email) { %>
+                        <a href="mailto:<%= member.socialLinks.email %>" class="btn btn-sm btn-outline-success">
+                          <i class="bi bi-envelope"></i>
+                        </a>
+                      <% } %>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
 
       <!-- Contact CTA -->
       <div class="text-center">

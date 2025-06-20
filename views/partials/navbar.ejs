@@ -74,11 +74,12 @@
         <!-- Help & Support Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/demo') ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/about' || path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/demo') ? 'active' : '' %>"
              href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-question-circle me-1"></i> Help & Support
           </a>
           <ul class="dropdown-menu glass-card-dark" aria-labelledby="helpDropdown">
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/about' ? 'active' : '' %>" href="/about"><i class="bi bi-info-circle me-2"></i>About Us</a></li>
             <% if (menuSettings.helpSupportMenu.items.demo) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/demo' ? 'active' : '' %>" href="/demo"><i class="bi bi-play-circle me-2"></i>Interactive Demo</a></li>
             <% } %>
