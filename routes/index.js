@@ -35,6 +35,16 @@ router.get('/', async (req, res) => {
         populate: { path: 'user', select: 'name' }
       });
 
+    // Get featured products - limit to 4
+    const Product = require('../models/Product');
+    const featuredProducts = await Product.find({
+      isActive: true,
+      isFeatured: true
+    })
+      .sort({ totalSales: -1, createdAt: -1 })
+      .limit(4)
+      .lean();
+
     // Get current user data
     const currentUser = req.session.user || null;
 
@@ -42,6 +52,7 @@ router.get('/', async (req, res) => {
       upcomingConcerts,
       featuredArtists,
       latestContent,
+      featuredProducts,
       user: currentUser
     });
   } catch (error) {
@@ -180,6 +191,17 @@ router.get('/subscription-policy', (req, res) => {
     path: '/subscription-policy',
     title: 'Subscription Policy - Rapira',
     description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.'
+  });
+});
+
+// Shopping policy
+router.get('/shopping-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('shopping-policy', {
+    currentUser,
+    path: '/shopping-policy',
+    title: 'Shopping Policy - Rapira',
+    description: 'RAPIRA shopping policy covers merchandise purchases, returns, exchanges, shipping, and customer support.'
   });
 });
 

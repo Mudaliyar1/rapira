@@ -81,7 +81,7 @@
         <!-- Help & Support Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/about' || path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/demo') ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/about' || path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/demo') ? 'active' : '' %>"
              href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-question-circle me-1"></i> Help & Support
           </a>
@@ -108,6 +108,7 @@
             <% if (menuSettings.helpSupportMenu.items.subscriptionPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/subscription-policy' ? 'active' : '' %>" href="/subscription-policy"><i class="bi bi-star me-2"></i>Subscription Policy</a></li>
             <% } %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/shopping-policy' ? 'active' : '' %>" href="/shopping-policy"><i class="bi bi-bag-check me-2"></i>Shopping Policy</a></li>
           </ul>
         </li>
         <% } %>

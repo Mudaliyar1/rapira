@@ -454,6 +454,76 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize filter toggles
   initializeFilterToggles();
 
+  // Newsletter form functionality
+  const newsletterForm = document.getElementById('newsletterForm');
+  if (newsletterForm) {
+    newsletterForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const emailInput = this.querySelector('input[type="email"]');
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.innerHTML;
+
+      // Basic email validation
+      const email = emailInput.value.trim();
+      if (!email || !isValidEmail(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+      }
+
+      // Show loading state
+      submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Subscribing...';
+      submitBtn.disabled = true;
+
+      // Simulate API call (replace with actual newsletter subscription logic)
+      setTimeout(() => {
+        // Reset form
+        emailInput.value = '';
+        submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Subscribed!';
+        submitBtn.classList.remove('btn-gradient-orange');
+        submitBtn.classList.add('btn-success');
+
+        showNotification('Thank you for subscribing to our newsletter!', 'success');
+
+        // Reset button after 3 seconds
+        setTimeout(() => {
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('btn-success');
+          submitBtn.classList.add('btn-gradient-orange');
+        }, 3000);
+      }, 1500);
+    });
+  }
+
+  // Email validation helper
+  function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Notification helper
+  function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+
   // Initialize all dropdowns
   const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
   dropdownElementList.map(function (dropdownToggleEl) {

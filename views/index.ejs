@@ -268,7 +268,227 @@
   </div>
 </section>
 
+<!-- Featured Merchandise Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text-green">Featured Merchandise</h2>
+      <a href="/shop" class="btn btn-outline-primary">Shop All <i class="bi bi-bag ms-1"></i></a>
+    </div>
 
+    <div class="row g-4">
+      <% if (featuredProducts && featuredProducts.length > 0) { %>
+        <% featuredProducts.forEach((product, index) => { %>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+            <div class="glass-card-dark card product-card h-100">
+              <div class="position-relative overflow-hidden">
+                <img src="<%= product.images[0] %>" class="card-img-top product-image" alt="<%= product.name %>" style="height: 250px; object-fit: cover;">
+
+                <!-- Featured Badge -->
+                <div class="position-absolute top-0 start-0 m-3">
+                  <span class="badge bg-gradient-green px-3 py-2">
+                    <i class="bi bi-star-fill me-1"></i> Featured
+                  </span>
+                </div>
+
+                <!-- Stock Status -->
+                <% if (product.totalStock === 0) { %>
+                  <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-danger px-3 py-2">Out of Stock</span>
+                  </div>
+                <% } else if (product.totalStock < 10) { %>
+                  <div class="position-absolute top-0 end-0 m-3">
+                    <span class="badge bg-warning px-3 py-2">Low Stock</span>
+                  </div>
+                <% } %>
+
+                <!-- Discount Badge -->
+                <% if (product.comparePrice && product.comparePrice > product.price) { %>
+                  <div class="position-absolute bottom-0 start-0 m-3">
+                    <span class="badge bg-gradient-danger px-3 py-2">
+                      <%= Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) %>% OFF
+                    </span>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="card-body">
+                <h5 class="card-title mb-2"><%= product.name %></h5>
+                <p class="card-text text-muted mb-2">
+                  <small><%= product.category %></small>
+                </p>
+
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <div class="price-section">
+                    <span class="h5 mb-0 text-success fw-bold">₹<%= product.price.toLocaleString() %></span>
+                    <% if (product.comparePrice && product.comparePrice > product.price) { %>
+                      <span class="text-muted text-decoration-line-through ms-2">₹<%= product.comparePrice.toLocaleString() %></span>
+                    <% } %>
+                  </div>
+
+                  <% if (product.averageRating > 0) { %>
+                    <div class="rating">
+                      <span class="text-warning">
+                        <% for (let i = 1; i <= 5; i++) { %>
+                          <i class="bi <%= i <= Math.round(product.averageRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
+                        <% } %>
+                      </span>
+                      <small class="text-muted">(<%= product.totalReviews %>)</small>
+                    </div>
+                  <% } %>
+                </div>
+
+                <% if (product.totalSales > 0) { %>
+                  <p class="card-text">
+                    <small class="text-muted">
+                      <i class="bi bi-bag-check me-1"></i> <%= product.totalSales %> sold
+                    </small>
+                  </p>
+                <% } %>
+              </div>
+
+              <div class="card-footer bg-transparent border-0 pb-3">
+                <% if (product.totalStock > 0) { %>
+                  <a href="/shop/product/<%= product._id %>" class="btn btn-gradient-green w-100">
+                    <i class="bi bi-eye me-1"></i> View Product
+                  </a>
+                <% } else { %>
+                  <button class="btn btn-secondary w-100" disabled>
+                    <i class="bi bi-x-circle me-1"></i> Out of Stock
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-5" data-aos="fade-up">
+          <div class="glass-card-dark p-5 rounded-4">
+            <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
+            <p class="text-muted">No featured merchandise at the moment. Check back soon!</p>
+            <a href="/shop" class="btn btn-outline-primary mt-3">Browse All Products</a>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- How It Works Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text">How RAPIRA Works</h2>
+      <p class="lead text-muted">Discover, connect, and experience music like never before</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="0">
+        <div class="glass-card-dark text-center p-4 h-100">
+          <div class="mb-4">
+            <div class="bg-gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+              <i class="bi bi-search text-white" style="font-size: 2rem;"></i>
+            </div>
+          </div>
+          <h4 class="fw-bold mb-3">Discover</h4>
+          <p class="text-muted">Explore a vast library of music, videos, and live concerts from talented artists across genres.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="glass-card-dark text-center p-4 h-100">
+          <div class="mb-4">
+            <div class="bg-gradient-blue rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+              <i class="bi bi-heart-fill text-white" style="font-size: 2rem;"></i>
+            </div>
+          </div>
+          <h4 class="fw-bold mb-3">Connect</h4>
+          <p class="text-muted">Follow your favorite artists, interact with their content, and be part of an engaged music community.</p>
+        </div>
+      </div>
+
+      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="glass-card-dark text-center p-4 h-100">
+          <div class="mb-4">
+            <div class="bg-gradient-orange rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+              <i class="bi bi-ticket-perforated-fill text-white" style="font-size: 2rem;"></i>
+            </div>
+          </div>
+          <h4 class="fw-bold mb-3">Experience</h4>
+          <p class="text-muted">Book tickets for live concerts, attend virtual events, and enjoy exclusive artist merchandise.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+
+<!-- Quick Links Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5" data-aos="fade-up">
+      <h2 class="fw-bold gradient-text">Explore More</h2>
+      <p class="lead text-muted">Quick access to all the amazing features RAPIRA has to offer</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="0">
+        <a href="/content" class="text-decoration-none">
+          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
+            <div class="mb-3">
+              <i class="bi bi-music-note-list display-4 gradient-text-orange"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Content Library</h5>
+            <p class="text-muted mb-0">Discover songs, videos, and exclusive content from your favorite artists.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+        <a href="/concerts" class="text-decoration-none">
+          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
+            <div class="mb-3">
+              <i class="bi bi-calendar-event display-4 gradient-text-purple"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Live Concerts</h5>
+            <p class="text-muted mb-0">Book tickets for amazing live performances and virtual events.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+        <a href="/team-requirement" class="text-decoration-none">
+          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
+            <div class="mb-3">
+              <i class="bi bi-people display-4 gradient-text-blue"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Team Booking</h5>
+            <p class="text-muted mb-0">Book complete teams of artists for your events and venues.</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+        <a href="/subscriptions" class="text-decoration-none">
+          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
+            <div class="mb-3">
+              <i class="bi bi-star display-4 gradient-text-green"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Subscriptions</h5>
+            <p class="text-muted mb-0">Get premium access to exclusive content and special features.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- Join as Artist CTA - Only show if user is not an artist -->
 <% if (!user || user.role !== 'artist') { %>
@@ -286,3 +506,4 @@
   </div>
 </section>
 <% } %>
+
