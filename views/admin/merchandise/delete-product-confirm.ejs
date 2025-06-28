@@ -88,13 +88,26 @@
         </div>
 
         <% if (hasOrders) { %>
-          <div class="alert alert-info d-flex align-items-center mb-4">
-            <i class="bi bi-info-circle me-2"></i>
-            <div>
-              <strong>Note:</strong> This product has existing orders. Instead of deleting, 
-              it will be deactivated to preserve order history.
+          <% if (hasPendingOrders) { %>
+            <div class="alert alert-warning d-flex align-items-center mb-4">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <div>
+                <strong>Cannot Delete:</strong> This product has <%= pendingOrders %> pending order(s) that are not yet delivered.
+                The product will be deactivated instead to preserve order history.
+                <br><small class="text-muted mt-1">
+                  Products can only be deleted when all orders are delivered, cancelled, or returned.
+                </small>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <div class="alert alert-success d-flex align-items-center mb-4">
+              <i class="bi bi-check-circle me-2"></i>
+              <div>
+                <strong>Ready to Delete:</strong> This product has <%= totalOrders %> order(s), but all are completed (delivered, cancelled, or returned).
+                The product can now be safely deleted.
+              </div>
+            </div>
+          <% } %>
         <% } %>
 
         <!-- Action Buttons -->
@@ -102,7 +115,7 @@
           <a href="/admin/merchandise/products" class="btn btn-outline-light btn-lg">
             <i class="bi bi-x-circle me-2"></i>Cancel
           </a>
-          <button type="button" class="btn btn-danger btn-lg" onclick="
+          <button type="button" class="btn btn-danger btn-lg" <% if (hasPendingOrders) { %>title="Cannot delete - has pending orders"<% } %> onclick="
             alert('🗑️ Delete button clicked! Starting deletion process...');
             console.log('Delete button clicked for product ID: <%= product._id %>');
 
@@ -142,7 +155,7 @@
             });
           ">
             <i class="bi bi-trash me-2"></i>
-            <%= hasOrders ? 'Deactivate Product' : 'Delete Product' %>
+            <%= hasPendingOrders ? 'Deactivate Product' : 'Delete Product' %>
           </button>
         </div>
       </div>

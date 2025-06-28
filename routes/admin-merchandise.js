@@ -402,15 +402,26 @@ router.get('/products/:id/delete', isAdmin, async (req, res) => {
       return res.redirect('/admin/merchandise/products');
     }
 
-    // Check if product has orders
-    const orderCount = await Order.countDocuments({
+    // Check if product has orders and their status
+    const totalOrders = await Order.countDocuments({
       'items.product': product._id
     });
+
+    const pendingOrders = await Order.countDocuments({
+      'items.product': product._id,
+      orderStatus: { $nin: ['delivered', 'cancelled', 'returned'] }
+    });
+
+    const canDelete = totalOrders === 0 || pendingOrders === 0;
 
     res.render('admin/merchandise/delete-product-confirm', {
       title: 'Delete Product',
       product,
-      hasOrders: orderCount > 0,
+      hasOrders: totalOrders > 0,
+      hasPendingOrders: pendingOrders > 0,
+      canDelete: canDelete,
+      totalOrders: totalOrders,
+      pendingOrders: pendingOrders,
       currentPath: req.originalUrl.split('?')[0],
       layout: 'layouts/admin'
     });
@@ -438,24 +449,25 @@ router.delete('/products/:id', isAdmin, async (req, res) => {
     }
 
     console.log('✅ Product found:', product.name);
-    
-    // Check if product has orders
-    const orderCount = await Order.countDocuments({ 
-      'items.product': product._id 
+
+    // Check if product has pending orders (not delivered, cancelled, or returned)
+    const pendingOrders = await Order.countDocuments({
+      'items.product': product._id,
+      orderStatus: { $nin: ['delivered', 'cancelled', 'returned'] }
     });
-    
-    if (orderCount > 0) {
+
+    if (pendingOrders > 0) {
       // Don't delete, just deactivate
-      console.log('⚠️ Product has orders, deactivating instead of deleting');
+      console.log('⚠️ Product has pending orders, deactivating instead of deleting');
       product.isActive = false;
       await product.save();
 
       return res.json({
         success: true,
-        message: 'Product deactivated (has existing orders)'
+        message: `Product deactivated (has ${pendingOrders} pending orders that need to be completed first)`
       });
     }
-    
+
     // Delete product images
     product.images.forEach(imagePath => {
       const fullPath = path.join(__dirname, '../public', imagePath);
@@ -463,7 +475,7 @@ router.delete('/products/:id', isAdmin, async (req, res) => {
         fs.unlinkSync(fullPath);
       }
     });
-    
+
     await Product.findByIdAndDelete(req.params.id);
     console.log('✅ Product deleted successfully');
 
@@ -504,12 +516,13 @@ router.post('/products/bulk-delete', isAdmin, async (req, res) => {
           continue;
         }
 
-        // Check if product has orders
-        const orderCount = await Order.countDocuments({
-          'items.product': product._id
+        // Check if product has pending orders (not delivered, cancelled, or returned)
+        const pendingOrders = await Order.countDocuments({
+          'items.product': product._id,
+          orderStatus: { $nin: ['delivered', 'cancelled', 'returned'] }
         });
 
-        if (orderCount > 0) {
+        if (pendingOrders > 0) {
           // Don't delete, just deactivate
           product.isActive = false;
           await product.save();
