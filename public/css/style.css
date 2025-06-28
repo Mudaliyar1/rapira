@@ -3498,3 +3498,116 @@ a:hover {
   max-height: 70vh;
   background-color: #000;
 }
+
+/* Filter Toggle Styles */
+.filter-toggle-btn {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  position: relative;
+}
+
+.filter-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.filter-toggle-btn i {
+  transition: transform 0.3s ease;
+}
+
+/* Add a subtle pulse animation to indicate interactivity */
+.filter-toggle-btn {
+  animation: subtle-pulse 3s infinite;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+  }
+}
+
+.filter-toggle-btn:hover {
+  animation: none;
+}
+
+/* Filter Collapse Animation */
+.collapse {
+  transition: height 0.35s ease;
+}
+
+/* Mobile Filter Improvements */
+@media (max-width: 767.98px) {
+  .filter-section {
+    padding: 1rem 0 !important;
+  }
+
+  .card-header h5 {
+    font-size: 1rem;
+  }
+
+  .filter-toggle-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .filter-toggle-btn .d-none.d-md-inline {
+    display: none !important;
+  }
+}
+
+/* Filter Card Enhancements */
+.filter-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.filter-card .card-header {
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(135deg, var(--bs-primary) 0%, #4f46e5 100%);
+}
+
+.filter-card .card-body {
+  background-color: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Dark Theme Filter Styling */
+.glass-card-dark .card-body .form-label {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+.glass-card-dark .card-body .form-control,
+.glass-card-dark .card-body .form-select {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.glass-card-dark .card-body .form-control:focus,
+.glass-card-dark .card-body .form-select:focus {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25) !important;
+}
+
+.glass-card-dark .card-body .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.glass-card-dark .card-body .input-group-text {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* Filter Section Background */
+section[style*="background-color: var(--bg)"] {
+  background-color: var(--bg) !important;
+  transition: background-color 0.3s ease;
+}

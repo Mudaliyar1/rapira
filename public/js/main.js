@@ -380,6 +380,80 @@ document.addEventListener('DOMContentLoaded', function() {
     return new bootstrap.Popover(popoverTriggerEl);
   });
 
+  // Password visibility toggle functionality
+  window.togglePasswordVisibility = function(inputId, buttonElement) {
+    try {
+      const passwordInput = document.getElementById(inputId);
+      const icon = buttonElement.querySelector('i');
+
+      if (!passwordInput || !icon) {
+        console.error('Password input or icon not found');
+        return;
+      }
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+        buttonElement.setAttribute('aria-label', 'Hide password');
+        buttonElement.setAttribute('title', 'Hide password');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+        buttonElement.setAttribute('aria-label', 'Show password');
+        buttonElement.setAttribute('title', 'Show password');
+      }
+    } catch (error) {
+      console.error('Error toggling password visibility:', error);
+    }
+  };
+
+  // Initialize password toggle buttons
+  function initializePasswordToggles() {
+    const passwordToggleButtons = document.querySelectorAll('.password-toggle-btn');
+
+    passwordToggleButtons.forEach(button => {
+      const targetInputId = button.getAttribute('data-target');
+      if (targetInputId) {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.togglePasswordVisibility(targetInputId, this);
+        });
+
+        // Set initial accessibility attributes
+        button.setAttribute('aria-label', 'Show password');
+        button.setAttribute('title', 'Show password');
+        button.setAttribute('type', 'button');
+      }
+    });
+  }
+
+  // Initialize password toggles
+  initializePasswordToggles();
+
+  // Global filter collapse functionality
+  function initializeFilterToggles() {
+    // Filters are closed by default on all devices
+    // They only open when user clicks the toggle button
+    const filterCollapses = document.querySelectorAll('#filterCollapse');
+
+    filterCollapses.forEach(filterCollapse => {
+      if (filterCollapse) {
+        // Ensure filters start closed
+        filterCollapse.classList.remove('show');
+        const toggleIcon = document.getElementById('filterToggleIcon');
+        if (toggleIcon) {
+          toggleIcon.classList.remove('bi-chevron-up');
+          toggleIcon.classList.add('bi-chevron-down');
+        }
+      }
+    });
+  }
+
+  // Initialize filter toggles
+  initializeFilterToggles();
+
   // Initialize all dropdowns
   const dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
   dropdownElementList.map(function (dropdownToggleEl) {
