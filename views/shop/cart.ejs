@@ -1,0 +1,243 @@
+<!-- Cart Header -->
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="text-white mb-4">
+        <i class="bi bi-cart3 me-2"></i>Shopping Cart
+      </h1>
+    </div>
+  </div>
+  
+  <% if (!cart || cart.items.length === 0) { %>
+    <!-- Empty Cart -->
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center">
+        <div class="glass-card-dark p-5 rounded-4">
+          <i class="bi bi-cart-x display-1 text-muted mb-4"></i>
+          <h3 class="text-white mb-3">Your cart is empty</h3>
+          <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+          <a href="/shop" class="btn btn-gradient-purple btn-lg">
+            <i class="bi bi-bag me-2"></i>Start Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- Cart Items -->
+    <div class="row g-4">
+      <!-- Cart Items List -->
+      <div class="col-lg-8">
+        <div class="glass-card-dark p-4 rounded-4">
+          <h4 class="text-white mb-4">Cart Items (<%= cart.totalItems %>)</h4>
+          
+          <% cart.items.forEach((item, index) => { %>
+            <div class="cart-item border-bottom border-secondary pb-4 mb-4" data-product-id="<%= item.product._id %>" data-size="<%= item.size %>">
+              <div class="row align-items-center">
+                <!-- Product Image -->
+                <div class="col-md-2">
+                  <img src="<%= item.product.images[0] %>" class="img-fluid rounded-3" 
+                       alt="<%= item.product.name %>" style="height: 80px; object-fit: cover;">
+                </div>
+                
+                <!-- Product Details -->
+                <div class="col-md-4">
+                  <h6 class="text-white mb-1">
+                    <a href="/shop/product/<%= item.product._id %>" class="text-decoration-none text-white">
+                      <%= item.product.name %>
+                    </a>
+                  </h6>
+                  <p class="text-muted mb-1">
+                    <small><%= item.product.category %></small>
+                  </p>
+                  <p class="text-muted mb-0">
+                    <small>Size: <%= item.size %></small>
+                  </p>
+                </div>
+                
+                <!-- Quantity Controls -->
+                <div class="col-md-3">
+                  <div class="input-group" style="max-width: 120px;">
+                    <button type="button" class="btn btn-outline-light btn-sm" 
+                            onclick="updateQuantity('<%= item.product._id %>', '<%= item.size %>', <%= item.quantity - 1 %>)">
+                      -
+                    </button>
+                    <input type="number" class="form-control form-control-sm text-center" 
+                           value="<%= item.quantity %>" min="1" max="10" readonly>
+                    <button type="button" class="btn btn-outline-light btn-sm" 
+                            onclick="updateQuantity('<%= item.product._id %>', '<%= item.size %>', <%= item.quantity + 1 %>)">
+                      +
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Price -->
+                <div class="col-md-2">
+                  <p class="text-white fw-bold mb-0">₹<%= item.price * item.quantity %></p>
+                  <% if (item.quantity > 1) { %>
+                    <small class="text-muted">₹<%= item.price %> each</small>
+                  <% } %>
+                </div>
+                
+                <!-- Remove Button -->
+                <div class="col-md-1">
+                  <button type="button" class="btn btn-outline-danger btn-sm" 
+                          onclick="removeItem('<%= item.product._id %>', '<%= item.size %>')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+          
+          <!-- Continue Shopping -->
+          <div class="text-center mt-4">
+            <a href="/shop" class="btn btn-outline-light">
+              <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Cart Summary -->
+      <div class="col-lg-4">
+        <div class="glass-card-dark p-4 rounded-4 sticky-top" style="top: 100px;">
+          <h4 class="text-white mb-4">Order Summary</h4>
+          
+          <!-- Subtotal -->
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Subtotal (<%= cart.totalItems %> items)</span>
+            <span class="text-white">₹<%= cart.totalAmount %></span>
+          </div>
+          
+
+          
+
+          
+          <!-- Shipping -->
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Shipping</span>
+            <span class="text-success">FREE</span>
+          </div>
+          
+          <hr class="border-secondary">
+          
+          <!-- Total -->
+          <div class="d-flex justify-content-between mb-4">
+            <span class="text-white fw-bold fs-5">Total</span>
+            <span class="text-white fw-bold fs-5" id="finalAmount">₹<%= cart.finalAmount %></span>
+          </div>
+          
+          <!-- Checkout Button -->
+          <a href="/shop/checkout" class="btn btn-gradient-purple btn-lg w-100">
+            <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+          </a>
+          
+          <!-- Security Info -->
+          <div class="text-center mt-3">
+            <small class="text-muted">
+              <i class="bi bi-shield-check me-1"></i>
+              Secure checkout with 256-bit SSL encryption
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Scripts -->
+<script>
+async function updateQuantity(productId, size, newQuantity) {
+  if (newQuantity < 1) {
+    if (confirm('Remove this item from cart?')) {
+      removeItem(productId, size);
+    }
+    return;
+  }
+  
+  try {
+    const response = await fetch('/shop/cart/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId: productId,
+        size: size,
+        quantity: newQuantity
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Reload page to update cart
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error updating cart');
+    }
+  } catch (error) {
+    console.error('Update quantity error:', error);
+    alert('Error updating cart');
+  }
+}
+
+async function removeItem(productId, size) {
+  if (!confirm('Are you sure you want to remove this item from your cart?')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/shop/cart/remove', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId: productId,
+        size: size
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Reload page to update cart
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error removing item');
+    }
+  } catch (error) {
+    console.error('Remove item error:', error);
+    alert('Error removing item');
+  }
+}
+
+
+</script>
+
+<style>
+.cart-item {
+  transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: -1rem;
+  margin-bottom: 1rem;
+}
+
+.sticky-top {
+  position: sticky;
+  top: 100px;
+  z-index: 10;
+}
+
+@media (max-width: 991.98px) {
+  .sticky-top {
+    position: static;
+  }
+}
+</style>

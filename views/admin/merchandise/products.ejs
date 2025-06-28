@@ -1,0 +1,461 @@
+<!-- Products Management Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-white mb-0">
+    <i class="bi bi-box-seam me-2"></i>Product Management
+  </h2>
+  <a href="/admin/merchandise/products/add" class="btn btn-gradient-purple">
+    <i class="bi bi-plus-circle me-2"></i>Add Product
+  </a>
+</div>
+
+<!-- Filters and Search -->
+<div class="glass-card-dark p-4 rounded-4 mb-4">
+  <form method="GET" action="/admin/merchandise/products" id="filterForm">
+    <div class="row g-3 align-items-end">
+      <!-- Search -->
+      <div class="col-md-4">
+        <label class="form-label text-white">Search Products</label>
+        <div class="input-group">
+          <input type="text" class="form-control" name="search" 
+                 placeholder="Search by name, description..." value="<%= filters.search || '' %>">
+          <button class="btn btn-outline-light" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Category Filter -->
+      <div class="col-md-2">
+        <label class="form-label text-white">Category</label>
+        <select class="form-select" name="category" onchange="document.getElementById('filterForm').submit()">
+          <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
+          <% categories.forEach(category => { %>
+            <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
+          <% }) %>
+        </select>
+      </div>
+      
+      <!-- Status Filter -->
+      <div class="col-md-2">
+        <label class="form-label text-white">Status</label>
+        <select class="form-select" name="status" onchange="document.getElementById('filterForm').submit()">
+          <option value="all" <%= (!filters.status || filters.status === 'all') ? 'selected' : '' %>>All Status</option>
+          <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+          <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+        </select>
+      </div>
+      
+      <!-- Sort -->
+      <div class="col-md-2">
+        <label class="form-label text-white">Sort By</label>
+        <select class="form-select" name="sort" onchange="document.getElementById('filterForm').submit()">
+          <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+          <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name A-Z</option>
+          <option value="price" <%= filters.sort === 'price' ? 'selected' : '' %>>Price Low-High</option>
+          <option value="stock" <%= filters.sort === 'stock' ? 'selected' : '' %>>Stock High-Low</option>
+          <option value="sales" <%= filters.sort === 'sales' ? 'selected' : '' %>>Sales High-Low</option>
+        </select>
+      </div>
+      
+      <!-- Clear Filters -->
+      <div class="col-md-2">
+        <a href="/admin/merchandise/products" class="btn btn-outline-secondary w-100">
+          <i class="bi bi-x-circle me-1"></i>Clear
+        </a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Products Table -->
+<div class="glass-card-dark rounded-4 overflow-hidden">
+  <% if (products.length === 0) { %>
+    <div class="p-5 text-center">
+      <i class="bi bi-box display-1 text-muted mb-3"></i>
+      <h4 class="text-white mb-3">No Products Found</h4>
+      <p class="text-muted mb-4">
+        <% if (filters.search || filters.category !== 'all' || filters.status !== 'all') { %>
+          No products match your current filters. Try adjusting your search criteria.
+        <% } else { %>
+          You haven't added any products yet. Start by adding your first product.
+        <% } %>
+      </p>
+      <a href="/admin/merchandise/products/add" class="btn btn-gradient-purple">
+        <i class="bi bi-plus-circle me-2"></i>Add First Product
+      </a>
+    </div>
+  <% } else { %>
+    <!-- Results Info -->
+    <div class="p-3 border-bottom border-secondary">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="text-white">
+          Showing <%= products.length %> of <%= totalProducts || products.length %> products
+        </span>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-light btn-sm" onclick="exportProducts()">
+            <i class="bi bi-download me-1"></i>Export
+          </button>
+          <button class="btn btn-outline-warning btn-sm" onclick="bulkActions()">
+            <i class="bi bi-gear me-1"></i>Bulk Actions
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="table table-dark table-hover mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th width="50">
+              <input type="checkbox" class="form-check-input" id="selectAll" onchange="toggleSelectAll()">
+            </th>
+            <th width="80">Image</th>
+            <th>Product</th>
+            <th width="120">Category</th>
+            <th width="100">Price</th>
+            <th width="80">Stock</th>
+            <th width="80">Sales</th>
+            <th width="100">Status</th>
+            <th width="120">Created</th>
+            <th width="150">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% products.forEach(product => { %>
+            <tr>
+              <td>
+                <input type="checkbox" class="form-check-input product-checkbox" value="<%= product._id %>">
+              </td>
+              <td>
+                <img src="<%= product.images[0] %>" class="rounded" width="50" height="50" 
+                     alt="<%= product.name %>" style="object-fit: cover;">
+              </td>
+              <td>
+                <div>
+                  <h6 class="text-white mb-1"><%= product.name %></h6>
+                  <small class="text-muted">
+                    <%= product.description.length > 50 ? product.description.substring(0, 50) + '...' : product.description %>
+                  </small>
+                  <% if (product.isFeatured) { %>
+                    <br><span class="badge bg-primary">Featured</span>
+                  <% } %>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-secondary"><%= product.category %></span>
+              </td>
+              <td>
+                <div class="text-white">₹<%= product.price %></div>
+                <% if (product.comparePrice && product.comparePrice > product.price) { %>
+                  <small class="text-muted text-decoration-line-through">₹<%= product.comparePrice %></small>
+                <% } %>
+              </td>
+              <td>
+                <% if (product.totalStock === 0) { %>
+                  <span class="badge bg-danger">Out of Stock</span>
+                <% } else if (product.totalStock < 10) { %>
+                  <span class="badge bg-warning"><%= product.totalStock %></span>
+                <% } else { %>
+                  <span class="badge bg-success"><%= product.totalStock %></span>
+                <% } %>
+              </td>
+              <td>
+                <span class="text-white"><%= product.totalSales || 0 %></span>
+              </td>
+              <td>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" 
+                         <%= product.isActive ? 'checked' : '' %>
+                         onchange="toggleProductStatus('<%= product._id %>', this.checked)">
+                  <label class="form-check-label text-white">
+                    <%= product.isActive ? 'Active' : 'Inactive' %>
+                  </label>
+                </div>
+              </td>
+              <td>
+                <small class="text-muted">
+                  <%= new Date(product.createdAt).toLocaleDateString('en-IN', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric'
+                  }) %>
+                </small>
+                <% if (product.createdBy) { %>
+                  <br><small class="text-muted">by <%= product.createdBy.name %></small>
+                <% } %>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="/shop/product/<%= product._id %>" class="btn btn-outline-info btn-sm" 
+                     target="_blank" title="View Product">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="/admin/merchandise/products/edit/<%= product._id %>" 
+                     class="btn btn-outline-warning btn-sm" title="Edit Product">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="/admin/merchandise/products/<%= product._id %>/delete"
+                     class="btn btn-outline-danger btn-sm" title="Delete Product">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                  <button class="btn btn-outline-danger btn-sm" title="Quick Delete" onclick="
+                    if(confirm('Are you sure you want to delete \'<%= product.name.replace(/'/g, '\\\'') %>\'? This action cannot be undone.')) {
+                      var btn = this;
+                      var originalText = btn.innerHTML;
+                      btn.disabled = true;
+                      btn.innerHTML = '<i class=\'bi bi-hourglass-split\'></i>';
+
+                      fetch('/admin/merchandise/products/<%= product._id %>', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                      })
+                      .then(function(response) { return response.json(); })
+                      .then(function(result) {
+                        if (result.success) {
+                          alert('✅ ' + result.message);
+                          window.location.reload();
+                        } else {
+                          alert('❌ ' + result.message);
+                          btn.disabled = false;
+                          btn.innerHTML = originalText;
+                        }
+                      })
+                      .catch(function(error) {
+                        alert('❌ Error: ' + error.message);
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                      });
+                    }
+                  ">
+                    <i class="bi bi-lightning"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="p-3 border-top border-secondary">
+        <nav aria-label="Products pagination">
+          <ul class="pagination justify-content-center mb-0">
+            <% if (currentPage > 1) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= new URLSearchParams(filters).toString() %>">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+            <% } %>
+            
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>&<%= new URLSearchParams(filters).toString() %>"><%= i %></a>
+              </li>
+            <% } %>
+            
+            <% if (currentPage < totalPages) { %>
+              <li class="page-item">
+                <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= new URLSearchParams(filters).toString() %>">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      </div>
+    <% } %>
+  <% } %>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Bulk Actions</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-white">Select an action to perform on selected products:</p>
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-success" onclick="bulkUpdateStatus(true)">
+            <i class="bi bi-check-circle me-2"></i>Activate Selected
+          </button>
+          <button class="btn btn-outline-warning" onclick="bulkUpdateStatus(false)">
+            <i class="bi bi-x-circle me-2"></i>Deactivate Selected
+          </button>
+          <button class="btn btn-outline-primary" onclick="bulkUpdateFeatured(true)">
+            <i class="bi bi-star me-2"></i>Mark as Featured
+          </button>
+          <button class="btn btn-outline-secondary" onclick="bulkUpdateFeatured(false)">
+            <i class="bi bi-star me-2"></i>Remove Featured
+          </button>
+          <button class="btn btn-outline-danger" onclick="bulkDelete()">
+            <i class="bi bi-trash me-2"></i>Delete Selected
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.product-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+}
+
+async function toggleProductStatus(productId, isActive) {
+  try {
+    const response = await fetch(`/admin/merchandise/products/${productId}/toggle`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ isActive })
+    });
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      alert(result.message || 'Error updating product status');
+      // Revert the toggle
+      event.target.checked = !isActive;
+    }
+  } catch (error) {
+    console.error('Toggle product status error:', error);
+    alert('Error updating product status');
+    event.target.checked = !isActive;
+  }
+}
+
+
+
+function bulkActions() {
+  const selectedProducts = document.querySelectorAll('.product-checkbox:checked');
+  
+  if (selectedProducts.length === 0) {
+    alert('Please select at least one product');
+    return;
+  }
+  
+  const modal = new bootstrap.Modal(document.getElementById('bulkActionsModal'));
+  modal.show();
+}
+
+function getSelectedProductIds() {
+  const selectedProducts = document.querySelectorAll('.product-checkbox:checked');
+  return Array.from(selectedProducts).map(checkbox => checkbox.value);
+}
+
+async function bulkUpdateStatus(isActive) {
+  const productIds = getSelectedProductIds();
+  
+  if (productIds.length === 0) {
+    alert('No products selected');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/admin/merchandise/products/bulk-update-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productIds, isActive })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`${productIds.length} products updated successfully`);
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error updating products');
+    }
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    alert('Error updating products');
+  }
+}
+
+async function bulkUpdateFeatured(isFeatured) {
+  const productIds = getSelectedProductIds();
+  
+  if (productIds.length === 0) {
+    alert('No products selected');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/admin/merchandise/products/bulk-update-featured', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productIds, isFeatured })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`${productIds.length} products updated successfully`);
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error updating products');
+    }
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    alert('Error updating products');
+  }
+}
+
+async function bulkDelete() {
+  const productIds = getSelectedProductIds();
+  
+  if (productIds.length === 0) {
+    alert('No products selected');
+    return;
+  }
+  
+  if (!confirm(`Are you sure you want to delete ${productIds.length} products? This action cannot be undone.`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/admin/merchandise/products/bulk-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productIds })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert(`${productIds.length} products deleted successfully`);
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error deleting products');
+    }
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    alert('Error deleting products');
+  }
+}
+
+function exportProducts() {
+  const params = new URLSearchParams(window.location.search);
+  params.set('export', 'csv');
+  window.location.href = '/admin/merchandise/products?' + params.toString();
+}
+</script>

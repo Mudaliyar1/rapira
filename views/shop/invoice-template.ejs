@@ -1,0 +1,113 @@
+<div class="invoice-container">
+    <% if (order.orderStatus === 'cancelled') { %>
+        <div class="watermark">CANCELLED</div>
+    <% } %>
+
+    <div class="invoice-header">
+        <h1>RAPIRA INVOICE</h1>
+        <div class="invoice-subtitle">Order #<%= order.orderNumber %></div>
+    </div>
+
+    <div class="invoice-body">
+
+        <!-- Order and Customer Info -->
+        <div class="info-section">
+            <div class="info-box">
+                <h3>Bill To:</h3>
+                <p><strong><%= order.shippingAddress.fullName %></strong></p>
+                <p><%= order.shippingAddress.addressLine1 %></p>
+                <% if (order.shippingAddress.addressLine2) { %>
+                    <p><%= order.shippingAddress.addressLine2 %></p>
+                <% } %>
+                <p><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %></p>
+                <p><%= order.shippingAddress.pincode %>, <%= order.shippingAddress.country %></p>
+                <p><strong>Phone:</strong> <%= order.shippingAddress.phone %></p>
+            </div>
+            <div class="info-box">
+                <h3>Order Details:</h3>
+                <p><strong>Order Date:</strong> <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }) %></p>
+                <p><strong>Payment ID:</strong> <%= order.paymentId %></p>
+                <p><strong>Payment Status:</strong>
+                    <span class="status-badge status-<%= order.paymentStatus %>">
+                        <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                    </span>
+                </p>
+                <% if (order.trackingNumber) { %>
+                    <p><strong>Tracking:</strong> <%= order.trackingNumber %></p>
+                <% } %>
+                <p><strong>Order Status:</strong>
+                    <span class="status-badge status-<%= order.orderStatus %>">
+                        <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Description</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% order.items.forEach(item => { %>
+                    <tr>
+                        <td>
+                            <img src="<%= item.productImage %>" alt="<%= item.productName %>" class="product-image">
+                        </td>
+                        <td>
+                            <div class="product-info"><%= item.productName %></div>
+                            <div class="product-details">Size: <%= item.size %></div>
+                        </td>
+                        <td class="text-center"><%= item.quantity %></td>
+                        <td class="text-right">₹<%= item.price.toLocaleString('en-IN') %></td>
+                        <td class="text-right">₹<%= item.totalPrice.toLocaleString('en-IN') %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span>₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+            </div>
+            <% if (order.discountAmount > 0) { %>
+                <div class="total-row">
+                    <span>Discount <% if (order.couponCode) { %>(<%= order.couponCode %>)<% } %>:</span>
+                    <span>-₹<%= order.discountAmount.toLocaleString('en-IN') %></span>
+                </div>
+            <% } %>
+            <div class="total-row">
+                <span>Shipping:</span>
+                <span>FREE</span>
+            </div>
+            <div class="total-row">
+                <span>Tax:</span>
+                <span>₹<%= (order.taxAmount || 0).toLocaleString('en-IN') %></span>
+            </div>
+            <div class="total-row final">
+                <span>Total:</span>
+                <span>₹<%= order.totalAmount.toLocaleString('en-IN') %></span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>RAPIRA - Digital Entertainment Platform</p>
+            <p>For support, contact us at support@rapira.com</p>
+        </div>
+    </div>
+</body>
+</html>

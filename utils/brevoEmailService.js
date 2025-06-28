@@ -678,10 +678,222 @@ const sendArtistBookingRequestEmail = async (request) => {
   }
 };
 
+/**
+ * Send order confirmation email for merchandise purchases
+ * @param {String} userEmail - User's email address
+ * @param {Object} orderData - Order details
+ * @returns {Promise} - A promise that resolves when the email is sent
+ */
+const sendOrderConfirmationEmail = async (userEmail, orderData) => {
+  const {
+    orderNumber,
+    customerName,
+    items,
+    totalAmount,
+    shippingAddress,
+    estimatedDelivery
+  } = orderData;
+
+  // Format items list for HTML
+  const itemsList = items.map(item => `
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">
+        <img src="${process.env.BASE_URL}${item.productImage}" alt="${item.productName}"
+             style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+      </td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">
+        <strong>${item.productName}</strong><br>
+        <small>Size: ${item.size} | Qty: ${item.quantity}</small>
+      </td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+        ₹${item.totalPrice}
+      </td>
+    </tr>
+  `).join('');
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+        }
+        .header {
+          background-color: #6366f1;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px 5px 0 0;
+        }
+        .content {
+          padding: 20px;
+        }
+        .order-details {
+          background-color: #f8f9fa;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 15px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+          color: #666;
+        }
+        .button {
+          display: inline-block;
+          padding: 10px 20px;
+          background-color: #6366f1;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin-top: 15px;
+        }
+        .success-icon {
+          font-size: 48px;
+          color: #10b981;
+          margin-bottom: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="success-icon">✓</div>
+          <h1>Order Confirmed!</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${customerName},</p>
+          <p>Thank you for your order! We're excited to let you know that your order has been confirmed and is being processed.</p>
+
+          <div class="order-details">
+            <h3 style="margin-top: 0;">Order Details:</h3>
+            <p><strong>Order Number:</strong> ${orderNumber}</p>
+            <p><strong>Order Date:</strong> ${new Date().toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</p>
+            <p><strong>Total Amount:</strong> ₹${totalAmount}</p>
+            ${estimatedDelivery ? `<p><strong>Estimated Delivery:</strong> ${new Date(estimatedDelivery).toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</p>` : ''}
+          </div>
+
+          <h3>Items Ordered:</h3>
+          <table class="items-table">
+            <thead>
+              <tr style="background-color: #f8f9fa;">
+                <th style="padding: 10px; text-align: left;">Image</th>
+                <th style="padding: 10px; text-align: left;">Product</th>
+                <th style="padding: 10px; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+          </table>
+
+          <div class="order-details">
+            <h3 style="margin-top: 0;">Shipping Address:</h3>
+            <p>
+              <strong>${shippingAddress.fullName}</strong><br>
+              ${shippingAddress.addressLine1}<br>
+              ${shippingAddress.addressLine2 ? shippingAddress.addressLine2 + '<br>' : ''}
+              ${shippingAddress.city}, ${shippingAddress.state} - ${shippingAddress.pincode}<br>
+              ${shippingAddress.country}<br>
+              Phone: ${shippingAddress.phone}
+            </p>
+          </div>
+
+          <a href="${process.env.BASE_URL}/orders/order/${orderNumber}" class="button">Track Your Order</a>
+
+          <p>We'll send you another email with tracking information once your order ships.</p>
+          <p>If you have any questions about your order, please don't hesitate to contact our support team.</p>
+          <p>Thank you for shopping with RAPIRA!</p>
+          <p>Best regards,<br>The RAPIRA Team</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email. Please do not reply to this message.</p>
+          <p>&copy; ${new Date().getFullYear()} RAPIRA. All rights reserved.</p>
+          <p><a href="${process.env.BASE_URL}/orders/my-orders" style="color: #6b7280;">View All Orders</a> |
+             <a href="${process.env.BASE_URL}/shop" style="color: #6b7280;">Continue Shopping</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+    Order Confirmed!
+
+    Hello ${customerName},
+
+    Thank you for your order! We're excited to let you know that your order has been confirmed and is being processed.
+
+    Order Details:
+    Order Number: ${orderNumber}
+    Order Date: ${new Date().toLocaleDateString('en-IN')}
+    Total Amount: ₹${totalAmount}
+    ${estimatedDelivery ? `Estimated Delivery: ${new Date(estimatedDelivery).toLocaleDateString('en-IN')}` : ''}
+
+    Items Ordered:
+    ${items.map(item => `- ${item.productName} (Size: ${item.size}, Qty: ${item.quantity}) - ₹${item.totalPrice}`).join('\n')}
+
+    Shipping Address:
+    ${shippingAddress.fullName}
+    ${shippingAddress.addressLine1}
+    ${shippingAddress.addressLine2 ? shippingAddress.addressLine2 : ''}
+    ${shippingAddress.city}, ${shippingAddress.state} - ${shippingAddress.pincode}
+    ${shippingAddress.country}
+    Phone: ${shippingAddress.phone}
+
+    Track your order: ${process.env.BASE_URL}/orders/order/${orderNumber}
+
+    We'll send you another email with tracking information once your order ships.
+
+    Thank you for shopping with RAPIRA!
+
+    Best regards,
+    The RAPIRA Team
+
+    This is an automated email. Please do not reply to this message.
+    © ${new Date().getFullYear()} RAPIRA. All rights reserved.
+  `;
+
+  return sendEmail({
+    to: userEmail,
+    toName: customerName,
+    subject: `Order Confirmed - ${orderNumber} | RAPIRA Merchandise`,
+    htmlContent,
+    textContent
+  });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendTicketEmail,
-  sendArtistBookingRequestEmail
+  sendArtistBookingRequestEmail,
+  sendOrderConfirmationEmail
 };

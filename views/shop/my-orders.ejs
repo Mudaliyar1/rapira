@@ -1,0 +1,416 @@
+<!-- My Orders Header -->
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-white mb-0">
+          <i class="bi bi-bag-check me-2"></i>My Orders
+        </h1>
+        <!-- Test button to verify JavaScript -->
+        <button class="btn btn-outline-warning btn-sm" onclick="testInvoiceDownload()">
+          <i class="bi bi-bug me-1"></i>Test JS
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <% if (orders.length === 0) { %>
+    <!-- No Orders -->
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center">
+        <div class="glass-card-dark p-5 rounded-4">
+          <i class="bi bi-bag-x display-1 text-muted mb-4"></i>
+          <h3 class="text-white mb-3">No Orders Yet</h3>
+          <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your orders here.</p>
+          <a href="/shop" class="btn btn-gradient-purple btn-lg">
+            <i class="bi bi-bag me-2"></i>Start Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- Orders Grid -->
+    <div class="row">
+      <% orders.forEach(order => { %>
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="glass-card-dark rounded-4 h-100 order-card">
+            <!-- Order Header -->
+            <div class="p-3 border-bottom border-secondary">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h6 class="text-white mb-1">Order #<%= order.orderNumber %></h6>
+                  <small class="text-muted">
+                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }) %>
+                  </small>
+                </div>
+                <%
+                  let statusClass = 'bg-secondary';
+                  let statusText = order.orderStatus;
+
+                  switch(order.orderStatus) {
+                    case 'pending':
+                      statusClass = 'bg-warning text-dark';
+                      statusText = 'Pending';
+                      break;
+                    case 'confirmed':
+                      statusClass = 'bg-info';
+                      statusText = 'Confirmed';
+                      break;
+                    case 'processing':
+                      statusClass = 'bg-primary';
+                      statusText = 'Processing';
+                      break;
+                    case 'shipped':
+                      statusClass = 'bg-info';
+                      statusText = 'Shipped';
+                      break;
+                    case 'delivered':
+                      statusClass = 'bg-success';
+                      statusText = 'Delivered';
+                      break;
+                    case 'cancelled':
+                      statusClass = 'bg-danger';
+                      statusText = 'Cancelled';
+                      break;
+                    case 'returned':
+                      statusClass = 'bg-secondary';
+                      statusText = 'Returned';
+                      break;
+                  }
+                %>
+                <span class="badge <%= statusClass %> fs-7">
+                  <%= statusText %>
+                </span>
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="p-3">
+              <div class="row g-2 mb-3">
+                <% order.items.slice(0, 4).forEach((item, index) => { %>
+                  <div class="col-6">
+                    <div class="position-relative">
+                      <img src="<%= item.productImage %>" class="w-100 rounded-3"
+                           style="height: 80px; object-fit: cover;" alt="<%= item.productName %>">
+                      <% if (item.quantity > 1) { %>
+                        <span class="position-absolute top-0 end-0 badge bg-dark rounded-pill m-1">
+                          <%= item.quantity %>
+                        </span>
+                      <% } %>
+                    </div>
+                  </div>
+                <% }) %>
+                <% if (order.items.length > 4) { %>
+                  <div class="col-6">
+                    <div class="bg-secondary rounded-3 d-flex align-items-center justify-content-center"
+                         style="height: 80px;">
+                      <span class="text-white">+<%= order.items.length - 4 %> more</span>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+
+              <!-- Order Summary -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted small">Total Amount:</span>
+                  <span class="text-white fw-bold">₹<%= order.totalAmount.toLocaleString('en-IN') %></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted small">Items:</span>
+                  <span class="text-white small"><%= order.items.length %> item(s)</span>
+                </div>
+                <%
+                  let paymentClass = 'bg-secondary';
+                  switch(order.paymentStatus) {
+                    case 'completed':
+                      paymentClass = 'bg-success';
+                      break;
+                    case 'failed':
+                      paymentClass = 'bg-danger';
+                      break;
+                    case 'refunded':
+                      paymentClass = 'bg-warning text-dark';
+                      break;
+                  }
+                %>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">Payment:</span>
+                  <span class="badge <%= paymentClass %> fs-7">
+                    <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Tracking Info -->
+              <% if (order.trackingNumber) { %>
+                <div class="mb-3 p-2 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
+                  <small class="text-info d-block">Tracking Number:</small>
+                  <small class="text-white"><%= order.trackingNumber %></small>
+                </div>
+              <% } %>
+
+              <!-- Expected Delivery -->
+              <% if (order.estimatedDelivery && ['processing', 'shipped'].includes(order.orderStatus)) { %>
+                <div class="mb-3 p-2 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3">
+                  <small class="text-warning d-block">
+                    <i class="bi bi-calendar-event me-1"></i>Expected Delivery:
+                  </small>
+                  <small class="text-white">
+                    <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric'
+                    }) %>
+                  </small>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Order Actions -->
+            <div class="p-3 border-top border-secondary mt-auto">
+              <div class="d-grid gap-2">
+                <a href="/orders/order/<%= order.orderNumber %>" class="btn btn-outline-light btn-sm">
+                  <i class="bi bi-eye me-1"></i>View Details
+                </a>
+                <div class="d-flex gap-2">
+                  <% if (order.canBeCancelled) { %>
+                    <button class="btn btn-outline-danger btn-sm flex-fill"
+                            onclick="cancelOrder('<%= order._id %>')">
+                      <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                  <% } %>
+                  <a href="/orders/invoice/<%= order._id %>"
+                     class="btn btn-outline-info btn-sm flex-fill"
+                     target="_blank"
+                     onclick="handleInvoiceDownload(event, '<%= order._id %>')">
+                    <i class="bi bi-download me-1"></i>Invoice
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+        
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+          <nav aria-label="Orders pagination">
+            <ul class="pagination justify-content-center">
+              <% if (currentPage > 1) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                </li>
+              <% } %>
+              
+              <% if (currentPage < totalPages) { %>
+                <li class="page-item">
+                  <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+              <% } %>
+            </ul>
+          </nav>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Cancel Order</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-white">Are you sure you want to cancel this order?</p>
+        <div class="mb-3">
+          <label class="form-label text-white">Reason for cancellation:</label>
+          <select class="form-select" id="cancellationReason">
+            <option value="Changed my mind">Changed my mind</option>
+            <option value="Found better price elsewhere">Found better price elsewhere</option>
+            <option value="Ordered by mistake">Ordered by mistake</option>
+            <option value="Delivery taking too long">Delivery taking too long</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
+        <button type="button" class="btn btn-danger" onclick="confirmCancelOrder()">Cancel Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let orderToCancel = null;
+
+// Test if JavaScript is working
+console.log('My Orders page JavaScript loaded');
+
+function cancelOrder(orderId) {
+  console.log('Cancel order called for:', orderId);
+  orderToCancel = orderId;
+  const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+  modal.show();
+}
+
+function handleInvoiceDownload(event, orderId) {
+  console.log('Invoice download handler called for order:', orderId);
+
+  // Show immediate feedback
+  const button = event.target.closest('a');
+  const originalContent = button.innerHTML;
+  button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
+
+  // Allow the default link behavior but add some feedback
+  setTimeout(() => {
+    button.innerHTML = originalContent;
+  }, 2000);
+
+  // Don't prevent default - let the link work normally
+  return true;
+}
+
+async function confirmCancelOrder() {
+  if (!orderToCancel) return;
+  
+  const reason = document.getElementById('cancellationReason').value;
+  
+  try {
+    const response = await fetch(`/orders/cancel/${orderToCancel}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Order cancelled successfully');
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error cancelling order');
+    }
+  } catch (error) {
+    console.error('Cancel order error:', error);
+    alert('Error cancelling order');
+  }
+  
+  // Close modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
+  modal.hide();
+}
+
+
+
+// Simple test function to verify JavaScript is working
+function testInvoiceDownload() {
+  alert('JavaScript is working! Invoice download test successful.');
+  console.log('Test function called successfully');
+}
+</script>
+
+<style>
+.pagination .page-link {
+  background-color: rgba(30, 30, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.order-card {
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.order-card .badge {
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.fs-7 {
+  font-size: 0.75rem !important;
+}
+
+/* Ensure equal height cards */
+.order-card {
+  min-height: 400px;
+}
+
+/* Product image grid styling */
+.order-card .row.g-2 img {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.order-card .row.g-2 img:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Status badge styling */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .order-card {
+    min-height: auto;
+  }
+
+  .order-card .row.g-2 {
+    margin-bottom: 1rem !important;
+  }
+
+  .order-card .row.g-2 .col-6 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .col-lg-4.col-md-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+</style>

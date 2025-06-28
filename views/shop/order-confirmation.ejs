@@ -1,0 +1,377 @@
+<!-- Order Confirmation -->
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Success Message -->
+      <div class="text-center mb-5">
+        <div class="glass-card-dark p-5 rounded-4">
+          <div class="mb-4">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+          </div>
+          <h1 class="text-white mb-3">Order Confirmed!</h1>
+          <p class="lead text-muted mb-4">
+            Thank you for your purchase. Your order has been successfully placed and is being processed.
+          </p>
+          <div class="row g-3 justify-content-center">
+            <div class="col-auto">
+              <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                <h5 class="text-primary mb-1">Order Number</h5>
+                <h4 class="text-white mb-0"><%= order.orderNumber %></h4>
+              </div>
+            </div>
+            <div class="col-auto">
+              <div class="bg-success bg-opacity-10 p-3 rounded-3">
+                <h5 class="text-success mb-1">Total Amount</h5>
+                <h4 class="text-white mb-0">₹<%= order.totalAmount %></h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Order Details -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">Order Details</h4>
+        
+        <div class="row g-4">
+          <!-- Order Info -->
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3">Order Information</h6>
+            <div class="mb-2">
+              <small class="text-muted">Order Date:</small>
+              <div class="text-white"><%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %></div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">Payment Status:</small>
+              <div>
+                <span class="badge bg-success">
+                  <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+                </span>
+              </div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">Order Status:</small>
+              <div>
+                <span class="badge bg-info">
+                  <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                </span>
+              </div>
+            </div>
+            <% if (order.estimatedDelivery) { %>
+              <div class="mb-2">
+                <small class="text-muted">Estimated Delivery:</small>
+                <div class="text-white">
+                  <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric'
+                  }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+          
+          <!-- Payment Info -->
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3">Payment Information</h6>
+            <div class="mb-2">
+              <small class="text-muted">Payment ID:</small>
+              <div class="text-white small"><%= order.paymentId %></div>
+            </div>
+            <div class="mb-2">
+              <small class="text-muted">Payment Method:</small>
+              <div class="text-white">Razorpay</div>
+            </div>
+            <% if (order.couponCode) { %>
+              <div class="mb-2">
+                <small class="text-muted">Coupon Applied:</small>
+                <div class="text-success"><%= order.couponCode %></div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Shipping Address -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">Shipping Address</h4>
+        <div class="row">
+          <div class="col-md-8">
+            <div class="text-white">
+              <strong><%= order.shippingAddress.fullName %></strong><br>
+              <%= order.shippingAddress.addressLine1 %><br>
+              <% if (order.shippingAddress.addressLine2) { %>
+                <%= order.shippingAddress.addressLine2 %><br>
+              <% } %>
+              <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %> - <%= order.shippingAddress.pincode %><br>
+              <%= order.shippingAddress.country %>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted">
+              <small>Phone:</small><br>
+              <span class="text-white"><%= order.shippingAddress.phone %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Order Items -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">Order Items</h4>
+        
+        <% order.items.forEach((item, itemIndex) => { %>
+          <div class="row align-items-center border-bottom border-secondary pb-3 mb-3">
+            <div class="col-md-2">
+              <% if (item.product && item.product.images && item.product.images.length > 1) { %>
+                <!-- Carousel for multiple images -->
+                <div id="confirmCarousel<%= itemIndex %>" class="carousel slide" data-bs-ride="carousel">
+                  <div class="carousel-inner rounded-3" style="height: 80px;">
+                    <% item.product.images.forEach((image, imageIndex) => { %>
+                      <div class="carousel-item <%= imageIndex === 0 ? 'active' : '' %>">
+                        <img src="<%= image %>" class="d-block w-100 rounded-3"
+                             alt="<%= item.productName %>" style="height: 80px; object-fit: cover;">
+                      </div>
+                    <% }) %>
+                  </div>
+                  <% if (item.product.images.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#confirmCarousel<%= itemIndex %>" data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#confirmCarousel<%= itemIndex %>" data-bs-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Next</span>
+                    </button>
+                  <% } %>
+                  <!-- Image count indicator -->
+                  <div class="position-absolute bottom-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 rounded-top-start" style="font-size: 0.7rem;">
+                    <i class="bi bi-images"></i> <%= item.product.images.length %>
+                  </div>
+                </div>
+              <% } else { %>
+                <!-- Single image fallback -->
+                <img src="<%= item.productImage %>" class="img-fluid rounded-3"
+                     alt="<%= item.productName %>" style="height: 80px; object-fit: cover;">
+              <% } %>
+            </div>
+            <div class="col-md-5">
+              <h6 class="text-white mb-1"><%= item.productName %></h6>
+              <small class="text-muted">Size: <%= item.size %></small>
+            </div>
+            <div class="col-md-2 text-center">
+              <span class="text-white">Qty: <%= item.quantity %></span>
+            </div>
+            <div class="col-md-2 text-center">
+              <span class="text-white">₹<%= item.price %></span>
+            </div>
+            <div class="col-md-1 text-end">
+              <span class="text-white fw-bold">₹<%= item.totalPrice %></span>
+            </div>
+          </div>
+        <% }) %>
+        
+        <!-- Order Summary -->
+        <div class="row justify-content-end mt-4">
+          <div class="col-md-4">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Subtotal:</span>
+              <span class="text-white">₹<%= order.subtotal %></span>
+            </div>
+            <% if (order.discountAmount > 0) { %>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-success">Discount:</span>
+                <span class="text-success">-₹<%= order.discountAmount %></span>
+              </div>
+            <% } %>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Shipping:</span>
+              <span class="text-success">FREE</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Tax:</span>
+              <span class="text-white">₹<%= order.taxAmount || 0 %></span>
+            </div>
+            <hr class="border-secondary">
+            <div class="d-flex justify-content-between">
+              <span class="text-white fw-bold">Total:</span>
+              <span class="text-white fw-bold">₹<%= order.totalAmount %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Next Steps -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">What's Next?</h4>
+        <div class="row g-4">
+          <div class="col-md-4 text-center">
+            <div class="mb-3">
+              <i class="bi bi-envelope-check text-primary" style="font-size: 2rem;"></i>
+            </div>
+            <h6 class="text-white">Email Confirmation</h6>
+            <p class="text-muted small">You'll receive an order confirmation email shortly with all the details.</p>
+          </div>
+          <div class="col-md-4 text-center">
+            <div class="mb-3">
+              <i class="bi bi-box-seam text-warning" style="font-size: 2rem;"></i>
+            </div>
+            <h6 class="text-white">Processing</h6>
+            <p class="text-muted small">We'll start processing your order and prepare it for shipping.</p>
+          </div>
+          <div class="col-md-4 text-center">
+            <div class="mb-3">
+              <i class="bi bi-truck text-success" style="font-size: 2rem;"></i>
+            </div>
+            <h6 class="text-white">Shipping</h6>
+            <p class="text-muted small">You'll get tracking information once your order ships.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="text-center">
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+          <a href="/orders/my-orders" class="btn btn-gradient-purple">
+            <i class="bi bi-list-ul me-2"></i>View All Orders
+          </a>
+          <a href="/shop" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+          </a>
+          <button class="btn btn-outline-light" onclick="window.print()">
+            <i class="bi bi-printer me-2"></i>Print Receipt
+          </button>
+        </div>
+      </div>
+      
+      <!-- Support Info -->
+      <div class="text-center mt-4">
+        <div class="glass-card-dark p-3 rounded-3">
+          <p class="text-muted mb-2">
+            <i class="bi bi-headset me-2"></i>
+            Need help with your order?
+          </p>
+          <p class="text-white mb-0">
+            Contact us at <a href="mailto:support@rapira.com" class="text-primary">support@rapira.com</a>
+            or call <a href="tel:+911234567890" class="text-primary">+91 12345 67890</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+/* Custom carousel controls for better visibility on dark backgrounds */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  padding: 8px;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 30px;
+  opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+}
+
+/* Smooth transitions for carousel */
+.carousel-item {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Image count indicator styling */
+.carousel .position-absolute {
+  backdrop-filter: blur(4px);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .container, .container * {
+    visibility: visible;
+  }
+
+  .container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .glass-card-dark {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .text-white {
+    color: black !important;
+  }
+
+  .text-muted {
+    color: #666 !important;
+  }
+
+  .btn {
+    display: none !important;
+  }
+
+  .bg-primary {
+    background-color: #6366f1 !important;
+  }
+
+  .bg-success {
+    background-color: #10b981 !important;
+  }
+
+  .text-primary {
+    color: #6366f1 !important;
+  }
+
+  .text-success {
+    color: #10b981 !important;
+  }
+}
+
+.glass-card-dark {
+  transition: all 0.3s ease;
+}
+
+.glass-card-dark:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .d-flex.gap-3.justify-content-center.flex-wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .d-flex.gap-3.justify-content-center.flex-wrap .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+</style>

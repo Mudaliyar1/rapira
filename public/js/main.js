@@ -79,6 +79,65 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the login timer
   startLoginTimer();
 
+  // Cart functionality
+  function updateCartCount() {
+    // Only update cart count if user is logged in
+    const cartCountElement = document.getElementById('cartCount');
+    if (!cartCountElement) return;
+
+    fetch('/shop/cart/count')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const count = data.count || 0;
+          cartCountElement.textContent = count;
+
+          if (count > 0) {
+            cartCountElement.style.display = 'inline-block';
+          } else {
+            cartCountElement.style.display = 'none';
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching cart count:', error);
+      });
+  }
+
+  // Update cart count on page load
+  updateCartCount();
+
+  // Update cart count every 30 seconds to sync across tabs
+  setInterval(updateCartCount, 30000);
+
+  // Listen for cart updates from other parts of the application
+  window.addEventListener('cartUpdated', function(event) {
+    if (event.detail && typeof event.detail.count !== 'undefined') {
+      const cartCountElement = document.getElementById('cartCount');
+      if (cartCountElement) {
+        const count = event.detail.count;
+        cartCountElement.textContent = count;
+
+        if (count > 0) {
+          cartCountElement.style.display = 'inline-block';
+        } else {
+          cartCountElement.style.display = 'none';
+        }
+      }
+    } else {
+      // Fallback to fetching from server
+      updateCartCount();
+    }
+  });
+
+  // Helper function to trigger cart update event
+  window.updateCartCount = function(count) {
+    const event = new CustomEvent('cartUpdated', {
+      detail: { count: count }
+    });
+    window.dispatchEvent(event);
+  };
+
   // Handle logout - clear login time when user logs out
   const logoutLinks = document.querySelectorAll('a[href="/auth/logout"]');
   if (logoutLinks.length > 0) {

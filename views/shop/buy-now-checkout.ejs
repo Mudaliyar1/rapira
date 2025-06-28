@@ -1,0 +1,308 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+    <li class="breadcrumb-item active">Buy Now Checkout</li>
+  </ol>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Order Summary -->
+    <div class="col-lg-4 order-lg-2 mb-4">
+      <div class="glass-card-dark p-4 rounded-4 sticky-top" style="top: 100px;">
+        <h4 class="text-white mb-4">
+          <i class="bi bi-bag-check me-2"></i>Order Summary
+        </h4>
+        
+        <!-- Product Item -->
+        <% cart.items.forEach(item => { %>
+          <div class="d-flex align-items-center mb-3 p-3 bg-secondary bg-opacity-25 rounded">
+            <img src="<%= item.product.images[0] %>" class="rounded me-3" 
+                 width="60" height="60" alt="<%= item.product.name %>" style="object-fit: cover;">
+            <div class="flex-grow-1">
+              <h6 class="text-white mb-1"><%= item.product.name %></h6>
+              <small class="text-muted">Size: <%= item.size %> | Qty: <%= item.quantity %></small>
+              <div class="text-white fw-bold">₹<%= item.totalPrice %></div>
+            </div>
+          </div>
+        <% }) %>
+        
+        <!-- Order Totals -->
+        <div class="border-top border-secondary pt-3">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Subtotal:</span>
+            <span class="text-white">₹<%= cart.totalAmount %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Shipping:</span>
+            <span class="text-white">Free</span>
+          </div>
+          <% if (cart.appliedCoupon && cart.appliedCoupon.code) { %>
+            <div class="d-flex justify-content-between mb-2 text-success">
+              <span>Discount (<%= cart.appliedCoupon.code %>):</span>
+              <span>-₹<%= cart.totalAmount - cart.finalAmount %></span>
+            </div>
+          <% } %>
+          <hr class="border-secondary">
+          <div class="d-flex justify-content-between">
+            <strong class="text-white">Total:</strong>
+            <strong class="text-white fs-5">₹<%= cart.finalAmount %></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Checkout Form -->
+    <div class="col-lg-8 order-lg-1">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h3 class="text-white mb-4">
+          <i class="bi bi-lightning-fill me-2"></i>Buy Now Checkout
+        </h3>
+        
+        <form id="buyNowCheckoutForm">
+          <!-- Shipping Address -->
+          <div class="mb-4">
+            <h5 class="text-white mb-3">
+              <i class="bi bi-geo-alt me-2"></i>Shipping Address
+            </h5>
+            
+            <!-- Saved Addresses -->
+            <% if (addresses && addresses.length > 0) { %>
+              <div class="mb-3">
+                <label class="form-label text-white">Select Saved Address</label>
+                <% addresses.forEach((address, index) => { %>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="addressOption" 
+                           id="address<%= index %>" value="<%= address._id %>" 
+                           <%= index === 0 ? 'checked' : '' %>>
+                    <label class="form-check-label text-white" for="address<%= index %>">
+                      <strong><%= address.name %></strong><br>
+                      <%= address.street %>, <%= address.city %><br>
+                      <%= address.state %> - <%= address.zipCode %><br>
+                      <small class="text-muted">Phone: <%= address.phone %></small>
+                    </label>
+                  </div>
+                <% }) %>
+                
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="addressOption" 
+                         id="newAddress" value="new">
+                  <label class="form-check-label text-white" for="newAddress">
+                    <strong>Add New Address</strong>
+                  </label>
+                </div>
+              </div>
+            <% } %>
+            
+            <!-- New Address Form -->
+            <div id="newAddressForm" class="<%= addresses && addresses.length > 0 ? 'd-none' : '' %>">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label text-white">Full Name *</label>
+                  <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-white">Phone Number *</label>
+                  <input type="tel" class="form-control" name="phone" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label text-white">Street Address *</label>
+                  <input type="text" class="form-control" name="street" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label text-white">City *</label>
+                  <input type="text" class="form-control" name="city" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-white">State *</label>
+                  <input type="text" class="form-control" name="state" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label text-white">ZIP Code *</label>
+                  <input type="text" class="form-control" name="zipCode" required>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Payment Method -->
+          <div class="mb-4">
+            <h5 class="text-white mb-3">
+              <i class="bi bi-credit-card me-2"></i>Payment Method
+            </h5>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              Secure payment powered by Razorpay. We accept all major credit/debit cards, UPI, and net banking.
+            </div>
+          </div>
+          
+          <!-- Place Order Button -->
+          <div class="d-grid">
+            <button type="submit" class="btn btn-gradient-purple btn-lg">
+              <i class="bi bi-lightning-fill me-2"></i>
+              Place Order - ₹<%= cart.finalAmount %>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// Toggle new address form
+document.querySelectorAll('input[name="addressOption"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const newAddressForm = document.getElementById('newAddressForm');
+    if (this.value === 'new') {
+      newAddressForm.classList.remove('d-none');
+      // Make new address fields required
+      newAddressForm.querySelectorAll('input[required]').forEach(input => {
+        input.required = true;
+      });
+    } else {
+      newAddressForm.classList.add('d-none');
+      // Remove required from new address fields
+      newAddressForm.querySelectorAll('input[required]').forEach(input => {
+        input.required = false;
+      });
+    }
+  });
+});
+
+// Buy Now Checkout Form
+document.getElementById('buyNowCheckoutForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const submitBtn = this.querySelector('button[type="submit"]');
+  const originalText = submitBtn.innerHTML;
+  
+  // Disable submit button
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+  
+  try {
+    // Prepare checkout data
+    const checkoutData = {};
+    
+    // Get address data
+    const addressOption = formData.get('addressOption');
+    if (addressOption === 'new') {
+      checkoutData.newAddress = {
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        street: formData.get('street'),
+        city: formData.get('city'),
+        state: formData.get('state'),
+        zipCode: formData.get('zipCode')
+      };
+    } else {
+      checkoutData.addressId = addressOption;
+    }
+    
+    // Process checkout
+    const response = await fetch('/shop/buy-now-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(checkoutData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Initialize Razorpay
+      const options = {
+        key: result.key,
+        amount: result.amount * 100,
+        currency: result.currency,
+        order_id: result.orderId,
+        name: 'RAPIRA',
+        description: 'Merchandise Purchase',
+        image: '/images/logo.png',
+        handler: function(response) {
+          // Verify payment
+          verifyBuyNowPayment(response, result.orderId);
+        },
+        prefill: {
+          name: '<%= currentUser.name %>',
+          email: '<%= currentUser.email %>'
+        },
+        theme: {
+          color: '#6366f1'
+        },
+        modal: {
+          ondismiss: function() {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+          }
+        }
+      };
+      
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } else {
+      alert(result.message || 'Error processing checkout');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  } catch (error) {
+    console.error('Checkout error:', error);
+    alert('Error processing checkout');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
+  }
+});
+
+// Verify Buy Now Payment
+async function verifyBuyNowPayment(paymentResponse, orderId) {
+  try {
+    const response = await fetch('/orders/verify-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        orderId: orderId,
+        isBuyNow: true
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Redirect to order confirmation
+      window.location.href = `/orders/confirmation/${result.orderNumber}`;
+    } else {
+      alert('Payment verification failed: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    alert('Error verifying payment');
+  }
+}
+</script>
+
+<style>
+.sticky-top {
+  z-index: 1020;
+}
+
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+</style>

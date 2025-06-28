@@ -1,0 +1,820 @@
+<!-- Breadcrumb -->
+<div class="container mt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="/shop" class="text-decoration-none">Shop</a></li>
+      <li class="breadcrumb-item active text-white" aria-current="page"><%= product.name %></li>
+    </ol>
+  </nav>
+</div>
+
+
+
+<!-- Product Details -->
+<div class="container py-4">
+  <div class="row g-5">
+    <!-- Product Images Carousel -->
+    <div class="col-lg-6">
+      <div class="glass-card-dark p-4 rounded-4">
+        <!-- Auto Carousel -->
+        <div id="productCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
+          <!-- Carousel Indicators -->
+          <div class="carousel-indicators">
+            <% product.images.forEach((image, index) => { %>
+              <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="<%= index %>"
+                      class="<%= index === 0 ? 'active' : '' %>" aria-current="<%= index === 0 ? 'true' : 'false' %>"
+                      aria-label="Slide <%= index + 1 %>"></button>
+            <% }) %>
+          </div>
+
+          <!-- Carousel Inner -->
+          <div class="carousel-inner rounded-3" style="min-height: 300px; max-height: 500px;">
+            <% product.images.forEach((image, index) => { %>
+              <div class="carousel-item <%= index === 0 ? 'active' : '' %> d-flex align-items-center justify-content-center">
+                <img src="<%= image %>" class="img-fluid rounded-3" alt="<%= product.name %>"
+                     style="max-height: 500px; width: auto; object-fit: contain;">
+                <!-- Image Counter -->
+                <div class="carousel-caption d-none d-md-block">
+                  <span class="badge bg-dark bg-opacity-75 fs-6"><%= index + 1 %> / <%= product.images.length %></span>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <!-- Carousel Controls -->
+          <% if (product.images.length > 1) { %>
+            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          <% } %>
+        </div>
+
+
+
+
+      </div>
+    </div>
+    
+    <!-- Product Info -->
+    <div class="col-lg-6">
+      <div class="glass-card-dark p-4 rounded-4 h-100">
+        <!-- Product Title -->
+        <h1 class="text-white mb-3"><%= product.name %></h1>
+        
+        <!-- Category -->
+        <p class="text-muted mb-3">
+          <i class="bi bi-tag me-1"></i>
+          <%= product.category %>
+        </p>
+        
+        <!-- Rating -->
+        <% if (product.averageRating > 0) { %>
+          <div class="mb-3">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i class="bi bi-star<%= i <= product.averageRating ? '-fill text-warning' : ' text-muted' %>"></i>
+            <% } %>
+            <span class="text-white ms-2"><%= product.averageRating %></span>
+            <small class="text-muted">(<%= product.totalReviews %> reviews)</small>
+          </div>
+        <% } %>
+        
+        <!-- Price -->
+        <div class="mb-4">
+          <% if (product.comparePrice && product.comparePrice > product.price) { %>
+            <span class="text-muted text-decoration-line-through fs-5 me-3">₹<%= product.comparePrice %></span>
+            <span class="text-success fw-bold fs-3">₹<%= product.price %></span>
+            <span class="badge bg-success ms-2">
+              <%= Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) %>% OFF
+            </span>
+          <% } else { %>
+            <span class="text-white fw-bold fs-3">₹<%= product.price %></span>
+          <% } %>
+        </div>
+        
+        <!-- Stock Status -->
+        <div class="mb-4">
+          <% if (product.totalStock === 0) { %>
+            <span class="badge bg-danger fs-6">Out of Stock</span>
+          <% } else if (product.totalStock < 10) { %>
+            <span class="badge bg-warning fs-6">Only <%= product.totalStock %> left in stock</span>
+          <% } else { %>
+            <span class="badge bg-success fs-6">In Stock</span>
+          <% } %>
+        </div>
+
+
+
+        <!-- Product Purchase Section -->
+        <% if (product.totalStock > 0) { %>
+          <div class="mb-4">
+            <!-- Size Selection -->
+            <div class="mb-3">
+              <label class="form-label text-white">Size *</label>
+              <div class="row g-2">
+                <% product.sizes.forEach(sizeObj => { %>
+                  <% if (sizeObj.stock > 0) { %>
+                    <div class="col-auto">
+                      <input type="radio" class="btn-check" name="size" id="size-<%= sizeObj.size %>"
+                             value="<%= sizeObj.size %>" required data-stock="<%= sizeObj.stock %>">
+                      <label class="btn btn-outline-light" for="size-<%= sizeObj.size %>">
+                        <%= sizeObj.size %>
+                        <small class="d-block text-success"><%= sizeObj.stock %> available</small>
+                      </label>
+                    </div>
+                  <% } else { %>
+                    <div class="col-auto">
+                      <button type="button" class="btn btn-outline-secondary" disabled>
+                        <%= sizeObj.size %> (Out of Stock)
+                      </button>
+                    </div>
+                  <% } %>
+                <% }) %>
+              </div>
+
+              <!-- Selected Size Stock Display -->
+              <div id="selectedSizeStock" class="mt-2" style="display: none;">
+                <div class="alert alert-info d-flex align-items-center">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <span id="stockMessage"></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quantity -->
+            <div class="mb-3">
+              <label class="form-label text-white">Quantity</label>
+              <div style="max-width: 150px;">
+                <input type="number" class="form-control text-center" id="quantity" name="quantity"
+                       value="1" min="1" max="10" required>
+              </div>
+              <small class="text-muted">Select a size to see maximum available quantity</small>
+              <div id="stockWarning" class="text-warning mt-1" style="display: none; font-size: 0.875rem;">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <span id="stockWarningText"></span>
+              </div>
+            </div>
+            
+            <!-- Buy Now Button -->
+            <% if (currentUser) { %>
+              <button type="button" class="btn btn-gradient-purple btn-lg w-100 mb-3" onclick="
+                const sizeRadio = document.querySelector('input[name=&quot;size&quot;]:checked');
+                const quantity = document.getElementById('quantity').value || 1;
+                if (!sizeRadio) { alert('Please select a size'); return; }
+                window.location.href = '/shop/buy-now/<%= product._id %>?size=' + sizeRadio.value + '&quantity=' + quantity;
+              ">
+                <i class="bi bi-lightning-fill me-2"></i>Buy Now - ₹<%= product.price %>
+              </button>
+
+
+            <% } else { %>
+              <a href="/auth/login" class="btn btn-gradient-purple btn-lg w-100 mb-3">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login to Purchase
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+
+
+
+        <!-- Product Tags -->
+        <% if (product.tags && product.tags.length > 0) { %>
+          <div class="mb-3">
+            <small class="text-muted">Tags: </small>
+            <% product.tags.forEach(tag => { %>
+              <span class="badge bg-secondary me-1"><%= tag %></span>
+            <% }) %>
+          </div>
+        <% } %>
+        
+        <!-- Share Buttons -->
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-light btn-sm" onclick="shareProduct('facebook')">
+            <i class="bi bi-facebook"></i>
+          </button>
+          <button class="btn btn-outline-light btn-sm" onclick="shareProduct('twitter')">
+            <i class="bi bi-twitter"></i>
+          </button>
+          <button class="btn btn-outline-light btn-sm" onclick="shareProduct('whatsapp')">
+            <i class="bi bi-whatsapp"></i>
+          </button>
+          <button class="btn btn-outline-light btn-sm" onclick="copyProductLink()">
+            <i class="bi bi-link-45deg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Product Description -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h3 class="text-white mb-3">Product Description</h3>
+        <p class="text-light"><%= product.description %></p>
+        
+        <!-- Product Specifications -->
+        <% if (product.weight > 0 || product.dimensions.length > 0) { %>
+          <h4 class="text-white mt-4 mb-3">Specifications</h4>
+          <div class="row">
+            <% if (product.weight > 0) { %>
+              <div class="col-md-6">
+                <p class="text-muted mb-2"><strong>Weight:</strong> <%= product.weight %>g</p>
+              </div>
+            <% } %>
+            <% if (product.dimensions.length > 0 || product.dimensions.width > 0 || product.dimensions.height > 0) { %>
+              <div class="col-md-6">
+                <p class="text-muted mb-2">
+                  <strong>Dimensions:</strong> 
+                  <%= product.dimensions.length %>cm × <%= product.dimensions.width %>cm × <%= product.dimensions.height %>cm
+                </p>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Reviews Section -->
+  <% if (reviews.length > 0) { %>
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="glass-card-dark p-4 rounded-4">
+          <h3 class="text-white mb-4">Customer Reviews</h3>
+          
+          <% reviews.forEach(review => { %>
+            <div class="border-bottom border-secondary pb-3 mb-3">
+              <div class="d-flex align-items-center mb-2">
+                <img src="<%= review.user.profileImage || '/images/default-profile.svg' %>" 
+                     class="rounded-circle me-3" width="40" height="40" alt="<%= review.user.name %>">
+                <div>
+                  <h6 class="text-white mb-0"><%= review.user.name %></h6>
+                  <div>
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <i class="bi bi-star<%= i <= review.rating ? '-fill text-warning' : ' text-muted' %>"></i>
+                    <% } %>
+                    <small class="text-muted ms-2">
+                      <%= new Date(review.createdAt).toLocaleDateString() %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <h6 class="text-white"><%= review.title %></h6>
+              <p class="text-muted mb-2"><%= review.comment %></p>
+              <small class="text-muted">Size: <%= review.size %> | Verified Purchase</small>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  
+  <!-- Related Products -->
+  <% if (relatedProducts.length > 0) { %>
+    <div class="row mt-5">
+      <div class="col-12">
+        <h3 class="text-white mb-4">Related Products</h3>
+        <div class="row g-4">
+          <% relatedProducts.forEach(relatedProduct => { %>
+            <div class="col-lg-3 col-md-6">
+              <div class="card h-100">
+                <img src="<%= relatedProduct.images[0] %>" class="card-img-top" alt="<%= relatedProduct.name %>"
+                     style="height: 200px; object-fit: cover;">
+                <div class="card-body">
+                  <h6 class="card-title text-white"><%= relatedProduct.name %></h6>
+                  <p class="text-white fw-bold">₹<%= relatedProduct.price %></p>
+                  <a href="/shop/product/<%= relatedProduct._id %>" class="btn btn-gradient-purple btn-sm">
+                    View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Scripts -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+// Global error handler for debugging
+window.addEventListener('error', function(e) {
+  console.error('JavaScript Error:', e);
+});
+
+console.log('Main script loaded');
+
+
+
+// Carousel control functions - simplified without thumbnails
+function goToSlide(index) {
+  var carousel = new bootstrap.Carousel(document.getElementById('productCarousel'));
+  carousel.to(index);
+}
+
+
+
+// Listen for carousel slide events
+document.addEventListener('DOMContentLoaded', function() {
+  var carousel = document.getElementById('productCarousel');
+  if (carousel) {
+
+    // Pause on hover
+    carousel.addEventListener('mouseenter', function() {
+      var carouselInstance = bootstrap.Carousel.getInstance(carousel);
+      if (carouselInstance) carouselInstance.pause();
+    });
+
+    // Resume on mouse leave
+    carousel.addEventListener('mouseleave', function() {
+      var carouselInstance = bootstrap.Carousel.getInstance(carousel);
+      if (carouselInstance) {
+        carouselInstance.cycle();
+      }
+    });
+  }
+});
+
+
+
+// Product data will be accessed directly from DOM elements
+
+// Function to show selected size stock information
+function showSelectedSizeStock() {
+  const selectedSizeRadio = document.querySelector('input[name="size"]:checked');
+  const selectedSizeStock = document.getElementById('selectedSizeStock');
+  const stockMessage = document.getElementById('stockMessage');
+  const quantityInput = document.getElementById('quantity');
+
+  if (selectedSizeRadio) {
+    const selectedSize = selectedSizeRadio.value;
+    const availableStock = parseInt(selectedSizeRadio.dataset.stock) || 0;
+    const currentQuantity = parseInt(quantityInput?.value) || 1;
+
+    // Show stock information with current selection
+    let stockInfo = `<strong>Size ${selectedSize} selected:</strong> `;
+
+    if (availableStock > 0) {
+      stockInfo += `<span class="text-success">${availableStock} items available</span>`;
+
+      // Show quantity vs stock comparison
+      if (currentQuantity <= availableStock) {
+        stockInfo += ` <span class="text-muted">| Selected: ${currentQuantity}</span>`;
+      } else {
+        stockInfo += ` <span class="text-warning">| Selected: ${currentQuantity} (exceeds stock!)</span>`;
+      }
+    } else {
+      stockInfo += `<span class="text-danger">Out of stock</span>`;
+    }
+
+    stockMessage.innerHTML = stockInfo;
+    selectedSizeStock.style.display = 'block';
+
+    // Update quantity input max value
+    if (quantityInput) {
+      quantityInput.max = availableStock;
+      // If current quantity exceeds available stock, reset to max available
+      if (parseInt(quantityInput.value) > availableStock) {
+        quantityInput.value = Math.min(availableStock, 1);
+      }
+    }
+
+    // Update helper text
+    const helperText = document.querySelector('.text-muted');
+    if (helperText) {
+      helperText.textContent = `Maximum ${availableStock} items available for size ${selectedSize}`;
+    }
+  } else {
+    // Hide stock information if no size selected
+    selectedSizeStock.style.display = 'none';
+
+    // Reset helper text
+    const helperText = document.querySelector('.text-muted');
+    if (helperText) {
+      helperText.textContent = 'Select a size to see maximum available quantity';
+    }
+  }
+}
+
+// Function to check stock availability
+function checkStockAvailability() {
+  const selectedSizeRadio = document.querySelector('input[name="size"]:checked');
+  const quantityInput = document.getElementById('quantity');
+  const stockWarning = document.getElementById('stockWarning');
+  const stockWarningText = document.getElementById('stockWarningText');
+  const buyNowBtn = document.querySelector('.btn-gradient-purple');
+
+
+  if (!selectedSizeRadio || !quantityInput) {
+    return;
+  }
+
+  const selectedSize = selectedSizeRadio.value;
+  const selectedQuantity = parseInt(quantityInput.value) || 1;
+
+  // Find the stock for selected size
+  const sizeObj = productSizes.find(s => s.size === selectedSize);
+
+  if (sizeObj) {
+    if (selectedQuantity > sizeObj.stock) {
+      // Show warning
+      stockWarningText.textContent = `Only ${sizeObj.stock} items available for size ${selectedSize}`;
+      stockWarning.style.display = 'block';
+
+      // Disable buttons
+      if (buyNowBtn) {
+        buyNowBtn.disabled = true;
+        buyNowBtn.classList.add('btn-secondary');
+        buyNowBtn.classList.remove('btn-gradient-purple');
+      }
+
+    } else {
+      // Hide warning
+      stockWarning.style.display = 'none';
+
+      // Enable buttons
+      if (buyNowBtn) {
+        buyNowBtn.disabled = false;
+        buyNowBtn.classList.remove('btn-secondary');
+        buyNowBtn.classList.add('btn-gradient-purple');
+      }
+
+    }
+  }
+}
+
+// Add input validation for quantity field
+document.addEventListener('DOMContentLoaded', function() {
+  const quantityInput = document.getElementById('quantity');
+  if (quantityInput) {
+    quantityInput.addEventListener('input', function() {
+      let value = parseInt(this.value);
+      if (isNaN(value) || value < 1) {
+        this.value = 1;
+      } else if (value > 10) {
+        this.value = 10;
+      }
+
+      // Check stock availability when quantity changes
+      checkStockAvailability();
+      // Update the selected size stock display if needed
+      showSelectedSizeStock();
+    });
+  }
+
+  // Add event listeners to size radio buttons
+  const sizeRadios = document.querySelectorAll('input[name="size"]');
+  sizeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      showSelectedSizeStock();
+      checkStockAvailability();
+    });
+  });
+});
+
+
+// Buy Now with Direct Razorpay Integration (Same as Subscription Page)
+function handleBuyNow() {
+  console.log('Buy Now button clicked! Starting payment process...');
+
+  // Get selected size and quantity
+  const sizeRadio = document.querySelector('input[name="size"]:checked');
+  const quantityInput = document.getElementById('quantity');
+
+  if (!sizeRadio) {
+    alert('Please select a size before purchasing');
+    return;
+  }
+
+  const selectedQuantity = parseInt(quantityInput.value) || 1;
+
+  // Check stock availability
+  const sizeObj = productSizes.find(s => s.size === sizeRadio.value);
+  if (sizeObj && selectedQuantity > sizeObj.stock) {
+    alert(`Sorry, only ${sizeObj.stock} items available for size ${sizeRadio.value}`);
+    return;
+  }
+
+  const quantity = parseInt(quantityInput.value) || 1;
+  const buyNowBtn = document.getElementById('buyNowBtn');
+
+  // Disable button
+  buyNowBtn.disabled = true;
+  buyNowBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+
+  // Create order with Razorpay
+  fetch('/shop/create-buy-now-order', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      productId: '<%= product._id %>',
+      size: sizeRadio.value,
+      quantity: quantity
+    })
+  })
+  .then(function(response) {
+    return response.json();
+  })
+  .then(function(data) {
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to create order');
+    }
+
+    console.log('Order created successfully! Opening Razorpay...');
+
+    // Initialize Razorpay options (same as subscription page)
+    var options = {
+      key: data.key,
+      amount: data.order.amount,
+      currency: data.order.currency || 'INR',
+      name: 'RAPIRA',
+      description: '<%= product.name %> - Buy Now',
+      order_id: data.order.id,
+      image: '/images/logo.png',
+      handler: function(response) {
+        console.log('Payment successful! Verifying...');
+
+        // Create hidden form for payment verification (same as subscription)
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/shop/verify-buy-now-payment';
+
+        var fields = {
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
+          productId: '<%= product._id %>',
+          size: sizeRadio.value,
+          quantity: quantity
+        };
+
+        for (var key in fields) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = fields[key];
+          form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+      },
+      prefill: {
+        name: '<%= currentUser ? currentUser.name : "" %>',
+        email: '<%= currentUser ? currentUser.email : "" %>'
+      },
+      theme: {
+        color: '#6366f1'
+      },
+      modal: {
+        ondismiss: function() {
+          console.log('Payment cancelled by user');
+          // Re-enable button
+          buyNowBtn.disabled = false;
+          buyNowBtn.innerHTML = '<i class="bi bi-lightning-fill me-2"></i>Buy Now - ₹<%= product.price %>';
+        }
+      }
+    };
+
+    // Create Razorpay instance and open checkout (same as subscription)
+    var rzp = new Razorpay(options);
+    rzp.open();
+  })
+  .catch(function(error) {
+    console.error('Buy Now error:', error);
+    alert('Error: ' + error.message);
+
+    // Re-enable button
+    buyNowBtn.disabled = false;
+    buyNowBtn.innerHTML = '<i class="bi bi-lightning-fill me-2"></i>Buy Now - ₹<%= product.price %>';
+  });
+}
+
+// Initialize Buy Now functionality when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded - Buy Now system ready');
+});
+
+
+
+// Add to cart functionality removed as requested
+
+// Share functions
+function shareProduct(platform) {
+  const url = window.location.href;
+  const title = '<%= product.name %>';
+  
+  let shareUrl = '';
+  switch (platform) {
+    case 'facebook':
+      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+      break;
+    case 'twitter':
+      shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+      break;
+    case 'whatsapp':
+      shareUrl = `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`;
+      break;
+  }
+  
+  if (shareUrl) {
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  }
+}
+
+function copyProductLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    alert('Product link copied to clipboard!');
+  });
+}
+</script>
+
+<style>
+.thumbnail-image {
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.thumbnail-image.active {
+  border-color: var(--primary);
+}
+
+.btn-check:checked + .btn-outline-light {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: var(--text-muted);
+}
+
+.breadcrumb-item a {
+  color: var(--primary);
+}
+
+#stockWarning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-gradient-purple:disabled {
+  background: #6c757d !important;
+  border-color: #6c757d !important;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Size selection styling */
+.btn-check:checked + .btn-outline-light {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.btn-check:checked + .btn-outline-light small {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Selected size stock display */
+#selectedSizeStock .alert {
+  background: rgba(13, 202, 240, 0.1);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: #0dcaf0;
+}
+
+/* Size button hover effects */
+.btn-outline-light:hover small {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Carousel Styles */
+.carousel-fade .carousel-item {
+  opacity: 0;
+  transition-duration: 0.8s;
+  transition-property: opacity;
+  min-height: 300px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.carousel-fade .carousel-item.active {
+  opacity: 1;
+}
+
+.carousel-item img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain !important;
+}
+
+.carousel-indicators {
+  bottom: -50px;
+}
+
+.carousel-indicators button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.carousel-indicators button.active {
+  background-color: #6f42c1;
+  border-color: #6f42c1;
+  transform: scale(1.2);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 8%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.carousel:hover .carousel-control-prev,
+.carousel:hover .carousel-control-next {
+  opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+}
+
+.carousel-caption {
+  bottom: 10px;
+  right: 10px;
+  left: auto;
+  text-align: right;
+  padding: 0;
+}
+
+
+
+/* Auto-play control buttons */
+.btn-outline-light {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+
+</style>
+
+<!-- Simple Buy Now Script (Page Redirect) -->
+<script>
+
+
+
+
+  // Simple redirect function that works with onclick
+  function redirectToPurchase() {
+    // Get selected size and quantity
+    const sizeRadio = document.querySelector('input[name="size"]:checked');
+    const quantityInput = document.getElementById('quantity');
+
+    if (!sizeRadio) {
+      alert('Please select a size before purchasing');
+      return;
+    }
+
+    const quantity = parseInt(quantityInput.value) || 1;
+
+    // Check stock availability
+    const sizeObj = productSizes.find(s => s.size === sizeRadio.value);
+    if (sizeObj && quantity > sizeObj.stock) {
+      alert(`Sorry, only ${sizeObj.stock} items available for size ${sizeRadio.value}`);
+      return;
+    }
+
+    // Redirect to purchase page with parameters
+    const url = `/shop/buy-now/<%= product._id %>?size=${sizeRadio.value}&quantity=${quantity}`;
+    window.location.href = url;
+  }
+
+  // Initialize page
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Product details page loaded');
+  });
+</script>

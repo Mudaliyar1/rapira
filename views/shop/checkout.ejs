@@ -1,0 +1,430 @@
+<!-- Checkout Header -->
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="text-white mb-4">
+        <i class="bi bi-credit-card me-2"></i>Checkout
+      </h1>
+      
+      <!-- Checkout Steps -->
+      <div class="mb-4">
+        <div class="d-flex align-items-center">
+          <div class="step-item active">
+            <span class="step-number">1</span>
+            <span class="step-text">Cart</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item active">
+            <span class="step-number">2</span>
+            <span class="step-text">Checkout</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item">
+            <span class="step-number">3</span>
+            <span class="step-text">Payment</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item">
+            <span class="step-number">4</span>
+            <span class="step-text">Confirmation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row g-4">
+    <!-- Shipping Information -->
+    <div class="col-lg-8">
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">Shipping Information</h4>
+        
+        <form id="checkoutForm">
+          <!-- Saved Addresses -->
+          <% if (addresses && addresses.length > 0) { %>
+            <div class="mb-4">
+              <h6 class="text-white mb-3">Select Saved Address</h6>
+              <% addresses.forEach((address, index) => { %>
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="radio" name="addressOption" 
+                         id="address-<%= address._id %>" value="saved" 
+                         data-address-id="<%= address._id %>" <%= index === 0 ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="address-<%= address._id %>">
+                    <div class="address-card p-3 border rounded">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <strong><%= address.fullName %></strong>
+                          <% if (address.isDefault) { %>
+                            <span class="badge bg-primary ms-2">Default</span>
+                          <% } %>
+                          <br>
+                          <small class="text-muted">
+                            <%= address.fullAddress %>
+                            <br>
+                            Phone: <%= address.phone %>
+                          </small>
+                        </div>
+                        <span class="badge bg-secondary"><%= address.label %></span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              <% }) %>
+            </div>
+            
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="radio" name="addressOption" 
+                     id="newAddress" value="new">
+              <label class="form-check-label text-white" for="newAddress">
+                Use a new address
+              </label>
+            </div>
+          <% } %>
+          
+          <!-- New Address Form -->
+          <div id="newAddressForm" class="<%= addresses && addresses.length > 0 ? 'd-none' : '' %>">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label text-white">Full Name *</label>
+                <input type="text" class="form-control" name="fullName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white">Phone Number *</label>
+                <input type="tel" class="form-control" name="phone" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-white">Address Line 1 *</label>
+                <input type="text" class="form-control" name="addressLine1" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-white">Address Line 2</label>
+                <input type="text" class="form-control" name="addressLine2">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">City *</label>
+                <input type="text" class="form-control" name="city" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">State *</label>
+                <input type="text" class="form-control" name="state" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">Pincode *</label>
+                <input type="text" class="form-control" name="pincode" pattern="[0-9]{6}" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white">Country</label>
+                <input type="text" class="form-control" name="country" value="India" readonly>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white">Address Type</label>
+                <select class="form-select" name="addressType">
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="saveAddress" id="saveAddress">
+                  <label class="form-check-label text-white" for="saveAddress">
+                    Save this address for future orders
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Order Summary -->
+    <div class="col-lg-4">
+      <div class="glass-card-dark p-4 rounded-4 sticky-top" style="top: 100px;">
+        <h4 class="text-white mb-4">Order Summary</h4>
+        
+        <!-- Order Items -->
+        <div class="mb-4">
+          <% cart.items.forEach(item => { %>
+            <div class="d-flex align-items-center mb-3">
+              <img src="<%= item.product.images[0] %>" class="rounded me-3" 
+                   width="50" height="50" alt="<%= item.product.name %>">
+              <div class="flex-grow-1">
+                <h6 class="text-white mb-0 small"><%= item.product.name %></h6>
+                <small class="text-muted">Size: <%= item.size %> | Qty: <%= item.quantity %></small>
+              </div>
+              <span class="text-white">₹<%= item.price * item.quantity %></span>
+            </div>
+          <% }) %>
+        </div>
+        
+        <hr class="border-secondary">
+        
+        <!-- Price Breakdown -->
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Subtotal (<%= cart.totalItems %> items)</span>
+          <span class="text-white">₹<%= cart.totalAmount %></span>
+        </div>
+        
+        <% if (cart.appliedCoupon && cart.appliedCoupon.code) { %>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-success">Discount (<%= cart.appliedCoupon.code %>)</span>
+            <span class="text-success">-₹<%= cart.totalAmount - cart.finalAmount %></span>
+          </div>
+        <% } %>
+        
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Shipping</span>
+          <span class="text-success">FREE</span>
+        </div>
+        
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Tax</span>
+          <span class="text-white">₹0</span>
+        </div>
+        
+        <hr class="border-secondary">
+        
+        <div class="d-flex justify-content-between mb-4">
+          <span class="text-white fw-bold fs-5">Total</span>
+          <span class="text-white fw-bold fs-5">₹<%= cart.finalAmount %></span>
+        </div>
+        
+        <!-- Place Order Button -->
+        <button type="button" class="btn btn-gradient-purple btn-lg w-100 mb-3" onclick="processCheckout()">
+          <i class="bi bi-credit-card me-2"></i>Place Order
+        </button>
+        
+        <!-- Security Info -->
+        <div class="text-center">
+          <small class="text-muted">
+            <i class="bi bi-shield-check me-1"></i>
+            Secure payment with Razorpay
+          </small>
+        </div>
+        
+        <!-- Payment Methods -->
+        <div class="mt-3">
+          <small class="text-muted d-block mb-2">We accept:</small>
+          <div class="d-flex gap-2">
+            <img src="/images/payment/visa.png" alt="Visa" height="20" class="opacity-75">
+            <img src="/images/payment/mastercard.png" alt="Mastercard" height="20" class="opacity-75">
+            <img src="/images/payment/rupay.png" alt="RuPay" height="20" class="opacity-75">
+            <img src="/images/payment/upi.png" alt="UPI" height="20" class="opacity-75">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+// Toggle new address form
+document.querySelectorAll('input[name="addressOption"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const newAddressForm = document.getElementById('newAddressForm');
+    if (this.value === 'new') {
+      newAddressForm.classList.remove('d-none');
+    } else {
+      newAddressForm.classList.add('d-none');
+    }
+  });
+});
+
+async function processCheckout() {
+  const form = document.getElementById('checkoutForm');
+  const formData = new FormData(form);
+  
+  // Determine address data
+  let addressData = {};
+  const selectedAddressOption = document.querySelector('input[name="addressOption"]:checked');
+  
+  if (selectedAddressOption && selectedAddressOption.value === 'saved') {
+    addressData.addressId = selectedAddressOption.dataset.addressId;
+  } else {
+    // New address
+    addressData.newAddress = {
+      fullName: formData.get('fullName'),
+      phone: formData.get('phone'),
+      addressLine1: formData.get('addressLine1'),
+      addressLine2: formData.get('addressLine2'),
+      city: formData.get('city'),
+      state: formData.get('state'),
+      pincode: formData.get('pincode'),
+      country: formData.get('country') || 'India',
+      addressType: formData.get('addressType'),
+      saveAddress: formData.get('saveAddress') === 'on'
+    };
+    
+    // Validate required fields
+    if (!addressData.newAddress.fullName || !addressData.newAddress.phone || 
+        !addressData.newAddress.addressLine1 || !addressData.newAddress.city || 
+        !addressData.newAddress.state || !addressData.newAddress.pincode) {
+      alert('Please fill in all required address fields');
+      return;
+    }
+  }
+  
+  try {
+    // Create order
+    const response = await fetch('/shop/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(addressData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Initialize Razorpay
+      const options = {
+        key: result.key,
+        amount: result.amount * 100, // Amount in paise
+        currency: result.currency,
+        order_id: result.orderId,
+        name: 'RAPIRA Merchandise',
+        description: 'Purchase from RAPIRA Shop',
+        image: '/images/logo.png',
+        handler: function(response) {
+          verifyPayment(response, addressData);
+        },
+        prefill: {
+          name: '<%= currentUser.name %>',
+          email: '<%= currentUser.email %>'
+        },
+        theme: {
+          color: '#6366f1'
+        },
+        modal: {
+          ondismiss: function() {
+            console.log('Payment cancelled');
+          }
+        }
+      };
+      
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } else {
+      alert(result.message || 'Error processing checkout');
+    }
+  } catch (error) {
+    console.error('Checkout error:', error);
+    alert('Error processing checkout');
+  }
+}
+
+async function verifyPayment(paymentResponse, addressData) {
+  try {
+    const response = await fetch('/orders/verify-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        ...addressData
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Redirect to confirmation page
+      window.location.href = `/orders/confirmation/${result.orderId}`;
+    } else {
+      alert(result.message || 'Payment verification failed');
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    alert('Error verifying payment');
+  }
+}
+</script>
+
+<style>
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.step-item.active .step-number {
+  background-color: var(--primary);
+  color: white;
+}
+
+.step-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.step-item.active .step-text {
+  color: var(--text);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 1rem;
+  align-self: flex-start;
+  margin-top: 20px;
+}
+
+.step-item.active + .step-line {
+  background-color: var(--primary);
+}
+
+.address-card {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.form-check-input:checked ~ .form-check-label .address-card {
+  border-color: var(--primary) !important;
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+.sticky-top {
+  position: sticky;
+  top: 100px;
+  z-index: 10;
+}
+
+@media (max-width: 991.98px) {
+  .sticky-top {
+    position: static;
+  }
+  
+  .d-flex.align-items-center {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .step-line {
+    width: 2px;
+    height: 2rem;
+    margin: 0;
+  }
+}
+</style>

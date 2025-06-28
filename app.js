@@ -295,6 +295,10 @@ app.use(loadWebsiteSettings);
 // Import the getImageUrl function from uploadHelper
 const { getImageUrl } = require('./utils/uploadHelper');
 
+// Cart middleware
+const cartMiddleware = require('./middleware/cart');
+app.use(cartMiddleware);
+
 // Global variables
 app.use(async (req, res, next) => {
   try {
@@ -402,9 +406,13 @@ const adminRoutes = require('./routes/admin');
 const adminContentRoutes = require('./routes/admin-content');
 const adminAccessControlRoutes = require('./routes/adminAccessControl');
 const adminContactRoutes = require('./routes/adminContact');
+const adminMerchandiseRoutes = require('./routes/admin-merchandise');
 const paymentRoutes = require('./routes/payments');
 const pageRoutes = require('./routes/pages');
 const emailStatusRoutes = require('./routes/email-status');
+const shopRoutes = require('./routes/shop');
+const orderRoutes = require('./routes/orders');
+const reviewRoutes = require('./routes/reviews');
 const artistApplicationRoutes = require('./routes/artistApplications');
 const roleRoutes = require('./routes/roles');
 const learningRoutes = require('./routes/learning');
@@ -444,9 +452,13 @@ app.use('/artists', artistRoutes);
 app.use('/concerts', concertRoutes);
 app.use('/tickets', ticketRoutes);
 app.use('/admin', adminRoutes);
+app.use('/admin/merchandise', adminMerchandiseRoutes);
 app.use('/payments', paymentRoutes);
 app.use('/pages', pageRoutes);
 app.use('/email-status', emailStatusRoutes);
+app.use('/shop', shopRoutes);
+app.use('/orders', orderRoutes);
+app.use('/reviews', reviewRoutes);
 app.use('/artist-applications', artistApplicationRoutes);
 app.use('/roles', roleRoutes);
 app.use('/learning', learningRoutes);

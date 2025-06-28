@@ -53,7 +53,7 @@
         <!-- Services Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.servicesMenu && menuSettings.servicesMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist') || path.startsWith('/subscriptions')) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist') || path.startsWith('/subscriptions') || path.startsWith('/shop') || path.startsWith('/orders')) ? 'active' : '' %>"
              href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-gear me-1"></i> Services
           </a>
@@ -66,6 +66,13 @@
             <% } %>
             <% if (menuSettings.servicesMenu.items.subscriptions) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/subscriptions') ? 'active' : '' %>" href="/subscriptions"><i class="bi bi-star me-2"></i>Subscriptions</a></li>
+            <% } %>
+
+            <!-- Shop Section -->
+            <li><hr class="dropdown-divider border-secondary"></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/shop') ? 'active' : '' %>" href="/shop"><i class="bi bi-bag me-2"></i>Shop</a></li>
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/orders') ? 'active' : '' %>" href="/orders/my-orders"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
             <% } %>
           </ul>
         </li>
@@ -104,6 +111,9 @@
           </ul>
         </li>
         <% } %>
+
+
+
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <% if (typeof isArtist !== 'undefined' && isArtist) { %>
             <li class="nav-item">
@@ -143,6 +153,8 @@
           </li>
           <% } %>
         </div>
+
+
         <% if (typeof currentUser !== 'undefined' && currentUser && typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
           <li class="nav-item me-2">
             <a class="nav-link position-relative" href="/messages">
@@ -164,6 +176,7 @@
             <ul class="dropdown-menu glass-card-dark dropdown-menu-end" aria-labelledby="navbarDropdown">
               <li><a class="dropdown-item text-white" href="/users/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
               <li><a class="dropdown-item text-white" href="/tickets"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a></li>
+              <li><a class="dropdown-item text-white" href="/orders/my-orders"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
               <li><a class="dropdown-item text-white" href="/subscriptions/my-subscriptions"><i class="bi bi-star me-2"></i>My Subscriptions</a></li>
               <% if (typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
               <li><a class="dropdown-item text-white" href="/messages"><i class="bi bi-chat-dots me-2"></i>Messages</a></li>

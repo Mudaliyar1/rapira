@@ -1,0 +1,952 @@
+<!-- Breadcrumb -->
+<div class="container mt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="/orders/my-orders" class="text-decoration-none">My Orders</a></li>
+      <li class="breadcrumb-item active text-white" aria-current="page">Order #<%= order.orderNumber %></li>
+    </ol>
+  </nav>
+</div>
+
+<!-- Order Details -->
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+          <a href="/orders/my-orders" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left me-1"></i>Back to Orders
+          </a>
+          <h1 class="text-white mb-0">Order #<%= order.orderNumber %></h1>
+        </div>
+        <div class="d-flex gap-2">
+          <% if (order.canBeCancelled) { %>
+            <button class="btn btn-outline-danger" onclick="cancelOrder('<%= order._id %>')">
+              <i class="bi bi-x-circle me-1"></i>Cancel Order
+            </button>
+          <% } %>
+          <a href="/orders/invoice/<%= order._id %>"
+             class="btn btn-outline-info"
+             target="_blank"
+             onclick="handleInvoiceDownload(event, '<%= order._id %>')">
+            <i class="bi bi-download me-1"></i>Invoice
+          </a>
+          <button class="btn btn-outline-light" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Print
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Order Status Timeline -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h4 class="text-white mb-4">Order Status</h4>
+        
+        <!-- Current Status Display -->
+        <div class="current-status-display mb-4">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="text-white mb-1">Current Status</h5>
+              <span class="badge bg-<%= order.orderStatus === 'pending' ? 'secondary' :
+                                      order.orderStatus === 'confirmed' ? 'success' :
+                                      order.orderStatus === 'processing' ? 'warning' :
+                                      order.orderStatus === 'shipped' ? 'info' :
+                                      order.orderStatus === 'delivered' ? 'primary' :
+                                      order.orderStatus === 'cancelled' ? 'danger' :
+                                      order.orderStatus === 'returned' ? 'dark' : 'secondary' %> fs-6">
+                <i class="bi bi-<%= order.orderStatus === 'pending' ? 'clock' :
+                                   order.orderStatus === 'confirmed' ? 'check-circle' :
+                                   order.orderStatus === 'processing' ? 'gear' :
+                                   order.orderStatus === 'shipped' ? 'truck' :
+                                   order.orderStatus === 'delivered' ? 'check-circle-fill' :
+                                   order.orderStatus === 'cancelled' ? 'x-circle' :
+                                   order.orderStatus === 'returned' ? 'arrow-return-left' : 'question-circle' %> me-2"></i>
+                <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+              </span>
+            </div>
+            <div class="text-end">
+              <small class="text-muted">Last Updated</small>
+              <div class="text-white">
+                <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expected Delivery Display -->
+          <% if (order.estimatedDelivery && ['processing', 'shipped'].includes(order.orderStatus)) { %>
+            <div class="mt-3 p-3 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-calendar-event text-info me-2"></i>
+                <div>
+                  <small class="text-info fw-bold">Expected Delivery</small>
+                  <div class="text-white fs-6">
+                    <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    }) %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% } else if (order.estimatedDelivery && order.orderStatus === 'delivered') { %>
+            <div class="mt-3 p-3 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <div>
+                  <small class="text-success fw-bold">Delivered</small>
+                  <div class="text-white fs-6">
+                    <% if (order.deliveredAt) { %>
+                      <%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) %>
+                    <% } else { %>
+                      Order has been delivered
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Status-specific Information -->
+        <div class="status-info">
+          <% if (order.orderStatus === 'pending') { %>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Order Received:</strong> Your order is pending confirmation. We'll update you once it's confirmed.
+            </div>
+          <% } else if (order.orderStatus === 'confirmed') { %>
+            <div class="alert alert-success">
+              <i class="bi bi-check-circle me-2"></i>
+              <strong>Order Confirmed:</strong> Your order has been confirmed and will be processed soon.
+            </div>
+          <% } else if (order.orderStatus === 'processing') { %>
+            <div class="alert alert-warning">
+              <i class="bi bi-gear me-2"></i>
+              <strong>Processing:</strong> Your order is being prepared for shipment.
+              <% if (order.estimatedDelivery) { %>
+                <br><strong>Expected Delivery:</strong> <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) %>
+              <% } %>
+            </div>
+          <% } else if (order.orderStatus === 'shipped') { %>
+            <div class="alert alert-info">
+              <i class="bi bi-truck me-2"></i>
+              <strong>Shipped:</strong> Your order has been shipped and is on its way to you.
+              <% if (order.trackingNumber) { %>
+                <br><strong>Tracking Number:</strong> <code><%= order.trackingNumber %></code>
+              <% } %>
+              <% if (order.estimatedDelivery) { %>
+                <br><strong>Expected Delivery:</strong> <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) %>
+                <%
+                  const today = new Date();
+                  const deliveryDate = new Date(order.estimatedDelivery);
+                  const diffTime = deliveryDate - today;
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                %>
+                <% if (diffDays > 0) { %>
+                  <br><small style="color: black;">(<%= diffDays %> day<%= diffDays > 1 ? 's' : '' %> remaining)</small>
+                <% } else if (diffDays === 0) { %>
+                  <br><small class="text-warning">Expected today!</small>
+                <% } else { %>
+                  <br><small class="text-danger">Delivery was expected <%= Math.abs(diffDays) %> day<%= Math.abs(diffDays) > 1 ? 's' : '' %> ago</small>
+                <% } %>
+              <% } %>
+            </div>
+          <% } else if (order.orderStatus === 'delivered') { %>
+            <div class="alert alert-primary">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <strong style="color: white;">Delivered:</strong> <span style="color: white;">Your order has been successfully delivered.</span>
+              <% if (order.deliveredAt) { %>
+                <br><strong style="color: white;">Delivered on:</strong> <span style="color: white;"><%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) %></span>
+              <% } %>
+            </div>
+          <% } else if (order.orderStatus === 'cancelled') { %>
+            <div class="alert alert-danger">
+              <i class="bi bi-x-circle me-2"></i>
+              <strong>Cancelled:</strong> This order has been cancelled.
+              <% if (order.cancelledAt) { %>
+                <br><strong>Cancelled on:</strong> <%= new Date(order.cancelledAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }) %>
+              <% } %>
+            </div>
+          <% } else if (order.orderStatus === 'returned') { %>
+            <div class="alert alert-secondary">
+              <i class="bi bi-arrow-return-left me-2"></i>
+              <strong>Returned:</strong> This order has been returned.
+            </div>
+          <% } %>
+
+          <% if (order.notes) { %>
+            <div class="mt-3">
+              <small class="text-muted">Additional Notes:</small>
+              <div class="text-white"><%= order.notes %></div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Dynamic Progress Timeline -->
+        <div class="order-timeline mt-4">
+          <!-- Order Placed (Always shown) -->
+          <div class="timeline-item completed">
+            <div class="timeline-icon">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <h6 class="text-white">Order Placed</h6>
+              <small class="text-muted">
+                <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </small>
+            </div>
+          </div>
+
+          <!-- Confirmed (Show if status is confirmed or beyond) -->
+          <% if (['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus)) { %>
+            <div class="timeline-item <%= order.orderStatus === 'confirmed' ? 'current' : 'completed' %>">
+              <div class="timeline-icon">
+                <i class="bi bi-check-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Confirmed</h6>
+                <small class="text-muted">
+                  Order confirmed<br>
+                  <% if (order.confirmedAt) { %>
+                    <%= new Date(order.confirmedAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } else { %>
+                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Processing (Show if status is processing or beyond) -->
+          <% if (['processing', 'shipped', 'delivered'].includes(order.orderStatus)) { %>
+            <div class="timeline-item <%= order.orderStatus === 'processing' ? 'current' : 'completed' %>">
+              <div class="timeline-icon">
+                <i class="bi bi-gear"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Processing</h6>
+                <small class="text-muted">
+                  Being prepared<br>
+                  <% if (order.processingAt) { %>
+                    <%= new Date(order.processingAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } else { %>
+                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Shipped (Show only if status is shipped or delivered) -->
+          <% if (['shipped', 'delivered'].includes(order.orderStatus)) { %>
+            <div class="timeline-item <%= order.orderStatus === 'shipped' ? 'current' : 'completed' %>">
+              <div class="timeline-icon">
+                <i class="bi bi-truck"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Shipped</h6>
+                <small class="text-muted">
+                  <% if (order.trackingNumber) { %>
+                    Track No: <%= order.trackingNumber %><br>
+                  <% } else { %>
+                    On the way<br>
+                  <% } %>
+                  <% if (order.shippedAt) { %>
+                    <%= new Date(order.shippedAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } else { %>
+                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Delivered (Show only if status is delivered) -->
+          <% if (order.orderStatus === 'delivered') { %>
+            <div class="timeline-item completed current">
+              <div class="timeline-icon">
+                <i class="bi bi-check-circle-fill"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Delivered</h6>
+                <small class="text-muted">
+                  <% if (order.deliveredAt) { %>
+                    <%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } else { %>
+                    Completed
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Cancelled (Show only if status is cancelled) -->
+          <% if (order.orderStatus === 'cancelled') { %>
+            <div class="timeline-item cancelled current">
+              <div class="timeline-icon">
+                <i class="bi bi-x-circle"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Cancelled</h6>
+                <small class="text-muted">
+                  <% if (order.cancelledAt) { %>
+                    <%= new Date(order.cancelledAt).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  <% } else { %>
+                    Order cancelled
+                  <% } %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Returned (Show only if status is returned) -->
+          <% if (order.orderStatus === 'returned') { %>
+            <div class="timeline-item returned current">
+              <div class="timeline-icon">
+                <i class="bi bi-arrow-return-left"></i>
+              </div>
+              <div class="timeline-content">
+                <h6 class="text-white">Returned</h6>
+                <small class="text-muted">
+                  Order returned<br>
+                  <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %>
+                </small>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row g-4">
+    <!-- Order Items -->
+    <div class="col-lg-8">
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h4 class="text-white mb-4">Order Items</h4>
+        
+        <% order.items.forEach((item, itemIndex) => { %>
+          <div class="row align-items-center border-bottom border-secondary pb-4 mb-4">
+            <div class="col-md-2">
+              <% if (item.product && item.product.images && item.product.images.length > 1) { %>
+                <!-- Carousel for multiple images -->
+                <div id="productCarousel<%= itemIndex %>" class="carousel slide" data-bs-ride="carousel">
+                  <div class="carousel-inner rounded-3" style="height: 100px;">
+                    <% item.product.images.forEach((image, imageIndex) => { %>
+                      <div class="carousel-item <%= imageIndex === 0 ? 'active' : '' %>">
+                        <img src="<%= image %>" class="d-block w-100 rounded-3"
+                             alt="<%= item.productName %>" style="height: 100px; object-fit: cover;">
+                      </div>
+                    <% }) %>
+                  </div>
+                  <% if (item.product.images.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel<%= itemIndex %>" data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel<%= itemIndex %>" data-bs-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="visually-hidden">Next</span>
+                    </button>
+                  <% } %>
+                  <!-- Image indicator -->
+                  <div class="position-absolute bottom-0 end-0 bg-dark bg-opacity-75 text-white px-2 py-1 rounded-top-start" style="font-size: 0.75rem;">
+                    <i class="bi bi-images"></i> <%= item.product.images.length %>
+                  </div>
+                </div>
+              <% } else { %>
+                <!-- Single image fallback -->
+                <img src="<%= item.productImage %>" class="img-fluid rounded-3"
+                     alt="<%= item.productName %>" style="height: 100px; object-fit: cover;">
+              <% } %>
+            </div>
+            <div class="col-md-5">
+              <h6 class="text-white mb-2"><%= item.productName %></h6>
+              <p class="text-muted mb-1">Size: <%= item.size %></p>
+              <p class="text-muted mb-0">Quantity: <%= item.quantity %></p>
+            </div>
+            <div class="col-md-2 text-center">
+              <span class="text-white">₹<%= item.price %></span>
+              <br>
+              <small class="text-muted">per item</small>
+            </div>
+            <div class="col-md-2 text-center">
+              <span class="text-white fw-bold">₹<%= item.totalPrice %></span>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    
+    <!-- Order Summary & Info -->
+    <div class="col-lg-4">
+      <!-- Order Summary -->
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h5 class="text-white mb-4">Order Summary</h5>
+        
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Subtotal:</span>
+          <span class="text-white">₹<%= order.subtotal %></span>
+        </div>
+        
+        <% if (order.discountAmount > 0) { %>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-success">
+              Discount
+              <% if (order.couponCode) { %>
+                (<%= order.couponCode %>)
+              <% } %>
+            </span>
+            <span class="text-success">-₹<%= order.discountAmount %></span>
+          </div>
+        <% } %>
+        
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Shipping:</span>
+          <span class="text-success">FREE</span>
+        </div>
+        
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">Tax:</span>
+          <span class="text-white">₹<%= order.taxAmount || 0 %></span>
+        </div>
+        
+        <hr class="border-secondary">
+        
+        <div class="d-flex justify-content-between mb-3">
+          <span class="text-white fw-bold fs-5">Total:</span>
+          <span class="text-white fw-bold fs-5">₹<%= order.totalAmount %></span>
+        </div>
+        
+        <!-- Expected Delivery -->
+        <% if (order.estimatedDelivery && ['processing', 'shipped'].includes(order.orderStatus)) { %>
+          <div class="text-center mb-3 p-3 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
+            <div class="text-info fw-bold mb-1">
+              <i class="bi bi-calendar-event me-2"></i>Expected Delivery
+            </div>
+            <div class="text-white">
+              <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+              }) %>
+              at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              }) %>
+            </div>
+            <%
+              const today = new Date();
+              const deliveryDate = new Date(order.estimatedDelivery);
+              const diffTime = deliveryDate - today;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            %>
+            <% if (diffDays > 0) { %>
+              <small style="color: black;">(<%= diffDays %> day<%= diffDays > 1 ? 's' : '' %> remaining)</small>
+            <% } else if (diffDays === 0) { %>
+              <small class="text-warning fw-bold">Expected today!</small>
+            <% } %>
+          </div>
+        <% } %>
+
+        <!-- Payment Status -->
+        <div class="text-center">
+          <%
+            let paymentClass = 'bg-secondary';
+            switch(order.paymentStatus) {
+              case 'completed':
+                paymentClass = 'bg-success';
+                break;
+              case 'failed':
+                paymentClass = 'bg-danger';
+                break;
+              case 'refunded':
+                paymentClass = 'bg-warning';
+                break;
+            }
+          %>
+          <span class="badge <%= paymentClass %> fs-6">
+            Payment <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+          </span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Additional Information Row -->
+  <div class="row mt-4">
+    <!-- Shipping Address -->
+    <div class="col-lg-6 mb-4">
+      <div class="glass-card-dark p-4 rounded-4 h-100">
+        <h5 class="text-white mb-3">Shipping Address</h5>
+        <div class="text-white">
+          <strong><%= order.shippingAddress.fullName %></strong><br>
+          <%= order.shippingAddress.addressLine1 %><br>
+          <% if (order.shippingAddress.addressLine2) { %>
+            <%= order.shippingAddress.addressLine2 %><br>
+          <% } %>
+          <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+          <%= order.shippingAddress.pincode %>, <%= order.shippingAddress.country %>
+        </div>
+        <div class="mt-2">
+          <small class="text-muted">Phone: <%= order.shippingAddress.phone %></small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Info -->
+    <div class="col-lg-6 mb-4">
+      <div class="glass-card-dark p-4 rounded-4 h-100">
+        <h5 class="text-white mb-3">Order Information</h5>
+
+        <div class="mb-2">
+          <small class="text-muted">Order Date:</small>
+          <div class="text-white">
+            <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) %>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <small class="text-muted">Payment ID:</small>
+          <div class="text-white small"><%= order.paymentId %></div>
+        </div>
+
+        <% if (order.trackingNumber) { %>
+          <div class="mb-2">
+            <small class="text-muted">Tracking Number:</small>
+            <div class="text-white"><%= order.trackingNumber %></div>
+          </div>
+        <% } %>
+
+        <% if (order.estimatedDelivery) { %>
+          <div class="mb-2">
+            <small class="text-muted">Expected Delivery:</small>
+            <div class="text-white">
+              <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              }) %>
+              at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <% if (order.notes) { %>
+          <div class="mb-2">
+            <small class="text-muted">Notes:</small>
+            <div class="text-white"><%= order.notes %></div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Cancel Order</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-white">Are you sure you want to cancel this order?</p>
+        <div class="mb-3">
+          <label class="form-label text-white">Reason for cancellation:</label>
+          <select class="form-select" id="cancellationReason">
+            <option value="Changed my mind">Changed my mind</option>
+            <option value="Found better price elsewhere">Found better price elsewhere</option>
+            <option value="Ordered by mistake">Ordered by mistake</option>
+            <option value="Delivery taking too long">Delivery taking too long</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
+        <button type="button" class="btn btn-danger" onclick="confirmCancelOrder()">Cancel Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let orderToCancel = null;
+
+function cancelOrder(orderId) {
+  orderToCancel = orderId;
+  const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+  modal.show();
+}
+
+async function confirmCancelOrder() {
+  if (!orderToCancel) return;
+  
+  const reason = document.getElementById('cancellationReason').value;
+  
+  try {
+    const response = await fetch(`/orders/cancel/${orderToCancel}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ reason })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert('Order cancelled successfully');
+      window.location.reload();
+    } else {
+      alert(result.message || 'Error cancelling order');
+    }
+  } catch (error) {
+    console.error('Cancel order error:', error);
+    alert('Error cancelling order');
+  }
+  
+  // Close modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
+  modal.hide();
+}
+
+function handleInvoiceDownload(event, orderId) {
+  console.log('Invoice download handler called for order:', orderId);
+
+  // Show immediate feedback
+  const button = event.target.closest('a');
+  const originalContent = button.innerHTML;
+  button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
+
+  // Allow the default link behavior but add some feedback
+  setTimeout(() => {
+    button.innerHTML = originalContent;
+  }, 2000);
+
+  // Don't prevent default - let the link work normally
+  return true;
+}
+
+
+</script>
+
+<style>
+.order-timeline {
+  display: flex;
+  justify-content: flex-start;
+  gap: 2rem;
+  position: relative;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.order-timeline::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.timeline-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  min-width: 120px;
+}
+
+.timeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.timeline-item.completed .timeline-icon {
+  background-color: var(--success);
+  color: white;
+}
+
+.timeline-item.current .timeline-icon {
+  background-color: #007bff;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.timeline-item.current .timeline-content h6 {
+  color: #007bff !important;
+}
+
+.timeline-item.cancelled .timeline-icon {
+  background-color: #dc3545;
+  color: white;
+}
+
+.timeline-item.cancelled .timeline-content h6 {
+  color: #dc3545 !important;
+}
+
+.timeline-item.returned .timeline-icon {
+  background-color: #6c757d;
+  color: white;
+}
+
+.timeline-item.returned .timeline-content h6 {
+  color: #6c757d !important;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+  }
+}
+
+.current-status-display {
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.status-info .alert {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.status-info .alert-info {
+  border-color: rgba(13, 202, 240, 0.3);
+  background: rgba(13, 202, 240, 0.1);
+}
+
+.status-info .alert-success {
+  border-color: rgba(25, 135, 84, 0.3);
+  background: rgba(25, 135, 84, 0.1);
+}
+
+.status-info .alert-warning {
+  border-color: rgba(255, 193, 7, 0.3);
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.status-info .alert-danger {
+  border-color: rgba(220, 53, 69, 0.3);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.status-info .alert-primary {
+  border-color: rgba(13, 110, 253, 0.3);
+  background: rgba(13, 110, 253, 0.1);
+}
+
+.status-info .alert-secondary {
+  border-color: rgba(108, 117, 125, 0.3);
+  background: rgba(108, 117, 125, 0.1);
+}
+
+.timeline-content {
+  text-align: center;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: var(--text-muted);
+}
+
+.breadcrumb-item a {
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .order-timeline {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .order-timeline::before {
+    display: none;
+  }
+  
+  .timeline-item {
+    flex-direction: row;
+    text-align: left;
+  }
+  
+  .timeline-icon {
+    margin-bottom: 0;
+    margin-right: 1rem;
+  }
+  
+  .timeline-content {
+    text-align: left;
+  }
+}
+
+/* Custom carousel controls for better visibility on dark backgrounds */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  padding: 8px;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 30px;
+  opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+}
+
+/* Smooth transitions for carousel */
+.carousel-item {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Image count indicator styling */
+.carousel .position-absolute {
+  backdrop-filter: blur(4px);
+}
+
+@media print {
+  .btn, .modal {
+    display: none !important;
+  }
+
+  .glass-card-dark {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .text-white {
+    color: black !important;
+  }
+
+  .text-muted {
+    color: #666 !important;
+  }
+}
+</style>

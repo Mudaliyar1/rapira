@@ -166,6 +166,29 @@
         </a>
       </li>
 
+      <!-- Merchandise Management Section -->
+      <li class="nav-item mt-3 mb-2">
+        <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
+          <span class="text-muted text-uppercase small">Merchandise</span>
+        </div>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/merchandise/products" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/admin/merchandise/products')) ? 'active bg-primary' : '' %>">
+          <i class="bi bi-box-seam me-1"></i> Products
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/merchandise/orders" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/admin/merchandise/orders')) ? 'active bg-primary' : '' %>">
+          <i class="bi bi-bag-check me-1"></i> Orders
+        </a>
+      </li>
+
+      <li class="nav-item mb-1">
+        <a href="/reviews/admin" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/reviews/admin')) ? 'active bg-primary' : '' %>">
+          <i class="bi bi-star me-1"></i> Reviews
+        </a>
+      </li>
+
       <!-- Subscription Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">

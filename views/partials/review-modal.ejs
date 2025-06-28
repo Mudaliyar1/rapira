@@ -1,0 +1,305 @@
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Write a Review</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="reviewForm">
+          <!-- Product Info -->
+          <div class="d-flex align-items-center mb-4 p-3 bg-secondary bg-opacity-25 rounded">
+            <img id="reviewProductImage" src="" class="rounded me-3" width="60" height="60" 
+                 alt="Product" style="object-fit: cover;">
+            <div>
+              <h6 class="text-white mb-1" id="reviewProductName"></h6>
+              <small class="text-muted">Size: <span id="reviewProductSize"></span></small>
+            </div>
+          </div>
+          
+          <!-- Rating -->
+          <div class="mb-4">
+            <label class="form-label text-white">Overall Rating *</label>
+            <div class="rating-input d-flex gap-2 mb-2">
+              <input type="radio" class="btn-check" name="rating" id="rating1" value="1" required>
+              <label class="btn btn-outline-warning" for="rating1">
+                <i class="bi bi-star"></i> 1
+              </label>
+              
+              <input type="radio" class="btn-check" name="rating" id="rating2" value="2">
+              <label class="btn btn-outline-warning" for="rating2">
+                <i class="bi bi-star"></i> 2
+              </label>
+              
+              <input type="radio" class="btn-check" name="rating" id="rating3" value="3">
+              <label class="btn btn-outline-warning" for="rating3">
+                <i class="bi bi-star"></i> 3
+              </label>
+              
+              <input type="radio" class="btn-check" name="rating" id="rating4" value="4">
+              <label class="btn btn-outline-warning" for="rating4">
+                <i class="bi bi-star"></i> 4
+              </label>
+              
+              <input type="radio" class="btn-check" name="rating" id="rating5" value="5">
+              <label class="btn btn-outline-warning" for="rating5">
+                <i class="bi bi-star"></i> 5
+              </label>
+            </div>
+            <div class="rating-labels d-flex justify-content-between">
+              <small class="text-muted">Poor</small>
+              <small class="text-muted">Fair</small>
+              <small class="text-muted">Good</small>
+              <small class="text-muted">Very Good</small>
+              <small class="text-muted">Excellent</small>
+            </div>
+          </div>
+          
+          <!-- Review Title -->
+          <div class="mb-3">
+            <label class="form-label text-white">Review Title *</label>
+            <input type="text" class="form-control" name="title" required 
+                   placeholder="Summarize your experience in a few words" maxlength="100">
+            <small class="text-muted">Help others understand your experience at a glance</small>
+          </div>
+          
+          <!-- Review Comment -->
+          <div class="mb-4">
+            <label class="form-label text-white">Your Review *</label>
+            <textarea class="form-control" name="comment" rows="5" required 
+                      placeholder="Tell others about your experience with this product. What did you like or dislike? How was the quality, fit, and value?" 
+                      maxlength="1000"></textarea>
+            <div class="d-flex justify-content-between">
+              <small class="text-muted">Share details about quality, fit, appearance, and value</small>
+              <small class="text-muted"><span id="commentCount">0</span>/1000</small>
+            </div>
+          </div>
+          
+          <!-- Review Guidelines -->
+          <div class="alert alert-info">
+            <h6 class="alert-heading">Review Guidelines</h6>
+            <ul class="mb-0 small">
+              <li>Focus on the product and your experience with it</li>
+              <li>Be honest and helpful to other customers</li>
+              <li>Avoid inappropriate language or personal information</li>
+              <li>Reviews are moderated and may take 24-48 hours to appear</li>
+            </ul>
+          </div>
+          
+          <!-- Hidden Fields -->
+          <input type="hidden" name="productId" id="reviewProductId">
+          <input type="hidden" name="orderId" id="reviewOrderId">
+          <input type="hidden" name="size" id="reviewSize">
+        </form>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-gradient-purple" onclick="submitReview()">
+          <i class="bi bi-star me-2"></i>Submit Review
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global variables for review modal
+let currentReviewData = {};
+
+// Function to show review modal
+function showReviewModal(productId, productName, productImage, size, orderId) {
+  // Set product information
+  document.getElementById('reviewProductImage').src = productImage;
+  document.getElementById('reviewProductName').textContent = productName;
+  document.getElementById('reviewProductSize').textContent = size;
+  
+  // Set hidden form fields
+  document.getElementById('reviewProductId').value = productId;
+  document.getElementById('reviewOrderId').value = orderId;
+  document.getElementById('reviewSize').value = size;
+  
+  // Store current review data
+  currentReviewData = {
+    productId,
+    productName,
+    productImage,
+    size,
+    orderId
+  };
+  
+  // Reset form
+  document.getElementById('reviewForm').reset();
+  updateCommentCount();
+  
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+  modal.show();
+}
+
+// Update comment character count
+function updateCommentCount() {
+  const textarea = document.querySelector('textarea[name="comment"]');
+  const counter = document.getElementById('commentCount');
+  
+  if (textarea && counter) {
+    counter.textContent = textarea.value.length;
+  }
+}
+
+// Add event listener for comment textarea
+document.addEventListener('DOMContentLoaded', function() {
+  const textarea = document.querySelector('textarea[name="comment"]');
+  if (textarea) {
+    textarea.addEventListener('input', updateCommentCount);
+  }
+  
+  // Add visual feedback for rating selection
+  const ratingInputs = document.querySelectorAll('input[name="rating"]');
+  ratingInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      const selectedRating = parseInt(this.value);
+      
+      // Update visual feedback
+      ratingInputs.forEach((inp, index) => {
+        const label = inp.nextElementSibling;
+        const star = label.querySelector('i');
+        
+        if (index < selectedRating) {
+          star.classList.remove('bi-star');
+          star.classList.add('bi-star-fill');
+          label.classList.add('active');
+        } else {
+          star.classList.remove('bi-star-fill');
+          star.classList.add('bi-star');
+          label.classList.remove('active');
+        }
+      });
+    });
+  });
+});
+
+// Submit review function
+async function submitReview() {
+  const form = document.getElementById('reviewForm');
+  const formData = new FormData(form);
+  
+  // Validate form
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  
+  // Prepare data
+  const reviewData = {
+    productId: formData.get('productId'),
+    orderId: formData.get('orderId'),
+    rating: parseInt(formData.get('rating')),
+    title: formData.get('title').trim(),
+    comment: formData.get('comment').trim(),
+    size: formData.get('size')
+  };
+  
+  // Validate data
+  if (!reviewData.rating || reviewData.rating < 1 || reviewData.rating > 5) {
+    alert('Please select a rating');
+    return;
+  }
+  
+  if (!reviewData.title || reviewData.title.length < 3) {
+    alert('Please enter a review title (at least 3 characters)');
+    return;
+  }
+  
+  if (!reviewData.comment || reviewData.comment.length < 10) {
+    alert('Please enter a detailed review (at least 10 characters)');
+    return;
+  }
+  
+  try {
+    // Disable submit button
+    const submitBtn = document.querySelector('.modal-footer .btn-gradient-purple');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+    
+    const response = await fetch('/reviews/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(reviewData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Close modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+      modal.hide();
+      
+      // Show success message
+      alert(result.message);
+      
+      // Optionally refresh the page or update UI
+      if (typeof updateOrderDisplay === 'function') {
+        updateOrderDisplay();
+      }
+    } else {
+      alert(result.message || 'Error submitting review');
+    }
+  } catch (error) {
+    console.error('Submit review error:', error);
+    alert('Error submitting review. Please try again.');
+  } finally {
+    // Re-enable submit button
+    const submitBtn = document.querySelector('.modal-footer .btn-gradient-purple');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalText;
+  }
+}
+</script>
+
+<style>
+.rating-input .btn-check:checked + .btn-outline-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.rating-input .btn-outline-warning:hover {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.rating-input .btn-outline-warning.active {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.rating-labels {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.modal-content {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert-info {
+  background-color: rgba(13, 202, 240, 0.1);
+  border-color: rgba(13, 202, 240, 0.2);
+  color: #9ec5fe;
+}
+
+#commentCount {
+  font-weight: 500;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+</style>

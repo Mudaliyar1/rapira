@@ -1,0 +1,437 @@
+<!-- Edit Product Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-white mb-0">
+    <i class="bi bi-pencil-square me-2"></i>Edit Product
+  </h2>
+  <div class="d-flex gap-2">
+    <a href="/admin/merchandise/products" class="btn btn-outline-light">
+      <i class="bi bi-arrow-left me-2"></i>Back to Products
+    </a>
+    <a href="/shop/product/<%= product._id %>" class="btn btn-outline-info" target="_blank">
+      <i class="bi bi-eye me-2"></i>View Product
+    </a>
+  </div>
+</div>
+
+<!-- Edit Product Form -->
+<div class="glass-card-dark p-4 rounded-4">
+  <form action="/admin/merchandise/products/edit/<%= product._id %>" method="POST" enctype="multipart/form-data" id="editProductForm">
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-8">
+        <!-- Basic Information -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Basic Information</h5>
+          
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-white">Product Name *</label>
+              <input type="text" class="form-control" name="name" value="<%= product.name %>" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="">Select Category</option>
+                <option value="Clothing" <%= product.category === 'Clothing' ? 'selected' : '' %>>Clothing</option>
+                <option value="Accessories" <%= product.category === 'Accessories' ? 'selected' : '' %>>Accessories</option>
+                <option value="Collectibles" <%= product.category === 'Collectibles' ? 'selected' : '' %>>Collectibles</option>
+                <option value="Music" <%= product.category === 'Music' ? 'selected' : '' %>>Music</option>
+                <option value="Electronics" <%= product.category === 'Electronics' ? 'selected' : '' %>>Electronics</option>
+                <option value="Other" <%= product.category === 'Other' ? 'selected' : '' %>>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="mb-4">
+          <label class="form-label text-white">Description *</label>
+          <textarea class="form-control" name="description" rows="4" required><%= product.description %></textarea>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Pricing</h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-white">Price (₹) *</label>
+              <input type="number" class="form-control" name="price" value="<%= product.price %>" min="0" step="0.01" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white">Compare Price (₹)</label>
+              <input type="number" class="form-control" name="comparePrice" value="<%= product.comparePrice || '' %>" min="0" step="0.01">
+              <small class="text-muted">Original price for discount display</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Payment Methods</h5>
+
+          <div class="row g-2">
+            <div class="col-md-6">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="paymentMethods"
+                       value="online" id="paymentOnline"
+                       <%= product.paymentMethods && product.paymentMethods.includes('online') ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="paymentOnline">
+                  Online Payment
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="paymentMethods"
+                       value="cod" id="paymentCOD"
+                       <%= product.paymentMethods && product.paymentMethods.includes('cod') ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="paymentCOD">
+                  Cash on Delivery
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sizes and Inventory -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Sizes & Inventory</h5>
+          
+          <div id="sizesContainer">
+            <% product.sizes.forEach((size, index) => { %>
+              <div class="row g-3 mb-3 size-row">
+                <div class="col-md-4">
+                  <label class="form-label text-white">Size</label>
+                  <select class="form-select" name="sizes[<%= index %>][size]" required>
+                    <option value="">Select Size</option>
+                    <option value="XS" <%= size.size === 'XS' ? 'selected' : '' %>>XS</option>
+                    <option value="S" <%= size.size === 'S' ? 'selected' : '' %>>S</option>
+                    <option value="M" <%= size.size === 'M' ? 'selected' : '' %>>M</option>
+                    <option value="L" <%= size.size === 'L' ? 'selected' : '' %>>L</option>
+                    <option value="XL" <%= size.size === 'XL' ? 'selected' : '' %>>XL</option>
+                    <option value="XXL" <%= size.size === 'XXL' ? 'selected' : '' %>>XXL</option>
+                    <option value="One Size" <%= size.size === 'One Size' ? 'selected' : '' %>>One Size</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label text-white">Stock Quantity</label>
+                  <input type="number" class="form-control" name="sizes[<%= index %>][stock]" value="<%= size.stock %>" min="0" required>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                  <button type="button" class="btn btn-outline-danger" onclick="
+                    var allRows = document.querySelectorAll('.size-row');
+                    if(allRows.length <= 1) { alert('At least one size is required'); return; }
+                    this.closest('.size-row').remove();
+                    var remainingRows = document.querySelectorAll('.size-row');
+                    remainingRows.forEach(function(row) { var btn = row.querySelector('.btn-outline-danger'); if(btn) btn.disabled = remainingRows.length <= 1; });
+                    alert('✅ Size row removed from edit page!');
+                  ">
+                    <i class="bi bi-trash"></i> Remove
+                  </button>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          
+          <button type="button" class="btn btn-outline-light" onclick="
+            var counter = document.querySelectorAll('.size-row').length;
+            var container = document.getElementById('sizesContainer');
+            var newRow = document.createElement('div');
+            newRow.className = 'size-row row g-3 mb-3';
+            newRow.innerHTML = '<div class=\'col-md-4\'><label class=\'form-label text-white\'>Size</label><select class=\'form-select\' name=\'sizes[' + counter + '][size]\' required><option value=\'\'>Select Size</option><option value=\'XS\'>XS</option><option value=\'S\'>S</option><option value=\'M\'>M</option><option value=\'L\'>L</option><option value=\'XL\'>XL</option><option value=\'XXL\'>XXL</option><option value=\'One Size\'>One Size</option></select></div><div class=\'col-md-4\'><label class=\'form-label text-white\'>Stock Quantity</label><input type=\'number\' class=\'form-control\' name=\'sizes[' + counter + '][stock]\' min=\'0\' value=\'0\' required></div><div class=\'col-md-4 d-flex align-items-end\'><button type=\'button\' class=\'btn btn-outline-danger\' onclick=\'var allRows = document.querySelectorAll(\'.size-row\'); if(allRows.length <= 1) { alert(\'At least one size is required\'); return; } this.closest(\'.size-row\').remove(); var remainingRows = document.querySelectorAll(\'.size-row\'); remainingRows.forEach(function(row) { var btn = row.querySelector(\'.btn-outline-danger\'); if(btn) btn.disabled = remainingRows.length <= 1; }); alert(\'✅ Size row removed!\');\'><i class=\'bi bi-trash\'></i> Remove</button></div>';
+            container.appendChild(newRow);
+            var allRows = document.querySelectorAll('.size-row');
+            allRows.forEach(function(row) { var btn = row.querySelector('.btn-outline-danger'); if(btn) btn.disabled = allRows.length <= 1; });
+            alert('✅ Size row added successfully in edit page!');
+          ">
+            <i class="bi bi-plus-circle me-2"></i>Add Size
+          </button>
+        </div>
+        
+        <!-- Tags -->
+        <div class="mb-4">
+          <label class="form-label text-white">Tags</label>
+          <input type="text" class="form-control" name="tags" value="<%= product.tags ? product.tags.join(', ') : '' %>" 
+                 placeholder="Enter tags separated by commas">
+          <small class="text-muted">e.g., trending, limited edition, bestseller</small>
+        </div>
+      </div>
+      
+      <!-- Right Column -->
+      <div class="col-lg-4">
+        <!-- Product Images -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Product Images</h5>
+          
+          <!-- Current Images -->
+          <% if (product.images && product.images.length > 0) { %>
+            <div class="mb-3">
+              <label class="form-label text-white">Current Images</label>
+              <div class="row g-2">
+                <% product.images.forEach((image, index) => { %>
+                  <div class="col-6">
+                    <div class="position-relative">
+                      <img src="<%= image %>" class="img-fluid rounded" alt="Product Image <%= index + 1 %>">
+                      <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                              onclick="
+                                if (confirm('Are you sure you want to remove this image?')) {
+                                  alert('🗑️ Removing image <%= index + 1 %>...');
+
+                                  // Remove the existing image hidden input
+                                  var existingImageInput = document.getElementById('existingImage_<%= index %>');
+                                  if (existingImageInput) {
+                                    existingImageInput.remove();
+                                  }
+
+                                  // Hide the image visually
+                                  this.closest('.col-6').style.display = 'none';
+                                  alert('✅ Image removed successfully!');
+                                }
+                              ">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+          
+          <!-- Upload New Images -->
+          <div class="mb-3">
+            <label class="form-label text-white">Upload New Images</label>
+            <input type="file" class="form-control" name="newImages" multiple accept="image/*"
+                   id="newImageInput" onchange="handleNewImagePreview(this)">
+            <small class="text-muted">Select multiple images. First image will be the main image.</small>
+          </div>
+
+          <!-- New Images Preview -->
+          <div id="newImagePreview" class="row g-2"></div>
+        </div>
+        
+        <!-- Product Status -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Product Status</h5>
+          
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="isActive" id="isActive" 
+                   <%= product.isActive ? 'checked' : '' %>>
+            <label class="form-check-label text-white" for="isActive">
+              Active (Visible in shop)
+            </label>
+          </div>
+          
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="isFeatured" id="isFeatured" 
+                   <%= product.isFeatured ? 'checked' : '' %>>
+            <label class="form-check-label text-white" for="isFeatured">
+              Featured Product
+            </label>
+          </div>
+        </div>
+
+
+
+        <!-- Product Stats -->
+        <div class="mb-4">
+          <h5 class="text-white mb-3">Product Statistics</h5>
+          
+          <div class="bg-secondary bg-opacity-25 p-3 rounded">
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="text-warning h5 mb-1"><%= product.totalSales || 0 %></div>
+                <small class="text-muted">Total Sales</small>
+              </div>
+              <div class="col-4">
+                <div class="text-info h5 mb-1"><%= product.totalStock || 0 %></div>
+                <small class="text-muted">Total Stock</small>
+              </div>
+              <div class="col-4">
+                <div class="text-success h5 mb-1">
+                  <%= product.averageRating ? product.averageRating.toFixed(1) : '0.0' %>
+                </div>
+                <small class="text-muted">Avg Rating</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="d-flex justify-content-between pt-4 border-top border-secondary">
+      <div>
+        <a href="/admin/merchandise/products" class="btn btn-outline-secondary">
+          <i class="bi bi-x-circle me-2"></i>Cancel
+        </a>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-warning" onclick="previewProduct()">
+          <i class="bi bi-eye me-2"></i>Preview
+        </button>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle me-2"></i>Update Product
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Hidden inputs for existing images and removal -->
+<div id="hiddenInputs">
+  <!-- Preserve existing images -->
+  <% product.images.forEach((image, index) => { %>
+    <input type="hidden" name="existingImages[]" value="<%= image %>" id="existingImage_<%= index %>">
+  <% }) %>
+</div>
+
+<script>
+
+
+// Simple initialization for edit page
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📄 EDIT PRODUCT PAGE LOADED');
+
+  // Update remove button states on page load
+  var rows = document.querySelectorAll('.size-row');
+  rows.forEach(function(row) {
+    var btn = row.querySelector('.btn-outline-danger');
+    if(btn) btn.disabled = rows.length <= 1;
+  });
+
+  console.log('✅ Edit page size management ready - using inline onclick handlers');
+});
+
+// Simple new image preview function
+function handleNewImagePreview(input) {
+  alert('📁 New images selected! Processing ' + input.files.length + ' files...');
+
+  var preview = document.getElementById('newImagePreview');
+  preview.innerHTML = '';
+
+  if (input.files && input.files.length > 0) {
+    // Add count info
+    var countDiv = document.createElement('div');
+    countDiv.className = 'col-12 mb-2';
+    var countText = document.createElement('small');
+    countText.className = 'text-info';
+    countText.textContent = input.files.length + ' new image(s) selected';
+    countDiv.appendChild(countText);
+    preview.appendChild(countDiv);
+
+    // Process each file
+    for (var i = 0; i < input.files.length && i < 5; i++) {
+      processNewImageFile(input.files[i], i, preview);
+    }
+
+    if (input.files.length > 5) {
+      var warningDiv = document.createElement('div');
+      warningDiv.className = 'col-12';
+      var warningText = document.createElement('small');
+      warningText.className = 'text-warning';
+      warningText.textContent = 'Only first 5 images will be uploaded';
+      warningDiv.appendChild(warningText);
+      preview.appendChild(warningDiv);
+    }
+  }
+}
+
+function processNewImageFile(file, index, preview) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var col = document.createElement('div');
+    col.className = 'col-6 col-md-4';
+
+    var container = document.createElement('div');
+    container.className = 'position-relative mb-2';
+
+    var img = document.createElement('img');
+    img.src = e.target.result;
+    img.className = 'img-fluid rounded';
+    img.style.height = '100px';
+    img.style.objectFit = 'cover';
+    img.style.width = '100%';
+
+    var badge1 = document.createElement('span');
+    badge1.className = 'badge bg-success position-absolute top-0 start-0 m-1';
+    badge1.textContent = 'New';
+
+    var badge2 = document.createElement('span');
+    badge2.className = 'badge bg-secondary position-absolute top-0 end-0 m-1';
+    badge2.textContent = index + 1;
+
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'text-center mt-1';
+    var nameText = document.createElement('small');
+    nameText.className = 'text-muted';
+    nameText.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+    nameDiv.appendChild(nameText);
+
+    container.appendChild(img);
+    container.appendChild(badge1);
+    container.appendChild(badge2);
+    container.appendChild(nameDiv);
+    col.appendChild(container);
+    preview.appendChild(col);
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewProduct() {
+  window.open('/shop/product/<%= product._id %>', '_blank');
+}
+
+// Form validation
+document.getElementById('editProductForm').addEventListener('submit', function(e) {
+  const sizeRows = document.querySelectorAll('.size-row');
+  if (sizeRows.length === 0) {
+    e.preventDefault();
+    alert('Please add at least one size option');
+    return;
+  }
+  
+  // Check for duplicate sizes
+  const sizes = [];
+  let hasDuplicates = false;
+  
+  sizeRows.forEach(row => {
+    const sizeSelect = row.querySelector('select[name*="[size]"]');
+    if (sizeSelect.value) {
+      if (sizes.includes(sizeSelect.value)) {
+        hasDuplicates = true;
+      }
+      sizes.push(sizeSelect.value);
+    }
+  });
+  
+  if (hasDuplicates) {
+    e.preventDefault();
+    alert('Duplicate sizes are not allowed');
+    return;
+  }
+});
+
+
+</script>
+
+<style>
+.glass-card-dark {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.size-row {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>

@@ -1,0 +1,516 @@
+<!-- Order Details Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-white mb-0">
+    <i class="bi bi-receipt me-2"></i>Order Details
+  </h2>
+  <div class="d-flex gap-2">
+    <a href="/admin/merchandise/orders" class="btn btn-outline-light">
+      <i class="bi bi-arrow-left me-2"></i>Back to Orders
+    </a>
+    <button class="btn btn-outline-info" onclick="window.print()">
+      <i class="bi bi-printer me-2"></i>Print
+    </button>
+  </div>
+</div>
+
+<!-- Order Information -->
+<div class="row">
+  <!-- Order Summary -->
+  <div class="col-lg-8">
+    <div class="glass-card-dark p-4 rounded-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <h4 class="text-white mb-2">Order #<%= order.orderNumber %></h4>
+          <p class="text-muted mb-1">
+            <i class="bi bi-calendar me-2"></i>
+            Placed on <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) %>
+          </p>
+          <p class="text-muted mb-0">
+            <i class="bi bi-person me-2"></i>
+            Customer: <%= order.user.name %> (<%= order.user.email %>)
+          </p>
+        </div>
+        <div class="text-end">
+          <span class="badge bg-<%= order.orderStatus === 'confirmed' ? 'success' : 
+                                    order.orderStatus === 'processing' ? 'warning' : 
+                                    order.orderStatus === 'shipped' ? 'info' : 
+                                    order.orderStatus === 'delivered' ? 'primary' : 
+                                    order.orderStatus === 'cancelled' ? 'danger' : 'secondary' %> fs-6">
+            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+          </span>
+          <div class="mt-2">
+            <span class="badge bg-<%= order.paymentStatus === 'completed' ? 'success' : 
+                                      order.paymentStatus === 'pending' ? 'warning' : 
+                                      order.paymentStatus === 'failed' ? 'danger' : 'secondary' %>">
+              Payment: <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <h5 class="text-white mb-3">Order Items</h5>
+      <div class="table-responsive">
+        <table class="table table-dark table-hover">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Size</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% order.items.forEach((item, itemIndex) => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (item.product && item.product.images && item.product.images.length > 1) { %>
+                      <!-- Mini carousel for admin -->
+                      <div id="adminCarousel<%= itemIndex %>" class="carousel slide me-3" data-bs-ride="carousel" style="width: 50px;">
+                        <div class="carousel-inner rounded">
+                          <% item.product.images.forEach((image, imageIndex) => { %>
+                            <div class="carousel-item <%= imageIndex === 0 ? 'active' : '' %>">
+                              <img src="<%= image %>" class="d-block w-100 rounded"
+                                   alt="<%= item.productName %>" style="width: 50px; height: 50px; object-fit: cover;">
+                            </div>
+                          <% }) %>
+                        </div>
+                        <% if (item.product.images.length > 1) { %>
+                          <button class="carousel-control-prev" type="button" data-bs-target="#adminCarousel<%= itemIndex %>" data-bs-slide="prev" style="width: 20px;">
+                            <span class="carousel-control-prev-icon" aria-hidden="true" style="width: 10px; height: 10px;"></span>
+                          </button>
+                          <button class="carousel-control-next" type="button" data-bs-target="#adminCarousel<%= itemIndex %>" data-bs-slide="next" style="width: 20px;">
+                            <span class="carousel-control-next-icon" aria-hidden="true" style="width: 10px; height: 10px;"></span>
+                          </button>
+                        <% } %>
+                        <!-- Small indicator -->
+                        <div class="position-absolute bottom-0 end-0 bg-dark bg-opacity-75 text-white px-1" style="font-size: 0.6rem; line-height: 1;">
+                          <%= item.product.images.length %>
+                        </div>
+                      </div>
+                    <% } else if (item.productImage) { %>
+                      <img src="<%= item.productImage %>" alt="<%= item.productName %>"
+                           class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <% } %>
+                    <div>
+                      <div class="text-white"><%= item.productName %></div>
+                      <% if (item.product && item.product.category) { %>
+                        <small class="text-muted"><%= item.product.category %></small>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td><%= item.size %></td>
+                <td><%= item.quantity %></td>
+                <td>₹<%= item.price.toLocaleString('en-IN') %></td>
+                <td>₹<%= item.totalPrice.toLocaleString('en-IN') %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Order Totals -->
+      <div class="row justify-content-end mt-4">
+        <div class="col-md-6">
+          <div class="bg-secondary bg-opacity-25 p-3 rounded">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Subtotal:</span>
+              <span class="text-white">₹<%= order.subtotal.toLocaleString('en-IN') %></span>
+            </div>
+            <% if (order.shippingCost > 0) { %>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Shipping:</span>
+                <span class="text-white">₹<%= order.shippingCost.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <% if (order.taxAmount > 0) { %>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Tax:</span>
+                <span class="text-white">₹<%= order.taxAmount.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <% if (order.discountAmount > 0) { %>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-success">Discount:</span>
+                <span class="text-success">-₹<%= order.discountAmount.toLocaleString('en-IN') %></span>
+              </div>
+            <% } %>
+            <hr class="border-secondary">
+            <div class="d-flex justify-content-between">
+              <strong class="text-white">Total:</strong>
+              <strong class="text-warning fs-5">₹<%= order.totalAmount.toLocaleString('en-IN') %></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Timeline -->
+    <div class="glass-card-dark p-4 rounded-4 mb-4">
+      <h5 class="text-white mb-3">Order Timeline</h5>
+      <div class="timeline">
+        <!-- Order Placed -->
+        <div class="timeline-item">
+          <div class="timeline-marker bg-success"></div>
+          <div class="timeline-content">
+            <h6 class="text-white mb-1">Order Placed</h6>
+            <p class="text-muted mb-0">
+              <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+            </p>
+          </div>
+        </div>
+
+        <!-- Current Status -->
+        <% if (order.orderStatus !== 'pending') { %>
+          <div class="timeline-item">
+            <div class="timeline-marker bg-<%= order.orderStatus === 'confirmed' ? 'success' :
+                                                 order.orderStatus === 'processing' ? 'warning' :
+                                                 order.orderStatus === 'shipped' ? 'info' :
+                                                 order.orderStatus === 'delivered' ? 'primary' :
+                                                 order.orderStatus === 'cancelled' ? 'danger' : 'secondary' %>"></div>
+            <div class="timeline-content">
+              <h6 class="text-white mb-1">
+                <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+              </h6>
+              <p class="text-muted mb-1">
+                <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </p>
+              <% if (order.notes) { %>
+                <p class="text-muted small mb-0"><%= order.notes %></p>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Delivered Status -->
+        <% if (order.deliveredAt) { %>
+          <div class="timeline-item">
+            <div class="timeline-marker bg-primary"></div>
+            <div class="timeline-content">
+              <h6 class="text-white mb-1">Delivered</h6>
+              <p class="text-muted mb-0">
+                <%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </p>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Cancelled Status -->
+        <% if (order.cancelledAt) { %>
+          <div class="timeline-item">
+            <div class="timeline-marker bg-danger"></div>
+            <div class="timeline-content">
+              <h6 class="text-white mb-1">Cancelled</h6>
+              <p class="text-muted mb-1">
+                <%= new Date(order.cancelledAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </p>
+              <% if (order.cancellationReason) { %>
+                <p class="text-muted small mb-0">Reason: <%= order.cancellationReason %></p>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Actions & Info -->
+  <div class="col-lg-4">
+    <!-- Current Notes Display -->
+    <% if (order.notes) { %>
+      <div class="glass-card-dark p-4 rounded-4 mb-4">
+        <h5 class="text-white mb-3">Current Notes</h5>
+        <div class="bg-dark bg-opacity-50 p-3 rounded-3">
+          <p class="text-white mb-2"><%= order.notes %></p>
+          <small class="text-muted">
+            <i class="bi bi-clock me-1"></i>
+            Last updated: <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) %>
+          </small>
+        </div>
+        <small class="text-muted">You can edit these notes in the form below</small>
+      </div>
+    <% } %>
+
+    <!-- Update Order Status -->
+    <div class="glass-card-dark p-4 rounded-4 mb-4">
+      <h5 class="text-white mb-3">Update Order Status</h5>
+      <form action="/admin/merchandise/orders/<%= order._id %>/status" method="POST">
+        <div class="mb-3">
+          <label class="form-label text-white">Order Status</label>
+          <select class="form-select" name="status" required onchange="toggleTrackingField(this.value)">
+            <option value="pending" <%= order.orderStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="confirmed" <%= order.orderStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+            <option value="processing" <%= order.orderStatus === 'processing' ? 'selected' : '' %>>Processing</option>
+            <option value="shipped" <%= order.orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+            <option value="delivered" <%= order.orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+            <option value="cancelled" <%= order.orderStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+            <option value="returned" <%= order.orderStatus === 'returned' ? 'selected' : '' %>>Returned</option>
+          </select>
+        </div>
+
+        <div class="mb-3" id="trackingNumberDiv" style="display: <%= order.orderStatus === 'shipped' ? 'block' : 'none' %>;">
+          <label class="form-label text-white">Tracking Number</label>
+          <input type="text" class="form-control" name="trackingNumber"
+                 value="<%= order.trackingNumber || '' %>">
+        </div>
+
+        <div class="mb-3" id="expectedDeliveryDiv" style="display: <%= ['shipped', 'processing'].includes(order.orderStatus) ? 'block' : 'none' %>;">
+          <label class="form-label text-white">Expected Delivery Date & Time</label>
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label text-white small">Date</label>
+              <input type="date" class="form-control" name="expectedDeliveryDate"
+                     value="<%= order.estimatedDelivery ? new Date(order.estimatedDelivery).toISOString().split('T')[0] : '' %>">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white small">Time</label>
+              <input type="time" class="form-control" name="expectedDeliveryTime"
+                     value="<%= order.estimatedDelivery ? new Date(order.estimatedDelivery).toTimeString().slice(0,5) : '18:00' %>">
+            </div>
+          </div>
+          <small class="text-muted">Set when the order is expected to be delivered (date and time)</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label text-white">Notes (Optional)</label>
+          <textarea class="form-control" name="notes" rows="4"
+                    placeholder="Add any notes about this status update..."><%= order.notes || '' %></textarea>
+          <small class="text-muted">
+            <% if (order.notes) { %>
+              Current notes are shown above. You can edit them or leave as is.
+            <% } else { %>
+              Add any notes about this status update.
+            <% } %>
+          </small>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-check-circle me-2"></i>Update Status
+        </button>
+      </form>
+    </div>
+
+    <!-- Shipping Address -->
+    <div class="glass-card-dark p-4 rounded-4 mb-4">
+      <h5 class="text-white mb-3">Shipping Address</h5>
+      <address class="text-muted mb-0">
+        <strong class="text-white"><%= order.shippingAddress.fullName %></strong><br>
+        <%= order.shippingAddress.addressLine1 %><br>
+        <% if (order.shippingAddress.addressLine2) { %>
+          <%= order.shippingAddress.addressLine2 %><br>
+        <% } %>
+        <%= order.shippingAddress.city %>, <%= order.shippingAddress.state %><br>
+        <%= order.shippingAddress.pincode %>, <%= order.shippingAddress.country || 'India' %><br>
+        <br>
+        <i class="bi bi-telephone me-2"></i><%= order.shippingAddress.phone %><br>
+        <i class="bi bi-envelope me-2"></i><%= order.shippingAddress.email %>
+      </address>
+    </div>
+
+    <!-- Payment Information -->
+    <div class="glass-card-dark p-4 rounded-4 mb-4">
+      <h5 class="text-white mb-3">Payment Information</h5>
+      <div class="mb-2">
+        <span class="text-muted">Payment ID:</span>
+        <span class="text-white small"><%= order.paymentId || 'N/A' %></span>
+      </div>
+      <div class="mb-2">
+        <span class="text-muted">Order ID:</span>
+        <span class="text-white small"><%= order.orderId || 'N/A' %></span>
+      </div>
+      <div class="mb-2">
+        <span class="text-muted">Payment Status:</span>
+        <span class="badge bg-<%= order.paymentStatus === 'completed' ? 'success' : 
+                                  order.paymentStatus === 'pending' ? 'warning' : 
+                                  order.paymentStatus === 'failed' ? 'danger' : 'secondary' %>">
+          <%= order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) %>
+        </span>
+      </div>
+      <% if (order.estimatedDelivery) { %>
+        <div class="mb-2">
+          <span class="text-muted">Expected Delivery:</span>
+          <span class="text-white">
+            <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }) %>
+            at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) %>
+          </span>
+          <small class="text-muted d-block">You can update this date and time using the form above</small>
+        </div>
+      <% } else { %>
+        <div class="mb-2">
+          <span class="text-muted">Expected Delivery:</span>
+          <span class="text-warning">Not set</span>
+          <small class="text-muted d-block">Set an expected delivery date and time using the form above</small>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+// Simple function to show/hide tracking and delivery fields
+function toggleTrackingField(status) {
+  const trackingDiv = document.getElementById('trackingNumberDiv');
+  const expectedDeliveryDiv = document.getElementById('expectedDeliveryDiv');
+
+  // Show tracking field only for shipped orders
+  if (status === 'shipped') {
+    trackingDiv.style.display = 'block';
+  } else {
+    trackingDiv.style.display = 'none';
+  }
+
+  // Show expected delivery field for processing and shipped orders
+  if (['processing', 'shipped'].includes(status)) {
+    expectedDeliveryDiv.style.display = 'block';
+  } else {
+    expectedDeliveryDiv.style.display = 'none';
+  }
+}
+
+// Initialize field visibility on page load
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Order details page loaded');
+
+  // Show/hide fields based on current status
+  const currentStatus = '<%= order.orderStatus %>';
+  toggleTrackingField(currentStatus);
+});
+
+// Form will submit normally to the server - no JavaScript needed
+
+// All complex functions removed - using simple form submission
+</script>
+
+<style>
+/* Custom carousel controls for admin order details */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  padding: 4px;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 20px;
+  opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+}
+
+/* Smooth transitions for carousel */
+.carousel-item {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Small image count indicator styling */
+.carousel .position-absolute {
+  backdrop-filter: blur(4px);
+}
+
+.glass-card-dark {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -22px;
+  top: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #1a1a1a;
+}
+
+.timeline-content {
+  padding-left: 20px;
+}
+
+@media print {
+  .btn, .glass-card-dark form {
+    display: none !important;
+  }
+  
+  .glass-card-dark {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  .text-white, .text-muted {
+    color: black !important;
+  }
+}
+</style>

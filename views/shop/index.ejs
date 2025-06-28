@@ -1,0 +1,229 @@
+<!-- Shop Header Section -->
+<section class="hero-section text-center py-5 mb-4">
+  <div class="container">
+    <h1 class="display-4 fw-bold mb-4">RAPIRA <span class="gradient-text-purple">Merchandise</span></h1>
+    <p class="lead mb-4">Discover exclusive RAPIRA branded merchandise and support your favorite artists</p>
+    
+    <!-- Search Bar -->
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <form method="GET" action="/shop" class="d-flex">
+          <input type="text" class="form-control me-2" name="search" 
+                 placeholder="Search products..." value="<%= filters.search || '' %>">
+          <button class="btn btn-gradient-purple" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Filters Section -->
+<div class="container mb-4">
+  <div class="glass-card-dark p-4 rounded-4">
+    <form method="GET" action="/shop" id="filterForm">
+      <div class="row g-3 align-items-end">
+        <!-- Category Filter -->
+        <div class="col-md-3">
+          <label class="form-label text-white">Category</label>
+          <select class="form-select" name="category" onchange="document.getElementById('filterForm').submit()">
+            <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
+            <% categories.forEach(category => { %>
+              <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
+            <% }) %>
+          </select>
+        </div>
+        
+        <!-- Price Range -->
+        <div class="col-md-2">
+          <label class="form-label text-white">Min Price</label>
+          <input type="number" class="form-control" name="minPrice" 
+                 placeholder="₹0" value="<%= filters.minPrice || '' %>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label text-white">Max Price</label>
+          <input type="number" class="form-control" name="maxPrice" 
+                 placeholder="₹10000" value="<%= filters.maxPrice || '' %>">
+        </div>
+        
+        <!-- Sort -->
+        <div class="col-md-3">
+          <label class="form-label text-white">Sort By</label>
+          <select class="form-select" name="sort" onchange="document.getElementById('filterForm').submit()">
+            <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+            <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price: Low to High</option>
+            <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price: High to Low</option>
+            <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+            <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+          </select>
+        </div>
+        
+        <!-- In Stock Filter -->
+        <div class="col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="inStock" value="true" 
+                   <%= filters.inStock === 'true' ? 'checked' : '' %> 
+                   onchange="document.getElementById('filterForm').submit()">
+            <label class="form-check-label text-white">
+              In Stock Only
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Hidden inputs to preserve search -->
+      <input type="hidden" name="search" value="<%= filters.search || '' %>">
+    </form>
+  </div>
+</div>
+
+<!-- Products Grid -->
+<div class="container">
+  <% if (products.length === 0) { %>
+    <div class="text-center py-5">
+      <div class="glass-card-dark p-5 rounded-4">
+        <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
+        <h3 class="text-white mb-3">No Products Found</h3>
+        <p class="text-muted">Try adjusting your filters or search terms.</p>
+        <a href="/shop" class="btn btn-gradient-purple">View All Products</a>
+      </div>
+    </div>
+  <% } else { %>
+    <!-- Results Info -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <p class="text-white mb-0">
+        Showing <%= products.length %> of <%= totalProducts %> products
+      </p>
+      <% if (cartCount > 0) { %>
+        <a href="/shop/cart" class="btn btn-outline-light">
+          <i class="bi bi-cart3"></i> Cart (<%= cartCount %>)
+        </a>
+      <% } %>
+    </div>
+    
+    <!-- Products Grid -->
+    <div class="row g-4 mb-5">
+      <% products.forEach(product => { %>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="card h-100 product-card">
+            <div class="position-relative">
+              <img src="<%= product.images[0] %>" class="card-img-top" alt="<%= product.name %>"
+                   style="height: 250px; object-fit: cover;">
+              
+              <!-- Stock Badge -->
+              <% if (product.totalStock === 0) { %>
+                <span class="badge bg-danger position-absolute top-0 end-0 m-2">Out of Stock</span>
+              <% } else if (product.totalStock < 10) { %>
+                <span class="badge bg-warning position-absolute top-0 end-0 m-2">Low Stock</span>
+              <% } %>
+              
+              <!-- Featured Badge -->
+              <% if (product.isFeatured) { %>
+                <span class="badge bg-primary position-absolute top-0 start-0 m-2">Featured</span>
+              <% } %>
+            </div>
+            
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title text-white mb-2"><%= product.name %></h5>
+              <p class="card-text text-muted small mb-3 flex-grow-1">
+                <%= product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description %>
+              </p>
+              
+              <!-- Rating -->
+              <% if (product.averageRating > 0) { %>
+                <div class="mb-2">
+                  <% for (let i = 1; i <= 5; i++) { %>
+                    <i class="bi bi-star<%= i <= product.averageRating ? '-fill text-warning' : ' text-muted' %>"></i>
+                  <% } %>
+                  <small class="text-muted ms-1">(<%= product.totalReviews %>)</small>
+                </div>
+              <% } %>
+              
+              <!-- Price -->
+              <div class="mb-3">
+                <% if (product.comparePrice && product.comparePrice > product.price) { %>
+                  <span class="text-muted text-decoration-line-through me-2">₹<%= product.comparePrice %></span>
+                  <span class="text-success fw-bold">
+                    ₹<%= product.price %>
+                    <small class="badge bg-success ms-1">
+                      <%= Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) %>% OFF
+                    </small>
+                  </span>
+                <% } else { %>
+                  <span class="text-white fw-bold fs-5">₹<%= product.price %></span>
+                <% } %>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="mt-auto">
+                <a href="/shop/product/<%= product._id %>" class="btn btn-gradient-purple w-100">
+                  View Details
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <nav aria-label="Products pagination">
+        <ul class="pagination justify-content-center">
+          <% if (currentPage > 1) { %>
+            <li class="page-item">
+              <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= new URLSearchParams(filters).toString() %>">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+          <% } %>
+          
+          <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+              <a class="page-link" href="?page=<%= i %>&<%= new URLSearchParams(filters).toString() %>"><%= i %></a>
+            </li>
+          <% } %>
+          
+          <% if (currentPage < totalPages) { %>
+            <li class="page-item">
+              <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= new URLSearchParams(filters).toString() %>">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
+    <% } %>
+  <% } %>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.product-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.pagination .page-link {
+  background-color: rgba(30, 30, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+</style>

@@ -1,0 +1,225 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/">Home</a></li>
+    <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+    <li class="breadcrumb-item"><a href="/shop/product/<%= product._id %>"><%= product.name %></a></li>
+    <li class="breadcrumb-item active">Buy Now</li>
+  </ol>
+</nav>
+
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="glass-card-dark p-4 rounded-4">
+        <h2 class="text-white mb-4">
+          <i class="bi bi-lightning-fill me-2"></i>Buy Now
+        </h2>
+        
+        <!-- Product Summary -->
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <img src="<%= product.images[0] %>" class="img-fluid rounded" alt="<%= product.name %>">
+          </div>
+          <div class="col-md-8">
+            <h4 class="text-white"><%= product.name %></h4>
+            <p class="text-muted mb-2"><%= product.description %></p>
+            <div class="mb-2">
+              <span class="badge bg-secondary">Category: <%= product.category %></span>
+            </div>
+            <div class="row">
+              <div class="col-sm-6">
+                <strong class="text-white">Size:</strong> <%= selectedSize %>
+              </div>
+              <div class="col-sm-6">
+                <strong class="text-white">Quantity:</strong> <%= selectedQuantity %>
+              </div>
+            </div>
+            <div class="mt-3">
+              <h5 class="text-white">
+                Price: ₹<%= product.price %> × <%= selectedQuantity %> = ₹<%= totalAmount %>
+              </h5>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Purchase Form with Address Collection -->
+        <form action="/shop/create-buy-now-order" method="POST" id="purchaseForm">
+          <input type="hidden" name="productId" value="<%= product._id %>">
+          <input type="hidden" name="size" value="<%= selectedSize %>">
+          <input type="hidden" name="quantity" value="<%= selectedQuantity %>">
+
+          <!-- Delivery Address Section -->
+          <div class="glass-card-dark p-4 rounded mb-4">
+            <h5 class="text-white mb-3">
+              <i class="bi bi-geo-alt me-2"></i>Delivery Address
+            </h5>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label text-white">Full Name *</label>
+                <input type="text" class="form-control" name="fullName" value="<%= currentUser.name %>" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-white">Phone Number *</label>
+                <input type="tel" class="form-control" name="phone" value="<%= currentUser.phone || '' %>" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-white">Address Line 1 *</label>
+                <input type="text" class="form-control" name="addressLine1" placeholder="House/Flat No., Building Name, Street" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-white">Address Line 2</label>
+                <input type="text" class="form-control" name="addressLine2" placeholder="Area, Landmark (Optional)">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">City *</label>
+                <input type="text" class="form-control" name="city" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">State *</label>
+                <select class="form-select" name="state" required>
+                  <option value="">Select State</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Puducherry">Puducherry</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label text-white">PIN Code *</label>
+                <input type="text" class="form-control" name="pincode" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Information -->
+          <div class="alert alert-info mb-4">
+            <h6 class="alert-heading">
+              <i class="bi bi-info-circle me-2"></i>Payment Information
+            </h6>
+            <ul class="mb-0">
+              <li>Secure payment powered by Razorpay</li>
+              <li>We accept all major credit/debit cards, UPI, and net banking</li>
+              <li>Your payment information is encrypted and secure</li>
+              <li>Order will be processed immediately after payment confirmation</li>
+            </ul>
+          </div>
+          
+          <!-- Order Summary -->
+          <div class="glass-card-dark p-3 rounded mb-4">
+            <h6 class="text-white mb-3">Order Summary</h6>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Product Price:</span>
+              <span class="text-white">₹<%= product.price %></span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Quantity:</span>
+              <span class="text-white"><%= selectedQuantity %></span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Subtotal:</span>
+              <span class="text-white">₹<%= totalAmount %></span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Shipping:</span>
+              <span class="text-success">Free</span>
+            </div>
+            <hr class="border-secondary">
+            <div class="d-flex justify-content-between">
+              <strong class="text-white">Total Amount:</strong>
+              <strong class="text-warning fs-5">₹<%= totalAmount %></strong>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <a href="/shop/product/<%= product._id %>" class="btn btn-outline-secondary btn-lg w-100">
+                <i class="bi bi-arrow-left me-2"></i>Back to Product
+              </a>
+            </div>
+            <div class="col-md-6">
+              <button type="submit" class="btn btn-gradient-purple btn-lg w-100" id="proceedPaymentBtn">
+                <i class="bi bi-credit-card me-2"></i>Proceed to Payment
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Script (Same as subscription) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('purchaseForm');
+    const submitBtn = document.getElementById('proceedPaymentBtn');
+    
+    form.addEventListener('submit', function(e) {
+      // Disable button to prevent double submission
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+      
+      // Allow form to submit normally (like subscription)
+      // The backend will handle creating the order and redirecting to payment
+    });
+  });
+</script>
+
+<style>
+.glass-card-dark {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert-info {
+  background-color: rgba(13, 202, 240, 0.1);
+  border-color: rgba(13, 202, 240, 0.2);
+  color: #9ec5fe;
+}
+
+.btn-gradient-purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+
+.btn-gradient-purple:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  color: white;
+}
+
+.btn-gradient-purple:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+</style>
