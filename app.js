@@ -283,12 +283,16 @@ const { isLoggedIn, isAdmin } = require('./middleware/auth');
 const { createMediaMiddleware } = require('./middleware/mediaMiddleware');
 const { checkSubscription } = require('./middleware/subscription');
 const { loadWebsiteSettings } = require('./middleware/websiteSettings');
+const GoogleAdsHelper = require('./utils/google-ads-helper');
 
 // Check subscription status for all requests
 app.use(checkSubscription);
 
 // Load website settings for all requests
 app.use(loadWebsiteSettings);
+
+// Load Google Ads helper for all requests
+app.use(GoogleAdsHelper.middleware);
 
 // Removed multiple response prevention middleware as it was causing issues with express-ejs-layouts
 
@@ -434,6 +438,7 @@ const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const adminSessionRoutes = require('./routes/adminSessions');
 const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
 const adminAboutRoutes = require('./routes/adminAbout');
+const adminGoogleAdsRoutes = require('./routes/adminGoogleAds');
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
@@ -509,6 +514,9 @@ app.use('/admin/website-settings', adminWebsiteSettingsRoutes);
 
 // Mount admin about routes
 app.use('/admin/about', adminAboutRoutes);
+
+// Mount admin Google Ads routes
+app.use('/admin/google-ads', adminGoogleAdsRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - RAPIRA Admin</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Google Ads -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<%= publisherId %>"
+     crossorigin="anonymous"></script>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 class="mb-1">Ad Slot Test: <%= slotName %></h2>
+                <p class="text-muted mb-0">Testing Google Ad configuration</p>
+              </div>
+              <div>
+                <a href="/admin/google-ads" class="btn btn-outline-primary">
+                  <i class="bi bi-arrow-left me-1"></i>Back to Settings
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ad Configuration Info -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Ad Configuration</h5>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm table-dark">
+              <tr>
+                <td class="text-white"><strong>Slot Name:</strong></td>
+                <td class="text-white"><%= slotName %></td>
+              </tr>
+              <tr>
+                <td class="text-white"><strong>Slot ID:</strong></td>
+                <td class="text-white"><code class="text-warning"><%= adConfig.slot %></code></td>
+              </tr>
+              <tr>
+                <td class="text-white"><strong>Publisher ID:</strong></td>
+                <td class="text-white"><code class="text-warning"><%= publisherId %></code></td>
+              </tr>
+              <tr>
+                <td class="text-white"><strong>Format:</strong></td>
+                <td class="text-white"><%= adConfig.format %></td>
+              </tr>
+              <tr>
+                <td class="text-white"><strong>Responsive:</strong></td>
+                <td class="text-white">
+                  <span class="badge <%= adConfig.responsive ? 'bg-success' : 'bg-secondary' %>">
+                    <%= adConfig.responsive ? 'Yes' : 'No' %>
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-white"><strong>Status:</strong></td>
+                <td class="text-white">
+                  <span class="badge <%= adConfig.enabled ? 'bg-success' : 'bg-danger' %>">
+                    <%= adConfig.enabled ? 'Enabled' : 'Disabled' %>
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Style Information</h5>
+          </div>
+          <div class="card-body">
+            <p><strong>CSS Style:</strong></p>
+            <code class="d-block p-2 bg-light rounded"><%= adConfig.style %></code>
+            
+            <div class="mt-3">
+              <p><strong>Expected Dimensions:</strong></p>
+              <% if (adConfig.format === 'rectangle') { %>
+                <span class="badge bg-info">300x250 pixels</span>
+              <% } else if (adConfig.format === 'banner') { %>
+                <span class="badge bg-info">728x90 pixels</span>
+              <% } else if (adConfig.format === 'auto') { %>
+                <span class="badge bg-success">Responsive (Auto-sized)</span>
+              <% } else if (adConfig.format === 'fluid') { %>
+                <span class="badge bg-primary">Fluid (Container-based)</span>
+              <% } else { %>
+                <span class="badge bg-secondary">Custom</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ad Preview -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-eye me-2"></i>Ad Preview
+              <span class="badge bg-warning ms-2">Live Test</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <% if (adConfig.enabled) { %>
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Test Mode:</strong> This is using placeholder slot ID (<code><%= adConfig.slot %></code>).
+                Real ads will only show with approved AdSense slot IDs.
+                <a href="/admin/google-ads" class="alert-link">Configure real slot IDs here</a>.
+              </div>
+              
+              <!-- Test Ad Container -->
+              <div class="border rounded p-4 bg-white text-center position-relative" style="min-height: 200px;">
+                <div class="mb-3">
+                  <small class="text-muted">Advertisement</small>
+                </div>
+
+                <!-- Demo Placeholder (shows when real ads don't load) -->
+                <div id="adPlaceholder" class="d-flex align-items-center justify-content-center h-100" style="min-height: 150px; background: #f8f9fa; border: 2px dashed #dee2e6;">
+                  <div class="text-center text-muted">
+                    <i class="bi bi-image fs-1 mb-2"></i>
+                    <p class="mb-1"><strong>Ad Preview</strong></p>
+                    <small>Slot: <%= adConfig.slot %></small><br>
+                    <small>Format: <%= adConfig.format %></small><br>
+                    <small class="text-warning">⚠️ Using placeholder ID - Real ads need approved AdSense slots</small>
+                  </div>
+                </div>
+
+                <!-- Google Ad (hidden initially) -->
+                <div id="realAdContainer" style="display: none;">
+                  <% if (adConfig.responsive) { %>
+                    <ins class="adsbygoogle test-ad-responsive"
+                         data-ad-client="<%= publisherId %>"
+                         data-ad-slot="<%= adConfig.slot %>"
+                         data-ad-format="<%= adConfig.format %>"
+                         data-full-width-responsive="true"></ins>
+                  <% } else { %>
+                    <ins class="adsbygoogle test-ad-fixed"
+                         data-ad-client="<%= publisherId %>"
+                         data-ad-slot="<%= adConfig.slot %>"
+                         data-ad-format="<%= adConfig.format %>"></ins>
+                  <% } %>
+                </div>
+
+                <script>
+                // Apply custom styles
+                const testAd = document.querySelector('.test-ad-responsive, .test-ad-fixed');
+                if (testAd) {
+                  testAd.style.cssText = '<%= adConfig.style %>';
+                }
+
+                // Try to initialize ad
+                try {
+                  (adsbygoogle = window.adsbygoogle || []).push({});
+
+                  // Check if ad loaded after 3 seconds
+                  setTimeout(() => {
+                    const adElement = document.querySelector('.test-ad-responsive, .test-ad-fixed');
+                    if (adElement && adElement.innerHTML.trim() !== '') {
+                      // Ad loaded successfully
+                      document.getElementById('adPlaceholder').style.display = 'none';
+                      document.getElementById('realAdContainer').style.display = 'block';
+                    }
+                    // If ad didn't load, placeholder remains visible
+                  }, 3000);
+                } catch (e) {
+                  console.warn('Google Ads initialization failed:', e);
+                }
+                </script>
+              </div>
+              
+              <!-- Debug Information -->
+              <div class="mt-4">
+                <h6 class="text-white">Debug Information:</h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <small class="text-light">
+                      <strong class="text-white">Ad Request Status:</strong> <span id="adStatus" class="text-info">Loading...</span><br>
+                      <strong class="text-white">Container Size:</strong> <span id="containerSize" class="text-info">Calculating...</span><br>
+                      <strong class="text-white">User Agent:</strong> <span id="userAgent" class="text-info">Detecting...</span>
+                    </small>
+                  </div>
+                  <div class="col-md-6">
+                    <small class="text-light">
+                      <strong class="text-white">Viewport Size:</strong> <span id="viewportSize" class="text-info">Calculating...</span><br>
+                      <strong class="text-white">Ad Loaded:</strong> <span id="adLoaded" class="text-info">Waiting...</span><br>
+                      <strong class="text-white">Load Time:</strong> <span id="loadTime" class="text-info">Measuring...</span>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Ad Slot Disabled:</strong> This ad slot is currently disabled. 
+                Enable it in the settings to see the preview.
+              </div>
+              
+              <!-- Placeholder -->
+              <div class="border rounded p-4 bg-light text-center" style="min-height: 200px;">
+                <div class="d-flex align-items-center justify-content-center h-100">
+                  <div class="text-muted">
+                    <i class="bi bi-image fs-1 d-block mb-2"></i>
+                    <p>Ad Slot Disabled</p>
+                    <small>Enable this slot to see the ad preview</small>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testing Instructions -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Testing Instructions</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>What to Check:</h6>
+                <ul class="list-unstyled">
+                  <li><i class="bi bi-check-circle text-success me-2"></i>Ad loads without errors</li>
+                  <li><i class="bi bi-check-circle text-success me-2"></i>Ad size fits the container</li>
+                  <li><i class="bi bi-check-circle text-success me-2"></i>Ad is relevant to content</li>
+                  <li><i class="bi bi-check-circle text-success me-2"></i>No layout breaking</li>
+                  <li><i class="bi bi-check-circle text-success me-2"></i>Mobile responsiveness</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>Common Issues:</h6>
+                <ul class="list-unstyled">
+                  <li><i class="bi bi-x-circle text-danger me-2"></i>Blank ad space (check slot ID)</li>
+                  <li><i class="bi bi-x-circle text-danger me-2"></i>Wrong size (check format/style)</li>
+                  <li><i class="bi bi-x-circle text-danger me-2"></i>Console errors (check publisher ID)</li>
+                  <li><i class="bi bi-x-circle text-danger me-2"></i>Ad blocked (check ad blocker)</li>
+                  <li><i class="bi bi-x-circle text-danger me-2"></i>Slow loading (check network)</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+              <i class="bi bi-lightbulb me-2"></i>
+              <strong>Getting Real Ads to Show:</strong>
+              <ol class="mb-0 mt-2">
+                <li>Apply for Google AdSense approval at <a href="https://www.google.com/adsense/" target="_blank" class="alert-link">adsense.google.com</a></li>
+                <li>Once approved, create ad units in your AdSense dashboard</li>
+                <li>Copy the real slot IDs (like "1234567890") from AdSense</li>
+                <li>Replace placeholder IDs in <a href="/admin/google-ads" class="alert-link">Google Ads settings</a></li>
+                <li>Real ads will then appear automatically</li>
+              </ol>
+            </div>
+
+            <div class="alert alert-warning mt-2">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Why Ads Don't Show:</strong> Placeholder slot IDs (like "1234567890") are for testing only.
+              Google AdSense requires real, approved slot IDs to display actual advertisements.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startTime = Date.now();
+    
+    // Update debug information
+    document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 50) + '...';
+    document.getElementById('viewportSize').textContent = window.innerWidth + 'x' + window.innerHeight;
+    
+    // Check container size
+    const container = document.querySelector('.adsbygoogle');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      document.getElementById('containerSize').textContent = Math.round(rect.width) + 'x' + Math.round(rect.height);
+    }
+    
+    // Monitor ad loading
+    let checkCount = 0;
+    const checkInterval = setInterval(() => {
+      checkCount++;
+      
+      if (container && container.innerHTML.trim() !== '') {
+        document.getElementById('adLoaded').innerHTML = '<span class="text-success">Yes</span>';
+        document.getElementById('adStatus').innerHTML = '<span class="text-success">Loaded</span>';
+        document.getElementById('loadTime').textContent = (Date.now() - startTime) + 'ms';
+        clearInterval(checkInterval);
+      } else if (checkCount > 20) { // 10 seconds timeout
+        document.getElementById('adLoaded').innerHTML = '<span class="text-warning">Timeout</span>';
+        document.getElementById('adStatus').innerHTML = '<span class="text-warning">Failed to load</span>';
+        document.getElementById('loadTime').textContent = 'Timeout after 10s';
+        clearInterval(checkInterval);
+      }
+    }, 500);
+    
+    // Update status initially
+    document.getElementById('adStatus').innerHTML = '<span class="text-info">Requesting...</span>';
+    document.getElementById('adLoaded').innerHTML = '<span class="text-info">Loading...</span>';
+  });
+  
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    document.getElementById('viewportSize').textContent = window.innerWidth + 'x' + window.innerHeight;
+  });
+  </script>
+</body>
+</html>

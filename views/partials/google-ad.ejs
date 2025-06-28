@@ -1,0 +1,119 @@
+<%
+// Google Ad Component
+// Usage: <%- include('partials/google-ad', { 
+//   slot: 'ad-slot-id', 
+//   format: 'auto', 
+//   style: 'display:block', 
+//   className: 'my-4',
+//   responsive: true 
+// }) %>
+
+// Default values
+const adSlot = typeof slot !== 'undefined' ? slot : '1234567890';
+const adFormat = typeof format !== 'undefined' ? format : 'auto';
+const adStyle = typeof style !== 'undefined' ? style : 'display:block';
+const adClass = typeof className !== 'undefined' ? className : 'my-4';
+const isResponsive = typeof responsive !== 'undefined' ? responsive : true;
+const adClient = 'ca-pub-7790730667146180';
+%>
+
+<!-- Google Ad Unit -->
+<div class="google-ad-container <%= adClass %>" data-ad-slot="<%= adSlot %>">
+  <div class="ad-wrapper">
+    <% if (isResponsive) { %>
+    <ins class="adsbygoogle google-ad-responsive"
+         data-ad-client="<%= adClient %>"
+         data-ad-slot="<%= adSlot %>"
+         data-ad-format="<%= adFormat %>"
+         data-full-width-responsive="true"></ins>
+    <% } else { %>
+    <ins class="adsbygoogle google-ad-fixed"
+         data-ad-client="<%= adClient %>"
+         data-ad-slot="<%= adSlot %>"
+         data-ad-format="<%= adFormat %>"></ins>
+    <% } %>
+  </div>
+  
+  <!-- Ad Label (for transparency) -->
+  <div class="ad-label">
+    <small class="text-muted">Advertisement</small>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Apply custom styles if provided
+  const adElement = document.querySelector('[data-ad-slot="<%= adSlot %>"] .adsbygoogle');
+  if (adElement && '<%= adStyle %>') {
+    const customStyle = '<%= adStyle %>';
+    if (customStyle && customStyle !== 'display:block') {
+      adElement.style.cssText = customStyle;
+    }
+  }
+
+  // Initialize this specific ad
+  try {
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  } catch (e) {
+    console.warn('Google Ads not loaded yet for slot <%= adSlot %>');
+  }
+})();
+</script>
+
+<style>
+.google-ad-container {
+  text-align: center;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ad-wrapper {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-label {
+  margin-top: 0.5rem;
+  opacity: 0.7;
+}
+
+.adsbygoogle {
+  background: transparent !important;
+}
+
+.google-ad-responsive {
+  display: block !important;
+}
+
+.google-ad-fixed {
+  display: block !important;
+  width: 300px;
+  height: 250px;
+}
+
+/* Responsive ad styles */
+@media (max-width: 768px) {
+  .google-ad-container {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+  }
+}
+
+/* Dark theme compatibility */
+.google-ad-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+/* Loading state */
+.google-ad-container:empty::before {
+  content: "Loading advertisement...";
+  color: #888;
+  font-size: 0.9rem;
+}
+</style>

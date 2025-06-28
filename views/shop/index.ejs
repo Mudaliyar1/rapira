@@ -78,6 +78,14 @@
   </div>
 </div>
 
+<!-- Google Ad - Shop Page Banner -->
+<% if (typeof googleAds !== 'undefined' && googleAds.shouldShow) { %>
+  <% const shopPageBannerAd = googleAds.getAd('shopPageBanner', { className: 'my-4' }); %>
+  <% if (shopPageBannerAd) { %>
+    <%- include('../partials/google-ad', shopPageBannerAd) %>
+  <% } %>
+<% } %>
+
 <!-- Products Grid -->
 <div class="container">
   <% if (products.length === 0) { %>
