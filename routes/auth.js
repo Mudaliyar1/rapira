@@ -6,6 +6,20 @@ const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
 const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/brevoEmailService');
 const WebsiteSettings = require('../models/WebsiteSettings');
 
+// Simple session test for production debugging
+router.get('/session-test', (req, res) => {
+  res.json({
+    hasSession: !!req.session,
+    sessionId: req.session ? req.session.id : null,
+    isLoggedIn: !!(req.session && req.session.user),
+    userEmail: req.session && req.session.user ? req.session.user.email : null,
+    cookieSettings: req.session ? req.session.cookie : null,
+    environment: process.env.NODE_ENV,
+    baseUrl: process.env.BASE_URL,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Session health check route (for debugging)
 router.get('/session-check', (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';

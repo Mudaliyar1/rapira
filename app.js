@@ -192,27 +192,28 @@ const sessionOptions = {
 
 // Set environment-specific cookie options
 if (isProduction) {
-  console.log('Using PRODUCTION session settings');
-  // Production cookie settings
-  sessionOptions.cookie.secure = process.env.PROD_SESSION_COOKIE_SECURE === 'true';
-  sessionOptions.cookie.sameSite = process.env.PROD_SESSION_COOKIE_SAMESITE || 'none';
+  console.log('Using PRODUCTION session settings for Render hosting');
+  // Production cookie settings optimized for Render
+  sessionOptions.cookie.secure = true; // Always true for HTTPS
+  sessionOptions.cookie.sameSite = 'lax'; // More compatible than 'none'
 
-  // Set domain if provided
-  if (process.env.PROD_SESSION_COOKIE_DOMAIN) {
-    sessionOptions.cookie.domain = process.env.PROD_SESSION_COOKIE_DOMAIN;
-  }
+  // Don't set domain for Render - let browser handle it automatically
+  // This prevents cross-domain cookie issues
+  console.log('Production: Not setting cookie domain (auto-detect)');
+
+  // Additional production settings for Render
+  sessionOptions.proxy = true; // Trust proxy headers
+  sessionOptions.cookie.httpOnly = true; // Security
+  sessionOptions.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours instead of 14 days
+
 } else {
   console.log('Using DEVELOPMENT session settings');
   // Development cookie settings
-  sessionOptions.cookie.secure = process.env.DEV_SESSION_COOKIE_SECURE === 'true';
-  sessionOptions.cookie.sameSite = process.env.DEV_SESSION_COOKIE_SAMESITE || 'lax';
+  sessionOptions.cookie.secure = false; // HTTP for localhost
+  sessionOptions.cookie.sameSite = 'lax';
 
-  // Don't set domain for localhost (causes issues)
-  // Only set if explicitly configured
-  if (process.env.DEV_SESSION_COOKIE_DOMAIN &&
-      process.env.DEV_SESSION_COOKIE_DOMAIN !== 'localhost') {
-    sessionOptions.cookie.domain = process.env.DEV_SESSION_COOKIE_DOMAIN;
-  }
+  // Don't set domain for localhost
+  console.log('Development: Not setting cookie domain for localhost');
 }
 
 // If no domain is set yet, try to extract it from BASE_URL
