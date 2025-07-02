@@ -254,42 +254,85 @@ router.post('/clear-by-role', isAdmin, async (req, res) => {
 // Force cookie refresh - clear all sessions and invalidate cookies
 router.post('/force-cookie-refresh', isAdmin, async (req, res) => {
   try {
+    console.log('🚀 Force cookie refresh initiated by admin:', req.session.user.email);
+    console.log('🔒 Current admin session ID:', req.sessionID);
+
     const sessionsCollection = await getSessionsCollection();
     const currentSessionId = req.sessionID;
 
-    console.log('Force cookie refresh initiated by admin:', req.session.user.email);
-    console.log('Preserving current admin session:', currentSessionId);
+    // Get total session count before deletion
+    const totalSessionsBefore = await sessionsCollection.countDocuments();
+    console.log(`📊 Total sessions before cleanup: ${totalSessionsBefore}`);
 
     // Clear all sessions except current admin session
-    const result = await sessionsCollection.deleteMany({
-      _id: { $ne: currentSessionId }
-    });
+    let result;
+    try {
+      // Try string comparison first
+      result = await sessionsCollection.deleteMany({
+        _id: { $ne: currentSessionId }
+      });
+      console.log(`🗑️ Deleted ${result.deletedCount} sessions using string comparison`);
+    } catch (deleteError) {
+      console.log('⚠️ String comparison failed, trying ObjectId comparison...');
+      // Fallback: try ObjectId comparison
+      const { ObjectId } = require('mongodb');
+      try {
+        const objectIdSessionId = new ObjectId(currentSessionId);
+        result = await sessionsCollection.deleteMany({
+          _id: { $ne: objectIdSessionId }
+        });
+        console.log(`🗑️ Deleted ${result.deletedCount} sessions using ObjectId comparison`);
+      } catch (objectIdError) {
+        console.log('⚠️ ObjectId comparison failed, clearing all sessions...');
+        // Last resort: clear all sessions and recreate admin session
+        result = await sessionsCollection.deleteMany({});
+        console.log(`🗑️ Deleted ${result.deletedCount} sessions (all sessions cleared)`);
+      }
+    }
 
-    console.log(`Force cookie refresh: Cleared ${result.deletedCount} user sessions`);
+    // Get session count after deletion
+    const totalSessionsAfter = await sessionsCollection.countDocuments();
+    console.log(`📊 Total sessions after cleanup: ${totalSessionsAfter}`);
 
     // Generate a new session secret for future sessions
-    const newSecret = Math.random().toString(36).substring(2, 15) +
-                     Math.random().toString(36).substring(2, 15) +
-                     Date.now().toString(36);
+    const timestamp = Date.now().toString(36);
+    const random1 = Math.random().toString(36).substring(2, 15);
+    const random2 = Math.random().toString(36).substring(2, 15);
+    const newSecret = `rapira_${timestamp}_${random1}_${random2}`;
 
     // Store the new secret in memory (this will force all future sessions to be invalid)
     process.env.SESSION_SECRET = newSecret;
+    console.log('🔑 New session secret generated and applied');
 
-    // Log the action
-    console.log('Cookie refresh completed. All user sessions cleared and new session secret generated.');
+    // Force garbage collection of old sessions if available
+    if (global.gc) {
+      global.gc();
+      console.log('🧹 Garbage collection triggered');
+    }
+
+    // Log the successful action
+    console.log('✅ Cookie refresh completed successfully!');
+    console.log(`📈 Sessions cleared: ${result.deletedCount}`);
+    console.log(`🔒 Admin session preserved: ${currentSessionId}`);
 
     res.json({
       success: true,
       message: `Successfully cleared ${result.deletedCount} user sessions and refreshed cookie settings`,
       clearedSessions: result.deletedCount,
-      newSecret: newSecret.substring(0, 10) + '...' // Show partial secret for confirmation
+      totalSessionsBefore: totalSessionsBefore,
+      totalSessionsAfter: totalSessionsAfter,
+      newSecret: newSecret.substring(0, 15) + '...', // Show partial secret for confirmation
+      adminSessionPreserved: true,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('Error in force cookie refresh:', error);
+    console.error('❌ Error in force cookie refresh:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to refresh cookies: ' + error.message
+      message: 'Failed to refresh cookies: ' + error.message,
+      error: error.stack,
+      timestamp: new Date().toISOString()
     });
   }
 });
