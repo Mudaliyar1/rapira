@@ -1,4 +1,60 @@
 <!-- Google Ads Management Page -->
+<style>
+  /* Force white text in table */
+  .table-dark td, .table-dark th {
+    color: #ffffff !important;
+    border-color: #454d55;
+  }
+
+  .table-dark tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.075);
+  }
+
+  /* Ensure all text elements are white */
+  .table-dark .text-white {
+    color: #ffffff !important;
+  }
+
+  .table-dark code {
+    background-color: #2d3748 !important;
+    color: #ffc107 !important;
+    border: 1px solid #4a5568;
+  }
+
+  .table-dark .badge {
+    color: #ffffff !important;
+  }
+
+  .table-dark .btn-outline-light {
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+  }
+
+  .table-dark .btn-outline-light:hover {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .table-dark .btn-outline-info {
+    color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+  }
+
+  .table-dark .btn-outline-info:hover {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+  }
+
+  /* Force all table text to be white */
+  .table-dark * {
+    color: #ffffff !important;
+  }
+
+  .table-dark .badge * {
+    color: inherit !important;
+  }
+</style>
+
 <div class="container-fluid">
   <!-- Header Section -->
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -109,17 +165,17 @@
               <tbody>
                 <% Object.keys(settings.adSlots).forEach(slotName => { %>
                   <% const slot = settings.adSlots[slotName]; %>
-                  <tr>
+                  <tr class="text-white">
                     <td class="text-white">
-                      <strong><%= slotName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) %></strong>
+                      <strong class="text-white"><%= slotName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()) %></strong>
                     </td>
                     <td class="text-white">
-                      <code class="text-warning"><%= slot.slot %></code>
+                      <code class="text-warning bg-dark px-2 py-1 rounded"><%= slot.slot %></code>
                     </td>
                     <td class="text-white">
-                      <span class="badge bg-secondary"><%= slot.format %></span>
+                      <span class="badge bg-secondary text-white"><%= slot.format %></span>
                       <% if (slot.responsive) { %>
-                        <span class="badge bg-info ms-1">Responsive</span>
+                        <span class="badge bg-info text-white ms-1">Responsive</span>
                       <% } %>
                     </td>
                     <td class="text-white">
@@ -129,18 +185,18 @@
                                <%= slot.enabled ? 'checked' : '' %>
                                onchange="toggleAdSlot('<%= slotName %>')">
                         <label class="form-check-label text-white" for="toggle-<%= slotName %>">
-                          <span class="badge <%= slot.enabled ? 'bg-success' : 'bg-danger' %>" id="status-<%= slotName %>">
+                          <span class="badge <%= slot.enabled ? 'bg-success' : 'bg-danger' %> text-white" id="status-<%= slotName %>">
                             <%= slot.enabled ? 'Enabled' : 'Disabled' %>
                           </span>
                         </label>
                       </div>
                     </td>
                     <td class="text-white">
-                      <button class="btn btn-sm btn-outline-light" onclick="editAdSlot('<%= slotName %>')">
-                        <i class="bi bi-pencil"></i>
+                      <button class="btn btn-sm btn-outline-light text-white" onclick="editAdSlot('<%= slotName %>')">
+                        <i class="bi bi-pencil text-white"></i>
                       </button>
-                      <a href="/admin/google-ads/test/<%= slotName %>" class="btn btn-sm btn-outline-info" target="_blank">
-                        <i class="bi bi-eye"></i>
+                      <a href="/admin/google-ads/test/<%= slotName %>" class="btn btn-sm btn-outline-info text-white ms-1" target="_blank">
+                        <i class="bi bi-eye text-white"></i>
                       </a>
                     </td>
                   </tr>
