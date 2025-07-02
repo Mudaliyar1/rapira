@@ -119,68 +119,24 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     // Set a flag to indicate this is a fresh login
     req.session.freshLogin = true;
 
-    // For development environment, use a simpler approach to avoid issues
-    if (process.env.NODE_ENV !== 'production') {
-      // Save the session directly without regeneration (works better in development)
-      req.session.save(err => {
-        if (err) {
-          console.error('Session save error (development):', err);
-          req.flash('error', 'Login failed - could not save session');
-          return res.redirect('/auth/login');
-        }
-
-        // Log successful login for debugging
-        console.log(`User logged in successfully (development): ${user.email} (${user.role})`);
-        console.log('Session ID:', req.session.id);
-        console.log('Session cookie settings:', JSON.stringify(req.session.cookie));
-        console.log('User in session:', req.session.user ? 'Yes' : 'No');
-
-        req.flash('success', 'You are now logged in');
-        return res.redirect('/');
-      });
-      return; // Exit early for development environment
-    }
-
-    // For production, regenerate the session to prevent session fixation attacks
-    req.session.regenerate(function(err) {
+    // Use simple session save for both development and production
+    // Session regeneration can cause issues in some hosting environments
+    req.session.save(err => {
       if (err) {
-        console.error('Session regeneration error (production):', err);
-        req.flash('error', 'Login failed - session error');
+        console.error('Session save error:', err);
+        req.flash('error', 'Login failed - could not save session');
         return res.redirect('/auth/login');
       }
 
-      // Re-add the user data to the new session
-      req.session.user = {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileImage: user.profileImage,
-        loginTime: new Date().toISOString()
-      };
+      // Log successful login for debugging
+      console.log(`User logged in successfully: ${user.email} (${user.role})`);
+      console.log('Session ID:', req.session.id);
+      console.log('Session cookie settings:', JSON.stringify(req.session.cookie));
+      console.log('User in session:', req.session.user ? 'Yes' : 'No');
+      console.log('Environment:', process.env.NODE_ENV);
 
-      // Save the session before redirecting to ensure it's stored
-      req.session.save(err => {
-        if (err) {
-          console.error('Session save error:', err);
-          console.error('Session details:', {
-            id: req.session.id,
-            cookie: req.session.cookie,
-            user: req.session.user ? 'exists' : 'missing'
-          });
-          req.flash('error', 'Login failed - could not save session');
-          return res.redirect('/auth/login');
-        }
-
-        // Log successful login for debugging
-        console.log(`User logged in successfully: ${user.email} (${user.role})`);
-        console.log('Session ID:', req.session.id);
-        console.log('Session cookie settings:', JSON.stringify(req.session.cookie));
-        console.log('User in session:', req.session.user ? 'Yes' : 'No');
-
-        req.flash('success', 'You are now logged in');
-        res.redirect('/');
-      });
+      req.flash('success', 'You are now logged in');
+      return res.redirect('/');
     });
   } catch (error) {
     console.error('Login error:', error);
