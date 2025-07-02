@@ -251,4 +251,47 @@ router.post('/clear-by-role', isAdmin, async (req, res) => {
   }
 });
 
+// Force cookie refresh - clear all sessions and invalidate cookies
+router.post('/force-cookie-refresh', isAdmin, async (req, res) => {
+  try {
+    const sessionsCollection = await getSessionsCollection();
+    const currentSessionId = req.sessionID;
+
+    console.log('Force cookie refresh initiated by admin:', req.session.user.email);
+    console.log('Preserving current admin session:', currentSessionId);
+
+    // Clear all sessions except current admin session
+    const result = await sessionsCollection.deleteMany({
+      _id: { $ne: currentSessionId }
+    });
+
+    console.log(`Force cookie refresh: Cleared ${result.deletedCount} user sessions`);
+
+    // Generate a new session secret for future sessions
+    const newSecret = Math.random().toString(36).substring(2, 15) +
+                     Math.random().toString(36).substring(2, 15) +
+                     Date.now().toString(36);
+
+    // Store the new secret in memory (this will force all future sessions to be invalid)
+    process.env.SESSION_SECRET = newSecret;
+
+    // Log the action
+    console.log('Cookie refresh completed. All user sessions cleared and new session secret generated.');
+
+    res.json({
+      success: true,
+      message: `Successfully cleared ${result.deletedCount} user sessions and refreshed cookie settings`,
+      clearedSessions: result.deletedCount,
+      newSecret: newSecret.substring(0, 10) + '...' // Show partial secret for confirmation
+    });
+
+  } catch (error) {
+    console.error('Error in force cookie refresh:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh cookies: ' + error.message
+    });
+  }
+});
+
 module.exports = router;

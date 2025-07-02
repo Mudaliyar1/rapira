@@ -188,7 +188,7 @@
             <button id="refreshCookieBtn" class="btn btn-primary w-100">
               <i class="bi bi-arrow-clockwise me-1"></i> Force Cookie Refresh
             </button>
-            <div id="cookieRefreshResult" class="mt-3 d-none alert alert-success"></div>
+            <div id="cookieRefreshResult" class="mt-3 d-none"></div>
           </div>
         </div>
 
@@ -346,19 +346,71 @@
     const cookieRefreshResult = document.getElementById('cookieRefreshResult');
 
     if (refreshCookieBtn) {
-      refreshCookieBtn.addEventListener('click', function() {
-        // Generate a random cookie secret
-        const newSecret = Math.random().toString(36).substring(2, 15) +
-                         Math.random().toString(36).substring(2, 15);
+      refreshCookieBtn.addEventListener('click', async function() {
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to force cookie refresh? This will log out all users except you and clear their sessions.')) {
+          return;
+        }
 
-        // Show success message with instructions
-        cookieRefreshResult.innerHTML = `
-          <p><strong>Cookie refresh initiated!</strong></p>
-          <p>To complete this action, you need to update your .env file with a new SESSION_SECRET:</p>
-          <pre class="bg-dark text-info p-2 rounded">SESSION_SECRET=${newSecret}</pre>
-          <p>After updating, restart your server to apply the changes.</p>
-        `;
-        cookieRefreshResult.classList.remove('d-none');
+        // Disable button and show loading
+        refreshCookieBtn.disabled = true;
+        refreshCookieBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Processing...';
+
+        try {
+          // Make API call to force cookie refresh
+          const response = await fetch('/admin/sessions/force-cookie-refresh', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // Show success message
+            cookieRefreshResult.innerHTML = `
+              <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>Cookie refresh completed successfully!</strong>
+                <ul class="mb-0 mt-2">
+                  <li>Cleared ${result.clearedSessions} user sessions</li>
+                  <li>Generated new session secret: ${result.newSecret}</li>
+                  <li>All users will need to log in again</li>
+                  <li>Your admin session has been preserved</li>
+                </ul>
+              </div>
+            `;
+            cookieRefreshResult.classList.remove('d-none');
+
+            // Refresh the page after 3 seconds to show updated session count
+            setTimeout(() => {
+              window.location.reload();
+            }, 3000);
+
+          } else {
+            throw new Error(result.message || 'Unknown error occurred');
+          }
+
+        } catch (error) {
+          console.error('Cookie refresh error:', error);
+
+          // Show error message
+          cookieRefreshResult.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Cookie refresh failed!</strong>
+              <p class="mb-0 mt-2">Error: ${error.message}</p>
+            </div>
+          `;
+          cookieRefreshResult.classList.remove('d-none');
+
+        } finally {
+          // Re-enable button
+          refreshCookieBtn.disabled = false;
+          refreshCookieBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Force Cookie Refresh';
+        }
       });
     }
   });
