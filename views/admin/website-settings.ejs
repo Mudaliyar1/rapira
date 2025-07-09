@@ -134,134 +134,183 @@
 
       <!-- Navigation Menu Tab -->
       <div class="tab-pane fade" id="menu" role="tabpanel">
+        <div class="mb-4">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Dynamic Navigation Management:</strong> This system automatically detects all available pages and routes in your application.
+            When you add new pages or routes, they will automatically appear here for you to manage.
+          </div>
+
+        </div>
+
         <form action="/admin/website-settings/menu" method="POST">
           <div class="row">
             <!-- Discover Menu -->
-            <div class="col-md-4">
-              <h5 class="text-white mb-3">Discover Menu</h5>
+            <div class="col-md-3">
+              <h5 class="text-white mb-3">
+                <i class="bi bi-compass me-2"></i>Discover Menu
+              </h5>
               <div class="mb-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="discoverMenuEnabled" id="discoverMenuEnabled" 
+                  <input class="form-check-input" type="checkbox" name="discoverMenuEnabled" id="discoverMenuEnabled"
                          <%= settings.menuSettings.discoverMenu.enabled ? 'checked' : '' %>>
                   <label class="form-check-label text-white fw-bold" for="discoverMenuEnabled">
                     Enable Discover Menu
                   </label>
                 </div>
               </div>
-              
+
               <div class="ms-3">
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="discoverHome" 
-                         <%= settings.menuSettings.discoverMenu.items.home ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Home</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="discoverContentLibrary" 
-                         <%= settings.menuSettings.discoverMenu.items.contentLibrary ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Content Library</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="discoverConcerts" 
-                         <%= settings.menuSettings.discoverMenu.items.concerts ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Concerts</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="discoverDailyConcerts" 
-                         <%= settings.menuSettings.discoverMenu.items.dailyConcerts ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Daily Concerts</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="discoverArtists" 
-                         <%= settings.menuSettings.discoverMenu.items.artists ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Artists</label>
-                </div>
+                <% if (menuConfiguration && menuConfiguration.discoverMenu && menuConfiguration.discoverMenu.routes) { %>
+                  <% Object.keys(menuConfiguration.discoverMenu.routes).forEach(key => { %>
+                    <% const route = menuConfiguration.discoverMenu.routes[key]; %>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" name="<%= key %>" id="discover_<%= key %>"
+                             <%= settings.menuSettings.discoverMenu.items && settings.menuSettings.discoverMenu.items[key] ? 'checked' : '' %>>
+                      <label class="form-check-label text-white" for="discover_<%= key %>">
+                        <i class="<%= route.icon %> me-1"></i><%= route.name %>
+                        <% if (route.isDynamic) { %>
+                          <small class="badge bg-secondary ms-1">Dynamic</small>
+                        <% } %>
+                        <% if (settings.menuSettings.discoverMenu.items && settings.menuSettings.discoverMenu.items[key]) { %>
+                          <small class="badge bg-success ms-1">Enabled</small>
+                        <% } else { %>
+                          <small class="badge bg-danger ms-1">Disabled</small>
+                        <% } %>
+                      </label>
+                    </div>
+                  <% }); %>
+                <% } %>
               </div>
             </div>
 
             <!-- Services Menu -->
-            <div class="col-md-4">
-              <h5 class="text-white mb-3">Services Menu</h5>
+            <div class="col-md-3">
+              <h5 class="text-white mb-3">
+                <i class="bi bi-gear me-2"></i>Services Menu
+              </h5>
               <div class="mb-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="servicesMenuEnabled" 
+                  <input class="form-check-input" type="checkbox" name="servicesMenuEnabled"
                          <%= settings.menuSettings.servicesMenu.enabled ? 'checked' : '' %>>
                   <label class="form-check-label text-white fw-bold">
                     Enable Services Menu
                   </label>
                 </div>
               </div>
-              
+
               <div class="ms-3">
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="servicesTeamRequirement" 
-                         <%= settings.menuSettings.servicesMenu.items.teamRequirement ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Team Requirement</label>
+                <% if (menuConfiguration && menuConfiguration.servicesMenu && menuConfiguration.servicesMenu.routes) { %>
+                  <% Object.keys(menuConfiguration.servicesMenu.routes).forEach(key => { %>
+                    <% const route = menuConfiguration.servicesMenu.routes[key]; %>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" name="<%= key %>" id="services_<%= key %>"
+                             <%= settings.menuSettings.servicesMenu.items && settings.menuSettings.servicesMenu.items[key] ? 'checked' : '' %>>
+                      <label class="form-check-label text-white" for="services_<%= key %>">
+                        <i class="<%= route.icon %> me-1"></i><%= route.name %>
+                        <% if (route.isDynamic) { %>
+                          <small class="badge bg-secondary ms-1">Dynamic</small>
+                        <% } %>
+                        <% if (settings.menuSettings.servicesMenu.items && settings.menuSettings.servicesMenu.items[key]) { %>
+                          <small class="badge bg-success ms-1">Enabled</small>
+                        <% } else { %>
+                          <small class="badge bg-danger ms-1">Disabled</small>
+                        <% } %>
+                      </label>
+                    </div>
+                  <% }); %>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Shop Menu -->
+            <div class="col-md-3">
+              <h5 class="text-white mb-3">
+                <i class="bi bi-bag me-2"></i>Shop Menu
+              </h5>
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="shopMenuEnabled"
+                         <%= settings.menuSettings.shopMenu.enabled ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold">
+                    Enable Shop Menu
+                  </label>
                 </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="servicesFindMyArtist" 
-                         <%= settings.menuSettings.servicesMenu.items.findMyArtist ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Find My Artist</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="servicesSubscriptions" 
-                         <%= settings.menuSettings.servicesMenu.items.subscriptions ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Subscriptions</label>
-                </div>
+              </div>
+
+              <div class="ms-3">
+                <% if (menuConfiguration && menuConfiguration.shopMenu && menuConfiguration.shopMenu.routes) { %>
+                  <% Object.keys(menuConfiguration.shopMenu.routes).forEach(key => { %>
+                    <% const route = menuConfiguration.shopMenu.routes[key]; %>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" name="<%= key %>" id="shop_<%= key %>"
+                             <%= settings.menuSettings.shopMenu.items && settings.menuSettings.shopMenu.items[key] ? 'checked' : '' %>>
+                      <label class="form-check-label text-white" for="shop_<%= key %>">
+                        <i class="<%= route.icon %> me-1"></i><%= route.name %>
+                        <% if (route.isDynamic) { %>
+                          <small class="badge bg-secondary ms-1">Dynamic</small>
+                        <% } %>
+                        <% if (settings.menuSettings.shopMenu.items && settings.menuSettings.shopMenu.items[key]) { %>
+                          <small class="badge bg-success ms-1">Enabled</small>
+                        <% } else { %>
+                          <small class="badge bg-danger ms-1">Disabled</small>
+                        <% } %>
+                      </label>
+                    </div>
+                  <% }); %>
+                <% } %>
               </div>
             </div>
 
             <!-- Help & Support Menu -->
-            <div class="col-md-4">
-              <h5 class="text-white mb-3">Help & Support Menu</h5>
+            <div class="col-md-3">
+              <h5 class="text-white mb-3">
+                <i class="bi bi-question-circle me-2"></i>Help & Support Menu
+              </h5>
               <div class="mb-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="helpSupportMenuEnabled" 
+                  <input class="form-check-input" type="checkbox" name="helpSupportMenuEnabled"
                          <%= settings.menuSettings.helpSupportMenu.enabled ? 'checked' : '' %>>
                   <label class="form-check-label text-white fw-bold">
                     Enable Help & Support Menu
                   </label>
                 </div>
               </div>
-              
+
               <div class="ms-3">
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportDemo" 
-                         <%= settings.menuSettings.helpSupportMenu.items.demo ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Interactive Demo</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportContact" 
-                         <%= settings.menuSettings.helpSupportMenu.items.contact ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Contact Us</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportTerms" 
-                         <%= settings.menuSettings.helpSupportMenu.items.termsOfService ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Terms of Service</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportPrivacy" 
-                         <%= settings.menuSettings.helpSupportMenu.items.privacyPolicy ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Privacy Policy</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportRefund" 
-                         <%= settings.menuSettings.helpSupportMenu.items.refundPolicy ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Refund Policy</label>
-                </div>
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="helpSupportSubscriptionPolicy" 
-                         <%= settings.menuSettings.helpSupportMenu.items.subscriptionPolicy ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">Subscription Policy</label>
-                </div>
+                <% if (menuConfiguration && menuConfiguration.helpSupportMenu && menuConfiguration.helpSupportMenu.routes) { %>
+                  <% Object.keys(menuConfiguration.helpSupportMenu.routes).forEach(key => { %>
+                    <% const route = menuConfiguration.helpSupportMenu.routes[key]; %>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" name="<%= key %>" id="help_<%= key %>"
+                             <%= settings.menuSettings.helpSupportMenu.items && settings.menuSettings.helpSupportMenu.items[key] ? 'checked' : '' %>>
+                      <label class="form-check-label text-white" for="help_<%= key %>">
+                        <i class="<%= route.icon %> me-1"></i><%= route.name %>
+                        <% if (route.isDynamic) { %>
+                          <small class="badge bg-secondary ms-1">Dynamic</small>
+                        <% } %>
+                        <% if (settings.menuSettings.helpSupportMenu.items && settings.menuSettings.helpSupportMenu.items[key]) { %>
+                          <small class="badge bg-success ms-1">Enabled</small>
+                        <% } else { %>
+                          <small class="badge bg-danger ms-1">Disabled</small>
+                        <% } %>
+                      </label>
+                    </div>
+                  <% }); %>
+                <% } %>
               </div>
             </div>
           </div>
 
-          <div class="mt-4">
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-save me-1"></i>Save Menu Settings
-            </button>
+          <!-- Form Actions -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex justify-content-start" style="position: relative; z-index: 1;">
+                <button type="submit" class="btn btn-primary" style="position: relative; z-index: 2;">
+                  <i class="bi bi-save me-1"></i>Save Menu Settings
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
@@ -671,3 +720,42 @@ function showDummyDataPreview(preview) {
   modal.show();
 }
 </script>
+
+<!-- Fix for floating button issue -->
+<style>
+/* Ensure form buttons are properly positioned */
+.admin-layout form button[type="submit"],
+.admin-layout form .btn {
+  position: relative !important;
+  z-index: 1 !important;
+  float: none !important;
+  display: inline-block !important;
+  margin: 0 !important;
+}
+
+/* Fix for form action containers */
+.admin-layout form .row,
+.admin-layout form .d-flex {
+  position: relative !important;
+  z-index: 1 !important;
+  clear: both !important;
+}
+
+/* Ensure proper spacing and layout */
+.admin-layout .tab-pane form {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Fix for any floating elements */
+.admin-layout .tab-pane {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Ensure buttons don't overlap content */
+.admin-layout .mt-4 {
+  margin-top: 1.5rem !important;
+  clear: both !important;
+}
+</style>

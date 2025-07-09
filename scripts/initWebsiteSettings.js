@@ -29,18 +29,27 @@ async function initializeWebsiteSettings() {
             enabled: true,
             items: {
               home: true,
-              contentLibrary: true,
+              about: true,
+              content: true,
               concerts: true,
-              dailyConcerts: true,
-              artists: true
+              daily_concerts: true,
+              artists: true,
+              learning: true
             }
           },
           servicesMenu: {
             enabled: true,
             items: {
-              teamRequirement: true,
-              findMyArtist: true,
+              team_requirement: true,
+              find_my_artist: true,
               subscriptions: true
+            }
+          },
+          shopMenu: {
+            enabled: true,
+            items: {
+              shop: true,
+              my_orders: true
             }
           },
           helpSupportMenu: {
@@ -48,10 +57,11 @@ async function initializeWebsiteSettings() {
             items: {
               demo: true,
               contact: true,
-              termsOfService: true,
-              privacyPolicy: true,
-              refundPolicy: true,
-              subscriptionPolicy: true
+              terms_of_service: true,
+              privacy_policy: true,
+              refund_policy: true,
+              subscription_policy: true,
+              shopping_policy: true
             }
           }
         },

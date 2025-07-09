@@ -5,8 +5,10 @@
       <% if (typeof headerSettings !== 'undefined' && headerSettings) { %>
         <% if (headerSettings.brandType === 'logo' || headerSettings.brandType === 'both') { %>
           <% if (headerSettings.logoUrl) { %>
-            <img src="<%= headerSettings.logoUrl %>" alt="<%= headerSettings.brandText || 'Logo' %>"
-                 style="height: <%= headerSettings.logoHeight || 45 %>px; width: auto;"
+            <img src="<%= headerSettings.logoUrl %>"
+                 alt="<%= headerSettings.brandText || 'Logo' %>"
+                 style="width: auto;"
+                 height="<%= headerSettings.logoHeight || 45 %>"
                  class="<%= headerSettings.brandType === 'both' ? 'me-2' : '' %>">
           <% } %>
         <% } %>
@@ -26,13 +28,16 @@
         <!-- Discover Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.discoverMenu && menuSettings.discoverMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path === '/about' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || path.startsWith('/learning') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
              href="#" id="discoverDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-compass me-1"></i> Discover
           </a>
           <ul class="dropdown-menu glass-card-dark" aria-labelledby="discoverDropdown">
             <% if (menuSettings.discoverMenu.items.home) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path === '/' ? 'active' : '' %>" href="/"><i class="bi bi-house-door me-2"></i>Home</a></li>
+            <% } %>
+            <% if (menuSettings.discoverMenu.items.about) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/about' ? 'active' : '' %>" href="/about"><i class="bi bi-info-circle me-2"></i>About Us</a></li>
             <% } %>
             <% if (menuSettings.discoverMenu.items.contentLibrary) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/content') ? 'active' : '' %>" href="/content"><i class="bi bi-collection me-2"></i>Content Library</a></li>
@@ -46,6 +51,9 @@
             <% if (menuSettings.discoverMenu.items.artists) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/artists') && !path.includes('dashboard') ? 'active' : '' %>" href="/artists"><i class="bi bi-person-badge me-2"></i>Artists</a></li>
             <% } %>
+            <% if (menuSettings.discoverMenu.items.learning) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/learning') ? 'active' : '' %>" href="/learning"><i class="bi bi-book me-2"></i>Learning</a></li>
+            <% } %>
           </ul>
         </li>
         <% } %>
@@ -53,7 +61,7 @@
         <!-- Services Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.servicesMenu && menuSettings.servicesMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist') || path.startsWith('/subscriptions') || path.startsWith('/shop') || path.startsWith('/orders')) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/team-requirement') || path.startsWith('/find-my-artist') || path.startsWith('/subscriptions')) ? 'active' : '' %>"
              href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-gear me-1"></i> Services
           </a>
@@ -68,10 +76,23 @@
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/subscriptions') ? 'active' : '' %>" href="/subscriptions"><i class="bi bi-star me-2"></i>Subscriptions</a></li>
             <% } %>
 
-            <!-- Shop Section -->
-            <li><hr class="dropdown-divider border-secondary"></li>
+
+          </ul>
+        </li>
+        <% } %>
+
+        <!-- Shop Dropdown -->
+        <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.shopMenu && menuSettings.shopMenu.enabled) { %>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path.startsWith('/shop') || path.startsWith('/orders')) ? 'active' : '' %>"
+             href="#" id="shopDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-bag me-1"></i> Shop
+          </a>
+          <ul class="dropdown-menu glass-card-dark" aria-labelledby="shopDropdown">
+            <% if (menuSettings.shopMenu.items.shop) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/shop') ? 'active' : '' %>" href="/shop"><i class="bi bi-bag me-2"></i>Shop</a></li>
-            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+            <% } %>
+            <% if (menuSettings.shopMenu.items.myOrders && typeof currentUser !== 'undefined' && currentUser) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/orders') ? 'active' : '' %>" href="/orders/my-orders"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
             <% } %>
           </ul>
@@ -81,12 +102,11 @@
         <!-- Help & Support Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/about' || path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/demo') ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/demo') ? 'active' : '' %>"
              href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-question-circle me-1"></i> Help & Support
           </a>
           <ul class="dropdown-menu glass-card-dark" aria-labelledby="helpDropdown">
-            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/about' ? 'active' : '' %>" href="/about"><i class="bi bi-info-circle me-2"></i>About Us</a></li>
             <% if (menuSettings.helpSupportMenu.items.demo) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/demo' ? 'active' : '' %>" href="/demo"><i class="bi bi-play-circle me-2"></i>Interactive Demo</a></li>
             <% } %>
@@ -108,7 +128,9 @@
             <% if (menuSettings.helpSupportMenu.items.subscriptionPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/subscription-policy' ? 'active' : '' %>" href="/subscription-policy"><i class="bi bi-star me-2"></i>Subscription Policy</a></li>
             <% } %>
+            <% if (menuSettings.helpSupportMenu.items.shoppingPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/shopping-policy' ? 'active' : '' %>" href="/shopping-policy"><i class="bi bi-bag-check me-2"></i>Shopping Policy</a></li>
+            <% } %>
           </ul>
         </li>
         <% } %>
@@ -130,19 +152,7 @@
       </ul>
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
         <div class="d-flex flex-column flex-lg-row align-items-center">
-          <!-- Internet Speed Display -->
-          <li class="nav-item me-lg-2 d-flex align-items-center">
-            <div class="internet-speed-display" id="internetSpeedDisplay">
-              <i class="bi bi-speedometer2 me-1"></i>
-              <span id="internetSpeedValue">Measuring...</span>
-              <span class="speed-indicator ms-1">
-                <span class="speed-bar"></span>
-                <span class="speed-bar"></span>
-                <span class="speed-bar"></span>
-                <span class="speed-bar"></span>
-              </span>
-            </div>
-          </li>
+
 
           <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <!-- Login Timer Display -->

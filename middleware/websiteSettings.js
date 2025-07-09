@@ -1,9 +1,12 @@
 const WebsiteSettings = require('../models/WebsiteSettings');
+const { getNavbarMenuSettings } = require('../utils/routeDiscovery');
 
 // Cache for website settings to avoid database calls on every request
 let settingsCache = null;
 let lastCacheUpdate = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+
 
 /**
  * Middleware to load website settings and make them available to all views
@@ -23,7 +26,7 @@ const loadWebsiteSettings = async (req, res, next) => {
     // Also make individual settings easily accessible
     res.locals.siteSettings = settingsCache.siteSettings;
     res.locals.headerSettings = settingsCache.headerSettings;
-    res.locals.menuSettings = settingsCache.menuSettings;
+    res.locals.menuSettings = getNavbarMenuSettings(settingsCache.menuSettings);
     res.locals.themeSettings = settingsCache.themeSettings;
 
     // Check maintenance mode

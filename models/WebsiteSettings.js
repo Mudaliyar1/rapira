@@ -26,36 +26,23 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
-  // Navigation Menu Settings
+  // Navigation Menu Settings - Simple object structure
   menuSettings: {
     discoverMenu: {
       enabled: { type: Boolean, default: true },
-      items: {
-        home: { type: Boolean, default: true },
-        contentLibrary: { type: Boolean, default: true },
-        concerts: { type: Boolean, default: true },
-        dailyConcerts: { type: Boolean, default: true },
-        artists: { type: Boolean, default: true }
-      }
+      items: { type: Object, default: {} }
     },
     servicesMenu: {
       enabled: { type: Boolean, default: true },
-      items: {
-        teamRequirement: { type: Boolean, default: true },
-        findMyArtist: { type: Boolean, default: true },
-        subscriptions: { type: Boolean, default: true }
-      }
+      items: { type: Object, default: {} }
+    },
+    shopMenu: {
+      enabled: { type: Boolean, default: true },
+      items: { type: Object, default: {} }
     },
     helpSupportMenu: {
       enabled: { type: Boolean, default: true },
-      items: {
-        demo: { type: Boolean, default: true },
-        contact: { type: Boolean, default: true },
-        termsOfService: { type: Boolean, default: true },
-        privacyPolicy: { type: Boolean, default: true },
-        refundPolicy: { type: Boolean, default: true },
-        subscriptionPolicy: { type: Boolean, default: true }
-      }
+      items: { type: Object, default: {} }
     }
   },
 

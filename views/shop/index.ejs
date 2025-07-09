@@ -19,64 +19,96 @@
   </div>
 </section>
 
-<!-- Filters Section -->
-<div class="container mb-4">
-  <div class="glass-card-dark p-4 rounded-4">
-    <form method="GET" action="/shop" id="filterForm">
-      <div class="row g-3 align-items-end">
-        <!-- Category Filter -->
-        <div class="col-md-3">
-          <label class="form-label text-white">Category</label>
-          <select class="form-select" name="category" onchange="document.getElementById('filterForm').submit()">
-            <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
-            <% categories.forEach(category => { %>
-              <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
-            <% }) %>
-          </select>
-        </div>
-        
-        <!-- Price Range -->
-        <div class="col-md-2">
-          <label class="form-label text-white">Min Price</label>
-          <input type="number" class="form-control" name="minPrice" 
-                 placeholder="₹0" value="<%= filters.minPrice || '' %>">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label text-white">Max Price</label>
-          <input type="number" class="form-control" name="maxPrice" 
-                 placeholder="₹10000" value="<%= filters.maxPrice || '' %>">
-        </div>
-        
-        <!-- Sort -->
-        <div class="col-md-3">
-          <label class="form-label text-white">Sort By</label>
-          <select class="form-select" name="sort" onchange="document.getElementById('filterForm').submit()">
-            <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Newest First</option>
-            <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price: Low to High</option>
-            <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price: High to Low</option>
-            <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
-            <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-          </select>
-        </div>
-        
-        <!-- In Stock Filter -->
-        <div class="col-md-2">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="inStock" value="true" 
-                   <%= filters.inStock === 'true' ? 'checked' : '' %> 
-                   onchange="document.getElementById('filterForm').submit()">
-            <label class="form-check-label text-white">
-              In Stock Only
-            </label>
-          </div>
+<!-- Filter Section -->
+<section class="py-4" style="background-color: var(--bg);">
+  <div class="container">
+    <!-- Search and Filter Form -->
+    <div class="card border-0 shadow-lg mb-4 glass-card-dark">
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Search & Filter Products
+          </h5>
+          <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
+            <span class="d-none d-md-inline ms-1">Toggle Filters</span>
+          </button>
         </div>
       </div>
-      
-      <!-- Hidden inputs to preserve search -->
-      <input type="hidden" name="search" value="<%= filters.search || '' %>">
-    </form>
+      <div class="collapse" id="filterCollapse">
+        <div class="card-body">
+          <form method="GET" action="/shop" id="filterForm">
+            <div class="row g-3">
+              <!-- Category Filter -->
+              <div class="col-md-3">
+                <label for="categoryFilter" class="form-label fw-semibold">Category</label>
+                <select class="form-select" id="categoryFilter" name="category">
+                  <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
+                  <% categories.forEach(category => { %>
+                    <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
+                  <% }) %>
+                </select>
+              </div>
+
+              <!-- Price Range -->
+              <div class="col-md-2">
+                <label for="minPriceFilter" class="form-label fw-semibold">Min Price</label>
+                <input type="number" class="form-control" id="minPriceFilter" name="minPrice"
+                       placeholder="₹0" value="<%= filters.minPrice || '' %>">
+              </div>
+              <div class="col-md-2">
+                <label for="maxPriceFilter" class="form-label fw-semibold">Max Price</label>
+                <input type="number" class="form-control" id="maxPriceFilter" name="maxPrice"
+                       placeholder="₹10000" value="<%= filters.maxPrice || '' %>">
+              </div>
+
+              <!-- Sort -->
+              <div class="col-md-3">
+                <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
+                <select class="form-select" id="sortFilter" name="sort">
+                  <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Newest First</option>
+                  <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price: Low to High</option>
+                  <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price: High to Low</option>
+                  <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+                  <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+                </select>
+              </div>
+
+              <!-- In Stock Filter -->
+              <div class="col-md-2">
+                <label class="form-label fw-semibold">Stock Status</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="inStockFilter" name="inStock" value="true"
+                         <%= filters.inStock === 'true' ? 'checked' : '' %>>
+                  <label class="form-check-label" for="inStockFilter">
+                    In Stock Only
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="row mt-3">
+              <div class="col-12">
+                <div class="d-flex gap-2 flex-wrap">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Apply Filters
+                  </button>
+                  <a href="/shop" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Clear All
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden inputs to preserve search -->
+            <input type="hidden" name="search" value="<%= filters.search || '' %>">
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
 
 
@@ -211,6 +243,110 @@
   </div>
 </div>
 
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Enhanced form handling with auto-submit for filters
+  const form = document.getElementById('filterForm');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const minPriceFilter = document.getElementById('minPriceFilter');
+  const maxPriceFilter = document.getElementById('maxPriceFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  const inStockFilter = document.getElementById('inStockFilter');
+
+  let priceTimeout;
+
+  // Auto-submit on dropdown changes
+  [categoryFilter, sortFilter].forEach(filter => {
+    if (filter) {
+      filter.addEventListener('change', function() {
+        clearTimeout(priceTimeout);
+        form.submit();
+      });
+    }
+  });
+
+  // Auto-submit on checkbox change
+  if (inStockFilter) {
+    inStockFilter.addEventListener('change', function() {
+      clearTimeout(priceTimeout);
+      form.submit();
+    });
+  }
+
+  // Debounced price input handling
+  [minPriceFilter, maxPriceFilter].forEach(priceInput => {
+    if (priceInput) {
+      priceInput.addEventListener('input', function() {
+        clearTimeout(priceTimeout);
+        priceTimeout = setTimeout(() => {
+          form.submit();
+        }, 1000); // 1 second delay for price inputs
+      });
+
+      // Immediate submit on Enter key
+      priceInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(priceTimeout);
+          form.submit();
+        }
+      });
+    }
+  });
+
+  // Enhanced form submission with loading state
+  if (form) {
+    form.addEventListener('submit', function() {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Filtering...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 5000);
+      }
+    });
+  }
+
+  // Show active filter indicators
+  function updateFilterIndicators() {
+    const hasFilters = '<%= filters.search || filters.category !== "all" && filters.category || filters.minPrice || filters.maxPrice || filters.sort !== "newest" && filters.sort || filters.inStock %>';
+
+    if (hasFilters) {
+      const filterHeader = document.querySelector('.card-header h5');
+      if (filterHeader && !filterHeader.querySelector('.badge')) {
+        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
+      }
+    }
+  }
+
+  updateFilterIndicators();
+
+  // Handle filter toggle icon rotation
+  const filterCollapse = document.getElementById('filterCollapse');
+  const filterToggleIcon = document.getElementById('filterToggleIcon');
+
+  if (filterCollapse && filterToggleIcon) {
+    filterCollapse.addEventListener('show.bs.collapse', function () {
+      filterToggleIcon.classList.remove('bi-chevron-down');
+      filterToggleIcon.classList.add('bi-chevron-up');
+    });
+
+    filterCollapse.addEventListener('hide.bs.collapse', function () {
+      filterToggleIcon.classList.remove('bi-chevron-up');
+      filterToggleIcon.classList.add('bi-chevron-down');
+    });
+  }
+});
+</script>
+
 <!-- Custom Styles -->
 <style>
 .product-card {
@@ -238,5 +374,77 @@
 .pagination .page-item.active .page-link {
   background-color: var(--primary);
   border-color: var(--primary);
+}
+
+/* Filter indicator */
+.badge.bg-light {
+  color: #6366f1 !important;
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+/* Enhanced filter card styling */
+.glass-card-dark .card-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-dark .card-body {
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Form styling improvements */
+.form-select, .form-control {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.form-select:focus, .form-control:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  color: white;
+}
+
+.form-select option {
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.form-label {
+  color: white;
+  font-weight: 600;
+}
+
+/* Button loading state */
+.btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .pagination {
+    font-size: 0.9em;
+  }
+
+  .btn {
+    margin-bottom: 0.5rem;
+  }
+
+  .d-flex.flex-wrap.gap-2 {
+    justify-content: center;
+  }
 }
 </style>
