@@ -114,13 +114,7 @@
 
 
 
-<!-- Google Ad - Home Page Banner -->
-<% if (typeof googleAds !== 'undefined' && googleAds.shouldShow) { %>
-  <% const homePageBannerAd = googleAds.getAd('homePageBanner', { className: 'my-5' }); %>
-  <% if (homePageBannerAd) { %>
-    <%- include('partials/google-ad', homePageBannerAd) %>
-  <% } %>
-<% } %>
+
 
 <!-- Upcoming Concerts Section -->
 <section class="py-5">
@@ -384,13 +378,7 @@
 
 
 
-<!-- Google Ad - Home Page Middle -->
-<% if (typeof googleAds !== 'undefined' && googleAds.shouldShow) { %>
-  <% const homePageSidebarAd = googleAds.getAd('homePageSidebar', { className: 'my-5' }); %>
-  <% if (homePageSidebarAd) { %>
-    <%- include('partials/google-ad', homePageSidebarAd) %>
-  <% } %>
-<% } %>
+
 
 <!-- How It Works Section -->
 <section class="py-5">
