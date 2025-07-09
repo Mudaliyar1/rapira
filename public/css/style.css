@@ -2903,6 +2903,19 @@ a:hover {
   color: #f59e0b;
 }
 
+/* Force black text for alert-info messages */
+.alert-info {
+  background-color: #cff4fc !important;
+  color: #000000 !important;
+  border: 1px solid #b6effb !important;
+}
+
+.alert-info h4,
+.alert-info p,
+.alert-info * {
+  color: #000000 !important;
+}
+
 .light-theme .alert-primary {
   background-color: rgba(99, 102, 241, 0.1);
   color: var(--primary-dark);
@@ -2921,6 +2934,18 @@ a:hover {
 .light-theme .alert-warning {
   background-color: rgba(245, 158, 11, 0.1);
   color: #d97706;
+}
+
+.light-theme .alert-info {
+  background-color: #cff4fc !important;
+  color: #000000 !important;
+  border: 1px solid #b6effb !important;
+}
+
+.light-theme .alert-info h4,
+.light-theme .alert-info p,
+.light-theme .alert-info * {
+  color: #000000 !important;
 }
 
 @keyframes fadeIn {

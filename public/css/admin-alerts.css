@@ -76,6 +76,35 @@ body:has([href*="daily-concerts"]) .alert {
   font-weight: bold !important;
 }
 
+/* Specific targeting for Team Requirement and Find My Artist pages */
+.alert-info,
+.alert-info h4,
+.alert-info p,
+.alert-info * {
+  color: #000000 !important;
+  background-color: #cff4fc !important;
+}
+
+/* Force black text for all "No results" messages */
+.text-center .alert-info,
+.text-center .alert-info h4,
+.text-center .alert-info p,
+.py-5 .alert-info,
+.py-5 .alert-info h4,
+.py-5 .alert-info p {
+  color: #000000 !important;
+  background-color: #cff4fc !important;
+  border: 1px solid #b6effb !important;
+}
+
+/* Global override for all alert-info elements */
+body .alert-info,
+body .alert-info *,
+html .alert-info,
+html .alert-info * {
+  color: #000000 !important;
+}
+
 /* Specific targeting for Daily Concerts page */
 .admin-layout .card:has([class*="bi-calendar-event"]) .card-body .alert-info,
 .admin-layout .card:has([class*="bi-calendar-event"]) .card-body .alert-info * {
