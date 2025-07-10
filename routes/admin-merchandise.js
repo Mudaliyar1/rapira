@@ -184,10 +184,35 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
 
     let productSizes = [];
     if (sizes && Array.isArray(sizes)) {
-      productSizes = sizes.map(size => ({
-        size: size.size,
-        stock: parseInt(size.stock) || 0
-      }));
+      // Filter out empty items and process each size
+      productSizes = sizes
+        .filter(size => size && size.size && size.stock !== undefined)
+        .map(size => {
+          // Handle case where size.size and size.stock might be arrays
+          const sizeValue = Array.isArray(size.size) ? size.size[0] : size.size;
+          const stockValue = Array.isArray(size.stock) ? size.stock[0] : size.stock;
+
+          return {
+            size: sizeValue,
+            stock: parseInt(stockValue) || 0
+          };
+        });
+    } else if (sizes && typeof sizes === 'object') {
+      // Handle case where sizes is an object with arrays
+      if (sizes.size && sizes.stock) {
+        const sizeArray = Array.isArray(sizes.size) ? sizes.size : [sizes.size];
+        const stockArray = Array.isArray(sizes.stock) ? sizes.stock : [sizes.stock];
+
+        // Create size objects by pairing size and stock arrays
+        for (let i = 0; i < sizeArray.length; i++) {
+          if (sizeArray[i] && stockArray[i] !== undefined) {
+            productSizes.push({
+              size: sizeArray[i],
+              stock: parseInt(stockArray[i]) || 0
+            });
+          }
+        }
+      }
     }
     console.log('Processed sizes:', productSizes);
     
@@ -333,10 +358,36 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
     
     // Update sizes
     if (sizes && Array.isArray(sizes)) {
-      product.sizes = sizes.map(size => ({
-        size: size.size,
-        stock: parseInt(size.stock) || 0
-      }));
+      // Filter out empty items and process each size
+      product.sizes = sizes
+        .filter(size => size && size.size && size.stock !== undefined)
+        .map(size => {
+          // Handle case where size.size and size.stock might be arrays
+          const sizeValue = Array.isArray(size.size) ? size.size[0] : size.size;
+          const stockValue = Array.isArray(size.stock) ? size.stock[0] : size.stock;
+
+          return {
+            size: sizeValue,
+            stock: parseInt(stockValue) || 0
+          };
+        });
+    } else if (sizes && typeof sizes === 'object') {
+      // Handle case where sizes is an object with arrays
+      if (sizes.size && sizes.stock) {
+        const sizeArray = Array.isArray(sizes.size) ? sizes.size : [sizes.size];
+        const stockArray = Array.isArray(sizes.stock) ? sizes.stock : [sizes.stock];
+
+        product.sizes = [];
+        // Create size objects by pairing size and stock arrays
+        for (let i = 0; i < sizeArray.length; i++) {
+          if (sizeArray[i] && stockArray[i] !== undefined) {
+            product.sizes.push({
+              size: sizeArray[i],
+              stock: parseInt(stockArray[i]) || 0
+            });
+          }
+        }
+      }
     }
     
     // Handle images - ROBUST METHOD
