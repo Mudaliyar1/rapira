@@ -1,0 +1,451 @@
+<%- contentFor('body') %>
+
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 text-white">Edit Team Update</h5>
+      <div class="d-flex gap-2">
+        <a href="/admin/team-updates/<%= update._id %>" class="btn btn-outline-info">
+          <i class="bi bi-eye me-1"></i> View
+        </a>
+        <a href="/admin/team-updates" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Back to Updates
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <form action="/admin/team-updates/<%= update._id %>?_method=PUT" method="POST" enctype="multipart/form-data" id="editUpdateForm">
+      <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+          <!-- Basic Information -->
+          <div class="mb-4">
+            <label for="title" class="form-label text-white">Title *</label>
+            <input type="text" class="form-control bg-dark text-white border-secondary" 
+                   id="title" name="title" required maxlength="200"
+                   value="<%= update.title %>"
+                   placeholder="Enter update title...">
+          </div>
+
+          <div class="mb-4">
+            <label for="content" class="form-label text-white">Content *</label>
+            <textarea class="form-control bg-dark text-white border-secondary" 
+                      id="content" name="content" rows="8" required
+                      placeholder="Write your update content here..."><%= update.content %></textarea>
+            <div class="form-text text-white-50">You can use markdown formatting</div>
+          </div>
+
+          <!-- Type and Priority -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="type" class="form-label text-white">Type *</label>
+              <select class="form-select bg-dark text-white border-secondary" id="type" name="type" required>
+                <option value="">Select type...</option>
+                <option value="announcement" <%= update.type === 'announcement' ? 'selected' : '' %>>📢 Announcement</option>
+                <option value="meeting_minutes" <%= update.type === 'meeting_minutes' ? 'selected' : '' %>>📝 Meeting Minutes</option>
+                <option value="policy_update" <%= update.type === 'policy_update' ? 'selected' : '' %>>📋 Policy Update</option>
+                <option value="project_update" <%= update.type === 'project_update' ? 'selected' : '' %>>🚀 Project Update</option>
+                <option value="general_info" <%= update.type === 'general_info' ? 'selected' : '' %>>ℹ️ General Information</option>
+                <option value="urgent" <%= update.type === 'urgent' ? 'selected' : '' %>>🚨 Urgent</option>
+                <option value="celebration" <%= update.type === 'celebration' ? 'selected' : '' %>>🎉 Celebration</option>
+                <option value="training" <%= update.type === 'training' ? 'selected' : '' %>>📚 Training</option>
+                <option value="system_update" <%= update.type === 'system_update' ? 'selected' : '' %>>⚙️ System Update</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="priority" class="form-label text-white">Priority</label>
+              <select class="form-select bg-dark text-white border-secondary" id="priority" name="priority">
+                <option value="low" <%= update.priority === 'low' ? 'selected' : '' %>>Low</option>
+                <option value="normal" <%= update.priority === 'normal' ? 'selected' : '' %>>Normal</option>
+                <option value="high" <%= update.priority === 'high' ? 'selected' : '' %>>High</option>
+                <option value="urgent" <%= update.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Category and Tags -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="category" class="form-label text-white">Category</label>
+              <select class="form-select bg-dark text-white border-secondary" id="category" name="category">
+                <option value="company_wide" <%= update.category === 'company_wide' ? 'selected' : '' %>>Company Wide</option>
+                <option value="development" <%= update.category === 'development' ? 'selected' : '' %>>Development</option>
+                <option value="marketing" <%= update.category === 'marketing' ? 'selected' : '' %>>Marketing</option>
+                <option value="operations" <%= update.category === 'operations' ? 'selected' : '' %>>Operations</option>
+                <option value="hr" <%= update.category === 'hr' ? 'selected' : '' %>>HR</option>
+                <option value="finance" <%= update.category === 'finance' ? 'selected' : '' %>>Finance</option>
+                <option value="customer_support" <%= update.category === 'customer_support' ? 'selected' : '' %>>Customer Support</option>
+                <option value="management" <%= update.category === 'management' ? 'selected' : '' %>>Management</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="tags" class="form-label text-white">Tags</label>
+              <input type="text" class="form-control bg-dark text-white border-secondary" 
+                     id="tags" name="tags" 
+                     value="<%= update.tags ? update.tags.join(', ') : '' %>"
+                     placeholder="tag1, tag2, tag3...">
+              <div class="form-text text-white-50">Separate tags with commas</div>
+            </div>
+          </div>
+
+          <!-- Meeting Specific Fields -->
+          <div id="meetingFields" style="<%= update.type === 'meeting_minutes' ? '' : 'display: none;' %>">
+            <h6 class="text-white mb-3">Meeting Details</h6>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="meetingDate" class="form-label text-white">Meeting Date</label>
+                <input type="datetime-local" class="form-control bg-dark text-white border-secondary" 
+                       id="meetingDate" name="meetingDate"
+                       value="<%= update.meetingDate ? new Date(update.meetingDate).toISOString().slice(0, 16) : '' %>">
+              </div>
+              <div class="col-md-6">
+                <label for="meetingAttendees" class="form-label text-white">Attendees</label>
+                <select class="form-select bg-dark text-white border-secondary" 
+                        id="meetingAttendees" name="meetingAttendees" multiple>
+                  <% adminUsers.forEach(user => { %>
+                    <option value="<%= user._id %>" 
+                            <%= update.meetingAttendees.some(attendee => attendee._id.toString() === user._id.toString()) ? 'selected' : '' %>>
+                      <%= user.name %> (<%= user.email %>)
+                    </option>
+                  <% }) %>
+                </select>
+                <div class="form-text text-white-50">Hold Ctrl/Cmd to select multiple</div>
+              </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="mb-4">
+              <label class="form-label text-white">Action Items</label>
+              <div id="actionItemsContainer">
+                <% if (update.actionItems && update.actionItems.length > 0) { %>
+                  <% update.actionItems.forEach((item, index) => { %>
+                    <div class="action-item-row row mb-2">
+                      <input type="hidden" name="actionItems[<%= index %>][_id]" value="<%= item._id %>">
+                      <div class="col-md-5">
+                        <input type="text" class="form-control bg-dark text-white border-secondary" 
+                               name="actionItems[<%= index %>][task]" 
+                               value="<%= item.task %>"
+                               placeholder="Action item description...">
+                      </div>
+                      <div class="col-md-2">
+                        <select class="form-select bg-dark text-white border-secondary" 
+                                name="actionItems[<%= index %>][assignedTo]">
+                          <option value="">Assign to...</option>
+                          <% adminUsers.forEach(user => { %>
+                            <option value="<%= user._id %>" 
+                                    <%= item.assignedTo && item.assignedTo._id.toString() === user._id.toString() ? 'selected' : '' %>>
+                              <%= user.name %>
+                            </option>
+                          <% }) %>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <input type="date" class="form-control bg-dark text-white border-secondary" 
+                               name="actionItems[<%= index %>][dueDate]"
+                               value="<%= item.dueDate ? new Date(item.dueDate).toISOString().split('T')[0] : '' %>">
+                      </div>
+                      <div class="col-md-2">
+                        <select class="form-select bg-dark text-white border-secondary" 
+                                name="actionItems[<%= index %>][status]">
+                          <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                          <option value="in_progress" <%= item.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                          <option value="completed" <%= item.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                        </select>
+                      </div>
+                      <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-action-item">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  <% }) %>
+                <% } else { %>
+                  <div class="action-item-row row mb-2">
+                    <div class="col-md-5">
+                      <input type="text" class="form-control bg-dark text-white border-secondary" 
+                             name="actionItems[0][task]" placeholder="Action item description...">
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select bg-dark text-white border-secondary" 
+                              name="actionItems[0][assignedTo]">
+                        <option value="">Assign to...</option>
+                        <% adminUsers.forEach(user => { %>
+                          <option value="<%= user._id %>"><%= user.name %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <input type="date" class="form-control bg-dark text-white border-secondary" 
+                             name="actionItems[0][dueDate]">
+                    </div>
+                    <div class="col-md-2">
+                      <select class="form-select bg-dark text-white border-secondary" 
+                              name="actionItems[0][status]">
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                    <div class="col-md-1">
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-action-item">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="addActionItem">
+                <i class="bi bi-plus me-1"></i> Add Action Item
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing Attachments -->
+          <% if (update.attachments && update.attachments.length > 0) { %>
+            <div class="mb-4">
+              <label class="form-label text-white">Current Attachments</label>
+              <div class="row g-3">
+                <% update.attachments.forEach(attachment => { %>
+                  <div class="col-md-6">
+                    <div class="attachment-card glass-card-dark border border-secondary p-3">
+                      <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-file-earmark text-primary me-3 fs-4"></i>
+                          <div>
+                            <h6 class="mb-1 text-white"><%= attachment.originalName %></h6>
+                            <small class="text-white-50">
+                              <%= (attachment.size / 1024 / 1024).toFixed(2) %> MB
+                            </small>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <a href="<%= attachment.path %>" class="btn btn-outline-primary btn-sm" download>
+                            <i class="bi bi-download"></i>
+                          </a>
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="removeAttachments" value="<%= attachment._id %>" 
+                                   id="remove_<%= attachment._id %>">
+                            <label class="form-check-label text-danger" for="remove_<%= attachment._id %>">
+                              Remove
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- New Attachments -->
+          <div class="mb-4">
+            <label for="attachments" class="form-label text-white">Add New Attachments</label>
+            <input type="file" class="form-control bg-dark text-white border-secondary" 
+                   id="attachments" name="attachments" multiple
+                   accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.jpg,.jpeg,.png,.gif">
+            <div class="form-text text-white-50">
+              Max 5 files, 10MB each. Supported: PDF, DOC, XLS, PPT, Images
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+          <!-- Publishing Options -->
+          <div class="glass-card-dark border border-secondary mb-4">
+            <div class="card-header border-bottom border-secondary">
+              <h6 class="card-title mb-0 text-white">Publishing Options</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="targetAudience" class="form-label text-white">Target Audience</label>
+                <select class="form-select bg-dark text-white border-secondary" 
+                        id="targetAudience" name="targetAudience">
+                  <option value="all_admins" <%= update.targetAudience === 'all_admins' ? 'selected' : '' %>>All Admins</option>
+                  <option value="super_admins_only" <%= update.targetAudience === 'super_admins_only' ? 'selected' : '' %>>Super Admins Only</option>
+                  <option value="specific_roles" <%= update.targetAudience === 'specific_roles' ? 'selected' : '' %>>Specific Roles</option>
+                  <option value="all_team" <%= update.targetAudience === 'all_team' ? 'selected' : '' %>>All Team Members</option>
+                </select>
+              </div>
+
+              <div id="specificRolesField" style="<%= update.targetAudience === 'specific_roles' ? '' : 'display: none;' %>">
+                <label class="form-label text-white">Specific Roles</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="admin" id="roleAdmin"
+                         <%= update.specificRoles && update.specificRoles.includes('admin') ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="roleAdmin">Admin</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="developer" id="roleDeveloper"
+                         <%= update.specificRoles && update.specificRoles.includes('developer') ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="roleDeveloper">Developer</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="manager" id="roleManager"
+                         <%= update.specificRoles && update.specificRoles.includes('manager') ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="roleManager">Manager</label>
+                </div>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="isPinned" name="isPinned"
+                       <%= update.isPinned ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="isPinned">
+                  Pin this update
+                </label>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="allowComments" name="allowComments"
+                       <%= update.allowComments ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="allowComments">
+                  Allow comments
+                </label>
+              </div>
+
+              <div class="mb-3">
+                <label for="expiresAt" class="form-label text-white">Expires At</label>
+                <input type="datetime-local" class="form-control bg-dark text-white border-secondary" 
+                       id="expiresAt" name="expiresAt"
+                       value="<%= update.expiresAt ? new Date(update.expiresAt).toISOString().slice(0, 16) : '' %>">
+                <div class="form-text text-white-50">Leave empty for no expiration</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Update Info -->
+          <div class="glass-card-dark border border-secondary mb-4">
+            <div class="card-header border-bottom border-secondary">
+              <h6 class="card-title mb-0 text-white">Update Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-2">
+                <strong class="text-white">Created by:</strong>
+                <span class="text-white-50 ms-2"><%= update.createdBy.name %></span>
+              </div>
+              <div class="mb-2">
+                <strong class="text-white">Created:</strong>
+                <span class="text-white-50 ms-2">
+                  <%= new Date(update.createdAt).toLocaleDateString() %>
+                </span>
+              </div>
+              <% if (update.updatedAt && update.updatedAt !== update.createdAt) { %>
+                <div class="mb-2">
+                  <strong class="text-white">Last updated:</strong>
+                  <span class="text-white-50 ms-2">
+                    <%= new Date(update.updatedAt).toLocaleDateString() %>
+                  </span>
+                </div>
+              <% } %>
+              <div class="mb-2">
+                <strong class="text-white">Views:</strong>
+                <span class="text-white-50 ms-2"><%= update.views.length %></span>
+              </div>
+              <div>
+                <strong class="text-white">Reactions:</strong>
+                <span class="text-white-50 ms-2"><%= update.reactions.length %></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Update
+            </button>
+            <a href="/admin/team-updates/<%= update._id %>" class="btn btn-outline-info">
+              <i class="bi bi-eye me-1"></i> View Update
+            </a>
+            <a href="/admin/team-updates" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+            <hr class="border-secondary">
+            <a href="/admin/team-updates/<%= update._id %>/delete" class="btn btn-outline-danger">
+              <i class="bi bi-trash me-1"></i> Delete Update
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const typeSelect = document.getElementById('type');
+  const meetingFields = document.getElementById('meetingFields');
+  const targetAudienceSelect = document.getElementById('targetAudience');
+  const specificRolesField = document.getElementById('specificRolesField');
+  const addActionItemBtn = document.getElementById('addActionItem');
+  const actionItemsContainer = document.getElementById('actionItemsContainer');
+  let actionItemIndex = <%= update.actionItems ? update.actionItems.length : 1 %>;
+
+  // Show/hide meeting fields based on type
+  typeSelect.addEventListener('change', function() {
+    if (this.value === 'meeting_minutes') {
+      meetingFields.style.display = 'block';
+    } else {
+      meetingFields.style.display = 'none';
+    }
+  });
+
+  // Show/hide specific roles field
+  targetAudienceSelect.addEventListener('change', function() {
+    if (this.value === 'specific_roles') {
+      specificRolesField.style.display = 'block';
+    } else {
+      specificRolesField.style.display = 'none';
+    }
+  });
+
+  // Add action item
+  addActionItemBtn.addEventListener('click', function() {
+    const newRow = document.createElement('div');
+    newRow.className = 'action-item-row row mb-2';
+    newRow.innerHTML = `
+      <div class="col-md-5">
+        <input type="text" class="form-control bg-dark text-white border-secondary" 
+               name="actionItems[${actionItemIndex}][task]" placeholder="Action item description...">
+      </div>
+      <div class="col-md-2">
+        <select class="form-select bg-dark text-white border-secondary" 
+                name="actionItems[${actionItemIndex}][assignedTo]">
+          <option value="">Assign to...</option>
+          <% adminUsers.forEach(user => { %>
+            <option value="<%= user._id %>"><%= user.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <input type="date" class="form-control bg-dark text-white border-secondary" 
+               name="actionItems[${actionItemIndex}][dueDate]">
+      </div>
+      <div class="col-md-2">
+        <select class="form-select bg-dark text-white border-secondary" 
+                name="actionItems[${actionItemIndex}][status]">
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-action-item">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    actionItemsContainer.appendChild(newRow);
+    actionItemIndex++;
+  });
+
+  // Remove action item
+  actionItemsContainer.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-action-item')) {
+      e.target.closest('.action-item-row').remove();
+    }
+  });
+});
+</script>

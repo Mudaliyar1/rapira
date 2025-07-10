@@ -222,6 +222,11 @@
           <i class="bi bi-envelope-check me-1"></i> Email Status
         </a>
       </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/team-updates" class="nav-link rounded <%= path.startsWith('/admin/team-updates') ? 'active bg-primary' : '' %>">
+          <i class="bi bi-megaphone me-1"></i> Team Updates
+        </a>
+      </li>
       <% if (hasRoles) { %>
       <li class="nav-item mb-1">
         <a href="/messages" class="nav-link rounded <%= path === '/messages' ? 'active bg-primary' : '' %>">

@@ -1,0 +1,293 @@
+<%- contentFor('body') %>
+
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 text-white">Create Team Update</h5>
+      <a href="/admin/team-updates" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Updates
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <form action="/admin/team-updates" method="POST" enctype="multipart/form-data" id="createUpdateForm">
+      <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+          <!-- Basic Information -->
+          <div class="mb-4">
+            <label for="title" class="form-label text-white">Title *</label>
+            <input type="text" class="form-control bg-dark text-white border-secondary" 
+                   id="title" name="title" required maxlength="200"
+                   placeholder="Enter update title...">
+          </div>
+
+          <div class="mb-4">
+            <label for="content" class="form-label text-white">Content *</label>
+            <textarea class="form-control bg-dark text-white border-secondary" 
+                      id="content" name="content" rows="8" required
+                      placeholder="Write your update content here..."></textarea>
+            <div class="form-text text-white-50">You can use markdown formatting</div>
+          </div>
+
+          <!-- Type and Priority -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="type" class="form-label text-white">Type *</label>
+              <select class="form-select bg-dark text-white border-secondary" id="type" name="type" required>
+                <option value="">Select type...</option>
+                <option value="announcement">📢 Announcement</option>
+                <option value="meeting_minutes">📝 Meeting Minutes</option>
+                <option value="policy_update">📋 Policy Update</option>
+                <option value="project_update">🚀 Project Update</option>
+                <option value="general_info">ℹ️ General Information</option>
+                <option value="urgent">🚨 Urgent</option>
+                <option value="celebration">🎉 Celebration</option>
+                <option value="training">📚 Training</option>
+                <option value="system_update">⚙️ System Update</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="priority" class="form-label text-white">Priority</label>
+              <select class="form-select bg-dark text-white border-secondary" id="priority" name="priority">
+                <option value="normal">Normal</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Category and Tags -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="category" class="form-label text-white">Category</label>
+              <select class="form-select bg-dark text-white border-secondary" id="category" name="category">
+                <option value="company_wide">Company Wide</option>
+                <option value="development">Development</option>
+                <option value="marketing">Marketing</option>
+                <option value="operations">Operations</option>
+                <option value="hr">HR</option>
+                <option value="finance">Finance</option>
+                <option value="customer_support">Customer Support</option>
+                <option value="management">Management</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="tags" class="form-label text-white">Tags</label>
+              <input type="text" class="form-control bg-dark text-white border-secondary" 
+                     id="tags" name="tags" 
+                     placeholder="tag1, tag2, tag3...">
+              <div class="form-text text-white-50">Separate tags with commas</div>
+            </div>
+          </div>
+
+          <!-- Meeting Specific Fields -->
+          <div id="meetingFields" style="display: none;">
+            <h6 class="text-white mb-3">Meeting Details</h6>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label for="meetingDate" class="form-label text-white">Meeting Date</label>
+                <input type="datetime-local" class="form-control bg-dark text-white border-secondary" 
+                       id="meetingDate" name="meetingDate">
+              </div>
+              <div class="col-md-6">
+                <label for="meetingAttendees" class="form-label text-white">Attendees</label>
+                <select class="form-select bg-dark text-white border-secondary" 
+                        id="meetingAttendees" name="meetingAttendees" multiple>
+                  <% adminUsers.forEach(user => { %>
+                    <option value="<%= user._id %>"><%= user.name %> (<%= user.email %>)</option>
+                  <% }) %>
+                </select>
+                <div class="form-text text-white-50">Hold Ctrl/Cmd to select multiple</div>
+              </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="mb-4">
+              <label class="form-label text-white">Action Items</label>
+              <div id="actionItemsContainer">
+                <div class="action-item-row row mb-2">
+                  <div class="col-md-6">
+                    <input type="text" class="form-control bg-dark text-white border-secondary" 
+                           name="actionItems[0][task]" placeholder="Action item description...">
+                  </div>
+                  <div class="col-md-3">
+                    <select class="form-select bg-dark text-white border-secondary" 
+                            name="actionItems[0][assignedTo]">
+                      <option value="">Assign to...</option>
+                      <% adminUsers.forEach(user => { %>
+                        <option value="<%= user._id %>"><%= user.name %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <input type="date" class="form-control bg-dark text-white border-secondary" 
+                           name="actionItems[0][dueDate]">
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-action-item">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="addActionItem">
+                <i class="bi bi-plus me-1"></i> Add Action Item
+              </button>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="mb-4">
+            <label for="attachments" class="form-label text-white">Attachments</label>
+            <input type="file" class="form-control bg-dark text-white border-secondary" 
+                   id="attachments" name="attachments" multiple
+                   accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.jpg,.jpeg,.png,.gif">
+            <div class="form-text text-white-50">
+              Max 5 files, 10MB each. Supported: PDF, DOC, XLS, PPT, Images
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+          <!-- Publishing Options -->
+          <div class="glass-card-dark border border-secondary mb-4">
+            <div class="card-header border-bottom border-secondary">
+              <h6 class="card-title mb-0 text-white">Publishing Options</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="targetAudience" class="form-label text-white">Target Audience</label>
+                <select class="form-select bg-dark text-white border-secondary" 
+                        id="targetAudience" name="targetAudience">
+                  <option value="all_admins">All Admins</option>
+                  <option value="super_admins_only">Super Admins Only</option>
+                  <option value="specific_roles">Specific Roles</option>
+                  <option value="all_team">All Team Members</option>
+                </select>
+              </div>
+
+              <div id="specificRolesField" style="display: none;">
+                <label class="form-label text-white">Specific Roles</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="admin" id="roleAdmin">
+                  <label class="form-check-label text-white" for="roleAdmin">Admin</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="developer" id="roleDeveloper">
+                  <label class="form-check-label text-white" for="roleDeveloper">Developer</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="specificRoles" value="manager" id="roleManager">
+                  <label class="form-check-label text-white" for="roleManager">Manager</label>
+                </div>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="isPinned" name="isPinned">
+                <label class="form-check-label text-white" for="isPinned">
+                  Pin this update
+                </label>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="allowComments" name="allowComments" checked>
+                <label class="form-check-label text-white" for="allowComments">
+                  Allow comments
+                </label>
+              </div>
+
+              <div class="mb-3">
+                <label for="expiresAt" class="form-label text-white">Expires At</label>
+                <input type="datetime-local" class="form-control bg-dark text-white border-secondary" 
+                       id="expiresAt" name="expiresAt">
+                <div class="form-text text-white-50">Leave empty for no expiration</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Create Update
+            </button>
+            <a href="/admin/team-updates" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const typeSelect = document.getElementById('type');
+  const meetingFields = document.getElementById('meetingFields');
+  const targetAudienceSelect = document.getElementById('targetAudience');
+  const specificRolesField = document.getElementById('specificRolesField');
+  const addActionItemBtn = document.getElementById('addActionItem');
+  const actionItemsContainer = document.getElementById('actionItemsContainer');
+  let actionItemIndex = 1;
+
+  // Show/hide meeting fields based on type
+  typeSelect.addEventListener('change', function() {
+    if (this.value === 'meeting_minutes') {
+      meetingFields.style.display = 'block';
+    } else {
+      meetingFields.style.display = 'none';
+    }
+  });
+
+  // Show/hide specific roles field
+  targetAudienceSelect.addEventListener('change', function() {
+    if (this.value === 'specific_roles') {
+      specificRolesField.style.display = 'block';
+    } else {
+      specificRolesField.style.display = 'none';
+    }
+  });
+
+  // Add action item
+  addActionItemBtn.addEventListener('click', function() {
+    const newRow = document.createElement('div');
+    newRow.className = 'action-item-row row mb-2';
+    newRow.innerHTML = `
+      <div class="col-md-6">
+        <input type="text" class="form-control bg-dark text-white border-secondary" 
+               name="actionItems[${actionItemIndex}][task]" placeholder="Action item description...">
+      </div>
+      <div class="col-md-3">
+        <select class="form-select bg-dark text-white border-secondary" 
+                name="actionItems[${actionItemIndex}][assignedTo]">
+          <option value="">Assign to...</option>
+          <% adminUsers.forEach(user => { %>
+            <option value="<%= user._id %>"><%= user.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <input type="date" class="form-control bg-dark text-white border-secondary" 
+               name="actionItems[${actionItemIndex}][dueDate]">
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-action-item">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    actionItemsContainer.appendChild(newRow);
+    actionItemIndex++;
+  });
+
+  // Remove action item
+  actionItemsContainer.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-action-item')) {
+      e.target.closest('.action-item-row').remove();
+    }
+  });
+});
+</script>

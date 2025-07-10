@@ -17,7 +17,8 @@
     "test": "jest --testTimeout=30000",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:merchandise": "jest tests/merchandise.test.js"
+    "test:merchandise": "jest tests/merchandise.test.js",
+    "init:team-updates": "node scripts/init-team-updates.js"
   },
   "keywords": [
     "rap",

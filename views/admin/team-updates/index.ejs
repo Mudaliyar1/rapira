@@ -1,0 +1,315 @@
+<%- contentFor('body') %>
+
+<!-- Header with Stats -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-primary-subtle text-primary me-3">
+          <i class="bi bi-file-text"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.total %></h3>
+          <p class="text-white-50 mb-0">Total Updates</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-danger-subtle text-danger me-3">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.urgent %></h3>
+          <p class="text-white-50 mb-0">Urgent</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-warning-subtle text-warning me-3">
+          <i class="bi bi-pin"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.pinned %></h3>
+          <p class="text-white-50 mb-0">Pinned</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card glass-card-dark border border-secondary">
+      <div class="d-flex align-items-center p-3">
+        <div class="stat-icon bg-success-subtle text-success me-3">
+          <i class="bi bi-calendar-week"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-white"><%= stats.thisWeek %></h3>
+          <p class="text-white-50 mb-0">This Week</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 text-white">Team Updates</h5>
+      <a href="/admin/team-updates/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Create Update
+      </a>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Filters -->
+    <form method="GET" class="row g-3 mb-4">
+      <div class="col-md-2">
+        <select name="type" class="form-select bg-dark text-white border-secondary">
+          <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>All Types</option>
+          <option value="announcement" <%= filters.type === 'announcement' ? 'selected' : '' %>>Announcement</option>
+          <option value="meeting_minutes" <%= filters.type === 'meeting_minutes' ? 'selected' : '' %>>Meeting Minutes</option>
+          <option value="policy_update" <%= filters.type === 'policy_update' ? 'selected' : '' %>>Policy Update</option>
+          <option value="project_update" <%= filters.type === 'project_update' ? 'selected' : '' %>>Project Update</option>
+          <option value="urgent" <%= filters.type === 'urgent' ? 'selected' : '' %>>Urgent</option>
+          <option value="celebration" <%= filters.type === 'celebration' ? 'selected' : '' %>>Celebration</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="category" class="form-select bg-dark text-white border-secondary">
+          <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All Categories</option>
+          <option value="company_wide" <%= filters.category === 'company_wide' ? 'selected' : '' %>>Company Wide</option>
+          <option value="development" <%= filters.category === 'development' ? 'selected' : '' %>>Development</option>
+          <option value="marketing" <%= filters.category === 'marketing' ? 'selected' : '' %>>Marketing</option>
+          <option value="operations" <%= filters.category === 'operations' ? 'selected' : '' %>>Operations</option>
+          <option value="hr" <%= filters.category === 'hr' ? 'selected' : '' %>>HR</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="priority" class="form-select bg-dark text-white border-secondary">
+          <option value="all" <%= filters.priority === 'all' ? 'selected' : '' %>>All Priorities</option>
+          <option value="urgent" <%= filters.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
+          <option value="high" <%= filters.priority === 'high' ? 'selected' : '' %>>High</option>
+          <option value="normal" <%= filters.priority === 'normal' ? 'selected' : '' %>>Normal</option>
+          <option value="low" <%= filters.priority === 'low' ? 'selected' : '' %>>Low</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="search" class="form-control bg-dark text-white border-secondary" 
+               placeholder="Search updates..." value="<%= filters.search %>">
+      </div>
+      <div class="col-md-3">
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-outline-primary">Filter</button>
+          <a href="/admin/team-updates" class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Updates List -->
+    <div class="updates-list">
+      <% if (updates.length === 0) { %>
+        <div class="text-center py-5">
+          <i class="bi bi-file-text display-1 text-muted"></i>
+          <h4 class="text-white mt-3">No Updates Found</h4>
+          <p class="text-white-50">No team updates match your current filters.</p>
+          <a href="/admin/team-updates/create" class="btn btn-primary">Create First Update</a>
+        </div>
+      <% } else { %>
+        <% updates.forEach(update => { %>
+          <div class="update-card glass-card-dark border border-secondary mb-3">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center">
+                  <% if (update.isPinned) { %>
+                    <i class="bi bi-pin-fill text-warning me-2"></i>
+                  <% } %>
+                  <h5 class="card-title mb-0 text-white">
+                    <a href="/admin/team-updates/<%= update._id %>" class="text-decoration-none text-white">
+                      <%= update.title %>
+                    </a>
+                  </h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <!-- Priority Badge -->
+                  <% 
+                    let priorityClass = 'bg-secondary';
+                    if (update.priority === 'urgent') priorityClass = 'bg-danger';
+                    else if (update.priority === 'high') priorityClass = 'bg-warning';
+                    else if (update.priority === 'normal') priorityClass = 'bg-primary';
+                  %>
+                  <span class="badge <%= priorityClass %>"><%= update.priority.toUpperCase() %></span>
+                  
+                  <!-- Type Badge -->
+                  <span class="badge bg-info"><%= update.type.replace('_', ' ').toUpperCase() %></span>
+                </div>
+              </div>
+
+              <!-- Content Preview -->
+              <p class="text-white-50 mb-3">
+                <%= update.content.length > 200 ? update.content.substring(0, 200) + '...' : update.content %>
+              </p>
+
+              <!-- Meta Information -->
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center text-white-50 small">
+                  <img src="<%= update.createdBy.profileImage || '/images/default-profile.svg' %>"
+                       alt="<%= update.createdBy.name %>"
+                       class="rounded-circle me-2"
+                       width="24" height="24"
+                       style="object-fit: cover;">
+                  <span>By <%= update.createdBy.name %></span>
+                  <span class="mx-2">•</span>
+                  <span><%= new Date(update.createdAt).toLocaleDateString() %></span>
+                  <% if (update.category !== 'company_wide') { %>
+                    <span class="mx-2">•</span>
+                    <span class="badge bg-secondary"><%= update.category.replace('_', ' ') %></span>
+                  <% } %>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Stats -->
+                  <div class="d-flex align-items-center gap-3 text-white-50 small">
+                    <span><i class="bi bi-eye me-1"></i><%= update.views.length %></span>
+                    <span><i class="bi bi-heart me-1"></i><%= update.reactions.length %></span>
+                    <% if (update.attachments && update.attachments.length > 0) { %>
+                      <span><i class="bi bi-paperclip me-1"></i><%= update.attachments.length %></span>
+                    <% } %>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end bg-dark border-secondary">
+                      <li>
+                        <a class="dropdown-item text-white" href="/admin/team-updates/<%= update._id %>">
+                          <i class="bi bi-eye me-2"></i> View
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item text-white" href="/admin/team-updates/<%= update._id %>/edit">
+                          <i class="bi bi-pencil me-2"></i> Edit
+                        </a>
+                      </li>
+                      <li>
+                        <button class="dropdown-item text-white" onclick="togglePin('<%= update._id %>', <%= update.isPinned %>)">
+                          <i class="bi bi-pin me-2"></i> <%= update.isPinned ? 'Unpin' : 'Pin' %>
+                        </button>
+                      </li>
+                      <li><hr class="dropdown-divider border-secondary"></li>
+                      <li>
+                        <a class="dropdown-item text-danger" href="/admin/team-updates/<%= update._id %>/delete">
+                          <i class="bi bi-trash me-2"></i> Delete
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <% if (update.tags && update.tags.length > 0) { %>
+                <div class="mt-2">
+                  <% update.tags.forEach(tag => { %>
+                    <span class="badge bg-dark border border-secondary me-1">#<%= tag %></span>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <!-- Pagination -->
+    <% if (pagination.total > 1) { %>
+      <nav aria-label="Updates pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
+            <a class="page-link bg-dark border-secondary text-white" 
+               href="?page=<%= pagination.prev %>&type=<%= filters.type %>&category=<%= filters.category %>&priority=<%= filters.priority %>&search=<%= filters.search %>">
+              Previous
+            </a>
+          </li>
+          
+          <% for (let i = Math.max(1, pagination.current - 2); i <= Math.min(pagination.total, pagination.current + 2); i++) { %>
+            <li class="page-item <%= i === pagination.current ? 'active' : '' %>">
+              <a class="page-link bg-dark border-secondary text-white" 
+                 href="?page=<%= i %>&type=<%= filters.type %>&category=<%= filters.category %>&priority=<%= filters.priority %>&search=<%= filters.search %>">
+                <%= i %>
+              </a>
+            </li>
+          <% } %>
+          
+          <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
+            <a class="page-link bg-dark border-secondary text-white" 
+               href="?page=<%= pagination.next %>&type=<%= filters.type %>&category=<%= filters.category %>&priority=<%= filters.priority %>&search=<%= filters.search %>">
+              Next
+            </a>
+          </li>
+        </ul>
+      </nav>
+    <% } %>
+  </div>
+</div>
+
+<style>
+.update-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.update-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.stat-card {
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+</style>
+
+<script>
+// Toggle pin status
+function togglePin(updateId, currentPinStatus) {
+  fetch(`/admin/team-updates/${updateId}/toggle-pin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload(); // Refresh to show updated pin status
+    } else {
+      alert('Failed to toggle pin status');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to toggle pin status');
+  });
+}
+</script>
+</style>

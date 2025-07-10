@@ -438,6 +438,7 @@ const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const adminSessionRoutes = require('./routes/adminSessions');
 const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
 const adminAboutRoutes = require('./routes/adminAbout');
+const adminTeamUpdatesRoutes = require('./routes/adminTeamUpdates');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -514,6 +515,9 @@ app.use('/admin/website-settings', adminWebsiteSettingsRoutes);
 
 // Mount admin about routes
 app.use('/admin/about', adminAboutRoutes);
+
+// Mount team updates routes
+app.use('/admin/team-updates', adminTeamUpdatesRoutes);
 
 
 
