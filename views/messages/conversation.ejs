@@ -42,9 +42,11 @@
                     <% } %>
                     <% if (otherUserRoles && otherUserRoles.length > 0) { %>
                       <% otherUserRoles.forEach(userRole => { %>
-                        <span class="badge bg-secondary">
-                          <i class="bi <%= userRole.role.icon %> me-1"></i> <%= userRole.role.name %>
-                        </span>
+                        <% if (userRole.role && userRole.role.name) { %>
+                          <span class="badge bg-secondary">
+                            <i class="bi <%= userRole.role.icon %> me-1"></i> <%= userRole.role.name %>
+                          </span>
+                        <% } %>
                       <% }); %>
                     <% } %>
                   </div>
@@ -57,16 +59,43 @@
             <div class="chat-messages p-3 scrollarea" style="flex: 1; overflow-y: auto; max-height: 400px;">
               <% if (messages && messages.length > 0) { %>
                 <% messages.forEach(message => { %>
-                  <div class="message <%= message.sender.toString() === user.id ? 'message-outgoing' : 'message-incoming' %> mb-3">
-                    <div class="message-content <%= message.sender.toString() === user.id ? 'bg-primary' : 'bg-secondary' %> text-white rounded p-3">
-                      <%= message.content %>
-                    </div>
-                    <div class="message-meta text-muted small mt-1 <%= message.sender.toString() === user.id ? 'text-end' : '' %>">
-                      <%= new Date(message.createdAt).toLocaleString() %>
-                      <% if (message.sender.toString() === user.id) { %>
-                        <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
-                      <% } %>
-                    </div>
+                  <%
+                    // Ensure both IDs are strings for comparison
+                    const isCurrentUser = message.sender.toString() === user.id.toString();
+                  %>
+                  <div class="row mb-3">
+                    <% if (isCurrentUser) { %>
+                      <!-- Outgoing message - align right -->
+                      <div class="col-2"></div>
+                      <div class="col-10">
+                        <div class="d-flex justify-content-end">
+                          <div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">
+                            <%= message.content %>
+                            <div class="message-time text-end mt-1">
+                              <small class="opacity-75">
+                                <%= new Date(message.createdAt).toLocaleString() %>
+                                <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    <% } else { %>
+                      <!-- Incoming message - align left -->
+                      <div class="col-10">
+                        <div class="d-flex justify-content-start">
+                          <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
+                            <%= message.content %>
+                            <div class="message-time mt-1">
+                              <small class="opacity-75">
+                                <%= new Date(message.createdAt).toLocaleString() %>
+                              </small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-2"></div>
+                    <% } %>
                   </div>
                 <% }); %>
               <% } else { %>
@@ -97,21 +126,44 @@
 </section>
 
 <style>
-  .message-outgoing {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+  .chat-messages {
+    width: 100%;
+    scroll-behavior: smooth;
+    overflow-anchor: none; /* Prevent automatic scroll adjustments */
   }
-  
-  .message-incoming {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .message-content {
-    max-width: 75%;
+
+  .message-bubble {
+    word-wrap: break-word;
     word-break: break-word;
+    position: relative;
+  }
+
+  .message-bubble::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 15px;
+  }
+
+  /* Outgoing message tail (right side) */
+  .bg-primary.message-bubble::before {
+    right: -8px;
+    border-left: 8px solid var(--bs-primary);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+
+  /* Incoming message tail (left side) */
+  .bg-secondary.message-bubble::before {
+    left: -8px;
+    border-right: 8px solid var(--bs-secondary);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+
+  .message-time {
+    font-size: 0.75rem;
   }
   
   .scrollarea {
@@ -134,9 +186,134 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Scroll to bottom of chat
-    const chatMessages = document.querySelector('.chat-messages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
+  // Robust chat scroll management
+  (function() {
+    'use strict';
+
+    let chatMessages;
+    let messageForm;
+    let messageInput;
+    let isUserAtBottom = true;
+
+    // Function to force scroll to bottom with multiple fallbacks
+    function forceScrollToBottom() {
+      if (!chatMessages) return;
+
+      // Method 1: Direct scroll
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Method 2: Smooth scroll (fallback)
+      setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 10);
+
+      // Method 3: Force with requestAnimationFrame
+      requestAnimationFrame(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+
+      // Method 4: Final fallback
+      setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 100);
+    }
+
+    // Check if user is at bottom of chat
+    function checkIfAtBottom() {
+      if (!chatMessages) return true;
+      const threshold = 50; // pixels from bottom
+      return chatMessages.scrollTop >= (chatMessages.scrollHeight - chatMessages.clientHeight - threshold);
+    }
+
+    // Initialize chat
+    function initializeChat() {
+      chatMessages = document.querySelector('.chat-messages');
+      messageForm = document.querySelector('form[action="/messages/send"]');
+      messageInput = document.querySelector('input[name="content"]');
+
+      if (!chatMessages) {
+        console.warn('Chat messages container not found');
+        return;
+      }
+
+      // Always scroll to bottom on page load
+      forceScrollToBottom();
+
+      // Set up scroll listener
+      chatMessages.addEventListener('scroll', () => {
+        isUserAtBottom = checkIfAtBottom();
+      });
+
+      // Handle form submission
+      if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+          if (!messageInput || messageInput.value.trim() === '') {
+            e.preventDefault();
+            return false;
+          }
+
+          // Mark that we should scroll to bottom after page reload
+          localStorage.setItem('chatScrollToBottom', 'true');
+          localStorage.setItem('chatScrollTimestamp', Date.now().toString());
+        });
+      }
+
+      // Auto-focus message input
+      if (messageInput) {
+        messageInput.focus();
+
+        // Handle Enter key
+        messageInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (messageInput.value.trim() !== '') {
+              messageForm.submit();
+            }
+          }
+        });
+      }
+
+      // Check if we need to scroll after form submission
+      const shouldScroll = localStorage.getItem('chatScrollToBottom');
+      const scrollTimestamp = localStorage.getItem('chatScrollTimestamp');
+
+      if (shouldScroll === 'true') {
+        // Only scroll if the timestamp is recent (within 5 seconds)
+        const now = Date.now();
+        const timestamp = parseInt(scrollTimestamp) || 0;
+
+        if (now - timestamp < 5000) {
+          // Clear the flags
+          localStorage.removeItem('chatScrollToBottom');
+          localStorage.removeItem('chatScrollTimestamp');
+
+          // Force scroll to bottom with multiple attempts
+          forceScrollToBottom();
+          setTimeout(forceScrollToBottom, 50);
+          setTimeout(forceScrollToBottom, 200);
+          setTimeout(forceScrollToBottom, 500);
+        }
+      }
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeChat);
+    } else {
+      initializeChat();
+    }
+
+    // Also initialize on window load as a fallback
+    window.addEventListener('load', () => {
+      setTimeout(forceScrollToBottom, 100);
+    });
+
+    // Handle page visibility change (when user returns to tab)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && isUserAtBottom) {
+        setTimeout(forceScrollToBottom, 100);
+      }
+    });
+
+  })();
 </script>

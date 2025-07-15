@@ -2019,6 +2019,30 @@ footer .social-icons a:hover {
   background: transparent !important;
 }
 
+/* Force white text for ALL table elements in admin layout */
+.admin-layout .table,
+.admin-layout .table *,
+.admin-layout .table td,
+.admin-layout .table th,
+.admin-layout .table tr,
+.admin-layout .table tbody,
+.admin-layout .table thead,
+.admin-layout .table tbody tr,
+.admin-layout .table tbody td,
+.admin-layout .table thead tr,
+.admin-layout .table thead th {
+  color: #ffffff !important;
+}
+
+/* Override any Bootstrap table classes that might set dark text */
+.admin-layout .table-striped tbody tr:nth-of-type(odd) td,
+.admin-layout .table-striped tbody tr:nth-of-type(even) td,
+.admin-layout .table-hover tbody tr:hover td,
+.admin-layout .table-dark td,
+.admin-layout .table-dark th {
+  color: #ffffff !important;
+}
+
 .admin-layout .table thead {
   background-color: rgba(0, 0, 0, 0.2) !important;
 }
@@ -2129,14 +2153,91 @@ footer .social-icons a:hover {
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Keep black text for non-glass card tables (like user management) */
-.admin-layout .table:not(.glass-card-dark .table) tbody tr td,
-.admin-layout .table:not(.glass-card-dark .table) tbody tr td *,
-.admin-layout .table:not(.glass-card-dark .table) tbody tr td h6,
-.admin-layout .table:not(.glass-card-dark .table) tbody tr td div,
-.admin-layout .table:not(.glass-card-dark .table) tbody tr td span:not(.badge) {
-  color: #000 !important;
+/* Override: Force white text for ALL admin tables - remove black text rules */
+.admin-layout .table tbody tr td,
+.admin-layout .table tbody tr td *,
+.admin-layout .table tbody tr td h6,
+.admin-layout .table tbody tr td div,
+.admin-layout .table tbody tr td span:not(.badge) {
+  color: #ffffff !important;
   font-weight: 500 !important;
+}
+
+/* Specific fixes for admin pages with table issues */
+.admin-layout .table tbody tr td,
+.admin-layout .table tbody tr th,
+.admin-layout .table thead tr td,
+.admin-layout .table thead tr th {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+/* Fix for DataTables and other table plugins */
+.admin-layout .dataTables_wrapper .table tbody tr td,
+.admin-layout .dataTables_wrapper .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Specific page fixes for the admin pages shown in screenshots */
+/* Daily Concerts Management */
+body:has([href*="daily-concerts"]) .admin-layout .table tbody tr td,
+body:has([href*="daily-concerts"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Team Requirement Roles */
+body:has([href*="team-requirement/roles"]) .admin-layout .table tbody tr td,
+body:has([href*="team-requirement/roles"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Team Booking Requests */
+body:has([href*="team-requirement/requests"]) .admin-layout .table tbody tr td,
+body:has([href*="team-requirement/requests"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Featured Artists Management */
+body:has([href*="featured-artists"]) .admin-layout .table tbody tr td,
+body:has([href*="featured-artists"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Role Slots Management */
+body:has([href*="role-slots"]) .admin-layout .table tbody tr td,
+body:has([href*="role-slots"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Artist Booking Requests */
+body:has([href*="artist/booking-requests"]) .admin-layout .table tbody tr td,
+body:has([href*="artist/booking-requests"]) .admin-layout .table thead tr th {
+  color: #ffffff !important;
+}
+
+/* Universal table text fix for all admin pages - highest specificity */
+.admin-layout .card .table tbody tr td,
+.admin-layout .card .table tbody tr td *:not(.badge):not(.btn),
+.admin-layout .card .table thead tr th,
+.admin-layout .card .table thead tr th *:not(.badge):not(.btn),
+.admin-layout .glass-card .table tbody tr td,
+.admin-layout .glass-card .table tbody tr td *:not(.badge):not(.btn),
+.admin-layout .glass-card .table thead tr th,
+.admin-layout .glass-card .table thead tr th *:not(.badge):not(.btn),
+.admin-layout .glass-card-dark .table tbody tr td,
+.admin-layout .glass-card-dark .table tbody tr td *:not(.badge):not(.btn),
+.admin-layout .glass-card-dark .table thead tr th,
+.admin-layout .glass-card-dark .table thead tr th *:not(.badge):not(.btn) {
+  color: #ffffff !important;
+}
+
+/* Ensure badges and buttons maintain their original colors */
+.admin-layout .table .badge {
+  color: inherit !important;
+}
+
+.admin-layout .table .btn {
+  color: inherit !important;
 }
 
 /* Artist Dashboard Table Readability Fix */
@@ -3860,4 +3961,146 @@ a:hover {
 section[style*="background-color: var(--bg)"] {
   background-color: var(--bg) !important;
   transition: background-color 0.3s ease;
+}
+
+/* ===== BOOKING REQUEST DETAILS PAGE TEXT COLOR FIX ===== */
+/* Specific fix for booking request details page and similar admin detail pages */
+body:has([href*="booking-requests/"]) .admin-layout,
+body:has([href*="booking-requests/"]) .admin-layout *:not(.alert):not(.badge):not(.btn):not(.dropdown-menu),
+body:has([href*="booking-request/"]) .admin-layout,
+body:has([href*="booking-request/"]) .admin-layout *:not(.alert):not(.badge):not(.btn):not(.dropdown-menu) {
+  color: #ffffff !important;
+}
+
+/* Target the specific table-like form layout in booking details */
+.admin-layout .card .row,
+.admin-layout .card .row *:not(.alert):not(.badge):not(.btn),
+.admin-layout .card .col-md-6,
+.admin-layout .card .col-md-6 *:not(.alert):not(.badge):not(.btn),
+.admin-layout .card .col-md-8,
+.admin-layout .card .col-md-8 *:not(.alert):not(.badge):not(.btn),
+.admin-layout .card .col-md-4,
+.admin-layout .card .col-md-4 *:not(.alert):not(.badge):not(.btn) {
+  color: #ffffff !important;
+}
+
+/* Force white text for form-like data display sections */
+.admin-layout .card-body .row .col-md-6 div,
+.admin-layout .card-body .row .col-md-8 div,
+.admin-layout .card-body .row .col-md-4 div,
+.admin-layout .card-body h3,
+.admin-layout .card-body h4,
+.admin-layout .card-body h5,
+.admin-layout .card-body p,
+.admin-layout .card-body span:not(.badge),
+.admin-layout .card-body strong,
+.admin-layout .card-body em {
+  color: #ffffff !important;
+}
+
+/* Override any Bootstrap or custom classes that might set dark text */
+.admin-layout .text-dark,
+.admin-layout .text-black,
+.admin-layout .text-muted,
+.admin-layout .text-secondary {
+  color: #ffffff !important;
+}
+
+/* Ensure readonly inputs and form elements are visible */
+.admin-layout input[readonly],
+.admin-layout textarea[readonly],
+.admin-layout .form-control[readonly],
+.admin-layout .readonly-field {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Nuclear option for admin detail pages - force all text to white */
+.admin-layout .card-body *:not(.alert):not(.badge):not(.btn):not(.dropdown-menu):not(.modal) {
+  color: #ffffff !important;
+}
+
+/* ===== ROBUST FIX FOR BOOKING REQUEST DETAILS PAGE ===== */
+/* This targets the specific page with inline styles that override CSS */
+
+/* Target the specific booking details page by URL pattern */
+body[data-page*="booking-details"] *,
+body[data-page*="booking-request"] *,
+body:has([href*="booking-requests/"]) *,
+body:has([href*="booking-request/"]) * {
+  color: #ffffff !important;
+}
+
+/* Override inline styles on table cells specifically */
+.admin-layout table td[style*="color: #000000"],
+.admin-layout table td[style*="color:#000000"],
+.admin-layout table td[style*="color: black"],
+.admin-layout table td[style*="color:black"] {
+  color: #ffffff !important;
+}
+
+/* Force white text on all table elements in admin booking pages */
+.admin-layout .table td,
+.admin-layout .table th,
+.admin-layout .table td *,
+.admin-layout .table th * {
+  color: #ffffff !important;
+}
+
+/* Override any div with inline black color styles */
+.admin-layout div[style*="color: #000000"],
+.admin-layout div[style*="color:#000000"],
+.admin-layout div[style*="color: black"],
+.admin-layout div[style*="color:black"] {
+  color: #ffffff !important;
+}
+
+/* Specific targeting for the booking details template structure */
+.admin-layout .container-fluid .card .card-body,
+.admin-layout .container-fluid .card .card-body *:not(.badge):not(.btn):not(.alert) {
+  color: #ffffff !important;
+}
+
+/* Override Bootstrap table classes that might interfere */
+.admin-layout .table-bordered td,
+.admin-layout .table-bordered th,
+.admin-layout .table-striped td,
+.admin-layout .table-striped th {
+  color: #ffffff !important;
+}
+
+/* Preserve only specific elements that should keep their colors */
+.admin-layout .badge,
+.admin-layout .btn,
+.admin-layout .alert,
+.admin-layout .dropdown-menu * {
+  color: inherit !important;
+}
+
+/* ===== ULTIMATE OVERRIDE FOR INLINE STYLES ===== */
+/* This uses the highest possible CSS specificity to override inline styles */
+
+/* Target all elements in admin layout with maximum specificity */
+html body .admin-layout .container-fluid .card .card-body table.table td,
+html body .admin-layout .container-fluid .card .card-body table.table th,
+html body .admin-layout .container-fluid .card .card-body table td,
+html body .admin-layout .container-fluid .card .card-body table th,
+html body .admin-layout .container-fluid .card .card-body div,
+html body .admin-layout .container-fluid .card .card-body p,
+html body .admin-layout .container-fluid .card .card-body span:not(.badge),
+html body .admin-layout .container-fluid .card .card-body strong,
+html body .admin-layout .container-fluid .card .card-body h1,
+html body .admin-layout .container-fluid .card .card-body h2,
+html body .admin-layout .container-fluid .card .card-body h3,
+html body .admin-layout .container-fluid .card .card-body h4,
+html body .admin-layout .container-fluid .card .card-body h5,
+html body .admin-layout .container-fluid .card .card-body h6 {
+  color: #ffffff !important;
+}
+
+/* Additional override with even higher specificity */
+html body div.admin-layout div.container-fluid div.card div.card-body table.table-bordered td,
+html body div.admin-layout div.container-fluid div.card div.card-body table.table-bordered th {
+  color: #ffffff !important;
 }

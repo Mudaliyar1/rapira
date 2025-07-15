@@ -2,7 +2,7 @@
 
 <style>
   .table td, .table th {
-    color: #000 !important;
+    color: #fff !important;
     font-weight: 500;
   }
   .badge {
@@ -25,18 +25,18 @@
                 <table class="table align-middle" style="background-color: white; border-radius: 8px; border: 1px solid #dee2e6;">
                   <thead style="background-color: #f8f9fa;">
                     <tr>
-                      <th style="color: #000 !important; font-weight: 600;">Artist Level</th>
-                      <th style="color: #000 !important; font-weight: 600;">Submitted</th>
-                      <th style="color: #000 !important; font-weight: 600;">Status</th>
-                      <th style="color: #000 !important; font-weight: 600;">Comments</th>
+                      <th style="color: #fff !important; font-weight: 600;">Artist Level</th>
+                      <th style="color: #fff !important; font-weight: 600;">Submitted</th>
+                      <th style="color: #fff !important; font-weight: 600;">Status</th>
+                      <th style="color: #fff !important; font-weight: 600;">Comments</th>
                     </tr>
                   </thead>
                   <tbody>
                     <% applications.forEach(application => { %>
                       <tr>
-                        <td style="color: #000 !important; font-weight: 500;"><%= application.artistLevel %></td>
-                        <td style="color: #000 !important; font-weight: 500;"><%= new Date(application.createdAt).toLocaleString() %></td>
-                        <td style="color: #000 !important; font-weight: 500;">
+                        <td style="color: #fff !important; font-weight: 500;"><%= application.artistLevel %></td>
+                        <td style="color: #fff !important; font-weight: 500;"><%= new Date(application.createdAt).toLocaleString() %></td>
+                        <td style="color: #fff !important; font-weight: 500;">
                           <% if (application.status === 'pending') { %>
                             <span class="badge" style="background-color: #fd7e14; color: white !important;">Pending</span>
                           <% } else if (application.status === 'approved') { %>
@@ -45,11 +45,11 @@
                             <span class="badge bg-danger">Rejected</span>
                           <% } %>
                         </td>
-                        <td style="color: #000 !important; font-weight: 500;">
+                        <td style="color: #fff !important; font-weight: 500;">
                           <% if (application.adminComments) { %>
-                            <span style="color: #000 !important; font-weight: 500;"><%= application.adminComments %></span>
+                            <span style="color: #fff !important; font-weight: 500;"><%= application.adminComments %></span>
                           <% } else { %>
-                            <span style="color: #000 !important; font-weight: 500;">No comments</span>
+                            <span style="color: #fff !important; font-weight: 500;">No comments</span>
                           <% } %>
                         </td>
                       </tr>

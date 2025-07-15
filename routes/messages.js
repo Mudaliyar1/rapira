@@ -30,7 +30,16 @@ const canMessageRole = async (req, res, next) => {
     const recipientRoles = await UserRole.find({ user: recipient._id })
       .populate('role');
 
-    const roleNames = recipientRoles.map(ur => ur.role.name);
+    // Check for orphaned UserRole records and log them
+    const orphanedRoles = recipientRoles.filter(ur => !ur.role || !ur.role.name);
+    if (orphanedRoles.length > 0) {
+      console.warn(`Found ${orphanedRoles.length} orphaned UserRole records for user ${recipient._id}:`,
+        orphanedRoles.map(ur => ur._id));
+    }
+
+    const roleNames = recipientRoles
+      .filter(ur => ur.role && ur.role.name) // Filter out null roles
+      .map(ur => ur.role.name);
 
     // Check if the current user can message this role
     let canMessage = false;
@@ -68,7 +77,9 @@ const canMessageRole = async (req, res, next) => {
       // Check if the current user has any roles
       const currentUserRoles = await UserRole.find({ user: req.session.user.id }).populate('role');
       const hasRoles = currentUserRoles.length > 0;
-      const currentUserRoleNames = currentUserRoles.map(ur => ur.role.name);
+      const currentUserRoleNames = currentUserRoles
+        .filter(ur => ur.role && ur.role.name) // Filter out null roles
+        .map(ur => ur.role.name);
 
       console.log('Current user has roles:', hasRoles ? 'Yes' : 'No');
       if (hasRoles) console.log('Current user roles:', currentUserRoleNames);
@@ -172,6 +183,9 @@ router.get('/', isLoggedIn, async (req, res) => {
     // Create a map of user roles for easier access
     const userRoleMap = {};
     userRoles.forEach(ur => {
+      // Skip if role is null
+      if (!ur.role) return;
+
       if (!userRoleMap[ur.user.toString()]) {
         userRoleMap[ur.user.toString()] = [];
       }
