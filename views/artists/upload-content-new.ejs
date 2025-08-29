@@ -12,11 +12,11 @@
           </div>
 
           <div class="mb-3">
-            <label for="type" class="form-label" style="color: white !important;">Content Type</label>
-            <select class="form-select" id="type" name="type" required style="color: #000; background-color: #fff;">
-              <option value="" selected disabled style="color: #000; background-color: #fff;">Select content type</option>
-              <option value="song" style="color: #000; background-color: #fff;">Song (YouTube)</option>
-              <option value="video" style="color: #000; background-color: #fff;">Video (YouTube)</option>
+            <label for="type" class="form-label" style="color: #ffffff !important;">Content Type</label>
+            <select class="form-select" id="type" name="type" required style="color: #ffffff !important; background-color: #000000 !important; border: 1px solid #dee2e6 !important;">
+              <option value="" selected disabled style="color: #ffffff !important; background-color: #000000 !important;">Select content type</option>
+              <option value="song" style="color: #ffffff !important; background-color: #000000 !important;">Song (YouTube)</option>
+              <option value="video" style="color: #ffffff !important; background-color: #000000 !important;">Video (YouTube)</option>
             </select>
           </div>
 
@@ -42,12 +42,12 @@
           </div>
 
           <div class="mb-3 alert" style="background-color: #d1ecf1;">
-            <h6 style="color: #000 !important;"><i class="bi bi-info-circle-fill me-2"></i>YouTube Embedding Tips</h6>
-            <ul class="mb-0" style="color: #000 !important;">
-              <li>Make sure your YouTube video is set to "Public" or "Unlisted"</li>
-              <li>Videos set to "Private" cannot be embedded</li>
-              <li>For best quality, upload videos in HD (1080p) resolution</li>
-              <li>YouTube automatically generates thumbnails, but you can also upload a custom one below</li>
+            <h6 style="color: #000000 !important;"><i class="bi bi-info-circle-fill me-2"></i>YouTube Embedding Tips</h6>
+            <ul class="mb-0">
+              <li style="color: #000000 !important;">Make sure your YouTube video is set to "Public" or "Unlisted"</li>
+              <li style="color: #000000 !important;">Videos set to "Private" cannot be embedded</li>
+              <li style="color: #000000 !important;">For best quality, upload videos in HD (1080p) resolution</li>
+              <li style="color: #000000 !important;">YouTube automatically generates thumbnails, but you can also upload a custom one below</li>
             </ul>
           </div>
 
@@ -60,12 +60,12 @@
           <div class="mb-3">
             <div class="card bg-light">
               <div class="card-body">
-                <h6 class="card-title" style="color: #000 !important;">Content Guidelines</h6>
-                <ul class="mb-0 small" style="color: #000 !important;">
-                  <li>Ensure you have the rights to all content you upload</li>
-                  <li>Explicit content must be appropriately labeled</li>
-                  <li>Content that violates our terms of service will be removed</li>
-                  <li>Large files may take longer to upload</li>
+                <h6 class="card-title" style="color: #000000 !important;">Content Guidelines</h6>
+                <ul class="mb-0 small">
+                  <li style="color: #000000 !important;">Ensure you have the rights to all content you upload</li>
+                  <li style="color: #000000 !important;">Explicit content must be appropriately labeled</li>
+                  <li style="color: #000000 !important;">Content that violates our terms of service will be removed</li>
+                  <li style="color: #000000 !important;">Large files may take longer to upload</li>
                 </ul>
               </div>
             </div>
@@ -100,77 +100,6 @@
         </div>
       </div>
     </form>
-  </div>
-</div>
-
-<!-- Your Content -->
-<div class="card">
-  <div class="card-header bg-white py-3">
-    <h5 class="card-title fw-bold mb-0">Your Content</h5>
-  </div>
-  <div class="card-body">
-    <div class="row g-4">
-      <% if (artist.content && artist.content.length > 0) { %>
-        <% artist.content.forEach(item => { %>
-          <div class="col-md-4 col-lg-3">
-            <div class="card content-card h-100">
-              <div class="position-relative">
-                <img src="<%= item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
-                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
-                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
-                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
-                </span>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><%= item.title %></h5>
-                <% if (item.description) { %>
-                  <p class="card-text"><%= item.description.length > 50 ? item.description.substring(0, 50) + '...' : item.description %></p>
-                <% } %>
-                <p class="card-text">
-                  <small class="text-muted">
-                    <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
-                  </small>
-                </p>
-              </div>
-              <div class="card-footer bg-white border-top-0 d-flex">
-                <a href="/content/<%= item._id %>" class="btn btn-outline-primary flex-grow-1 me-2">
-                  <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
-                </a>
-                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= item._id %>">
-                  <i class="bi bi-trash"></i>
-                </button>
-
-                <!-- Delete Modal -->
-                <div class="modal fade" id="deleteModal<%= item._id %>" tabindex="-1" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        <p>Are you sure you want to delete "<%= item.title %>"?</p>
-                        <p class="text-danger mb-0">This action cannot be undone.</p>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form action="/artists/content/<%= item._id %>/delete" method="POST">
-                          <button type="submit" class="btn btn-danger">Delete</button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-4">
-          <p class="mb-0">You haven't uploaded any content yet.</p>
-        </div>
-      <% } %>
-    </div>
   </div>
 </div>
 

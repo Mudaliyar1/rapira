@@ -188,6 +188,7 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
 
     // Get artist's concerts
     const concerts = await Concert.find({ artist: artist._id })
+      .populate('venue')
       .sort({ date: -1 });
 
     // Get artist's content
@@ -667,6 +668,7 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
 
     // Get artist's concerts with filters
     const concerts = await Concert.find(filter)
+      .populate('venue')
       .sort(sortOptions);
 
     // Get stats for the artist's concerts
@@ -679,7 +681,7 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
     const freeConcerts = await Concert.countDocuments({ artist: artist._id, isPaid: false });
 
     // Get unique cities for filter dropdown
-    const allConcerts = await Concert.find({ artist: artist._id });
+    const allConcerts = await Concert.find({ artist: artist._id }).populate('venue');
     const cities = [...new Set(allConcerts.map(c => c.city))].sort();
 
     res.render('artists/manage-concerts', {
@@ -735,7 +737,7 @@ router.get('/manage-tickets', isLoggedIn, isArtist, async (req, res) => {
     const { search, concert, dateRange, sortBy, sortOrder } = req.query;
 
     // Get artist's concerts
-    const concerts = await Concert.find({ artist: artist._id });
+    const concerts = await Concert.find({ artist: artist._id }).populate('venue');
 
     // Build filter object for tickets
     const Ticket = require('../models/Ticket');
@@ -1097,7 +1099,7 @@ router.get('/:id', async (req, res) => {
       artist: artist._id,
       status: 'approved',
       date: { $gte: new Date() }
-    }).sort({ date: 1 });
+    }).populate('venue').sort({ date: 1 });
 
     res.render('artists/profile', {
       artist,

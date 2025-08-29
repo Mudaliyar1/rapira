@@ -1,0 +1,271 @@
+<%- contentFor('body') %>
+
+<!-- Venue Details -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="fw-bold"><%= venue.name %> - Details</h1>
+  <div class="d-flex gap-2">
+    <a href="/admin/venues/<%= venue._id %>/edit" class="btn btn-primary">
+      <i class="bi bi-pencil me-1"></i> Edit Venue
+    </a>
+    <a href="/admin/venues" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Venues
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Venue Information -->
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Venue Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Basic Details</h6>
+            <table class="table table-borderless table-sm">
+              <tr>
+                <td><strong>Name:</strong></td>
+                <td><%= venue.name %></td>
+              </tr>
+              <tr>
+                <td><strong>Type:</strong></td>
+                <td><span class="badge bg-secondary"><%= venue.venueType %></span></td>
+              </tr>
+              <tr>
+                <td><strong>Capacity:</strong></td>
+                <td><%= venue.capacity ? venue.capacity + ' people' : 'Not specified' %></td>
+              </tr>
+              <tr>
+                <td><strong>Price Range:</strong></td>
+                <td><span class="badge bg-info"><%= venue.priceRange %></span></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Location</h6>
+            <table class="table table-borderless table-sm">
+              <tr>
+                <td><strong>Address:</strong></td>
+                <td><%= venue.address %></td>
+              </tr>
+              <tr>
+                <td><strong>City:</strong></td>
+                <td><%= venue.city %></td>
+              </tr>
+              <tr>
+                <td><strong>State:</strong></td>
+                <td><%= venue.state %></td>
+              </tr>
+              <tr>
+                <td><strong>Pincode:</strong></td>
+                <td><%= venue.pincode %></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        
+        <% if (venue.description) { %>
+          <div class="mt-3">
+            <h6 class="text-muted mb-2">Description</h6>
+            <p><%= venue.description %></p>
+          </div>
+        <% } %>
+        
+        <% if (venue.facilities && venue.facilities.length > 0) { %>
+          <div class="mt-3">
+            <h6 class="text-muted mb-2">Facilities</h6>
+            <div class="d-flex flex-wrap gap-1">
+              <% venue.facilities.forEach(facility => { %>
+                <span class="badge bg-light text-dark"><%= facility %></span>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+        
+        <% if (venue.googleMapsLink || venue.website) { %>
+          <div class="mt-3">
+            <h6 class="text-muted mb-2">Links</h6>
+            <% if (venue.googleMapsLink) { %>
+              <a href="<%= venue.googleMapsLink %>" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                <i class="bi bi-geo-alt me-1"></i> View on Maps
+              </a>
+            <% } %>
+            <% if (venue.website) { %>
+              <a href="<%= venue.website %>" target="_blank" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-globe me-1"></i> Visit Website
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Contact Information -->
+    <% if (venue.contactPerson && (venue.contactPerson.name || venue.contactPerson.phone || venue.contactPerson.email)) { %>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Contact Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <% if (venue.contactPerson.name) { %>
+              <div class="col-md-4">
+                <strong>Contact Person:</strong><br>
+                <%= venue.contactPerson.name %>
+              </div>
+            <% } %>
+            <% if (venue.contactPerson.phone) { %>
+              <div class="col-md-4">
+                <strong>Phone:</strong><br>
+                <a href="tel:<%= venue.contactPerson.phone %>"><%= venue.contactPerson.phone %></a>
+              </div>
+            <% } %>
+            <% if (venue.contactPerson.email) { %>
+              <div class="col-md-4">
+                <strong>Email:</strong><br>
+                <a href="mailto:<%= venue.contactPerson.email %>"><%= venue.contactPerson.email %></a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Venue Images -->
+    <% if (venue.images && venue.images.length > 0) { %>
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Venue Images</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <% venue.images.forEach((image, index) => { %>
+              <div class="col-md-4">
+                <div class="card">
+                  <img src="<%= image %>" class="card-img-top" style="height: 200px; object-fit: cover;" 
+                       alt="Venue Image <%= index + 1 %>" data-bs-toggle="modal" data-bs-target="#imageModal<%= index %>"
+                       style="cursor: pointer;">
+                </div>
+                
+                <!-- Image Modal -->
+                <div class="modal fade" id="imageModal<%= index %>" tabindex="-1">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title"><%= venue.name %> - Image <%= index + 1 %></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body text-center">
+                        <img src="<%= image %>" class="img-fluid" alt="Venue Image <%= index + 1 %>">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Status Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Status</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span>Active Status:</span>
+          <span class="badge <%= venue.isActive ? 'bg-success' : 'bg-danger' %> fs-6">
+            <%= venue.isActive ? 'Active' : 'Inactive' %>
+          </span>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span>Verification:</span>
+          <span class="badge <%= venue.isVerified ? 'bg-primary' : 'bg-warning' %> fs-6">
+            <%= venue.isVerified ? 'Verified' : 'Unverified' %>
+          </span>
+        </div>
+        
+        <div class="d-grid gap-2">
+          <form method="POST" action="/admin/venues/<%= venue._id %>/toggle-active" class="d-inline">
+            <button type="submit" class="btn btn-<%= venue.isActive ? 'danger' : 'success' %> w-100">
+              <i class="bi bi-<%= venue.isActive ? 'x-circle' : 'check-circle' %> me-1"></i>
+              <%= venue.isActive ? 'Deactivate' : 'Activate' %>
+            </button>
+          </form>
+          
+          <form method="POST" action="/admin/venues/<%= venue._id %>/toggle-verified" class="d-inline">
+            <button type="submit" class="btn btn-<%= venue.isVerified ? 'warning' : 'primary' %> w-100">
+              <i class="bi bi-<%= venue.isVerified ? 'patch-exclamation' : 'patch-check' %> me-1"></i>
+              <%= venue.isVerified ? 'Unverify' : 'Verify' %>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Statistics</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span>Concerts Hosted:</span>
+          <span class="badge bg-info fs-6"><%= concertCount %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Management Info -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">Management Info</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <strong>Created By:</strong><br>
+          <%= venue.createdBy ? venue.createdBy.name : 'Unknown' %><br>
+          <small class="text-muted">
+            <%= venue.createdAt.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            }) %>
+          </small>
+        </div>
+        
+        <% if (venue.lastUpdatedBy) { %>
+          <div class="mb-3">
+            <strong>Last Updated By:</strong><br>
+            <%= venue.lastUpdatedBy.name %><br>
+            <small class="text-muted">
+              <%= venue.updatedAt.toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+              }) %>
+            </small>
+          </div>
+        <% } %>
+        
+        <div class="d-grid">
+          <form method="POST" action="/admin/venues/<%= venue._id %>/delete" 
+                onsubmit="return confirm('Are you sure you want to delete this venue? This action cannot be undone.')"
+                class="d-inline">
+            <button type="submit" class="btn btn-outline-danger w-100">
+              <i class="bi bi-trash me-1"></i> Delete Venue
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

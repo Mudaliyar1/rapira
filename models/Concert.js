@@ -23,9 +23,11 @@ const ConcertSchema = new mongoose.Schema({
     required: true
   },
   venue: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Venue',
     required: true
   },
+  // Keep city for backward compatibility and easier filtering
   city: {
     type: String,
     required: true
@@ -47,6 +49,10 @@ const ConcertSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected', 'completed', 'cancelled'],
     default: 'pending'
   },
+  rejectionReason: {
+    type: String,
+    maxlength: 500
+  },
   maxTickets: {
     type: Number,
     default: 0 // 0 means unlimited
@@ -54,6 +60,53 @@ const ConcertSchema = new mongoose.Schema({
   ticketsSold: {
     type: Number,
     default: 0
+  },
+  venueBooking: {
+    bookingHours: {
+      type: Number,
+      min: 1,
+      default: 1
+    },
+    // Keep legacy hourlyRate for backward compatibility
+    hourlyRate: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    totalVenueCost: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    adminCommission: {
+      percentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
+      },
+      advanceAmount: {
+        type: Number,
+        min: 0,
+        default: 0
+      }
+    },
+    isPaid: {
+      type: Boolean,
+      default: false
+    },
+    paymentDate: {
+      type: Date
+    },
+    paymentId: {
+      type: String // Razorpay payment ID
+    },
+    orderId: {
+      type: String // Razorpay order ID
+    },
+    paidAt: {
+      type: Date // Timestamp when payment was completed
+    }
   },
   createdAt: {
     type: Date,

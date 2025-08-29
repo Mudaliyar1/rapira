@@ -1,9 +1,131 @@
 <%- include('../partials/artist-header') %>
 
-<!-- Edit Concert Form -->
-<div class="card">
-  <div class="card-body p-4">
-    <form action="/concerts/<%= concert._id %>/edit" method="POST" enctype="multipart/form-data">
+<!-- Concert Edit Status Check -->
+<% if (concert.status === 'approved') { %>
+  <!-- Edit Request Form for Approved Concerts -->
+  <div class="card border-warning">
+    <div class="card-header bg-warning text-dark">
+      <h5 class="card-title mb-0">
+        <i class="bi bi-lock"></i> Request Concert Edit
+      </h5>
+      <p class="mb-0 small">This concert has been approved. Any changes require admin approval.</p>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <h6><i class="bi bi-info-circle"></i> Current Concert Details:</h6>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Title:</strong> <%= concert.title %></p>
+            <p><strong>Date:</strong> <%= new Date(concert.date).toLocaleDateString() %></p>
+            <p><strong>Time:</strong> <%= concert.time %></p>
+            <p><strong>Venue:</strong> <%= concert.venue ? concert.venue.name : 'N/A' %></p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>City:</strong> <%= concert.city %></p>
+            <p><strong>Price:</strong> ₹<%= concert.price %></p>
+            <p><strong>Max Tickets:</strong> <%= concert.maxTickets || 'Unlimited' %></p>
+            <p><strong>Status:</strong> <span class="badge bg-success">Approved</span></p>
+          </div>
+        </div>
+      </div>
+
+      <form action="/concerts/<%= concert._id %>/request-edit" method="POST" enctype="multipart/form-data">
+        <h6 class="text-primary">Requested Changes:</h6>
+        
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="title" class="form-label">Concert Title</label>
+              <input type="text" class="form-control" id="title" name="title" value="<%= concert.title %>">
+              <div class="form-text">Leave unchanged if you don't want to modify</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3"><%= concert.description %></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="date" class="form-label">Date</label>
+                  <input type="date" class="form-control" id="date" name="date" value="<%= concert.date.toISOString().split('T')[0] %>">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="time" class="form-label">Time</label>
+                  <input type="time" class="form-control" id="time" name="time" value="<%= concert.time %>">
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="venue" class="form-label">Venue</label>
+              <select class="form-control" id="venue" name="venue">
+                <option value="">Keep current venue</option>
+                <% if (venues && venues.length > 0) { %>
+                  <% venues.forEach(venue => { %>
+                    <option value="<%= venue._id %>" 
+                            data-capacity="<%= venue.capacity || 0 %>"
+                            data-city="<%= venue.city %>"
+                            <%= concert.venue && concert.venue._id && concert.venue._id.toString() === venue._id.toString() ? 'selected' : '' %>>
+                      <%= venue.name %> - <%= venue.city %> (Capacity: <%= venue.capacity || 'Unlimited' %>)
+                    </option>
+                  <% }); %>
+                <% } %>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="posterImage" class="form-label">New Poster Image</label>
+              <input type="file" class="form-control" id="posterImage" name="posterImage">
+              <div class="form-text">Upload only if you want to change the poster</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="price" class="form-label">Ticket Price (₹)</label>
+              <input type="number" class="form-control" id="price" name="price" min="1" value="<%= concert.price %>">
+            </div>
+
+            <div class="mb-3">
+              <label for="maxTickets" class="form-label">Max Tickets</label>
+              <input type="number" class="form-control" id="maxTickets" name="maxTickets" min="0" value="<%= concert.maxTickets %>">
+              <div class="form-text" id="capacityInfo">
+                Current venue capacity: <%= concert.venue && concert.venue.capacity ? concert.venue.capacity : 'Unlimited' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="city" class="form-label">City</label>
+              <input type="text" class="form-control" id="city" name="city" value="<%= concert.city %>" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="reason" class="form-label">Reason for Edit Request <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="reason" name="reason" rows="3" required placeholder="Please explain why you need to make these changes..."></textarea>
+          <div class="form-text">This will help admin understand your request better</div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-send"></i> Request Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<% } else { %>
+  <!-- Normal Edit Form for Non-Approved Concerts -->
+  <div class="card">
+    <div class="card-body p-4">
+      <form action="/concerts/<%= concert._id %>/edit" method="POST" enctype="multipart/form-data">
       <div class="row g-4">
         <div class="col-md-6">
           <div class="mb-3">
@@ -33,12 +155,126 @@
 
           <div class="mb-3">
             <label for="venue" class="form-label">Venue <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="venue" name="venue" value="<%= concert.venue %>" required>
+            <select class="form-control" id="venue" name="venue" required>
+              <option value="">Select a venue</option>
+              <% if (venues && venues.length > 0) { %>
+                <% venues.forEach(venue => { %>
+                  <option value="<%= venue._id %>" 
+                          data-city="<%= venue.city %>"
+                          data-hourly-rates='<%- JSON.stringify(venue.pricing && venue.pricing.hourlyRates ? venue.pricing.hourlyRates : []) %>'
+                          data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
+                          data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
+                          data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
+                          data-commission-percentage="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : 0 %>"
+                          data-advance-amount="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : 0 %>"
+                          data-venue-name="<%= venue.name %>"
+                          data-venue-type="<%= venue.venueType || 'Not specified' %>"
+                          data-capacity="<%= venue.capacity || 'Not specified' %>"
+                          data-facilities='<%- JSON.stringify(venue.facilities || []) %>'
+                          data-address="<%= venue.address %>"
+                          data-description="<%= venue.description || '' %>"
+                          <%= concert.venue && concert.venue._id && concert.venue._id.toString() === venue._id.toString() ? 'selected' : '' %>>
+                    <%= venue.name %> - <%= venue.city %> (<%= venue.venueType || 'Venue' %>)
+                  </option>
+                <% }); %>
+              <% } else { %>
+                <option disabled>No venues available</option>
+              <% } %>
+            </select>
+            <div class="form-text">Select from admin-approved venues only</div>
+          </div>
+
+          <!-- Venue Pricing Information -->
+          <div id="venuePricing" class="mb-3 d-none">
+            <div class="card border-info">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Venue Pricing</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Available Rate:</strong> <span style="color: #ffffff !important;">₹</span><span id="displayHourlyRate">0</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Duration:</strong> <span id="displayMinHours">1</span> <span style="color: #ffffff !important;">hour(s)</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Total Cost:</strong> <span style="color: #ffffff !important;">₹</span><span id="displayBaseCost">0</span>
+                  </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-md-6">
+                    <label for="bookingHours" class="form-label">Booking Duration (Hours) <span class="text-danger">*</span></label>
+                    <select class="form-control" id="bookingHours" name="bookingHours">
+                      <option value="">Select hours</option>
+                    </select>
+                    <div class="form-text">
+                      <i class="bi bi-info-circle"></i> Only hours with defined rates are available
+                      <br><small class="text-muted">Contact admin to request additional booking durations</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Total Venue Cost</label>
+                    <div class="form-control-plaintext bg-light p-2 rounded border">
+                      <strong style="color: #000000 !important;">₹<span id="totalVenueCost" style="color: #000000 !important;">0</span></strong>
+                      <br><small style="color: #000000 !important;">For reference only</small>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Pricing Explanation -->
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <div class="alert alert-info py-2" style="color: #000000 !important;">
+                      <small style="color: #000000 !important;">
+                        <i class="bi bi-lightbulb" style="color: #000000 !important;"></i> 
+                        <strong style="color: #000000 !important;">Pricing Note:</strong> The venue rates shown are configured by the admin. 
+                        Changes to venue pricing require admin approval.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Venue Details Section -->
+          <div id="venueDetailsSection" style="display: none;" class="mb-4">
+            <div class="card border-info">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-building"></i> Venue Details</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6 id="selectedVenueName" class="text-primary"></h6>
+                    <p class="mb-2"><strong>Type:</strong> <span id="selectedVenueType"></span></p>
+                    <p class="mb-2"><strong>Capacity:</strong> <span id="selectedVenueCapacity"></span></p>
+                    <p class="mb-2"><strong>Address:</strong> <span id="selectedVenueAddress"></span></p>
+                    <p class="mb-0"><strong>Description:</strong> <span id="selectedVenueDescription"></span></p>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="text-success">Available Facilities</h6>
+                    <div id="selectedVenueFacilities" class="d-flex flex-wrap gap-1">
+                      <!-- Facilities will be populated here -->
+                    </div>
+                    
+                    <div class="mt-3">
+                      <h6 class="text-warning">Commission Details</h6>
+                      <p class="mb-1"><strong>Admin Commission:</strong> <span id="adminCommissionPercentage">0</span>%</p>
+                      <p class="mb-1"><strong>Advance Amount:</strong> ₹<span id="adminAdvanceAmount">0</span></p>
+                      <p class="mb-0"><strong>Commission on Total:</strong> ₹<span id="calculatedCommission">0</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mb-3">
             <label for="city" class="form-label">City <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="city" name="city" value="<%= concert.city %>" required>
+            <input type="text" class="form-control" id="city" name="city" value="<%= concert.city %>" readonly required>
+            <div class="form-text">City is automatically set based on selected venue</div>
           </div>
         </div>
 
@@ -56,37 +292,39 @@
             <% } %>
           </div>
 
-          <div class="mb-3">
-            <div class="highlighted-toggle-section">
-              <div class="form-check form-switch">
-                <input class="form-check-input enhanced-toggle" type="checkbox" id="isPaid" name="isPaid" <%= concert.isPaid ? 'checked' : '' %>>
-                <label class="form-check-label highlighted-label" for="isPaid">This is a paid concert</label>
-              </div>
-            </div>
-          </div>
-
-          <div id="paidOptions" class="mb-3 <%= concert.isPaid ? '' : 'd-none' %>">
+          <!-- Ticket Pricing (Always Required - No Free Concert Option) -->
+          <div id="paidOptions" class="mb-3">
             <div class="row">
               <div class="col-md-6">
                 <label for="price" class="form-label">Ticket Price (₹) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="price" name="price" min="1" step="1" value="<%= concert.price %>" <%= concert.isPaid ? 'required' : '' %>>
+                <input type="number" class="form-control" id="price" name="price" min="1" step="1" value="<%= concert.price %>" required>
+                <div class="form-text">
+                  Minimum: ₹<span id="minTicketPrice">0</span> | 
+                  Suggested: ₹<span id="suggestedTicketPrice">100</span>
+                </div>
               </div>
               <div class="col-md-6">
                 <label for="maxTickets" class="form-label">Max Tickets</label>
                 <input type="number" class="form-control" id="maxTickets" name="maxTickets" min="0" value="<%= concert.maxTickets %>">
                 <div class="form-text">Leave at 0 for unlimited tickets</div>
+                <div class="form-text text-info" id="venueCapacityInfo" style="display: none;">
+                  <i class="bi bi-info-circle"></i> Venue capacity: <span id="venueCapacityValue">0</span>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Hidden field to always mark as paid -->
+          <input type="hidden" id="isPaid" name="isPaid" value="on">
+
           <div class="mb-3 mt-4">
-            <div class="card bg-light">
+            <div class="card" style="background-color: #000000 !important; border: 1px solid #dee2e6 !important;">
               <div class="card-body">
-                <h6 class="card-title">Status: <span class="badge bg-<%= concert.status === 'pending' ? 'warning' : concert.status === 'rejected' ? 'danger' : 'success' %>"><%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %></span></h6>
+                <h6 class="card-title" style="color: #ffffff !important;">Status: <span class="badge bg-<%= concert.status === 'pending' ? 'warning' : concert.status === 'rejected' ? 'danger' : 'success' %>"><%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %></span></h6>
                 <% if (concert.status === 'rejected' && concert.rejectionReason) { %>
-                  <p class="mb-2 small">Rejection reason: <%= concert.rejectionReason %></p>
+                  <p class="mb-2 small" style="color: #ffffff !important;">Rejection reason: <%= concert.rejectionReason %></p>
                 <% } %>
-                <p class="mb-0 small">Your changes will be reviewed again before the concert is published.</p>
+                <p class="mb-0 small" style="color: #ffffff !important;">Your changes will be reviewed again before the concert is published.</p>
               </div>
             </div>
           </div>
@@ -105,121 +343,411 @@
     </form>
   </div>
 </div>
+<% } %>
 
 <script>
-  // Set minimum date to today and initialize paid options
+  // Set minimum date to today and initialize
   document.addEventListener('DOMContentLoaded', function() {
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('date').min = today;
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+      dateInput.min = today;
+    }
 
-    // Toggle paid options
-    const isPaidCheckbox = document.getElementById('isPaid');
-    const paidOptions = document.getElementById('paidOptions');
+    // Check if this is an approved concert (edit request form)
+    const isApprovedConcert = document.querySelector('.card-header.bg-warning') !== null;
+    
+    if (isApprovedConcert) {
+      // Handle edit request form for approved concerts
+      handleApprovedConcertForm();
+    } else {
+      // Handle normal edit form for non-approved concerts
+      handleNormalEditForm();
+    }
+  });
 
-    // Function to toggle paid options visibility
-    function togglePaidOptions() {
-      if (isPaidCheckbox.checked) {
-        paidOptions.classList.remove('d-none');
-        document.getElementById('price').setAttribute('required', '');
+  function handleApprovedConcertForm() {
+    const venueSelect = document.getElementById('venue');
+    const cityInput = document.getElementById('city');
+    const maxTicketsInput = document.getElementById('maxTickets');
+    const capacityInfo = document.getElementById('capacityInfo');
+
+    if (venueSelect) {
+      venueSelect.addEventListener('change', function() {
+        const selectedOption = venueSelect.options[venueSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          const city = selectedOption.dataset.city;
+          const capacity = parseInt(selectedOption.dataset.capacity) || 0;
+          
+          if (cityInput) {
+            cityInput.value = city || '';
+          }
+          
+          if (capacityInfo && maxTicketsInput) {
+            if (capacity > 0) {
+              capacityInfo.innerHTML = `Venue capacity: ${capacity} (cannot exceed this limit)`;
+              capacityInfo.className = 'form-text text-warning';
+              maxTicketsInput.max = capacity;
+              
+              // Validate current value
+              if (parseInt(maxTicketsInput.value) > capacity) {
+                maxTicketsInput.value = capacity;
+              }
+            } else {
+              capacityInfo.innerHTML = 'Venue capacity: Unlimited';
+              capacityInfo.className = 'form-text text-info';
+              maxTicketsInput.removeAttribute('max');
+            }
+          }
+        }
+      });
+
+      // Validate max tickets on input
+      if (maxTicketsInput) {
+        maxTicketsInput.addEventListener('input', function() {
+          const selectedOption = venueSelect.options[venueSelect.selectedIndex];
+          if (selectedOption && selectedOption.value) {
+            const capacity = parseInt(selectedOption.dataset.capacity) || 0;
+            if (capacity > 0 && parseInt(this.value) > capacity) {
+              this.setCustomValidity(`Cannot exceed venue capacity of ${capacity}`);
+            } else {
+              this.setCustomValidity('');
+            }
+          }
+        });
+      }
+    }
+  }
+
+  function handleNormalEditForm() {
+    // Elements for normal edit form
+    const venueSelect = document.getElementById('venue');
+    const cityInput = document.getElementById('city');
+    const bookingHours = document.getElementById('bookingHours');
+    const ticketPriceInput = document.getElementById('price');
+    const maxTicketsInput = document.getElementById('maxTickets');
+    const minPriceSpan = document.getElementById('minTicketPrice');
+    const suggestedPriceSpan = document.getElementById('suggestedTicketPrice');
+    const venuePricing = document.getElementById('venuePricing');
+    const displayHourlyRate = document.getElementById('displayHourlyRate');
+    const displayMinHours = document.getElementById('displayMinHours');
+    const displayBaseCost = document.getElementById('displayBaseCost');
+    const totalVenueCost = document.getElementById('totalVenueCost');
+    const venueCapacityInfo = document.getElementById('venueCapacityInfo');
+    const venueCapacityValue = document.getElementById('venueCapacityValue');
+    
+    let hourlyRates = [];
+    let currentVenueMinTicketPrice = 0;
+    let currentCommissionPercentage = 0;
+    let currentAdvanceAmount = 0;
+    let currentVenue = null;
+    let currentVenueCapacity = 0;
+
+    function updateVenuePricing() {
+      const selectedOption = venueSelect.options[venueSelect.selectedIndex];
+      
+      if (selectedOption && selectedOption.value) {
+        const city = selectedOption.dataset.city || '';
+        const venueName = selectedOption.dataset.venueName || '';
+        const venueType = selectedOption.dataset.venueType || '';
+        const capacity = parseInt(selectedOption.dataset.capacity) || 0;
+        const address = selectedOption.dataset.address || '';
+        const description = selectedOption.dataset.description || '';
+        const rates = selectedOption.dataset.hourlyRates;
+        const minimumHours = parseInt(selectedOption.dataset.minimumHours) || 1;
+        const minTicketPrice = parseFloat(selectedOption.dataset.minTicketPrice) || 0;
+        const suggestedTicketPrice = parseFloat(selectedOption.dataset.suggestedTicketPrice) || 100;
+        const commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
+        const advanceAmount = parseFloat(selectedOption.dataset.advanceAmount) || 0;
+        const facilities = selectedOption.dataset.facilities;
+        
+        // Store current venue data
+        currentVenue = {
+          id: selectedOption.value,
+          name: venueName,
+          capacity: capacity,
+          pricing: {
+            hourlyRates: []
+          }
+        };
+        
+        currentVenueCapacity = capacity;
+        
+        // Update venue capacity info and max tickets validation
+        if (venueCapacityInfo && venueCapacityValue && maxTicketsInput) {
+          if (capacity > 0) {
+            venueCapacityValue.textContent = capacity;
+            venueCapacityInfo.style.display = 'block';
+            maxTicketsInput.max = capacity;
+            
+            // Validate current max tickets value
+            if (parseInt(maxTicketsInput.value) > capacity) {
+              maxTicketsInput.value = capacity;
+            }
+          } else {
+            venueCapacityInfo.style.display = 'none';
+            maxTicketsInput.removeAttribute('max');
+          }
+        }
+        
+        // Parse hourly rates
+        try {
+          const rawRates = rates ? JSON.parse(rates) : [];
+          hourlyRates = [];
+          
+          // Handle new structure: array of objects with hours and rate
+          if (rawRates.length > 0 && rawRates[0].hasOwnProperty('hours') && rawRates[0].hasOwnProperty('rate')) {
+            currentVenue.pricing.hourlyRates = rawRates;
+            
+            // Create legacy array for backward compatibility
+            rawRates.forEach(rateObj => {
+              if (rateObj.hours && rateObj.rate) {
+                hourlyRates[rateObj.hours - 1] = rateObj.rate;
+              }
+            });
+          } else if (rawRates.length > 0) {
+            // Legacy structure: simple array of rates
+            hourlyRates = rawRates;
+            
+            // Convert to new structure
+            rawRates.forEach((rate, index) => {
+              if (rate && parseFloat(rate) > 0) {
+                const hoursCount = index + 1;
+                currentVenue.pricing.hourlyRates.push({
+                  hours: hoursCount,
+                  rate: parseFloat(rate)
+                });
+              }
+            });
+          }
+          
+        } catch (e) {
+          console.error('Error parsing hourly rates:', e);
+          hourlyRates = [];
+          currentVenue.pricing.hourlyRates = [];
+        }
+        
+        // Parse facilities
+        let parsedFacilities = [];
+        try {
+          parsedFacilities = facilities ? JSON.parse(facilities) : [];
+        } catch (e) {
+          parsedFacilities = [];
+        }
+        
+        // Set city
+        if (cityInput) {
+          cityInput.value = city;
+        }
+        
+        // Update venue details section if elements exist
+        const selectedVenueName = document.getElementById('selectedVenueName');
+        const selectedVenueType = document.getElementById('selectedVenueType');
+        const selectedVenueCapacity = document.getElementById('selectedVenueCapacity');
+        const selectedVenueAddress = document.getElementById('selectedVenueAddress');
+        const selectedVenueDescription = document.getElementById('selectedVenueDescription');
+        
+        if (selectedVenueName) selectedVenueName.textContent = venueName;
+        if (selectedVenueType) selectedVenueType.textContent = venueType;
+        if (selectedVenueCapacity) selectedVenueCapacity.textContent = capacity || 'Not specified';
+        if (selectedVenueAddress) selectedVenueAddress.textContent = address;
+        if (selectedVenueDescription) selectedVenueDescription.textContent = description || 'No description available';
+        
+        // Update facilities
+        const facilitiesContainer = document.getElementById('selectedVenueFacilities');
+        if (facilitiesContainer) {
+          facilitiesContainer.innerHTML = '';
+          if (parsedFacilities.length > 0) {
+            parsedFacilities.forEach(facility => {
+              const badge = document.createElement('span');
+              badge.className = 'badge bg-success';
+              badge.textContent = facility;
+              facilitiesContainer.appendChild(badge);
+            });
+          } else {
+            facilitiesContainer.innerHTML = '<span class="text-muted">No facilities listed</span>';
+          }
+        }
+        
+        // Update commission details
+        const adminCommissionPercentage = document.getElementById('adminCommissionPercentage');
+        const adminAdvanceAmount = document.getElementById('adminAdvanceAmount');
+        const calculatedCommission = document.getElementById('calculatedCommission');
+        
+        if (adminCommissionPercentage) adminCommissionPercentage.textContent = commissionPercentage;
+        if (adminAdvanceAmount) adminAdvanceAmount.textContent = advanceAmount.toLocaleString('en-IN');
+        if (calculatedCommission) calculatedCommission.textContent = '0';
+        
+        // Store commission data
+        currentCommissionPercentage = commissionPercentage;
+        currentAdvanceAmount = advanceAmount;
+        
+        // Update ticket pricing information
+        currentVenueMinTicketPrice = minTicketPrice;
+        if (minPriceSpan) minPriceSpan.textContent = minTicketPrice;
+        if (suggestedPriceSpan) suggestedPriceSpan.textContent = suggestedTicketPrice;
+        
+        // Set minimum ticket price validation
+        if (ticketPriceInput) {
+          ticketPriceInput.min = minTicketPrice;
+          if (parseFloat(ticketPriceInput.value || 0) < minTicketPrice) {
+            ticketPriceInput.value = minTicketPrice;
+          }
+        }
+        
+        // Populate booking hours dropdown
+        if (bookingHours) {
+          populateBookingHoursDropdown();
+        }
+        
+        // Show venue pricing if rates available
+        if (venuePricing && currentVenue.pricing.hourlyRates.length > 0) {
+          const firstRateObj = currentVenue.pricing.hourlyRates[0];
+          const firstHourRate = firstRateObj ? parseFloat(firstRateObj.rate) || 0 : 0;
+          if (displayHourlyRate) displayHourlyRate.textContent = firstHourRate.toLocaleString('en-IN');
+          if (displayMinHours) displayMinHours.textContent = minimumHours;
+          
+          venuePricing.classList.remove('d-none');
+          calculateTotalCost();
+        } else if (venuePricing) {
+          venuePricing.classList.add('d-none');
+        }
+        
+        // Show venue details
+        const venueDetailsSection = document.getElementById('venueDetailsSection');
+        if (venueDetailsSection) {
+          venueDetailsSection.style.display = 'block';
+        }
       } else {
-        paidOptions.classList.add('d-none');
-        document.getElementById('price').removeAttribute('required');
+        if (cityInput) cityInput.value = '';
+        hourlyRates = [];
+        currentVenueMinTicketPrice = 0;
+        currentCommissionPercentage = 0;
+        currentAdvanceAmount = 0;
+        currentVenueCapacity = 0;
+        if (minPriceSpan) minPriceSpan.textContent = '0';
+        if (suggestedPriceSpan) suggestedPriceSpan.textContent = '100';
+        if (venuePricing) venuePricing.classList.add('d-none');
+        const venueDetailsSection = document.getElementById('venueDetailsSection');
+        if (venueDetailsSection) venueDetailsSection.style.display = 'none';
+        if (venueCapacityInfo) venueCapacityInfo.style.display = 'none';
+        if (maxTicketsInput) maxTicketsInput.removeAttribute('max');
+        
+        // Clear booking hours dropdown
+        if (bookingHours) {
+          bookingHours.innerHTML = '<option value="">Select hours</option>';
+        }
       }
     }
 
-    // Add event listener for checkbox changes
-    isPaidCheckbox.addEventListener('change', togglePaidOptions);
+    function populateBookingHoursDropdown() {
+      // Clear existing options
+      if (bookingHours) {
+        bookingHours.innerHTML = '<option value="">Select hours</option>';
+        
+        if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates && currentVenue.pricing.hourlyRates.length > 0) {
+          // Sort rates by hour count
+          const sortedRates = [...currentVenue.pricing.hourlyRates].sort((a, b) => a.hours - b.hours);
+          
+          let validOptionsCount = 0;
+          
+          // Add options for each available hour rate
+          sortedRates.forEach(rateObj => {
+            if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0) {
+              const option = document.createElement('option');
+              option.value = rateObj.hours;
+              option.textContent = `${rateObj.hours} Hour${rateObj.hours > 1 ? 's' : ''} - ₹${parseFloat(rateObj.rate).toLocaleString('en-IN')}`;
+              bookingHours.appendChild(option);
+              validOptionsCount++;
+            }
+          });
+          
+          // Auto-select first available option
+          if (sortedRates.length > 0 && validOptionsCount > 0) {
+            bookingHours.value = sortedRates[0].hours;
+            calculateTotalCost();
+          }
+        } else {
+          // Add informational option for no rates
+          const noRatesOption = document.createElement('option');
+          noRatesOption.disabled = true;
+          noRatesOption.textContent = 'No booking rates configured - Contact admin';
+          noRatesOption.style.fontStyle = 'italic';
+          noRatesOption.style.color = '#dc3545';
+          bookingHours.appendChild(noRatesOption);
+        }
+      }
+    }
 
-    // Initialize state on page load
-    togglePaidOptions();
+    function calculateTotalCost() {
+      const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      let totalCost = 0;
+      
+      // Calculate cost based on the selected hour from dropdown
+      if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates) {
+        const hourlyRatesArray = currentVenue.pricing.hourlyRates;
+        
+        // Find the exact rate for selected hours
+        const rateEntry = hourlyRatesArray.find(entry => entry.hours === hours);
+        if (rateEntry && rateEntry.rate) {
+          totalCost = parseFloat(rateEntry.rate) || 0;
+        }
+      }
+      
+      // Calculate commission (for admin records only)
+      const commissionAmount = (totalCost * currentCommissionPercentage) / 100;
+      
+      // Update displays
+      if (displayBaseCost) displayBaseCost.textContent = totalCost.toLocaleString('en-IN');
+      if (totalVenueCost) totalVenueCost.textContent = totalCost.toLocaleString('en-IN');
+      if (displayHourlyRate) displayHourlyRate.textContent = totalCost.toLocaleString('en-IN');
+      
+      // Update commission display
+      const calculatedCommission = document.getElementById('calculatedCommission');
+      if (calculatedCommission) calculatedCommission.textContent = commissionAmount.toLocaleString('en-IN');
+    }
 
-    // Debug log
-    console.log('Concert edit form initialized');
-  });
+    // Ticket price validation
+    function validateTicketPrice() {
+      if (!ticketPriceInput) return true;
+      
+      const currentPrice = parseFloat(ticketPriceInput.value || 0);
+      
+      if (currentPrice < currentVenueMinTicketPrice) {
+        ticketPriceInput.setCustomValidity(`Ticket price cannot be less than ₹${currentVenueMinTicketPrice} for this venue`);
+        return false;
+      } else {
+        ticketPriceInput.setCustomValidity('');
+        return true;
+      }
+    }
+
+    // Max tickets validation based on venue capacity
+    function validateMaxTickets() {
+      if (!maxTicketsInput) return true;
+      
+      const maxTickets = parseInt(maxTicketsInput.value);
+      if (currentVenueCapacity > 0 && maxTickets > currentVenueCapacity) {
+        maxTicketsInput.setCustomValidity(`Cannot exceed venue capacity of ${currentVenueCapacity}`);
+        return false;
+      } else {
+        maxTicketsInput.setCustomValidity('');
+        return true;
+      }
+    }
+
+    // Event listeners
+    if (venueSelect) venueSelect.addEventListener('change', updateVenuePricing);
+    if (bookingHours) bookingHours.addEventListener('change', calculateTotalCost);
+    if (ticketPriceInput) ticketPriceInput.addEventListener('input', validateTicketPrice);
+    if (maxTicketsInput) maxTicketsInput.addEventListener('input', validateMaxTickets);
+    
+    // Initialize if venue is pre-selected
+    if (venueSelect && venueSelect.value) {
+      updateVenuePricing();
+    }
+  }
 </script>
-
-<style>
-  /* Highlighted Toggle Section */
-  .highlighted-toggle-section {
-    padding: 15px 20px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05));
-    border: 2px solid rgba(13, 110, 253, 0.3);
-    backdrop-filter: blur(10px);
-    box-shadow:
-      0 4px 15px rgba(13, 110, 253, 0.2),
-      0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .highlighted-toggle-section:hover {
-    border-color: rgba(13, 110, 253, 0.5);
-    box-shadow:
-      0 6px 20px rgba(13, 110, 253, 0.3),
-      0 2px 10px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-  }
-
-  /* Enhanced Toggle Switch */
-  .enhanced-toggle {
-    width: 3rem !important;
-    height: 1.5rem !important;
-    background-color: #6c757d !important;
-    border: 2px solid #495057 !important;
-    border-radius: 1rem !important;
-    transition: all 0.3s ease !important;
-    cursor: pointer;
-  }
-
-  .enhanced-toggle:checked {
-    background-color: #0d6efd !important;
-    border-color: #0d6efd !important;
-    box-shadow: 0 0 15px rgba(13, 110, 253, 0.4) !important;
-  }
-
-  .enhanced-toggle:focus {
-    border-color: #86b7fe !important;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
-  }
-
-  .enhanced-toggle:hover {
-    border-color: #86b7fe !important;
-    transform: scale(1.05);
-  }
-
-  /* Highlighted Label */
-  .highlighted-label {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    font-size: 1.1rem !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    margin-left: 0.75rem !important;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .enhanced-toggle:checked + .highlighted-label {
-    color: #86b7fe !important;
-    text-shadow: 0 0 10px rgba(134, 183, 254, 0.5);
-  }
-
-  .highlighted-toggle-section:hover .highlighted-label {
-    transform: translateX(3px);
-  }
-
-  /* Disabled state */
-  .enhanced-toggle:disabled {
-    background-color: #343a40 !important;
-    border-color: #495057 !important;
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .enhanced-toggle:disabled + .highlighted-label {
-    color: #6c757d !important;
-    text-shadow: none;
-  }
-</style>
 
 <%- include('../partials/artist-footer') %>

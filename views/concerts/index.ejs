@@ -131,7 +131,7 @@
               <div class="card-body">
                 <h5 class="card-title fw-bold text-white" style="color: white !important;"><%= concert.title %></h5>
                 <p class="card-text mb-2">
-                  <i class="bi bi-geo-alt me-2"></i> <%= concert.venue %>, <%= concert.city %>
+                  <i class="bi bi-geo-alt me-2"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
                 </p>
                 <p class="card-text mb-3">
                   <i class="bi bi-calendar3 me-2"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>

@@ -173,7 +173,7 @@
                     <tr>
                       <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
                       <td><%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : 'N/A' %></td>
-                      <td><%= ticket.concert ? ticket.concert.venue : 'N/A' %></td>
+                      <td><%= ticket.concert && ticket.concert.venue ? (ticket.concert.venue.name || ticket.concert.venue) : 'N/A' %></td>
                       <td><%= ticket.quantity %></td>
                       <td>
                         <span class="badge <%= ticket.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
@@ -229,7 +229,7 @@
                       <tr>
                         <td><%= concert.title %></td>
                         <td><%= new Date(concert.date).toLocaleDateString() %></td>
-                        <td><%= concert.venue %></td>
+                        <td><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                         <td>
                           <span class="badge <%= concert.status === 'approved' ? 'bg-success' : 'bg-warning' %>">
                             <%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %>

@@ -641,7 +641,10 @@ router.get('/', isLoggedIn, async (req, res) => {
       paymentStatus: 'completed'
     })
       .sort({ createdAt: -1 })
-      .populate('concert');
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue', select: 'name address city' }
+      });
 
     console.log('Tickets found in database:', tickets.length);
 

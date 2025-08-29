@@ -1,0 +1,343 @@
+<%- contentFor('body') %>
+
+<!-- Edit Venue Form -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="fw-bold">Edit <%= venue.name %></h1>
+  <div class="d-flex gap-2">
+    <a href="/admin/venues/<%= venue._id %>/details" class="btn btn-outline-info">
+      <i class="bi bi-eye me-1"></i> View Details
+    </a>
+    <a href="/admin/venues" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Venues
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card">
+      <div class="card-body">
+        <form action="/admin/venues/<%= venue._id %>/edit" method="POST" enctype="multipart/form-data">
+          <!-- Basic Information -->
+          <h5 class="card-title mb-3">Basic Information</h5>
+          
+          <div class="row g-3 mb-4">
+            <div class="col-md-12">
+              <label for="name" class="form-label">Venue Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="name" name="name" required 
+                     value="<%= venue.name %>" placeholder="Enter venue name">
+            </div>
+            
+            <div class="col-md-12">
+              <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="address" name="address" rows="2" required 
+                        placeholder="Enter complete address"><%= venue.address %></textarea>
+            </div>
+            
+            <div class="col-md-4">
+              <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="city" name="city" required 
+                     value="<%= venue.city %>" placeholder="Enter city">
+            </div>
+            
+            <div class="col-md-4">
+              <label for="state" class="form-label">State <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="state" name="state" required 
+                     value="<%= venue.state %>" placeholder="Enter state">
+            </div>
+            
+            <div class="col-md-4">
+              <label for="pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="pincode" name="pincode" required 
+                     value="<%= venue.pincode %>" placeholder="Enter pincode">
+            </div>
+          </div>
+
+          <!-- Venue Details -->
+          <h5 class="card-title mb-3">Venue Details</h5>
+          
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="venueType" class="form-label">Venue Type</label>
+              <select class="form-select" id="venueType" name="venueType">
+                <option value="Indoor Hall" <%= venue.venueType === 'Indoor Hall' ? 'selected' : '' %>>Indoor Hall</option>
+                <option value="Outdoor Venue" <%= venue.venueType === 'Outdoor Venue' ? 'selected' : '' %>>Outdoor Venue</option>
+                <option value="Auditorium" <%= venue.venueType === 'Auditorium' ? 'selected' : '' %>>Auditorium</option>
+                <option value="Stadium" <%= venue.venueType === 'Stadium' ? 'selected' : '' %>>Stadium</option>
+                <option value="Club" <%= venue.venueType === 'Club' ? 'selected' : '' %>>Club</option>
+                <option value="Restaurant" <%= venue.venueType === 'Restaurant' ? 'selected' : '' %>>Restaurant</option>
+                <option value="Hotel" <%= venue.venueType === 'Hotel' ? 'selected' : '' %>>Hotel</option>
+                <option value="Community Center" <%= venue.venueType === 'Community Center' ? 'selected' : '' %>>Community Center</option>
+                <option value="Other" <%= venue.venueType === 'Other' ? 'selected' : '' %>>Other</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label for="capacity" class="form-label">Capacity (Optional)</label>
+              <input type="number" class="form-control" id="capacity" name="capacity" 
+                     value="<%= venue.capacity || '' %>" placeholder="Maximum capacity" min="1">
+            </div>
+            
+            <div class="col-md-6">
+              <label for="priceRange" class="form-label">Price Range</label>
+              <select class="form-select" id="priceRange" name="priceRange">
+                <option value="Budget" <%= venue.priceRange === 'Budget' ? 'selected' : '' %>>Budget</option>
+                <option value="Mid-Range" <%= venue.priceRange === 'Mid-Range' ? 'selected' : '' %>>Mid-Range</option>
+                <option value="Premium" <%= venue.priceRange === 'Premium' ? 'selected' : '' %>>Premium</option>
+                <option value="Luxury" <%= venue.priceRange === 'Luxury' ? 'selected' : '' %>>Luxury</option>
+              </select>
+            </div>
+
+            <div class="col-md-12">
+              <h6 class="mb-3">Hourly Rates (Hours 1-24)</h6>
+              <div class="row g-2">
+                <% for (let hour = 1; hour <= 24; hour++) { %>
+                  <%
+                    // Get the current rate for this hour
+                    let currentRate = '';
+                    if (venue.pricing && venue.pricing.hourlyRates && Array.isArray(venue.pricing.hourlyRates)) {
+                      const rateObj = venue.pricing.hourlyRates.find(r => r.hours === hour);
+                      if (rateObj && rateObj.rate) {
+                        currentRate = rateObj.rate;
+                      }
+                    }
+                  %>
+                  <div class="col-md-3 col-sm-4 col-6">
+                    <label for="hourlyRate<%= hour %>" class="form-label small">Hour <%= hour %> (₹)</label>
+                    <input type="number" 
+                           class="form-control form-control-sm" 
+                           id="hourlyRate<%= hour %>" 
+                           name="hourlyRate<%= hour %>" 
+                           min="0" 
+                           step="100" 
+                           placeholder="0"
+                           value="<%= currentRate %>">
+                  </div>
+                <% } %>
+              </div>
+              <div class="form-text mt-2">
+                <small class="text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Set the hourly rates for different hours. Leave blank for hours not available.
+                </small>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label for="minimumHours" class="form-label">Minimum Hours</label>
+              <input type="number" class="form-control" id="minimumHours" name="minimumHours" 
+                     min="1" max="24" placeholder="e.g., 4"
+                     value="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>">
+            </div>
+
+            <div class="col-md-6">
+              <label for="commissionPercentage" class="form-label">Admin Commission (%)</label>
+              <input type="number" class="form-control" id="commissionPercentage" name="commissionPercentage" 
+                     step="0.1" placeholder="e.g., 15 (any percentage)"
+                     value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : '' %>">
+              <small class="text-muted">Commission for admin records only - artists don't pay this</small>
+            </div>
+
+            <div class="col-md-6">
+              <label for="advanceAmount" class="form-label">Advance Amount (₹) - Artist Payment</label>
+              <input type="number" class="form-control" id="advanceAmount" name="advanceAmount" 
+                     step="1" placeholder="e.g., 5000 (amount artist pays)"
+                     value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : '' %>">
+              <small class="text-muted">This is the only amount artists pay upfront</small>
+            </div>
+
+            <div class="col-md-6">
+              <label for="minTicketPrice" class="form-label">Minimum Ticket Price (₹)</label>
+              <input type="number" class="form-control" id="minTicketPrice" name="minTicketPrice" 
+                     step="1" placeholder="e.g., 100 (any amount)"
+                     value="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : '' %>">
+              <small class="text-muted">Set any minimum ticket price</small>
+            </div>
+
+            <div class="col-md-6">
+              <label for="suggestedTicketPrice" class="form-label">Suggested Ticket Price (₹)</label>
+              <input type="number" class="form-control" id="suggestedTicketPrice" name="suggestedTicketPrice" 
+                     step="1" placeholder="e.g., 500 (any amount)"
+                     value="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : '' %>">
+              <small class="text-muted">Recommended ticket price for artists</small>
+            </div>
+            
+            <div class="col-md-12">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3" 
+                        placeholder="Describe the venue, its features, and any important details"><%= venue.description || '' %></textarea>
+            </div>
+          </div>
+
+          <!-- Facilities -->
+          <h5 class="card-title mb-3">Facilities</h5>
+          
+          <div class="row g-2 mb-4">
+            <%
+              const allFacilities = ['Parking', 'Sound System', 'Lighting', 'Stage', 'Green Rooms', 'Restrooms', 'Food Court', 'AC', 'Wheelchair Accessible', 'Wi-Fi'];
+              const venueFacilities = venue.facilities || [];
+            %>
+            <% allFacilities.forEach((facility, index) => { %>
+              <div class="col-md-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="<%= facility %>" 
+                         id="facility<%= index %>" name="facilities"
+                         <%= venueFacilities.includes(facility) ? 'checked' : '' %>>
+                  <label class="form-check-label" for="facility<%= index %>"><%= facility %></label>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+
+          <!-- Contact Information -->
+          <h5 class="card-title mb-3">Contact Information</h5>
+          
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label for="contactName" class="form-label">Contact Person Name</label>
+              <input type="text" class="form-control" id="contactName" name="contactName" 
+                     value="<%= venue.contactPerson ? venue.contactPerson.name || '' : '' %>"
+                     placeholder="Contact person name">
+            </div>
+            
+            <div class="col-md-4">
+              <label for="contactPhone" class="form-label">Contact Phone</label>
+              <input type="tel" class="form-control" id="contactPhone" name="contactPhone" 
+                     value="<%= venue.contactPerson ? venue.contactPerson.phone || '' : '' %>"
+                     placeholder="Contact phone number">
+            </div>
+            
+            <div class="col-md-4">
+              <label for="contactEmail" class="form-label">Contact Email</label>
+              <input type="email" class="form-control" id="contactEmail" name="contactEmail" 
+                     value="<%= venue.contactPerson ? venue.contactPerson.email || '' : '' %>"
+                     placeholder="Contact email address">
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <h5 class="card-title mb-3">Additional Information</h5>
+          
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="googleMapsLink" class="form-label">Google Maps Link</label>
+              <input type="url" class="form-control" id="googleMapsLink" name="googleMapsLink" 
+                     value="<%= venue.googleMapsLink || '' %>" placeholder="https://maps.google.com/...">
+            </div>
+            
+            <div class="col-md-6">
+              <label for="website" class="form-label">Website</label>
+              <input type="url" class="form-control" id="website" name="website" 
+                     value="<%= venue.website || '' %>" placeholder="https://venue-website.com">
+            </div>
+          </div>
+
+          <!-- Current Images -->
+          <% if (venue.images && venue.images.length > 0) { %>
+            <h5 class="card-title mb-3">Current Images</h5>
+            <div class="row g-3 mb-4">
+              <% venue.images.forEach((image, index) => { %>
+                <div class="col-md-3">
+                  <div class="card">
+                    <img src="<%= image %>" class="card-img-top" style="height: 120px; object-fit: cover;" 
+                         alt="Venue Image <%= index + 1 %>">
+                    <div class="card-body p-2">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="<%= image %>" 
+                               id="removeImage<%= index %>" name="removeImages">
+                        <label class="form-check-label text-danger" for="removeImage<%= index %>">
+                          Remove
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <!-- New Images -->
+          <h5 class="card-title mb-3">Add New Images</h5>
+          
+          <div class="mb-4">
+            <label for="images" class="form-label">Upload New Images (Max 5)</label>
+            <input type="file" class="form-control" id="images" name="images" multiple 
+                   accept="image/*" onchange="previewImages(this)">
+            <div class="form-text">Accepted formats: JPG, PNG, GIF, WebP. Max file size: 5MB each.</div>
+            
+            <!-- Image Preview -->
+            <div id="imagePreview" class="row g-2 mt-3" style="display: none;">
+              <!-- Preview images will be inserted here -->
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-flex justify-content-end gap-2">
+            <a href="/admin/venues/<%= venue._id %>/details" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Update Venue
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function previewImages(input) {
+  const preview = document.getElementById('imagePreview');
+  preview.innerHTML = '';
+  
+  if (input.files && input.files.length > 0) {
+    preview.style.display = 'block';
+    
+    // Limit to 5 files
+    const files = Array.from(input.files).slice(0, 5);
+    
+    files.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const col = document.createElement('div');
+        col.className = 'col-md-2';
+        col.innerHTML = `
+          <div class="card">
+            <img src="${e.target.result}" class="card-img-top" style="height: 100px; object-fit: cover;">
+            <div class="card-body p-2">
+              <small class="text-muted">${file.name}</small>
+            </div>
+          </div>
+        `;
+        preview.appendChild(col);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    if (input.files.length > 5) {
+      alert('Only the first 5 images will be uploaded.');
+    }
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// Add form submission debugging
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const submitBtn = document.querySelector('button[type="submit"]');
+  
+  if (form && submitBtn) {
+    form.addEventListener('submit', function(e) {
+      console.log('Form submission started...');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Updating...';
+      
+      // Re-enable after 10 seconds in case of issues
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Update Venue';
+      }, 10000);
+    });
+  }
+});
+</script>

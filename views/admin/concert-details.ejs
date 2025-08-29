@@ -67,7 +67,18 @@
                 </div>
                 <div class="col-md-6 mb-3">
                   <p class="fw-medium mb-1">Venue:</p>
-                  <p><%= concert.venue %></p>
+                  <p>
+                    <% if (concert.venue && typeof concert.venue === 'object' && concert.venue.name) { %>
+                      <%= concert.venue.name %>
+                      <% if (concert.venue.address) { %>
+                        <br><small class="text-muted"><%= concert.venue.address %></small>
+                      <% } %>
+                    <% } else if (concert.venue && typeof concert.venue === 'string') { %>
+                      <%= concert.venue %>
+                    <% } else { %>
+                      N/A
+                    <% } %>
+                  </p>
                 </div>
                 <div class="col-md-6 mb-3">
                   <p class="fw-medium mb-1">City:</p>
@@ -197,12 +208,22 @@
                 </div>
                 <div class="progress" style="height: 10px;">
                   <div class="progress-bar bg-primary" role="progressbar"
-                    style="width: <%= concert.maxTickets > 0 ? (concert.ticketsSold / concert.maxTickets * 100) : 100 %>%;"
+                    data-ticket-percentage="<%= concert.maxTickets > 0 ? (concert.ticketsSold / concert.maxTickets * 100) : 100 %>"
                     aria-valuenow="<%= concert.ticketsSold %>"
                     aria-valuemin="0"
                     aria-valuemax="<%= concert.maxTickets > 0 ? concert.maxTickets : concert.ticketsSold %>">
                   </div>
                 </div>
+                <script>
+                  // Set progress bar width dynamically to avoid CSS linter issues
+                  document.addEventListener('DOMContentLoaded', function() {
+                    const progressBar = document.querySelector('[data-ticket-percentage]');
+                    if (progressBar) {
+                      const percentage = progressBar.getAttribute('data-ticket-percentage');
+                      progressBar.style.width = percentage + '%';
+                    }
+                  });
+                </script>
               </div>
 
               <div class="row text-center">

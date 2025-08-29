@@ -26,7 +26,7 @@
                         <i class="bi bi-clock me-2 text-primary"></i> <%= ticket.concert.time %>
                       </p>
                       <p class="text-white-50 mb-3">
-                        <i class="bi bi-geo-alt me-2 text-primary"></i> <%= ticket.concert.venue %>, <%= ticket.concert.city %>
+                        <i class="bi bi-geo-alt me-2 text-primary"></i> <%= ticket.concert.venue && ticket.concert.venue.name ? ticket.concert.venue.name : ticket.concert.venue %>, <%= ticket.concert.city %>
                       </p>
                     <% } else { %>
                       <h6 class="fw-bold mb-2 text-white">Concert Unavailable</h6>

@@ -88,7 +88,10 @@ router.get('/profile', isLoggedIn, async (req, res) => {
       paymentStatus: 'completed'
     })
       .sort({ createdAt: -1 })
-      .populate('concert');
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue', select: 'name address city' }
+      });
 
     console.log('Found tickets for server-side rendering:', tickets.length);
 
@@ -103,7 +106,8 @@ router.get('/profile', isLoggedIn, async (req, res) => {
           { status: 'pending' }
         ]
       })
-        .sort({ date: 1 });
+        .sort({ date: 1 })
+        .populate('venue', 'name address city');
 
       console.log('Found concerts for server-side rendering:', concerts.length);
     }

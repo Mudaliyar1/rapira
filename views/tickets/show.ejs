@@ -80,7 +80,7 @@
                   </p>
                   <p class="text-white-50 mb-0 concert-venue-info">
                     <i class="bi bi-geo-alt me-2 text-primary"></i>
-                    <%= concert.venue %>, <%= concert.city %>
+                    <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
                   </p>
                 <% } %>
               </div>

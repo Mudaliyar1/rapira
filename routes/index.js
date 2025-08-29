@@ -19,7 +19,8 @@ router.get('/', async (req, res) => {
     .populate({
       path: 'artist',
       populate: { path: 'user', select: 'name profileImage' }
-    });
+    })
+    .populate('venue', 'name address city');
 
     // Get featured artists - limit to 4
     const featuredArtists = await Artist.find({ featuredArtist: true })

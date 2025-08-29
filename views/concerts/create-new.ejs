@@ -1,9 +1,22 @@
 <%- include('../partials/artist-header') %>
 
+<!-- Include Razorpay SDK with error handling -->
+<script>
+  window.addEventListener('error', function(e) {
+    if (e.target.src && e.target.src.includes('checkout.razorpay.com')) {
+      console.error('Failed to load Razorpay SDK:', e);
+      console.log('This might be due to network issues or API key restrictions');
+    }
+  });
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js" 
+        onerror="console.error('Razorpay SDK failed to load'); window.razorpayLoadError = true;"
+        onload="console.log('Razorpay SDK loaded successfully'); window.razorpayLoaded = true;"></script>
+
 <!-- Create Concert Form -->
 <div class="card">
   <div class="card-body p-4">
-    <form action="/concerts/create" method="POST" enctype="multipart/form-data">
+    <form id="concertForm" enctype="multipart/form-data">
       <div class="row g-4">
         <div class="col-md-6">
           <div class="mb-3">
@@ -33,12 +46,152 @@
 
           <div class="mb-3">
             <label for="venue" class="form-label">Venue <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="venue" name="venue" placeholder="Enter venue name" required>
+            <select class="form-control" id="venue" name="venue" required>
+              <option value="">Select a venue</option>
+              <% if (venues && venues.length > 0) { %>
+                <% venues.forEach(venue => { %>
+                  <option value="<%= venue._id %>" 
+                          data-city="<%= venue.city %>"
+                          data-capacity="<%= venue.capacity || 0 %>"
+                          data-hourly-rates='<%- JSON.stringify(venue.pricing && venue.pricing.hourlyRates ? venue.pricing.hourlyRates : []) %>'
+                          data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
+                          data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
+                          data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
+                          data-commission-percentage="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : 0 %>"
+                          data-advance-amount="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : 0 %>"
+                          data-venue-name="<%= venue.name %>"
+                          data-venue-type="<%= venue.venueType || 'Not specified' %>"
+                          data-capacity="<%= venue.capacity || 'Not specified' %>"
+                          data-facilities='<%- JSON.stringify(venue.facilities || []) %>'
+                          data-address="<%= venue.address %>"
+                          data-description="<%= venue.description || '' %>">
+                    <%= venue.name %> - <%= venue.city %> (<%= venue.venueType || 'Venue' %>) - Capacity: <%= venue.capacity || 'Unlimited' %>
+                  </option>
+                <% }); %>
+              <% } else { %>
+                <option disabled>No venues available</option>
+              <% } %>
+            </select>
+            <div class="form-text">Select from admin-approved venues only</div>
+          </div>
+
+          <!-- Venue Pricing Information -->
+          <div id="venuePricing" class="mb-3 d-none">
+            <div class="card border-info">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Venue Pricing</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Available Rate:</strong> <span style="color: #ffffff !important;">₹</span><span id="displayHourlyRate">0</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Duration:</strong> <span id="displayMinHours">1</span> <span style="color: #ffffff !important;">hour(s)</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong style="color: #ffffff !important;">Total Cost:</strong> <span style="color: #ffffff !important;">₹</span><span id="displayBaseCost">0</span>
+                  </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-md-6">
+                    <label for="bookingHours" class="form-label">Booking Duration (Hours) <span class="text-danger">*</span></label>
+                    <select class="form-control" id="bookingHours" name="bookingHours" required>
+                      <option value="">Select hours</option>
+                    </select>
+                    <div class="form-text">
+                      <i class="bi bi-info-circle"></i> Only hours with defined rates are available
+                      <br><small class="text-muted">Contact admin to request additional booking durations</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Total Venue Cost</label>
+                    <div class="form-control-plaintext bg-light p-2 rounded border">
+                      <strong style="color: #000000 !important;">₹<span id="totalVenueCost" style="color: #000000 !important;">0</span></strong>
+                      <br><small style="color: #000000 !important;">Artist pays advance only</small>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Pricing Explanation -->
+                <div class="row mt-3">
+                  <div class="col-12">
+                    <div class="alert alert-info py-2" style="color: #000000 !important;">
+                      <small style="color: #000000 !important;">
+                        <i class="bi bi-lightbulb" style="color: #000000 !important;"></i> 
+                        <strong style="color: #000000 !important;">Pricing Note:</strong> The venue rates shown are configured by the admin. 
+                        If you need different booking durations (1hr, 2hrs, etc.), please contact the administrator 
+                        to add more pricing tiers for this venue.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Venue Details Section -->
+          <div id="venueDetailsSection" style="display: none;" class="mb-4">
+            <div class="card border-info">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-building"></i> Venue Details</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6 id="selectedVenueName" class="text-primary"></h6>
+                    <p class="mb-2"><strong>Type:</strong> <span id="selectedVenueType"></span></p>
+                    <p class="mb-2"><strong>Capacity:</strong> <span id="selectedVenueCapacity"></span></p>
+                    <p class="mb-2"><strong>Address:</strong> <span id="selectedVenueAddress"></span></p>
+                    <p class="mb-0"><strong>Description:</strong> <span id="selectedVenueDescription"></span></p>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="text-success">Available Facilities</h6>
+                    <div id="selectedVenueFacilities" class="d-flex flex-wrap gap-1">
+                      <!-- Facilities will be populated here -->
+                    </div>
+                    
+                    <div class="mt-3">
+                      <h6 class="text-warning">Commission Details</h6>
+                      <p class="mb-1"><strong>Admin Commission:</strong> <span id="adminCommissionPercentage">0</span>%</p>
+                      <p class="mb-1"><strong>Advance Amount:</strong> ₹<span id="adminAdvanceAmount">0</span></p>
+                      <p class="mb-0"><strong>Commission on Total:</strong> ₹<span id="calculatedCommission">0</span></p>
+                    </div>
+                    
+                    <div class="mt-3 p-3 bg-warning bg-opacity-10 border border-warning rounded">
+                      <h6 class="text-warning mb-2">💰 Payment Summary</h6>
+                      <div class="d-flex justify-content-between mb-1">
+                        <span>Venue Base Cost:</span>
+                        <span>₹<span id="summaryBaseCost">0</span> <small class="text-muted">(for reference)</small></span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-1">
+                        <span>Commission (<span id="summaryCommissionPercent">0</span>%):</span>
+                        <span>₹<span id="summaryCommissionAmount">0</span> <small class="text-muted">(admin only)</small></span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-1 text-success">
+                        <span><strong>Your Payment (Advance):</strong></span>
+                        <span><strong>₹<span id="summaryAdvanceAmount">0</span></strong></span>
+                      </div>
+                      <hr class="my-2">
+                      <div class="d-flex justify-content-between fw-bold">
+                        <span>Total to Pay Now:</span>
+                        <span class="text-danger">₹<span id="summaryTotalAmount">0</span></span>
+                      </div>
+                      <div class="mt-2">
+                        <small class="text-muted">* You only pay the advance amount set by admin</small>
+                        <small class="d-block text-muted">* Venue cost & commission are for admin records only</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mb-3">
             <label for="city" class="form-label">City <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="city" name="city" placeholder="Enter city" required>
+            <input type="text" class="form-control" id="city" name="city" placeholder="City will be set automatically" readonly required>
+            <div class="form-text">City is automatically set based on selected venue</div>
           </div>
         </div>
 
@@ -49,28 +202,30 @@
             <div class="form-text">Recommended size: 800x1200px. JPG, PNG, GIF (max 5MB)</div>
           </div>
 
-          <div class="mb-3">
-            <div class="highlighted-toggle-section">
-              <div class="form-check form-switch">
-                <input class="form-check-input enhanced-toggle" type="checkbox" id="isPaid" name="isPaid">
-                <label class="form-check-label highlighted-label" for="isPaid">This is a paid concert</label>
-              </div>
-            </div>
-          </div>
-
-          <div id="paidOptions" class="mb-3 d-none">
+          <!-- Ticket Pricing (Always Required) -->
+          <div id="paidOptions" class="mb-3">
             <div class="row">
               <div class="col-md-6">
                 <label for="price" class="form-label">Ticket Price (₹) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="price" name="price" min="1" step="1" placeholder="Enter price">
+                <input type="number" class="form-control" id="price" name="price" min="1" step="1" placeholder="Enter price" required>
+                <div class="form-text">
+                  Minimum: ₹<span id="minTicketPrice">0</span> | 
+                  Suggested: ₹<span id="suggestedTicketPrice">100</span>
+                </div>
               </div>
               <div class="col-md-6">
                 <label for="maxTickets" class="form-label">Max Tickets</label>
                 <input type="number" class="form-control" id="maxTickets" name="maxTickets" min="0" placeholder="0 = unlimited">
                 <div class="form-text">Leave at 0 for unlimited tickets</div>
+                <div class="form-text text-info" id="venueCapacityInfo" style="display: none;">
+                  <i class="bi bi-info-circle"></i> Venue capacity: <span id="venueCapacityValue">0</span>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Hidden field to always mark as paid -->
+          <input type="hidden" id="isPaid" name="isPaid" value="on">
 
           <div class="mb-3 mt-4">
             <div class="card bg-light">
@@ -91,8 +246,8 @@
           <hr>
           <div class="d-flex justify-content-end gap-2">
             <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">
-              <i class="bi bi-send me-1"></i> Submit Concert
+            <button type="button" class="btn btn-success" id="payAndSubmitBtn" disabled>
+              <i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">0</span> & Submit Concert
             </button>
           </div>
         </div>
@@ -102,36 +257,609 @@
 </div>
 
 <script>
-  // Set minimum date to today and initialize paid options
+  // Set minimum date to today and initialize
   document.addEventListener('DOMContentLoaded', function() {
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('date').min = today;
     document.getElementById('date').value = today;
 
-    // Toggle paid options
-    const isPaidCheckbox = document.getElementById('isPaid');
-    const paidOptions = document.getElementById('paidOptions');
+    // Elements
+    const venueSelect = document.getElementById('venue');
+    const cityInput = document.getElementById('city');
+    const bookingHours = document.getElementById('bookingHours'); // Fixed ID
+    const ticketPriceInput = document.getElementById('price'); // Fixed ID
+    const minPriceSpan = document.getElementById('minTicketPrice');
+    const suggestedPriceSpan = document.getElementById('suggestedTicketPrice');
+    const venuePricing = document.getElementById('venuePricing');
+    const displayHourlyRate = document.getElementById('displayHourlyRate');
+    const displayMinHours = document.getElementById('displayMinHours');
+    const displayBaseCost = document.getElementById('displayBaseCost');
+    const totalVenueCost = document.getElementById('totalVenueCost');
+    
+    let hourlyRates = [];
+    let currentVenueMinTicketPrice = 0;
+    let currentCommissionPercentage = 0;
+    let currentAdvanceAmount = 0;
+    let currentVenue = null; // Store current venue data
+    let currentVenueCapacity = 0;
 
-    // Function to toggle paid options visibility
-    function togglePaidOptions() {
-      if (isPaidCheckbox.checked) {
-        paidOptions.classList.remove('d-none');
-        document.getElementById('price').setAttribute('required', '');
+    function updateVenuePricing() {
+      const selectedOption = venueSelect.options[venueSelect.selectedIndex];
+      
+      if (selectedOption && selectedOption.value) {
+        const city = selectedOption.dataset.city || '';
+        const venueName = selectedOption.dataset.venueName || '';
+        const venueType = selectedOption.dataset.venueType || '';
+        const capacity = parseInt(selectedOption.dataset.capacity) || 0;
+        const address = selectedOption.dataset.address || '';
+        const description = selectedOption.dataset.description || '';
+        const rates = selectedOption.dataset.hourlyRates;
+        const minimumHours = parseInt(selectedOption.dataset.minimumHours) || 1;
+        const minTicketPrice = parseFloat(selectedOption.dataset.minTicketPrice) || 0;
+        const suggestedTicketPrice = parseFloat(selectedOption.dataset.suggestedTicketPrice) || 100;
+        const commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
+        const advanceAmount = parseFloat(selectedOption.dataset.advanceAmount) || 0;
+        const facilities = selectedOption.dataset.facilities;
+        
+        // Store current venue data
+        currentVenue = {
+          id: selectedOption.value,
+          name: venueName,
+          capacity: capacity,
+          pricing: {
+            hourlyRates: []
+          }
+        };
+        
+        currentVenueCapacity = capacity;
+        
+        // Parse hourly rates
+        console.log('=== VENUE RATES PARSING ===');
+        console.log('Raw rates from dataset:', rates);
+        
+        try {
+          const rawRates = rates ? JSON.parse(rates) : [];
+          console.log('Parsed raw rates:', rawRates);
+          hourlyRates = [];
+          
+          // Handle new structure: array of objects with hours and rate
+          if (rawRates.length > 0 && rawRates[0].hasOwnProperty('hours') && rawRates[0].hasOwnProperty('rate')) {
+            console.log('Using NEW structure (array of objects)');
+            currentVenue.pricing.hourlyRates = rawRates; // Store full structure
+            
+            // Create legacy array for backward compatibility
+            rawRates.forEach(rateObj => {
+              if (rateObj.hours && rateObj.rate) {
+                hourlyRates[rateObj.hours - 1] = rateObj.rate; // Convert to 0-indexed array
+                console.log(`Added rate: ${rateObj.hours} hours = ₹${rateObj.rate}`);
+              }
+            });
+          } else if (rawRates.length > 0) {
+            console.log('Using LEGACY structure (simple array)');
+            // Legacy structure: simple array of rates
+            hourlyRates = rawRates;
+            
+            // Convert to new structure
+            rawRates.forEach((rate, index) => {
+              if (rate && parseFloat(rate) > 0) {
+                const hoursCount = index + 1;
+                currentVenue.pricing.hourlyRates.push({
+                  hours: hoursCount,
+                  rate: parseFloat(rate)
+                });
+                console.log(`Converted rate: ${hoursCount} hours = ₹${rate}`);
+              }
+            });
+          } else {
+            console.log('No rates found in raw data');
+          }
+          
+          console.log('Final hourlyRates array:', hourlyRates);
+          console.log('Final venue pricing structure:', currentVenue.pricing.hourlyRates);
+          
+        } catch (e) {
+          console.error('Error parsing hourly rates:', e);
+          hourlyRates = [];
+          currentVenue.pricing.hourlyRates = [];
+          console.warn('Could not parse hourly rates for venue');
+        }
+        console.log('=== END VENUE RATES PARSING ===');
+        
+        // Parse facilities
+        let parsedFacilities = [];
+        try {
+          parsedFacilities = facilities ? JSON.parse(facilities) : [];
+        } catch (e) {
+          parsedFacilities = [];
+          console.warn('Could not parse facilities for venue');
+        }
+        
+        // Set city
+        cityInput.value = city;
+        
+        // Update venue capacity info and max tickets validation
+        const venueCapacityInfo = document.getElementById('venueCapacityInfo');
+        const venueCapacityValue = document.getElementById('venueCapacityValue');
+        const maxTicketsInput = document.getElementById('maxTickets');
+        
+        if (venueCapacityInfo && venueCapacityValue && maxTicketsInput) {
+          if (capacity > 0) {
+            venueCapacityValue.textContent = capacity;
+            venueCapacityInfo.style.display = 'block';
+            maxTicketsInput.max = capacity;
+            
+            // Validate current max tickets value
+            if (parseInt(maxTicketsInput.value) > capacity) {
+              maxTicketsInput.value = capacity;
+            }
+          } else {
+            venueCapacityInfo.style.display = 'none';
+            maxTicketsInput.removeAttribute('max');
+          }
+        }
+        
+        // Update venue details section
+        document.getElementById('selectedVenueName').textContent = venueName;
+        document.getElementById('selectedVenueType').textContent = venueType;
+        document.getElementById('selectedVenueCapacity').textContent = capacity;
+        document.getElementById('selectedVenueAddress').textContent = address;
+        document.getElementById('selectedVenueDescription').textContent = description || 'No description available';
+        
+        // Update facilities
+        const facilitiesContainer = document.getElementById('selectedVenueFacilities');
+        facilitiesContainer.innerHTML = '';
+        if (parsedFacilities.length > 0) {
+          parsedFacilities.forEach(facility => {
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-success';
+            badge.textContent = facility;
+            facilitiesContainer.appendChild(badge);
+          });
+        } else {
+          facilitiesContainer.innerHTML = '<span class="text-muted">No facilities listed</span>';
+        }
+        
+        // Update commission details
+        document.getElementById('adminCommissionPercentage').textContent = commissionPercentage;
+        document.getElementById('adminAdvanceAmount').textContent = advanceAmount.toLocaleString('en-IN');
+        
+        // Store commission data for calculation
+        currentCommissionPercentage = commissionPercentage;
+        currentAdvanceAmount = advanceAmount;
+        
+        // Update ticket pricing information
+        currentVenueMinTicketPrice = minTicketPrice;
+        minPriceSpan.textContent = minTicketPrice;
+        suggestedPriceSpan.textContent = suggestedTicketPrice;
+        
+        // Set minimum ticket price validation
+        ticketPriceInput.min = minTicketPrice;
+        if (parseFloat(ticketPriceInput.value || 0) < minTicketPrice) {
+          ticketPriceInput.value = minTicketPrice;
+        }
+        
+        // Populate booking hours dropdown with available rates only
+        populateBookingHoursDropdown();
+        
+        // Show venue pricing if rates available
+        if (currentVenue.pricing.hourlyRates.length > 0) {
+          const firstRateObj = currentVenue.pricing.hourlyRates[0];
+          const firstHourRate = firstRateObj ? parseFloat(firstRateObj.rate) || 0 : 0;
+          displayHourlyRate.textContent = firstHourRate.toLocaleString('en-IN');
+          displayMinHours.textContent = minimumHours;
+          
+          venuePricing.classList.remove('d-none');
+          calculateTotalCost();
+        } else {
+          venuePricing.classList.add('d-none');
+        }
+        
+        // Show venue details and pricing sections
+        document.getElementById('venueDetailsSection').style.display = 'block';
+        document.getElementById('paidOptions').style.display = 'block';
       } else {
-        paidOptions.classList.add('d-none');
-        document.getElementById('price').removeAttribute('required');
+        cityInput.value = '';
+        hourlyRates = [];
+        currentVenueMinTicketPrice = 0;
+        currentCommissionPercentage = 0;
+        currentAdvanceAmount = 0;
+        minPriceSpan.textContent = '0';
+        suggestedPriceSpan.textContent = '100';
+        venuePricing.classList.add('d-none');
+        document.getElementById('venueDetailsSection').style.display = 'none';
+        document.getElementById('paidOptions').style.display = 'none';
+        
+        // Clear booking hours dropdown
+        bookingHours.innerHTML = '<option value="">Select hours</option>';
       }
     }
 
-    // Add event listener for checkbox changes
-    isPaidCheckbox.addEventListener('change', togglePaidOptions);
+    function populateBookingHoursDropdown() {
+      // Clear existing options
+      bookingHours.innerHTML = '<option value="">Select hours</option>';
+      
+      console.log('=== BOOKING HOURS DEBUG ===');
+      console.log('Current venue:', currentVenue);
+      console.log('Venue pricing:', currentVenue ? currentVenue.pricing : null);
+      console.log('Hourly rates array:', currentVenue && currentVenue.pricing ? currentVenue.pricing.hourlyRates : null);
+      
+      if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates && currentVenue.pricing.hourlyRates.length > 0) {
+        // Sort rates by hour count
+        const sortedRates = [...currentVenue.pricing.hourlyRates].sort((a, b) => a.hours - b.hours);
+        console.log('Sorted rates:', sortedRates);
+        
+        let validOptionsCount = 0;
+        
+        // Add options for each available hour rate
+        sortedRates.forEach(rateObj => {
+          console.log('Processing rate object:', rateObj);
+          
+          if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0) {
+            const option = document.createElement('option');
+            option.value = rateObj.hours;
+            option.textContent = `${rateObj.hours} Hour${rateObj.hours > 1 ? 's' : ''} - ₹${parseFloat(rateObj.rate).toLocaleString('en-IN')}`;
+            bookingHours.appendChild(option);
+            validOptionsCount++;
+            console.log(`Added option: ${option.textContent}`);
+          } else {
+            console.warn('Skipping invalid rate object:', rateObj);
+          }
+        });
+        
+        console.log(`Total valid options added: ${validOptionsCount}`);
+        
+        // Auto-select first available option
+        if (sortedRates.length > 0 && validOptionsCount > 0) {
+          bookingHours.value = sortedRates[0].hours;
+          calculateTotalCost();
+          console.log('Auto-selected first option:', sortedRates[0].hours, 'hours');
+        }
+        
+        // If only one option is available, show a helpful message
+        if (validOptionsCount === 1) {
+          console.log('Only one booking duration available for this venue');
+          
+          // Add informational option
+          const infoOption = document.createElement('option');
+          infoOption.disabled = true;
+          infoOption.textContent = '─────────────────────────';
+          bookingHours.appendChild(infoOption);
+          
+          const noteOption = document.createElement('option');
+          noteOption.disabled = true;
+          noteOption.textContent = 'Contact admin for other durations';
+          noteOption.style.fontStyle = 'italic';
+          noteOption.style.color = '#6c757d';
+          bookingHours.appendChild(noteOption);
+        }
+      } else {
+        console.warn('No hourly rates available for selected venue');
+        console.log('Available data:', {
+          currentVenue: !!currentVenue,
+          hasPricing: !!(currentVenue && currentVenue.pricing),
+          hasRates: !!(currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates),
+          ratesLength: currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates ? 
+            currentVenue.pricing.hourlyRates.length : 0
+        });
+        
+        // Add informational option for no rates
+        const noRatesOption = document.createElement('option');
+        noRatesOption.disabled = true;
+        noRatesOption.textContent = 'No booking rates configured - Contact admin';
+        noRatesOption.style.fontStyle = 'italic';
+        noRatesOption.style.color = '#dc3545';
+        bookingHours.appendChild(noRatesOption);
+      }
+      console.log('=== END BOOKING HOURS DEBUG ===');
+    }
 
-    // Initialize state on page load
-    togglePaidOptions();
+    function calculateTotalCost() {
+      const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      let totalCost = 0;
+      
+      // Calculate cost based on the selected hour from dropdown
+      if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates) {
+        const hourlyRatesArray = currentVenue.pricing.hourlyRates;
+        
+        // Find the exact rate for selected hours
+        const rateEntry = hourlyRatesArray.find(entry => entry.hours === hours);
+        if (rateEntry && rateEntry.rate) {
+          totalCost = parseFloat(rateEntry.rate) || 0;
+        }
+      }
+      
+      // Calculate commission (for admin records only)
+      const commissionAmount = (totalCost * currentCommissionPercentage) / 100;
+      
+      // Artist only pays the advance amount - venue cost & commission are for admin records
+      const artistPayAmount = currentAdvanceAmount;
+      
+      // Update displays
+      if (displayBaseCost) displayBaseCost.textContent = totalCost.toLocaleString('en-IN');
+      if (totalVenueCost) totalVenueCost.textContent = totalCost.toLocaleString('en-IN');
+      if (displayHourlyRate) displayHourlyRate.textContent = totalCost.toLocaleString('en-IN');
+      
+      // Update commission display
+      document.getElementById('calculatedCommission').textContent = commissionAmount.toLocaleString('en-IN');
+      
+      // Update payment summary
+      document.getElementById('summaryBaseCost').textContent = totalCost.toLocaleString('en-IN');
+      document.getElementById('summaryCommissionPercent').textContent = currentCommissionPercentage;
+      document.getElementById('summaryCommissionAmount').textContent = commissionAmount.toLocaleString('en-IN');
+      document.getElementById('summaryAdvanceAmount').textContent = currentAdvanceAmount.toLocaleString('en-IN');
+      document.getElementById('summaryTotalAmount').textContent = artistPayAmount.toLocaleString('en-IN');
+      
+      // Show detailed breakdown in console for debugging
+      console.log('Venue Cost Breakdown:', {
+        selectedHours: hours,
+        hourlyRate: totalCost,
+        totalBaseCost: totalCost,
+        commissionPercentage: currentCommissionPercentage,
+        commissionAmount: commissionAmount,
+        advanceAmount: currentAdvanceAmount,
+        artistPays: artistPayAmount,
+        note: 'Artist only pays advance amount'
+      });
+
+      // Update pay button
+      if (typeof updatePayButton === 'function') {
+        updatePayButton();
+      }
+    }
+
+    // Ticket price validation
+    function validateTicketPrice() {
+      const currentPrice = parseFloat(ticketPriceInput.value || 0);
+      
+      if (currentPrice < currentVenueMinTicketPrice) {
+        ticketPriceInput.setCustomValidity(`Ticket price cannot be less than ₹${currentVenueMinTicketPrice} for this venue`);
+        return false;
+      } else {
+        ticketPriceInput.setCustomValidity('');
+        return true;
+      }
+    }
+
+    // Max tickets validation based on venue capacity
+    function validateMaxTickets() {
+      const maxTicketsInput = document.getElementById('maxTickets');
+      if (!maxTicketsInput) return true;
+      
+      const maxTickets = parseInt(maxTicketsInput.value);
+      if (currentVenueCapacity > 0 && maxTickets > currentVenueCapacity) {
+        maxTicketsInput.setCustomValidity(`Cannot exceed venue capacity of ${currentVenueCapacity}`);
+        return false;
+      } else {
+        maxTicketsInput.setCustomValidity('');
+        return true;
+      }
+    }
+
+    // Event listeners
+    venueSelect.addEventListener('change', updateVenuePricing);
+    if (bookingHours) bookingHours.addEventListener('change', calculateTotalCost); // Changed from 'input' to 'change'
+    if (ticketPriceInput) ticketPriceInput.addEventListener('input', validateTicketPrice);
+    
+    // Add max tickets validation
+    const maxTicketsInput = document.getElementById('maxTickets');
+    if (maxTicketsInput) maxTicketsInput.addEventListener('input', validateMaxTickets);
+    
+    // Payment and form submission
+    const payAndSubmitBtn = document.getElementById('payAndSubmitBtn');
+    const concertForm = document.getElementById('concertForm');
+    const payButtonAmount = document.getElementById('payButtonAmount');
+
+    // Update pay button amount when total changes
+    function updatePayButton() {
+      const totalAmount = document.getElementById('summaryTotalAmount').textContent;
+      payButtonAmount.textContent = totalAmount;
+      
+      // Enable/disable pay button based on form validity and amount
+      const isFormValid = validateRequiredFields();
+      const hasAmount = parseFloat(totalAmount.replace(/,/g, '')) > 0;
+      payAndSubmitBtn.disabled = !isFormValid || !hasAmount;
+    }
+
+    // Validate required fields
+    function validateRequiredFields() {
+      const requiredFields = ['title', 'description', 'date', 'time', 'venue', 'price'];
+      for (let fieldName of requiredFields) {
+        const field = document.getElementById(fieldName);
+        if (!field || !field.value.trim()) {
+          return false;
+        }
+      }
+      return validateTicketPrice();
+    }
+
+    // Listen for form changes to update pay button
+    concertForm.addEventListener('input', updatePayButton);
+    concertForm.addEventListener('change', updatePayButton);
+
+    // Handle payment and form submission
+    payAndSubmitBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      if (!validateRequiredFields()) {
+        alert('Please fill in all required fields correctly.');
+        return;
+      }
+
+      try {
+        payAndSubmitBtn.disabled = true;
+        payAndSubmitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Creating Payment Order...';
+
+        console.log('Form element found:', concertForm);
+        console.log('Form elements count:', concertForm.elements.length);
+
+        // Prepare form data
+        const formData = new FormData(concertForm);
+        
+        // Debug: Log form data being sent
+        console.log('Preparing to send form data...');
+        console.log('FormData entries:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+
+        // Check if FormData is empty
+        let hasData = false;
+        for (let [key, value] of formData.entries()) {
+          hasData = true;
+          break;
+        }
+
+        if (!hasData) {
+          throw new Error('Form data is empty - no form fields found');
+        }
+        
+        // Create payment order
+        console.log('Sending request to /concerts/create-payment-order');
+        const response = await fetch('/concerts/create-payment-order', {
+          method: 'POST',
+          body: formData
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('HTTP Error:', response.status, errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('Parsed result:', result);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create payment order');
+        }
+
+        console.log('Payment order created:', result);
+
+        // Validate Razorpay response
+        if (!result.order || !result.order.id) {
+          throw new Error('Invalid payment order response - missing order ID');
+        }
+
+        // Initialize Razorpay
+        const options = {
+          key: result.razorpayKeyId || 'rzp_live_EcyCHFYkMgWCAM', // Use key from server response or fallback
+          amount: result.order.amount,
+          currency: result.currency || 'INR',
+          name: result.name || 'Rapira Music Platform',
+          description: result.description || 'Venue Booking Payment',
+          order_id: result.order.id,
+          prefill: result.prefill || {},
+          theme: {
+            color: '#007bff'
+          },
+          handler: function(response) {
+            console.log('Payment successful:', response);
+            // Payment successful, verify and create concert
+            verifyPaymentAndCreateConcert(response);
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment modal dismissed by user');
+              payAndSubmitBtn.disabled = false;
+              payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+            }
+          }
+        };
+
+        console.log('Initializing Razorpay with options:', {
+          key: options.key,
+          amount: options.amount,
+          currency: options.currency,
+          order_id: options.order_id,
+          name: options.name
+        });
+
+        // Debug: Log key source
+        if (result.razorpayKeyId) {
+          console.log('Using Razorpay key from server response:', result.razorpayKeyId);
+        } else {
+          console.log('Using fallback Razorpay key (server did not provide key)');
+        }
+
+        // Validate the Razorpay key format
+        if (!options.key || !options.key.startsWith('rzp_')) {
+          throw new Error('Invalid Razorpay key format: ' + options.key);
+        }
+
+        // Check if Razorpay SDK is loaded
+        if (typeof Razorpay === 'undefined') {
+          if (window.razorpayLoadError) {
+            throw new Error('Razorpay SDK failed to load. This might be due to network issues or browser extensions blocking the script.');
+          } else {
+            throw new Error('Razorpay SDK is not available. Please check your internet connection and try again.');
+          }
+        }
+
+        console.log('Creating Razorpay instance with key:', options.key);
+        const rzp = new Razorpay(options);
+        console.log('Razorpay instance created successfully');
+        
+        // Add error handling for Razorpay
+        rzp.on('payment.failed', function (response) {
+          console.error('Razorpay payment failed:', response);
+          alert('Payment Failed: ' + response.error.description);
+          payAndSubmitBtn.disabled = false;
+          payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+        });
+        
+        rzp.open();
+
+      } catch (error) {
+        console.error('Error creating payment order:', error);
+        alert('Error: ' + error.message + '\nPlease check console for details.');
+        payAndSubmitBtn.disabled = false;
+        payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+      }
+    });
+
+    // Verify payment and create concert
+    async function verifyPaymentAndCreateConcert(razorpayResponse) {
+      try {
+        payAndSubmitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Processing Payment...';
+
+        // Prepare verification data
+        const formData = new FormData(concertForm);
+        formData.append('razorpay_order_id', razorpayResponse.razorpay_order_id);
+        formData.append('razorpay_payment_id', razorpayResponse.razorpay_payment_id);
+        formData.append('razorpay_signature', razorpayResponse.razorpay_signature);
+
+        // Verify payment and create concert
+        const response = await fetch('/concerts/verify-payment', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok && response.url.includes('/artists/dashboard')) {
+          // Successful verification, redirect to dashboard
+          window.location.href = '/artists/dashboard';
+        } else {
+          throw new Error('Payment verification failed');
+        }
+
+      } catch (error) {
+        console.error('Error verifying payment:', error);
+        alert('Payment verification failed. Please contact support.');
+        payAndSubmitBtn.disabled = false;
+        payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+      }
+    }
+
+    // Initialize if venue is pre-selected
+    if (venueSelect.value) {
+      updateVenuePricing();
+    }
 
     // Debug log
-    console.log('Concert form initialized');
+    console.log('Enhanced concert form initialized with venue pricing');
   });
 </script>
 

@@ -1,0 +1,179 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <!-- Back Button -->
+  <div class="mb-3">
+    <a href="/admin/concert-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Request Details
+    </a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-check-circle me-2"></i>
+            Approve Concert Edit Request
+          </h4>
+          <p class="mb-0">
+            Request #<%= editRequest._id.toString().slice(-6) %> - 
+            <%= editRequest.concert ? editRequest.concert.title : 'Deleted Concert' %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Request Summary -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Summary</h5>
+        </div>
+        <div class="card-body">
+          <% if (editRequest.concert) { %>
+            <p><strong>Concert:</strong> <%= editRequest.concert.title %></p>
+            <p><strong>Current Date:</strong> <%= new Date(editRequest.concert.date).toLocaleDateString() %></p>
+            <p><strong>Current Time:</strong> <%= editRequest.concert.time %></p>
+            <p><strong>Current Venue:</strong> <%= editRequest.concert.venue ? editRequest.concert.venue.name : 'No venue' %></p>
+            <p><strong>Current Price:</strong> ₹<%= editRequest.concert.price %></p>
+          <% } else { %>
+            <div class="alert alert-warning">Concert has been deleted</div>
+          <% } %>
+          
+          <hr>
+          
+          <p><strong>Artist:</strong> <%= editRequest.artist && editRequest.artist.user ? editRequest.artist.user.name : 'Unknown' %></p>
+          <p><strong>Requested Date:</strong> <%= new Date(editRequest.requestedAt).toLocaleDateString() %></p>
+          <p><strong>Reason:</strong> <%= editRequest.reason %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Changes Preview -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Changes to Apply</h5>
+        </div>
+        <div class="card-body">
+          <% const changes = editRequest.requestedChanges; %>
+          <% if (Object.keys(changes).length === 0) { %>
+            <div class="alert alert-info">No specific changes requested</div>
+          <% } else { %>
+            <div class="list-group list-group-flush">
+              <% if (changes.title) { %>
+                <div class="list-group-item">
+                  <strong>Title:</strong> 
+                  <span class="text-success"><%= changes.title %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.description) { %>
+                <div class="list-group-item">
+                  <strong>Description:</strong>
+                  <div class="text-success mt-1"><%= changes.description %></div>
+                </div>
+              <% } %>
+              
+              <% if (changes.date) { %>
+                <div class="list-group-item">
+                  <strong>Date:</strong> 
+                  <span class="text-success"><%= new Date(changes.date).toLocaleDateString() %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.time) { %>
+                <div class="list-group-item">
+                  <strong>Time:</strong> 
+                  <span class="text-success"><%= changes.time %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.city) { %>
+                <div class="list-group-item">
+                  <strong>City:</strong> 
+                  <span class="text-success"><%= changes.city %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.venue && requestedVenue) { %>
+                <div class="list-group-item">
+                  <strong>Venue:</strong> 
+                  <span class="text-success"><%= requestedVenue.name %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.price !== undefined) { %>
+                <div class="list-group-item">
+                  <strong>Price:</strong> 
+                  <span class="text-success">₹<%= changes.price %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.maxTickets !== undefined) { %>
+                <div class="list-group-item">
+                  <strong>Max Tickets:</strong> 
+                  <span class="text-success"><%= changes.maxTickets || 'Unlimited' %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.posterImage) { %>
+                <div class="list-group-item">
+                  <strong>Poster Image:</strong>
+                  <div class="mt-2">
+                    <img src="<%= changes.posterImage %>" class="img-fluid rounded" style="max-height: 200px;" alt="New Poster">
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approval Form -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="bi bi-check-circle"></i> Approve Request</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-success">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Approving this request will immediately apply all the requested changes to the concert.</strong>
+            This action cannot be undone, but the artist can submit new edit requests if needed.
+          </div>
+
+          <form action="/admin/concert-edit-requests/<%= editRequest._id %>/approve" method="POST">
+            <div class="mb-4">
+              <label for="adminMessage" class="form-label">
+                <strong>Message to Artist (Optional)</strong>
+              </label>
+              <textarea class="form-control" 
+                        id="adminMessage" 
+                        name="adminMessage" 
+                        rows="4" 
+                        placeholder="Add a message for the artist about the approval..."></textarea>
+              <div class="form-text">This message will be sent to the artist along with the approval notification.</div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle"></i> Approve and Apply Changes
+              </button>
+              <a href="/admin/concert-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-x"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

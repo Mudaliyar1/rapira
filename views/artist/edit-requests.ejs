@@ -1,0 +1,370 @@
+<%- include('../partials/artist-header', { title: 'My Edit Requests' }) %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="text-white"><i class="bi bi-pencil-square"></i> My Concert Edit Requests</h2>
+  <div class="text-end">
+    <small class="text-muted">Track the status of your concert modification requests</small>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="glass-card-dark border border-warning">
+      <div class="card-body text-center">
+        <i class="bi bi-clock-history display-6 text-warning"></i>
+        <h4 class="mt-2 text-white">
+          <%= editRequests.filter(req => req.status === 'pending').length %>
+        </h4>
+        <p class="mb-0 text-muted">Pending</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-card-dark border border-success">
+      <div class="card-body text-center">
+        <i class="bi bi-check-circle display-6 text-success"></i>
+        <h4 class="mt-2 text-white">
+          <%= editRequests.filter(req => req.status === 'approved').length %>
+        </h4>
+        <p class="mb-0 text-muted">Approved</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-card-dark border border-danger">
+      <div class="card-body text-center">
+        <i class="bi bi-x-circle display-6 text-danger"></i>
+        <h4 class="mt-2 text-white">
+          <%= editRequests.filter(req => req.status === 'rejected').length %>
+        </h4>
+        <p class="mb-0 text-muted">Rejected</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="glass-card-dark border border-info">
+      <div class="card-body text-center">
+        <i class="bi bi-list-check display-6 text-info"></i>
+        <h4 class="mt-2 text-white"><%= editRequests.length %></h4>
+        <p class="mb-0 text-muted">Total</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="glass-card-dark border border-secondary mb-3">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Filter & Sort</h5>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="statusFilter" class="form-label text-white">Filter by Status</label>
+        <select id="statusFilter" class="form-select bg-dark border-secondary text-white">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="sortFilter" class="form-label text-white">Sort by</label>
+        <select id="sortFilter" class="form-select bg-dark border-secondary text-white">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="status">By Status</option>
+          <option value="concert">By Concert</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Requests List -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary">
+    <h5 class="card-title mb-0 text-white">Edit Request History</h5>
+  </div>
+  <div class="card-body">
+      <% if (editRequests.length === 0) { %>
+        <div class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <h4 class="mt-3 text-muted">No edit requests yet</h4>
+          <p class="text-muted">When you request edits for approved concerts, they will appear here.</p>
+          <a href="/concerts" class="btn btn-primary">
+            <i class="bi bi-music-note-list"></i> View My Concerts
+          </a>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover text-dark" id="editRequestsTable" style="background-color: white;">
+            <thead class="table-dark">
+              <tr>
+                <th style="color: white !important; background-color: #343a40 !important;">Request ID</th>
+                <th style="color: white !important; background-color: #343a40 !important;">Concert</th>
+                <th style="color: white !important; background-color: #343a40 !important;">Status</th>
+                <th style="color: white !important; background-color: #343a40 !important;">Requested Date</th>
+                <th style="color: white !important; background-color: #343a40 !important;">Changes Summary</th>
+                <th style="color: white !important; background-color: #343a40 !important;">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="text-dark">
+              <% editRequests.forEach(function(request) { %>
+                <tr class="edit-request-row" data-status="<%= request.status %>" style="background-color: white; color: black !important;">
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <code style="color: black !important;">#<%= request._id.toString().slice(-6) %></code>
+                  </td>
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <div class="d-flex align-items-center">
+                      <% if (request.concert) { %>
+                        <div style="color: black !important;">
+                          <strong style="color: black !important;"><%= request.concert.title %></strong><br>
+                          <small style="color: #666 !important;">
+                            <%= new Date(request.concert.date).toLocaleDateString() %> | 
+                            <%= request.concert.city %>
+                          </small>
+                        </div>
+                      <% } else { %>
+                        <span style="color: #666 !important;">Concert Deleted</span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <span class="badge bg-<%= request.status === 'pending' ? 'warning' : (request.status === 'approved' ? 'success' : 'danger') %>">
+                      <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+                    </span>
+                  </td>
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <span style="color: black !important;"><%= new Date(request.requestedAt).toLocaleDateString() %></span><br>
+                    <small style="color: #666 !important;"><%= new Date(request.requestedAt).toLocaleTimeString() %></small>
+                  </td>
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <% 
+                      const changes = request.requestedChanges;
+                      const changeCount = Object.keys(changes).length;
+                      const changeTypes = [];
+                      if (changes.title) changeTypes.push('Title');
+                      if (changes.description) changeTypes.push('Description');
+                      if (changes.date) changeTypes.push('Date');
+                      if (changes.time) changeTypes.push('Time');
+                      if (changes.venue) changeTypes.push('Venue');
+                      if (changes.city) changeTypes.push('City');
+                      if (changes.price !== undefined) changeTypes.push('Price');
+                      if (changes.maxTickets !== undefined) changeTypes.push('Tickets');
+                      if (changes.posterImage) changeTypes.push('Poster');
+                    %>
+                    <small style="color: black !important;">
+                      <% if (changeCount === 0) { %>
+                        <span style="color: #666 !important;">No changes</span>
+                      <% } else { %>
+                        <strong style="color: black !important;"><%= changeCount %> changes:</strong><br>
+                        <span style="color: black !important;"><%= changeTypes.slice(0, 3).join(', ') %></span>
+                        <% if (changeTypes.length > 3) { %>
+                          <span style="color: black !important;">+ <%= changeTypes.length - 3 %> more</span>
+                        <% } %>
+                      <% } %>
+                    </small>
+                  </td>
+                  <td class="text-dark" style="color: black !important; background-color: white;">
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="viewRequestDetails('<%= request._id %>')">
+                      <i class="bi bi-eye"></i> View
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Request Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalContent">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Filter functionality
+document.getElementById('statusFilter').addEventListener('change', filterRequests);
+document.getElementById('sortFilter').addEventListener('change', sortRequests);
+
+function filterRequests() {
+  const statusFilter = document.getElementById('statusFilter').value;
+  const rows = document.querySelectorAll('.edit-request-row');
+  
+  rows.forEach(row => {
+    const status = row.dataset.status;
+    if (statusFilter === '' || status === statusFilter) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
+function sortRequests() {
+  const sortValue = document.getElementById('sortFilter').value;
+  const tbody = document.querySelector('#editRequestsTable tbody');
+  const rows = Array.from(tbody.querySelectorAll('.edit-request-row'));
+  
+  rows.sort((a, b) => {
+    switch(sortValue) {
+      case 'newest':
+        return new Date(b.querySelector('td:nth-child(4)').textContent) - new Date(a.querySelector('td:nth-child(4)').textContent);
+      case 'oldest':
+        return new Date(a.querySelector('td:nth-child(4)').textContent) - new Date(b.querySelector('td:nth-child(4)').textContent);
+      case 'status':
+        return a.dataset.status.localeCompare(b.dataset.status);
+      case 'concert':
+        const concertA = a.querySelector('td:nth-child(2) strong')?.textContent || '';
+        const concertB = b.querySelector('td:nth-child(2) strong')?.textContent || '';
+        return concertA.localeCompare(concertB);
+      default:
+        return 0;
+    }
+  });
+  
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+function viewRequestDetails(requestId) {
+  // Show loading spinner
+  document.getElementById('modalContent').innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading request details...</p>
+    </div>
+  `;
+  
+  // Show modal
+  new bootstrap.Modal(document.getElementById('detailsModal')).show();
+  
+  // Fetch request details
+  fetch(`/concerts/edit-request/${requestId}/details`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        displayRequestDetails(data.request);
+      } else {
+        document.getElementById('modalContent').innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> ${data.message}
+          </div>
+        `;
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching request details:', error);
+      document.getElementById('modalContent').innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> Failed to load request details. Please try again.
+        </div>
+      `;
+    });
+}
+
+function displayRequestDetails(request) {
+  const statusColor = request.status === 'pending' ? 'warning' : (request.status === 'approved' ? 'success' : 'danger');
+  const changes = request.requestedChanges;
+  
+  let changesHtml = '';
+  if (Object.keys(changes).length === 0) {
+    changesHtml = '<div class="alert alert-info">No specific changes requested</div>';
+  } else {
+    changesHtml = '<div class="row">';
+    if (changes.title) changesHtml += `<div class="col-12 mb-2"><strong>Title:</strong> ${changes.title}</div>`;
+    if (changes.description) changesHtml += `<div class="col-12 mb-2"><strong>Description:</strong> ${changes.description}</div>`;
+    if (changes.date) changesHtml += `<div class="col-6 mb-2"><strong>Date:</strong> ${new Date(changes.date).toLocaleDateString()}</div>`;
+    if (changes.time) changesHtml += `<div class="col-6 mb-2"><strong>Time:</strong> ${changes.time}</div>`;
+    if (changes.city) changesHtml += `<div class="col-6 mb-2"><strong>City:</strong> ${changes.city}</div>`;
+    if (changes.venue && request.requestedVenue) changesHtml += `<div class="col-6 mb-2"><strong>Venue:</strong> ${request.requestedVenue.name}</div>`;
+    if (changes.price !== undefined) changesHtml += `<div class="col-6 mb-2"><strong>Price:</strong> ₹${changes.price}</div>`;
+    if (changes.maxTickets !== undefined) changesHtml += `<div class="col-6 mb-2"><strong>Max Tickets:</strong> ${changes.maxTickets || 'Unlimited'}</div>`;
+    if (changes.posterImage) changesHtml += `<div class="col-12 mb-2"><strong>New Poster:</strong><br><img src="${changes.posterImage}" class="img-fluid rounded mt-2" style="max-height: 200px;"></div>`;
+    changesHtml += '</div>';
+  }
+  
+  let adminResponseHtml = '';
+  if (request.adminResponse && request.adminResponse.message) {
+    adminResponseHtml = `
+      <div class="card border-${statusColor} mt-3">
+        <div class="card-header bg-${statusColor} text-white">
+          <h6 class="mb-0"><i class="bi bi-chat-quote"></i> Admin Response</h6>
+        </div>
+        <div class="card-body">
+          <p>${request.adminResponse.message}</p>
+          <small class="text-muted">
+            ${new Date(request.adminResponse.respondedAt).toLocaleString()}
+          </small>
+        </div>
+      </div>
+    `;
+  }
+  
+  document.getElementById('modalContent').innerHTML = `
+    <div class="mb-3">
+      <h6>Request #${request._id.toString().slice(-6)} 
+        <span class="badge bg-${statusColor}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>
+      </h6>
+      <p class="text-muted mb-0">Requested on ${new Date(request.requestedAt).toLocaleString()}</p>
+    </div>
+    
+    ${request.concert ? `
+      <div class="card mb-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-music-note"></i> Concert: ${request.concert.title}</h6>
+        </div>
+        <div class="card-body">
+          <p class="mb-2">${request.concert.description}</p>
+          <small class="text-muted">
+            ${new Date(request.concert.date).toLocaleDateString()} | 
+            ${request.concert.time} | 
+            ${request.concert.city} | 
+            ₹${request.concert.price}
+          </small>
+        </div>
+      </div>
+    ` : '<div class="alert alert-warning">Concert has been deleted</div>'}
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-pencil"></i> Requested Changes</h6>
+      </div>
+      <div class="card-body">
+        ${changesHtml}
+      </div>
+    </div>
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-chat-text"></i> Reason</h6>
+      </div>
+      <div class="card-body">
+        <p>${request.reason}</p>
+      </div>
+    </div>
+    
+    ${adminResponseHtml}
+  `;
+}
+</script>
+
+<%- include('../partials/artist-footer') %>

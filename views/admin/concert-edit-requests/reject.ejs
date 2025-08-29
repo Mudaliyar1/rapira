@@ -1,0 +1,189 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <!-- Back Button -->
+  <div class="mb-3">
+    <a href="/admin/concert-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Request Details
+    </a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-x-circle me-2"></i>
+            Reject Concert Edit Request
+          </h4>
+          <p class="mb-0">
+            Request #<%= editRequest._id.toString().slice(-6) %> - 
+            <%= editRequest.concert ? editRequest.concert.title : 'Deleted Concert' %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Request Summary -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-info-circle"></i> Request Summary</h5>
+        </div>
+        <div class="card-body">
+          <% if (editRequest.concert) { %>
+            <p><strong>Concert:</strong> <%= editRequest.concert.title %></p>
+            <p><strong>Current Date:</strong> <%= new Date(editRequest.concert.date).toLocaleDateString() %></p>
+            <p><strong>Current Time:</strong> <%= editRequest.concert.time %></p>
+            <p><strong>Current Venue:</strong> <%= editRequest.concert.venue ? editRequest.concert.venue.name : 'No venue' %></p>
+            <p><strong>Current Price:</strong> ₹<%= editRequest.concert.price %></p>
+          <% } else { %>
+            <div class="alert alert-warning">Concert has been deleted</div>
+          <% } %>
+          
+          <hr>
+          
+          <p><strong>Artist:</strong> <%= editRequest.artist && editRequest.artist.user ? editRequest.artist.user.name : 'Unknown' %></p>
+          <p><strong>Requested Date:</strong> <%= new Date(editRequest.requestedAt).toLocaleDateString() %></p>
+          <p><strong>Reason:</strong> <%= editRequest.reason %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requested Changes -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Requested Changes</h5>
+        </div>
+        <div class="card-body">
+          <% const changes = editRequest.requestedChanges; %>
+          <% if (Object.keys(changes).length === 0) { %>
+            <div class="alert alert-info">No specific changes requested</div>
+          <% } else { %>
+            <div class="list-group list-group-flush">
+              <% if (changes.title) { %>
+                <div class="list-group-item">
+                  <strong>Title:</strong> 
+                  <span class="text-primary"><%= changes.title %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.description) { %>
+                <div class="list-group-item">
+                  <strong>Description:</strong>
+                  <div class="text-primary mt-1"><%= changes.description %></div>
+                </div>
+              <% } %>
+              
+              <% if (changes.date) { %>
+                <div class="list-group-item">
+                  <strong>Date:</strong> 
+                  <span class="text-primary"><%= new Date(changes.date).toLocaleDateString() %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.time) { %>
+                <div class="list-group-item">
+                  <strong>Time:</strong> 
+                  <span class="text-primary"><%= changes.time %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.city) { %>
+                <div class="list-group-item">
+                  <strong>City:</strong> 
+                  <span class="text-primary"><%= changes.city %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.venue && requestedVenue) { %>
+                <div class="list-group-item">
+                  <strong>Venue:</strong> 
+                  <span class="text-primary"><%= requestedVenue.name %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.price !== undefined) { %>
+                <div class="list-group-item">
+                  <strong>Price:</strong> 
+                  <span class="text-primary">₹<%= changes.price %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.maxTickets !== undefined) { %>
+                <div class="list-group-item">
+                  <strong>Max Tickets:</strong> 
+                  <span class="text-primary"><%= changes.maxTickets || 'Unlimited' %></span>
+                </div>
+              <% } %>
+              
+              <% if (changes.posterImage) { %>
+                <div class="list-group-item">
+                  <strong>Poster Image:</strong>
+                  <div class="mt-2">
+                    <img src="<%= changes.posterImage %>" class="img-fluid rounded" style="max-height: 200px;" alt="New Poster">
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rejection Form -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0"><i class="bi bi-x-circle"></i> Reject Request</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> 
+            <strong>Rejecting this request will decline all the requested changes.</strong>
+            The concert will remain unchanged, and the artist will be notified of the rejection.
+          </div>
+
+          <form action="/admin/concert-edit-requests/<%= editRequest._id %>/reject" method="POST">
+            <div class="mb-4">
+              <label for="adminMessage" class="form-label">
+                <strong>Reason for Rejection <span class="text-danger">*</span></strong>
+              </label>
+              <textarea class="form-control" 
+                        id="adminMessage" 
+                        name="adminMessage" 
+                        rows="4" 
+                        placeholder="Please provide a clear explanation for why you're rejecting this request..."
+                        required></textarea>
+              <div class="form-text">This message will be sent to the artist explaining why their request was rejected. Please be specific and constructive.</div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="confirmReject" required>
+                <label class="form-check-label" for="confirmReject">
+                  I understand that rejecting this request will notify the artist and no changes will be made to the concert.
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn btn-danger btn-lg">
+                <i class="bi bi-x-circle"></i> Reject Request
+              </button>
+              <a href="/admin/concert-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

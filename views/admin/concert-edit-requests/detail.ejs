@@ -1,0 +1,227 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <!-- Back Button -->
+  <div class="mb-3">
+    <a href="/admin/concert-edit-requests" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Edit Requests
+    </a>
+  </div>
+
+  <!-- Request Header -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-<%= editRequest.status === 'pending' ? 'warning' : (editRequest.status === 'approved' ? 'success' : 'danger') %>">
+        <div class="card-header bg-<%= editRequest.status === 'pending' ? 'warning' : (editRequest.status === 'approved' ? 'success' : 'danger') %> text-white">
+          <h4 class="mb-0">
+            <i class="bi bi-pencil-square me-2"></i>
+            Concert Edit Request #<%= editRequest._id.toString().slice(-6) %>
+            <span class="badge bg-white text-<%= editRequest.status === 'pending' ? 'warning' : (editRequest.status === 'approved' ? 'success' : 'danger') %> ms-2">
+              <%= editRequest.status.charAt(0).toUpperCase() + editRequest.status.slice(1) %>
+            </span>
+          </h4>
+          <p class="mb-0">
+            Requested on <%= new Date(editRequest.requestedAt).toLocaleDateString() %> 
+            at <%= new Date(editRequest.requestedAt).toLocaleTimeString() %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Current Concert Details -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-info-circle"></i> Current Concert Details</h5>
+        </div>
+        <div class="card-body">
+          <% if (editRequest.concert) { %>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <h6><strong><%= editRequest.concert.title %></strong></h6>
+                <p class="text-muted mb-2"><%= editRequest.concert.description %></p>
+              </div>
+              
+              <div class="col-6">
+                <p><strong>Date:</strong><br>
+                <%= new Date(editRequest.concert.date).toLocaleDateString() %></p>
+                
+                <p><strong>Time:</strong><br>
+                <%= editRequest.concert.time %></p>
+                
+                <p><strong>City:</strong><br>
+                <%= editRequest.concert.city %></p>
+              </div>
+              
+              <div class="col-6">
+                <p><strong>Venue:</strong><br>
+                <%= editRequest.concert.venue ? editRequest.concert.venue.name : 'No venue' %></p>
+                
+                <p><strong>Price:</strong><br>
+                ₹<%= editRequest.concert.price %></p>
+                
+                <p><strong>Max Tickets:</strong><br>
+                <%= editRequest.concert.maxTickets || 'Unlimited' %></p>
+              </div>
+              
+              <% if (editRequest.concert.posterImage && editRequest.concert.posterImage !== '/images/default-concert.jpg') { %>
+                <div class="col-12 mt-2">
+                  <p><strong>Current Poster:</strong></p>
+                  <img src="<%= editRequest.concert.posterImage %>" class="img-fluid rounded" style="max-height: 200px;" alt="Current Poster">
+                </div>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle"></i> Concert has been deleted
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requested Changes -->
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0"><i class="bi bi-arrow-right"></i> Requested Changes</h5>
+        </div>
+        <div class="card-body">
+          <% const changes = editRequest.requestedChanges; %>
+          <% if (Object.keys(changes).length === 0) { %>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> No specific changes requested
+            </div>
+          <% } else { %>
+            <div class="row">
+              <% if (changes.title) { %>
+                <div class="col-12 mb-3">
+                  <p><strong>New Title:</strong><br>
+                  <span class="text-primary"><%= changes.title %></span></p>
+                </div>
+              <% } %>
+              
+              <% if (changes.description) { %>
+                <div class="col-12 mb-3">
+                  <p><strong>New Description:</strong><br>
+                  <span class="text-primary"><%= changes.description %></span></p>
+                </div>
+              <% } %>
+              
+              <div class="col-6">
+                <% if (changes.date) { %>
+                  <p><strong>New Date:</strong><br>
+                  <span class="text-primary"><%= new Date(changes.date).toLocaleDateString() %></span></p>
+                <% } %>
+                
+                <% if (changes.time) { %>
+                  <p><strong>New Time:</strong><br>
+                  <span class="text-primary"><%= changes.time %></span></p>
+                <% } %>
+                
+                <% if (changes.city) { %>
+                  <p><strong>New City:</strong><br>
+                  <span class="text-primary"><%= changes.city %></span></p>
+                <% } %>
+              </div>
+              
+              <div class="col-6">
+                <% if (changes.venue && requestedVenue) { %>
+                  <p><strong>New Venue:</strong><br>
+                  <span class="text-primary"><%= requestedVenue.name %></span></p>
+                <% } %>
+                
+                <% if (changes.price !== undefined) { %>
+                  <p><strong>New Price:</strong><br>
+                  <span class="text-primary">₹<%= changes.price %></span></p>
+                <% } %>
+                
+                <% if (changes.maxTickets !== undefined) { %>
+                  <p><strong>New Max Tickets:</strong><br>
+                  <span class="text-primary"><%= changes.maxTickets || 'Unlimited' %></span></p>
+                <% } %>
+              </div>
+              
+              <% if (changes.posterImage) { %>
+                <div class="col-12 mt-2">
+                  <p><strong>New Poster:</strong></p>
+                  <img src="<%= changes.posterImage %>" class="img-fluid rounded" style="max-height: 200px;" alt="New Poster">
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artist Information and Reason -->
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-secondary text-white">
+          <h5 class="mb-0"><i class="bi bi-person"></i> Artist Information</h5>
+        </div>
+        <div class="card-body">
+          <% if (editRequest.artist && editRequest.artist.user) { %>
+            <p><strong>Stage Name:</strong> <%= editRequest.artist.stageName || 'Not set' %></p>
+            <p><strong>Real Name:</strong> <%= editRequest.artist.user.name %></p>
+            <p><strong>Email:</strong> <%= editRequest.artist.user.email %></p>
+            <p><strong>Phone:</strong> <%= editRequest.artist.phoneNumber || 'Not provided' %></p>
+          <% } else { %>
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle"></i> Artist information not available
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="bi bi-chat-text"></i> Reason for Edit</h5>
+        </div>
+        <div class="card-body">
+          <p><%= editRequest.reason %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Response (if any) -->
+  <% if (editRequest.adminResponse && editRequest.adminResponse.message) { %>
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <div class="card border-<%= editRequest.status === 'approved' ? 'success' : 'danger' %>">
+          <div class="card-header bg-<%= editRequest.status === 'approved' ? 'success' : 'danger' %> text-white">
+            <h5 class="mb-0"><i class="bi bi-chat-quote"></i> Admin Response</h5>
+          </div>
+          <div class="card-body">
+            <p><%= editRequest.adminResponse.message %></p>
+            <small class="text-muted">
+              Responded on <%= new Date(editRequest.adminResponse.respondedAt).toLocaleDateString() %> 
+              at <%= new Date(editRequest.adminResponse.respondedAt).toLocaleTimeString() %>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Action Buttons -->
+  <% if (editRequest.status === 'pending') { %>
+    <div class="row mt-4">
+      <div class="col-md-12 text-center">
+        <a href="/admin/concert-edit-requests/<%= editRequest._id %>/approve" class="btn btn-success btn-lg me-3">
+          <i class="bi bi-check-circle"></i> Approve Request
+        </a>
+        <a href="/admin/concert-edit-requests/<%= editRequest._id %>/reject" class="btn btn-danger btn-lg">
+          <i class="bi bi-x-circle"></i> Reject Request
+        </a>
+      </div>
+    </div>
+  <% } %>
+</div>

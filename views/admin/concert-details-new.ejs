@@ -1,4 +1,55 @@
 <%- contentFor('body') %>
+<style>
+.glass-card-dark {
+  background: rgba(33, 37, 41, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.glass-card-dark .card-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-dark .card-footer {
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-dark {
+  --bs-table-bg: rgba(33, 37, 41, 0.6);
+  color: #fff;
+}
+
+.badge.bg-light {
+  background-color: rgba(108, 117, 125, 0.8) !important;
+  color: #fff !important;
+}
+
+.card.bg-dark {
+  background-color: rgba(52, 58, 64, 0.8) !important;
+  color: #fff;
+}
+
+.modal-content {
+  background-color: #212529;
+  color: #fff;
+}
+
+.modal-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-close {
+  filter: invert(1);
+}
+</style>
+
 <!-- Concert Details -->
 <div class="row">
   <div class="col-lg-8">
@@ -38,7 +89,117 @@
             
             <div class="mb-3">
               <h6 class="fw-bold">Venue:</h6>
-              <p class="mb-0"><%= concert.venue %></p>
+              <div class="card bg-dark border-secondary p-3">
+                <% if (concert.venue && typeof concert.venue === 'object' && concert.venue.name) { %>
+                  <h6 class="text-primary mb-2"><%= concert.venue.name %></h6>
+                  
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>Address:</strong><br>
+                      <%= concert.venue.address %><br>
+                      <%= concert.venue.city %>, <%= concert.venue.state %> - <%= concert.venue.pincode %><br><br>
+                      
+                      <strong>Capacity:</strong> <%= concert.venue.capacity %> people<br>
+                      <strong>Venue Type:</strong> <%= concert.venue.venueType %><br>
+                      <strong>Facilities:</strong> <%= concert.venue.facilities ? concert.venue.facilities.join(', ') : 'N/A' %><br><br>
+                      
+                      <strong>Contact Person:</strong><br>
+                      Name: <%= concert.venue.contactPerson ? concert.venue.contactPerson.name : 'N/A' %><br>
+                      Phone: <%= concert.venue.contactPerson ? concert.venue.contactPerson.phone : 'N/A' %><br>
+                      Email: <%= concert.venue.contactPerson ? concert.venue.contactPerson.email : 'N/A' %>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <strong>Booking Details:</strong><br>
+                      Hours Booked: <%= 
+                        (concert.venueBooking && concert.venueBooking.bookingHours) || 
+                        concert.bookingHours || 
+                        'N/A' 
+                      %> hours<br><br>
+                      
+                      <strong>Pricing Structure:</strong><br>
+                      <% if (concert.venue.pricing) { %>
+                        Admin Commission: <%= 
+                          concert.venue.pricing.adminCommission ? 
+                            (concert.venue.pricing.adminCommission.percentage || concert.venue.pricing.adminCommission) : 
+                            'N/A' 
+                        %>%<br>
+                        Advance Amount: ₹<%= 
+                          concert.venue.pricing.adminCommission ? 
+                            concert.venue.pricing.adminCommission.advanceAmount : 
+                            'N/A' 
+                        %><br>
+                        Minimum Price: ₹<%= 
+                          concert.venue.pricing.ticketPricing ? 
+                            concert.venue.pricing.ticketPricing.minimumPrice : 
+                            'N/A' 
+                        %><br>
+                        Suggested Price: ₹<%= 
+                          concert.venue.pricing.ticketPricing ? 
+                            concert.venue.pricing.ticketPricing.suggestedPrice : 
+                            'N/A' 
+                        %><br><br>
+                        
+                        <strong>Hourly Rates:</strong><br>
+                        <% if (concert.venue.pricing.hourlyRates && concert.venue.pricing.hourlyRates.length > 0) { %>
+                          <% concert.venue.pricing.hourlyRates.forEach((rateObj, index) => { %>
+                            <% if (typeof rateObj === 'object' && rateObj.rate !== undefined) { %>
+                              <%= rateObj.hours || (index + 1) %> Hour<%= (rateObj.hours > 1 || index > 0) ? 's' : '' %>: ₹<%= rateObj.rate %><br>
+                            <% } else { %>
+                              <%= index + 1 %> Hour<%= index > 0 ? 's' : '' %>: ₹<%= rateObj %><br>
+                            <% } %>
+                          <% }); %>
+                        <% } else { %>
+                          Standard hourly rates not available<br>
+                        <% } %>
+                        
+                        <% if (concert.venue.pricing.minimumHours) { %>
+                          Minimum Hours: <%= concert.venue.pricing.minimumHours %><br>
+                        <% } %>
+                        
+                        <% if (concert.venue.pricing.currency) { %>
+                          Currency: <%= concert.venue.pricing.currency %><br>
+                        <% } %>
+                        
+                        <% if (concert.venue.pricing.additionalCharges && concert.venue.pricing.additionalCharges.length > 0) { %>
+                          <strong>Additional Charges:</strong><br>
+                          <% concert.venue.pricing.additionalCharges.forEach(charge => { %>
+                            - <%= charge %><br>
+                          <% }); %>
+                        <% } %>
+                      <% } else { %>
+                        Pricing details not available<br>
+                      <% } %>
+                      
+                      <% if (concert.venueBooking) { %>
+                        <br><strong>Booking Status:</strong><br>
+                        Booking Paid: <%= concert.venueBooking.isPaid ? 'Yes' : 'No' %><br>
+                        <% if (concert.venueBooking.bookingHours) { %>
+                          Confirmed Hours: <%= concert.venueBooking.bookingHours %><br>
+                        <% } %>
+                        <% if (concert.venueBooking.totalCost) { %>
+                          Total Cost: ₹<%= concert.venueBooking.totalCost %><br>
+                        <% } %>
+                        <% if (concert.venueBooking.commission) { %>
+                          Commission: ₹<%= concert.venueBooking.commission %><br>
+                        <% } %>
+                      <% } %>
+                    </div>
+                  </div>
+                  
+                  <% if (concert.venue.description) { %>
+                    <div class="mt-2">
+                      <strong>Description:</strong><br>
+                      <%= concert.venue.description %>
+                    </div>
+                  <% } %>
+                  
+                <% } else if (concert.venue && typeof concert.venue === 'string') { %>
+                  <%= concert.venue %>
+                <% } else { %>
+                  N/A
+                <% } %>
+              </div>
             </div>
             
             <div class="mb-3">
@@ -106,6 +267,164 @@
       </div>
     </div>
     
+    <!-- Venue Booking Summary -->
+    <% if (concert.venue && typeof concert.venue === 'object') { %>
+    <div class="glass-card-dark mb-4">
+      <div class="card-header py-3">
+        <h5 class="card-title mb-0">Venue Booking Summary</h5>
+      </div>
+      <div class="card-body p-4">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <h6 class="fw-bold text-success">Financial Details:</h6>
+              <div class="table-responsive">
+                <table class="table table-dark table-sm">
+                  <tbody>
+                    <tr>
+                      <td><strong>Hours Booked:</strong></td>
+                      <td><%= 
+                        (concert.venueBooking && concert.venueBooking.bookingHours) || 
+                        concert.bookingHours || 
+                        'N/A' 
+                      %> hours</td>
+                    </tr>
+                    <% if (concert.venue.pricing && concert.venue.pricing.hourlyRates) { %>
+                    <tr>
+                      <td><strong>Hourly Rate:</strong></td>
+                      <td>
+                        <% 
+                        let currentRate = 'N/A';
+                        const actualBookingHours = (concert.venueBooking && concert.venueBooking.bookingHours) || concert.bookingHours;
+                        if (actualBookingHours && concert.venue.pricing.hourlyRates.length > 0) {
+                          const bookingHours = parseInt(actualBookingHours);
+                          const rateObj = concert.venue.pricing.hourlyRates.find(r => r.hours === bookingHours) || concert.venue.pricing.hourlyRates[0];
+                          if (typeof rateObj === 'object' && rateObj.rate !== undefined) {
+                            currentRate = '₹' + rateObj.rate;
+                          } else {
+                            currentRate = '₹' + rateObj;
+                          }
+                        }
+                        %>
+                        <%= currentRate %>
+                      </td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venue.pricing && concert.venue.pricing.adminCommission && concert.venue.pricing.adminCommission.advanceAmount) { %>
+                    <tr>
+                      <td><strong>Advance Amount:</strong></td>
+                      <td class="text-primary"><strong>₹<%= concert.venue.pricing.adminCommission.advanceAmount %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venue.pricing && concert.venue.pricing.ticketPricing && concert.venue.pricing.ticketPricing.minimumPrice) { %>
+                    <tr>
+                      <td><strong>Minimum Ticket Price:</strong></td>
+                      <td class="text-info"><strong>₹<%= concert.venue.pricing.ticketPricing.minimumPrice %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venue.pricing && concert.venue.pricing.ticketPricing && concert.venue.pricing.ticketPricing.suggestedPrice) { %>
+                    <tr>
+                      <td><strong>Suggested Ticket Price:</strong></td>
+                      <td class="text-success"><strong>₹<%= concert.venue.pricing.ticketPricing.suggestedPrice %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venue.pricing && concert.venue.pricing.adminCommission) { %>
+                    <tr>
+                      <td><strong>Admin Commission:</strong></td>
+                      <td><%= concert.venue.pricing.adminCommission.percentage || 'N/A' %>%</td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venueBooking && concert.venueBooking.totalCost) { %>
+                    <tr>
+                      <td><strong>Total Venue Cost:</strong></td>
+                      <td class="text-success"><strong>₹<%= concert.venueBooking.totalCost %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venueBooking && concert.venueBooking.commission) { %>
+                    <tr>
+                      <td><strong>Commission Amount:</strong></td>
+                      <td class="text-warning"><strong>₹<%= concert.venueBooking.commission %></strong></td>
+                    </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <h6 class="fw-bold text-info">Venue Specifications:</h6>
+              <div class="table-responsive">
+                <table class="table table-dark table-sm">
+                  <tbody>
+                    <tr>
+                      <td><strong>Capacity:</strong></td>
+                      <td><%= concert.venue.capacity || 'N/A' %> people</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Venue Type:</strong></td>
+                      <td><%= concert.venue.venueType || 'N/A' %></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Status:</strong></td>
+                      <td>
+                        <span class="badge <%= concert.venue.isActive ? 'bg-success' : 'bg-secondary' %>">
+                          <%= concert.venue.isActive ? 'Active' : 'Inactive' %>
+                        </span>
+                        <% if (concert.venue.isVerified) { %>
+                          <span class="badge bg-primary">Verified</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                    <% if (concert.venue.pricing && concert.venue.pricing.minimumHours) { %>
+                    <tr>
+                      <td><strong>Minimum Hours:</strong></td>
+                      <td><%= concert.venue.pricing.minimumHours %> hours</td>
+                    </tr>
+                    <% } %>
+                    <% if (concert.venueBooking && concert.venueBooking.isPaid !== undefined) { %>
+                    <tr>
+                      <td><strong>Payment Status:</strong></td>
+                      <td>
+                        <span class="badge <%= concert.venueBooking.isPaid ? 'bg-success' : 'bg-warning' %>">
+                          <%= concert.venueBooking.isPaid ? 'Paid' : 'Pending' %>
+                        </span>
+                      </td>
+                    </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <% if (concert.venue.facilities && concert.venue.facilities.length > 0) { %>
+        <div class="mt-3">
+          <h6 class="fw-bold">Available Facilities:</h6>
+          <div class="d-flex flex-wrap gap-1">
+            <% concert.venue.facilities.forEach(facility => { %>
+              <span class="badge bg-secondary text-light"><%= facility %></span>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+        
+        <% if (concert.venue.pricing && concert.venue.pricing.additionalCharges && concert.venue.pricing.additionalCharges.length > 0) { %>
+        <div class="mt-3">
+          <h6 class="fw-bold">Additional Charges:</h6>
+          <ul class="list-unstyled mb-0">
+            <% concert.venue.pricing.additionalCharges.forEach(charge => { %>
+              <li><i class="bi bi-arrow-right text-primary me-1"></i><%= charge %></li>
+            <% }); %>
+          </ul>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+    
     <!-- Concert Image -->
     <% if (concert.image) { %>
       <div class="glass-card-dark mb-4">
@@ -131,7 +450,7 @@
             <% if (concert.artist.user.profileImage) { %>
               <img src="<%= concert.artist.user.profileImage %>" alt="<%= concert.artist.user.name %>" class="rounded-circle img-thumbnail mb-3" width="100" height="100">
             <% } else { %>
-              <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+              <div class="bg-dark rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
                 <i class="bi bi-person-circle text-secondary" style="font-size: 3rem;"></i>
               </div>
             <% } %>

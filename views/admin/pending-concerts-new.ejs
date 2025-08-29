@@ -149,7 +149,7 @@
                   <div class="small text-primary"><%= concert.time %></div>
                 </td>
                 <td>
-                  <div class="text-white"><%= concert.venue %></div>
+                  <div class="text-white"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></div>
                   <div class="small text-primary"><%= concert.city %></div>
                 </td>
                 <td>

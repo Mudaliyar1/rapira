@@ -86,9 +86,19 @@
         </a>
       </li>
       <li class="nav-item mb-1">
+        <a href="/admin/venues" class="nav-link rounded <%= path === '/admin/venues' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-building me-1"></i> Venues
+        </a>
+      </li>
+      <li class="nav-item mb-1">
         <a href="/admin/concerts/pending" class="nav-link rounded <%= path === '/admin/concerts/pending' ? 'active bg-primary' : '' %>">
           <i class="bi bi-hourglass-split me-1"></i> Pending
           <span class="badge bg-danger rounded-pill float-end" id="pendingCount" style="font-size: 0.65rem;"></span>
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/concert-edit-requests" class="nav-link rounded <%= path.startsWith('/admin/concert-edit-requests') ? 'active bg-primary' : '' %>">
+          <i class="bi bi-pencil-square me-1"></i> Edit Requests
         </a>
       </li>
       <li class="nav-item mb-1">

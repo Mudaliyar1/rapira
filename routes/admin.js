@@ -507,19 +507,20 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
       .populate({
         path: 'artist',
         populate: { path: 'user', select: 'name' }
-      });
+      })
+      .populate('venue', 'name city address');
 
     // Apply text search on populated data
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
       realConcerts = realConcerts.filter(concert => {
         const title = (concert.title || '').toLowerCase();
-        const venue = (concert.venue || '').toLowerCase();
+        const venueName = (concert.venue && concert.venue.name ? concert.venue.name : '').toLowerCase();
         const city = (concert.city || '').toLowerCase();
         const artistName = (concert.artist && concert.artist.user ? concert.artist.user.name : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               venue.includes(searchTerm) ||
+               venueName.includes(searchTerm) ||
                city.includes(searchTerm) ||
                artistName.includes(searchTerm);
       });
@@ -547,7 +548,19 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
 
     // Get unique venues for filter dropdown
     const allVenues = await Concert.find().distinct('venue');
-    const venues = allVenues.filter(v => v && v.trim()).sort();
+    const venues = allVenues
+      .filter(v => v)
+      .map(v => {
+        // Handle both string venues and populated venue objects
+        if (typeof v === 'string') {
+          return v.trim();
+        } else if (v && typeof v === 'object' && v.name) {
+          return v.name.trim();
+        }
+        return null;
+      })
+      .filter(v => v && v.length > 0)
+      .sort();
 
     res.render('admin/concerts-new', {
       layout: 'admin',
@@ -688,7 +701,8 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
       .populate({
         path: 'artist',
         populate: { path: 'user' }
-      });
+      })
+      .populate('venue'); // Populate venue details
 
     if (!concert) {
       req.flash('error', 'Concert not found');
@@ -748,7 +762,8 @@ router.get('/concerts/pending', isLoggedIn, isAdmin, async (req, res) => {
       .populate({
         path: 'artist',
         populate: { path: 'user', select: 'name email' }
-      });
+      })
+      .populate('venue', 'name city address');
 
     // Apply text search on populated data
     if (search && search.trim()) {
