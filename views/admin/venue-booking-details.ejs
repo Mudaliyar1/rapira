@@ -1,0 +1,464 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+              <li class="breadcrumb-item">
+                <a href="/admin" class="text-decoration-none">Admin</a>
+              </li>
+              <li class="breadcrumb-item">
+                <a href="/admin/venue-bookings" class="text-decoration-none">Venue Bookings</a>
+              </li>
+              <li class="breadcrumb-item active" aria-current="page"><%= venue.name %></li>
+            </ol>
+          </nav>
+          <h2 class="text-dark mb-1">
+            <i class="bi bi-geo-alt-fill me-2"></i><%= venue.name %>
+          </h2>
+          <p class="text-muted mb-0">
+            <i class="bi bi-geo me-1"></i><%= venue.address %>, <%= venue.city %>, <%= venue.state %>
+          </p>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="checkVenueAvailability('<%= venue._id %>')">
+            <i class="bi bi-calendar-check me-1"></i>Check Availability
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Info Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-people-fill text-primary fs-1 mb-2"></i>
+          <h5 class="card-title">Capacity</h5>
+          <p class="card-text fs-4"><%= venue.capacity || 'N/A' %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-calendar-event-fill text-success fs-1 mb-2"></i>
+          <h5 class="card-title">Total Bookings</h5>
+          <p class="card-text fs-4"><%= totalBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-clock-history text-warning fs-1 mb-2"></i>
+          <h5 class="card-title">Upcoming</h5>
+          <p class="card-text fs-4"><%= upcomingBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <i class="bi bi-currency-rupee text-info fs-1 mb-2"></i>
+          <h5 class="card-title">Hourly Rate</h5>
+          <p class="card-text fs-4">
+            <% if (venue.pricing && venue.pricing.hourlyRates && venue.pricing.hourlyRates.length > 0) { %>
+              ₹<%= venue.pricing.hourlyRates[0].rate %><small class="text-muted">/hr</small>
+            <% } else { %>
+              N/A
+            <% } %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="GET" class="row g-3">
+            <div class="col-md-3">
+              <label for="date" class="form-label">Date</label>
+              <input type="date" name="date" id="date" class="form-control" value="<%= selectedDate || '' %>">
+            </div>
+            <div class="col-md-3">
+              <label for="status" class="form-label">Status</label>
+              <select name="status" id="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+                <option value="approved" <%= selectedStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+                <option value="completed" <%= selectedStatus === 'completed' ? 'selected' : '' %>>Completed</option>
+                <option value="cancelled" <%= selectedStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="timeRange" class="form-label">Time Range</label>
+              <select name="timeRange" id="timeRange" class="form-select">
+                <option value="">All Times</option>
+                <option value="morning" <%= selectedTimeRange === 'morning' ? 'selected' : '' %>>Morning (6AM-12PM)</option>
+                <option value="afternoon" <%= selectedTimeRange === 'afternoon' ? 'selected' : '' %>>Afternoon (12PM-6PM)</option>
+                <option value="evening" <%= selectedTimeRange === 'evening' ? 'selected' : '' %>>Evening (6PM-12AM)</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">&nbsp;</label>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search me-1"></i>Filter
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings List -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="bi bi-calendar-event me-2"></i>Booking History
+            <span class="badge bg-secondary ms-2"><%= bookings.length %> bookings</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if (bookings.length === 0) { %>
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+              <h4 class="text-muted">No bookings found</h4>
+              <p class="text-muted">This venue has no bookings matching your current filters.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Concert Details</th>
+                    <th>Artist</th>
+                    <th>Date & Time</th>
+                    <th>Duration</th>
+                    <th>Booking Amount</th>
+                    <th>Status</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% bookings.forEach(booking => { %>
+                    <tr>
+                      <td>
+                        <div>
+                          <h6 class="mb-1"><%= booking.title %></h6>
+                          <small class="text-muted">
+                            <% if (booking.description && booking.description.length > 50) { %>
+                              <%= booking.description.substring(0, 50) %>...
+                            <% } else { %>
+                              <%= booking.description || 'No description' %>
+                            <% } %>
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div>
+                            <div class="fw-bold"><%= booking.artist.stageName %></div>
+                            <small class="text-muted"><%= booking.artist.user.email %></small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <div class="fw-bold"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                          <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i><%= booking.time %>
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <% if (booking.venueBooking && booking.venueBooking.bookingHours) { %>
+                          <span class="badge bg-info"><%= booking.venueBooking.bookingHours %>h</span>
+                        <% } else { %>
+                          <span class="text-muted">N/A</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (booking.venueBooking && booking.venueBooking.totalAmount) { %>
+                          <div class="fw-bold text-success">₹<%= booking.venueBooking.totalAmount %></div>
+                          <% if (booking.venueBooking.adminCommission) { %>
+                            <small class="text-muted">Commission: ₹<%= booking.venueBooking.adminCommission %></small>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-muted">N/A</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% 
+                          let statusClass = 'secondary';
+                          let statusIcon = 'clock';
+                          if (booking.status === 'approved') {
+                            statusClass = 'success';
+                            statusIcon = 'check-circle';
+                          } else if (booking.status === 'pending') {
+                            statusClass = 'warning';
+                            statusIcon = 'clock-history';
+                          } else if (booking.status === 'rejected') {
+                            statusClass = 'danger';
+                            statusIcon = 'x-circle';
+                          } else if (booking.status === 'completed') {
+                            statusClass = 'info';
+                            statusIcon = 'check-all';
+                          }
+                        %>
+                        <span class="badge bg-<%= statusClass %>">
+                          <i class="bi bi-<%= statusIcon %> me-1"></i><%= booking.status.toUpperCase() %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (booking.venueBooking) { %>
+                          <% if (booking.venueBooking.paymentStatus === 'completed') { %>
+                            <span class="badge bg-success">
+                              <i class="bi bi-check-circle me-1"></i>Paid
+                            </span>
+                          <% } else if (booking.venueBooking.paymentStatus === 'pending') { %>
+                            <span class="badge bg-warning">
+                              <i class="bi bi-clock-history me-1"></i>Pending
+                            </span>
+                          <% } else { %>
+                            <span class="badge bg-danger">
+                              <i class="bi bi-x-circle me-1"></i>Failed
+                            </span>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-muted">N/A</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <a href="/admin/concerts/<%= booking._id %>/details" class="btn btn-outline-primary" title="View Details">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <% if (booking.status === 'pending') { %>
+                            <button class="btn btn-outline-success" onclick="approveBooking('<%= booking._id %>')" title="Approve">
+                              <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="rejectBooking('<%= booking._id %>')" title="Reject">
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          <% } %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Venue Availability Modal -->
+<div class="modal fade" id="availabilityModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-calendar-check me-2"></i>Check Venue Availability
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="availabilityForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="checkDate" class="form-label">Date</label>
+              <input type="date" class="form-control" id="checkDate" required>
+            </div>
+            <div class="col-md-6">
+              <label for="checkTime" class="form-label">Time</label>
+              <input type="time" class="form-control" id="checkTime" required>
+            </div>
+            <div class="col-md-6">
+              <label for="duration" class="form-label">Duration (hours)</label>
+              <select class="form-select" id="duration">
+                <option value="1">1 Hour</option>
+                <option value="2" selected>2 Hours</option>
+                <option value="3">3 Hours</option>
+                <option value="4">4 Hours</option>
+                <option value="6">6 Hours</option>
+                <option value="8">8 Hours</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">&nbsp;</label>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-search me-1"></i>Check Availability
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+        
+        <div id="availabilityResults" class="mt-4" style="display: none;">
+          <!-- Results will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentVenueId = '<%= venue._id %>';
+
+function checkVenueAvailability(venueId) {
+  currentVenueId = venueId;
+  document.getElementById('checkDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('availabilityResults').style.display = 'none';
+  new bootstrap.Modal(document.getElementById('availabilityModal')).show();
+}
+
+function approveBooking(concertId) {
+  if (confirm('Are you sure you want to approve this booking?')) {
+    fetch(`/admin/concerts/${concertId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Failed to approve booking');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to approve booking');
+    });
+  }
+}
+
+function rejectBooking(concertId) {
+  const reason = prompt('Please provide a reason for rejection:');
+  if (reason) {
+    fetch(`/admin/concerts/${concertId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason })
+    })
+    .then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Failed to reject booking');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to reject booking');
+    });
+  }
+}
+
+document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const date = document.getElementById('checkDate').value;
+  const time = document.getElementById('checkTime').value;
+  const duration = document.getElementById('duration').value;
+  
+  try {
+    const response = await fetch(`/admin/venue-bookings/check-availability?venueId=${currentVenueId}&date=${date}&time=${time}&duration=${duration}`);
+    const result = await response.json();
+    
+    const resultsDiv = document.getElementById('availabilityResults');
+    resultsDiv.style.display = 'block';
+    
+    if (result.success) {
+      if (result.available) {
+        resultsDiv.innerHTML = `
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Available!</strong> The venue is free during the requested time slot.
+          </div>
+        `;
+      } else {
+        let conflictsHtml = result.conflicts.map(conflict => `
+          <div class="border-start border-3 border-danger ps-3 mb-2">
+            <h6 class="mb-1">${conflict.title}</h6>
+            <p class="text-muted mb-1">Artist: ${conflict.artist}</p>
+            <small class="text-danger">Time: ${conflict.time} (${conflict.duration}h) - ${conflict.status}</small>
+          </div>
+        `).join('');
+        
+        resultsDiv.innerHTML = `
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Conflicting Bookings Found!</strong>
+          </div>
+          <div class="mt-3">
+            <h6>Conflicting Events:</h6>
+            ${conflictsHtml}
+          </div>
+        `;
+      }
+      
+      if (result.existingBookings.length > 0) {
+        let bookingsHtml = result.existingBookings.map(booking => `
+          <div class="border rounded p-2 mb-2">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong>${booking.title}</strong><br>
+                <small class="text-muted">${booking.artist} • ${booking.time} (${booking.duration}h)</small>
+              </div>
+              <span class="badge bg-${booking.status === 'approved' ? 'success' : 'warning'}">${booking.status}</span>
+            </div>
+          </div>
+        `).join('');
+        
+        resultsDiv.innerHTML += `
+          <div class="mt-3">
+            <h6>All Bookings for this Date:</h6>
+            ${bookingsHtml}
+          </div>
+        `;
+      }
+    } else {
+      resultsDiv.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-x-circle me-2"></i>
+          Error: ${result.message}
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    document.getElementById('availabilityResults').innerHTML = `
+      <div class="alert alert-danger">
+        <i class="bi bi-x-circle me-2"></i>
+        Error checking availability. Please try again.
+      </div>
+    `;
+  }
+});
+</script>
+
+  </div>
+</div>

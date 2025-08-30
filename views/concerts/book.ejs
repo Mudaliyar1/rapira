@@ -17,7 +17,20 @@
                 </span>
               </div>
               <p class="text-white mb-0">
-                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+                <% 
+                  // Convert time to 12-hour format with AM/PM
+                  let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
+                  let displayTime = concert.time;
+                  if (timeMatch) {
+                    let hours = parseInt(timeMatch[1]);
+                    let minutes = timeMatch[2];
+                    let amPm = hours >= 12 ? 'PM' : 'AM';
+                    let hour12 = hours % 12;
+                    if (hour12 === 0) hour12 = 12;
+                    displayTime = `${hour12}:${minutes} ${amPm}`;
+                  }
+                %>
+                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= displayTime %>
               </p>
               <p class="text-white mb-0">
                 <i class="bi bi-geo-alt me-1 text-primary"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
@@ -149,7 +162,33 @@
               </div>
               <div>
                 <h6 class="mb-0 text-white"><%= concert.title %></h6>
-                <p class="text-white-50 mb-0"><%= concert.time %></p>
+                <p class="text-white-50 mb-0"><%= displayTime %></p>
+                <% 
+                  let bookingHours = concert.bookingHours || 2;
+                  // Calculate end time using the same logic
+                  let endDisplayTime = concert.time;
+                  if (timeMatch) {
+                    let startHours = parseInt(timeMatch[1]);
+                    let minutes = timeMatch[2];
+                    let endHours = startHours + bookingHours;
+                    let endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                    let endHour12 = endHours % 12;
+                    if (endHour12 === 0) endHour12 = 12;
+                    
+                    if (endHours >= 24) {
+                      endHours = endHours - 24;
+                      endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                      endHour12 = endHours % 12;
+                      if (endHour12 === 0) endHour12 = 12;
+                      endDisplayTime = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
+                    } else {
+                      endDisplayTime = `${endHour12}:${minutes} ${endAmPm}`;
+                    }
+                  }
+                %>
+                <small class="text-white-50">Duration: <%= bookingHours %> hours</small><br>
+                <small class="text-success">Start: <%= displayTime %></small><br>
+                <small class="text-danger">End: <%= endDisplayTime %></small>
               </div>
             </div>
 

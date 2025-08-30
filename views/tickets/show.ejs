@@ -76,11 +76,61 @@
                   </p>
                   <p class="text-white-50 mb-0">
                     <i class="bi bi-clock me-2 text-primary"></i>
-                    <%= concert.time %>
+                    <span class="fw-medium">Concert Time:</span> <%= concert.time %>
+                  </p>
+                  <% 
+                    // Get booking hours from concert or default to 2 hours
+                    let bookingHours = concert.bookingHours || 2;
+                    
+                    // Parse time and convert to 12-hour format with AM/PM
+                    let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
+                    let displayTime = concert.time;
+                    let startTime12hr = concert.time;
+                    let endTime12hr = '';
+                    
+                    if (timeMatch) {
+                      let hours = parseInt(timeMatch[1]);
+                      let minutes = timeMatch[2];
+                      
+                      // Convert to 12-hour format for start time
+                      let startAmPm = hours >= 12 ? 'PM' : 'AM';
+                      let startHour12 = hours % 12;
+                      if (startHour12 === 0) startHour12 = 12;
+                      startTime12hr = `${startHour12}:${minutes} ${startAmPm}`;
+                      
+                      // Calculate end time
+                      let endHours = hours + bookingHours;
+                      let endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                      let endHour12 = endHours % 12;
+                      if (endHour12 === 0) endHour12 = 12;
+                      
+                      // Handle day overflow
+                      if (endHours >= 24) {
+                        endHours = endHours - 24;
+                        endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                        endHour12 = endHours % 12;
+                        if (endHour12 === 0) endHour12 = 12;
+                        endTime12hr = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
+                      } else {
+                        endTime12hr = `${endHour12}:${minutes} ${endAmPm}`;
+                      }
+                    }
+                  %>
+                  <p class="text-white-50 mb-0">
+                    <i class="bi bi-hourglass-split me-2 text-primary"></i>
+                    <span class="fw-medium">Duration:</span> <%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %>
+                  </p>
+                  <p class="text-white-50 mb-0">
+                    <i class="bi bi-play-circle me-2 text-success"></i>
+                    <span class="fw-medium">Start Time:</span> <%= startTime12hr %>
+                  </p>
+                  <p class="text-white-50 mb-0">
+                    <i class="bi bi-stop-circle me-2 text-danger"></i>
+                    <span class="fw-medium">End Time:</span> <%= endTime12hr %>
                   </p>
                   <p class="text-white-50 mb-0 concert-venue-info">
                     <i class="bi bi-geo-alt me-2 text-primary"></i>
-                    <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
+                    <%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>, <%= concert.city %>
                   </p>
                 <% } %>
               </div>
@@ -168,6 +218,87 @@
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= ticket._id %>" alt="Ticket QR Code" class="img-fluid" style="max-width: 150px; background-color: white; padding: 10px; border-radius: 8px;">
               </div>
             </div>
+
+            <!-- Venue Location Map -->
+            <% if (!isDeletedConcert && concert.venue) { %>
+            <hr class="my-4 border-secondary">
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Venue Location</h5>
+              <div class="row">
+                <div class="col-md-8 mb-3 mb-md-0">
+                  <div class="bg-dark rounded p-3 border border-secondary">
+                    <h6 class="text-white mb-2">
+                      <i class="bi bi-geo-alt-fill me-2 text-primary"></i>
+                      <%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>
+                    </h6>
+                    <p class="text-white-50 mb-2">
+                      <i class="bi bi-building me-2"></i>
+                      <% if (concert.venue && concert.venue.address && concert.venue.address.trim() !== '') { %>
+                        <%= concert.venue.address %>
+                        <% if (concert.venue.city && concert.venue.city.trim() !== '') { %>, <%= concert.venue.city %><% } %>
+                        <% if (concert.venue.state && concert.venue.state.trim() !== '') { %>, <%= concert.venue.state %><% } %>
+                        <% if (concert.venue.pincode && concert.venue.pincode.trim() !== '') { %> - <%= concert.venue.pincode %><% } %>
+                      <% } else { %>
+                        Full address will be provided closer to event date
+                      <% } %>
+                    </p>
+                    <p class="text-white-50 mb-0">
+                      <i class="bi bi-map me-2"></i>
+                      <%= concert.city %>
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-center">
+                    <% 
+                      // Create comprehensive search query for maps
+                      let venueName = concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue');
+                      let venueAddress = '';
+                      
+                      if (concert.venue && concert.venue.address) {
+                        venueAddress = concert.venue.address;
+                        // Add venue city if different from concert city
+                        if (concert.venue.city && concert.venue.city !== concert.city) {
+                          venueAddress += ', ' + concert.venue.city;
+                        }
+                      }
+                      
+                      // Build comprehensive map query using only address (no venue name)
+                      let mapQuery = '';
+                      if (venueAddress) {
+                        mapQuery = venueAddress;
+                      }
+                      if (concert.city) {
+                        mapQuery += (mapQuery ? ', ' : '') + concert.city;
+                      }
+                      mapQuery = encodeURIComponent(mapQuery);
+                    %>
+                    <!-- Simple map placeholder with click to open -->
+                    <div class="map-placeholder" onclick="window.open('https://www.google.com/maps/search/<%= mapQuery %>', '_blank')" 
+                         style="width: 100%; height: 200px; background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;">
+                      <div class="text-center text-white">
+                        <i class="bi bi-geo-alt-fill" style="font-size: 3rem; opacity: 0.8;"></i>
+                        <div class="mt-2">
+                          <strong>Click to View Location</strong>
+                          <br><small>Opens in Google Maps</small>
+                        </div>
+                      </div>
+                      <div style="position: absolute; top: 10px; right: 10px;">
+                        <i class="bi bi-box-arrow-up-right text-white"></i>
+                      </div>
+                    </div>
+                    <div class="mt-2">
+                      <a href="https://www.google.com/maps/search/<%= mapQuery %>" 
+                         target="_blank" 
+                         class="btn btn-primary btn-sm">
+                        <i class="bi bi-map me-1"></i> Open in Maps
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <% } %>
 
             <!-- REFUND SECTION - SIMPLE AND PROMINENT -->
             <hr class="my-4 border-secondary">

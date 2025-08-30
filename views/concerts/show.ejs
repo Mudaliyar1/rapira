@@ -36,7 +36,20 @@
                     <i class="bi bi-clock text-primary me-3 fs-4"></i>
                     <div>
                       <small class="text-primary d-block">Time</small>
-                      <span class="text-white"><%= concert.time %></span>
+                      <% 
+                        // Convert time to 12-hour format with AM/PM
+                        let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
+                        let displayTime = concert.time;
+                        if (timeMatch) {
+                          let hours = parseInt(timeMatch[1]);
+                          let minutes = timeMatch[2];
+                          let amPm = hours >= 12 ? 'PM' : 'AM';
+                          let hour12 = hours % 12;
+                          if (hour12 === 0) hour12 = 12;
+                          displayTime = `${hour12}:${minutes} ${amPm}`;
+                        }
+                      %>
+                      <span class="text-white"><%= displayTime %></span>
                     </div>
                   </div>
                 </div>
@@ -52,6 +65,56 @@
                           <%= concert.city %>
                         <% } %>
                       </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-hourglass-split text-primary me-3 fs-4"></i>
+                    <div>
+                      <small class="text-primary d-block">Duration</small>
+                      <% let bookingHours = concert.bookingHours || 2; %>
+                      <span class="text-white"><%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-play-circle text-success me-3 fs-4"></i>
+                    <div>
+                      <small class="text-success d-block">Start Time</small>
+                      <span class="text-white"><%= displayTime %></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3 glass-card-dark p-3 rounded-3">
+                    <i class="bi bi-stop-circle text-danger me-3 fs-4"></i>
+                    <div>
+                      <small class="text-danger d-block">End Time</small>
+                      <% 
+                        // Calculate end time
+                        let endDisplayTime = concert.time;
+                        if (timeMatch) {
+                          let startHours = parseInt(timeMatch[1]);
+                          let minutes = timeMatch[2];
+                          let endHours = startHours + bookingHours;
+                          let endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                          let endHour12 = endHours % 12;
+                          if (endHour12 === 0) endHour12 = 12;
+                          
+                          if (endHours >= 24) {
+                            endHours = endHours - 24;
+                            endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                            endHour12 = endHours % 12;
+                            if (endHour12 === 0) endHour12 = 12;
+                            endDisplayTime = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
+                          } else {
+                            endDisplayTime = `${endHour12}:${minutes} ${endAmPm}`;
+                          }
+                        }
+                      %>
+                      <span class="text-white"><%= endDisplayTime %></span>
                     </div>
                   </div>
                 </div>
@@ -181,7 +244,7 @@
             <h5 class="card-title fw-bold mb-3 gradient-text-orange">Venue Location</h5>
             <div class="ratio ratio-4x3 mb-3 rounded-3 overflow-hidden">
               <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=<%= encodeURIComponent(concert.venue && concert.venue.name ? `${concert.venue.name}, ${concert.venue.city}` : concert.city) %>"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>"
                 width="100%"
                 height="200"
                 style="border:0;"
@@ -189,6 +252,13 @@
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade">
               </iframe>
+            </div>
+            <div class="text-center mb-3">
+              <a href="https://www.google.com/maps/search/<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>" 
+                 target="_blank" 
+                 class="btn btn-primary btn-lg">
+                <i class="bi bi-geo-alt-fill me-2"></i> Open Location in Maps
+              </a>
             </div>
             <div class="glass-card-dark p-3 rounded-3">
               <p class="mb-0 text-white">

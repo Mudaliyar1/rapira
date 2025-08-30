@@ -241,6 +241,68 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
       isActive: selectedVenue.isActive
     });
 
+    // CHECK FOR VENUE BOOKING CONFLICTS
+    const bookingDate = new Date(date);
+    const [startHours, startMinutes] = time.split(':').map(Number);
+    const durationHours = parseInt(bookingHours) || 1;
+
+    // Create start and end times for the requested booking
+    const requestedStart = new Date(bookingDate);
+    requestedStart.setHours(startHours, startMinutes, 0, 0);
+    
+    const requestedEnd = new Date(requestedStart);
+    requestedEnd.setHours(startHours + durationHours, startMinutes, 0, 0);
+
+    // Find existing bookings for this venue on this date
+    const existingBookings = await Concert.find({
+      venue: venue,
+      date: {
+        $gte: new Date(bookingDate.setHours(0, 0, 0, 0)),
+        $lte: new Date(bookingDate.setHours(23, 59, 59, 999))
+      },
+      status: { $in: ['pending', 'approved'] } // Only check non-cancelled bookings
+    });
+
+    // Check for conflicts
+    const conflicts = [];
+    existingBookings.forEach(booking => {
+      if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
+        const [existingHours, existingMinutes] = booking.time.split(':').map(Number);
+        
+        const existingStart = new Date(bookingDate);
+        existingStart.setHours(existingHours, existingMinutes, 0, 0);
+        
+        const existingEnd = new Date(existingStart);
+        existingEnd.setHours(existingHours + booking.venueBooking.bookingHours, existingMinutes, 0, 0);
+
+        // Check for overlap
+        const hasOverlap = (requestedStart < existingEnd && requestedEnd > existingStart);
+
+        if (hasOverlap) {
+          conflicts.push({
+            title: booking.title,
+            time: booking.time,
+            duration: booking.venueBooking.bookingHours,
+            status: booking.status
+          });
+        }
+      }
+    });
+
+    // If there are conflicts, reject the booking
+    if (conflicts.length > 0) {
+      const conflictDetails = conflicts.map(c => `${c.title} (${c.time} for ${c.duration}h - ${c.status})`).join(', ');
+      console.log('Venue booking conflict detected:', conflictDetails);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Venue booking conflict detected',
+        message: `This time slot conflicts with existing bookings: ${conflictDetails}`,
+        conflicts: conflicts
+      });
+    }
+
+    console.log('No venue conflicts detected, proceeding with booking...');
+
     // Use venue city if not provided in form
     const finalCity = city || selectedVenue.city;
 
@@ -413,6 +475,59 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, upload.single('post
 
     // Get pending concert data
     const concertData = req.session.pendingConcert;
+
+    // DOUBLE-CHECK FOR VENUE BOOKING CONFLICTS BEFORE FINAL CREATION
+    const bookingDate = new Date(concertData.date);
+    const [startHours, startMinutes] = concertData.time.split(':').map(Number);
+    const durationHours = concertData.venueBooking?.bookingHours || 1;
+
+    // Create start and end times for the requested booking
+    const requestedStart = new Date(bookingDate);
+    requestedStart.setHours(startHours, startMinutes, 0, 0);
+    
+    const requestedEnd = new Date(requestedStart);
+    requestedEnd.setHours(startHours + durationHours, startMinutes, 0, 0);
+
+    // Find existing bookings for this venue on this date (excluding current session)
+    const existingBookings = await Concert.find({
+      venue: concertData.venue,
+      date: {
+        $gte: new Date(bookingDate.setHours(0, 0, 0, 0)),
+        $lte: new Date(bookingDate.setHours(23, 59, 59, 999))
+      },
+      status: { $in: ['pending', 'approved'] }
+    });
+
+    // Check for conflicts
+    let hasConflict = false;
+    existingBookings.forEach(booking => {
+      if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
+        const [existingHours, existingMinutes] = booking.time.split(':').map(Number);
+        
+        const existingStart = new Date(bookingDate);
+        existingStart.setHours(existingHours, existingMinutes, 0, 0);
+        
+        const existingEnd = new Date(existingStart);
+        existingEnd.setHours(existingHours + booking.venueBooking.bookingHours, existingMinutes, 0, 0);
+
+        // Check for overlap
+        const hasOverlap = (requestedStart < existingEnd && requestedEnd > existingStart);
+
+        if (hasOverlap) {
+          hasConflict = true;
+        }
+      }
+    });
+
+    // If there are conflicts during payment verification, show error
+    if (hasConflict) {
+      console.log('Venue booking conflict detected during payment verification');
+      delete req.session.pendingConcert; // Clear the pending concert
+      req.flash('error', 'Venue booking conflict detected. Another artist has booked this time slot. Please create a new concert with a different time.');
+      return res.redirect('/concerts/create');
+    }
+
+    console.log('Final conflict check passed, creating concert...');
 
     // Create concert
     const newConcert = new Concert({

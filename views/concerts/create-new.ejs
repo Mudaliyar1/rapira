@@ -73,6 +73,26 @@
             <div class="form-text">Select from admin-approved venues only</div>
           </div>
 
+          <!-- Venue Availability Status -->
+          <div id="venueAvailabilitySection" class="mb-3 d-none">
+            <div class="card" id="availabilityCard">
+              <div class="card-header" id="availabilityHeader">
+                <h6 class="mb-0">
+                  <i class="bi bi-calendar-check me-2"></i>Venue Availability
+                  <button type="button" class="btn btn-sm btn-outline-primary float-end" id="checkAvailabilityBtn">
+                    <i class="bi bi-search me-1"></i>Check Availability
+                  </button>
+                </h6>
+              </div>
+              <div class="card-body" id="availabilityResults">
+                <div class="text-center text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Select venue, date, time, and duration to check availability
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Venue Pricing Information -->
           <div id="venuePricing" class="mb-3 d-none">
             <div class="card border-info">
@@ -249,6 +269,32 @@
 </div>
 
 <script>
+  // Add visual feedback styles
+  const styles = `
+    <style>
+      .availability-checking {
+        border-left: 4px solid #007bff !important;
+        background-color: rgba(0, 123, 255, 0.1) !important;
+      }
+      
+      .form-control.checking {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        transition: all 0.3s ease;
+      }
+      
+      .availability-results {
+        transition: all 0.3s ease;
+      }
+      
+      .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+      }
+    </style>
+  `;
+  document.head.insertAdjacentHTML('beforeend', styles);
+
   // Set minimum date to today and initialize
   document.addEventListener('DOMContentLoaded', function() {
     // Set minimum date to today
@@ -643,9 +689,323 @@
     }
 
     // Event listeners
-    venueSelect.addEventListener('change', updateVenuePricing);
+    venueSelect.addEventListener('change', function() {
+      updateVenuePricing();
+      showAvailabilitySection();
+      resetAvailabilityResults();
+    });
     if (bookingHours) bookingHours.addEventListener('change', calculateTotalCost); // Changed from 'input' to 'change'
     if (ticketPriceInput) ticketPriceInput.addEventListener('input', validateTicketPrice);
+    
+    // Add venue availability functionality
+    const checkAvailabilityBtn = document.getElementById('checkAvailabilityBtn');
+    const availabilitySection = document.getElementById('venueAvailabilitySection');
+    const availabilityResults = document.getElementById('availabilityResults');
+    const availabilityCard = document.getElementById('availabilityCard');
+    const availabilityHeader = document.getElementById('availabilityHeader');
+    const dateInput = document.getElementById('date');
+    const timeInput = document.getElementById('time');
+
+    // Show/hide availability section
+    function showAvailabilitySection() {
+      if (venueSelect.value) {
+        availabilitySection.classList.remove('d-none');
+      } else {
+        availabilitySection.classList.add('d-none');
+      }
+    }
+
+    function resetAvailabilityResults() {
+      availabilityResults.innerHTML = `
+        <div class="text-center text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Select venue, date, time, and duration to check availability
+        </div>
+      `;
+      availabilityCard.className = 'card';
+      availabilityHeader.className = 'card-header';
+    }
+
+    // Auto-check availability when values change
+    let availabilityCheckTimeout;
+    function autoCheckAvailability() {
+      // Clear existing timeout to avoid rapid API calls
+      if (availabilityCheckTimeout) {
+        clearTimeout(availabilityCheckTimeout);
+      }
+      
+      // Add visual feedback - highlight the availability section
+      const availabilitySection = document.getElementById('availabilityResults');
+      const formControls = [venueSelect, dateInput, timeInput, bookingHours];
+      
+      // Add checking class to form controls that have values
+      formControls.forEach(control => {
+        if (control.value) {
+          control.classList.add('checking');
+        }
+      });
+      
+      // Show checking indicator immediately if we have some required fields
+      if (venueSelect.value && (dateInput.value || timeInput.value || bookingHours.value)) {
+        availabilityResults.classList.add('availability-checking');
+        availabilityResults.innerHTML = `
+          <div class="text-center text-info">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span>Checking availability...</span>
+          </div>
+        `;
+      }
+      
+      // Debounce the actual check
+      availabilityCheckTimeout = setTimeout(() => {
+        // Remove checking visual feedback
+        formControls.forEach(control => {
+          control.classList.remove('checking');
+        });
+        
+        if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
+          checkVenueAvailability();
+        } else if (venueSelect.value) {
+          // Show partial message when some fields are missing
+          availabilityResults.classList.remove('availability-checking');
+          availabilityResults.innerHTML = `
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle me-2" style="color: #000000 !important;"></i>
+              <span style="color: #000000 !important;">Please complete all fields (date, time, duration) to check availability.</span>
+            </div>
+          `;
+        } else {
+          availabilityResults.classList.remove('availability-checking');
+          availabilityResults.innerHTML = '';
+        }
+      }, 800); // Reduced debounce time for faster response
+    }
+
+    // Event listeners for auto-checking (enhanced)
+    dateInput.addEventListener('change', autoCheckAvailability);
+    dateInput.addEventListener('input', autoCheckAvailability);
+    dateInput.addEventListener('blur', autoCheckAvailability); // When user clicks away
+    
+    timeInput.addEventListener('change', autoCheckAvailability);
+    timeInput.addEventListener('input', autoCheckAvailability);
+    timeInput.addEventListener('blur', autoCheckAvailability);
+    
+    bookingHours.addEventListener('change', autoCheckAvailability);
+    bookingHours.addEventListener('input', autoCheckAvailability);
+    
+    // Also add keyboard event listeners for more responsive checking
+    dateInput.addEventListener('keyup', function() {
+      if (this.value.length >= 10) { // Full date entered
+        autoCheckAvailability();
+      }
+    });
+    
+    timeInput.addEventListener('keyup', function() {
+      if (this.value.length >= 5) { // Full time entered (HH:MM)
+        autoCheckAvailability();
+      }
+    });
+    
+    // Also check when venue changes (integrated with existing venue change handler)
+    const originalVenueChangeHandler = venueSelect.onchange;
+    venueSelect.addEventListener('change', function() {
+      updateVenuePricing();
+      showAvailabilitySection();
+      resetAvailabilityResults();
+      // Auto-check if all required fields are filled
+      setTimeout(autoCheckAvailability, 500);
+    });
+
+    // Manual availability check
+    checkAvailabilityBtn.addEventListener('click', checkVenueAvailability);
+
+    async function checkVenueAvailability() {
+      const venueId = venueSelect.value;
+      const date = dateInput.value;
+      const startTime = timeInput.value;
+      const duration = bookingHours.value;
+
+      if (!venueId || !date || !startTime || !duration) {
+        availabilityResults.innerHTML = `
+          <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Please select venue, date, start time, and duration first.
+          </div>
+        `;
+        return;
+      }
+
+      // Show loading state
+      availabilityResults.innerHTML = `
+        <div class="text-center">
+          <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+          <span>Checking availability...</span>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/venue-availability/check-availability', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            venueId,
+            date,
+            startTime,
+            duration: parseInt(duration)
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          displayAvailabilityResults(result);
+        } else {
+          availabilityResults.innerHTML = `
+            <div class="alert alert-danger mb-0">
+              <i class="bi bi-x-circle me-2"></i>
+              Error: ${result.message}
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        availabilityResults.innerHTML = `
+          <div class="alert alert-danger mb-0">
+            <i class="bi bi-x-circle me-2"></i>
+            Error checking availability. Please try again.
+          </div>
+        `;
+      }
+    }
+
+    function displayAvailabilityResults(result) {
+      // Remove visual feedback classes
+      availabilityResults.classList.remove('availability-checking');
+      const formControls = [venueSelect, dateInput, timeInput, bookingHours];
+      formControls.forEach(control => {
+        control.classList.remove('checking');
+      });
+      
+      const { available, requestedSlot, venue, conflicts, suggestions, existingBookings } = result;
+
+      let html = '';
+
+      if (available) {
+        // Venue is available
+        html = `
+          <div class="alert alert-success mb-3">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Available!</strong> The venue is free for your requested time slot.
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-success mb-2">Your Booking Slot</h6>
+              <div class="border rounded p-2 bg-dark text-light">
+                <strong class="text-light">${venue.name}</strong><br>
+                <i class="bi bi-calendar3 me-1"></i> ${new Date(dateInput.value).toLocaleDateString('en-IN')}<br>
+                <i class="bi bi-clock me-1"></i> ${requestedSlot.startTime} - ${requestedSlot.endTime}<br>
+                <i class="bi bi-hourglass-split me-1"></i> ${requestedSlot.duration} hour(s)
+              </div>
+            </div>
+        `;
+
+        if (existingBookings.length > 0) {
+          html += `
+            <div class="col-md-6">
+              <h6 class="text-info mb-2">Other Bookings Today</h6>
+              <div style="max-height: 150px; overflow-y: auto;">
+          `;
+          existingBookings.forEach(booking => {
+            html += `
+              <div class="border rounded p-2 mb-2 small bg-dark text-light">
+                <strong class="text-light">${booking.title}</strong><br>
+                <span class="text-light">${booking.artistName} • ${booking.startTime} (${booking.duration}h) • ${booking.status}</span>
+              </div>
+            `;
+          });
+          html += `</div></div>`;
+        }
+        html += `</div>`;
+
+        availabilityCard.className = 'card border-success';
+        availabilityHeader.className = 'card-header bg-success text-white';
+      } else {
+        // Venue has conflicts
+        html = `
+          <div class="alert alert-danger mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Booking Conflict!</strong> This time slot overlaps with existing bookings.
+          </div>
+        `;
+
+        if (conflicts.length > 0) {
+          html += `
+            <h6 class="text-danger mb-2">Conflicting Bookings</h6>
+            <div class="mb-3">
+          `;
+          conflicts.forEach(conflict => {
+            html += `
+              <div class="border-start border-3 border-danger ps-3 mb-2 bg-dark text-light rounded p-2">
+                <h6 class="mb-1 text-danger">${conflict.title}</h6>
+                <div class="text-light small">
+                  <i class="bi bi-person me-1"></i>${conflict.artistName}<br>
+                  <i class="bi bi-clock me-1"></i>${conflict.startTime} - ${conflict.endTime} (${conflict.duration}h)<br>
+                  <i class="bi bi-info-circle me-1"></i>Status: ${conflict.status}
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+        }
+
+        if (suggestions.length > 0) {
+          html += `
+            <h6 class="text-success mb-2">Available Time Slots</h6>
+            <div class="row">
+          `;
+          suggestions.slice(0, 6).forEach((suggestion, index) => {
+            html += `
+              <div class="col-md-6 mb-2">
+                <div class="border rounded p-2 bg-success bg-opacity-10 border-success cursor-pointer" 
+                     onclick="selectSuggestedTime('${suggestion.startTime}')">
+                  <i class="bi bi-clock text-success me-1"></i>
+                  ${suggestion.startTime} - ${suggestion.endTime}
+                  <small class="text-success d-block">Click to select</small>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+
+          if (suggestions.length > 6) {
+            html += `<p class="text-muted small mt-2">+${suggestions.length - 6} more slots available</p>`;
+          }
+        }
+
+        availabilityCard.className = 'card border-danger';
+        availabilityHeader.className = 'card-header bg-danger text-white';
+      }
+
+      availabilityResults.innerHTML = html;
+    }
+
+    // Function to select suggested time
+    window.selectSuggestedTime = function(timeString) {
+      // Parse time string like "2:00 PM" to 24-hour format
+      const [time, period] = timeString.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      const timeValue = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      timeInput.value = timeValue;
+      
+      // Re-check availability with new time
+      setTimeout(checkVenueAvailability, 300);
+    };
     
     // Add max tickets validation
     const maxTicketsInput = document.getElementById('maxTickets');
@@ -690,6 +1050,57 @@
       if (!validateRequiredFields()) {
         alert('Please fill in all required fields correctly.');
         return;
+      }
+
+      // Check venue availability before proceeding with payment
+      const venueId = venueSelect.value;
+      const date = dateInput.value;
+      const startTime = timeInput.value;
+      const duration = bookingHours.value;
+
+      if (venueId && date && startTime && duration) {
+        try {
+          // Show checking message
+          payAndSubmitBtn.innerHTML = '<i class="bi bi-search me-1"></i> Checking Availability...';
+          payAndSubmitBtn.disabled = true;
+
+          const availabilityResponse = await fetch('/venue-availability/check-availability', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              venueId,
+              date,
+              startTime,
+              duration: parseInt(duration)
+            })
+          });
+
+          const availabilityResult = await availabilityResponse.json();
+
+          if (!availabilityResult.success) {
+            showConflictPopup('Error checking venue availability. Please try again.');
+            resetPayButton();
+            return;
+          }
+
+          if (!availabilityResult.available) {
+            // Show conflict popup with details
+            showConflictPopup(availabilityResult.conflicts, availabilityResult.suggestions);
+            resetPayButton();
+            return;
+          }
+
+          // If available, continue with payment
+          console.log('Venue is available, proceeding with payment...');
+          
+        } catch (error) {
+          console.error('Error checking venue availability:', error);
+          showConflictPopup('Unable to verify venue availability. Please check your internet connection and try again.');
+          resetPayButton();
+          return;
+        }
       }
 
       try {
@@ -740,6 +1151,25 @@
         console.log('Parsed result:', result);
 
         if (!result.success) {
+          // Special handling for venue conflicts
+          if (result.error === 'Venue booking conflict detected' && result.conflicts) {
+            const conflictDetails = result.conflicts.map(c => 
+              `• ${c.title} at ${c.time} for ${c.duration} hours (${c.status})`
+            ).join('\n');
+            
+            alert(`VENUE BOOKING CONFLICT!\n\nThis time slot conflicts with existing bookings:\n${conflictDetails}\n\nPlease select a different date or time.`);
+            
+            // Re-check availability to show current status
+            if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
+              setTimeout(checkVenueAvailability, 500);
+            }
+            
+            // Reset button
+            payAndSubmitBtn.disabled = false;
+            payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">0</span> & Submit Concert';
+            return;
+          }
+          
           throw new Error(result.error || 'Failed to create payment order');
         }
 
@@ -834,9 +1264,22 @@
 
       } catch (error) {
         console.error('Error creating payment order:', error);
-        alert('Error: ' + error.message + '\nPlease check console for details.');
+        
+        // Re-enable button
         payAndSubmitBtn.disabled = false;
         payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+        
+        // Check if it's a venue conflict error
+        if (error.message.includes('conflict') || error.message.includes('booking')) {
+          alert('VENUE BOOKING CONFLICT!\n\nThe selected venue is no longer available for this time slot. Another booking may have been made.\n\nPlease check venue availability below and select a different time.');
+          
+          // Auto-check availability to show current status
+          if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
+            setTimeout(checkVenueAvailability, 500);
+          }
+        } else {
+          alert('Error: ' + error.message + '\nPlease check console for details.');
+        }
       }
     });
 
@@ -870,7 +1313,41 @@
             window.location.href = '/artists/dashboard';
           }, 3000);
         } else {
-          throw new Error('Payment verification failed');
+          // Check if response has text content to parse error
+          const errorText = await response.text();
+          console.error('Payment verification failed:', errorText);
+          
+          // Try to parse error from response
+          let errorMessage = 'Payment verification failed';
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error) {
+              errorMessage = errorData.error;
+              
+              // Special handling for venue conflicts during verification
+              if (errorData.error === 'Venue booking conflict detected' && errorData.conflicts) {
+                const conflictDetails = errorData.conflicts.map(c => 
+                  `• ${c.title} at ${c.time} for ${c.duration} hours (${c.status})`
+                ).join('\n');
+                
+                hidePaymentOverlay();
+                alert(`VENUE BOOKING CONFLICT!\n\nAnother artist booked this venue while you were making payment:\n${conflictDetails}\n\nYour payment will be refunded. Please select a different time slot.`);
+                
+                // Re-check availability to show current status
+                if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
+                  setTimeout(checkVenueAvailability, 500);
+                }
+                
+                payAndSubmitBtn.disabled = false;
+                payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+                return;
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing verification response:', parseError);
+          }
+          
+          throw new Error(errorMessage);
         }
 
       } catch (error) {
@@ -878,11 +1355,14 @@
         hidePaymentOverlay();
         showPaymentErrorAnimation();
         
-        setTimeout(() => {
-          alert('Payment verification failed. Please contact support.');
-          payAndSubmitBtn.disabled = false;
-          payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
-        }, 2000);
+        // Check if it's a venue conflict error (already handled above)
+        if (!error.message.includes('conflict')) {
+          setTimeout(() => {
+            alert('Payment verification failed. Please contact support.\n\nError: ' + error.message);
+            payAndSubmitBtn.disabled = false;
+            payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+          }, 2000);
+        }
       }
     }
 
@@ -1063,10 +1543,88 @@
 
     // Debug log
     console.log('Enhanced concert form initialized with venue pricing');
+
+    // Helper function to show conflict popup
+    function showConflictPopup(conflicts, suggestions = null) {
+      let message = '⚠️ You Cannot Create This Concert!\n\n';
+      
+      if (typeof conflicts === 'string') {
+        message += conflicts;
+      } else if (Array.isArray(conflicts)) {
+        message += 'The selected venue and time slot is already booked for:\n\n';
+        conflicts.forEach((conflict, index) => {
+          message += `${index + 1}. ${conflict.title}\n`;
+          message += `   Artist: ${conflict.artist}\n`;
+          message += `   Time: ${conflict.startTime} - ${conflict.endTime}\n\n`;
+        });
+        
+        if (suggestions && suggestions.length > 0) {
+          message += '💡 Alternative Time Slots:\n\n';
+          suggestions.forEach((suggestion, index) => {
+            message += `${index + 1}. ${suggestion.startTime} - ${suggestion.endTime}\n`;
+          });
+        }
+      }
+      
+      message += '\nPlease choose a different venue or time slot.';
+      alert(message);
+    }
+
+    // Helper function to reset pay button
+    function resetPayButton() {
+      payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay & Submit Concert';
+      payAndSubmitBtn.disabled = false;
+    }
+    
+    // Initial auto-check when form loads (if fields are pre-filled)
+    setTimeout(() => {
+      if (venueSelect.value || dateInput.value || timeInput.value || bookingHours.value) {
+        autoCheckAvailability();
+      }
+    }, 1000);
   });
 </script>
 
 <style>
+  /* Venue Availability Styles */
+  .cursor-pointer {
+    cursor: pointer;
+  }
+
+  .cursor-pointer:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+  }
+
+  .availability-suggestion {
+    transition: all 0.2s ease;
+    border: 1px solid #28a745 !important;
+  }
+
+  .availability-suggestion:hover {
+    background-color: rgba(40, 167, 69, 0.2) !important;
+    transform: scale(1.02);
+  }
+
+  /* Dark theme for availability section */
+  #venueAvailabilitySection .card-body {
+    background-color: #212529;
+    color: white;
+  }
+
+  #venueAvailabilitySection .alert {
+    color: white;
+  }
+
+  #venueAvailabilitySection .text-muted {
+    color: #adb5bd !important;
+  }
+
+  #venueAvailabilitySection .bg-dark {
+    background-color: #343a40 !important;
+    border-color: #495057 !important;
+  }
+
   /* Highlighted Toggle Section */
   .highlighted-toggle-section {
     padding: 15px 20px;

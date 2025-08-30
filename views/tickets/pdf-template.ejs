@@ -264,10 +264,67 @@
               <i>📅</i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
             </p>
             <p class="concert-info-item">
-              <i>🕒</i> <%= concert.time %>
+              <i>🕒</i> Concert Time: <%= concert.time %>
+            </p>
+            <% 
+              // Get booking hours from concert or default to 2 hours
+              let bookingHours = concert.bookingHours || 2;
+              
+              // Parse time and convert to 12-hour format with AM/PM
+              let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
+              let displayTime = concert.time;
+              let startTime12hr = concert.time;
+              let endTime12hr = '';
+              
+              if (timeMatch) {
+                let hours = parseInt(timeMatch[1]);
+                let minutes = timeMatch[2];
+                
+                // Convert to 12-hour format for start time
+                let startAmPm = hours >= 12 ? 'PM' : 'AM';
+                let startHour12 = hours % 12;
+                if (startHour12 === 0) startHour12 = 12;
+                startTime12hr = `${startHour12}:${minutes} ${startAmPm}`;
+                
+                // Calculate end time
+                let endHours = hours + bookingHours;
+                let endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                let endHour12 = endHours % 12;
+                if (endHour12 === 0) endHour12 = 12;
+                
+                // Handle day overflow
+                if (endHours >= 24) {
+                  endHours = endHours - 24;
+                  endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                  endHour12 = endHours % 12;
+                  if (endHour12 === 0) endHour12 = 12;
+                  endTime12hr = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
+                } else {
+                  endTime12hr = `${endHour12}:${minutes} ${endAmPm}`;
+                }
+              }
+            %>
+            <p class="concert-info-item">
+              <i>⏱️</i> Duration: <%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %>
             </p>
             <p class="concert-info-item">
-              <i>📍</i> <%= concert.venue %>, <%= concert.city %>
+              <i>▶️</i> Start Time: <%= startTime12hr %>
+            </p>
+            <p class="concert-info-item">
+              <i>⏹️</i> End Time: <%= endTime12hr %>
+            </p>
+            <p class="concert-info-item">
+              <i>📍</i> <%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>
+              <% if (concert.venue && concert.venue.address) { %>
+                <br><small style="color: #888; margin-left: 25px; font-size: 0.9em;">
+                  <%= concert.venue.address %>
+                  <% if (concert.venue.city) { %>, <%= concert.venue.city %><% } %>
+                  <% if (concert.venue.state) { %>, <%= concert.venue.state %><% } %>
+                  <% if (concert.venue.pincode) { %> - <%= concert.venue.pincode %><% } %>
+                </small>
+              <% } else { %>
+                <br><small style="color: #888; margin-left: 25px; font-size: 0.9em;">Full address will be provided closer to event date</small>
+              <% } %>
             </p>
           <% } %>
         </div>

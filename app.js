@@ -441,6 +441,7 @@ const adminAboutRoutes = require('./routes/adminAbout');
 const adminTeamUpdatesRoutes = require('./routes/adminTeamUpdates');
 const adminVenuesRoutes = require('./routes/adminVenues');
 const adminConcertEditRequestRoutes = require('./routes/adminConcertEditRequests');
+const venueAvailabilityRoutes = require('./routes/venueAvailability');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -458,6 +459,7 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/artists', artistRoutes);
 app.use('/concerts', concertRoutes);
+app.use('/venue-availability', venueAvailabilityRoutes);
 app.use('/tickets', ticketRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/merchandise', adminMerchandiseRoutes);

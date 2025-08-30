@@ -469,13 +469,25 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     }
 
     const ticket = await Ticket.findById(req.params.id)
-      .populate('concert')
       .populate('user');
 
     if (!ticket) {
       req.flash('error', 'Ticket not found');
       return res.redirect('/users/profile');
     }
+
+    // Manually populate concert and venue to ensure all data is loaded
+    const Concert = require('../models/Concert');
+    const Venue = require('../models/Venue');
+    
+    const concert = await Concert.findById(ticket.concert).populate('venue');
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/users/profile');
+    }
+    
+    // Replace the ticket's concert with the fully populated concert
+    ticket.concert = concert;
 
     // Check if user owns the ticket or is admin
     if (ticket.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
@@ -490,18 +502,24 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     }
 
     // Check if concert exists and handle deleted concerts
-    let concert = null;
     let isDeletedConcert = false;
 
     if (ticket.concert) {
-      // Get artist details if concert exists
-      concert = await Concert.findById(ticket.concert._id)
-        .populate({
-          path: 'artist',
-          populate: { path: 'user', select: 'name' }
-        });
+      // Concert is already populated with venue from our manual population above
+      // Just populate artist details if needed
+      if (!ticket.concert.artist || !ticket.concert.artist.user) {
+        const Concert = require('../models/Concert');
+        const concertWithArtist = await Concert.findById(ticket.concert._id)
+          .populate({
+            path: 'artist',
+            populate: { path: 'user', select: 'name' }
+          });
+        if (concertWithArtist) {
+          ticket.concert.artist = concertWithArtist.artist;
+        }
+      }
 
-      if (!concert) {
+      if (!ticket.concert) {
         isDeletedConcert = true;
       }
     } else {
@@ -514,7 +532,7 @@ router.get('/:id', isLoggedIn, async (req, res) => {
 
     res.render('tickets/show', {
       ticket,
-      concert,
+      concert: ticket.concert,
       isDeletedConcert,
       refundRequest
     });
@@ -578,7 +596,10 @@ router.get('/:id/download', isLoggedIn, async (req, res) => {
 router.get('/:id/download-html', isLoggedIn, async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
-      .populate('concert')
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue' }
+      })
       .populate('user');
 
     if (!ticket) {
@@ -643,7 +664,7 @@ router.get('/', isLoggedIn, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: 'concert',
-        populate: { path: 'venue', select: 'name address city' }
+        populate: { path: 'venue' }
       });
 
     console.log('Tickets found in database:', tickets.length);

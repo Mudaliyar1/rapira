@@ -2064,6 +2064,10 @@ router.post('/send-direct-email', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// Venue Bookings routes
+const venueBookingsRouter = require('./adminVenueBookings');
+router.use('/venue-bookings', venueBookingsRouter);
+
 // Storage Management
 router.get('/storage-management', isLoggedIn, isAdmin, async (req, res) => {
   try {
