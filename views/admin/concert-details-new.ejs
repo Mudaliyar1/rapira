@@ -119,16 +119,21 @@
                       
                       <strong>Pricing Structure:</strong><br>
                       <% if (concert.venue.pricing) { %>
-                        Admin Commission: <%= 
-                          concert.venue.pricing.adminCommission ? 
-                            (concert.venue.pricing.adminCommission.percentage || concert.venue.pricing.adminCommission) : 
-                            'N/A' 
-                        %>%<br>
-                        Advance Amount: ₹<%= 
-                          concert.venue.pricing.adminCommission ? 
-                            concert.venue.pricing.adminCommission.advanceAmount : 
-                            'N/A' 
-                        %><br>
+                        <% 
+                        // Calculate commission percentage from booked hours
+                        let commissionPercentage = 'N/A';
+                        let commissionAmount = 'N/A';
+                        if (concert.venue.pricing.hourlyRates && concert.venueBooking && concert.venueBooking.bookingHours) {
+                          const bookedHours = concert.venueBooking.bookingHours;
+                          const hourlyRate = concert.venue.pricing.hourlyRates.find(rate => rate.hours === bookedHours);
+                          if (hourlyRate && hourlyRate.commissionPercentage !== undefined) {
+                            commissionPercentage = hourlyRate.commissionPercentage;
+                            commissionAmount = hourlyRate.commissionAmount || 'N/A';
+                          }
+                        }
+                        %>
+                        Commission for <%= concert.venueBooking.bookingHours || 1 %> hours: <%= commissionPercentage %>%<br>
+                        Commission Amount: ₹<%= commissionAmount %><br>
                         Minimum Price: ₹<%= 
                           concert.venue.pricing.ticketPricing ? 
                             concert.venue.pricing.ticketPricing.minimumPrice : 
@@ -328,10 +333,21 @@
                       <td class="text-success"><strong>₹<%= concert.venue.pricing.ticketPricing.suggestedPrice %></strong></td>
                     </tr>
                     <% } %>
-                    <% if (concert.venue.pricing && concert.venue.pricing.adminCommission) { %>
+                    <% 
+                    // Calculate commission percentage from booked hours for table display
+                    let tableCommissionPercentage = 'N/A';
+                    if (concert.venue.pricing.hourlyRates && concert.venueBooking && concert.venueBooking.bookingHours) {
+                      const bookedHours = concert.venueBooking.bookingHours;
+                      const hourlyRate = concert.venue.pricing.hourlyRates.find(rate => rate.hours === bookedHours);
+                      if (hourlyRate && hourlyRate.commissionPercentage !== undefined) {
+                        tableCommissionPercentage = hourlyRate.commissionPercentage;
+                      }
+                    }
+                    %>
+                    <% if (tableCommissionPercentage !== 'N/A') { %>
                     <tr>
                       <td><strong>Admin Commission:</strong></td>
-                      <td><%= concert.venue.pricing.adminCommission.percentage || 'N/A' %>%</td>
+                      <td><%= tableCommissionPercentage %>% (for <%= concert.venueBooking.bookingHours || 1 %> hours)</td>
                     </tr>
                     <% } %>
                     <% if (concert.venueBooking && concert.venueBooking.totalCost) { %>

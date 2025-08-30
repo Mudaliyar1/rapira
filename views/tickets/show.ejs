@@ -290,3 +290,18 @@
     }
   }
 </style>
+
+<script>
+  // Check for success parameters in URL (removed animations)
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment') === 'success';
+    const ticketBooking = urlParams.get('ticket_booking') === 'true';
+    
+    if (paymentSuccess && ticketBooking) {
+      // Clean up URL parameters only, no animations
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  });
+</script>

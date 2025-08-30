@@ -89,61 +89,70 @@
             </div>
 
             <div class="col-md-12">
-              <h6 class="mb-3">Hourly Rates (Hours 1-24)</h6>
-              <div class="row g-2">
-                <% for (let hour = 1; hour <= 24; hour++) { %>
-                  <%
-                    // Get the current rate for this hour
-                    let currentRate = '';
-                    if (venue.pricing && venue.pricing.hourlyRates && Array.isArray(venue.pricing.hourlyRates)) {
-                      const rateObj = venue.pricing.hourlyRates.find(r => r.hours === hour);
-                      if (rateObj && rateObj.rate) {
-                        currentRate = rateObj.rate;
-                      }
-                    }
-                  %>
-                  <div class="col-md-3 col-sm-4 col-6">
-                    <label for="hourlyRate<%= hour %>" class="form-label small">Hour <%= hour %> (₹)</label>
-                    <input type="number" 
-                           class="form-control form-control-sm" 
-                           id="hourlyRate<%= hour %>" 
-                           name="hourlyRate<%= hour %>" 
-                           min="0" 
-                           step="100" 
-                           placeholder="0"
-                           value="<%= currentRate %>">
+              <h6 class="mb-3">Hourly Rates with Commission (Hours 1-24)</h6>
+              <div class="card border-info mb-3">
+                <div class="card-body">
+                  <div class="row g-2 mb-3">
+                    <div class="col-md-2"><strong>Hour</strong></div>
+                    <div class="col-md-3"><strong>Rate (₹)</strong></div>
+                    <div class="col-md-3"><strong>Commission %</strong></div>
                   </div>
-                <% } %>
-              </div>
-              <div class="form-text mt-2">
-                <small class="text-muted">
-                  <i class="bi bi-info-circle me-1"></i>
-                  Set the hourly rates for different hours. Leave blank for hours not available.
-                </small>
+                  
+                  <% for (let hour = 1; hour <= 24; hour++) { %>
+                    <%
+                      // Get the current rate and commission for this hour
+                      let currentRate = '';
+                      let currentCommission = '';
+                      if (venue.pricing && venue.pricing.hourlyRates && Array.isArray(venue.pricing.hourlyRates)) {
+                        const rateObj = venue.pricing.hourlyRates.find(r => r.hours === hour);
+                        if (rateObj) {
+                          currentRate = rateObj.rate || '';
+                          currentCommission = rateObj.commissionPercentage || '';
+                        }
+                      }
+                    %>
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-2">
+                        <label class="form-label small">Hour <%= hour %></label>
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" 
+                               class="form-control form-control-sm" 
+                               name="hourlyRate_<%= hour %>" 
+                               min="0" 
+                               step="100" 
+                               placeholder="0"
+                               value="<%= currentRate %>">
+                      </div>
+                      <div class="col-md-3">
+                        <input type="number" 
+                               class="form-control form-control-sm" 
+                               name="commissionPercentage_<%= hour %>" 
+                               min="0" 
+                               max="100"
+                               step="0.1" 
+                               placeholder="10"
+                               value="<%= currentCommission %>"
+                               title="Commission percentage for <%= hour %> hour booking">
+                      </div>
+                    </div>
+                  <% } %>
+                  
+                  <small class="text-info">
+                    <i class="bi bi-info-circle"></i> 
+                    Only hours with both rate and commission percentage will be available for booking.
+                    Leave both fields empty to disable that hour option.
+                  </small>
+                </div>
               </div>
             </div>
 
-            <div class="col-md-6">
-              <label for="minimumHours" class="form-label">Minimum Hours</label>
+            <div class="col-md-12">
+              <label for="minimumHours" class="form-label">Minimum Booking Hours</label>
               <input type="number" class="form-control" id="minimumHours" name="minimumHours" 
                      min="1" max="24" placeholder="e.g., 4"
                      value="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>">
-            </div>
-
-            <div class="col-md-6">
-              <label for="commissionPercentage" class="form-label">Admin Commission (%)</label>
-              <input type="number" class="form-control" id="commissionPercentage" name="commissionPercentage" 
-                     step="0.1" placeholder="e.g., 15 (any percentage)"
-                     value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : '' %>">
-              <small class="text-muted">Commission for admin records only - artists don't pay this</small>
-            </div>
-
-            <div class="col-md-6">
-              <label for="advanceAmount" class="form-label">Advance Amount (₹) - Artist Payment</label>
-              <input type="number" class="form-control" id="advanceAmount" name="advanceAmount" 
-                     step="1" placeholder="e.g., 5000 (amount artist pays)"
-                     value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : '' %>">
-              <small class="text-muted">This is the only amount artists pay upfront</small>
+              <small class="text-muted">Minimum hours required for booking this venue</small>
             </div>
 
             <div class="col-md-6">

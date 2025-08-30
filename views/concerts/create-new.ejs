@@ -57,8 +57,6 @@
                           data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
                           data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
                           data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
-                          data-commission-percentage="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : 0 %>"
-                          data-advance-amount="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : 0 %>"
                           data-venue-name="<%= venue.name %>"
                           data-venue-type="<%= venue.venueType || 'Not specified' %>"
                           data-capacity="<%= venue.capacity || 'Not specified' %>"
@@ -154,7 +152,6 @@
                     <div class="mt-3">
                       <h6 class="text-warning">Commission Details</h6>
                       <p class="mb-1"><strong>Admin Commission:</strong> <span id="adminCommissionPercentage">0</span>%</p>
-                      <p class="mb-1"><strong>Advance Amount:</strong> ₹<span id="adminAdvanceAmount">0</span></p>
                       <p class="mb-0"><strong>Commission on Total:</strong> ₹<span id="calculatedCommission">0</span></p>
                     </div>
                     
@@ -162,24 +159,16 @@
                       <h6 class="text-warning mb-2">💰 Payment Summary</h6>
                       <div class="d-flex justify-content-between mb-1">
                         <span>Venue Base Cost:</span>
-                        <span>₹<span id="summaryBaseCost">0</span> <small class="text-muted">(for reference)</small></span>
+                        <span>₹<span id="summaryBaseCost">0</span></span>
                       </div>
                       <div class="d-flex justify-content-between mb-1">
                         <span>Commission (<span id="summaryCommissionPercent">0</span>%):</span>
-                        <span>₹<span id="summaryCommissionAmount">0</span> <small class="text-muted">(admin only)</small></span>
-                      </div>
-                      <div class="d-flex justify-content-between mb-1 text-success">
-                        <span><strong>Your Payment (Advance):</strong></span>
-                        <span><strong>₹<span id="summaryAdvanceAmount">0</span></strong></span>
+                        <span>₹<span id="summaryCommissionAmount">0</span></span>
                       </div>
                       <hr class="my-2">
                       <div class="d-flex justify-content-between fw-bold">
                         <span>Total to Pay Now:</span>
                         <span class="text-danger">₹<span id="summaryTotalAmount">0</span></span>
-                      </div>
-                      <div class="mt-2">
-                        <small class="text-muted">* You only pay the advance amount set by admin</small>
-                        <small class="d-block text-muted">* Venue cost & commission are for admin records only</small>
                       </div>
                     </div>
                   </div>
@@ -246,6 +235,9 @@
           <hr>
           <div class="d-flex justify-content-end gap-2">
             <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
+            <button type="button" class="btn btn-info" id="demoPaymentBtn" title="Demo Payment Animation">
+              <i class="bi bi-play-circle me-1"></i> Demo Animation
+            </button>
             <button type="button" class="btn btn-success" id="payAndSubmitBtn" disabled>
               <i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">0</span> & Submit Concert
             </button>
@@ -279,8 +271,7 @@
     
     let hourlyRates = [];
     let currentVenueMinTicketPrice = 0;
-    let currentCommissionPercentage = 0;
-    let currentAdvanceAmount = 0;
+    let selectedVenueHourlyCommission = {}; // Store commission data for selected hour
     let currentVenue = null; // Store current venue data
     let currentVenueCapacity = 0;
 
@@ -298,8 +289,6 @@
         const minimumHours = parseInt(selectedOption.dataset.minimumHours) || 1;
         const minTicketPrice = parseFloat(selectedOption.dataset.minTicketPrice) || 0;
         const suggestedTicketPrice = parseFloat(selectedOption.dataset.suggestedTicketPrice) || 100;
-        const commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
-        const advanceAmount = parseFloat(selectedOption.dataset.advanceAmount) || 0;
         const facilities = selectedOption.dataset.facilities;
         
         // Store current venue data
@@ -323,32 +312,36 @@
           console.log('Parsed raw rates:', rawRates);
           hourlyRates = [];
           
-          // Handle new structure: array of objects with hours and rate
+          // Handle new structure: array of objects with hours, rate, and commission
           if (rawRates.length > 0 && rawRates[0].hasOwnProperty('hours') && rawRates[0].hasOwnProperty('rate')) {
-            console.log('Using NEW structure (array of objects)');
+            console.log('Using NEW structure with commission (array of objects)');
             currentVenue.pricing.hourlyRates = rawRates; // Store full structure
             
-            // Create legacy array for backward compatibility
+            // Create legacy array for backward compatibility and validate commission
             rawRates.forEach(rateObj => {
-              if (rateObj.hours && rateObj.rate) {
+              if (rateObj.hours && rateObj.rate && 
+                  rateObj.commissionPercentage !== undefined && 
+                  rateObj.commissionPercentage >= 0) {
                 hourlyRates[rateObj.hours - 1] = rateObj.rate; // Convert to 0-indexed array
-                console.log(`Added rate: ${rateObj.hours} hours = ₹${rateObj.rate}`);
+                console.log(`Added rate: ${rateObj.hours} hours = ₹${rateObj.rate}, Commission: ${rateObj.commissionPercentage}%`);
               }
             });
           } else if (rawRates.length > 0) {
-            console.log('Using LEGACY structure (simple array)');
-            // Legacy structure: simple array of rates
+            console.log('Using LEGACY structure (simple array) - No commission data');
+            // Legacy structure: simple array of rates (no commission)
             hourlyRates = rawRates;
             
-            // Convert to new structure
+            // Convert to new structure (without commission for legacy data)
             rawRates.forEach((rate, index) => {
               if (rate && parseFloat(rate) > 0) {
                 const hoursCount = index + 1;
                 currentVenue.pricing.hourlyRates.push({
                   hours: hoursCount,
-                  rate: parseFloat(rate)
+                  rate: parseFloat(rate),
+                  commissionPercentage: 0, // Default commission for legacy data
+                  commissionAmount: 0
                 });
-                console.log(`Converted rate: ${hoursCount} hours = ₹${rate}`);
+                console.log(`Converted rate: ${hoursCount} hours = ₹${rate} (No commission)`);
               }
             });
           } else {
@@ -420,13 +413,12 @@
           facilitiesContainer.innerHTML = '<span class="text-muted">No facilities listed</span>';
         }
         
-        // Update commission details
-        document.getElementById('adminCommissionPercentage').textContent = commissionPercentage;
-        document.getElementById('adminAdvanceAmount').textContent = advanceAmount.toLocaleString('en-IN');
+        // Update commission details - will be updated when hour is selected
+        document.getElementById('adminCommissionPercentage').textContent = '0';
+        document.getElementById('calculatedCommission').textContent = '0';
         
-        // Store commission data for calculation
-        currentCommissionPercentage = commissionPercentage;
-        currentAdvanceAmount = advanceAmount;
+        // Clear previous commission data
+        selectedVenueHourlyCommission = {};
         
         // Update ticket pricing information
         currentVenueMinTicketPrice = minTicketPrice;
@@ -491,19 +483,24 @@
         
         let validOptionsCount = 0;
         
-        // Add options for each available hour rate
+        // Add options for each available hour rate WITH commission
         sortedRates.forEach(rateObj => {
           console.log('Processing rate object:', rateObj);
           
-          if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0) {
+          // Only add if has rate, commission percentage, and commission amount
+          if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0 &&
+              rateObj.commissionPercentage !== undefined && rateObj.commissionPercentage >= 0) {
             const option = document.createElement('option');
             option.value = rateObj.hours;
             option.textContent = `${rateObj.hours} Hour${rateObj.hours > 1 ? 's' : ''} - ₹${parseFloat(rateObj.rate).toLocaleString('en-IN')}`;
+            option.dataset.rate = rateObj.rate;
+            option.dataset.commissionPercentage = rateObj.commissionPercentage;
+            option.dataset.commissionAmount = rateObj.commissionAmount || 0;
             bookingHours.appendChild(option);
             validOptionsCount++;
-            console.log(`Added option: ${option.textContent}`);
+            console.log(`Added option: ${option.textContent} (Commission: ${rateObj.commissionPercentage}%)`);
           } else {
-            console.warn('Skipping invalid rate object:', rateObj);
+            console.warn('Skipping rate object - missing rate or commission data:', rateObj);
           }
         });
         
@@ -557,23 +554,34 @@
     function calculateTotalCost() {
       const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
       let totalCost = 0;
+      let commissionPercentage = 0;
+      let commissionAmount = 0;
       
-      // Calculate cost based on the selected hour from dropdown
-      if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates) {
-        const hourlyRatesArray = currentVenue.pricing.hourlyRates;
+      console.log('=== CALCULATE TOTAL COST DEBUG ===');
+      console.log('Selected hours:', hours);
+      
+      // Get commission data from selected option
+      const selectedOption = bookingHours.options[bookingHours.selectedIndex];
+      if (selectedOption && selectedOption.dataset.rate) {
+        totalCost = parseFloat(selectedOption.dataset.rate) || 0;
+        commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
+        commissionAmount = parseFloat(selectedOption.dataset.commissionAmount) || 0;
         
-        // Find the exact rate for selected hours
-        const rateEntry = hourlyRatesArray.find(entry => entry.hours === hours);
-        if (rateEntry && rateEntry.rate) {
-          totalCost = parseFloat(rateEntry.rate) || 0;
-        }
+        // Store commission data for this selection
+        selectedVenueHourlyCommission = {
+          hours: hours,
+          rate: totalCost,
+          commissionPercentage: commissionPercentage,
+          commissionAmount: commissionAmount
+        };
+        
+        console.log('Commission data from selected option:', selectedVenueHourlyCommission);
+      } else {
+        console.warn('No rate data found for selected option');
       }
       
-      // Calculate commission (for admin records only)
-      const commissionAmount = (totalCost * currentCommissionPercentage) / 100;
-      
-      // Artist only pays the advance amount - venue cost & commission are for admin records
-      const artistPayAmount = currentAdvanceAmount;
+      // Artist pays commission amount only (commission-only model)
+      const artistPayAmount = commissionAmount;
       
       // Update displays
       if (displayBaseCost) displayBaseCost.textContent = totalCost.toLocaleString('en-IN');
@@ -581,25 +589,23 @@
       if (displayHourlyRate) displayHourlyRate.textContent = totalCost.toLocaleString('en-IN');
       
       // Update commission display
+      document.getElementById('adminCommissionPercentage').textContent = commissionPercentage;
       document.getElementById('calculatedCommission').textContent = commissionAmount.toLocaleString('en-IN');
       
       // Update payment summary
       document.getElementById('summaryBaseCost').textContent = totalCost.toLocaleString('en-IN');
-      document.getElementById('summaryCommissionPercent').textContent = currentCommissionPercentage;
+      document.getElementById('summaryCommissionPercent').textContent = commissionPercentage;
       document.getElementById('summaryCommissionAmount').textContent = commissionAmount.toLocaleString('en-IN');
-      document.getElementById('summaryAdvanceAmount').textContent = currentAdvanceAmount.toLocaleString('en-IN');
       document.getElementById('summaryTotalAmount').textContent = artistPayAmount.toLocaleString('en-IN');
       
       // Show detailed breakdown in console for debugging
       console.log('Venue Cost Breakdown:', {
         selectedHours: hours,
-        hourlyRate: totalCost,
-        totalBaseCost: totalCost,
-        commissionPercentage: currentCommissionPercentage,
+        venueBaseCost: totalCost,
+        commissionPercentage: commissionPercentage,
         commissionAmount: commissionAmount,
-        advanceAmount: currentAdvanceAmount,
         artistPays: artistPayAmount,
-        note: 'Artist only pays advance amount'
+        note: 'Artist pays commission amount only'
       });
 
       // Update pay button
@@ -758,6 +764,19 @@
           },
           handler: function(response) {
             console.log('Payment successful:', response);
+            
+            // Show immediate payment success feedback with celebration
+            payAndSubmitBtn.innerHTML = '<i class="bi bi-check-circle me-1 text-success animate-pulse"></i> Payment Successful!';
+            payAndSubmitBtn.disabled = true;
+            payAndSubmitBtn.classList.remove('btn-primary');
+            payAndSubmitBtn.classList.add('btn-success');
+            
+            // Add celebration effect to button
+            payAndSubmitBtn.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+              payAndSubmitBtn.style.transform = 'scale(1)';
+            }, 200);
+            
             // Payment successful, verify and create concert
             verifyPaymentAndCreateConcert(response);
           },
@@ -824,7 +843,11 @@
     // Verify payment and create concert
     async function verifyPaymentAndCreateConcert(razorpayResponse) {
       try {
-        payAndSubmitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Processing Payment...';
+        // Show payment processing animation
+        payAndSubmitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1 animate-spin"></i> Verifying Payment...';
+        
+        // Add payment success animation overlay
+        showPaymentProcessingOverlay();
 
         // Prepare verification data
         const formData = new FormData(concertForm);
@@ -839,18 +862,198 @@
         });
 
         if (response.ok && response.url.includes('/artists/dashboard')) {
-          // Successful verification, redirect to dashboard
-          window.location.href = '/artists/dashboard';
+          // Show payment success animation
+          showPaymentSuccessAnimation();
+          
+          // Wait for animation to complete before redirect
+          setTimeout(() => {
+            window.location.href = '/artists/dashboard';
+          }, 3000);
         } else {
           throw new Error('Payment verification failed');
         }
 
       } catch (error) {
         console.error('Error verifying payment:', error);
-        alert('Payment verification failed. Please contact support.');
-        payAndSubmitBtn.disabled = false;
-        payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+        hidePaymentOverlay();
+        showPaymentErrorAnimation();
+        
+        setTimeout(() => {
+          alert('Payment verification failed. Please contact support.');
+          payAndSubmitBtn.disabled = false;
+          payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+        }, 2000);
       }
+    }
+
+    // Payment Animation Functions
+    function showPaymentProcessingOverlay() {
+      // Create overlay if it doesn't exist
+      let overlay = document.getElementById('paymentOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'paymentOverlay';
+        overlay.innerHTML = `
+          <div class="payment-modal">
+            <div class="payment-animation-container">
+              <div class="payment-icon processing">
+                <i class="bi bi-credit-card-2-front"></i>
+              </div>
+              <div class="payment-status">
+                <h4>Processing Payment</h4>
+                <p>Please wait while we verify your payment...</p>
+                <div class="payment-loader">
+                  <div class="loader-dot"></div>
+                  <div class="loader-dot"></div>
+                  <div class="loader-dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+      overlay.classList.add('show');
+    }
+
+    function showPaymentSuccessAnimation() {
+      const overlay = document.getElementById('paymentOverlay');
+      if (overlay) {
+        overlay.innerHTML = `
+          <div class="payment-modal">
+            <div class="payment-animation-container">
+              <div class="payment-icon success animate-success">
+                <i class="bi bi-check-circle-fill"></i>
+              </div>
+              <div class="payment-status">
+                <h4 class="text-success">Payment Successful!</h4>
+                <p>Your venue has been booked successfully. Redirecting to dashboard...</p>
+                <div class="success-checkmarks">
+                  <div class="checkmark-item">
+                    <i class="bi bi-check2 text-success"></i>
+                    <span>Payment Verified</span>
+                  </div>
+                  <div class="checkmark-item">
+                    <i class="bi bi-check2 text-success"></i>
+                    <span>Venue Booked</span>
+                  </div>
+                  <div class="checkmark-item">
+                    <i class="bi bi-check2 text-success"></i>
+                    <span>Concert Submitted</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Play success sound
+        playPaymentSuccessSound();
+        
+        // Add confetti effect
+        createConfetti();
+      }
+    }
+
+    function playPaymentSuccessSound() {
+      try {
+        // Create a success sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Success chord: C major
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C
+        oscillator.start();
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        setTimeout(() => {
+          oscillator.stop();
+        }, 500);
+      } catch (error) {
+        console.log('Could not play success sound:', error);
+      }
+    }
+
+    function showPaymentErrorAnimation() {
+      const overlay = document.getElementById('paymentOverlay');
+      if (overlay) {
+        overlay.innerHTML = `
+          <div class="payment-modal">
+            <div class="payment-animation-container">
+              <div class="payment-icon error animate-error">
+                <i class="bi bi-x-circle-fill"></i>
+              </div>
+              <div class="payment-status">
+                <h4 class="text-danger">Payment Failed</h4>
+                <p>There was an issue with your payment verification. Please try again.</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function hidePaymentOverlay() {
+      const overlay = document.getElementById('paymentOverlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => {
+          if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+          }
+        }, 300);
+      }
+    }
+
+    function createConfetti() {
+      // Simple confetti animation
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+          if (confetti.parentNode) {
+            confetti.parentNode.removeChild(confetti);
+          }
+        }, 5000);
+      }
+    }
+
+    // Demo Payment Animation Button
+    const demoPaymentBtn = document.getElementById('demoPaymentBtn');
+    if (demoPaymentBtn) {
+      demoPaymentBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Show demo payment flow
+        demoPaymentBtn.innerHTML = '<i class="bi bi-play-fill me-1"></i> Running Demo...';
+        demoPaymentBtn.disabled = true;
+        
+        // Step 1: Show processing overlay
+        showPaymentProcessingOverlay();
+        
+        // Step 2: After 2 seconds, show success
+        setTimeout(() => {
+          showPaymentSuccessAnimation();
+          
+          // Step 3: After 3 more seconds, hide overlay and reset button
+          setTimeout(() => {
+            hidePaymentOverlay();
+            demoPaymentBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Demo Animation';
+            demoPaymentBtn.disabled = false;
+          }, 4000);
+        }, 2000);
+      });
     }
 
     // Initialize if venue is pre-selected
@@ -943,6 +1146,193 @@
   .enhanced-toggle:disabled + .highlighted-label {
     color: #6c757d !important;
     text-shadow: none;
+  }
+
+  /* Payment Animation Styles */
+  #paymentOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  #paymentOverlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .payment-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  #paymentOverlay.show .payment-modal {
+    transform: scale(1);
+  }
+
+  .payment-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+
+  .payment-icon.processing {
+    color: #0d6efd;
+    animation: pulse 2s infinite;
+  }
+
+  .payment-icon.success {
+    color: #198754;
+  }
+
+  .payment-icon.error {
+    color: #dc3545;
+  }
+
+  .animate-success {
+    animation: successBounce 0.6s ease;
+  }
+
+  .animate-error {
+    animation: errorShake 0.5s ease;
+  }
+
+  .payment-status h4 {
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #000000 !important;
+  }
+
+  .payment-status p {
+    margin-bottom: 20px;
+    color: #000000 !important;
+  }
+
+  .payment-loader {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .loader-dot {
+    width: 12px;
+    height: 12px;
+    background: #0d6efd;
+    border-radius: 50%;
+    animation: loadingDots 1.4s infinite ease-in-out;
+  }
+
+  .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .success-checkmarks {
+    text-align: left;
+    margin-top: 20px;
+  }
+
+  .checkmark-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: slideInLeft 0.5s ease forwards;
+    color: #000000 !important;
+  }
+
+  .checkmark-item span {
+    color: #000000 !important;
+  }
+
+  /* Override Bootstrap text-success class in payment modals */
+  .payment-modal .text-success {
+    color: #000000 !important;
+  }
+
+  .payment-modal .text-danger {
+    color: #000000 !important;
+  }
+
+  .payment-modal h4 {
+    color: #000000 !important;
+  }
+
+  .checkmark-item:nth-child(1) { animation-delay: 0.2s; }
+  .checkmark-item:nth-child(2) { animation-delay: 0.4s; }
+  .checkmark-item:nth-child(3) { animation-delay: 0.6s; }
+
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: #ff6b6b;
+    top: -10px;
+    z-index: 10001;
+    animation: confettiFall linear;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  /* Animation Keyframes */
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+  }
+
+  @keyframes successBounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  @keyframes loadingDots {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slideInLeft {
+    0% { opacity: 0; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-100vh) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(720deg); }
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .animate-pulse {
+    animation: pulse 1s infinite;
   }
 </style>
 

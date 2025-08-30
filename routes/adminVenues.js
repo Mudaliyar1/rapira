@@ -209,15 +209,25 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
       }
     }
 
-    // Process hourly rates (1-24 hours)
+    // Process hourly rates with commission (1-24 hours)
     const hourlyRates = [];
     for (let i = 1; i <= 24; i++) {
       const rateKey = `hourlyRate_${i}`;
+      const commissionKey = `commissionPercentage_${i}`;
       const rate = req.body[rateKey];
-      if (rate && parseFloat(rate) > 0) {
+      const commissionPercentage = req.body[commissionKey];
+      
+      // Only add if both rate and commission are provided
+      if (rate && parseFloat(rate) > 0 && commissionPercentage && parseFloat(commissionPercentage) >= 0) {
+        const rateValue = parseFloat(rate);
+        const commissionValue = parseFloat(commissionPercentage);
+        const commissionAmount = (rateValue * commissionValue) / 100;
+        
         hourlyRates.push({
           hours: i,
-          rate: parseFloat(rate)
+          rate: rateValue,
+          commissionPercentage: commissionValue,
+          commissionAmount: commissionAmount
         });
       }
     }
@@ -242,10 +252,6 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
         hourlyRates: hourlyRates,
         minimumHours: minimumHours ? parseInt(minimumHours) : 1,
         currency: 'INR',
-        adminCommission: {
-          percentage: commissionPercentage ? parseFloat(commissionPercentage) : 10,
-          advanceAmount: advanceAmount ? parseFloat(advanceAmount) : 0
-        },
         ticketPricing: {
           minimumPrice: minimumTicketPrice ? parseFloat(minimumTicketPrice) : 0,
           suggestedPrice: suggestedTicketPrice ? parseFloat(suggestedTicketPrice) : 100
@@ -376,20 +382,30 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
       }
     }
 
-    // Process hourly rates for hours 1-24
+    // Process hourly rates with commission for hours 1-24
     const hourlyRatesArray = [];
     let hasAnyRates = false;
     
     for (let i = 1; i <= 24; i++) {
       // Try both possible field name formats for robustness
       const hourlyRateValue = req.body[`hourlyRate${i}`] || req.body[`hourlyRate_${i}`];
-      if (hourlyRateValue && parseFloat(hourlyRateValue) >= 0) {
+      const commissionValue = req.body[`commissionPercentage${i}`] || req.body[`commissionPercentage_${i}`];
+      
+      // Only add if both rate and commission are provided
+      if (hourlyRateValue && parseFloat(hourlyRateValue) > 0 && 
+          commissionValue && parseFloat(commissionValue) >= 0) {
+        const rateVal = parseFloat(hourlyRateValue);
+        const commissionVal = parseFloat(commissionValue);
+        const commissionAmount = (rateVal * commissionVal) / 100;
+        
         hourlyRatesArray.push({
           hours: i,
-          rate: parseFloat(hourlyRateValue)
+          rate: rateVal,
+          commissionPercentage: commissionVal,
+          commissionAmount: commissionAmount
         });
         hasAnyRates = true;
-        console.log(`Found hourly rate for hour ${i}: ₹${hourlyRateValue}`);
+        console.log(`Found hourly rate for hour ${i}: ₹${hourlyRateValue}, Commission: ${commissionValue}%`);
       }
     }
     
@@ -436,13 +452,6 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     venue.pricing.hourlyRates = hasAnyRates ? hourlyRatesArray : (existingPricing.hourlyRates || []);
     venue.pricing.minimumHours = minimumHours ? parseInt(minimumHours) : (existingPricing.minimumHours || 1);
     venue.pricing.currency = 'INR';
-    
-    // Update admin commission
-    if (!venue.pricing.adminCommission) {
-      venue.pricing.adminCommission = {};
-    }
-    venue.pricing.adminCommission.percentage = commissionPercentage ? parseFloat(commissionPercentage) : (existingPricing.adminCommission?.percentage || 0);
-    venue.pricing.adminCommission.advanceAmount = advanceAmount ? parseFloat(advanceAmount) : (existingPricing.adminCommission?.advanceAmount || 0);
     
     // Update ticket pricing
     if (!venue.pricing.ticketPricing) {

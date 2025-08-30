@@ -456,7 +456,7 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, upload.single('post
     }
 
     req.flash('success', 'Payment successful! Your concert has been submitted for approval.');
-    res.redirect('/artists/dashboard');
+    res.redirect('/artists/dashboard?payment=success&venue_booking=true');
 
   } catch (error) {
     console.error('Error verifying payment:', error);

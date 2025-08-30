@@ -9,7 +9,273 @@
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" h    .table tbody tr:hover {
+      color: #212529 !important;
+      background-color: #f8f9fa !important;
+      border-color: #dee2e6 !important;
+    }
+
+    /* Venue Booking Success Animation Styles */
+    .venue-booking-success-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .success-modal {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      transform: scale(0.8);
+      animation: modalBounceIn 0.6s ease forwards;
+    }
+
+    .success-icon {
+      font-size: 5rem;
+      color: #198754;
+      margin-bottom: 20px;
+      animation: iconBounce 1s ease infinite alternate;
+    }
+
+    .success-title {
+      color: #198754;
+      font-weight: 700;
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+    }
+
+    .success-message {
+      color: #666;
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+    }
+
+    .success-details {
+      margin: 25px 0;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: slideInUp 0.5s ease forwards;
+      font-weight: 500;
+    }
+
+    .detail-item:nth-child(1) { animation-delay: 0.3s; }
+    .detail-item:nth-child(2) { animation-delay: 0.5s; }
+    .detail-item:nth-child(3) { animation-delay: 0.7s; }
+
+    .detail-item i {
+      font-size: 1.2rem;
+    }
+
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modalBounceIn {
+      0% { 
+        opacity: 0;
+        transform: scale(0.3);
+      }
+      50% { 
+        opacity: 1;
+        transform: scale(1.05);
+      }
+      70% { transform: scale(0.9); }
+      100% { 
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes iconBounce {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    @keyframes slideInUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Celebration particles */
+    .celebration-particle {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #198754;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      animation: particleFall 3s linear forwards;
+    }
+
+    @keyframes particleFall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+  </style>
+
+  <!-- Bootstrap 5 JS Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (for some components) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <script>
+    // Venue Booking Success Animation
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check URL parameters for payment success
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentSuccess = urlParams.get('payment') === 'success';
+      const venueBooking = urlParams.get('venue_booking') === 'true';
+
+      if (paymentSuccess && venueBooking) {
+        // Show venue booking success animation
+        showVenueBookingSuccess();
+        
+        // Clean URL without reloading
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+
+      // Close animation handler
+      document.getElementById('closeSuccessAnimation').addEventListener('click', function() {
+        hideVenueBookingSuccess();
+      });
+    });
+
+    function showVenueBookingSuccess() {
+      const overlay = document.getElementById('venueBookingSuccessAlert');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        
+        // Play success sound
+        playSuccessSound();
+        
+        // Create celebration particles
+        createCelebrationParticles();
+        
+        // Auto-hide after 8 seconds
+        setTimeout(() => {
+          hideVenueBookingSuccess();
+        }, 8000);
+      }
+    }
+
+    function hideVenueBookingSuccess() {
+      const overlay = document.getElementById('venueBookingSuccessAlert');
+      if (overlay) {
+        overlay.style.animation = 'fadeOut 0.3s ease forwards';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          overlay.style.animation = '';
+        }, 300);
+      }
+    }
+
+    function createCelebrationParticles() {
+      const colors = ['#198754', '#ffc107', '#0d6efd', '#dc3545', '#6f42c1'];
+      
+      for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+          const particle = document.createElement('div');
+          particle.className = 'celebration-particle';
+          particle.style.left = Math.random() * 100 + 'vw';
+          particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          particle.style.animationDelay = Math.random() * 2 + 's';
+          particle.style.animationDuration = Math.random() * 2 + 3 + 's';
+          document.body.appendChild(particle);
+          
+          setTimeout(() => {
+            if (particle.parentNode) {
+              particle.parentNode.removeChild(particle);
+            }
+          }, 5000);
+        }, i * 100);
+      }
+    }
+
+    function playSuccessSound() {
+      try {
+        // Create a simple success sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Play a pleasant success melody
+        const frequencies = [523.25, 659.25, 783.99]; // C, E, G notes
+        let noteIndex = 0;
+        
+        function playNote() {
+          if (noteIndex < frequencies.length) {
+            oscillator.frequency.setValueAtTime(frequencies[noteIndex], audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            noteIndex++;
+            setTimeout(playNote, 150);
+          }
+        }
+        
+        oscillator.start();
+        playNote();
+        
+        setTimeout(() => {
+          oscillator.stop();
+        }, 600);
+      } catch (error) {
+        console.log('Could not play success sound:', error);
+      }
+    }
+
+    // Add fadeOut animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>le.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -109,6 +375,34 @@
             <i class="bi bi-list"></i>
           </button>
           <h1 class="fw-bold mb-0">Artist Dashboard</h1>
+        </div>
+      </div>
+
+      <!-- Venue Booking Success Animation -->
+      <div id="venueBookingSuccessAlert" class="venue-booking-success-overlay" style="display: none;">
+        <div class="success-modal">
+          <div class="success-animation">
+            <div class="success-icon">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h3 class="success-title">Venue Booked Successfully!</h3>
+            <p class="success-message">Your payment has been processed and venue has been reserved.</p>
+            <div class="success-details">
+              <div class="detail-item">
+                <i class="bi bi-credit-card-fill text-success"></i>
+                <span>Payment Verified</span>
+              </div>
+              <div class="detail-item">
+                <i class="bi bi-building text-success"></i>
+                <span>Venue Reserved</span>
+              </div>
+              <div class="detail-item">
+                <i class="bi bi-calendar-check text-success"></i>
+                <span>Concert Submitted for Approval</span>
+              </div>
+            </div>
+            <button id="closeSuccessAnimation" class="btn btn-primary mt-3">Continue</button>
+          </div>
         </div>
       </div>
 

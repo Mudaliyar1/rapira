@@ -195,6 +195,16 @@
 <% if (concert.isPaid) { %>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+
+
+
+
+
+
+
+
+
+
   document.addEventListener('DOMContentLoaded', function() {
     const ticketQuantitySelect = document.getElementById('ticketQuantity');
     const ticketPriceElement = document.getElementById('ticketPrice');
@@ -327,6 +337,8 @@
             description: 'Concert Ticket Purchase',
             order_id: data.order.id,
             handler: function(response) {
+              console.log('Ticket payment successful:', response);
+              
               // Create hidden form for payment verification
               const form = document.createElement('form');
               form.method = 'POST';
@@ -347,6 +359,7 @@
                 form.appendChild(input);
               }
 
+              // Submit form after payment verification
               document.body.appendChild(form);
               form.submit();
             },
@@ -368,7 +381,15 @@
         }
       });
     }
+
+
   });
 </script>
+
+<style>
+
+
+
+</style>
 <% } %>
 

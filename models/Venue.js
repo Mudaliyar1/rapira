@@ -81,6 +81,18 @@ const VenueSchema = new mongoose.Schema({
         type: Number,
         min: 0,
         required: true
+      },
+      commissionPercentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+        required: true,
+        default: 10 // Default commission percentage for this hour
+      },
+      commissionAmount: {
+        type: Number,
+        min: 0,
+        default: 0 // Calculated commission amount (rate * commissionPercentage / 100)
       }
     }],
     minimumHours: {

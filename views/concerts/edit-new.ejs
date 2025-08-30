@@ -165,8 +165,6 @@
                           data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
                           data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
                           data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
-                          data-commission-percentage="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage ? venue.pricing.adminCommission.percentage : 0 %>"
-                          data-advance-amount="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount ? venue.pricing.adminCommission.advanceAmount : 0 %>"
                           data-venue-name="<%= venue.name %>"
                           data-venue-type="<%= venue.venueType || 'Not specified' %>"
                           data-capacity="<%= venue.capacity || 'Not specified' %>"
@@ -261,9 +259,8 @@
                     
                     <div class="mt-3">
                       <h6 class="text-warning">Commission Details</h6>
-                      <p class="mb-1"><strong>Admin Commission:</strong> <span id="adminCommissionPercentage">0</span>%</p>
-                      <p class="mb-1"><strong>Advance Amount:</strong> ₹<span id="adminAdvanceAmount">0</span></p>
-                      <p class="mb-0"><strong>Commission on Total:</strong> ₹<span id="calculatedCommission">0</span></p>
+                      <p class="mb-1"><strong>Commission for Selected Hours:</strong> <span id="adminCommissionPercentage">0</span>%</p>
+                      <p class="mb-0"><strong>Commission Amount:</strong> ₹<span id="calculatedCommission">0</span></p>
                     </div>
                   </div>
                 </div>
@@ -316,6 +313,9 @@
 
           <!-- Hidden field to always mark as paid -->
           <input type="hidden" id="isPaid" name="isPaid" value="on">
+          
+          <!-- Hidden field for current booking hours -->
+          <input type="hidden" id="currentBookingHours" value="<%= concert.venueBooking && concert.venueBooking.bookingHours ? concert.venueBooking.bookingHours : '' %>">
 
           <div class="mb-3 mt-4">
             <div class="card" style="background-color: #000000 !important; border: 1px solid #dee2e6 !important;">
@@ -346,8 +346,16 @@
 <% } %>
 
 <script>
+  // Concert data for initialization - will be set in DOM ready function
+  var currentConcertBookingHours;
+  
   // Set minimum date to today and initialize
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize concert booking hours from server data (set via hidden element)
+    const bookingHoursElement = document.getElementById('currentBookingHours');
+    currentConcertBookingHours = bookingHoursElement ? parseInt(bookingHoursElement.value) || null : null;
+    console.log('Current concert booking hours:', currentConcertBookingHours);
+    
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('date');
@@ -439,8 +447,7 @@
     
     let hourlyRates = [];
     let currentVenueMinTicketPrice = 0;
-    let currentCommissionPercentage = 0;
-    let currentAdvanceAmount = 0;
+    let selectedVenueHourlyCommission = {}; // Store commission data for selected hour
     let currentVenue = null;
     let currentVenueCapacity = 0;
 
@@ -458,8 +465,6 @@
         const minimumHours = parseInt(selectedOption.dataset.minimumHours) || 1;
         const minTicketPrice = parseFloat(selectedOption.dataset.minTicketPrice) || 0;
         const suggestedTicketPrice = parseFloat(selectedOption.dataset.suggestedTicketPrice) || 100;
-        const commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
-        const advanceAmount = parseFloat(selectedOption.dataset.advanceAmount) || 0;
         const facilities = selectedOption.dataset.facilities;
         
         // Store current venue data
@@ -570,18 +575,15 @@
           }
         }
         
-        // Update commission details
+        // Update commission details - will be updated when hour is selected
         const adminCommissionPercentage = document.getElementById('adminCommissionPercentage');
-        const adminAdvanceAmount = document.getElementById('adminAdvanceAmount');
         const calculatedCommission = document.getElementById('calculatedCommission');
         
-        if (adminCommissionPercentage) adminCommissionPercentage.textContent = commissionPercentage;
-        if (adminAdvanceAmount) adminAdvanceAmount.textContent = advanceAmount.toLocaleString('en-IN');
+        if (adminCommissionPercentage) adminCommissionPercentage.textContent = '0';
         if (calculatedCommission) calculatedCommission.textContent = '0';
         
-        // Store commission data
-        currentCommissionPercentage = commissionPercentage;
-        currentAdvanceAmount = advanceAmount;
+        // Clear commission data since it depends on selected hours
+        // Commission will be updated when booking hours are selected
         
         // Update ticket pricing information
         currentVenueMinTicketPrice = minTicketPrice;
@@ -652,12 +654,17 @@
           
           let validOptionsCount = 0;
           
-          // Add options for each available hour rate
+          // Add options for each available hour rate WITH commission
           sortedRates.forEach(rateObj => {
-            if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0) {
+            // Only add if has rate, commission percentage, and commission amount
+            if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0 &&
+                rateObj.commissionPercentage !== undefined && rateObj.commissionPercentage >= 0) {
               const option = document.createElement('option');
               option.value = rateObj.hours;
               option.textContent = `${rateObj.hours} Hour${rateObj.hours > 1 ? 's' : ''} - ₹${parseFloat(rateObj.rate).toLocaleString('en-IN')}`;
+              option.dataset.rate = rateObj.rate;
+              option.dataset.commissionPercentage = rateObj.commissionPercentage;
+              option.dataset.commissionAmount = rateObj.commissionAmount || 0;
               bookingHours.appendChild(option);
               validOptionsCount++;
             }
@@ -683,20 +690,31 @@
     function calculateTotalCost() {
       const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
       let totalCost = 0;
+      let commissionPercentage = 0;
+      let commissionAmount = 0;
       
-      // Calculate cost based on the selected hour from dropdown
-      if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates) {
-        const hourlyRatesArray = currentVenue.pricing.hourlyRates;
-        
-        // Find the exact rate for selected hours
-        const rateEntry = hourlyRatesArray.find(entry => entry.hours === hours);
-        if (rateEntry && rateEntry.rate) {
-          totalCost = parseFloat(rateEntry.rate) || 0;
+      console.log('=== EDIT PAGE: CALCULATE TOTAL COST ===');
+      console.log('Selected hours:', hours);
+      
+      // Get commission data from selected option
+      if (bookingHours) {
+        const selectedOption = bookingHours.options[bookingHours.selectedIndex];
+        if (selectedOption && selectedOption.dataset.rate) {
+          totalCost = parseFloat(selectedOption.dataset.rate) || 0;
+          commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
+          commissionAmount = parseFloat(selectedOption.dataset.commissionAmount) || 0;
+          
+          // Store commission data for this selection
+          selectedVenueHourlyCommission = {
+            hours: hours,
+            rate: totalCost,
+            commissionPercentage: commissionPercentage,
+            commissionAmount: commissionAmount
+          };
+          
+          console.log('Commission data from selected option:', selectedVenueHourlyCommission);
         }
       }
-      
-      // Calculate commission (for admin records only)
-      const commissionAmount = (totalCost * currentCommissionPercentage) / 100;
       
       // Update displays
       if (displayBaseCost) displayBaseCost.textContent = totalCost.toLocaleString('en-IN');
@@ -704,8 +722,12 @@
       if (displayHourlyRate) displayHourlyRate.textContent = totalCost.toLocaleString('en-IN');
       
       // Update commission display
+      const adminCommissionPercentage = document.getElementById('adminCommissionPercentage');
       const calculatedCommission = document.getElementById('calculatedCommission');
+      if (adminCommissionPercentage) adminCommissionPercentage.textContent = commissionPercentage;
       if (calculatedCommission) calculatedCommission.textContent = commissionAmount.toLocaleString('en-IN');
+      
+      console.log('Updated displays with commission:', { commissionPercentage, commissionAmount });
     }
 
     // Ticket price validation
@@ -746,6 +768,13 @@
     // Initialize if venue is pre-selected
     if (venueSelect && venueSelect.value) {
       updateVenuePricing();
+      // Set the booking hours if we have a value
+      if (currentConcertBookingHours && bookingHours) {
+        setTimeout(() => {
+          bookingHours.value = currentConcertBookingHours;
+          calculateTotalCost();
+        }, 100); // Small delay to ensure options are populated
+      }
     }
   }
 </script>
