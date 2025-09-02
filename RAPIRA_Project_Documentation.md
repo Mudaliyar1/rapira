@@ -376,6 +376,125 @@ Users ||--o{ LearningProgress : "completes"
 | isRequired | Boolean | Mandatory module flag |
 | createdBy | ObjectId | Admin who created module |
 
+### 4.9 Venues Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for venue |
+| name | String | Venue name |
+| address | String | Street address |
+| city | String | Venue city |
+| state | String | Venue state |
+| pincode | String | Postal code |
+| capacity | Number | Maximum capacity |
+| venueType | String | Type (Indoor Hall/Outdoor/etc.) |
+| facilities | Array | Available facilities |
+| contactPerson | Object | Contact person details |
+| pricing | Object | Pricing and commission structure |
+| isActive | Boolean | Venue availability status |
+| isVerified | Boolean | Admin verification status |
+| googleMapsLink | String | Google Maps link |
+| createdBy | ObjectId | User who created venue |
+| lastUpdatedBy | ObjectId | User who last updated venue |
+
+### 4.10 Notifications Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for notification |
+| module | String | Notification module type |
+| requestId | ObjectId | Reference to related request |
+| modelRef | String | Referenced model name |
+| title | String | Notification title |
+| message | String | Notification message |
+| isRead | Boolean | Read status |
+| isPending | Boolean | Pending status |
+| actionType | String | Required action type |
+| actionUrl | String | Action URL |
+| targetRole | String | Target user role |
+| priority | String | Notification priority |
+| expiresAt | Date | Expiration date |
+
+### 4.11 RefundRequests Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for refund |
+| ticket | ObjectId | Reference to Ticket document |
+| user | ObjectId | Reference to User document |
+| reason | String | Refund reason |
+| status | String | Request status |
+| requestedAmount | Number | Requested refund amount |
+| processedAmount | Number | Actual refund amount |
+| adminComments | String | Admin comments |
+| processedBy | ObjectId | Admin who processed |
+| requestedAt | Date | Request submission date |
+| processedAt | Date | Processing date |
+
+### 4.12 Orders Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for order |
+| user | ObjectId | Reference to User document |
+| items | Array | Order items array |
+| totalAmount | Number | Total order amount |
+| paymentStatus | String | Payment status |
+| paymentId | String | Payment gateway ID |
+| orderId | String | Payment gateway order ID |
+| shippingAddress | Object | Delivery address |
+| orderStatus | String | Order processing status |
+| trackingNumber | String | Shipping tracking number |
+
+### 4.13 Products Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for product |
+| name | String | Product name |
+| description | String | Product description |
+| price | Number | Product price |
+| category | String | Product category |
+| images | Array | Product image URLs |
+| stock | Number | Available stock |
+| isActive | Boolean | Product availability |
+| artist | ObjectId | Associated artist (if any) |
+| createdBy | ObjectId | Admin who created product |
+
+### 4.14 ArtistApplications Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for application |
+| user | ObjectId | Reference to User document |
+| stageName | String | Proposed stage name |
+| genre | String | Music genre |
+| artistLevel | String | Experience level |
+| yearsActive | Number | Years of experience |
+| about | String | Artist description |
+| achievements | Array | List of achievements |
+| socialLinks | Object | Social media links |
+| sampleWork | Array | Sample music/video files |
+| status | String | Application status |
+| submittedAt | Date | Submission date |
+| reviewedAt | Date | Review date |
+| reviewedBy | ObjectId | Admin who reviewed |
+
+### 4.15 ConcertEditRequests Collection
+
+| Field Name | Data Type | Description |
+|------------|-----------|-------------|
+| _id | ObjectId | Unique identifier for edit request |
+| concert | ObjectId | Reference to Concert document |
+| artist | ObjectId | Reference to Artist document |
+| requestedChanges | Object | Requested modifications |
+| reason | String | Reason for changes |
+| status | String | Request status |
+| requestedAt | Date | Request submission date |
+| reviewedAt | Date | Review date |
+| reviewedBy | ObjectId | Admin who reviewed |
+| adminMessage | String | Admin response message |
+
 ---
 
 ## 5. Screen Layouts

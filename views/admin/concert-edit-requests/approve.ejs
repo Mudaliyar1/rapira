@@ -66,63 +66,63 @@
           <% } else { %>
             <div class="list-group list-group-flush">
               <% if (changes.title) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Title:</strong> 
                   <span class="text-success"><%= changes.title %></span>
                 </div>
               <% } %>
               
               <% if (changes.description) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Description:</strong>
                   <div class="text-success mt-1"><%= changes.description %></div>
                 </div>
               <% } %>
               
               <% if (changes.date) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Date:</strong> 
                   <span class="text-success"><%= new Date(changes.date).toLocaleDateString() %></span>
                 </div>
               <% } %>
               
               <% if (changes.time) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Time:</strong> 
                   <span class="text-success"><%= changes.time %></span>
                 </div>
               <% } %>
               
               <% if (changes.city) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>City:</strong> 
                   <span class="text-success"><%= changes.city %></span>
                 </div>
               <% } %>
               
               <% if (changes.venue && requestedVenue) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Venue:</strong> 
                   <span class="text-success"><%= requestedVenue.name %></span>
                 </div>
               <% } %>
               
               <% if (changes.price !== undefined) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Price:</strong> 
                   <span class="text-success">₹<%= changes.price %></span>
                 </div>
               <% } %>
               
               <% if (changes.maxTickets !== undefined) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Max Tickets:</strong> 
                   <span class="text-success"><%= changes.maxTickets || 'Unlimited' %></span>
                 </div>
               <% } %>
               
               <% if (changes.posterImage) { %>
-                <div class="list-group-item">
+                <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Poster Image:</strong>
                   <div class="mt-2">
                     <img src="<%= changes.posterImage %>" class="img-fluid rounded" style="max-height: 200px;" alt="New Poster">
