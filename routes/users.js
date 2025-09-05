@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ArtistApplication = require('../models/ArtistApplication');
+const VenueRequest = require('../models/VenueRequest');
 const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -341,7 +342,7 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
   }
 });
 
-// View public profile
+// View public profile (MUST be last route with :id parameter)
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

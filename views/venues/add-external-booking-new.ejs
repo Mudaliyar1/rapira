@@ -1,0 +1,472 @@
+<%- contentFor('head') %>
+<style>
+  .form-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .header-section {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .info-card {
+    background: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 1rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .availability-card {
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .availability-header {
+    background: #007bff;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px 6px 0 0;
+    margin: 0;
+  }
+
+  .btn-check-availability {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border: none;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .btn-check-availability:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .btn-check-availability:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+
+  .success-message {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+  }
+
+  .error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .form-container {
+      padding: 1rem;
+    }
+    
+    .d-flex.justify-content-between {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+</style>
+
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Breadcrumb Navigation -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/users/venues" style="color: #007bff;">My Venues</a></li>
+          <li class="breadcrumb-item"><a href="/venue-dashboard" style="color: #007bff;">Venue Dashboards</a></li>
+          <li class="breadcrumb-item"><a href="/venue-dashboard/<%= venue._id %>/dashboard" style="color: #007bff;"><%= venue.name %></a></li>
+          <li class="breadcrumb-item active" aria-current="page">Add External Booking</li>
+        </ol>
+      </nav>
+
+      <div class="form-container">
+        <!-- Header Section -->
+        <div class="header-section">
+          <h4 class="mb-1">
+            <i class="bi bi-plus-circle me-2"></i>
+            Add External Booking - <%= venue.name %>
+          </h4>
+          <p class="mb-0 opacity-90">
+            <i class="bi bi-geo-alt me-1"></i>
+            <%= venue.address %>, <%= venue.city %>, <%= venue.state %>
+          </p>
+        </div>
+
+        <!-- Info Card -->
+        <div class="info-card">
+          <h6 class="mb-2">
+            <i class="bi bi-info-circle me-2"></i>
+            External Booking Guidelines
+          </h6>
+          <ul class="mb-0 small">
+            <li><strong>12-hour minimum gap</strong> between any bookings</li>
+            <li>System will check conflicts with website bookings</li>
+            <li>External bookings will appear in venue dashboard</li>
+            <li>This helps prevent double bookings</li>
+          </ul>
+        </div>
+
+        <!-- Add External Booking Form -->
+        <form id="externalBookingForm" method="POST" action="/venue-dashboard/<%= venue._id %>/add-booking">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="title" class="form-label">
+                <i class="bi bi-music-note-beamed me-1"></i>Concert/Event Title *
+              </label>
+              <input type="text" class="form-control" id="title" name="title" required 
+                     placeholder="Enter event title">
+            </div>
+            <div class="col-md-6">
+              <label for="artistName" class="form-label">
+                <i class="bi bi-person me-1"></i>Artist/Performer Name *
+              </label>
+              <input type="text" class="form-control" id="artistName" name="artistName" required 
+                     placeholder="Enter artist name">
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="date" class="form-label">
+                <i class="bi bi-calendar3 me-1"></i>Date *
+              </label>
+              <input type="date" class="form-control" id="date" name="date" required>
+            </div>
+            <div class="col-md-4">
+              <label for="time" class="form-label">
+                <i class="bi bi-clock me-1"></i>Start Time *
+              </label>
+              <input type="time" class="form-control" id="time" name="time" required>
+            </div>
+            <div class="col-md-4">
+              <label for="duration" class="form-label">
+                <i class="bi bi-hourglass-split me-1"></i>Duration (hours) *
+              </label>
+              <select class="form-select" id="duration" name="duration" required>
+                <option value="">Select duration</option>
+                <option value="1">1 hour</option>
+                <option value="2">2 hours</option>
+                <option value="3">3 hours</option>
+                <option value="4">4 hours</option>
+                <option value="5">5 hours</option>
+                <option value="6">6 hours</option>
+                <option value="8">8 hours</option>
+                <option value="10">10 hours</option>
+                <option value="12">12 hours</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="contactInfo" class="form-label">
+                <i class="bi bi-telephone me-1"></i>Contact Information
+              </label>
+              <input type="text" class="form-control" id="contactInfo" name="contactInfo" 
+                     placeholder="Phone, email, or other contact details">
+            </div>
+            <div class="col-md-6">
+              <label for="notes" class="form-label">
+                <i class="bi bi-sticky me-1"></i>Notes
+              </label>
+              <input type="text" class="form-control" id="notes" name="notes" 
+                     placeholder="Additional notes or details">
+            </div>
+          </div>
+
+          <!-- Availability Check Section -->
+          <div class="availability-card" id="availabilityCard">
+            <h6 class="availability-header">
+              <i class="bi bi-search me-2"></i>Availability Check Results
+            </h6>
+            <div class="card-body" id="availabilityResults">
+              <!-- Results will be loaded here -->
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="btn btn-secondary">
+              <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+            </a>
+            
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-check-availability" id="checkBtn" 
+                      onclick="checkAvailability()">
+                <i class="bi bi-search me-1"></i>
+                <span id="checkBtnText">Check Availability</span>
+              </button>
+              
+              <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                <i class="bi bi-plus-circle me-1"></i>Add External Booking
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+console.log('External Booking Page Loaded');
+console.log('Venue ID:', '<%= venue._id %>');
+console.log('Venue Name:', '<%= venue.name %>');
+
+// Global variables
+let availabilityChecked = false;
+let isCheckingAvailability = false;
+
+// DOM elements
+const checkBtn = document.getElementById('checkBtn');
+const submitBtn = document.getElementById('submitBtn');
+const availabilityCard = document.getElementById('availabilityCard');
+const availabilityResults = document.getElementById('availabilityResults');
+const checkBtnText = document.getElementById('checkBtnText');
+
+// Form fields
+const dateField = document.getElementById('date');
+const timeField = document.getElementById('time');
+const durationField = document.getElementById('duration');
+
+// Set minimum date to today
+dateField.min = new Date().toISOString().split('T')[0];
+
+// Reset availability when form fields change
+function resetAvailability() {
+  console.log('Form field changed - resetting availability');
+  availabilityChecked = false;
+  submitBtn.disabled = true;
+  availabilityCard.style.display = 'none';
+  checkBtn.disabled = false;
+  checkBtnText.textContent = 'Check Availability';
+}
+
+// Add event listeners to form fields
+[dateField, timeField, durationField].forEach(field => {
+  field.addEventListener('change', resetAvailability);
+});
+
+// Check availability function
+function checkAvailability() {
+  console.log('checkAvailability function called');
+  
+  if (isCheckingAvailability) {
+    console.log('Already checking availability, ignoring request');
+    return;
+  }
+  
+  const date = dateField.value;
+  const time = timeField.value;
+  const duration = durationField.value;
+  
+  console.log('Form values:', { date, time, duration });
+
+  // Validate required fields
+  if (!date || !time || !duration) {
+    alert('Please fill in date, time, and duration first');
+    return;
+  }
+
+  // Show loading state
+  isCheckingAvailability = true;
+  checkBtn.disabled = true;
+  checkBtnText.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Checking...';
+  
+  // Show availability card with loading
+  availabilityCard.style.display = 'block';
+  availabilityResults.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Checking availability...</span>
+      </div>
+      <p class="mt-2 mb-0">Checking availability for your time slot...</p>
+    </div>
+  `;
+
+  const requestUrl = '/venue-dashboard/<%= venue._id %>/check-availability';
+  const requestData = { date, time, duration };
+  
+  console.log('Making request to:', requestUrl);
+  console.log('Request data:', requestData);
+
+  // Make the availability check request
+  fetch(requestUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestData)
+  })
+  .then(response => {
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return response.json();
+  })
+  .then(data => {
+    console.log('Response data:', data);
+    
+    // Reset loading state
+    isCheckingAvailability = false;
+    checkBtn.disabled = false;
+    checkBtnText.textContent = 'Check Availability';
+    
+    if (data.success) {
+      if (data.available) {
+        // Available - show success
+        availabilityResults.innerHTML = `
+          <div class="success-message">
+            <h6 class="mb-2">
+              <i class="bi bi-check-circle me-2"></i>✅ Time Slot Available!
+            </h6>
+            <p class="mb-2">
+              <strong>Your Booking:</strong> ${data.requestedSlot.startTime} - ${data.requestedSlot.endTime} 
+              (${data.requestedSlot.duration} hours)
+            </p>
+            <p class="mb-0 small">No conflicts found with existing bookings.</p>
+          </div>
+        `;
+        submitBtn.disabled = false;
+        availabilityChecked = true;
+        
+      } else {
+        // Conflicts found - show details
+        let conflictHtml = `
+          <div class="error-message">
+            <h6 class="mb-2">
+              <i class="bi bi-exclamation-triangle me-2"></i>❌ Time Slot Conflicts
+            </h6>
+            <p class="mb-2">The requested time slot conflicts with existing bookings:</p>
+        `;
+        
+        if (data.conflicts && data.conflicts.length > 0) {
+          data.conflicts.forEach(conflict => {
+            conflictHtml += `
+              <div class="mb-2 p-2 border-start border-danger border-3 bg-light">
+                <strong>${conflict.title}</strong> - ${conflict.artistName}<br>
+                <small class="text-muted">
+                  ${conflict.type === 'website' ? '🌐 Website Booking' : '📝 External Booking'} | 
+                  ${conflict.time} (${conflict.duration}h) | ${conflict.reason}
+                </small>
+              </div>
+            `;
+          });
+        }
+        
+        conflictHtml += `
+            <p class="mb-0 mt-2 small">
+              <i class="bi bi-lightbulb me-1"></i>
+              Please choose a different time slot with at least 12-hour gap.
+            </p>
+          </div>
+        `;
+        
+        availabilityResults.innerHTML = conflictHtml;
+        submitBtn.disabled = true;
+        availabilityChecked = false;
+      }
+    } else {
+      // Error from server
+      availabilityResults.innerHTML = `
+        <div class="error-message">
+          <h6 class="mb-2">
+            <i class="bi bi-exclamation-triangle me-2"></i>Error Checking Availability
+          </h6>
+          <p class="mb-0">${data.message || 'Please try again'}</p>
+        </div>
+      `;
+      submitBtn.disabled = true;
+      availabilityChecked = false;
+    }
+  })
+  .catch(error => {
+    console.error('Fetch error:', error);
+    
+    // Reset loading state
+    isCheckingAvailability = false;
+    checkBtn.disabled = false;
+    checkBtnText.textContent = 'Check Availability';
+    
+    availabilityResults.innerHTML = `
+      <div class="error-message">
+        <h6 class="mb-2">
+          <i class="bi bi-x-circle me-2"></i>Network Error
+        </h6>
+        <p class="mb-1">Unable to check availability. Please try again.</p>
+        <small class="text-muted">Error: ${error.message}</small>
+      </div>
+    `;
+    submitBtn.disabled = true;
+    availabilityChecked = false;
+  });
+}
+
+// Form submission handler
+document.getElementById('externalBookingForm').addEventListener('submit', function(e) {
+  if (!availabilityChecked) {
+    e.preventDefault();
+    alert('Please check availability before submitting the booking.');
+    return false;
+  }
+  
+  console.log('Form submitted with availability checked');
+  return true;
+});
+
+console.log('All JavaScript loaded successfully');
+</script>

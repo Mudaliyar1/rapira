@@ -440,4 +440,34 @@ router.post('/test-menu-item', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST /admin/website-settings/venue - Update venue settings
+router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { defaultCommissionPercentage, minimumVenueRate, requireAdminApproval, allowUserCommissionEdit } = req.body;
+
+    const settings = await WebsiteSettings.getSettings();
+    
+    // Initialize venueSettings if it doesn't exist
+    if (!settings.venueSettings) {
+      settings.venueSettings = {};
+    }
+
+    // Update venue settings
+    settings.venueSettings.defaultCommissionPercentage = parseFloat(defaultCommissionPercentage) || 10;
+    settings.venueSettings.minimumVenueRate = parseInt(minimumVenueRate) || 500;
+    settings.venueSettings.requireAdminApproval = requireAdminApproval === 'on';
+    settings.venueSettings.allowUserCommissionEdit = allowUserCommissionEdit === 'on';
+    
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    req.flash('success', 'Venue settings updated successfully!');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating venue settings:', error);
+    req.flash('error', 'Failed to update venue settings');
+    res.redirect('/admin/website-settings');
+  }
+});
+
 module.exports = router;

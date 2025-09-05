@@ -1,0 +1,516 @@
+<%- contentFor('body') %>
+
+<!-- Venue Booking Management Page -->
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/users/profile">Profile</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>"><%= venue.name %></a></li>
+          <li class="breadcrumb-item active">Bookings</li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold">
+        <i class="bi bi-calendar-check me-2"></i>Venue Bookings
+      </h1>
+      <p class="text-muted mb-0"><%= venue.name %> - <%= venue.city %>, <%= venue.state %></p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/users/venues/<%= venue._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Venue
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body text-center">
+          <h4 class="mb-1"><%= bookings.length %></h4>
+          <small>Total Bookings</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body text-center">
+          <h4 class="mb-1"><%= bookings.filter(b => b.status === 'approved' || b.status === 'confirmed').length %></h4>
+          <small>Approved</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body text-center">
+          <h4 class="mb-1"><%= bookings.filter(b => b.status === 'pending').length %></h4>
+          <small>Pending</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body text-center">
+          <h4 class="mb-1"><%= bookings.filter(b => b.status === 'cancelled' || b.status === 'rejected').length %></h4>
+          <small>Cancelled</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Controls -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label for="searchInput" class="form-label">Search Bookings</label>
+              <input type="text" class="form-control" id="searchInput" placeholder="Artist name, event title...">
+            </div>
+            <div class="col-md-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="dateFilter" class="form-label">Date Range</label>
+              <select class="form-select" id="dateFilter">
+                <option value="">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="sortFilter" class="form-label">Sort By</label>
+              <select class="form-select" id="sortFilter">
+                <option value="date">Date</option>
+                <option value="artist">Artist Name</option>
+                <option value="status">Status</option>
+                <option value="created">Created Date</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-12 text-end">
+              <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Summary -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-list-ul me-2"></i>Booking Details 
+          <span class="badge bg-primary" id="visibleCount"><%= bookings.length %></span>
+        </h5>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Results Message (Hidden by default) -->
+  <div id="noResultsMessage" class="row" style="display: none;">
+    <div class="col-12 text-center py-5">
+      <i class="bi bi-search fs-1 text-muted mb-3"></i>
+      <h4 class="text-muted">No bookings found</h4>
+      <p class="text-muted">Try adjusting your search criteria</p>
+    </div>
+  </div>
+
+  <!-- Bookings Container -->
+  <div class="row" id="bookingsContainer">
+    <% if (bookings && bookings.length > 0) { %>
+      <% bookings.forEach((booking) => { %>
+        <div class="col-12 mb-4 booking-card"
+             data-status="<%= booking.status %>"
+             data-date="<%= booking.date %>"
+             data-created="<%= booking.createdAt || booking.date %>">
+          <div class="card shadow-sm border-start border-4 
+                      <%= booking.status === 'approved' || booking.status === 'confirmed' ? 'border-success' : 
+                          booking.status === 'pending' ? 'border-warning' : 
+                          booking.status === 'cancelled' || booking.status === 'rejected' ? 'border-danger' : 'border-secondary' %>">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-2">
+                  <div class="text-center">
+                    <span class="badge 
+                          <%= booking.status === 'approved' || booking.status === 'confirmed' ? 'bg-success' : 
+                              booking.status === 'pending' ? 'bg-warning' : 
+                              booking.status === 'cancelled' || booking.status === 'rejected' ? 'bg-danger' : 'bg-secondary' %> 
+                          fs-6 px-3 py-2 mb-2">
+                      <%= booking.status.toUpperCase() %>
+                    </span>
+                    <p class="small text-muted mb-0">#<%= booking._id.toString().slice(-6).toUpperCase() %></p>
+                  </div>
+                </div>
+                
+                <div class="col-md-3">
+                  <h6 class="mb-1 fw-bold event-title"><%= booking.title || 'Concert Event' %></h6>
+                  <% if (booking.artist) { %>
+                    <p class="mb-1 text-primary artist-name">
+                      <i class="bi bi-person-circle me-1"></i>
+                      <%= booking.artist.stageName || (booking.artist.user ? booking.artist.user.name : 'Unknown Artist') %>
+                    </p>
+                    <% if (booking.artist.user && booking.artist.user.email) { %>
+                      <small class="text-muted">
+                        <i class="bi bi-envelope me-1"></i>
+                        <%= booking.artist.user.email %>
+                      </small>
+                    <% } %>
+                  <% } else { %>
+                    <p class="mb-1 text-muted artist-name">Artist information not available</p>
+                  <% } %>
+                </div>
+                
+                <div class="col-md-2">
+                  <p class="mb-1">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    <%= new Date(booking.date).toLocaleDateString('en-IN', { 
+                      day: 'numeric', 
+                      month: 'short', 
+                      year: 'numeric' 
+                    }) %>
+                  </p>
+                  <p class="mb-0">
+                    <i class="bi bi-clock me-1"></i>
+                    <%= booking.time || 'Time TBD' %>
+                    <% if (booking.venueBooking && booking.venueBooking.bookingHours) { %>
+                      <span class="ms-1">(<%= booking.venueBooking.bookingHours %> hrs)</span>
+                    <% } %>
+                  </p>
+                </div>
+                
+                <!-- Financial Details -->
+                <div class="col-md-2">
+                  <% if (booking.venueBooking) { %>
+                    <% 
+                      const totalCost = booking.venueBooking.totalCost || 0;
+                      const advanceAmount = booking.venueBooking.adminCommission?.advanceAmount || 0;
+                      const remaining = Math.max(0, totalCost - advanceAmount);
+                    %>
+                    <p class="mb-1 text-success">
+                      <i class="bi bi-currency-rupee me-1"></i>
+                      <small>Paid: ₹<%= advanceAmount.toLocaleString('en-IN') %></small>
+                    </p>
+                    <% if (remaining > 0) { %>
+                      <p class="mb-0 text-warning">
+                        <small>Remaining: ₹<%= remaining.toLocaleString('en-IN') %></small>
+                      </p>
+                    <% } else { %>
+                      <p class="mb-0 text-success">
+                        <small><i class="bi bi-check-circle me-1"></i>Fully Paid</small>
+                      </p>
+                    <% } %>
+                  <% } else { %>
+                    <p class="mb-0 text-muted">
+                      <small>Payment info unavailable</small>
+                    </p>
+                  <% } %>
+                </div>
+                
+                <div class="col-md-3 text-end">
+                  <div class="btn-group-vertical d-grid gap-1">
+                    <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>" 
+                       class="btn btn-outline-info btn-sm">
+                      <i class="bi bi-eye me-1"></i> View Full Details
+                    </a>
+                    
+                    <% if (booking.status === 'approved' || booking.status === 'confirmed') { %>
+                      <button class="btn btn-outline-primary btn-sm" 
+                              onclick="downloadReceipt('<%= booking._id %>')">
+                        <i class="bi bi-download me-1"></i> Download Receipt
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              
+              <% if (booking.description && booking.description.trim()) { %>
+                <hr class="my-3">
+                <div class="row">
+                  <div class="col-12">
+                    <small class="text-muted">
+                      <strong>Event Description:</strong>
+                      <%= booking.description.substring(0, 150) %><%= booking.description.length > 150 ? '...' : '' %>
+                    </small>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="col-12 text-center py-5">
+        <i class="bi bi-calendar-x fs-1 text-muted mb-3"></i>
+        <h4 class="text-muted">No bookings yet</h4>
+        <p class="text-muted">Your venue bookings will appear here</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script type="application/json" id="bookingsData">
+<%- JSON.stringify(bookings) %>
+</script>
+
+<script>
+// Global variables
+let allBookings = [];
+let bookingsData = [];
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Load bookings data
+  try {
+    const dataElement = document.getElementById('bookingsData');
+    if (dataElement) {
+      bookingsData = JSON.parse(dataElement.textContent);
+      console.log('Loaded bookings data:', bookingsData.length, 'bookings');
+    }
+  } catch (error) {
+    console.error('Error loading bookings data:', error);
+    bookingsData = [];
+  }
+  
+  // Store all booking elements for filtering
+  allBookings = Array.from(document.querySelectorAll('.booking-card'));
+  console.log('Loaded booking elements:', allBookings.length);
+  
+  // Add event listeners for filters
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const dateFilter = document.getElementById('dateFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  
+  if (searchInput) searchInput.addEventListener('input', debounce(applyFilters, 300));
+  if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+  if (dateFilter) dateFilter.addEventListener('change', applyFilters);
+  if (sortFilter) sortFilter.addEventListener('change', applyFilters);
+  
+  // Initial filter application
+  applyFilters();
+});
+
+// Debounce function for search input
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  const statusFilter = document.getElementById('statusFilter')?.value || '';
+  const dateFilter = document.getElementById('dateFilter')?.value || '';
+  const sortFilter = document.getElementById('sortFilter')?.value || 'date';
+  
+  console.log('Applying filters:', { searchTerm, statusFilter, dateFilter, sortFilter });
+  
+  let visibleBookings = allBookings.filter(booking => {
+    // Get booking data from elements
+    const artistName = booking.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+    const eventTitle = booking.querySelector('.event-title')?.textContent.toLowerCase() || '';
+    const status = booking.dataset.status || '';
+    const bookingDate = new Date(booking.dataset.date || '');
+    const now = new Date();
+    
+    // Search filter
+    if (searchTerm && !artistName.includes(searchTerm) && !eventTitle.includes(searchTerm)) {
+      return false;
+    }
+    
+    // Status filter
+    if (statusFilter && status !== statusFilter) {
+      return false;
+    }
+    
+    // Date filter
+    if (dateFilter) {
+      switch (dateFilter) {
+        case 'today':
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const bookingDay = new Date(bookingDate);
+          bookingDay.setHours(0, 0, 0, 0);
+          if (bookingDay.getTime() !== today.getTime()) return false;
+          break;
+        case 'week':
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - now.getDay());
+          weekStart.setHours(0, 0, 0, 0);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          weekEnd.setHours(23, 59, 59, 999);
+          if (bookingDate < weekStart || bookingDate > weekEnd) return false;
+          break;
+        case 'month':
+          if (bookingDate.getMonth() !== now.getMonth() || bookingDate.getFullYear() !== now.getFullYear()) return false;
+          break;
+        case 'upcoming':
+          if (bookingDate <= now) return false;
+          break;
+        case 'past':
+          if (bookingDate >= now) return false;
+          break;
+      }
+    }
+    
+    return true;
+  });
+  
+  // Sort bookings
+  if (sortFilter) {
+    visibleBookings.sort((a, b) => {
+      switch (sortFilter) {
+        case 'artist':
+          const artistA = a.querySelector('.artist-name')?.textContent || '';
+          const artistB = b.querySelector('.artist-name')?.textContent || '';
+          return artistA.localeCompare(artistB);
+        case 'status':
+          return a.dataset.status.localeCompare(b.dataset.status);
+        case 'created':
+          return new Date(b.dataset.created || '') - new Date(a.dataset.created || '');
+        case 'date':
+        default:
+          return new Date(a.dataset.date || '') - new Date(b.dataset.date || '');
+      }
+    });
+  }
+  
+  // Hide all bookings first
+  allBookings.forEach(booking => {
+    booking.style.display = 'none';
+  });
+  
+  // Show filtered bookings
+  const container = document.getElementById('bookingsContainer');
+  if (container) {
+    visibleBookings.forEach((booking) => {
+      booking.style.display = 'block';
+      container.appendChild(booking); // Re-append in sorted order
+    });
+  }
+  
+  // Update count
+  const visibleCountElement = document.getElementById('visibleCount');
+  if (visibleCountElement) {
+    visibleCountElement.textContent = visibleBookings.length;
+  }
+  
+  // Show/hide no results message
+  const noResultsMessage = document.getElementById('noResultsMessage');
+  if (visibleBookings.length === 0 && allBookings.length > 0) {
+    if (noResultsMessage) {
+      noResultsMessage.style.display = 'block';
+    }
+  } else {
+    if (noResultsMessage) {
+      noResultsMessage.style.display = 'none';
+    }
+  }
+  
+  console.log('Filter result:', visibleBookings.length, 'bookings visible');
+}
+
+function clearFilters() {
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const dateFilter = document.getElementById('dateFilter');
+  const sortFilter = document.getElementById('sortFilter');
+  
+  if (searchInput) searchInput.value = '';
+  if (statusFilter) statusFilter.value = '';
+  if (dateFilter) dateFilter.value = '';
+  if (sortFilter) sortFilter.value = 'date';
+  
+  applyFilters();
+}
+
+// Download receipt function
+function downloadReceipt(bookingId) {
+  window.open(`/users/venues/bookings/${bookingId}/receipt`, '_blank');
+}
+
+// Show alert message function
+function showAlert(message, type) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+  
+  // Auto dismiss after 5 seconds
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 5000);
+}
+</script>
+
+<style>
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.border-start {
+  border-left-width: 4px !important;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.btn-group-vertical .btn {
+  margin-bottom: 2px;
+}
+
+.booking-card {
+  transition: opacity 0.3s;
+}
+
+.alert {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+  .btn-group-vertical {
+    margin-top: 1rem;
+  }
+}
+</style>

@@ -1,0 +1,382 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+          <li class="breadcrumb-item"><a href="/admin/venue-edit-requests">Venue Edit Requests</a></li>
+          <li class="breadcrumb-item active">Request #<%= editRequest._id.toString().slice(-6) %></li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold">
+        <i class="bi bi-building-gear me-2"></i>Venue Edit Request Details
+      </h1>
+      <p class="text-muted mb-0">
+        Request #<%= editRequest._id.toString().slice(-6) %> - 
+        <% if (editRequest.venue) { %>
+          <%= editRequest.venue.name %>
+        <% } else { %>
+          Deleted Venue
+        <% } %>
+      </p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/admin/venue-edit-requests" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+      </a>
+    </div>
+  </div>
+
+  <!-- Status and Actions -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h5 class="mb-1">Request Status</h5>
+              <% 
+                let statusClass = '';
+                let statusIcon = '';
+                switch(editRequest.status) {
+                  case 'pending':
+                    statusClass = 'warning';
+                    statusIcon = 'hourglass-split';
+                    break;
+                  case 'approved':
+                    statusClass = 'success';
+                    statusIcon = 'check-circle';
+                    break;
+                  case 'rejected':
+                    statusClass = 'danger';
+                    statusIcon = 'x-circle';
+                    break;
+                  default:
+                    statusClass = 'secondary';
+                    statusIcon = 'question-circle';
+                }
+              %>
+              <span class="badge bg-<%= statusClass %> fs-6">
+                <i class="bi bi-<%= statusIcon %> me-1"></i>
+                <%= editRequest.status.charAt(0).toUpperCase() + editRequest.status.slice(1) %>
+              </span>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <% if (editRequest.status === 'pending') { %>
+                <div class="btn-group" role="group">
+                  <form method="POST" action="/admin/venue-edit-requests/<%= editRequest._id %>/approve" style="display: inline;">
+                    <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this venue edit request?')">
+                      <i class="bi bi-check me-1"></i> Approve
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/venue-edit-requests/<%= editRequest._id %>/reject" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this venue edit request?')">
+                      <i class="bi bi-x me-1"></i> Reject
+                    </button>
+                  </form>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body text-center">
+          <h6>Request Information</h6>
+          <p class="mb-1"><strong>Submitted:</strong> <%= new Date(editRequest.createdAt).toLocaleDateString() %></p>
+          <p class="mb-0"><strong>Time:</strong> <%= new Date(editRequest.createdAt).toLocaleTimeString() %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Details -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-info-circle me-2"></i>Request Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Venue Information</h6>
+              <% if (editRequest.venue) { %>
+                <p><strong>Venue:</strong> <%= editRequest.venue.name %></p>
+                <p><strong>Location:</strong> <%= editRequest.venue.city %>, <%= editRequest.venue.state %></p>
+                <p><strong>Type:</strong> <%= editRequest.venue.type %></p>
+              <% } else { %>
+                <p class="text-muted">Venue has been deleted</p>
+              <% } %>
+            </div>
+            <div class="col-md-6">
+              <h6>User Information</h6>
+              <% if (editRequest.user) { %>
+                <p><strong>User:</strong> <%= editRequest.user.name %></p>
+                <p><strong>Email:</strong> <%= editRequest.user.email %></p>
+              <% } else { %>
+                <p class="text-muted">User information not available</p>
+              <% } %>
+            </div>
+          </div>
+          
+          <% if (editRequest.reason) { %>
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>Reason for Changes</h6>
+                <div class="alert alert-info">
+                  <i class="bi bi-chat-left-text me-2"></i>
+                  <%= editRequest.reason %>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changed Fields Comparison -->
+  <% if (editRequest.changedFields && editRequest.changedFields.length > 0) { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-arrow-left-right me-2"></i>Proposed Changes
+              <span class="badge bg-primary ms-2"><%= editRequest.changedFields.length %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th width="20%">Field</th>
+                    <th width="40%">Current Value</th>
+                    <th width="40%">Proposed Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% editRequest.changedFields.forEach(field => { %>
+                    <tr>
+                      <td><strong><%= field.charAt(0).toUpperCase() + field.slice(1) %></strong></td>
+                      <td>
+                        <% if (field === 'images') { %>
+                          <% if (editRequest.originalData[field] && editRequest.originalData[field].length > 0) { %>
+                            <div class="d-flex flex-wrap gap-2">
+                              <% editRequest.originalData[field].forEach(img => { %>
+                                <img src="<%= img %>" alt="Current image" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
+                              <% }); %>
+                            </div>
+                          <% } else { %>
+                            <span class="text-muted">No images</span>
+                          <% } %>
+                        <% } else if (field === 'pricing') { %>
+                          <% if (editRequest.originalData[field]) { %>
+                            <div class="small">
+                              <% if (editRequest.originalData[field].hourlyRates && editRequest.originalData[field].hourlyRates.length > 0) { %>
+                                <strong>Hourly Rates:</strong><br>
+                                <% editRequest.originalData[field].hourlyRates.forEach(rate => { %>
+                                  <%= rate.hours %>h: ₹<%= rate.price %><br>
+                                <% }); %>
+                              <% } %>
+                              <% if (editRequest.originalData[field].dailyRate) { %>
+                                <strong>Daily:</strong> ₹<%= editRequest.originalData[field].dailyRate %><br>
+                              <% } %>
+                            </div>
+                          <% } else { %>
+                            <span class="text-muted">No pricing set</span>
+                          <% } %>
+                        <% } else if (field === 'amenities') { %>
+                          <% if (editRequest.originalData[field] && editRequest.originalData[field].length > 0) { %>
+                            <% editRequest.originalData[field].forEach(amenity => { %>
+                              <span class="badge bg-secondary me-1"><%= amenity %></span>
+                            <% }); %>
+                          <% } else { %>
+                            <span class="text-muted">No amenities</span>
+                          <% } %>
+                        <% } else { %>
+                          <%= editRequest.originalData[field] || 'Not set' %>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (field === 'images') { %>
+                          <% if (editRequest.requestedChanges[field] && editRequest.requestedChanges[field].length > 0) { %>
+                            <div class="d-flex flex-wrap gap-2">
+                              <% editRequest.requestedChanges[field].forEach(img => { %>
+                                <img src="<%= img %>" alt="Proposed image" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
+                              <% }); %>
+                            </div>
+                          <% } else { %>
+                            <span class="text-muted">No images</span>
+                          <% } %>
+                        <% } else if (field === 'pricing') { %>
+                          <% if (editRequest.requestedChanges[field]) { %>
+                            <div class="small">
+                              <% if (editRequest.requestedChanges[field].hourlyRates && editRequest.requestedChanges[field].hourlyRates.length > 0) { %>
+                                <strong>Hourly Rates:</strong><br>
+                                <% editRequest.requestedChanges[field].hourlyRates.forEach(rate => { %>
+                                  <%= rate.hours %>h: ₹<%= rate.price %><br>
+                                <% }); %>
+                              <% } %>
+                              <% if (editRequest.requestedChanges[field].dailyRate) { %>
+                                <strong>Daily:</strong> ₹<%= editRequest.requestedChanges[field].dailyRate %><br>
+                              <% } %>
+                            </div>
+                          <% } else { %>
+                            <span class="text-muted">No pricing set</span>
+                          <% } %>
+                        <% } else if (field === 'amenities') { %>
+                          <% if (editRequest.requestedChanges[field] && editRequest.requestedChanges[field].length > 0) { %>
+                            <% editRequest.requestedChanges[field].forEach(amenity => { %>
+                              <span class="badge bg-primary me-1"><%= amenity %></span>
+                            <% }); %>
+                          <% } else { %>
+                            <span class="text-muted">No amenities</span>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-success"><%= editRequest.requestedChanges[field] || 'Not set' %></span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- New Images Section -->
+  <% if (editRequest.newImages && editRequest.newImages.length > 0) { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-images me-2"></i>New Images Added
+              <span class="badge bg-info ms-2"><%= editRequest.newImages.length %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% editRequest.newImages.forEach(image => { %>
+                <div class="col-md-3 mb-3">
+                  <img src="<%= image %>" alt="New venue image" class="img-fluid rounded">
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Images to Remove Section -->
+  <% if (editRequest.imagesToRemove && editRequest.imagesToRemove.length > 0) { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-trash me-2"></i>Images to Remove
+              <span class="badge bg-warning ms-2"><%= editRequest.imagesToRemove.length %></span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% editRequest.imagesToRemove.forEach(image => { %>
+                <div class="col-md-3 mb-3">
+                  <div class="position-relative">
+                    <img src="<%= image %>" alt="Image to remove" class="img-fluid rounded">
+                    <div class="position-absolute top-0 end-0 p-2">
+                      <span class="badge bg-danger">
+                        <i class="bi bi-trash"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Admin Response Section -->
+  <% if (editRequest.status !== 'pending') { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-chat-dots me-2"></i>Admin Response
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Status:</strong> 
+                  <span class="badge bg-<%= statusClass %>">
+                    <%= editRequest.status.charAt(0).toUpperCase() + editRequest.status.slice(1) %>
+                  </span>
+                </p>
+                <% if (editRequest.processedAt) { %>
+                  <p><strong>Processed:</strong> <%= new Date(editRequest.processedAt).toLocaleString() %></p>
+                <% } %>
+                <% if (editRequest.processedBy) { %>
+                  <p><strong>Processed By:</strong> <%= editRequest.processedBy.name %></p>
+                <% } %>
+              </div>
+              <div class="col-md-6">
+                <% if (editRequest.adminResponse) { %>
+                  <p><strong>Response:</strong></p>
+                  <div class="alert alert-<%= editRequest.status === 'approved' ? 'success' : 'danger' %>">
+                    <%= editRequest.adminResponse %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<style>
+.card {
+  border: none;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.img-thumbnail {
+  border: 2px solid #dee2e6;
+}
+
+.alert {
+  border: none;
+  border-radius: 10px;
+}
+</style>

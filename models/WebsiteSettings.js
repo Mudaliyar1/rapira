@@ -96,6 +96,29 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Venue Management Settings
+  venueSettings: {
+    defaultCommissionPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 10
+    },
+    allowUserCommissionEdit: {
+      type: Boolean,
+      default: false
+    },
+    minimumVenueRate: {
+      type: Number,
+      min: 0,
+      default: 500
+    },
+    requireAdminApproval: {
+      type: Boolean,
+      default: true
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,

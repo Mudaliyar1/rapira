@@ -73,7 +73,7 @@
                     <i class="bi bi-hourglass-split text-primary me-3 fs-4"></i>
                     <div>
                       <small class="text-primary d-block">Duration</small>
-                      <% let bookingHours = concert.bookingHours || 2; %>
+                      <% let bookingHours = (concert.venueBooking && concert.venueBooking.bookingHours) ? concert.venueBooking.bookingHours : 1; %>
                       <span class="text-white"><%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %></span>
                     </div>
                   </div>

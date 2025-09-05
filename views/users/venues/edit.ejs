@@ -1,0 +1,445 @@
+<%- contentFor('body') %>
+
+<!-- Venue Edit Request Form -->
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/users/profile">Profile</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>"><%= venue.name %></a></li>
+          <li class="breadcrumb-item active">Request Edit</li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold">
+        <i class="bi bi-pencil-square me-2"></i>Request Venue Edit
+      </h1>
+      <p class="text-muted mb-0">Submit changes for admin approval</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/users/venues/<%= venue._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Venue
+      </a>
+    </div>
+  </div>
+
+  <!-- Notice -->
+  <div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Important:</strong> All changes must be approved by an administrator before they take effect. You will be notified once your request is reviewed.
+  </div>
+
+  <!-- Edit Form -->
+  <form action="/users/venues/<%= venue._id %>/edit" method="POST" enctype="multipart/form-data" id="venueEditForm">
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-8">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-info-circle me-2"></i>Basic Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Venue Name *</label>
+                <input type="text" class="form-control" id="name" name="name" 
+                       value="<%= venue.name %>" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="venueType" class="form-label">Venue Type *</label>
+                <select class="form-select" id="venueType" name="venueType" required>
+                  <option value="">Select venue type</option>
+                  <option value="Concert Hall" <%= venue.venueType === 'Concert Hall' ? 'selected' : '' %>>Concert Hall</option>
+                  <option value="Theater" <%= venue.venueType === 'Theater' ? 'selected' : '' %>>Theater</option>
+                  <option value="Club" <%= venue.venueType === 'Club' ? 'selected' : '' %>>Club</option>
+                  <option value="Auditorium" <%= venue.venueType === 'Auditorium' ? 'selected' : '' %>>Auditorium</option>
+                  <option value="Arena" <%= venue.venueType === 'Arena' ? 'selected' : '' %>>Arena</option>
+                  <option value="Stadium" <%= venue.venueType === 'Stadium' ? 'selected' : '' %>>Stadium</option>
+                  <option value="Festival Ground" <%= venue.venueType === 'Festival Ground' ? 'selected' : '' %>>Festival Ground</option>
+                  <option value="Hotel" <%= venue.venueType === 'Hotel' ? 'selected' : '' %>>Hotel</option>
+                  <option value="Restaurant" <%= venue.venueType === 'Restaurant' ? 'selected' : '' %>>Restaurant</option>
+                  <option value="Other" <%= venue.venueType === 'Other' ? 'selected' : '' %>>Other</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="capacity" class="form-label">Capacity *</label>
+                <input type="number" class="form-control" id="capacity" name="capacity" 
+                       value="<%= venue.capacity %>" min="1" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="priceRange" class="form-label">Price Range *</label>
+                <select class="form-select" id="priceRange" name="priceRange" required>
+                  <option value="">Select price range</option>
+                  <option value="Budget" <%= venue.priceRange === 'Budget' ? 'selected' : '' %>>Budget (₹0 - ₹10,000)</option>
+                  <option value="Mid-Range" <%= venue.priceRange === 'Mid-Range' ? 'selected' : '' %>>Mid-Range (₹10,000 - ₹50,000)</option>
+                  <option value="Premium" <%= venue.priceRange === 'Premium' ? 'selected' : '' %>>Premium (₹50,000 - ₹1,00,000)</option>
+                  <option value="Luxury" <%= venue.priceRange === 'Luxury' ? 'selected' : '' %>>Luxury (₹1,00,000+)</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="4" 
+                        placeholder="Describe your venue..."><%= venue.description || '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-geo-alt me-2"></i>Location Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label for="address" class="form-label">Address *</label>
+                <input type="text" class="form-control" id="address" name="address" 
+                       value="<%= venue.address %>" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="city" class="form-label">City *</label>
+                <input type="text" class="form-control" id="city" name="city" 
+                       value="<%= venue.city %>" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="state" class="form-label">State *</label>
+                <input type="text" class="form-control" id="state" name="state" 
+                       value="<%= venue.state %>" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="zipCode" class="form-label">ZIP Code *</label>
+                <input type="text" class="form-control" id="zipCode" name="zipCode" 
+                       value="<%= venue.zipCode %>" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-telephone me-2"></i>Contact Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="contactNumber" class="form-label">Contact Number *</label>
+                <input type="tel" class="form-control" id="contactNumber" name="contactNumber" 
+                       value="<%= venue.contactNumber %>" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="<%= venue.email || '' %>">
+              </div>
+              <div class="col-12 mb-3">
+                <label for="website" class="form-label">Website</label>
+                <input type="url" class="form-control" id="website" name="website" 
+                       value="<%= venue.website || '' %>" placeholder="https://yourwebsite.com">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Facilities & Amenities -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-list-check me-2"></i>Facilities & Amenities
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% 
+              const availableFacilities = [
+                'Air Conditioning', 'Heating', 'Wi-Fi', 'Parking', 'Security', 
+                'Sound System', 'Lighting System', 'Stage', 'Green Room', 'Catering Kitchen',
+                'Bar Area', 'Restrooms', 'Wheelchair Access', 'Elevator', 'Coat Check',
+                'VIP Area', 'Balcony', 'Dance Floor', 'Piano', 'Projector', 'Screen'
+              ];
+              const venueFacilities = venue.facilities || [];
+              %>
+              <% availableFacilities.forEach((facility, index) => { %>
+                <div class="col-md-4 mb-2">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="facility-<%= index %>" 
+                           name="facilities" value="<%= facility %>" 
+                           <%= venueFacilities.includes(facility) ? 'checked' : '' %>>
+                    <label class="form-check-label" for="facility-<%= index %>">
+                      <%= facility %>
+                    </label>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-currency-dollar me-2"></i>Pricing Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- Hourly Rates -->
+            <div class="mb-4">
+              <h6>Hourly Rates</h6>
+              <div class="card border-info mb-3">
+                <div class="card-body">
+                  <div class="row g-2 mb-3">
+                    <div class="col-md-2"><strong>Hours</strong></div>
+                    <div class="col-md-4"><strong>Rate (₹)</strong></div>
+                    <div class="col-md-2"><strong>Hours</strong></div>
+                    <div class="col-md-4"><strong>Rate (₹)</strong></div>
+                  </div>
+                  
+                  <div class="pricing-grid">
+                    <% for(let i = 1; i <= 12; i++) { %>
+                      <div class="row g-2 mb-2">
+                        <div class="col-md-2">
+                          <label class="form-label small">Hour <%= i %></label>
+                        </div>
+                        <div class="col-md-4">
+                          <input type="number" class="form-control form-control-sm" 
+                                 name="pricing[hourlyRates][<%= i-1 %>][rate]" 
+                                 value="<%= venue.pricing && venue.pricing.hourlyRates && venue.pricing.hourlyRates.find(hr => hr.hours === i) ? venue.pricing.hourlyRates.find(hr => hr.hours === i).rate : '' %>"
+                                 placeholder="0" min="0" step="100">
+                          <input type="hidden" name="pricing[hourlyRates][<%= i-1 %>][hours]" value="<%= i %>">
+                        </div>
+                        <% if(i + 12 <= 24) { %>
+                          <div class="col-md-2">
+                            <label class="form-label small">Hour <%= i + 12 %></label>
+                          </div>
+                          <div class="col-md-4">
+                            <input type="number" class="form-control form-control-sm" 
+                                   name="pricing[hourlyRates][<%= i+11 %>][rate]" 
+                                   value="<%= venue.pricing && venue.pricing.hourlyRates && venue.pricing.hourlyRates.find(hr => hr.hours === (i + 12)) ? venue.pricing.hourlyRates.find(hr => hr.hours === (i + 12)).rate : '' %>"
+                                   placeholder="0" min="0" step="100">
+                            <input type="hidden" name="pricing[hourlyRates][<%= i+11 %>][hours]" value="<%= i + 12 %>">
+                          </div>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
+                  <small class="text-info">
+                    <i class="bi bi-info-circle"></i> 
+                    Only hours with rates will be available for booking. Leave empty to disable that hour option.
+                    Commission is managed by administration.
+                  </small>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="minimumHours" class="form-label">Minimum Hours *</label>
+                  <input type="number" class="form-control" id="minimumHours" name="pricing[minimumHours]" 
+                         value="<%= venue.pricing && venue.pricing.minimumHours || 1 %>" 
+                         min="1" max="24" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="currency" class="form-label">Currency</label>
+                  <select class="form-select" id="currency" name="pricing[currency]">
+                    <option value="INR" <%= venue.pricing && venue.pricing.currency === 'INR' ? 'selected' : '' %>>INR (₹)</option>
+                    <option value="USD" <%= venue.pricing && venue.pricing.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
+                    <option value="EUR" <%= venue.pricing && venue.pricing.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin Commission -->
+            <div class="mb-4">
+              <h6>Commission Settings</h6>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="commissionPercentage" class="form-label">Commission Percentage (%)</label>
+                  <input type="number" class="form-control" id="commissionPercentage" name="pricing[adminCommission][percentage]" 
+                         value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.percentage || 10 %>" 
+                         min="0" max="50" step="0.5" readonly>
+                  <small class="text-muted">Set by administration</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="advanceAmount" class="form-label">Advance Amount (₹)</label>
+                  <input type="number" class="form-control" id="advanceAmount" name="pricing[adminCommission][advanceAmount]" 
+                         value="<%= venue.pricing && venue.pricing.adminCommission && venue.pricing.adminCommission.advanceAmount || 0 %>" 
+                         min="0" step="100">
+                </div>
+              </div>
+            </div>
+
+            <!-- Ticket Pricing -->
+            <div class="mb-4">
+              <h6>Suggested Ticket Pricing</h6>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="minimumTicketPrice" class="form-label">Minimum Ticket Price (₹)</label>
+                  <input type="number" class="form-control" id="minimumTicketPrice" name="pricing[ticketPricing][minimumPrice]" 
+                         value="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice || 10 %>" 
+                         min="0" step="10">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="suggestedTicketPrice" class="form-label">Suggested Ticket Price (₹)</label>
+                  <input type="number" class="form-control" id="suggestedTicketPrice" name="pricing[ticketPricing][suggestedPrice]" 
+                         value="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice || 1000 %>" 
+                         min="0" step="50">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Images -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-images me-2"></i>Venue Images
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- Current Images -->
+            <% if (venue.images && venue.images.length > 0) { %>
+              <h6>Current Images</h6>
+              <div class="row mb-3">
+                <% venue.images.forEach((image, index) => { %>
+                  <div class="col-md-3 mb-3">
+                    <div class="position-relative">
+                      <img src="<%= image %>" alt="Venue Image <%= index + 1 %>" 
+                           class="img-fluid rounded" style="height: 150px; object-fit: cover; width: 100%;">
+                      <div class="form-check position-absolute top-0 end-0 m-2">
+                        <input class="form-check-input bg-danger" type="checkbox" 
+                               name="imagesToRemove" value="<%= image %>" 
+                               id="removeImg-<%= index %>">
+                        <label class="form-check-label text-white" for="removeImg-<%= index %>">
+                          <i class="bi bi-trash"></i>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <!-- Add New Images -->
+            <h6>Add New Images</h6>
+            <div class="mb-3">
+              <input type="file" class="form-control" id="newImages" name="newImages" 
+                     multiple accept="image/*">
+              <small class="text-muted">You can select multiple images. Maximum 10 images total.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-4">
+        <!-- Edit Reason -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-chat-text me-2"></i>Edit Reason
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="reason" class="form-label">Reason for Changes *</label>
+              <textarea class="form-control" id="reason" name="reason" rows="4" 
+                        placeholder="Please explain why you want to make these changes..." required></textarea>
+              <small class="text-muted">This helps administrators understand and review your request.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Status -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-info-circle me-2"></i>Current Status
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span>Venue Status:</span>
+              <span class="badge <%= venue.isActive ? 'bg-success' : 'bg-warning' %>">
+                <%= venue.isActive ? 'Active' : 'Inactive' %>
+              </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span>Created:</span>
+              <span class="text-muted"><%= new Date(venue.createdAt).toLocaleDateString() %></span>
+            </div>
+            <% if (venue.updatedAt && venue.updatedAt.getTime() !== venue.createdAt.getTime()) { %>
+              <div class="d-flex justify-content-between align-items-center">
+                <span>Last Updated:</span>
+                <span class="text-muted"><%= new Date(venue.updatedAt).toLocaleDateString() %></span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="card">
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-warning btn-lg">
+                <i class="bi bi-send me-2"></i>Submit Edit Request
+              </button>
+              <a href="/users/venues/<%= venue._id %>" class="btn btn-outline-secondary">
+                <i class="bi bi-x me-2"></i>Cancel
+              </a>
+            </div>
+            
+            <div class="alert alert-warning mt-3 mb-0">
+              <small>
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <strong>Note:</strong> Changes will be pending until approved by an administrator.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+// Form validation and preview
+document.getElementById('venueEditForm').addEventListener('submit', function(e) {
+  const reason = document.getElementById('reason').value.trim();
+  if (reason.length < 10) {
+    e.preventDefault();
+    alert('Please provide a detailed reason for the changes (at least 10 characters).');
+    return false;
+  }
+  
+  // Show confirmation
+  if (!confirm('Are you sure you want to submit this edit request? You will be notified once it is reviewed.')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Image preview for new uploads
+document.getElementById('newImages').addEventListener('change', function(e) {
+  const files = e.target.files;
+  const totalImages = (document.querySelectorAll('img[alt^="Venue Image"]').length - document.querySelectorAll('input[name="imagesToRemove"]:checked').length) + files.length;
+  
+  if (totalImages > 10) {
+    alert('Maximum 10 images allowed. Please remove some existing images or select fewer new images.');
+    e.target.value = '';
+    return;
+  }
+});
+</script>

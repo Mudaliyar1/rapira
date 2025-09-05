@@ -1,0 +1,127 @@
+<%- contentFor('body') %>
+
+<!-- Approve Venue Request -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">Approve Venue Request</h1>
+    <div class="d-flex gap-2">
+      <a href="/admin/venue-requests/<%= venueRequest._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+      </a>
+      <a href="/admin/venue-requests" class="btn btn-outline-info">
+        <i class="bi bi-list me-1"></i> All Requests
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Venue Summary Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-check-circle me-2"></i>Venue to be Approved
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <% if (venueRequest.images && venueRequest.images.length > 0) { %>
+              <img src="<%= venueRequest.images[0] %>" alt="<%= venueRequest.name %>" 
+                   class="rounded me-3" style="width: 80px; height: 80px; object-fit: cover;">
+            <% } else { %>
+              <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
+                   style="width: 80px; height: 80px;">
+                <i class="bi bi-building text-muted fs-2"></i>
+              </div>
+            <% } %>
+            <div>
+              <h4 class="mb-1"><%= venueRequest.name %></h4>
+              <p class="text-muted mb-1"><%= venueRequest.fullAddress %></p>
+              <small class="text-muted">
+                Submitted by: <strong><%= venueRequest.user.name %></strong> 
+                (<%= venueRequest.user.email %>)
+              </small>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-3">
+              <strong>Type:</strong> <%= venueRequest.venueType %>
+            </div>
+            <div class="col-md-3">
+              <strong>Price Range:</strong> <%= venueRequest.priceRange %>
+            </div>
+            <% if (venueRequest.capacity) { %>
+              <div class="col-md-3">
+                <strong>Capacity:</strong> <%= venueRequest.capacity %>
+              </div>
+            <% } %>
+            <div class="col-md-3">
+              <strong>Submitted:</strong> 
+              <%= venueRequest.createdAt.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric' 
+              }) %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval Form -->
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="bi bi-check-square me-2"></i>Approval Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <form action="/admin/venue-requests/<%= venueRequest._id %>/approve" method="POST">
+            <!-- Admin Notes -->
+            <div class="mb-4">
+              <label for="adminNotes" class="form-label">Admin Notes (Optional)</label>
+              <textarea class="form-control" id="adminNotes" name="adminNotes" rows="4" 
+                        placeholder="Add any notes or comments for this approval..."></textarea>
+              <small class="text-muted">These notes will be visible to the user and stored for record keeping.</small>
+            </div>
+
+            <!-- Auto-activate Option -->
+            <div class="mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="autoActivate" name="autoActivate" checked>
+                <label class="form-check-label" for="autoActivate">
+                  <strong>Activate venue immediately</strong>
+                </label>
+              </div>
+              <small class="text-muted">
+                If checked, the venue will be active and available for artists to book immediately. 
+                If unchecked, you'll need to manually activate it later.
+              </small>
+            </div>
+
+            <!-- What happens next -->
+            <div class="alert alert-info">
+              <h6><i class="bi bi-info-circle me-2"></i>What happens when you approve:</h6>
+              <ul class="mb-0">
+                <li>A new venue will be created in the system with all the provided details</li>
+                <li>The venue will be marked as verified since it's admin-approved</li>
+                <li>The original user will be set as the venue creator</li>
+                <li>The user will be notified of the approval</li>
+                <li>The venue will be available for artists to book (if activated)</li>
+              </ul>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="/admin/venue-requests/<%= venueRequest._id %>" class="btn btn-outline-secondary me-md-2">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle me-1"></i> Approve & Create Venue
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

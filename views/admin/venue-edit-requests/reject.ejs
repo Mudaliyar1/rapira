@@ -1,0 +1,244 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+          <li class="breadcrumb-item"><a href="/admin/venue-edit-requests">Venue Edit Requests</a></li>
+          <li class="breadcrumb-item"><a href="/admin/venue-edit-requests/<%= editRequest._id %>">Request #<%= editRequest._id.toString().slice(-6) %></a></li>
+          <li class="breadcrumb-item active">Reject</li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold text-danger">
+        <i class="bi bi-x-circle me-2"></i>Reject Venue Edit Request
+      </h1>
+      <p class="text-muted mb-0">
+        Request #<%= editRequest._id.toString().slice(-6) %> - 
+        <% if (editRequest.venue) { %>
+          <%= editRequest.venue.name %>
+        <% } else { %>
+          Deleted Venue
+        <% } %>
+      </p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/admin/venue-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+      </a>
+    </div>
+  </div>
+
+  <!-- Rejection Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-x-circle me-2"></i>Reject Changes
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Request Summary -->
+          <div class="alert alert-info">
+            <h6><i class="bi bi-info-circle me-2"></i>Request Summary</h6>
+            <% if (editRequest.venue) { %>
+              <p><strong>Venue:</strong> <%= editRequest.venue.name %></p>
+              <p><strong>Location:</strong> <%= editRequest.venue.city %>, <%= editRequest.venue.state %></p>
+            <% } %>
+            <% if (editRequest.user) { %>
+              <p><strong>Requested by:</strong> <%= editRequest.user.name %> (<%= editRequest.user.email %>)</p>
+            <% } %>
+            <p><strong>Submitted:</strong> <%= new Date(editRequest.createdAt).toLocaleString() %></p>
+            <% if (editRequest.changedFields) { %>
+              <p><strong>Fields to change:</strong> <%= editRequest.changedFields.join(', ') %></p>
+            <% } %>
+            <% if (editRequest.reason) { %>
+              <p><strong>User's reason:</strong> "<%= editRequest.reason %>"</p>
+            <% } %>
+          </div>
+
+          <!-- Rejection Form -->
+          <form action="/admin/venue-edit-requests/<%= editRequest._id %>/reject" method="POST">
+            <div class="mb-3">
+              <label for="adminResponse" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+              <textarea 
+                class="form-control" 
+                id="adminResponse" 
+                name="adminResponse" 
+                rows="5" 
+                placeholder="Please provide a clear reason for rejecting this request. This will help the user understand what needs to be improved."
+                required
+              ></textarea>
+              <div class="form-text">This message will be sent to the user via email notification. Please be specific about what needs to be corrected.</div>
+            </div>
+
+            <!-- Common rejection reasons -->
+            <div class="mb-3">
+              <label class="form-label">Common Rejection Reasons (Click to add to message)</label>
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Information provided is incomplete or inaccurate.')">
+                  Incomplete Information
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Pricing does not meet venue standards.')">
+                  Pricing Issues
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Images do not meet quality requirements.')">
+                  Image Quality
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Description needs to be more detailed and professional.')">
+                  Description Issues
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Contact information is invalid or unreachable.')">
+                  Contact Issues
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addReason('Venue does not meet safety or quality standards.')">
+                  Standards Issues
+                </button>
+              </div>
+            </div>
+
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Confirmation Required:</strong> By rejecting this request, the user will be notified and the venue information will remain unchanged. The user can submit a new request with corrections.
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/admin/venue-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-danger btn-lg">
+                <i class="bi bi-x-circle me-1"></i> Reject Request
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Request Info -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Request Information</h6>
+        </div>
+        <div class="card-body">
+          <p><strong>Request ID:</strong><br><code>#<%= editRequest._id.toString().slice(-6) %></code></p>
+          <p><strong>Status:</strong><br>
+            <span class="badge bg-warning">
+              <i class="bi bi-hourglass-split me-1"></i>Pending
+            </span>
+          </p>
+          <p><strong>Submitted:</strong><br><%= new Date(editRequest.createdAt).toLocaleString() %></p>
+        </div>
+      </div>
+
+      <!-- Proposed Changes -->
+      <% if (editRequest.changedFields && editRequest.changedFields.length > 0) { %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h6 class="mb-0">Proposed Changes</h6>
+          </div>
+          <div class="card-body">
+            <% editRequest.changedFields.forEach(field => { %>
+              <div class="mb-2">
+                <strong><%= field.charAt(0).toUpperCase() + field.slice(1) %>:</strong>
+                <% if (field === 'pricing' && editRequest.requestedChanges[field]) { %>
+                  <br><small class="text-muted">
+                    <% if (editRequest.requestedChanges[field].dailyRate) { %>
+                      Daily: ₹<%= editRequest.requestedChanges[field].dailyRate %>
+                    <% } %>
+                    <% if (editRequest.requestedChanges[field].hourlyRates && editRequest.requestedChanges[field].hourlyRates.length > 0) { %>
+                      <br>Hourly rates updated
+                    <% } %>
+                  </small>
+                <% } else if (field === 'amenities' && editRequest.requestedChanges[field]) { %>
+                  <br><small class="text-muted"><%= editRequest.requestedChanges[field].length %> amenities</small>
+                <% } else { %>
+                  <br><small class="text-muted">Modified</small>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- User Info -->
+      <% if (editRequest.user) { %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h6 class="mb-0">User Information</h6>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <img src="<%= editRequest.user.profileImage || '/images/default-profile.svg' %>" 
+                   alt="User profile" 
+                   class="rounded-circle me-2" 
+                   width="40" height="40"
+                   style="object-fit: cover;">
+              <div>
+                <h6 class="mb-0"><%= editRequest.user.name %></h6>
+                <small class="text-muted"><%= editRequest.user.email %></small>
+              </div>
+            </div>
+            <p class="mb-1"><strong>Role:</strong> <%= editRequest.user.role || 'User' %></p>
+            <p class="mb-0"><strong>Member since:</strong> <%= new Date(editRequest.user.createdAt).toLocaleDateString() %></p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+function addReason(reason) {
+  const textarea = document.getElementById('adminResponse');
+  const currentValue = textarea.value.trim();
+  
+  if (currentValue) {
+    textarea.value = currentValue + '\n\n' + reason;
+  } else {
+    textarea.value = reason;
+  }
+  
+  // Focus on textarea
+  textarea.focus();
+  
+  // Move cursor to end
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+</script>
+
+<style>
+.card {
+  border: none;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.alert {
+  border: none;
+  border-radius: 10px;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+.btn-outline-secondary.btn-sm {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+</style>

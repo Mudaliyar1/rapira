@@ -1,0 +1,405 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+              <li class="breadcrumb-item">
+                <a href="/users/venues" class="text-decoration-none">My Venues</a>
+              </li>
+              <li class="breadcrumb-item">
+                <a href="/venue-dashboard" class="text-decoration-none">Dashboards</a>
+              </li>
+              <li class="breadcrumb-item active" aria-current="page"><%= venue.name %></li>
+            </ol>
+          </nav>
+          <h2 class="text-dark mb-1">
+            <i class="bi bi-kanban me-2"></i><%= venue.name %> Dashboard
+          </h2>
+          <p class="text-muted mb-0">
+            <i class="bi bi-geo-alt me-1"></i><%= venue.address %>, <%= venue.city %>, <%= venue.state %>
+          </p>
+        </div>
+        <div>
+          <a href="/venue-dashboard/<%= venue._id %>/add-external-booking" class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i>Add External Booking
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-primary text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-calendar-event-fill fs-1 mb-2"></i>
+          <h5 class="card-title">Total Bookings</h5>
+          <p class="card-text fs-4"><%= stats.totalBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-success text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-globe fs-1 mb-2"></i>
+          <h5 class="card-title">Website Bookings</h5>
+          <p class="card-text fs-4"><%= stats.totalWebsiteBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-info text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-plus-square-fill fs-1 mb-2"></i>
+          <h5 class="card-title">External Bookings</h5>
+          <p class="card-text fs-4"><%= stats.totalExternalBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-warning text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-clock-history fs-1 mb-2"></i>
+          <h5 class="card-title">Upcoming</h5>
+          <p class="card-text fs-4"><%= stats.upcomingBookings %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month Navigation -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h5 class="mb-0">
+                <i class="bi bi-calendar3 me-2"></i>
+                Bookings Calendar - <%= new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %>
+              </h5>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-md-end">
+                <div class="btn-group" role="group">
+                  <a href="?month=<%= currentMonth === 1 ? 12 : currentMonth - 1 %>&year=<%= currentMonth === 1 ? currentYear - 1 : currentYear %>" 
+                     class="btn btn-outline-primary">
+                    <i class="bi bi-chevron-left"></i> Previous
+                  </a>
+                  <button class="btn btn-outline-primary" disabled>
+                    <%= new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) %>
+                  </button>
+                  <a href="?month=<%= currentMonth === 12 ? 1 : currentMonth + 1 %>&year=<%= currentMonth === 12 ? currentYear + 1 : currentYear %>" 
+                     class="btn btn-outline-primary">
+                    Next <i class="bi bi-chevron-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body py-2">
+          <div class="d-flex flex-wrap gap-3 align-items-center">
+            <small><strong>Legend:</strong></small>
+            <small>
+              <span class="badge bg-success">Website Booking (Approved)</span>
+            </small>
+            <small>
+              <span class="badge bg-warning">Website Booking (Pending)</span>
+            </small>
+            <small>
+              <span class="badge bg-info">External Booking</span>
+            </small>
+            <small>
+              <span class="badge bg-secondary">Other Status</span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings List -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="bi bi-list-ul me-2"></i>All Bookings 
+            <span class="badge bg-secondary ms-2"><%= bookings.length %> booking(s)</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if (bookings.length === 0) { %>
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+              <h4 class="text-muted">No Bookings Found</h4>
+              <p class="text-muted">No bookings found for the selected month.</p>
+              <a href="/venue-dashboard/<%= venue._id %>/add-external-booking" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Add Your First External Booking
+              </a>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Event Details</th>
+                    <th>Artist/Performer</th>
+                    <th>Date & Time</th>
+                    <th>Duration</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% bookings.forEach(booking => { %>
+                    <tr class="<%= new Date(booking.date) < new Date() ? 'table-secondary' : '' %>"
+                        data-booking-id="<%= booking.id %>"
+                        data-title="<%= booking.title %>"
+                        data-artist="<%= booking.artistName %>"
+                        data-date="<%= booking.date %>"
+                        data-time="<%= booking.startTime %>"
+                        data-duration="<%= booking.duration %>"
+                        data-contact="<%= booking.contactInfo || '' %>"
+                        data-notes="<%= booking.notes || '' %>">
+                      <td>
+                        <div>
+                          <h6 class="mb-1"><%= booking.title %></h6>
+                          <% if (booking.notes) { %>
+                            <small class="text-muted">
+                              <%= booking.notes.length > 50 ? booking.notes.substring(0, 50) + '...' : booking.notes %>
+                            </small>
+                          <% } %>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div>
+                            <div class="fw-bold"><%= booking.artistName %></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <div class="fw-bold"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                          <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i><%= booking.startTime %>
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge bg-info"><%= booking.duration %>h</span>
+                      </td>
+                      <td>
+                        <% if (booking.type === 'website') { %>
+                          <span class="badge bg-success">
+                            <i class="bi bi-globe me-1"></i>Website
+                          </span>
+                        <% } else { %>
+                          <span class="badge bg-info">
+                            <i class="bi bi-plus-square me-1"></i>External
+                          </span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% 
+                          let statusClass = 'secondary';
+                          let statusIcon = 'clock';
+                          if (booking.status === 'approved') {
+                            statusClass = 'success';
+                            statusIcon = 'check-circle';
+                          } else if (booking.status === 'pending') {
+                            statusClass = 'warning';
+                            statusIcon = 'clock-history';
+                          } else if (booking.status === 'active') {
+                            statusClass = 'info';
+                            statusIcon = 'play-circle';
+                          } else if (booking.status === 'completed') {
+                            statusClass = 'success';
+                            statusIcon = 'check-all';
+                          }
+                        %>
+                        <span class="badge bg-<%= statusClass %>">
+                          <i class="bi bi-<%= statusIcon %> me-1"></i><%= booking.status.toUpperCase() %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (booking.contactInfo) { %>
+                          <small class="text-muted">
+                            <%= booking.contactInfo.length > 20 ? booking.contactInfo.substring(0, 20) + '...' : booking.contactInfo %>
+                          </small>
+                        <% } else { %>
+                          <span class="text-muted">-</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <% if (booking.type === 'website') { %>
+                            <a href="/admin/concerts/<%= booking.id %>/details" class="btn btn-outline-primary" title="View Details">
+                              <i class="bi bi-eye"></i>
+                            </a>
+                          <% } else { %>
+                            <button class="btn btn-outline-primary" title="View Details" 
+                                    onclick="viewExternalBooking('<%= booking.id %>')">
+                              <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" title="Edit" 
+                                    onclick="editExternalBooking('<%= booking.id %>')">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" title="Delete" 
+                                    onclick="deleteExternalBooking('<%= booking.id %>')">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          <% } %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- External Booking Details Modal -->
+<div class="modal fade" id="externalBookingModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-info-circle me-2"></i>External Booking Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalContent">
+        <!-- Content will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// External booking management functions
+function viewExternalBooking(bookingId) {
+  // Find booking data from the page data attributes
+  const bookingCard = document.querySelector(`[data-booking-id="${bookingId}"]`);
+  if (!bookingCard) return;
+  
+  const title = bookingCard.getAttribute('data-title');
+  const artistName = bookingCard.getAttribute('data-artist');
+  const date = bookingCard.getAttribute('data-date');
+  const time = bookingCard.getAttribute('data-time');
+  const duration = bookingCard.getAttribute('data-duration');
+  const contact = bookingCard.getAttribute('data-contact');
+  const notes = bookingCard.getAttribute('data-notes');
+  
+  const modalContent = document.getElementById('modalContent');
+  modalContent.innerHTML = `
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="text-primary">Event Information</h6>
+          <table class="table table-sm">
+            <tr><td><strong>Title:</strong></td><td>${title}</td></tr>
+            <tr><td><strong>Artist:</strong></td><td>${artistName}</td></tr>
+            <tr><td><strong>Date:</strong></td><td>${new Date(date).toLocaleDateString('en-IN')}</td></tr>
+            <tr><td><strong>Time:</strong></td><td>${time}</td></tr>
+            <tr><td><strong>Duration:</strong></td><td>${duration} hours</td></tr>
+            <tr><td><strong>Status:</strong></td><td><span class="badge bg-info">active</span></td></tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-primary">Contact & Notes</h6>
+          <table class="table table-sm">
+            <tr><td><strong>Contact:</strong></td><td>${contact || 'Not provided'}</td></tr>
+            <tr><td><strong>Notes:</strong></td><td>${notes || 'No notes'}</td></tr>
+            <tr><td><strong>Type:</strong></td><td><span class="badge bg-info">External Booking</span></td></tr>
+          </table>
+        </div>
+      </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('externalBookingModal')).show();
+}
+
+function editExternalBooking(bookingId) {
+  // Redirect to edit page or open edit modal
+  window.location.href = `/venue-dashboard/<%= venue._id %>/external-bookings/${bookingId}/edit`;
+}
+
+function deleteExternalBooking(bookingId) {
+  if (confirm('Are you sure you want to delete this external booking? This action cannot be undone.')) {
+    fetch(`/venue-dashboard/<%= venue._id %>/external-bookings/${bookingId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('External booking deleted successfully!');
+        window.location.reload();
+      } else {
+        alert('Error deleting booking: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error deleting booking. Please try again.');
+    });
+  }
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+});
+</script>
+
+<style>
+.table tr.table-secondary {
+  opacity: 0.7;
+}
+
+.card {
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+</style>

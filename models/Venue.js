@@ -44,7 +44,7 @@ const VenueSchema = new mongoose.Schema({
   },
   facilities: [{
     type: String,
-    enum: ['Parking', 'Sound System', 'Lighting', 'Stage', 'Green Rooms', 'Restrooms', 'Food Court', 'AC', 'Wheelchair Accessible', 'Wheelchair Access', 'Wi-Fi', 'WiFi']
+    enum: ['Parking', 'Sound System', 'Lighting', 'Stage', 'Green Rooms', 'Restrooms', 'Food Court', 'AC', 'Wheelchair Accessible', 'Wheelchair Access', 'Wi-Fi', 'WiFi', 'Dance Floor', 'Bar', 'Kitchen', 'Terrace', 'Garden', 'Pool', 'Gym', 'Spa', 'Conference Room', 'Projector', 'Microphone', 'DJ Setup']
   }],
   contactPerson: {
     name: {

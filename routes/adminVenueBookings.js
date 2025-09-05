@@ -101,49 +101,103 @@ router.get('/check-availability', async (req, res) => {
       });
     }
 
+    // Enhanced booking search: Check current date and surrounding dates for cross-day conflicts
     const bookingDate = new Date(date);
     const [hours, minutes] = time.split(':').map(Number);
+    const durationHours = parseInt(duration) || 2;
     
-    // Create start and end times for the requested booking
-    const startTime = new Date(bookingDate);
-    startTime.setHours(hours, minutes, 0, 0);
-    
-    const endTime = new Date(startTime);
-    endTime.setHours(hours + parseInt(duration), minutes, 0, 0);
+    const currentDate = new Date(bookingDate);
+    const previousDate = new Date(currentDate);
+    previousDate.setDate(currentDate.getDate() - 1);
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(currentDate.getDate() + 1);
 
-    // Find existing bookings for this venue on this date
+    // Find existing bookings for this venue on current date, previous date, and next date
     const existingBookings = await Concert.find({
       venue: venueId,
       date: {
-        $gte: new Date(date + 'T00:00:00.000Z'),
-        $lt: new Date(date + 'T23:59:59.999Z')
+        $gte: new Date(previousDate.setHours(0, 0, 0, 0)),
+        $lte: new Date(nextDate.setHours(23, 59, 59, 999))
       },
       status: { $in: ['approved', 'pending'] }
     })
     .populate('artist', 'stageName')
     .select('title time date artist venueBooking.bookingHours status');
 
-    // Check for time conflicts
+    // Enhanced conflict checking with new rules
     const conflicts = [];
-    
-    existingBookings.forEach(booking => {
-      const [bookingHours, bookingMinutes] = booking.time.split(':').map(Number);
-      const bookingStart = new Date(booking.date);
-      bookingStart.setHours(bookingHours, bookingMinutes, 0, 0);
-      
-      const bookingEnd = new Date(bookingStart);
-      const bookingDuration = booking.venueBooking?.bookingHours || 2;
-      bookingEnd.setHours(bookingHours + bookingDuration, bookingMinutes, 0, 0);
+    const MINIMUM_GAP_HOURS = 12; // 12-hour minimum gap requirement
 
-      // Check if times overlap
-      if (startTime < bookingEnd && endTime > bookingStart) {
-        conflicts.push({
-          title: booking.title,
-          artist: booking.artist.stageName,
-          time: booking.time,
-          duration: bookingDuration,
-          status: booking.status
-        });
+    // Function to get actual concert end time (including cross-day scenarios)
+    const getConcertEndTime = (startDate, startTime, duration) => {
+      const concertStart = new Date(startDate);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      concertStart.setHours(hours, minutes, 0, 0);
+      
+      const concertEnd = new Date(concertStart);
+      concertEnd.setTime(concertEnd.getTime() + (duration * 60 * 60 * 1000));
+      
+      return concertEnd;
+    };
+
+    // Function to get concert start time
+    const getConcertStartTime = (startDate, startTime) => {
+      const concertStart = new Date(startDate);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      concertStart.setHours(hours, minutes, 0, 0);
+      
+      return concertStart;
+    };
+
+    // Get requested concert times
+    const requestedStartTime = getConcertStartTime(bookingDate, time);
+    const requestedEndTime = getConcertEndTime(bookingDate, time, durationHours);
+
+    existingBookings.forEach(booking => {
+      if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
+        const existingBookingDate = new Date(booking.date);
+        const existingDuration = booking.venueBooking.bookingHours;
+        
+        const existingStartTime = getConcertStartTime(existingBookingDate, booking.time);
+        const existingEndTime = getConcertEndTime(existingBookingDate, booking.time, existingDuration);
+
+        // Rule 1: Check for direct time overlap
+        if (requestedStartTime < existingEndTime && requestedEndTime > existingStartTime) {
+          conflicts.push({
+            title: booking.title,
+            artist: booking.artist.stageName,
+            time: booking.time,
+            duration: existingDuration,
+            status: booking.status,
+            reason: 'Time slots overlap directly'
+          });
+        }
+
+        // Rule 2: Check for 12-hour minimum gap requirement
+        const timeBetweenConcerts1 = Math.abs(requestedStartTime - existingEndTime) / (1000 * 60 * 60); // Gap from existing end to requested start
+        const timeBetweenConcerts2 = Math.abs(existingStartTime - requestedEndTime) / (1000 * 60 * 60); // Gap from requested end to existing start
+
+        if (timeBetweenConcerts1 < MINIMUM_GAP_HOURS && timeBetweenConcerts1 >= 0) {
+          conflicts.push({
+            title: booking.title,
+            artist: booking.artist.stageName,
+            time: booking.time,
+            duration: existingDuration,
+            status: booking.status,
+            reason: `Minimum ${MINIMUM_GAP_HOURS}-hour gap required. Booking starts only ${timeBetweenConcerts1.toFixed(1)} hours after previous concert ends`
+          });
+        }
+
+        if (timeBetweenConcerts2 < MINIMUM_GAP_HOURS && timeBetweenConcerts2 >= 0) {
+          conflicts.push({
+            title: booking.title,
+            artist: booking.artist.stageName,
+            time: booking.time,
+            duration: existingDuration,
+            status: booking.status,
+            reason: `Minimum ${MINIMUM_GAP_HOURS}-hour gap required. Next concert starts only ${timeBetweenConcerts2.toFixed(1)} hours after this booking ends`
+          });
+        }
       }
     });
 

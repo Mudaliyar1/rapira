@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Concert = require('../models/Concert');
+const VenueExternalBooking = require('../models/VenueExternalBooking');
 const Venue = require('../models/Venue');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 
@@ -16,178 +17,149 @@ router.post('/check-availability', isLoggedIn, isArtist, async (req, res) => {
       });
     }
 
-    // Parse the input
-    const bookingDate = new Date(date);
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const durationHours = parseInt(duration);
+    // Use the VenueExternalBooking conflict checking method which includes both website and external bookings
+    const conflictCheck = await VenueExternalBooking.checkConflicts(
+      venueId, 
+      date, 
+      startTime, 
+      parseInt(duration)
+    );
 
-    // Create start and end times for the requested booking
-    const requestedStart = new Date(bookingDate);
-    requestedStart.setHours(startHours, startMinutes, 0, 0);
-    
-    const requestedEnd = new Date(requestedStart);
-    requestedEnd.setHours(startHours + durationHours, startMinutes, 0, 0);
-
-    // Format times for display
-    const formatTime = (date) => {
-      return date.toLocaleTimeString('en-US', { 
-        hour12: true, 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    };
-
-    // Find existing bookings for this venue on this date
-    const existingBookings = await Concert.find({
-      venue: venueId,
-      date: {
-        $gte: new Date(bookingDate.setHours(0, 0, 0, 0)),
-        $lte: new Date(bookingDate.setHours(23, 59, 59, 999))
-      },
-      status: { $in: ['pending', 'approved'] } // Only check non-cancelled bookings
-    })
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name' }
-    })
-    .sort({ time: 1 });
-
-    // Check for conflicts
-    const conflicts = [];
-    let hasConflict = false;
-
-    existingBookings.forEach(booking => {
-      if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
-        const [existingHours, existingMinutes] = booking.time.split(':').map(Number);
-        
-        const existingStart = new Date(bookingDate);
-        existingStart.setHours(existingHours, existingMinutes, 0, 0);
-        
-        const existingEnd = new Date(existingStart);
-        existingEnd.setHours(existingHours + booking.venueBooking.bookingHours, existingMinutes, 0, 0);
-
-        // Check for overlap
-        const hasOverlap = (requestedStart < existingEnd && requestedEnd > existingStart);
-
-        if (hasOverlap) {
-          hasConflict = true;
-          conflicts.push({
-            concertId: booking._id,
-            title: booking.title,
-            artistName: booking.artist.user ? booking.artist.user.name : booking.artist.stageName,
-            startTime: formatTime(existingStart),
-            endTime: formatTime(existingEnd),
-            duration: booking.venueBooking.bookingHours,
-            status: booking.status,
-            rawStart: existingStart,
-            rawEnd: existingEnd
-          });
-        }
-      }
-    });
+    // Format conflicts for response
+    const formattedConflicts = conflictCheck.conflicts.map(conflict => ({
+      concertId: conflict.id,
+      title: conflict.title,
+      artistName: conflict.artistName,
+      startTime: conflict.startTime,
+      endTime: conflict.endTime || `${parseInt(conflict.startTime.split(':')[0]) + conflict.duration}:${conflict.startTime.split(':')[1]}`,
+      duration: conflict.duration,
+      status: conflict.status || 'active',
+      reason: conflict.reason,
+      type: conflict.type,
+      conflictDate: conflict.date.toISOString().split('T')[0]
+    }));
 
     // Generate time suggestions if there's a conflict
     const suggestions = [];
-    if (hasConflict) {
-      const allBookings = existingBookings
-        .filter(b => b.time && b.venueBooking && b.venueBooking.bookingHours)
-        .map(booking => {
-          const [existingHours, existingMinutes] = booking.time.split(':').map(Number);
-          const existingStart = new Date(bookingDate);
-          existingStart.setHours(existingHours, existingMinutes, 0, 0);
-          const existingEnd = new Date(existingStart);
-          existingEnd.setHours(existingHours + booking.venueBooking.bookingHours, existingMinutes, 0, 0);
-          return { start: existingStart, end: existingEnd };
-        })
-        .sort((a, b) => a.start - b.start);
-
-      // Find available slots
-      const dayStart = new Date(bookingDate);
-      dayStart.setHours(6, 0, 0, 0); // Start from 6 AM
-
-      const dayEnd = new Date(bookingDate);
-      dayEnd.setHours(23, 0, 0, 0); // End at 11 PM
-
-      // Check slots before first booking
-      if (allBookings.length > 0) {
-        const firstBookingStart = allBookings[0].start;
-        const potentialEnd = new Date(dayStart.getTime() + durationHours * 60 * 60 * 1000);
+    if (conflictCheck.hasConflicts) {
+      // Find available time slots with 12-hour gaps
+      const venue = await Venue.findById(venueId);
+      const currentDate = new Date(date);
+      
+      // Check multiple days for available slots
+      for (let i = 0; i <= 7; i++) { // Check current day and next 7 days
+        const checkDate = new Date(currentDate);
+        checkDate.setDate(currentDate.getDate() + i);
         
-        if (potentialEnd <= firstBookingStart) {
-          suggestions.push({
-            startTime: formatTime(dayStart),
-            endTime: formatTime(potentialEnd),
-            available: true
-          });
+        // Check if we can fit the requested duration at various times
+        for (let hour = 6; hour <= 22; hour++) {
+          const testStartTime = `${hour.toString().padStart(2, '0')}:00`;
+          
+          const testConflictCheck = await VenueExternalBooking.checkConflicts(
+            venueId, 
+            checkDate.toISOString().split('T')[0], 
+            testStartTime, 
+            parseInt(duration)
+          );
+
+          if (!testConflictCheck.hasConflicts) {
+            const testStart = new Date(checkDate);
+            testStart.setHours(hour, 0, 0, 0);
+            
+            const testEnd = new Date(testStart);
+            testEnd.setTime(testStart.getTime() + (parseInt(duration) * 60 * 60 * 1000));
+
+            suggestions.push({
+              date: checkDate.toISOString().split('T')[0],
+              startTime: testStartTime,
+              endTime: testEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+              available: true,
+              note: `Available with 12-hour gap`
+            });
+            
+            // Limit suggestions per day
+            if (suggestions.filter(s => s.date === checkDate.toISOString().split('T')[0]).length >= 3) {
+              break;
+            }
+          }
         }
-      }
-
-      // Check slots between bookings
-      for (let i = 0; i < allBookings.length - 1; i++) {
-        const currentEnd = allBookings[i].end;
-        const nextStart = allBookings[i + 1].start;
-        const gapDuration = (nextStart - currentEnd) / (1000 * 60 * 60); // in hours
-
-        if (gapDuration >= durationHours) {
-          const potentialEnd = new Date(currentEnd.getTime() + durationHours * 60 * 60 * 1000);
-          suggestions.push({
-            startTime: formatTime(currentEnd),
-            endTime: formatTime(potentialEnd),
-            available: true
-          });
-        }
-      }
-
-      // Check slot after last booking
-      if (allBookings.length > 0) {
-        const lastBookingEnd = allBookings[allBookings.length - 1].end;
-        const potentialEnd = new Date(lastBookingEnd.getTime() + durationHours * 60 * 60 * 1000);
         
-        if (potentialEnd <= dayEnd) {
-          suggestions.push({
-            startTime: formatTime(lastBookingEnd),
-            endTime: formatTime(potentialEnd),
-            available: true
-          });
-        }
+        // Limit total suggestions
+        if (suggestions.length >= 10) break;
       }
-
-      // If no bookings exist, suggest the requested time or early slots
-      if (allBookings.length === 0) {
-        suggestions.push({
-          startTime: formatTime(requestedStart),
-          endTime: formatTime(requestedEnd),
-          available: true
-        });
-      }
+    } else {
+      // If no conflicts, show the requested slot as available
+      const requestedStart = new Date(date + 'T' + startTime);
+      const requestedEnd = new Date(requestedStart.getTime() + (parseInt(duration) * 60 * 60 * 1000));
+      
+      suggestions.push({
+        startTime: requestedStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        endTime: requestedEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        available: true,
+        note: 'Requested slot is available'
+      });
     }
 
     // Get venue details
     const venue = await Venue.findById(venueId);
 
+    // Get existing bookings for display
+    const existingConcerts = await Concert.find({
+      venue: venueId,
+      date: new Date(date),
+      status: { $in: ['pending', 'approved'] }
+    }).populate({
+      path: 'artist',
+      populate: { path: 'user', select: 'name' }
+    });
+
+    const existingExternalBookings = await VenueExternalBooking.find({
+      venue: venueId,
+      date: new Date(date),
+      status: 'active'
+    });
+
+    const allExistingBookings = [
+      ...existingConcerts.map(booking => ({
+        title: booking.title,
+        artistName: booking.artist?.user?.name || booking.artist?.stageName || 'Unknown',
+        startTime: booking.time,
+        duration: booking.venueBooking ? booking.venueBooking.bookingHours : 0,
+        status: booking.status,
+        type: 'website'
+      })),
+      ...existingExternalBookings.map(booking => ({
+        title: booking.title,
+        artistName: booking.artistName,
+        startTime: booking.startTime,
+        duration: booking.durationHours,
+        status: booking.status,
+        type: 'external'
+      }))
+    ];
+
     res.json({
       success: true,
-      available: !hasConflict,
+      available: !conflictCheck.hasConflicts,
       requestedSlot: {
-        startTime: formatTime(requestedStart),
-        endTime: formatTime(requestedEnd),
-        duration: durationHours
+        startTime: startTime,
+        endTime: `${parseInt(startTime.split(':')[0]) + parseInt(duration)}:${startTime.split(':')[1]}`,
+        duration: parseInt(duration)
       },
       venue: {
         name: venue ? venue.name : 'Unknown Venue',
         city: venue ? venue.city : '',
         capacity: venue ? venue.capacity : null
       },
-      conflicts: conflicts,
-      existingBookings: existingBookings.map(booking => ({
-        title: booking.title,
-        artistName: booking.artist.user ? booking.artist.user.name : booking.artist.stageName,
-        startTime: booking.time,
-        duration: booking.venueBooking ? booking.venueBooking.bookingHours : 0,
-        status: booking.status
-      })),
+      conflicts: formattedConflicts,
+      existingBookings: allExistingBookings,
       suggestions: suggestions,
-      totalExistingBookings: existingBookings.length
+      totalExistingBookings: allExistingBookings.length,
+      summary: {
+        websiteBookings: conflictCheck.websiteBookings,
+        externalBookings: conflictCheck.externalBookings,
+        totalConflicts: formattedConflicts.length
+      }
     });
 
   } catch (error) {

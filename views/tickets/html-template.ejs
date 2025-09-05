@@ -276,8 +276,8 @@
               <i>🕒</i> Concert Time: <%= concert.time %>
             </p>
             <% 
-              // Get booking hours from concert or default to 2 hours
-              let bookingHours = concert.bookingHours || 2;
+              // Get booking hours from concert venue booking data
+              let bookingHours = (concert.venueBooking && concert.venueBooking.bookingHours) ? concert.venueBooking.bookingHours : 1;
               
               // Parse time and convert to 12-hour format with AM/PM
               let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);

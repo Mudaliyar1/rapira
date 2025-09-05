@@ -1,0 +1,219 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+          <li class="breadcrumb-item"><a href="/admin/venue-edit-requests">Venue Edit Requests</a></li>
+          <li class="breadcrumb-item"><a href="/admin/venue-edit-requests/<%= editRequest._id %>">Request #<%= editRequest._id.toString().slice(-6) %></a></li>
+          <li class="breadcrumb-item active">Approve</li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold text-success">
+        <i class="bi bi-check-circle me-2"></i>Approve Venue Edit Request
+      </h1>
+      <p class="text-muted mb-0">
+        Request #<%= editRequest._id.toString().slice(-6) %> - 
+        <% if (editRequest.venue) { %>
+          <%= editRequest.venue.name %>
+        <% } else { %>
+          Deleted Venue
+        <% } %>
+      </p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/admin/venue-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Details
+      </a>
+    </div>
+  </div>
+
+  <!-- Approval Form -->
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-check-circle me-2"></i>Approve Changes
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Request Summary -->
+          <div class="alert alert-info">
+            <h6><i class="bi bi-info-circle me-2"></i>Request Summary</h6>
+            <% if (editRequest.venue) { %>
+              <p><strong>Venue:</strong> <%= editRequest.venue.name %></p>
+              <p><strong>Location:</strong> <%= editRequest.venue.city %>, <%= editRequest.venue.state %></p>
+            <% } %>
+            <% if (editRequest.user) { %>
+              <p><strong>Requested by:</strong> <%= editRequest.user.name %> (<%= editRequest.user.email %>)</p>
+            <% } %>
+            <p><strong>Submitted:</strong> <%= new Date(editRequest.createdAt).toLocaleString() %></p>
+            <% if (editRequest.changedFields) { %>
+              <p><strong>Fields to change:</strong> <%= editRequest.changedFields.join(', ') %></p>
+            <% } %>
+          </div>
+
+          <!-- Changes Preview -->
+          <% if (editRequest.changedFields && editRequest.changedFields.length > 0) { %>
+            <div class="mb-4">
+              <h6>Changes to Apply:</h6>
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Field</th>
+                      <th>Current</th>
+                      <th>New Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% editRequest.changedFields.forEach(field => { %>
+                      <tr>
+                        <td><strong><%= field.charAt(0).toUpperCase() + field.slice(1) %></strong></td>
+                        <td class="text-muted">
+                          <% if (field === 'pricing' && editRequest.originalData[field]) { %>
+                            <% if (editRequest.originalData[field].dailyRate) { %>
+                              Daily: ₹<%= editRequest.originalData[field].dailyRate %>
+                            <% } %>
+                            <% if (editRequest.originalData[field].hourlyRates && editRequest.originalData[field].hourlyRates.length > 0) { %>
+                              <br>Hourly: <%= editRequest.originalData[field].hourlyRates.map(r => r.hours + 'h: ₹' + r.price).join(', ') %>
+                            <% } %>
+                          <% } else if (field === 'amenities' && editRequest.originalData[field]) { %>
+                            <%= editRequest.originalData[field].join(', ') %>
+                          <% } else { %>
+                            <%= editRequest.originalData[field] || 'Not set' %>
+                          <% } %>
+                        </td>
+                        <td class="text-success">
+                          <% if (field === 'pricing' && editRequest.requestedChanges[field]) { %>
+                            <% if (editRequest.requestedChanges[field].dailyRate) { %>
+                              Daily: ₹<%= editRequest.requestedChanges[field].dailyRate %>
+                            <% } %>
+                            <% if (editRequest.requestedChanges[field].hourlyRates && editRequest.requestedChanges[field].hourlyRates.length > 0) { %>
+                              <br>Hourly: <%= editRequest.requestedChanges[field].hourlyRates.map(r => r.hours + 'h: ₹' + r.price).join(', ') %>
+                            <% } %>
+                          <% } else if (field === 'amenities' && editRequest.requestedChanges[field]) { %>
+                            <%= editRequest.requestedChanges[field].join(', ') %>
+                          <% } else { %>
+                            <%= editRequest.requestedChanges[field] || 'Not set' %>
+                          <% } %>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Approval Form -->
+          <form action="/admin/venue-edit-requests/<%= editRequest._id %>/approve" method="POST">
+            <div class="mb-3">
+              <label for="adminResponse" class="form-label">Response Message (Optional)</label>
+              <textarea 
+                class="form-control" 
+                id="adminResponse" 
+                name="adminResponse" 
+                rows="4" 
+                placeholder="Add a message for the user explaining the approval decision..."
+              ></textarea>
+              <div class="form-text">This message will be sent to the user via email notification.</div>
+            </div>
+
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Confirmation Required:</strong> By approving this request, the venue information will be permanently updated with the proposed changes. This action cannot be undone.
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <a href="/admin/venue-edit-requests/<%= editRequest._id %>" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle me-1"></i> Approve Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Request Info -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Request Information</h6>
+        </div>
+        <div class="card-body">
+          <p><strong>Request ID:</strong><br><code>#<%= editRequest._id.toString().slice(-6) %></code></p>
+          <p><strong>Status:</strong><br>
+            <span class="badge bg-warning">
+              <i class="bi bi-hourglass-split me-1"></i>Pending
+            </span>
+          </p>
+          <p><strong>Submitted:</strong><br><%= new Date(editRequest.createdAt).toLocaleString() %></p>
+          <% if (editRequest.reason) { %>
+            <p><strong>Reason:</strong><br>
+              <em class="text-muted">"<%= editRequest.reason %>"</em>
+            </p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- User Info -->
+      <% if (editRequest.user) { %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h6 class="mb-0">User Information</h6>
+          </div>
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <img src="<%= editRequest.user.profileImage || '/images/default-profile.svg' %>" 
+                   alt="User profile" 
+                   class="rounded-circle me-2" 
+                   width="40" height="40"
+                   style="object-fit: cover;">
+              <div>
+                <h6 class="mb-0"><%= editRequest.user.name %></h6>
+                <small class="text-muted"><%= editRequest.user.email %></small>
+              </div>
+            </div>
+            <p class="mb-1"><strong>Role:</strong> <%= editRequest.user.role || 'User' %></p>
+            <p class="mb-0"><strong>Member since:</strong> <%= new Date(editRequest.user.createdAt).toLocaleDateString() %></p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+.card {
+  border: none;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.alert {
+  border: none;
+  border-radius: 10px;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+}
+</style>

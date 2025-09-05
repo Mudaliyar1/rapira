@@ -1,0 +1,278 @@
+<%- contentFor('body') %>
+
+<!-- Venue Registration Requests Dashboard -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="fw-bold">Venue Registration Requests</h1>
+  <div class="d-flex gap-2">
+    <a href="/admin/venues" class="btn btn-outline-info">
+      <i class="bi bi-building me-1"></i> Manage Venues
+    </a>
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="card border-info h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-building display-4 text-info mb-2"></i>
+        <h3 class="fw-bold text-info"><%= stats.total %></h3>
+        <p class="text-muted mb-0">Total Requests</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-warning h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-clock display-4 text-warning mb-2"></i>
+        <h3 class="fw-bold text-warning"><%= stats.pending %></h3>
+        <p class="text-muted mb-0">Pending Review</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-success h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+        <h3 class="fw-bold text-success"><%= stats.approved %></h3>
+        <p class="text-muted mb-0">Approved</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-danger h-100">
+      <div class="card-body text-center">
+        <i class="bi bi-x-circle display-4 text-danger mb-2"></i>
+        <h3 class="fw-bold text-danger"><%= stats.rejected %></h3>
+        <p class="text-muted mb-0">Rejected</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3">
+      <div class="col-md-3">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" id="status" name="status">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Status</option>
+          <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>Approved</option>
+          <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="city" class="form-label">City</label>
+        <select class="form-select" id="city" name="city">
+          <option value="all" <%= filters.city === 'all' ? 'selected' : '' %>>All Cities</option>
+          <% filters.cities.forEach(city => { %>
+            <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="search" class="form-label">Search</label>
+        <input type="text" class="form-control" id="search" name="search" 
+               value="<%= filters.search %>" placeholder="Search by name, address, city...">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">&nbsp;</label>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-search me-1"></i> Filter
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Venue Requests Table -->
+<div class="card">
+  <div class="card-header bg-light">
+    <h5 class="mb-0">
+      <i class="bi bi-list-ul me-2"></i>Venue Registration Requests
+    </h5>
+  </div>
+  <div class="card-body">
+    <% if (venueRequests && venueRequests.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Venue Details</th>
+              <th>Submitted By</th>
+              <th>Location</th>
+              <th>Type & Capacity</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% venueRequests.forEach(request => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (request.images && request.images.length > 0) { %>
+                      <img src="<%= request.images[0] %>" alt="<%= request.name %>" 
+                           class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    <% } else { %>
+                      <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
+                           style="width: 50px; height: 50px;">
+                        <i class="bi bi-building text-muted"></i>
+                      </div>
+                    <% } %>
+                    <div>
+                      <h6 class="mb-1"><%= request.name %></h6>
+                      <small class="text-muted"><%= request.priceRange %> Range</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <strong><%= request.user.name %></strong>
+                    <br><small class="text-muted"><%= request.user.email %></small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <strong><%= request.city %>, <%= request.state %></strong>
+                    <% if (request.pincode) { %>
+                      <br><small class="text-muted">PIN: <%= request.pincode %></small>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span class="badge bg-secondary"><%= request.venueType %></span>
+                    <% if (request.capacity) { %>
+                      <br><small class="text-muted">Capacity: <%= request.capacity %></small>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <% if (request.status === 'pending') { %>
+                    <span class="badge bg-warning">
+                      <i class="bi bi-clock me-1"></i>Pending
+                    </span>
+                  <% } else if (request.status === 'approved') { %>
+                    <span class="badge bg-success">
+                      <i class="bi bi-check-circle me-1"></i>Approved
+                    </span>
+                    <% if (request.createdVenue) { %>
+                      <br><small class="text-success">Venue Created</small>
+                    <% } %>
+                  <% } else if (request.status === 'rejected') { %>
+                    <span class="badge bg-danger">
+                      <i class="bi bi-x-circle me-1"></i>Rejected
+                    </span>
+                  <% } %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= request.createdAt.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    }) %>
+                  </small>
+                  <% if (request.reviewedAt) { %>
+                    <br><small class="text-muted">
+                      Reviewed: <%= request.reviewedAt.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                      }) %>
+                    </small>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="dropdown">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                      Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <a class="dropdown-item" href="/admin/venue-requests/<%= request._id %>">
+                          <i class="bi bi-eye me-1"></i> View Details
+                        </a>
+                      </li>
+                      <% if (request.status === 'pending') { %>
+                        <li>
+                          <a class="dropdown-item text-success" href="/admin/venue-requests/<%= request._id %>/approve">
+                            <i class="bi bi-check-circle me-1"></i> Approve
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item text-danger" href="/admin/venue-requests/<%= request._id %>/reject">
+                            <i class="bi bi-x-circle me-1"></i> Reject
+                          </a>
+                        </li>
+                      <% } %>
+                      <% if (request.status === 'approved' && request.createdVenue) { %>
+                        <li>
+                          <a class="dropdown-item" href="/admin/venues/<%= request.createdVenue._id %>/details" target="_blank">
+                            <i class="bi bi-building me-1"></i> View Venue
+                          </a>
+                        </li>
+                      <% } %>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <form method="POST" action="/admin/venue-requests/<%= request._id %>/delete" style="display: inline;">
+                          <button type="submit" class="dropdown-item text-danger" 
+                                  onclick="return confirm('Are you sure you want to delete this venue request?')">
+                            <i class="bi bi-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-building display-1 text-muted mb-3"></i>
+        <h4>No Venue Requests Found</h4>
+        <p class="text-muted">No venue registration requests match your current filter criteria.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Pagination -->
+<% if (pagination.total > 1) { %>
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center">
+      <% if (pagination.hasPrev) { %>
+        <li class="page-item">
+          <a class="page-link" href="?page=<%= pagination.prevPage %>&status=<%= filters.status %>&city=<%= filters.city %>&search=<%= filters.search %>">
+            Previous
+          </a>
+        </li>
+      <% } %>
+      
+      <% for(let i = Math.max(1, pagination.current - 2); i <= Math.min(pagination.total, pagination.current + 2); i++) { %>
+        <li class="page-item <%= i === pagination.current ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= i %>&status=<%= filters.status %>&city=<%= filters.city %>&search=<%= filters.search %>">
+            <%= i %>
+          </a>
+        </li>
+      <% } %>
+      
+      <% if (pagination.hasNext) { %>
+        <li class="page-item">
+          <a class="page-link" href="?page=<%= pagination.nextPage %>&status=<%= filters.status %>&city=<%= filters.city %>&search=<%= filters.search %>">
+            Next
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+<% } %>

@@ -74,6 +74,32 @@
           </div>
 
           <!-- Venue Availability Status -->
+          <!-- Venue Booking Rules Information -->
+          <div id="venueBookingRules" class="mb-3 d-none">
+            <div class="alert alert-info border-0 shadow-sm">
+              <div class="d-flex align-items-start">
+                <i class="bi bi-info-circle-fill text-info me-3 mt-1" style="font-size: 1.2rem;"></i>
+                <div>
+                  <h6 class="alert-heading mb-2 text-dark">📋 Venue Booking Rules</h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <ul class="mb-0 small text-dark">
+                        <li class="text-dark"><strong class="text-dark">Multiple concerts allowed per venue per day</strong></li>
+                        <li class="text-dark"><strong class="text-dark">12-hour minimum gap</strong> between any concerts</li>
+                      </ul>
+                    </div>
+                    <div class="col-md-6">
+                      <ul class="mb-0 small text-dark">
+                        <li class="text-dark">Concerts can extend past midnight</li>
+                        <li class="text-dark">Click suggested slots to auto-fill form</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div id="venueAvailabilitySection" class="mb-3 d-none">
             <div class="card" id="availabilityCard">
               <div class="card-header" id="availabilityHeader">
@@ -268,6 +294,9 @@
   </div>
 </div>
 
+<!-- Server data for JavaScript -->
+<div id="serverData" data-commission="<%= currentCommissionPercentage || 10 %>" style="display: none;"></div>
+
 <script>
   // Add visual feedback styles
   const styles = `
@@ -320,6 +349,10 @@
     let selectedVenueHourlyCommission = {}; // Store commission data for selected hour
     let currentVenue = null; // Store current venue data
     let currentVenueCapacity = 0;
+    
+    // Get current admin commission percentage from server
+    const serverDataEl = document.getElementById('serverData');
+    const currentAdminCommission = serverDataEl ? parseInt(serverDataEl.dataset.commission) || 10 : 10;
 
     function updateVenuePricing() {
       const selectedOption = venueSelect.options[venueSelect.selectedIndex];
@@ -600,18 +633,19 @@
     function calculateTotalCost() {
       const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
       let totalCost = 0;
-      let commissionPercentage = 0;
+      let commissionPercentage = currentAdminCommission; // Use current admin commission
       let commissionAmount = 0;
       
       console.log('=== CALCULATE TOTAL COST DEBUG ===');
       console.log('Selected hours:', hours);
+      console.log('Using admin commission percentage:', commissionPercentage);
       
-      // Get commission data from selected option
+      // Get rate data from selected option
       const selectedOption = bookingHours.options[bookingHours.selectedIndex];
       if (selectedOption && selectedOption.dataset.rate) {
         totalCost = parseFloat(selectedOption.dataset.rate) || 0;
-        commissionPercentage = parseFloat(selectedOption.dataset.commissionPercentage) || 0;
-        commissionAmount = parseFloat(selectedOption.dataset.commissionAmount) || 0;
+        // Calculate commission based on current admin setting, not stored venue data
+        commissionAmount = (totalCost * commissionPercentage) / 100;
         
         // Store commission data for this selection
         selectedVenueHourlyCommission = {
@@ -621,7 +655,7 @@
           commissionAmount: commissionAmount
         };
         
-        console.log('Commission data from selected option:', selectedVenueHourlyCommission);
+        console.log('Commission data calculated:', selectedVenueHourlyCommission);
       } else {
         console.warn('No rate data found for selected option');
       }
@@ -710,8 +744,18 @@
     function showAvailabilitySection() {
       if (venueSelect.value) {
         availabilitySection.classList.remove('d-none');
+        // Also show booking rules
+        const bookingRules = document.getElementById('venueBookingRules');
+        if (bookingRules) {
+          bookingRules.classList.remove('d-none');
+        }
       } else {
         availabilitySection.classList.add('d-none');
+        // Hide booking rules too
+        const bookingRules = document.getElementById('venueBookingRules');
+        if (bookingRules) {
+          bookingRules.classList.add('d-none');
+        }
       }
     }
 
@@ -942,7 +986,13 @@
 
         if (conflicts.length > 0) {
           html += `
-            <h6 class="text-danger mb-2">Conflicting Bookings</h6>
+            <h6 class="text-danger mb-2">⚠️ Venue Booking Restrictions</h6>
+            <div class="alert alert-warning small mb-3">
+              <strong class="text-dark">New Venue Booking Rules:</strong><br>
+              <span class="text-dark">• <strong class="text-dark">Multiple concerts allowed per venue per day</strong><br>
+              • <strong class="text-dark">12-hour minimum gap</strong> between any concerts<br>
+              • Concerts can extend past midnight with proper gaps</span>
+            </div>
             <div class="mb-3">
           `;
           conflicts.forEach(conflict => {
@@ -953,6 +1003,8 @@
                   <i class="bi bi-person me-1"></i>${conflict.artistName}<br>
                   <i class="bi bi-clock me-1"></i>${conflict.startTime} - ${conflict.endTime} (${conflict.duration}h)<br>
                   <i class="bi bi-info-circle me-1"></i>Status: ${conflict.status}
+                  ${conflict.reason ? `<br><i class="bi bi-exclamation-triangle me-1"></i><strong>Issue:</strong> ${conflict.reason}` : ''}
+                  ${conflict.conflictDate ? `<br><i class="bi bi-calendar me-1"></i>Date: ${conflict.conflictDate}` : ''}
                 </div>
               </div>
             `;
@@ -962,25 +1014,48 @@
 
         if (suggestions.length > 0) {
           html += `
-            <h6 class="text-success mb-2">Available Time Slots</h6>
+            <h6 class="text-success mb-2">💡 Alternative Options</h6>
             <div class="row">
           `;
           suggestions.slice(0, 6).forEach((suggestion, index) => {
-            html += `
-              <div class="col-md-6 mb-2">
-                <div class="border rounded p-2 bg-success bg-opacity-10 border-success cursor-pointer" 
-                     onclick="selectSuggestedTime('${suggestion.startTime}')">
-                  <i class="bi bi-clock text-success me-1"></i>
-                  ${suggestion.startTime} - ${suggestion.endTime}
-                  <small class="text-success d-block">Click to select</small>
+            if (suggestion.date) {
+              // Alternative date suggestion
+              html += `
+                <div class="col-md-6 mb-2">
+                  <div class="border rounded p-2 bg-success bg-opacity-10 border-success cursor-pointer hover-effect" 
+                       onclick="selectSuggestedDate('${suggestion.date}', '${suggestion.startTime}')"
+                       style="transition: all 0.3s ease;">
+                    <i class="bi bi-calendar-check text-success me-1"></i>
+                    <strong>${suggestion.date}</strong><br>
+                    <small class="text-success">${suggestion.startTime} - ${suggestion.endTime}</small><br>
+                    <small class="text-muted">${suggestion.note || 'Available date'}</small>
+                    <div class="mt-1">
+                      <small class="text-success fw-bold">🖱️ Click to select this date & time</small>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            `;
+              `;
+            } else {
+              // Time slot suggestion
+              html += `
+                <div class="col-md-6 mb-2">
+                  <div class="border rounded p-2 bg-success bg-opacity-10 border-success cursor-pointer hover-effect" 
+                       onclick="selectSuggestedTime('${suggestion.startTime}')"
+                       style="transition: all 0.3s ease;">
+                    <i class="bi bi-clock text-success me-1"></i>
+                    ${suggestion.startTime} - ${suggestion.endTime}
+                    <div class="mt-1">
+                      <small class="text-success fw-bold">🖱️ Click to select this time</small>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
           });
           html += `</div>`;
 
           if (suggestions.length > 6) {
-            html += `<p class="text-muted small mt-2">+${suggestions.length - 6} more slots available</p>`;
+            html += `<p class="text-muted small mt-2">+${suggestions.length - 6} more dates available</p>`;
           }
         }
 
@@ -1003,9 +1078,60 @@
       const timeValue = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
       timeInput.value = timeValue;
       
+      // Show success feedback
+      showSelectionFeedback('Time updated to ' + timeString);
+      
       // Re-check availability with new time
       setTimeout(checkVenueAvailability, 300);
     };
+
+    // Function to select suggested date and time
+    window.selectSuggestedDate = function(dateString, timeString) {
+      // Update date field
+      dateInput.value = dateString;
+      
+      // Parse and update time field
+      const [time, period] = timeString.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      const timeValue = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      timeInput.value = timeValue;
+      
+      // Show success feedback
+      showSelectionFeedback(`Date & time updated to ${dateString} at ${timeString}`);
+      
+      // Re-check availability with new date and time
+      setTimeout(checkVenueAvailability, 300);
+    };
+
+    // Function to show selection feedback
+    function showSelectionFeedback(message) {
+      // Create or update feedback element
+      let feedback = document.getElementById('selectionFeedback');
+      if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'selectionFeedback';
+        feedback.className = 'alert alert-success alert-dismissible fade show mt-2';
+        feedback.style.position = 'relative';
+        availabilityResults.parentNode.insertBefore(feedback, availabilityResults.nextSibling);
+      }
+      
+      feedback.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>
+        <strong>Updated!</strong> ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        if (feedback && feedback.parentNode) {
+          feedback.remove();
+        }
+      }, 3000);
+    }
     
     // Add max tickets validation
     const maxTicketsInput = document.getElementById('maxTickets');
@@ -1546,27 +1672,42 @@
 
     // Helper function to show conflict popup
     function showConflictPopup(conflicts, suggestions = null) {
-      let message = '⚠️ You Cannot Create This Concert!\n\n';
+      let message = '⚠️ Venue Booking Restriction!\n\n';
+      message += '🔒 NEW BOOKING RULES:\n';
+      message += '• Multiple concerts allowed per venue per day\n';
+      message += '• 12-hour minimum gap between any concerts\n';
+      message += '• Concerts can extend past midnight\n\n';
       
       if (typeof conflicts === 'string') {
         message += conflicts;
       } else if (Array.isArray(conflicts)) {
-        message += 'The selected venue and time slot is already booked for:\n\n';
+        message += '❌ Your booking conflicts with:\n\n';
         conflicts.forEach((conflict, index) => {
           message += `${index + 1}. ${conflict.title}\n`;
-          message += `   Artist: ${conflict.artist}\n`;
-          message += `   Time: ${conflict.startTime} - ${conflict.endTime}\n\n`;
+          message += `   Artist: ${conflict.artistName}\n`;
+          message += `   Time: ${conflict.startTime} - ${conflict.endTime}\n`;
+          if (conflict.reason) {
+            message += `   Issue: ${conflict.reason}\n`;
+          }
+          message += '\n';
         });
         
         if (suggestions && suggestions.length > 0) {
-          message += '💡 Alternative Time Slots:\n\n';
-          suggestions.forEach((suggestion, index) => {
-            message += `${index + 1}. ${suggestion.startTime} - ${suggestion.endTime}\n`;
+          message += '💡 Alternative Slots Available:\n\n';
+          suggestions.slice(0, 3).forEach((suggestion, index) => {
+            if (suggestion.date) {
+              message += `${index + 1}. ${suggestion.date} at ${suggestion.startTime}\n`;
+            } else {
+              message += `${index + 1}. ${suggestion.startTime} - ${suggestion.endTime}\n`;
+            }
           });
+          if (suggestions.length > 3) {
+            message += `\n...and ${suggestions.length - 3} more slots available\n`;
+          }
         }
       }
       
-      message += '\nPlease choose a different venue or time slot.';
+      message += '\n📅 Please choose a different time slot with proper 12-hour gap.';
       alert(message);
     }
 
@@ -1891,6 +2032,65 @@
 
   .animate-pulse {
     animation: pulse 1s infinite;
+  }
+
+  /* Enhanced hover effects for suggestion cards */
+  .hover-effect {
+    transition: all 0.3s ease !important;
+    border: 2px solid transparent !important;
+  }
+
+  .hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    border-color: #007bff !important;
+    background: linear-gradient(45deg, rgba(25, 135, 84, 0.1), rgba(25, 135, 84, 0.2)) !important;
+  }
+
+  .hover-effect:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+  }
+
+  /* Pulse animation for clickable elements */
+  .hover-effect:hover .bi {
+    animation: pulse 0.6s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Success feedback styling */
+  #selectionFeedback {
+    animation: slideInDown 0.5s ease;
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Force venue booking rules text to be black */
+  #venueBookingRules .alert-heading,
+  #venueBookingRules ul li,
+  #venueBookingRules ul li strong,
+  #venueBookingRules * {
+    color: #000000 !important;
+  }
+
+  /* Also force conflict warning text to be black */
+  .alert-warning strong,
+  .alert-warning span {
+    color: #000000 !important;
   }
 </style>
 

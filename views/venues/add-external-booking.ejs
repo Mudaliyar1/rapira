@@ -1,0 +1,253 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Breadcrumb Navigation -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="/users/venues" class="text-decoration-none">My Venues</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/venue-dashboard" class="text-decoration-none">Dashboards</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="text-decoration-none"><%= venue.name %></a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">Add External Booking</li>
+        </ol>
+      </nav>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="bi bi-plus-circle me-2"></i>Add External Booking for <%= venue.name %>
+          </h5>
+          <small class="opacity-75">Add bookings from outside the website to prevent conflicts</small>
+        </div>
+
+        <div class="card-body">
+          <!-- Display flash messages -->
+          <% if (typeof success !== 'undefined' && success.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <%= success %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+
+          <% if (typeof error !== 'undefined' && error.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <%= error %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+
+          <!-- Display detailed conflict information if conflicts exist -->
+          <% if (typeof query !== 'undefined' && query.conflicts === 'true' && typeof conflictDetails !== 'undefined' && conflictDetails !== null && conflictDetails.requestedBooking) { %>
+            <div class="card border-danger mb-4">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>Booking Conflicts Detected
+                </h6>
+              </div>
+              <div class="card-body">
+                <p class="mb-3">Your requested booking conflicts with the following existing bookings:</p>
+                
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <h6 class="text-primary">Your Requested Booking:</h6>
+                    <div class="card bg-light">
+                      <div class="card-body p-3">
+                        <strong class="text-dark">🎵 <%= conflictDetails.requestedBooking.title %></strong><br>
+                        <small class="text-dark">
+                          👤 Artist: <%= conflictDetails.requestedBooking.artistName %><br>
+                          📅 Date: <%= new Date(conflictDetails.requestedBooking.date).toLocaleDateString('en-IN') %><br>
+                          🕐 Time: <%= conflictDetails.requestedBooking.startTime %><br>
+                          ⏱️ Duration: <%= conflictDetails.requestedBooking.durationHours %> hours
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="text-danger">Conflicting Bookings:</h6>
+                    <% if (conflictDetails.conflicts && conflictDetails.conflicts.length > 0) { %>
+                      <% conflictDetails.conflicts.forEach((conflict, index) => { %>
+                      <div class="card border-danger mb-2">
+                        <div class="card-body p-3">
+                          <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                              <strong>🎵 <%= conflict.title %></strong><br>
+                              <small>
+                                👤 Artist: <%= conflict.artistName %><br>
+                                📅 Date: <%= conflict.date %><br>
+                                🕐 Time: <%= conflict.startTime %><br>
+                                ⏱️ Duration: <%= conflict.duration %> hours<br>
+                                ⚠️ Issue: <%= conflict.reason %>
+                              </small>
+                            </div>
+                            <span class="badge <%= conflict.type === 'website' ? 'bg-success' : 'bg-info' %>">
+                              <i class="bi bi-<%= conflict.type === 'website' ? 'globe' : 'plus-square' %> me-1"></i>
+                              <%= conflict.type.toUpperCase() %>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                    <% } %>
+                  </div>
+                </div>
+                
+                <div class="alert alert-warning mb-0">
+                  <i class="bi bi-lightbulb me-1"></i>
+                  <strong>💡 Solution:</strong> Please choose a different date or time with at least a 12-hour gap from all existing bookings.
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Important Rules Alert -->
+          <div class="alert alert-info mb-4">
+            <h6 class="alert-heading">
+              <i class="bi bi-info-circle me-2"></i>Important Booking Rules
+            </h6>
+            <ul class="mb-0">
+              <li><strong>12-hour minimum gap</strong> between any bookings</li>
+              <li>System will check conflicts with website bookings automatically when you submit</li>
+              <li>External bookings will appear in venue dashboard</li>
+              <li>This helps prevent double bookings</li>
+              <li><strong>Note:</strong> Conflicts will be shown if any exist when you click "Add External Booking"</li>
+            </ul>
+          </div>
+
+          <!-- Add External Booking Form -->
+          <form action="/venue-dashboard/<%= venue._id %>/add-booking" method="POST" id="externalBookingForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="title" class="form-label">
+                  <i class="bi bi-music-note-beamed me-1"></i>Concert/Event Title *
+                </label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       placeholder="Enter event title">
+              </div>
+              <div class="col-md-6">
+                <label for="artistName" class="form-label">
+                  <i class="bi bi-person me-1"></i>Artist/Performer Name *
+                </label>
+                <input type="text" class="form-control" id="artistName" name="artistName" required 
+                       placeholder="Enter artist name">
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label for="date" class="form-label">
+                  <i class="bi bi-calendar me-1"></i>Date *
+                </label>
+                <input type="date" class="form-control" id="date" name="date" required>
+              </div>
+              <div class="col-md-4">
+                <label for="startTime" class="form-label">
+                  <i class="bi bi-clock me-1"></i>Start Time *
+                </label>
+                <input type="time" class="form-control" id="startTime" name="startTime" required>
+              </div>
+              <div class="col-md-4">
+                <label for="durationHours" class="form-label">
+                  <i class="bi bi-stopwatch me-1"></i>Duration (hours) *
+                </label>
+                <select class="form-control" id="durationHours" name="durationHours" required>
+                  <option value="">Select duration</option>
+                  <option value="1">1 hour</option>
+                  <option value="2">2 hours</option>
+                  <option value="3">3 hours</option>
+                  <option value="4">4 hours</option>
+                  <option value="5">5 hours</option>
+                  <option value="6">6 hours</option>
+                  <option value="8">8 hours</option>
+                  <option value="12">12 hours</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="contactInfo" class="form-label">
+                  <i class="bi bi-telephone me-1"></i>Contact Information
+                </label>
+                <input type="text" class="form-control" id="contactInfo" name="contactInfo" 
+                       placeholder="Phone number or email">
+              </div>
+              <div class="col-md-6">
+                <label for="notes" class="form-label">
+                  <i class="bi bi-journal-text me-1"></i>Notes
+                </label>
+                <textarea class="form-control" id="notes" name="notes" rows="2" 
+                          placeholder="Additional notes or details"></textarea>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+              <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="btn btn-secondary me-2">
+                <i class="bi bi-arrow-left me-1"></i>Cancel
+              </a>
+              <button type="submit" class="btn btn-success" id="submitBtn">
+                <i class="bi bi-plus-circle me-1"></i>Add External Booking
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+console.log('External Booking Page Loaded');
+
+// Form submission
+document.getElementById('externalBookingForm').addEventListener('submit', function(e) {
+  const submitBtn = document.getElementById('submitBtn');
+  const title = document.getElementById('title').value.trim();
+  const artistName = document.getElementById('artistName').value.trim();
+  const date = document.getElementById('date').value;
+  const startTime = document.getElementById('startTime').value;
+  const durationHours = document.getElementById('durationHours').value;
+  
+  // Basic validation
+  if (!title || !artistName || !date || !startTime || !durationHours) {
+    e.preventDefault();
+    alert('⚠️ Please fill in all required fields!');
+    return false;
+  }
+  
+  // Show loading state
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Checking availability and adding booking...';
+  
+  // Let the form submit normally - server will handle conflict checking
+  return true;
+});
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Page fully loaded');
+  
+  // Set minimum date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('date').min = today;
+  
+  // Scroll to conflicts section if conflicts exist
+  if (window.location.search.includes('conflicts=true')) {
+    const conflictsSection = document.querySelector('.border-danger');
+    if (conflictsSection) {
+      conflictsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  
+  console.log('External booking page initialization complete');
+});
+</script>

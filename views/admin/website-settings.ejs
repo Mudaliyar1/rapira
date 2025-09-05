@@ -40,6 +40,11 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="venue-tab" data-bs-toggle="tab" data-bs-target="#venue" type="button" role="tab">
+          <i class="bi bi-building me-2"></i>Venue Settings
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link text-white" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
           <i class="bi bi-gear me-2"></i>Admin Settings
         </button>
@@ -106,7 +111,7 @@
                 <div class="d-flex align-items-center">
                   <% if (settings.headerSettings.logoUrl && (settings.headerSettings.brandType === 'logo' || settings.headerSettings.brandType === 'both')) { %>
                     <img src="<%= settings.headerSettings.logoUrl %>" alt="Current Logo" 
-                         style="height: <%= settings.headerSettings.logoHeight %>px; width: auto;" class="me-2">
+                         class="me-2" id="currentLogo">
                   <% } %>
                   <% if (settings.headerSettings.showBrandText && (settings.headerSettings.brandType === 'text' || settings.headerSettings.brandType === 'both')) { %>
                     <span class="fs-4 fw-bold gradient-text-purple"><%= settings.headerSettings.brandText %></span>
@@ -396,13 +401,16 @@
               <h5 class="text-white mb-3">Color Preview</h5>
               <div class="border border-secondary rounded p-3 bg-dark">
                 <div class="mb-2">
-                  <span class="badge" style="background-color: <%= settings.themeSettings.primaryColor %>">Primary Color</span>
+                  <span class="badge bg-secondary">Primary Color</span>
+                  <span class="color-preview-block" id="primaryColorPreview">█</span>
                 </div>
                 <div class="mb-2">
-                  <span class="badge" style="background-color: <%= settings.themeSettings.secondaryColor %>">Secondary Color</span>
+                  <span class="badge bg-secondary">Secondary Color</span>
+                  <span class="color-preview-block" id="secondaryColorPreview">█</span>
                 </div>
                 <div class="mb-2">
-                  <span class="badge" style="background-color: <%= settings.themeSettings.accentColor %>">Accent Color</span>
+                  <span class="badge bg-secondary">Accent Color</span>
+                  <span class="color-preview-block" id="accentColorPreview">█</span>
                 </div>
               </div>
             </div>
@@ -422,6 +430,88 @@
         <form action="/admin/website-settings/theme/reset" method="POST" class="mt-3">
           <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to reset theme colors to default and save? This action cannot be undone.')">
             <i class="bi bi-arrow-counterclockwise me-1"></i>Reset & Save to Default Colors
+          </button>
+        </form>
+      </div>
+
+      <!-- Venue Settings Tab -->
+      <div class="tab-pane fade" id="venue" role="tabpanel">
+        <form action="/admin/website-settings/venue" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Venue Management Settings</h5>
+
+              <div class="mb-4">
+                <label for="defaultCommissionPercentage" class="form-label text-white fw-bold">Default Commission Percentage</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="defaultCommissionPercentage" 
+                         name="defaultCommissionPercentage" 
+                         value="<%= settings.venueSettings ? settings.venueSettings.defaultCommissionPercentage : 10 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">
+                  This commission percentage will be automatically applied to all new venue registrations.
+                </small>
+              </div>
+
+              <div class="mb-4">
+                <label for="minimumVenueRate" class="form-label text-white fw-bold">Minimum Venue Rate (₹)</label>
+                <input type="number" class="form-control" id="minimumVenueRate" 
+                       name="minimumVenueRate" 
+                       value="<%= settings.venueSettings ? settings.venueSettings.minimumVenueRate : 500 %>"
+                       min="0" step="100">
+                <small class="text-muted">
+                  Minimum hourly rate that venues can set for their bookings.
+                </small>
+              </div>
+
+              <div class="mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="requireAdminApproval" id="requireAdminApproval"
+                         <%= (settings.venueSettings && settings.venueSettings.requireAdminApproval !== false) ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold" for="requireAdminApproval">
+                    Require Admin Approval for Venue Registration
+                  </label>
+                  <small class="d-block text-muted mt-1">
+                    When enabled, all venue registration requests must be approved by an administrator before they become active.
+                  </small>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="allowUserCommissionEdit" id="allowUserCommissionEdit"
+                         <%= (settings.venueSettings && settings.venueSettings.allowUserCommissionEdit) ? 'checked' : '' %>>
+                  <label class="form-check-label text-white fw-bold" for="allowUserCommissionEdit">
+                    Allow Users to Set Commission Rates
+                  </label>
+                  <small class="d-block text-muted mt-1">
+                    When disabled, users can only set hourly rates. Commission rates are controlled by the admin.
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Venue Settings Info
+                  </h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Commission percentage affects venue owner earnings</li>
+                    <li class="mb-2">Minimum rate prevents unrealistic pricing</li>
+                    <li class="mb-2">Admin approval ensures quality control</li>
+                    <li class="mb-2">User commission editing provides flexibility</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success me-2">
+            <i class="bi bi-check me-1"></i> Save Venue Settings
           </button>
         </form>
       </div>
@@ -758,4 +848,37 @@ function showDummyDataPreview(preview) {
   margin-top: 1.5rem !important;
   clear: both !important;
 }
+
+/* Color preview styling */
+.color-preview-block {
+  font-size: 20px;
+  margin-left: 10px;
+}
 </style>
+
+<script>
+// Set dynamic styles that can't be done in CSS due to EJS variables
+document.addEventListener('DOMContentLoaded', function() {
+  // Set logo height
+  const logoElement = document.getElementById('currentLogo');
+  if (logoElement) {
+    logoElement.style.height = '<%= settings.headerSettings.logoHeight %>px';
+    logoElement.style.width = 'auto';
+  }
+  
+  // Set color previews
+  const primaryPreview = document.getElementById('primaryColorPreview');
+  const secondaryPreview = document.getElementById('secondaryColorPreview');
+  const accentPreview = document.getElementById('accentColorPreview');
+  
+  if (primaryPreview) {
+    primaryPreview.style.color = '<%= settings.themeSettings.primaryColor %>';
+  }
+  if (secondaryPreview) {
+    secondaryPreview.style.color = '<%= settings.themeSettings.secondaryColor %>';
+  }
+  if (accentPreview) {
+    accentPreview.style.color = '<%= settings.themeSettings.accentColor %>';
+  }
+});
+</script>

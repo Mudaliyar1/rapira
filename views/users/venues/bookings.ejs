@@ -1,0 +1,807 @@
+<%- contentFor('body') %>
+
+<!-- Venue Booking Calendar Page -->
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/users/profile">Profile</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>"><%= venue.name %></a></li>
+          <li class="breadcrumb-item active">Booking Calendar</li>
+        </ol>
+      </nav>
+      <h1 class="fw-bold">
+        <i class="bi bi-calendar-event me-2"></i>Booking Calendar
+      </h1>
+      <p class="text-muted mb-0"><%= venue.name %> - <%= venue.city %>, <%= venue.state %></p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/users/venues/<%= venue._id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Venue
+      </a>
+    </div>
+  </div>
+
+  <!-- Filter & Stats Row -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <!-- Filter Options -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-3">
+              <label class="form-label">Filter by Status:</label>
+              <select class="form-select" id="statusFilter" onchange="filterBookings()">
+                <option value="all">All Bookings</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Pending</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Month:</label>
+              <input type="month" class="form-control" id="monthFilter" 
+                     value="<%= new Date().getFullYear() %>-<%= String(new Date().getMonth() + 1).padStart(2, '0') %>"
+                     onchange="filterBookings()">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">View:</label>
+              <div class="btn-group w-100" role="group">
+                <button type="button" class="btn btn-outline-primary active" onclick="switchView('calendar')">
+                  <i class="bi bi-calendar"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="switchView('list')">
+                  <i class="bi bi-list"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">&nbsp;</label>
+              <button class="btn btn-info w-100" onclick="exportBookings()">
+                <i class="bi bi-download me-1"></i> Export
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <!-- Quick Stats -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-6">
+              <h4 class="text-primary mb-1"><%= bookings.length %></h4>
+              <small class="text-muted">Total Bookings</small>
+            </div>
+            <div class="col-6">
+              <h4 class="text-success mb-1">
+                <%= bookings.filter(b => b.status === 'confirmed').length %>
+              </h4>
+              <small class="text-muted">Confirmed</small>
+            </div>
+          </div>
+          <!-- Debug Info -->
+          <% if (bookings.length > 0) { %>
+            <div class="mt-2 small text-muted">
+              <strong>Debug:</strong> Found <%= bookings.length %> booking(s)<br>
+              First booking: <%= bookings[0].title || 'No title' %> - <%= bookings[0].status %>
+            </div>
+          <% } else { %>
+            <div class="mt-2 small text-warning">
+              <strong>Debug:</strong> No bookings found for venue ID: <%= venue._id %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar/List View -->
+  <div class="row">
+    <div class="col-12">
+      <!-- Debug Information (remove this later) -->
+      <div class="alert alert-info">
+        <strong>Debug Info:</strong> Found <%= bookings.length %> bookings for this venue
+        <% if (bookings.length > 0) { %>
+          <br>First booking: <%= JSON.stringify(bookings[0]) %>
+        <% } %>
+      </div>
+
+      <!-- Calendar View -->
+      <div id="calendarView" class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-calendar3 me-2"></i>Monthly Calendar View
+          </h5>
+          <div class="btn-group" role="group">
+            <button class="btn btn-outline-secondary btn-sm" onclick="previousMonth()">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="nextMonth()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="calendar">
+            <!-- Calendar will be generated by JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- List View -->
+      <div id="listView" class="card" style="display: none;">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-list-ul me-2"></i>Booking List View
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover" id="bookingsTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Event/Artist</th>
+                  <th>Contact</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>Revenue</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (bookings.length === 0) { %>
+                  <tr>
+                    <td colspan="7" class="text-center py-4">
+                      <i class="bi bi-calendar-x fs-1 text-muted mb-2"></i>
+                      <div>No bookings found for the selected filters</div>
+                    </td>
+                  </tr>
+                <% } else { %>
+                  <% bookings.forEach(booking => { %>
+                    <tr data-status="<%= booking.status %>" data-date="<%= new Date(booking.date).toISOString().substring(0, 10) %>">
+                      <td>
+                        <strong><%= new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) %></strong><br>
+                        <small class="text-muted">
+                          <%= booking.time || 'Time TBD' %>
+                          <% if (booking.venueBooking && booking.venueBooking.bookingHours) { %>
+                            - <%= booking.venueBooking.bookingHours %> hour(s)
+                          <% } %>
+                        </small>
+                      </td>
+                      <td>
+                        <strong><%= booking.title || 'Concert Event' %></strong><br>
+                        <small class="text-muted"><%= booking.eventType || 'Live Performance' %></small>
+                      </td>
+                      <td>
+                        <% if (booking.artist && booking.artist.user) { %>
+                          <strong><%= booking.artist.stageName || booking.artist.user.name %></strong><br>
+                          <small class="text-muted"><%= booking.artist.user.email %></small>
+                        <% } else if (booking.artist) { %>
+                          <strong><%= booking.artist.stageName || 'Unknown Artist' %></strong><br>
+                          <small class="text-muted">Artist details not available</small>
+                        <% } else { %>
+                          <span class="text-muted">Artist not assigned</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (booking.venueBooking && booking.venueBooking.bookingHours) { %>
+                          <%= booking.venueBooking.bookingHours %> hour(s)
+                        <% } else { %>
+                          <span class="text-muted">Not specified</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                          <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (booking.venueBooking && booking.venueBooking.totalCost) { %>
+                          <strong class="text-success">₹<%= booking.venueBooking.totalCost.toLocaleString('en-IN') %></strong>
+                          <% if (booking.venueBooking.commissionPercentage) { %>
+                            <br><small class="text-muted">Commission: <%= booking.venueBooking.commissionPercentage %>%</small>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-muted">Not finalized</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button class="btn btn-outline-info" onclick="viewBookingDetails('<%= booking._id %>')" title="View Details">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          <% if (booking.status === 'pending') { %>
+                            <button class="btn btn-outline-success" onclick="updateBookingStatus('<%= booking._id %>', 'confirmed')" title="Accept Booking">
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="updateBookingStatus('<%= booking._id %>', 'cancelled')" title="Decline Booking">
+                              <i class="bi bi-x"></i>
+                            </button>
+                          <% } else if (booking.status === 'confirmed') { %>
+                            <button class="btn btn-outline-secondary" onclick="downloadBookingReceipt('<%= booking._id %>')" title="Download Receipt">
+                              <i class="bi bi-download"></i>
+                            </button>
+                          <% } %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+          
+          <% if (bookings.length === 0) { %>
+            <div class="text-center py-5">
+              <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+              <h4>No Bookings Found</h4>
+              <p class="text-muted">This venue doesn't have any bookings for the selected period.</p>
+            </div>
+          <% } else { %>
+            <!-- Booking Details Cards for better visibility -->
+            <div class="row mb-4">
+              <% bookings.forEach(booking => { %>
+                <div class="col-md-6 col-lg-4 mb-3">
+                  <div class="card border-start border-4 border-<%= booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-1">
+                          <%= booking.title || 'Concert Event' %>
+                        </h6>
+                        <span class="badge bg-<%= booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : booking.status === 'cancelled' ? 'danger' : 'secondary' %>">
+                          <%= booking.status.charAt(0).toUpperCase() + booking.status.slice(1) %>
+                        </span>
+                      </div>
+                      
+                      <div class="text-muted small mb-2">
+                        <div class="d-flex align-items-center mb-1">
+                          <i class="bi bi-person me-2"></i>
+                          <span><%= booking.artist ? (booking.artist.stageName || (booking.artist.user ? booking.artist.user.name : 'Unknown Artist')) : 'Unknown Artist' %></span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                          <i class="bi bi-calendar3 me-2"></i>
+                          <span><%= new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                        </div>
+                        <div class="d-flex align-items-center mb-1">
+                          <i class="bi bi-clock me-2"></i>
+                          <span><%= booking.time || 'TBD' %></span>
+                          <% if (booking.venueBooking && booking.venueBooking.bookingHours) { %>
+                            <span class="ms-1">(<%= booking.venueBooking.bookingHours %> hrs)</span>
+                          <% } %>
+                        </div>
+                        <% if (booking.venueBooking && booking.venueBooking.totalCost) { %>
+                          <div class="d-flex align-items-center mb-1">
+                            <i class="bi bi-currency-rupee me-2"></i>
+                            <span class="text-success fw-bold">₹<%= booking.venueBooking.totalCost %></span>
+                          </div>
+                        <% } %>
+                        <% if (booking.artist && booking.artist.user && booking.artist.user.email) { %>
+                          <div class="d-flex align-items-center">
+                            <i class="bi bi-envelope me-2"></i>
+                            <span><%= booking.artist.user.email %></span>
+                          </div>
+                        <% } %>
+                      </div>
+                      
+                      <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-outline-info btn-sm flex-fill" onclick="viewBookingDetails('<%= booking._id %>')">
+                          <i class="bi bi-eye me-1"></i>View Details
+                        </button>
+                        <% if (booking.status === 'pending') { %>
+                          <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-success" onclick="updateBookingStatus('<%= booking._id %>', 'confirmed')" title="Accept">
+                              <i class="bi bi-check"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="updateBookingStatus('<%= booking._id %>', 'cancelled')" title="Decline">
+                              <i class="bi bi-x"></i>
+                            </button>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Booking Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="bookingDetailsContent">
+        <!-- Content will be loaded dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script id="bookings-data" type="application/json"><%- JSON.stringify(bookings) %></script>
+
+<script>
+// Parse bookings data from JSON script tag
+let bookingsData = [];
+try {
+  const dataElement = document.getElementById('bookings-data');
+  if (dataElement) {
+    bookingsData = JSON.parse(dataElement.textContent);
+    console.log('Parsed bookings data:', bookingsData);
+    console.log('Number of bookings:', bookingsData.length);
+  } else {
+    console.error('Bookings data element not found');
+  }
+} catch(e) {
+  console.error('Error parsing bookings data:', e);
+}
+
+// Debug: Check if we have the expected data
+if (bookingsData.length > 0) {
+  console.log('Sample booking data:', bookingsData[0]);
+} else {
+  console.log('No bookings found in data');
+}
+let currentDate = new Date();
+let currentView = 'calendar';
+
+// Calendar generation
+function generateCalendar(year, month) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startingDayOfWeek = firstDay.getDay();
+  
+  let calendarHTML = `
+    <div class="text-center mb-3">
+      <h4>${firstDay.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h4>
+    </div>
+    <div class="row border-bottom fw-bold text-center py-2">
+      <div class="col">Sun</div>
+      <div class="col">Mon</div>
+      <div class="col">Tue</div>
+      <div class="col">Wed</div>
+      <div class="col">Thu</div>
+      <div class="col">Fri</div>
+      <div class="col">Sat</div>
+    </div>`;
+  
+  let dayCount = 1;
+  const weeks = Math.ceil((daysInMonth + startingDayOfWeek) / 7);
+  
+  for (let week = 0; week < weeks; week++) {
+    calendarHTML += '<div class="row border-bottom" style="min-height: 100px;">';
+    
+    for (let day = 0; day < 7; day++) {
+      const cellIndex = week * 7 + day;
+      
+      if (cellIndex < startingDayOfWeek || dayCount > daysInMonth) {
+        calendarHTML += '<div class="col calendar-day empty p-2"></div>';
+      } else {
+        const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayCount).padStart(2, '0')}`;
+        const dayBookings = bookingsData.filter(booking => {
+          const bookingDate = new Date(booking.date).toISOString().substring(0, 10);
+          return bookingDate === currentDateStr;
+        });
+        
+        let dayClass = 'calendar-day p-2';
+        if (dayBookings.length > 0) {
+          dayClass += ' has-bookings';
+        }
+        
+        calendarHTML += `<div class="col ${dayClass}" data-date="${currentDateStr}">
+          <div class="day-number fw-bold mb-1">${dayCount}</div>`;
+        
+        dayBookings.forEach(booking => {
+          const statusClass = booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : booking.status === 'cancelled' ? 'danger' : 'secondary';
+          const artistName = booking.artist ? (booking.artist.stageName || (booking.artist.user ? booking.artist.user.name : 'Unknown')) : 'TBD';
+          calendarHTML += `<div class="booking-item bg-${statusClass} mb-1" onclick="viewBookingDetails('${booking._id}')" title="${booking.title || 'Concert'} - ${artistName}">
+            <div class="small fw-bold">${booking.time || 'TBD'}</div>
+            <div class="tiny">${artistName}</div>
+            <div class="tiny">${booking.title || 'Concert'}</div>
+          </div>`;
+        });
+        
+        calendarHTML += '</div>';
+        dayCount++;
+      }
+    }
+    
+    calendarHTML += '</div>';
+  }
+  
+  document.getElementById('calendar').innerHTML = calendarHTML;
+}
+
+// View switching
+function switchView(view) {
+  currentView = view;
+  const calendarView = document.getElementById('calendarView');
+  const listView = document.getElementById('listView');
+  
+  if (view === 'calendar') {
+    calendarView.style.display = 'block';
+    listView.style.display = 'none';
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  } else {
+    calendarView.style.display = 'none';
+    listView.style.display = 'block';
+  }
+  
+  // Update button states
+  document.querySelectorAll('.btn-group button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+}
+
+// Month navigation
+function previousMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+}
+
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+}
+
+// Filtering
+function filterBookings() {
+  const statusFilter = document.getElementById('statusFilter').value;
+  const monthFilter = document.getElementById('monthFilter').value;
+  
+  const rows = document.querySelectorAll('#bookingsTable tbody tr');
+  rows.forEach(row => {
+    const status = row.dataset.status;
+    const date = row.dataset.date;
+    const dateMonth = date.substring(0, 7); // YYYY-MM format
+    
+    let showRow = true;
+    
+    if (statusFilter !== 'all' && status !== statusFilter) {
+      showRow = false;
+    }
+    
+    if (monthFilter && dateMonth !== monthFilter) {
+      showRow = false;
+    }
+    
+    row.style.display = showRow ? '' : 'none';
+  });
+  
+  // Regenerate calendar if in calendar view
+  if (currentView === 'calendar') {
+    const [year, month] = monthFilter.split('-').map(Number);
+    currentDate = new Date(year, month - 1);
+    generateCalendar(year, month - 1);
+  }
+}
+
+// Booking details modal
+function viewBookingDetails(bookingId) {
+  const booking = bookingsData.find(b => b._id === bookingId);
+  if (booking) {
+    const content = `
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="text-primary mb-3">
+            <i class="bi bi-calendar-event me-2"></i>Event Information
+          </h6>
+          <div class="mb-3">
+            <strong>Event Title:</strong><br>
+            <span class="text-muted">${booking.title || 'Concert Event'}</span>
+          </div>
+          <div class="mb-3">
+            <strong>Artist/Performer:</strong><br>
+            <span class="text-muted">${booking.artist ? (booking.artist.stageName || (booking.artist.user ? booking.artist.user.name : 'Unknown Artist')) : 'Not assigned'}</span>
+          </div>
+          <div class="mb-3">
+            <strong>Date & Time:</strong><br>
+            <span class="text-muted">
+              <i class="bi bi-calendar3 me-1"></i>${new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}<br>
+              <i class="bi bi-clock me-1"></i>${booking.time || 'Time to be decided'}
+              ${booking.venueBooking && booking.venueBooking.bookingHours ? ` (${booking.venueBooking.bookingHours} hours)` : ''}
+            </span>
+          </div>
+          <div class="mb-3">
+            <strong>Event Type:</strong><br>
+            <span class="text-muted">${booking.eventType || 'Live Performance'}</span>
+          </div>
+          <div class="mb-3">
+            <strong>Current Status:</strong><br>
+            <span class="badge bg-${booking.status === 'confirmed' ? 'success' : booking.status === 'pending' ? 'warning' : booking.status === 'cancelled' ? 'danger' : 'secondary'} fs-6">
+              ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-success mb-3">
+            <i class="bi bi-person-lines-fill me-2"></i>Contact & Financial Information
+          </h6>
+          ${booking.artist && booking.artist.user ? `
+            <div class="mb-3">
+              <strong>Artist Contact:</strong><br>
+              <span class="text-muted">
+                <i class="bi bi-envelope me-1"></i>${booking.artist.user.email || 'Not provided'}<br>
+                ${booking.artist.user.phone ? `<i class="bi bi-telephone me-1"></i>${booking.artist.user.phone}` : ''}
+              </span>
+            </div>
+          ` : ''}
+          ${booking.venueBooking ? `
+            <div class="mb-3">
+              <strong>Booking Duration:</strong><br>
+              <span class="text-muted">${booking.venueBooking.bookingHours || 'Not specified'} hour(s)</span>
+            </div>
+            <div class="mb-3">
+              <strong>Venue Cost:</strong><br>
+              <span class="text-success fw-bold">₹${booking.venueBooking.totalCost ? booking.venueBooking.totalCost.toLocaleString('en-IN') : 'Not finalized'}</span>
+            </div>
+            ${booking.venueBooking.commissionPercentage ? `
+              <div class="mb-3">
+                <strong>Commission Rate:</strong><br>
+                <span class="text-muted">${booking.venueBooking.commissionPercentage}%</span>
+              </div>
+            ` : ''}
+          ` : ''}
+          <div class="mb-3">
+            <strong>Booking Created:</strong><br>
+            <span class="text-muted">${booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-IN') : new Date(booking.date).toLocaleDateString('en-IN')}</span>
+          </div>
+        </div>
+      </div>
+      
+      ${booking.description ? `
+        <div class="row mt-3">
+          <div class="col-12">
+            <h6 class="text-info mb-2">
+              <i class="bi bi-card-text me-2"></i>Event Description
+            </h6>
+            <div class="border rounded p-3 bg-light">
+              <p class="mb-0 text-muted">${booking.description}</p>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+      
+      <div class="row mt-4">
+        <div class="col-12">
+          <h6 class="text-warning mb-2">
+            <i class="bi bi-exclamation-triangle me-2"></i>Important Notes
+          </h6>
+          <div class="alert alert-info">
+            <small>
+              • This booking is ${booking.status === 'confirmed' ? 'confirmed and active' : booking.status === 'pending' ? 'awaiting your approval' : 'cancelled'}.<br>
+              • All venue bookings are subject to the terms and conditions agreed upon.<br>
+              • For any changes or cancellations, please contact the artist directly.
+            </small>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('bookingDetailsContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('bookingDetailsModal')).show();
+  } else {
+    alert('Booking details not found');
+  }
+}
+
+// Update booking status
+function updateBookingStatus(bookingId, newStatus) {
+  const statusText = newStatus === 'confirmed' ? 'accept' : 'decline';
+  if (confirm(`Are you sure you want to ${statusText} this booking?`)) {
+    // Show loading state
+    const buttons = document.querySelectorAll(`button[onclick*="${bookingId}"]`);
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    });
+
+    fetch(`/users/venues/bookings/${bookingId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Show success message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${newStatus === 'confirmed' ? 'success' : 'warning'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+          <i class="bi bi-check-circle me-2"></i>
+          Booking has been ${newStatus === 'confirmed' ? 'accepted' : 'declined'} successfully!
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+        
+        // Reload page after short delay
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      } else {
+        alert('Error updating booking status: ' + (data.message || 'Unknown error'));
+        // Restore buttons
+        buttons.forEach(btn => {
+          btn.disabled = false;
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error updating booking status. Please try again.');
+      // Restore buttons
+      buttons.forEach(btn => {
+        btn.disabled = false;
+      });
+    });
+  }
+}
+
+// Download booking receipt
+function downloadBookingReceipt(bookingId) {
+  const booking = bookingsData.find(b => b._id === bookingId);
+  if (booking && booking.status === 'confirmed') {
+    // Create a simple receipt download
+    window.open(`/users/venues/bookings/${bookingId}/receipt`, '_blank');
+  } else {
+    alert('Receipt is only available for confirmed bookings');
+  }
+}
+
+// Export bookings
+function exportBookings() {
+  const statusFilter = document.getElementById('statusFilter').value;
+  const monthFilter = document.getElementById('monthFilter').value;
+  
+  let url = `/users/venues/<%= venue._id %>/bookings/export?`;
+  if (statusFilter !== 'all') url += `status=${statusFilter}&`;
+  if (monthFilter) url += `month=${monthFilter}&`;
+  
+  window.open(url, '_blank');
+}
+
+// Initialize view on page load - show list view by default if there are bookings
+document.addEventListener('DOMContentLoaded', function() {
+  // Show list view by default if we have bookings, otherwise show calendar
+  if (bookingsData.length > 0) {
+    switchView('list');
+    // Update button states
+    document.querySelectorAll('.btn-group[role="group"] button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelectorAll('.btn-group[role="group"] button')[1].classList.add('active'); // List view button
+  } else {
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+  }
+});
+</script>
+
+<style>
+.calendar-day {
+  min-height: 100px;
+  border-right: 1px solid #dee2e6;
+  position: relative;
+}
+
+.calendar-day.empty {
+  background-color: #f8f9fa;
+}
+
+.calendar-day.has-bookings {
+  background-color: #f0f8ff;
+}
+
+.day-number {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.booking-item {
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  margin: 1px 0;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: white !important;
+  transition: opacity 0.2s;
+}
+
+.booking-item:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+.booking-item .tiny {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+#bookingsTable th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+#bookingsTable tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.border-start {
+  border-left-width: 4px !important;
+}
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Calendar responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-day {
+    min-height: 80px;
+    font-size: 0.8rem;
+  }
+  
+  .booking-item {
+    font-size: 0.6rem;
+    padding: 1px 2px;
+  }
+  
+  .booking-item .tiny {
+    font-size: 0.5rem;
+  }
+}
+
+/* Status badge improvements */
+.badge {
+  font-size: 0.75em;
+}
+
+/* Button improvements */
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Alert styling */
+.alert {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Modal improvements */
+.modal-content {
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  border-bottom: 2px solid #f8f9fa;
+}
+</style>

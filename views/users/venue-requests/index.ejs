@@ -1,0 +1,225 @@
+<%- contentFor('body') %>
+
+<!-- My Venue Requests Page -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">My Venue Requests</h1>
+    <div class="d-flex gap-2">
+      <a href="/users/profile" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Profile
+      </a>
+      <a href="/users/venue-requests/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Request New Venue
+      </a>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <%
+      const totalRequests = venueRequests.length;
+      const pendingRequests = venueRequests.filter(req => req.status === 'pending').length;
+      const approvedRequests = venueRequests.filter(req => req.status === 'approved').length;
+      const rejectedRequests = venueRequests.filter(req => req.status === 'rejected').length;
+    %>
+    <div class="col-md-3 mb-3">
+      <div class="card border-info h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-building display-4 text-info mb-2"></i>
+          <h3 class="fw-bold text-info"><%= totalRequests %></h3>
+          <p class="text-muted mb-0">Total Requests</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-warning h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-clock display-4 text-warning mb-2"></i>
+          <h3 class="fw-bold text-warning"><%= pendingRequests %></h3>
+          <p class="text-muted mb-0">Pending Review</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-success h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+          <h3 class="fw-bold text-success"><%= approvedRequests %></h3>
+          <p class="text-muted mb-0">Approved</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card border-danger h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-x-circle display-4 text-danger mb-2"></i>
+          <h3 class="fw-bold text-danger"><%= rejectedRequests %></h3>
+          <p class="text-muted mb-0">Rejected</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Requests List -->
+  <div class="card">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">
+        <i class="bi bi-list-ul me-2"></i>Venue Registration Requests
+      </h5>
+    </div>
+    <div class="card-body">
+      <% if (venueRequests && venueRequests.length > 0) { %>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Venue Details</th>
+                <th>Location</th>
+                <th>Type & Capacity</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% venueRequests.forEach(request => { %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <% if (request.images && request.images.length > 0) { %>
+                        <img src="<%= request.images[0] %>" alt="<%= request.name %>" 
+                             class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                      <% } else { %>
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
+                             style="width: 50px; height: 50px;">
+                          <i class="bi bi-building text-muted"></i>
+                        </div>
+                      <% } %>
+                      <div>
+                        <h6 class="mb-1"><%= request.name %></h6>
+                        <small class="text-muted"><%= request.priceRange %> Range</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong><%= request.city %>, <%= request.state %></strong>
+                      <% if (request.pincode) { %>
+                        <br><small class="text-muted">PIN: <%= request.pincode %></small>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <span class="badge bg-secondary"><%= request.venueType %></span>
+                      <% if (request.capacity) { %>
+                        <br><small class="text-muted">Capacity: <%= request.capacity %></small>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (request.status === 'pending') { %>
+                      <span class="badge bg-warning">
+                        <i class="bi bi-clock me-1"></i>Pending Review
+                      </span>
+                    <% } else if (request.status === 'approved') { %>
+                      <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                      </span>
+                      <% if (request.createdVenue && request.createdVenue.isActive) { %>
+                        <br><small class="text-success">Venue is Active</small>
+                      <% } else if (request.createdVenue) { %>
+                        <br><small class="text-muted">Venue Created (Inactive)</small>
+                      <% } %>
+                    <% } else if (request.status === 'rejected') { %>
+                      <span class="badge bg-danger">
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                      </span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <small class="text-muted">
+                      <%= request.createdAt.toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                      }) %>
+                    </small>
+                    <% if (request.reviewedAt) { %>
+                      <br><small class="text-muted">
+                        Reviewed: <%= request.reviewedAt.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                        }) %>
+                      </small>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="btn-group-vertical btn-group-sm" role="group">
+                      <a href="/users/venue-requests/<%= request._id %>" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-eye me-1"></i> View
+                      </a>
+                      <% if (request.status === 'pending') { %>
+                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                onclick="cancelRequest('<%= request._id %>', '<%= request.name %>')">
+                          <i class="bi bi-x me-1"></i> Cancel
+                        </button>
+                      <% } %>
+                      <% if (request.status === 'approved' && request.createdVenue) { %>
+                        <a href="/users/venues/<%= request.createdVenue._id %>" 
+                           class="btn btn-outline-success btn-sm">
+                          <i class="bi bi-building me-1"></i> View Venue
+                        </a>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="text-center py-5">
+          <i class="bi bi-building display-1 text-muted mb-3"></i>
+          <h4>No Venue Requests Yet</h4>
+          <p class="text-muted mb-4">You haven't submitted any venue registration requests.</p>
+          <a href="/users/venue-requests/create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Submit Your First Venue Request
+          </a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Request Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cancel Venue Request</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to cancel the venue request for <strong id="venueName"></strong>?</p>
+        <p class="text-muted">This action cannot be undone and you will need to submit a new request if you want to register this venue later.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Request</button>
+        <form id="cancelForm" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-danger">Cancel Request</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function cancelRequest(requestId, venueName) {
+  document.getElementById('venueName').textContent = venueName;
+  document.getElementById('cancelForm').action = `/users/venue-requests/${requestId}/cancel`;
+  const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+  modal.show();
+}
+</script>

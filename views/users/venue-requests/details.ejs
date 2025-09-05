@@ -1,0 +1,421 @@
+<%- contentFor('body') %>
+
+<!-- Venue Request Details -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">Venue Request Details</h1>
+    <div class="d-flex gap-2">
+      <a href="/users/venue-requests" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Requests
+      </a>
+      <% if (venueRequest.status === 'approved' && venueRequest.createdVenue) { %>
+        <a href="/admin/venues/<%= venueRequest.createdVenue._id %>/details" 
+           class="btn btn-success" target="_blank">
+          <i class="bi bi-building me-1"></i> View Created Venue
+        </a>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <!-- Status Card -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="mb-1"><%= venueRequest.name %></h3>
+              <p class="text-muted mb-0"><%= venueRequest.fullAddress %></p>
+            </div>
+            <div class="text-end">
+              <% if (venueRequest.status === 'pending') { %>
+                <span class="badge bg-warning fs-6">
+                  <i class="bi bi-clock me-1"></i>Pending Review
+                </span>
+              <% } else if (venueRequest.status === 'approved') { %>
+                <span class="badge bg-success fs-6">
+                  <i class="bi bi-check-circle me-1"></i>Approved
+                </span>
+              <% } else if (venueRequest.status === 'rejected') { %>
+                <span class="badge bg-danger fs-6">
+                  <i class="bi bi-x-circle me-1"></i>Rejected
+                </span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Basic Information -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="bi bi-info-circle me-2"></i>Basic Information
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Venue Type:</strong>
+              <p><%= venueRequest.venueType %></p>
+            </div>
+            <div class="col-md-6">
+              <strong>Price Range:</strong>
+              <p><%= venueRequest.priceRange %></p>
+            </div>
+            <% if (venueRequest.capacity) { %>
+              <div class="col-md-6">
+                <strong>Capacity:</strong>
+                <p><%= venueRequest.capacity %> people</p>
+              </div>
+            <% } %>
+            <% if (venueRequest.description) { %>
+              <div class="col-md-12">
+                <strong>Description:</strong>
+                <p><%= venueRequest.description %></p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Facilities -->
+      <% if (venueRequest.facilities && venueRequest.facilities.length > 0) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-gear me-2"></i>Facilities
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% venueRequest.facilities.forEach(facility => { %>
+                <div class="col-md-4 mb-2">
+                  <i class="bi bi-check-circle text-success me-2"></i><%= facility %>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Pricing Information -->
+      <% if (venueRequest.pricing && venueRequest.pricing.hourlyRates && venueRequest.pricing.hourlyRates.length > 0) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-currency-rupee me-2"></i>Pricing Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <strong>Minimum Hours:</strong>
+                <p><%= venueRequest.pricing.minimumHours || 1 %> hours</p>
+              </div>
+              <% if (venueRequest.pricing.ticketPricing) { %>
+                <div class="col-md-4">
+                  <strong>Min Ticket Price:</strong>
+                  <p>₹<%= venueRequest.pricing.ticketPricing.minimumPrice || 0 %></p>
+                </div>
+                <div class="col-md-4">
+                  <strong>Suggested Ticket Price:</strong>
+                  <p>₹<%= venueRequest.pricing.ticketPricing.suggestedPrice || 100 %></p>
+                </div>
+              <% } %>
+            </div>
+            
+            <h6>Hourly Rates</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Duration</th>
+                    <th>Rate</th>
+                    <th>Commission %</th>
+                    <th>Commission Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% venueRequest.pricing.hourlyRates.forEach(rate => { %>
+                    <tr>
+                      <td><%= rate.hours %> hour<%= rate.hours > 1 ? 's' : '' %></td>
+                      <td>₹<%= rate.rate.toLocaleString() %></td>
+                      <td><%= rate.commissionPercentage %>%</td>
+                      <td>₹<%= rate.commissionAmount.toLocaleString() %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Contact Information -->
+      <% if (venueRequest.contactPerson && (venueRequest.contactPerson.name || venueRequest.contactPerson.phone || venueRequest.contactPerson.email)) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-person me-2"></i>Contact Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% if (venueRequest.contactPerson.name) { %>
+                <div class="col-md-4">
+                  <strong>Contact Person:</strong>
+                  <p><%= venueRequest.contactPerson.name %></p>
+                </div>
+              <% } %>
+              <% if (venueRequest.contactPerson.phone) { %>
+                <div class="col-md-4">
+                  <strong>Phone:</strong>
+                  <p><%= venueRequest.contactPerson.phone %></p>
+                </div>
+              <% } %>
+              <% if (venueRequest.contactPerson.email) { %>
+                <div class="col-md-4">
+                  <strong>Email:</strong>
+                  <p><%= venueRequest.contactPerson.email %></p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Images -->
+      <% if (venueRequest.images && venueRequest.images.length > 0) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-images me-2"></i>Venue Images
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <% venueRequest.images.forEach((image, index) => { %>
+                <div class="col-md-4 mb-3">
+                  <img src="<%= image %>" alt="Venue Image <%= index + 1 %>" 
+                       class="img-fluid rounded" style="height: 200px; object-fit: cover; width: 100%;">
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Request Timeline -->
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>Request Timeline
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-marker bg-primary"></div>
+              <div class="timeline-content">
+                <h6 class="mb-1">Request Submitted</h6>
+                <small class="text-muted">
+                  <%= venueRequest.createdAt.toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                  }) %>
+                </small>
+              </div>
+            </div>
+            
+            <% if (venueRequest.reviewedAt) { %>
+              <div class="timeline-item">
+                <div class="timeline-marker <%= venueRequest.status === 'approved' ? 'bg-success' : 'bg-danger' %>"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">Request <%= venueRequest.status.charAt(0).toUpperCase() + venueRequest.status.slice(1) %></h6>
+                  <small class="text-muted">
+                    <%= venueRequest.reviewedAt.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) %>
+                  </small>
+                  <% if (venueRequest.reviewedBy) { %>
+                    <br><small class="text-muted">By: <%= venueRequest.reviewedBy.name %></small>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+            
+            <% if (venueRequest.status === 'approved' && venueRequest.createdVenue) { %>
+              <div class="timeline-item">
+                <div class="timeline-marker bg-info"></div>
+                <div class="timeline-content">
+                  <h6 class="mb-1">Venue Created</h6>
+                  <small class="text-muted">Your venue is now available on the platform</small>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Response -->
+      <% if (venueRequest.status !== 'pending') { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-chat-dots me-2"></i>Admin Response
+            </h5>
+          </div>
+          <div class="card-body">
+            <% if (venueRequest.status === 'approved') { %>
+              <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>Congratulations!</strong> Your venue request has been approved.
+              </div>
+              <% if (venueRequest.adminNotes) { %>
+                <strong>Admin Notes:</strong>
+                <p><%= venueRequest.adminNotes %></p>
+              <% } %>
+            <% } else if (venueRequest.status === 'rejected') { %>
+              <div class="alert alert-danger">
+                <i class="bi bi-x-circle me-2"></i>
+                <strong>Request Rejected</strong>
+              </div>
+              <% if (venueRequest.rejectionReason) { %>
+                <strong>Rejection Reason:</strong>
+                <p><%= venueRequest.rejectionReason %></p>
+              <% } %>
+              <% if (venueRequest.adminNotes) { %>
+                <strong>Admin Notes:</strong>
+                <p><%= venueRequest.adminNotes %></p>
+              <% } %>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Additional Links -->
+      <% if (venueRequest.googleMapsLink || venueRequest.website) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-link me-2"></i>Links
+            </h5>
+          </div>
+          <div class="card-body">
+            <% if (venueRequest.googleMapsLink) { %>
+              <a href="<%= venueRequest.googleMapsLink %>" target="_blank" class="btn btn-outline-primary btn-sm mb-2 w-100">
+                <i class="bi bi-geo-alt me-1"></i> View on Google Maps
+              </a>
+            <% } %>
+            <% if (venueRequest.website) { %>
+              <a href="<%= venueRequest.website %>" target="_blank" class="btn btn-outline-info btn-sm w-100">
+                <i class="bi bi-globe me-1"></i> Visit Website
+              </a>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Actions -->
+      <% if (venueRequest.status === 'pending') { %>
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">
+              <i class="bi bi-gear me-2"></i>Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <button type="button" class="btn btn-danger w-100" 
+                    onclick="cancelRequest('<%= venueRequest._id %>', '<%= venueRequest.name %>')">
+              <i class="bi bi-x me-1"></i> Cancel Request
+            </button>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Request Modal -->
+<% if (venueRequest.status === 'pending') { %>
+  <div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cancel Venue Request</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to cancel this venue request?</p>
+          <p class="text-muted">This action cannot be undone and you will need to submit a new request if you want to register this venue later.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Request</button>
+          <form id="cancelForm" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-danger">Cancel Request</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<style>
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dee2e6;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -23px;
+  top: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 3px #dee2e6;
+}
+
+.timeline-content {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid #007bff;
+}
+</style>
+
+<script>
+function cancelRequest(requestId, venueName) {
+  document.getElementById('cancelForm').action = `/users/venue-requests/${requestId}/cancel`;
+  const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+  modal.show();
+}
+</script>

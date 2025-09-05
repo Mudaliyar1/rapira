@@ -439,9 +439,14 @@ const adminSessionRoutes = require('./routes/adminSessions');
 const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
 const adminAboutRoutes = require('./routes/adminAbout');
 const adminTeamUpdatesRoutes = require('./routes/adminTeamUpdates');
+const venueRequestRoutes = require('./routes/venueRequests');
+const adminVenueRequestRoutes = require('./routes/adminVenueRequests');
 const adminVenuesRoutes = require('./routes/adminVenues');
 const adminConcertEditRequestRoutes = require('./routes/adminConcertEditRequests');
 const venueAvailabilityRoutes = require('./routes/venueAvailability');
+const userVenuesRoutes = require('./routes/userVenues');
+const venueDashboardRoutes = require('./routes/venueDashboard');
+const adminVenueEditRequestRoutes = require('./routes/adminVenueEditRequests');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -456,6 +461,9 @@ app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'public/uploads')
 // Use routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
+app.use('/users/venue-requests', venueRequestRoutes);
+app.use('/users/venues', userVenuesRoutes);
+app.use('/venue-dashboard', venueDashboardRoutes);
 app.use('/users', userRoutes);
 app.use('/artists', artistRoutes);
 app.use('/concerts', concertRoutes);
@@ -525,6 +533,12 @@ app.use('/admin/team-updates', adminTeamUpdatesRoutes);
 
 // Mount admin venues routes
 app.use('/admin/venues', adminVenuesRoutes);
+
+// Mount admin venue requests routes
+app.use('/admin/venue-requests', adminVenueRequestRoutes);
+
+// Mount admin venue edit requests routes
+app.use('/admin/venue-edit-requests', adminVenueEditRequestRoutes);
 
 // Mount admin concert edit requests routes
 app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
