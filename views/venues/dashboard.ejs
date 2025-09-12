@@ -170,15 +170,7 @@
                 </thead>
                 <tbody>
                   <% bookings.forEach(booking => { %>
-                    <tr class="<%= new Date(booking.date) < new Date() ? 'table-secondary' : '' %>"
-                        data-booking-id="<%= booking.id %>"
-                        data-title="<%= booking.title %>"
-                        data-artist="<%= booking.artistName %>"
-                        data-date="<%= booking.date %>"
-                        data-time="<%= booking.startTime %>"
-                        data-duration="<%= booking.duration %>"
-                        data-contact="<%= booking.contactInfo || '' %>"
-                        data-notes="<%= booking.notes || '' %>">
+                    <tr class="<%= new Date(booking.date) < new Date() ? 'table-secondary' : '' %>">
                       <td>
                         <div>
                           <h6 class="mb-1"><%= booking.title %></h6>
@@ -300,40 +292,37 @@
   </div>
 </div>
 
+<!-- Store bookings data in a data attribute -->
+<div id="bookingsData" style="display: none;" data-bookings="<%- encodeURIComponent(JSON.stringify(bookings || [])) %>"></div>
+
 <script>
 // External booking management functions
 function viewExternalBooking(bookingId) {
-  // Find booking data from the page data attributes
-  const bookingCard = document.querySelector(`[data-booking-id="${bookingId}"]`);
-  if (!bookingCard) return;
+  // Get booking data from the data attribute
+  const bookingsDataEl = document.getElementById('bookingsData');
+  const bookings = JSON.parse(decodeURIComponent(bookingsDataEl.getAttribute('data-bookings')));
+  const booking = bookings.find(b => b.id === bookingId);
   
-  const title = bookingCard.getAttribute('data-title');
-  const artistName = bookingCard.getAttribute('data-artist');
-  const date = bookingCard.getAttribute('data-date');
-  const time = bookingCard.getAttribute('data-time');
-  const duration = bookingCard.getAttribute('data-duration');
-  const contact = bookingCard.getAttribute('data-contact');
-  const notes = bookingCard.getAttribute('data-notes');
-  
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = `
+  if (booking) {
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
       <div class="row">
         <div class="col-md-6">
           <h6 class="text-primary">Event Information</h6>
           <table class="table table-sm">
-            <tr><td><strong>Title:</strong></td><td>${title}</td></tr>
-            <tr><td><strong>Artist:</strong></td><td>${artistName}</td></tr>
-            <tr><td><strong>Date:</strong></td><td>${new Date(date).toLocaleDateString('en-IN')}</td></tr>
-            <tr><td><strong>Time:</strong></td><td>${time}</td></tr>
-            <tr><td><strong>Duration:</strong></td><td>${duration} hours</td></tr>
-            <tr><td><strong>Status:</strong></td><td><span class="badge bg-info">active</span></td></tr>
+            <tr><td><strong>Title:</strong></td><td>${booking.title}</td></tr>
+            <tr><td><strong>Artist:</strong></td><td>${booking.artistName}</td></tr>
+            <tr><td><strong>Date:</strong></td><td>${new Date(booking.date).toLocaleDateString('en-IN')}</td></tr>
+            <tr><td><strong>Time:</strong></td><td>${booking.startTime}</td></tr>
+            <tr><td><strong>Duration:</strong></td><td>${booking.duration} hours</td></tr>
+            <tr><td><strong>Status:</strong></td><td><span class="badge bg-info">${booking.status}</span></td></tr>
           </table>
         </div>
         <div class="col-md-6">
           <h6 class="text-primary">Contact & Notes</h6>
           <table class="table table-sm">
-            <tr><td><strong>Contact:</strong></td><td>${contact || 'Not provided'}</td></tr>
-            <tr><td><strong>Notes:</strong></td><td>${notes || 'No notes'}</td></tr>
+            <tr><td><strong>Contact:</strong></td><td>${booking.contactInfo || 'Not provided'}</td></tr>
+            <tr><td><strong>Notes:</strong></td><td>${booking.notes || 'No notes'}</td></tr>
             <tr><td><strong>Type:</strong></td><td><span class="badge bg-info">External Booking</span></td></tr>
           </table>
         </div>
@@ -341,6 +330,7 @@ function viewExternalBooking(bookingId) {
     `;
     
     new bootstrap.Modal(document.getElementById('externalBookingModal')).show();
+  }
 }
 
 function editExternalBooking(bookingId) {
