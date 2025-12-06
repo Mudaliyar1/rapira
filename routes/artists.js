@@ -1090,6 +1090,9 @@ router.get('/:id', async (req, res) => {
       return res.redirect('/artists');
     }
 
+    // Get follower counts
+    const followerCounts = await artist.populateFollowerCounts();
+
     // Get artist's content
     const content = await Content.find({ artist: artist._id })
       .sort({ createdAt: -1 });
@@ -1101,10 +1104,27 @@ router.get('/:id', async (req, res) => {
       date: { $gte: new Date() }
     }).populate('venue').sort({ date: 1 });
 
+    // Check if current user is following this artist
+    let isFollowing = false;
+    let currentUser = null;
+    if (req.session.user) {
+      currentUser = req.session.user;
+      const Follow = require('../models/Follow');
+      const existingFollow = await Follow.findOne({
+        followerId: req.session.user.id,
+        followingId: artist.user._id
+      });
+      isFollowing = !!existingFollow;
+    }
+
     res.render('artists/profile', {
       artist,
       content,
-      upcomingConcerts
+      upcomingConcerts,
+      followerCounts,
+      isFollowing,
+      currentUser,
+      message: req.query.message || null
     });
   } catch (error) {
     console.error('Artist profile error:', error);

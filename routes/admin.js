@@ -2210,4 +2210,167 @@ router.post('/storage-management/delete/:collection', isLoggedIn, isAdmin, async
   }
 });
 
+// Follower Analytics Routes
+router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const Follow = require('../models/Follow');
+    const Artist = require('../models/Artist');
+    
+    // Get all artists with their follower counts
+    const artistsWithFollowers = await Artist.aggregate([
+      {
+        $lookup: {
+          from: 'follows',
+          localField: 'user',
+          foreignField: 'followingId',
+          as: 'followers'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          stageName: 1,
+          genre: 1,
+          city: 1,
+          state: 1,
+          totalFollowers: { $size: '$followers' },
+          userFollowers: {
+            $size: {
+              $filter: {
+                input: '$followers',
+                cond: { $eq: ['$$this.roleOfFollower', 'user'] }
+              }
+            }
+          },
+          artistFollowers: {
+            $size: {
+              $filter: {
+                input: '$followers',
+                cond: { $eq: ['$$this.roleOfFollower', 'artist'] }
+              }
+            }
+          },
+          latestFollower: { $max: '$followers.createdAt' }
+        }
+      },
+      { $sort: { totalFollowers: -1 } }
+    ]);
+
+    // Get overall follower statistics
+    const totalFollows = await Follow.countDocuments();
+    const userFollowers = await Follow.countDocuments({ roleOfFollower: 'user' });
+    const artistFollowers = await Follow.countDocuments({ roleOfFollower: 'artist' });
+    
+    // Get recent follows
+    const recentFollows = await Follow.find()
+      .populate('followerId', 'name email profileImage role')
+      .populate('followingId', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Get top artists by followers
+    const topArtists = artistsWithFollowers.slice(0, 10);
+
+    // Get follower growth by month
+    const followerGrowth = await Follow.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': -1, '_id.month': -1 } },
+      { $limit: 12 }
+    ]);
+
+    res.render('admin/follower-analytics', {
+      layout: 'admin',
+      title: 'Follower Analytics',
+      currentPath: '/admin/follower-analytics',
+      artistsWithFollowers,
+      totalFollows,
+      userFollowers,
+      artistFollowers,
+      recentFollows,
+      topArtists,
+      followerGrowth
+    });
+  } catch (error) {
+    console.error('Follower analytics error:', error);
+    req.flash('error', 'Failed to load follower analytics');
+    res.redirect('/admin');
+  }
+});
+
+// Artist follower detail view
+router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const Follow = require('../models/Follow');
+    const Artist = require('../models/Artist');
+    
+    const artist = await Artist.findById(req.params.id).populate('user');
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/follower-analytics');
+    }
+
+    // Get detailed follower information
+    const followers = await Follow.find({ followingId: artist.user._id })
+      .populate('followerId', 'name email profileImage role city state')
+      .sort({ createdAt: -1 });
+
+    // Get follower statistics
+    const totalFollowers = await Follow.countDocuments({ followingId: artist.user._id });
+    const userFollowers = await Follow.countDocuments({ 
+      followingId: artist.user._id, 
+      roleOfFollower: 'user' 
+    });
+    const artistFollowers = await Follow.countDocuments({ 
+      followingId: artist.user._id, 
+      roleOfFollower: 'artist' 
+    });
+
+    // Get follower locations
+    const followerLocations = await Follow.aggregate([
+      { $match: { followingId: artist.user._id } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'followerId',
+          foreignField: '_id',
+          as: 'follower'
+        }
+      },
+      { $unwind: '$follower' },
+      {
+        $group: {
+          _id: '$follower.city',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    res.render('admin/artist-follower-detail', {
+      layout: 'admin',
+      title: `${artist.stageName} - Follower Details`,
+      currentPath: '/admin/follower-analytics',
+      artist,
+      followers,
+      totalFollowers,
+      userFollowers,
+      artistFollowers,
+      followerLocations
+    });
+  } catch (error) {
+    console.error('Artist follower detail error:', error);
+    req.flash('error', 'Failed to load artist follower details');
+    res.redirect('/admin/follower-analytics');
+  }
+});
+
 module.exports = router;

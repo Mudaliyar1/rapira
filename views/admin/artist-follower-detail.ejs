@@ -1,0 +1,314 @@
+<%- contentFor('title') %><%= title %>
+
+<%- contentFor('body') %>
+
+<!-- Helper function for chart colors -->
+<% 
+function getChartColor(index) {
+  const colors = [
+    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b',
+    '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899'
+  ];
+  return colors[index % colors.length];
+}
+%>
+
+<% if (followerLocations && followerLocations.length > 0) { %>
+  <div id="chart-data" 
+    data-labels="<%= JSON.stringify(followerLocations.map(l => l._id || 'Unknown')) %>"
+    data-data="<%= JSON.stringify(followerLocations.map(l => l.count)) %>"
+    data-background-colors="<%= JSON.stringify(followerLocations.map((_, i) => getChartColor(i))) %>"
+    style="display: none;">
+  </div>
+<% } %>
+
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center mb-4">
+    <a href="/admin/follower-analytics" class="btn btn-outline-primary btn-sm me-3">
+      <i class="bi bi-arrow-left"></i> Back to Analytics
+    </a>
+    <div class="d-flex align-items-center">
+      <% if (artist.profileImage) { %>
+        <img src="<%= artist.profileImage %>" alt="<%= artist.stageName %>" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+      <% } else { %>
+        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+          <i class="bi bi-person-fill text-white fs-4"></i>
+        </div>
+      <% } %>
+      <div>
+        <h3 class="fw-bold mb-0 text-white"><%= artist.stageName %></h3>
+        <p class="text-white-50 mb-0"><%= artist.genre %> • <%= artist.city %>, <%= artist.state %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-primary-subtle text-primary me-3">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= totalFollowers %></h3>
+            <p class="text-white-50 mb-0">Total Followers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-success-subtle text-success me-3">
+            <i class="bi bi-person-heart"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= userFollowers %></h3>
+            <p class="text-white-50 mb-0">Fan Followers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card glass-card-dark p-3">
+        <div class="d-flex align-items-center">
+          <div class="stat-icon bg-warning-subtle text-warning me-3">
+            <i class="bi bi-music-note-beamed"></i>
+          </div>
+          <div>
+            <h3 class="fw-bold mb-0 text-white"><%= artistFollowers %></h3>
+            <p class="text-white-50 mb-0">Artist Followers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Followers List -->
+    <div class="col-lg-8">
+      <div class="glass-card-dark p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="fw-bold text-white mb-0">Followers</h5>
+          <div class="d-flex gap-2">
+            <input type="text" id="followerSearch" class="form-control form-control-sm" placeholder="Search followers..." style="max-width: 200px;">
+            <select id="roleFilter" class="form-select form-select-sm" style="max-width: 120px;">
+              <option value="">All Roles</option>
+              <option value="user">Fans</option>
+              <option value="artist">Artists</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-dark table-hover">
+            <thead>
+              <tr>
+                <th>Follower</th>
+                <th>Role</th>
+                <th>Location</th>
+                <th>Followed Date</th>
+              </tr>
+            </thead>
+            <tbody id="followersTableBody">
+              <% if (followers && followers.length > 0) { %>
+                <% followers.forEach(follower => { %>
+                  <tr data-role="<%= follower.followerId.role %>">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <% if (follower.followerId.profileImage) { %>
+                          <img src="<%= follower.followerId.profileImage %>" alt="<%= follower.followerId.name %>" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                        <% } else { %>
+                          <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            <i class="bi bi-person-fill text-white"></i>
+                          </div>
+                        <% } %>
+                        <div>
+                          <h6 class="mb-0 text-white"><%= follower.followerId.name %></h6>
+                          <small class="text-white-50"><%= follower.followerId.email %></small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <% if (follower.followerId.role === 'user') { %>
+                        <span class="badge bg-success">Fan</span>
+                      <% } else if (follower.followerId.role === 'artist') { %>
+                        <span class="badge bg-warning">Artist</span>
+                      <% } else { %>
+                        <span class="badge bg-secondary"><%= follower.followerId.role %></span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (follower.followerId.city && follower.followerId.state) { %>
+                        <%= follower.followerId.city %>, <%= follower.followerId.state %>
+                      <% } else { %>
+                        <span class="text-muted">Not specified</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <small class="text-white-50">
+                        <%= new Date(follower.createdAt).toLocaleDateString() %>
+                        <br>
+                        <%= new Date(follower.createdAt).toLocaleTimeString() %>
+                      </small>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="text-center text-white-50 py-4">
+                    <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+                    No followers yet
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follower Locations -->
+    <div class="col-lg-4">
+      <div class="glass-card-dark p-4">
+        <h5 class="fw-bold text-white mb-4">Follower Locations</h5>
+        <% if (followerLocations && followerLocations.length > 0) { %>
+          <div class="mb-3">
+            <canvas id="locationChart" width="200" height="200"></canvas>
+          </div>
+          <div class="location-list">
+            <% followerLocations.forEach((location, index) => { %>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center">
+                  <div class="location-color me-2" style="width: 12px; height: 12px; background-color: '<%= getChartColor(index) %>'; border-radius: 2px;"></div>
+                  <span class="text-white-50"><%= location._id || 'Unknown' %></span>
+                </div>
+                <span class="badge bg-dark"><%= location.count %></span>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="text-center text-white-50 py-4">
+            <i class="bi bi-geo-alt fs-1 d-block mb-2"></i>
+            <p>No location data available</p>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Search and filter functionality
+document.getElementById('followerSearch').addEventListener('input', function() {
+  const searchTerm = this.value.toLowerCase();
+  const rows = document.querySelectorAll('#followersTableBody tr');
+  
+  rows.forEach(row => {
+    const name = row.querySelector('h6').textContent.toLowerCase();
+    const email = row.querySelector('small').textContent.toLowerCase();
+    
+    if (name.includes(searchTerm) || email.includes(searchTerm)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+
+document.getElementById('roleFilter').addEventListener('change', function() {
+  const selectedRole = this.value;
+  const rows = document.querySelectorAll('#followersTableBody tr');
+  
+  rows.forEach(row => {
+    if (selectedRole === '' || row.dataset.role === selectedRole) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+
+// Chart functionality (if Chart.js is available)
+const chartDataElement = document.getElementById('chart-data');
+if (chartDataElement && typeof Chart !== 'undefined') {
+  const ctx = document.getElementById('locationChart').getContext('2d');
+  const chartLabels = JSON.parse(chartDataElement.dataset.labels);
+  const chartData = JSON.parse(chartDataElement.dataset.data);
+  const chartBackgroundColors = JSON.parse(chartDataElement.dataset.backgroundColors);
+
+  const locationData = {
+    labels: chartLabels,
+    datasets: [{
+      data: chartData,
+      backgroundColor: chartBackgroundColors
+    }]
+  };
+  
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: locationData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+</script>
+
+<style>
+.location-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.location-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.location-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.location-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.table-dark {
+  --bs-table-bg: transparent;
+  --bs-table-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table-dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+</style>

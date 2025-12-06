@@ -442,11 +442,12 @@ const adminTeamUpdatesRoutes = require('./routes/adminTeamUpdates');
 const venueRequestRoutes = require('./routes/venueRequests');
 const adminVenueRequestRoutes = require('./routes/adminVenueRequests');
 const adminVenuesRoutes = require('./routes/adminVenues');
+const adminVenueEditRequestRoutes = require('./routes/adminVenueEditRequests');
 const adminConcertEditRequestRoutes = require('./routes/adminConcertEditRequests');
+const followRoutes = require('./routes/follows');
 const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
-const adminVenueEditRequestRoutes = require('./routes/adminVenueEditRequests');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -542,6 +543,9 @@ app.use('/admin/venue-edit-requests', adminVenueEditRequestRoutes);
 
 // Mount admin concert edit requests routes
 app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
+
+// Mount follow routes
+app.use('/follows', followRoutes);
 
 
 

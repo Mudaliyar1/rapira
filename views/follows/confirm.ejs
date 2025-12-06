@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= action === 'follow' ? 'Follow' : 'Unfollow' %> Confirmation</title>
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Backdrop overlay */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Modal container */
+        .confirmation-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            width: 85%;
+            max-width: 340px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #8a2be2 0%, #764ba2 100%);
+            padding: 1.2rem 1.2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+            font-size: 1.3rem;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-icon {
+            position: relative;
+            z-index: 2;
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .modal-body {
+            padding: 1.2rem 1.2rem;
+        }
+
+        .artist-card {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .artist-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #8a2be2;
+            margin: 0 auto 0.6rem;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
+            display: block;
+        }
+
+        .artist-image.placeholder {
+            background: linear-gradient(135deg, #8a2be2, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .artist-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 0.2rem 0;
+        }
+
+        .artist-genre {
+            font-size: 0.75rem;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .artist-genre i {
+            color: #8a2be2;
+        }
+
+        .message-box {
+            background: #f9fafb;
+            border-left: 4px solid #8a2be2;
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .message-box p {
+            font-size: 0.8rem;
+            color: #1f2937;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .message-highlight {
+            color: #8a2be2;
+            font-weight: 700;
+        }
+
+        .modal-footer {
+            padding: 0 1.2rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8a2be2 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 1.5px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+            transform: translateY(-2px);
+            color: #1f2937;
+            text-decoration: none;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0px);
+        }
+
+        .spinner-border-sm {
+            display: inline-block;
+            width: 0.9rem;
+            height: 0.9rem;
+            vertical-align: text-bottom;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border 0.6s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .confirmation-modal {
+                width: 95%;
+                max-width: calc(100% - 20px);
+            }
+
+            .modal-body {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .modal-footer {
+                padding: 0 1.2rem 1.5rem;
+            }
+
+            .modal-header {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .artist-image {
+                width: 75px;
+                height: 75px;
+            }
+
+            .artist-name {
+                font-size: 1.1rem;
+            }
+
+            .btn {
+                padding: 0.85rem 1rem;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Backdrop overlay -->
+    <div class="modal-backdrop"></div>
+
+    <!-- Modal -->
+    <div class="confirmation-modal">
+        <!-- Header -->
+        <div class="modal-header">
+            <button type="button" class="modal-close" onclick="goBack()" title="Close">
+                <i class="bi bi-x"></i>
+            </button>
+            <i class="modal-icon bi bi-<%= action === 'follow' ? 'person-plus' : 'person-dash' %>"></i>
+            <h3><%= action === 'follow' ? 'Follow Artist' : 'Unfollow Artist' %></h3>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+            <!-- Artist Card -->
+            <div class="artist-card">
+                <% if (artist.profileImage) { %>
+                    <img src="<%= artist.profileImage %>" alt="<%= artist.stageName %>" class="artist-image">
+                <% } else { %>
+                    <div class="artist-image placeholder">
+                        <i class="bi bi-music-note"></i>
+                    </div>
+                <% } %>
+                <h4 class="artist-name"><%= artist.stageName %></h4>
+                <% if (artist.genre) { %>
+                    <div class="artist-genre">
+                        <i class="bi bi-vinyl2"></i>
+                        <span><%= artist.genre %></span>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Message -->
+            <div class="message-box">
+                <% if (action === 'follow') { %>
+                    <p>Are you sure you want to follow <span class="message-highlight"><%= artist.stageName %></span>?</p>
+                <% } else { %>
+                    <p>Are you sure you want to unfollow <span class="message-highlight"><%= artist.stageName %></span>?</p>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+            <form id="confirmationForm" action="/follows/confirm/<%= action %>/<%= artist.user._id %>" method="POST" style="margin: 0; width: 100%;">
+                <button type="submit" class="btn btn-primary" id="confirmBtn">
+                    <i class="bi bi-<%= action === 'follow' ? 'person-plus' : 'person-dash' %>"></i>
+                    <span><%= action === 'follow' ? 'Yes, Follow' : 'Yes, Unfollow' %></span>
+                </button>
+            </form>
+            <button type="button" class="btn btn-secondary" onclick="goBack()">
+                <i class="bi bi-x-circle"></i>
+                <span>Cancel</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            const modal = document.querySelector('.confirmation-modal');
+            const backdrop = document.querySelector('.modal-backdrop');
+            
+            if (modal) modal.style.animation = 'slideDown 0.3s ease-out forwards';
+            if (backdrop) backdrop.style.animation = 'fadeOut 0.3s ease-out forwards';
+            
+            setTimeout(() => {
+                if (document.referrer && document.referrer.includes('/artists/')) {
+                    window.location.href = document.referrer;
+                } else {
+                    window.location.href = '/artists/<%= artist.user._id %>';
+                }
+            }, 250);
+        }
+
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                to {
+                    opacity: 0;
+                    transform: translate(-50%, -45%);
+                }
+            }
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Handle form submission with loading state
+        document.getElementById('confirmationForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border-sm"></span><span>Processing...</span>';
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                goBack();
+            } else if (event.key === 'Enter' && document.activeElement !== document.getElementById('confirmBtn')) {
+                document.getElementById('confirmBtn').click();
+            }
+        });
+
+        // Close on backdrop click
+        document.querySelector('.modal-backdrop').addEventListener('click', goBack);
+
+        // Auto-focus button
+        setTimeout(() => {
+            document.getElementById('confirmBtn').focus();
+        }, 100);
+    </script>
+</body>
+</html>

@@ -173,6 +173,28 @@ const createLearningModuleNotification = async (learningRequest) => {
 };
 
 /**
+ * Create a notification for a new follower
+ * @param {Object} followData - The follow data containing follower and following information
+ * @returns {Promise<Object>} - The created notification
+ */
+const createFollowNotification = async (followData) => {
+  try {
+    const { followerId, followingId, followerName, followerRole } = followData;
+    
+    const module = 'Follow';
+    const requestId = followerId; // Use follower ID as request ID
+    const modelRef = 'Follow';
+    const description = `${followerName} (${followerRole}) started following you`;
+    const link = `/artists/${followingId}`;
+
+    return await createNotification(module, requestId, modelRef, description, link);
+  } catch (error) {
+    console.error('Error creating follow notification:', error);
+    return null;
+  }
+};
+
+/**
  * Update notification status based on the status of the related request
  * @param {string} modelRef - The model reference (e.g., 'Concert', 'TeamBookingRequest')
  * @param {string} requestId - The ID of the request
@@ -226,5 +248,6 @@ module.exports = {
   createConcertNotification,
   createDailyConcertNotification,
   createLearningModuleNotification,
+  createFollowNotification,
   updateNotificationStatus
 };

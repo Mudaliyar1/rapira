@@ -70,4 +70,89 @@ const ArtistSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Virtual for total followers count
+ArtistSchema.virtual('totalFollowers').get(function() {
+  return this._totalFollowers || 0;
+});
+
+// Virtual for user followers count
+ArtistSchema.virtual('userFollowers').get(function() {
+  return this._userFollowers || 0;
+});
+
+// Virtual for artist followers count
+ArtistSchema.virtual('artistFollowers').get(function() {
+  return this._artistFollowers || 0;
+});
+
+// Method to populate follower counts
+ArtistSchema.methods.populateFollowerCounts = async function() {
+  const Follow = require('./Follow');
+  
+  const [totalFollowers, userFollowers, artistFollowers] = await Promise.all([
+    Follow.countDocuments({ followingId: this.user }),
+    Follow.countDocuments({ followingId: this.user, roleOfFollower: 'user' }),
+    Follow.countDocuments({ followingId: this.user, roleOfFollower: 'artist' })
+  ]);
+  
+  this._totalFollowers = totalFollowers;
+  this._userFollowers = userFollowers;
+  this._artistFollowers = artistFollowers;
+  
+  return {
+    totalFollowers,
+    userFollowers,
+    artistFollowers
+  };
+};
+
+// Static method to get multiple artists with follower counts
+ArtistSchema.statics.withFollowerCounts = async function(filter = {}) {
+  const artists = await this.find(filter).populate('user', 'name email profileImage');
+  
+  const Follow = require('./Follow');
+  
+  // Get all artist user IDs
+  const artistUserIds = artists.map(artist => artist.user._id);
+  
+  // Get follower counts for all artists in one query
+  const followerCounts = await Follow.aggregate([
+    { $match: { followingId: { $in: artistUserIds } } },
+    {
+      $group: {
+        _id: '$followingId',
+        totalFollowers: { $sum: 1 },
+        userFollowers: {
+          $sum: { $cond: [{ $eq: ['$roleOfFollower', 'user'] }, 1, 0] }
+        },
+        artistFollowers: {
+          $sum: { $cond: [{ $eq: ['$roleOfFollower', 'artist'] }, 1, 0] }
+        }
+      }
+    }
+  ]);
+  
+  // Create a map of follower counts by user ID
+  const followerCountMap = {};
+  followerCounts.forEach(count => {
+    followerCountMap[count._id.toString()] = {
+      totalFollowers: count.totalFollowers,
+      userFollowers: count.userFollowers,
+      artistFollowers: count.artistFollowers
+    };
+  });
+  
+  // Add follower counts to each artist
+  artists.forEach(artist => {
+    const userIdStr = artist.user._id.toString();
+    const counts = followerCountMap[userIdStr] || { totalFollowers: 0, userFollowers: 0, artistFollowers: 0 };
+    
+    artist._totalFollowers = counts.totalFollowers;
+    artist._userFollowers = counts.userFollowers;
+    artist._artistFollowers = counts.artistFollowers;
+  });
+  
+  return artists;
+};
+
 module.exports = mongoose.model('Artist', ArtistSchema);
