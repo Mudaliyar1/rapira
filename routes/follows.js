@@ -3,7 +3,7 @@ const router = express.Router();
 const Follow = require('../models/Follow');
 const User = require('../models/User');
 const Artist = require('../models/Artist');
-const { isLoggedIn } = require('../middleware/auth');
+const { isLoggedIn, isArtist } = require('../middleware/auth');
 const { sendNotification, createFollowNotification } = require('../utils/notificationService');
 const { sendFollowNotificationEmail } = require('../utils/brevoEmailService');
 
@@ -14,7 +14,7 @@ const getUserRole = async (userId) => {
 };
 
 // Helper function to check if user is an artist
-const isArtist = async (userId) => {
+const checkIsArtist = async (userId) => {
   const artist = await Artist.findOne({ user: userId });
   return !!artist;
 };
@@ -193,7 +193,7 @@ router.post('/follow/:artistId', isLoggedIn, async (req, res) => {
     // Role-based validation
     if (followerRole === 'user') {
       // Users can only follow artists
-      const isFollowingArtist = await isArtist(artistId);
+      const isFollowingArtist = await checkIsArtist(artistId);
       if (!isFollowingArtist) {
         return res.status(403).json({ 
           success: false, 
@@ -202,7 +202,7 @@ router.post('/follow/:artistId', isLoggedIn, async (req, res) => {
       }
     } else if (followerRole === 'artist') {
       // Artists can only follow other artists
-      const isFollowingArtist = await isArtist(artistId);
+      const isFollowingArtist = await checkIsArtist(artistId);
       if (!isFollowingArtist) {
         return res.status(403).json({ 
           success: false, 
@@ -312,6 +312,57 @@ router.delete('/unfollow/:artistId', isLoggedIn, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Error unfollowing artist' 
+    });
+  }
+});
+
+// Artist removes a follower from their account
+router.delete('/artist/remove-follower/:followerId', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const { followerId } = req.params;
+    const artistUserId = req.session.user.id;
+
+    // Validate followerId is a valid ObjectId
+    if (!followerId || !followerId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid follower ID format' 
+      });
+    }
+
+    // Verify the current user is an artist
+    const artist = await Artist.findOne({ user: artistUserId });
+    if (!artist) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only artists can remove followers' 
+      });
+    }
+
+    // Find and delete the follow relationship where this user is being followed
+    const follow = await Follow.findOne({
+      followerId: followerId,
+      followingId: artistUserId
+    });
+
+    if (!follow) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Follower not found' 
+      });
+    }
+
+    await Follow.findByIdAndDelete(follow._id);
+
+    res.json({ 
+      success: true, 
+      message: 'Follower removed successfully' 
+    });
+  } catch (error) {
+    console.error('Remove follower error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error removing follower' 
     });
   }
 });

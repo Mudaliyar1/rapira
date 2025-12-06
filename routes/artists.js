@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Concert = require('../models/Concert');
+const Follow = require('../models/Follow');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -195,6 +196,18 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     const content = await Content.find({ artist: artist._id })
       .sort({ createdAt: -1 });
 
+    // Get artist's followers
+    const followers = await Follow.find({ followingId: req.session.user.id })
+      .populate('followerId', 'name email profileImage role')
+      .sort({ createdAt: -1 });
+
+    // Get follower counts
+    const followerCounts = {
+      totalFollowers: await Follow.countDocuments({ followingId: req.session.user.id }),
+      userFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'user' }),
+      artistFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'artist' })
+    };
+
     // Check if the request is from the profile page (AJAX)
     console.log('Artist dashboard request received from user:', req.session.user.id);
     console.log('Headers:', req.headers);
@@ -246,6 +259,8 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
       artist,
       concerts,
       content,
+      followers,
+      followerCounts,
       upcomingConcerts: concerts.filter(c => new Date(c.date) >= new Date() && c.status === 'approved'),
       pendingConcerts: concerts.filter(c => c.status === 'pending'),
       pastConcerts: concerts.filter(c => new Date(c.date) < new Date() && c.status === 'approved')
@@ -1070,6 +1085,63 @@ router.post('/update-profile', isLoggedIn, isArtist, upload.single('bannerImage'
     console.error('Update artist profile error:', error);
     req.flash('error', 'Failed to update profile');
     res.redirect('/artists/edit-profile');
+  }
+});
+
+// Artist followers management page
+router.get('/followers', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id })
+      .populate('user');
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    // Get artist's followers with pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const type = req.query.type; // 'all', 'user', 'artist'
+
+    let query = { followingId: req.session.user.id };
+    if (type === 'user') query.roleOfFollower = 'user';
+    else if (type === 'artist') query.roleOfFollower = 'artist';
+
+    const followers = await Follow.find(query)
+      .populate('followerId', 'name email profileImage role')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const totalFollowers = await Follow.countDocuments(query);
+
+    // Get follower counts
+    const followerCounts = {
+      totalFollowers: await Follow.countDocuments({ followingId: req.session.user.id }),
+      userFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'user' }),
+      artistFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'artist' })
+    };
+
+    res.render('artists/followers', {
+      layout: false,
+      currentPath: '/artists/followers',
+      title: 'Manage Followers',
+      artist,
+      followers,
+      followerCounts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalFollowers / limit),
+        totalItems: totalFollowers,
+        hasNext: page < Math.ceil(totalFollowers / limit),
+        hasPrev: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Artist followers error:', error);
+    req.flash('error', 'Failed to load followers');
+    res.redirect('/artists/dashboard');
   }
 });
 

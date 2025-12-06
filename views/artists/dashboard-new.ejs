@@ -46,6 +46,20 @@
         </div>
       </div>
     </div>
+  <div class="col-md-4">
+    <div class="card bg-dark p-3">
+      <div class="d-flex align-items-center">
+        <div class="me-3 text-center">
+          <div class="bg-success text-white p-3 rounded" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-people fs-3"></i>
+          </div>
+        </div>
+        <div>
+          <h5 style="color: white !important; font-weight: 700;" class="mb-1">Followers</h5>
+          <p class="mb-0" style="color: #ccc;"><strong><%= followerCounts.totalFollowers %></strong> Total</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -75,6 +89,12 @@
         </a>
       </div>
       <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
+        <a href="/artists/followers" class="btn btn-warning w-100 py-3 text-white">
+          <i class="bi bi-people fs-4 d-block mb-2"></i>
+          Manage Followers
+        </a>
+      </div>
+      <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
         <a href="/artists/manage-tickets" class="btn btn-danger w-100 py-3 text-white">
           <i class="bi bi-ticket-perforated fs-4 d-block mb-2"></i>
           Manage Tickets
@@ -87,8 +107,8 @@
         </a>
       </div>
       <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
-        <a href="/messages/find" class="btn btn-warning w-100 py-3 text-white">
-          <i class="bi bi-people fs-4 d-block mb-2"></i>
+        <a href="/messages/find" class="btn btn-info w-100 py-3 text-white">
+          <i class="bi bi-chat-dots fs-4 d-block mb-2"></i>
           Connect with Others
         </a>
       </div>
@@ -319,9 +339,7 @@
   </div>
 </div>
 
-<script>
-  // Additional scripts for the dashboard if needed
-</script>
+
 
 <style>
   /* Custom styles for the artist dashboard */
