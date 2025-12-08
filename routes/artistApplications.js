@@ -11,21 +11,7 @@ const { sendArtistApplicationEmail, sendArtistApprovalEmail, sendArtistRejection
 const { createArtistApplicationNotification } = require('../utils/notificationService');
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads/proofs');
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'proof-' + uniqueSuffix + ext);
-  }
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -230,6 +216,17 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
     }
 
     // Create new application
+    // Build storage path and ensure file is written to disk for local access
+    const uploadPath = path.join(__dirname, '../public/uploads/proofs');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(req.file.originalname) || '.pdf';
+    const fileName = 'proof-' + uniqueSuffix + ext;
+    const diskPath = path.join(uploadPath, fileName);
+    fs.writeFileSync(diskPath, req.file.buffer);
+
     const newApplication = new ArtistApplication({
       user: req.session.user.id,
       artistLevel,
@@ -238,7 +235,9 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
       city,
       age,
       phoneNumber,
-      proofPhoto: '/uploads/proofs/' + req.file.filename,
+      proofPhoto: '/uploads/proofs/' + fileName,
+      proofPhotoData: req.file.buffer,
+      proofPhotoContentType: req.file.mimetype,
       status: 'pending'
     });
 
@@ -489,6 +488,33 @@ router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Error in admin application details:', error);
     req.flash('error', 'An error occurred while loading application details');
     res.redirect('/artist-applications/admin');
+  }
+});
+
+// Serve proof photo/PDF directly (admin only)
+router.get('/proof/:id', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const application = await ArtistApplication.findById(req.params.id);
+    if (!application) {
+      return res.status(404).send('Proof not found');
+    }
+
+    if (application.proofPhotoData && application.proofPhotoContentType) {
+      res.setHeader('Content-Type', application.proofPhotoContentType);
+      return res.send(application.proofPhotoData);
+    }
+
+    if (application.proofPhoto) {
+      const proofPath = path.join(__dirname, '../public', application.proofPhoto);
+      if (fs.existsSync(proofPath)) {
+        return res.sendFile(proofPath);
+      }
+    }
+
+    return res.status(404).send('Proof not found');
+  } catch (error) {
+    console.error('Error serving proof photo:', error);
+    res.status(500).send('Error serving proof photo');
   }
 });
 

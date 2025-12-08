@@ -48,6 +48,12 @@ const ArtistApplicationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  proofPhotoData: {
+    type: Buffer
+  },
+  proofPhotoContentType: {
+    type: String
+  },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

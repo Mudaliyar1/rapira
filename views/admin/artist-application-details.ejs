@@ -92,13 +92,12 @@
         <h6 class="text-white mb-3">Proof Photo</h6>
         <div class="mb-4">
           <% if (application.proofPhoto && application.proofPhoto.endsWith('.pdf')) { %>
-            <div class="d-grid">
-              <a href="<%= application.proofPhoto %>" class="btn btn-outline-light" target="_blank">
-                <i class="bi bi-file-earmark-pdf me-2"></i> View PDF Document
-              </a>
+            <div class="ratio ratio-4x3 border border-secondary rounded overflow-hidden">
+              <iframe src="/artist-applications/proof/<%= application._id %>" title="Proof PDF" class="w-100 h-100" style="border:0;"></iframe>
             </div>
+            <div class="mt-2 small text-muted">PDF preview</div>
           <% } else { %>
-            <img src="<%= application.proofPhoto %>" alt="Proof Photo" class="img-fluid rounded">
+            <img src="/artist-applications/proof/<%= application._id %>" alt="Proof Photo" class="img-fluid rounded border border-secondary">
           <% } %>
         </div>
 
