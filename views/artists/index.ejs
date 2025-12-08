@@ -110,7 +110,7 @@
           <div class="col-md-6 col-lg-3">
             <div class="card artist-card h-100">
               <div class="position-relative overflow-hidden">
-                <img src="<%= artist.user.profileImage %>" class="card-img-top artist-thumbnail" alt="<%= artist.user.name %>">
+                <img src="<%= (artist.user.profileImage && artist.user.profileImage !== '/images/default-profile.svg') ? artist.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(artist.user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>" class="card-img-top artist-thumbnail" alt="<%= artist.user.name %>">
                 <% if (artist.verified) { %>
                   <div class="position-absolute top-0 end-0 m-3">
                     <span class="badge bg-success px-3 py-2">

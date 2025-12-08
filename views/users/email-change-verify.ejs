@@ -1,0 +1,39 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header bg-white py-3">
+          <h3 class="card-title fw-bold mb-0">Verify Email Change</h3>
+          <p class="mb-0 text-muted">Enter the OTP sent to your current email, then provide the new email.</p>
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-3">
+            <label class="form-label">Current Email</label>
+            <input type="email" class="form-control" value="<%= user.email %>" readonly>
+          </div>
+
+          <!-- Resend OTP -->
+          <form action="/users/email-change/request-otp" method="POST" class="mb-4">
+            <button type="submit" class="btn btn-outline-primary w-100">Resend OTP to current email</button>
+          </form>
+
+          <!-- Confirm email change -->
+          <form action="/users/email-change/confirm" method="POST" class="row g-3">
+            <div class="col-12">
+              <label for="emailOtp" class="form-label">OTP</label>
+              <input type="text" class="form-control" id="emailOtp" name="otp" placeholder="Enter 6-digit OTP" required>
+            </div>
+            <div class="col-12">
+              <label for="newEmail" class="form-label">New Email</label>
+              <input type="email" class="form-control" id="newEmail" name="newEmail" placeholder="Enter new email" required>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+              <a href="/users/edit-profile" class="btn btn-outline-secondary">Back</a>
+              <button type="submit" class="btn btn-success">Confirm Email Change</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

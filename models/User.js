@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { getAvatarURL } = require('../utils/avatarGenerator');
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -22,7 +23,7 @@ const UserSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: '/images/default-profile.svg'
+    default: null
   },
   bio: {
     type: String,
@@ -52,12 +53,25 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date
   },
+  // Pending email change flow
+  pendingEmail: {
+    type: String,
+    default: null
+  },
+  emailChangeOTP: {
+    type: String,
+    default: null
+  },
+  emailChangeExpires: {
+    type: Date,
+    default: null
+  },
   walletBalance: {
     type: Number,
     default: 0,
     min: 0
   }
-}, { timestamps: true });
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 // Hash password before saving
 UserSchema.pre('save', async function(next) {
@@ -77,5 +91,21 @@ UserSchema.pre('save', async function(next) {
 UserSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
+// Method to get profile image (default to avatar if not uploaded)
+UserSchema.methods.getDisplayProfileImage = function() {
+  if (this.profileImage) {
+    return this.profileImage;
+  }
+  return getAvatarURL(this.name);
+};
+
+// Virtual method to get profile image (default to avatar if not uploaded)
+UserSchema.virtual('displayProfileImage').get(function() {
+  if (this.profileImage) {
+    return this.profileImage;
+  }
+  return getAvatarURL(this.name);
+});
 
 module.exports = mongoose.model('User', UserSchema);

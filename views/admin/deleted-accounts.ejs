@@ -1,0 +1,96 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="fw-bold mb-0">Deleted Accounts</h1>
+        <p class="text-muted mb-0">Total: <%= pagination.totalDeleted %></p>
+      </div>
+    </div>
+  </div>
+
+  <% if (deletedAccounts.length === 0) { %>
+    <div class="card bg-dark border-secondary">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-archive fs-1 text-muted mb-3 d-block"></i>
+        <h5 class="text-muted">No deleted accounts yet</h5>
+        <p class="text-muted small">Deleted user accounts will appear here</p>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="card bg-dark border-secondary">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Deleted At</th>
+              <th>Reason</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% deletedAccounts.forEach(account => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= (account.profileImage && account.profileImage !== '/images/default-profile.svg') ? account.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(account.name.charAt(0).toUpperCase()) + '&background=FF6B6B&color=fff&bold=true&size=40') %>" 
+                         alt="<%= account.name %>" 
+                         class="rounded-circle me-2" 
+                         width="40" height="40" 
+                         style="object-fit: cover;">
+                    <div>
+                      <strong><%= account.name %></strong>
+                      <% if (account.role === 'artist') { %>
+                        <br><small class="text-warning"><i class="bi bi-music-note-beamed"></i> Artist</small>
+                      <% } %>
+                    </div>
+                  </div>
+                </td>
+                <td><%= account.email %></td>
+                <td>
+                  <span class="badge <%= account.role === 'admin' ? 'bg-danger' : account.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                    <%= account.role %>
+                  </span>
+                </td>
+                <td><small><%= new Date(account.deletedAt).toLocaleDateString() %></small></td>
+                <td><small class="text-muted"><%= account.deletionReason %></small></td>
+                <td>
+                  <a href="/admin/deleted-accounts/<%= account._id %>" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-eye"></i> View
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (pagination.totalPages > 1) { %>
+      <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+          <% if (pagination.hasPrevPage) { %>
+            <li class="page-item">
+              <a class="page-link" href="/admin/deleted-accounts?page=<%= pagination.page - 1 %>">Previous</a>
+            </li>
+          <% } %>
+
+          <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+              <a class="page-link" href="/admin/deleted-accounts?page=<%= i %>"><%= i %></a>
+            </li>
+          <% } %>
+
+          <% if (pagination.hasNextPage) { %>
+            <li class="page-item">
+              <a class="page-link" href="/admin/deleted-accounts?page=<%= pagination.page + 1 %>">Next</a>
+            </li>
+          <% } %>
+        </ul>
+      </nav>
+    <% } %>
+  <% } %>
+</div>

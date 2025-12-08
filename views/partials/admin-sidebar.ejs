@@ -9,7 +9,7 @@
   <div class="p-2">
     <div class="admin-profile d-flex align-items-center mb-3">
       <div class="admin-avatar me-2">
-        <img src="<%= currentUser.profileImage || '/images/default-profile.svg' %>"
+        <img src="<%= (currentUser.profileImage && currentUser.profileImage !== '/images/default-profile.svg') ? currentUser.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
              alt="Admin"
              class="rounded-circle"
              width="36" height="36"
@@ -74,8 +74,13 @@
         </a>
       </li>
       <li class="nav-item mb-1">
-        <a href="/roles/user-roles" class="nav-link rounded <%= path === '/roles/user-roles' ? 'active bg-primary' : '' %>">
+        <a href="/admin/user-roles" class="nav-link rounded <%= path === '/roles/user-roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people-fill me-1"></i> User Roles
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/deleted-accounts" class="nav-link rounded <%= path === '/admin/deleted-accounts' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-archive me-1"></i> Deleted Accounts
         </a>
       </li>
 

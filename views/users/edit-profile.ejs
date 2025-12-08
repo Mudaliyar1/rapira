@@ -36,6 +36,11 @@
                       <img src="<%= user.profileImage %>" alt="Current Profile Image" class="img-thumbnail" width="100">
                       <small class="d-block text-muted">Current profile image</small>
                     </div>
+                  <% } else { %>
+                    <div class="mt-2">
+                      <img src="<%= user.displayProfileImage %>" alt="Default avatar" class="img-thumbnail rounded-circle" width="100" height="100">
+                      <small class="d-block text-muted">Current default avatar</small>
+                    </div>
                   <% } %>
                 </div>
                 
@@ -43,19 +48,19 @@
                   <label class="form-label">Social Media Links</label>
                   <div class="input-group mb-2">
                     <span class="input-group-text"><i class="bi bi-instagram"></i></span>
-                    <input type="text" class="form-control" id="instagram" name="instagram" placeholder="Instagram URL" value="<%= user.socialLinks.instagram %>">
+                    <input type="text" class="form-control" id="instagram" name="instagram" placeholder="Instagram URL" value="<%= user.socialLinks ? user.socialLinks.instagram : '' %>">
                   </div>
                   <div class="input-group mb-2">
                     <span class="input-group-text"><i class="bi bi-twitter-x"></i></span>
-                    <input type="text" class="form-control" id="twitter" name="twitter" placeholder="Twitter URL" value="<%= user.socialLinks.twitter %>">
+                    <input type="text" class="form-control" id="twitter" name="twitter" placeholder="Twitter URL" value="<%= user.socialLinks ? user.socialLinks.twitter : '' %>">
                   </div>
                   <div class="input-group mb-2">
                     <span class="input-group-text"><i class="bi bi-youtube"></i></span>
-                    <input type="text" class="form-control" id="youtube" name="youtube" placeholder="YouTube URL" value="<%= user.socialLinks.youtube %>">
+                    <input type="text" class="form-control" id="youtube" name="youtube" placeholder="YouTube URL" value="<%= user.socialLinks ? user.socialLinks.youtube : '' %>">
                   </div>
                   <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-spotify"></i></span>
-                    <input type="text" class="form-control" id="spotify" name="spotify" placeholder="Spotify URL" value="<%= user.socialLinks.spotify %>">
+                    <input type="text" class="form-control" id="spotify" name="spotify" placeholder="Spotify URL" value="<%= user.socialLinks ? user.socialLinks.spotify : '' %>">
                   </div>
                 </div>
               </div>
@@ -105,6 +110,31 @@
               </div>
             </div>
           </form>
+
+          <!-- Email change section -->
+          <div class="mt-5">
+            <h4 class="fw-bold mb-3">Change Email</h4>
+            <p class="text-muted mb-3">Step 1: Send OTP to your current email. Step 2: Enter OTP and new email on the next page.</p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Current Email</label>
+                <input type="email" class="form-control" value="<%= user.email %>" readonly>
+              </div>
+            </div>
+
+            <!-- Request OTP form (no new email here) -->
+            <form action="/users/email-change/request-otp" method="POST" class="row g-3 mt-3">
+              <div class="col-md-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-outline-primary">Send OTP to current email</button>
+              </div>
+            </form>
+
+            <div class="mt-2 text-muted" style="font-size: 0.95rem;">
+              After sending the OTP, proceed to the verification page to enter the code and your new email.
+              <a href="/users/email-change/verify">Go to verification page</a>.
+            </div>
+          </div>
         </div>
       </div>
     </div>

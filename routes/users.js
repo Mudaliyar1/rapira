@@ -8,6 +8,8 @@ const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
+const DeletedAccount = require('../models/DeletedAccount');
 
 // Import upload helper
 const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
@@ -219,6 +221,121 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
   }
 });
 
+// Request OTP to change email (sends to current email)
+router.post('/email-change/request-otp', isLoggedIn, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP (no new email yet)
+    user.pendingEmail = null;
+    user.emailChangeOTP = otp;
+    user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    await user.save();
+
+    // Send OTP to current email
+    await sendEmail({
+      to: user.email,
+      toName: user.name,
+      subject: 'Confirm your email change',
+      textContent: `Use this OTP to change your email: ${otp}. It expires in 15 minutes.`,
+      htmlContent: `<p>Hi ${user.name || 'there'},</p><p>Your OTP to change your email is <strong>${otp}</strong>.</p><p>This code expires in 15 minutes.</p>`
+    });
+
+    req.flash('success', 'OTP sent to your current email. Please check your inbox.');
+    res.redirect('/users/email-change/verify');
+  } catch (error) {
+    console.error('Email change OTP error:', error);
+    req.flash('error', 'Failed to send OTP. Please try again.');
+    res.redirect('/users/email-change/verify');
+  }
+});
+
+// Email change verification page
+router.get('/email-change/verify', isLoggedIn, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+    res.render('users/email-change-verify', { user });
+  } catch (error) {
+    console.error('Email change verify page error:', error);
+    req.flash('error', 'Failed to load email change page');
+    res.redirect('/users/edit-profile');
+  }
+});
+
+// Confirm email change with OTP
+router.post('/email-change/confirm', isLoggedIn, async (req, res) => {
+  try {
+    const { newEmail, otp } = req.body;
+
+    if (!newEmail || !otp) {
+      req.flash('error', 'Please enter both email and OTP');
+      return res.redirect('/users/email-change/verify');
+    }
+
+    const user = await User.findById(req.session.user.id);
+    const trimmedNewEmail = newEmail.trim().toLowerCase();
+
+    // Check OTP presence
+    if (!user.emailChangeOTP || !user.emailChangeExpires) {
+      req.flash('error', 'Please request an OTP first');
+      return res.redirect('/users/email-change/verify');
+    }
+
+    if (user.emailChangeOTP !== otp.trim()) {
+      req.flash('error', 'Invalid OTP');
+      return res.redirect('/users/email-change/verify');
+    }
+
+    if (user.emailChangeExpires < new Date()) {
+      req.flash('error', 'OTP has expired. Please request a new one.');
+      return res.redirect('/users/email-change/verify');
+    }
+
+    // Ensure email not taken
+    const emailExists = await User.findOne({ email: trimmedNewEmail, _id: { $ne: user._id } });
+    if (emailExists) {
+      req.flash('error', 'This email is already in use');
+      return res.redirect('/users/email-change/verify');
+    }
+
+    // Update email and clear OTP fields
+    const oldEmail = user.email;
+    user.email = trimmedNewEmail;
+    user.pendingEmail = null;
+    user.emailChangeOTP = null;
+    user.emailChangeExpires = null;
+    await user.save();
+
+    // Update session email if stored
+    if (req.session.user) {
+      req.session.user.email = user.email;
+    }
+
+    // Notify new email about the change
+    try {
+      await sendEmail({
+        to: trimmedNewEmail,
+        toName: user.name,
+        subject: 'Your email was updated on Rapira',
+        textContent: `Hi ${user.name || ''}, your account email was changed from ${oldEmail} to ${trimmedNewEmail}. If this wasn’t you, please contact support immediately.`,
+        htmlContent: `<p>Hi ${user.name || 'there'},</p><p>Your account email has been updated.</p><p><strong>Previous email:</strong> ${oldEmail}<br><strong>New email:</strong> ${trimmedNewEmail}</p><p>If you did not make this change, please contact support immediately.</p>`
+      });
+    } catch (err) {
+      console.error('Post-change email notification failed:', err);
+    }
+
+    req.flash('success', 'Email updated successfully');
+    res.redirect('/users/profile');
+  } catch (error) {
+    console.error('Email change confirm error:', error);
+    req.flash('error', 'Failed to update email. Please try again.');
+    res.redirect('/users/email-change/verify');
+  }
+});
+
 // Change password page
 router.get('/change-password', isLoggedIn, (req, res) => {
   res.render('users/change-password');
@@ -292,12 +409,23 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
       return res.redirect('/users/profile');
     }
 
+    let artistData = null;
+
     // Check if user is an artist
     if (user.role === 'artist') {
       // Find artist profile
       const artist = await Artist.findOne({ user: user._id });
 
       if (artist) {
+        // Store artist data before deletion
+        artistData = {
+          stageName: artist.stageName,
+          genre: artist.genre,
+          yearsActive: artist.yearsActive,
+          about: artist.about,
+          followers: artist.followers || 0
+        };
+
         // Delete artist's concerts
         const Concert = require('../models/Concert');
         await Concert.deleteMany({ artist: artist._id });
@@ -314,16 +442,49 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
       }
     }
 
-    // Delete user's tickets
+    // Get ticket count before deletion
     const Ticket = require('../models/Ticket');
+    const ticketCount = await Ticket.countDocuments({ user: user._id });
+
+    // Get concert count if artist
+    const Concert = require('../models/Concert');
+    const concertCount = await Concert.countDocuments({ artist: user._id });
+
+    // Delete user's tickets
     await Ticket.deleteMany({ user: user._id });
     console.log(`Deleted all tickets for user ${user._id}`);
 
+    // Create deleted account record
+    const deletedAccount = new DeletedAccount({
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      bio: user.bio,
+      city: user.city,
+      socialLinks: user.socialLinks,
+      walletBalance: user.walletBalance,
+      deletedBy: 'user',
+      deletionReason: 'User requested account deletion',
+      artistData: artistData,
+      totalTicketsPurchased: ticketCount,
+      totalConcerts: concertCount
+    });
+
+    await deletedAccount.save();
+    console.log(`Created deleted account record: ${deletedAccount._id}`);
+
     // Delete profile image if it's not the default
-    if (user.profileImage && user.profileImage !== '/images/default-profile.png') {
+    if (user.profileImage && user.profileImage !== '/images/default-profile.png' && user.profileImage !== '/images/default-profile.svg') {
       const oldImagePath = path.join(__dirname, '../public', user.profileImage);
       if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+        try {
+          fs.unlinkSync(oldImagePath);
+          console.log(`Deleted profile image: ${oldImagePath}`);
+        } catch (imgErr) {
+          console.error(`Could not delete image ${oldImagePath}:`, imgErr);
+        }
       }
     }
 

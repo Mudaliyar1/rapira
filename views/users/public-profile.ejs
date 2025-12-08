@@ -3,7 +3,7 @@
     <div class="col-lg-4 mb-4 mb-lg-0">
       <div class="glass-card-dark">
         <div class="card-body text-center p-4">
-          <img src="<%= user.profileImage || '/images/default-profile.svg' %>"
+          <img src="<%= (user.profileImage && user.profileImage !== '/images/default-profile.svg') ? user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
                alt="<%= user.name %>"
                class="rounded-circle img-thumbnail mb-3"
                width="150" height="150"

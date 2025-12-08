@@ -3,7 +3,8 @@ const router = express.Router();
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
-const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/brevoEmailService');
+const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
+const DeletedAccount = require('../models/DeletedAccount');
 const WebsiteSettings = require('../models/WebsiteSettings');
 
 // Simple session test for production debugging
@@ -251,7 +252,7 @@ router.get('/register', isNotLoggedIn, (req, res) => {
   res.render('auth/register');
 });
 
-// Register process
+// Register process - step 1: submit details and send OTP
 router.post('/register', isNotLoggedIn, async (req, res) => {
   try {
     const { name, email, password, confirmPassword, role } = req.body;
@@ -274,47 +275,123 @@ router.post('/register', isNotLoggedIn, async (req, res) => {
       return res.redirect('/auth/register');
     }
 
-    // Create user
-    const userRole = role === 'artist' ? 'artist' : 'user';
-    const newUser = new User({
+    // Generate OTP and store pending registration in session
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    req.session.registerData = {
       name,
       email,
       password,
-      role: userRole
+      role: role === 'artist' ? 'artist' : 'user'
+    };
+    req.session.registerOTP = otp;
+    req.session.registerOTPExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    // Send OTP email
+    await sendEmail({
+      to: email,
+      toName: name,
+      subject: 'Verify your email for Rapira',
+      textContent: `Use this OTP to complete your registration: ${otp}. It expires in 15 minutes.`,
+      htmlContent: `<p>Hi ${name || 'there'},</p><p>Your OTP to complete registration is <strong>${otp}</strong>.</p><p>This code expires in 15 minutes.</p>`
     });
 
+    req.flash('success', 'OTP sent to your email. Please verify to complete registration.');
+    res.redirect('/auth/register/verify');
+  } catch (error) {
+    console.error('Registration OTP error:', error);
+    req.flash('error', 'Could not send OTP. Please try again.');
+    res.redirect('/auth/register');
+  }
+});
+
+// Register verify page
+router.get('/register/verify', isNotLoggedIn, (req, res) => {
+  if (!req.session.registerData || !req.session.registerOTP) {
+    req.flash('error', 'Please start registration again');
+    return res.redirect('/auth/register');
+  }
+  res.render('auth/register-verify', { email: req.session.registerData.email });
+});
+
+// Register verify process
+router.post('/register/verify', isNotLoggedIn, async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!req.session.registerData || !req.session.registerOTP || !req.session.registerOTPExpires) {
+      req.flash('error', 'Please start registration again');
+      return res.redirect('/auth/register');
+    }
+
+    if (!otp) {
+      req.flash('error', 'Please enter the OTP');
+      return res.redirect('/auth/register/verify');
+    }
+
+    if (Date.now() > req.session.registerOTPExpires) {
+      req.flash('error', 'OTP has expired. Please register again.');
+      req.session.registerData = null;
+      req.session.registerOTP = null;
+      req.session.registerOTPExpires = null;
+      return res.redirect('/auth/register');
+    }
+
+    if (otp.trim() !== req.session.registerOTP) {
+      req.flash('error', 'Invalid OTP');
+      return res.redirect('/auth/register/verify');
+    }
+
+    // Create user using stored data
+    const { name, email, password, role } = req.session.registerData;
+
+    // Double-check email still not taken
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      req.flash('error', 'Email already registered');
+      req.session.registerData = null;
+      req.session.registerOTP = null;
+      req.session.registerOTPExpires = null;
+      return res.redirect('/auth/register');
+    }
+
+    const newUser = new User({ name, email, password, role });
     await newUser.save();
 
-    // If registering as artist, create artist profile
-    if (userRole === 'artist') {
+    // Check if there's a deleted account with same email and remove it
+    const deletedWithSameEmail = await DeletedAccount.findOneAndDelete({ email });
+    if (deletedWithSameEmail) {
+      console.log(`Removed deleted account record for email: ${email}`);
+    }
+
+    if (role === 'artist') {
       const newArtist = new Artist({
         user: newUser._id,
-        stageName: name, // Default to user name, can be updated later
-        genre: 'Hip Hop' // Default genre, can be updated later
+        stageName: name,
+        genre: 'Hip Hop'
       });
-
       await newArtist.save();
     }
+
+    // Clear session temp data
+    req.session.registerData = null;
+    req.session.registerOTP = null;
+    req.session.registerOTPExpires = null;
 
     // Send welcome email
     try {
       console.log('Sending welcome email to:', newUser.email);
       const emailResult = await sendWelcomeEmail(newUser);
-
-      if (emailResult.success) {
-        console.log('Welcome email sent successfully to:', newUser.email);
-      } else {
+      if (!emailResult.success) {
         console.error('Failed to send welcome email:', emailResult.error);
       }
     } catch (emailError) {
       console.error('Error sending welcome email:', emailError);
-      // Continue with registration even if email fails
     }
 
-    req.flash('success', 'Registration successful! You can now log in. A welcome email has been sent to your email address.');
+    req.flash('success', 'Registration successful! You can now log in.');
     res.redirect('/auth/login');
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration verify error:', error);
     req.flash('error', 'Registration failed');
     res.redirect('/auth/register');
   }

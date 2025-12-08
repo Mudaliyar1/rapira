@@ -1,0 +1,236 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <a href="/admin/deleted-accounts" class="btn btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Deleted Accounts
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Account Info -->
+    <div class="col-lg-8">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary py-3">
+          <h5 class="card-title fw-bold mb-0">Account Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6 text-center">
+              <img src="<%= (deletedAccount.profileImage && deletedAccount.profileImage !== '/images/default-profile.svg') ? deletedAccount.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(deletedAccount.name.charAt(0).toUpperCase()) + '&background=FF6B6B&color=fff&bold=true&size=200') %>" 
+                   alt="<%= deletedAccount.name %>" 
+                   class="rounded-circle img-thumbnail mb-3" 
+                   width="150" height="150" 
+                   style="object-fit: cover;">
+              <h4 class="fw-bold"><%= deletedAccount.name %></h4>
+              <p class="text-muted mb-0">
+                <i class="bi bi-envelope"></i> <%= deletedAccount.email %>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li class="mb-3">
+                  <strong>Role:</strong>
+                  <span class="badge <%= deletedAccount.role === 'admin' ? 'bg-danger' : deletedAccount.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                    <%= deletedAccount.role %>
+                  </span>
+                </li>
+                <li class="mb-3">
+                  <strong>Deleted At:</strong>
+                  <br><small class="text-muted"><%= new Date(deletedAccount.deletedAt).toLocaleString() %></small>
+                </li>
+                <li class="mb-3">
+                  <strong>Deletion Method:</strong>
+                  <br><small class="badge bg-info"><%= deletedAccount.deletedBy === 'user' ? 'User Requested' : 'Admin Action' %></small>
+                </li>
+                <li class="mb-3">
+                  <strong>Reason:</strong>
+                  <br><small class="text-muted"><%= deletedAccount.deletionReason %></small>
+                </li>
+                <li class="mb-3">
+                  <strong>Wallet Balance:</strong>
+                  <br><span>₹<%= deletedAccount.walletBalance || 0 %></span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- User Details -->
+          <hr class="border-secondary my-4">
+          <h6 class="fw-bold mb-3">Details</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-muted small">Bio</label>
+              <p class="mb-0"><%= deletedAccount.bio || 'N/A' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small">City</label>
+              <p class="mb-0"><%= deletedAccount.city || 'N/A' %></p>
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <% if (deletedAccount.socialLinks) { %>
+            <% if (deletedAccount.socialLinks.instagram || deletedAccount.socialLinks.twitter || deletedAccount.socialLinks.youtube || deletedAccount.socialLinks.spotify) { %>
+              <hr class="border-secondary my-4">
+              <h6 class="fw-bold mb-3">Social Media</h6>
+              <div class="row g-3">
+              <% if (deletedAccount.socialLinks.instagram) { %>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small"><i class="bi bi-instagram"></i> Instagram</label>
+                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.instagram %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.instagram %></a></p>
+                </div>
+              <% } %>
+              <% if (deletedAccount.socialLinks.twitter) { %>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small"><i class="bi bi-twitter-x"></i> Twitter</label>
+                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.twitter %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.twitter %></a></p>
+                </div>
+              <% } %>
+              <% if (deletedAccount.socialLinks.youtube) { %>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small"><i class="bi bi-youtube"></i> YouTube</label>
+                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.youtube %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.youtube %></a></p>
+                </div>
+              <% } %>
+              <% if (deletedAccount.socialLinks.spotify) { %>
+                <div class="col-md-6">
+                  <label class="form-label text-muted small"><i class="bi bi-spotify"></i> Spotify</label>
+                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.spotify %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.spotify %></a></p>
+                </div>
+              <% } %>
+              </div>
+            <% } %>
+          <% } %>
+
+          <!-- Artist Data -->
+          <% if (deletedAccount.role === 'artist' && deletedAccount.artistData) { %>
+            <hr class="border-secondary my-4">
+            <h6 class="fw-bold mb-3">Artist Information</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Stage Name</label>
+                <p class="mb-0"><%= deletedAccount.artistData.stageName || 'N/A' %></p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Genre</label>
+                <p class="mb-0"><%= deletedAccount.artistData.genre || 'N/A' %></p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Years Active</label>
+                <p class="mb-0"><%= deletedAccount.artistData.yearsActive || 'N/A' %></p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted small">Followers</label>
+                <p class="mb-0"><%= deletedAccount.artistData.followers || 0 %></p>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-muted small">About</label>
+                <p class="mb-0"><%= deletedAccount.artistData.about || 'N/A' %></p>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Stats -->
+          <hr class="border-secondary my-4">
+          <h6 class="fw-bold mb-3">Account Statistics</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="bg-dark p-3 rounded border border-secondary">
+                <small class="text-muted d-block">Tickets Purchased</small>
+                <h5 class="fw-bold mb-0"><%= deletedAccount.totalTicketsPurchased || 0 %></h5>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-dark p-3 rounded border border-secondary">
+                <small class="text-muted d-block">Concerts Created</small>
+                <h5 class="fw-bold mb-0"><%= deletedAccount.totalConcerts || 0 %></h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-lg-4">
+      <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark border-secondary py-3">
+          <h5 class="card-title fw-bold mb-0">Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <!-- Restore Button -->
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#restoreModal">
+              <i class="bi bi-arrow-counterclockwise"></i> Restore Account
+            </button>
+
+            <!-- Permanent Delete Button -->
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+              <i class="bi bi-trash"></i> Permanently Delete
+            </button>
+          </div>
+
+          <hr class="border-secondary my-4">
+
+          <div class="alert alert-info small">
+            <i class="bi bi-info-circle"></i>
+            <strong>Restore:</strong> Creates a new user account with the same email and data. User must reset password.
+            <br><br>
+            <strong>Delete:</strong> Permanently removes this deleted account record. This cannot be undone.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Modal -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Restore Account?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>This will create a new user account for <strong><%= deletedAccount.email %></strong>.</p>
+        <p class="text-warning mb-0">
+          <i class="bi bi-exclamation-triangle"></i>
+          The user will need to reset their password to log in.
+        </p>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form action="/admin/deleted-accounts/<%= deletedAccount._id %>/restore" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-success">Restore Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Permanently Delete?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>This will permanently delete the deleted account record for <strong><%= deletedAccount.email %></strong>.</p>
+        <p class="text-danger mb-0">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          This action cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form action="/admin/deleted-accounts/<%= deletedAccount._id %>/permanent-delete" method="POST" style="display: inline;">
+          <button type="submit" class="btn btn-danger">Permanently Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

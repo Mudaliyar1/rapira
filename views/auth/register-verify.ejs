@@ -1,0 +1,38 @@
+<%- contentFor('title') %>Verify Registration - Rapira
+
+<%- contentFor('body') %>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="glass-card-dark shadow-sm">
+        <div class="card-body p-4 p-md-5">
+          <div class="text-center mb-4">
+            <h2 class="fw-bold">Verify Your Email</h2>
+            <p class="text-muted">We sent a 6-digit OTP to <strong><%= email %></strong>. Enter it below to finish signing up.</p>
+          </div>
+
+          <form action="/auth/register/verify" method="POST">
+            <div class="mb-3">
+              <label for="otp" class="form-label">OTP</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                <input type="text" class="form-control" id="otp" name="otp" placeholder="Enter 6-digit OTP" required>
+              </div>
+              <div class="form-text">OTP expires in 15 minutes.</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <a href="/auth/register" class="text-decoration-none">Start over</a>
+              <button type="submit" class="btn btn-success">Verify & Create Account</button>
+            </div>
+          </form>
+
+          <form action="/auth/register" method="POST">
+            <!-- Hidden fields to resend OTP using stored session data isn't possible; guide user to restart -->
+            <p class="small text-muted mb-0">Didn't get the code? Please go back and try again.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -7,6 +7,7 @@ const Concert = require('../models/Concert');
 const Ticket = require('../models/Ticket');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
+const DeletedAccount = require('../models/DeletedAccount');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
@@ -2256,17 +2257,27 @@ router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
       { $sort: { totalFollowers: -1 } }
     ]);
 
-    // Get overall follower statistics
-    const totalFollows = await Follow.countDocuments();
-    const userFollowers = await Follow.countDocuments({ roleOfFollower: 'user' });
-    const artistFollowers = await Follow.countDocuments({ roleOfFollower: 'artist' });
-    
-    // Get recent follows
-    const recentFollows = await Follow.find()
+    // Get recent follows (filter out nulls after populating)
+    const recentFollowsRaw = await Follow.find()
       .populate('followerId', 'name email profileImage role')
       .populate('followingId', 'name email')
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(20);
+    
+    // Filter out follows with missing follower or following data
+    const recentFollows = recentFollowsRaw
+      .filter(follow => follow.followerId && follow.followingId)
+      .slice(0, 10);
+
+    // Get overall follower statistics (only count valid follows)
+    const allFollowsForCount = await Follow.find()
+      .populate('followerId', '_id')
+      .populate('followingId', '_id');
+    
+    const validFollows = allFollowsForCount.filter(f => f.followerId && f.followingId);
+    const totalFollows = validFollows.length;
+    const userFollowers = validFollows.filter(f => f.roleOfFollower === 'user').length;
+    const artistFollowers = validFollows.filter(f => f.roleOfFollower === 'artist').length;
 
     // Get top artists by followers
     const topArtists = artistsWithFollowers.slice(0, 10);
@@ -2373,4 +2384,143 @@ router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, re
   }
 });
 
+// Deleted accounts page
+router.get('/deleted-accounts', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    // Get total count
+    const totalDeleted = await DeletedAccount.countDocuments();
+
+    // Get deleted accounts
+    const deletedAccounts = await DeletedAccount.find()
+      .sort({ deletedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Calculate pagination
+    const totalPages = Math.ceil(totalDeleted / limit);
+
+    res.render('admin/deleted-accounts', {
+      layout: 'admin',
+      title: 'Deleted Accounts',
+      currentPath: '/admin/deleted-accounts',
+      deletedAccounts,
+      pagination: {
+        page,
+        totalPages,
+        totalDeleted,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Deleted accounts error:', error);
+    req.flash('error', 'Failed to load deleted accounts');
+    res.redirect('/admin');
+  }
+});
+
+// Deleted account details
+router.get('/deleted-accounts/:id', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const deletedAccount = await DeletedAccount.findById(req.params.id);
+
+    if (!deletedAccount) {
+      req.flash('error', 'Deleted account not found');
+      return res.redirect('/admin/deleted-accounts');
+    }
+
+    res.render('admin/deleted-account-details', {
+      layout: 'admin',
+      title: 'Deleted Account Details',
+      currentPath: '/admin/deleted-accounts',
+      deletedAccount
+    });
+  } catch (error) {
+    console.error('Deleted account details error:', error);
+    req.flash('error', 'Failed to load deleted account details');
+    res.redirect('/admin/deleted-accounts');
+  }
+});
+
+// Restore deleted account (admin can restore)
+router.post('/deleted-accounts/:id/restore', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const deletedAccount = await DeletedAccount.findById(req.params.id);
+
+    if (!deletedAccount) {
+      req.flash('error', 'Deleted account not found');
+      return res.redirect('/admin/deleted-accounts');
+    }
+
+    // Check if email already exists in current users
+    const existingUser = await User.findOne({ email: deletedAccount.email });
+    if (existingUser) {
+      req.flash('error', 'This email is already registered to another account');
+      return res.redirect(`/admin/deleted-accounts/${req.params.id}`);
+    }
+
+    // Create user from deleted account data
+    const restoredUser = new User({
+      name: deletedAccount.name,
+      email: deletedAccount.email,
+      password: 'please-reset-password', // Force password reset
+      role: deletedAccount.role,
+      profileImage: deletedAccount.profileImage,
+      bio: deletedAccount.bio,
+      city: deletedAccount.city,
+      socialLinks: deletedAccount.socialLinks,
+      walletBalance: deletedAccount.walletBalance
+    });
+
+    await restoredUser.save();
+
+    // If artist, recreate artist profile
+    if (deletedAccount.role === 'artist' && deletedAccount.artistData) {
+      const restoredArtist = new Artist({
+        user: restoredUser._id,
+        stageName: deletedAccount.artistData.stageName || deletedAccount.name,
+        genre: deletedAccount.artistData.genre || 'Hip Hop',
+        yearsActive: deletedAccount.artistData.yearsActive || 0,
+        about: deletedAccount.artistData.about || ''
+      });
+      await restoredArtist.save();
+    }
+
+    // Delete the deleted account record
+    await DeletedAccount.findByIdAndDelete(req.params.id);
+
+    req.flash('success', `Account ${deletedAccount.email} has been restored. User must reset their password.`);
+    res.redirect('/admin/deleted-accounts');
+  } catch (error) {
+    console.error('Restore deleted account error:', error);
+    req.flash('error', 'Failed to restore account');
+    res.redirect(`/admin/deleted-accounts/${req.params.id}`);
+  }
+});
+
+// Permanently delete (hard delete)
+router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const deletedAccount = await DeletedAccount.findByIdAndDelete(req.params.id);
+
+    if (!deletedAccount) {
+      req.flash('error', 'Deleted account not found');
+      return res.redirect('/admin/deleted-accounts');
+    }
+
+    req.flash('success', `Permanently deleted account: ${deletedAccount.email}`);
+    res.redirect('/admin/deleted-accounts');
+  } catch (error) {
+    console.error('Permanent delete error:', error);
+    req.flash('error', 'Failed to permanently delete account');
+    res.redirect('/admin/deleted-accounts');
+  }
+});
+
+module.exports = router;
 module.exports = router;
