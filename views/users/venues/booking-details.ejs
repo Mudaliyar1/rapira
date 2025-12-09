@@ -122,9 +122,9 @@
           <% if (booking.description) { %>
             <hr>
             <div>
-              <label class="text-muted small">Event Description</label>
+              <label class="text-muted small" style="color: #ffffff !important;">Event Description</label>
               <div class="bg-light p-3 rounded">
-                <p class="mb-0"><%= booking.description %></p>
+                <p class="mb-0" style="color: #000000 !important;"><%= booking.description %></p>
               </div>
             </div>
           <% } %>
@@ -246,6 +246,18 @@
             </h5>
           </div>
           <div class="card-body">
+            <!-- Seat Allocation -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="text-muted small">Venue Capacity</label>
+                <p class="mb-0 fw-bold"><%= venue.capacity %> seats</p>
+              </div>
+              <div class="col-md-6">
+                <label class="text-muted small">Artist Allocated Seats</label>
+                <p class="mb-0 fw-bold text-info"><%= booking.maxTickets || 'Unlimited' %> seats</p>
+              </div>
+            </div>
+
             <% if (booking.venueBooking.bookingHours) { %>
               <div class="mb-3">
                 <label class="text-muted small">Duration</label>
@@ -253,24 +265,96 @@
               </div>
             <% } %>
             
-            <% if (booking.venueBooking.totalCost) { %>
+            <% if (booking.venueBooking.totalVenueCost) { %>
               <div class="mb-3">
                 <label class="text-muted small">Total Venue Cost</label>
-                <h5 class="text-success mb-0">₹<%= booking.venueBooking.totalCost.toLocaleString('en-IN') %></h5>
+                <h5 class="text-success mb-0">₹<%= booking.venueBooking.totalVenueCost.toLocaleString('en-IN') %></h5>
               </div>
             <% } %>
-            
-            <% if (booking.venueBooking.commissionPercentage) { %>
-              <div class="mb-3">
-                <label class="text-muted small">Commission Rate</label>
-                <p class="mb-0"><%= booking.venueBooking.commissionPercentage %>%</p>
+
+            <!-- Commission Details -->
+            <% if (booking.venueBooking.adminCommission) { %>
+              <hr>
+              <h6 class="mb-3 fw-bold">Commission Payment Details</h6>
+              
+              <% if (booking.venueBooking.adminCommission.percentage) { %>
+                <div class="mb-3">
+                  <label class="text-muted small">Commission Percentage</label>
+                  <p class="mb-0 fw-bold"><%= booking.venueBooking.adminCommission.percentage %>%</p>
+                </div>
+              <% } %>
+
+              <% 
+                // Calculate commission amount (total cost * commission percentage / 100)
+                let commissionPercentage = booking.venueBooking.adminCommission.percentage || 0;
+                let totalCost = booking.venueBooking.totalVenueCost || 0;
+                let totalCommissionAmount = (totalCost * commissionPercentage) / 100;
+                
+                // Get actual commission paid from database
+                let storedCommission = booking.venueBooking.adminCommission.advanceAmount;
+                let commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0 
+                  ? storedCommission 
+                  : 0;
+                
+                // Get actual artist direct payment from database
+                let artistPaidDirect = booking.venueBooking.amountPaidByArtist || 0;
+                
+                // Total paid by artist (commission + direct payment)
+                let totalArtistPaid = commissionPaid + artistPaidDirect;
+                
+                // Remaining is the total cost minus total paid
+                let remainingBalance = Math.max(totalCost - totalArtistPaid, 0);
+              %>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="text-muted small">Total Commission Amount</label>
+                  <h6 class="fw-bold text-primary">₹<%= commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h6>
+                </div>
+                <div class="col-md-6">
+                  <label class="text-muted small">Commission Percentage Calculation</label>
+                  <p class="mb-0 small">₹<%= totalCost.toLocaleString('en-IN') %> × <%= commissionPercentage %>%</p>
+                </div>
               </div>
-            <% } %>
-            
-            <% if (booking.venueBooking.commissionAmount) { %>
-              <div class="mb-3">
-                <label class="text-muted small">Commission Amount</label>
-                <p class="mb-0 text-info fw-bold">₹<%= booking.venueBooking.commissionAmount.toLocaleString('en-IN') %></p>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="text-muted small">Amount Paid by Artist</label>
+                  <div class="d-flex align-items-center gap-2">
+                    <h6 class="text-success fw-bold mb-0">✓ ₹<span id="displayPaid"><%= totalArtistPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span></h6>
+                    <a
+                      class="btn btn-sm btn-outline-primary"
+                      href="/users/venues/bookings/<%= booking._id %>/edit-payment?returnTo=<%= encodeURIComponent(`/users/venues/${venue._id}/bookings/${booking._id}`) %>"
+                      title="Edit Payment"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="text-muted small">Remaining Balance</label>
+                  <h6 class="<%= remainingBalance > 0 ? 'text-danger' : 'text-success' %> fw-bold" id="displayRemaining">
+                    <% if (remainingBalance > 0) { %>
+                      ⚠ ₹<%= remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                    <% } else { %>
+                      ✓ ₹0.00 (Paid)
+                    <% } %>
+                  </h6>
+                </div>
+              </div>
+
+              <div id="paymentStatusAlert">
+                <% if (remainingBalance > 0) { %>
+                  <div class="alert alert-warning small mb-0">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    <strong>Partial Paid:</strong> ₹<%= remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> remaining.
+                  </div>
+                <% } else { %>
+                  <div class="alert alert-success small mb-0">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <strong>Full Paid:</strong> All payments have been received.
+                  </div>
+                <% } %>
               </div>
             <% } %>
           </div>
@@ -299,9 +383,6 @@
               <a href="/users/venues/bookings/<%= booking._id %>/receipt" class="btn btn-outline-primary">
                 <i class="bi bi-download me-1"></i>Download Receipt
               </a>
-              <button class="btn btn-outline-warning" onclick="updateBookingStatus('<%= booking._id %>', 'cancelled')">
-                <i class="bi bi-x-lg me-1"></i>Cancel Booking
-              </button>
             </div>
           <% } %>
           
@@ -377,9 +458,7 @@ function updateBookingStatus(bookingId, newStatus) {
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.card-header {
+}.card-header {
   border-bottom: 2px solid rgba(255,255,255,0.2);
 }
 
@@ -402,3 +481,111 @@ function updateBookingStatus(bookingId, newStatus) {
   }
 }
 </style>
+
+<!-- Payment Edit Modal -->
+<div class="modal fade" id="editPaymentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Edit Payment Amount</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Total Venue Cost</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="editTotalCost" disabled>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Amount Paid by Artist</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="editPaidAmount" step="0.01" min="0" placeholder="Enter amount">
+          </div>
+          <small class="text-muted">Update the payment amount from artist</small>
+        </div>
+        <div id="editPaymentStatus" class="alert d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="savePaymentUpdate()">Update Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentBookingId = null;
+let currentTotalCost = 0;
+
+function openEditPaymentModal(bookingId, totalCost, paidAmount) {
+  currentBookingId = bookingId;
+  currentTotalCost = totalCost;
+  document.getElementById('editTotalCost').value = totalCost;
+  document.getElementById('editPaidAmount').value = paidAmount;
+  document.getElementById('editPaymentStatus').classList.add('d-none');
+  
+  const modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
+  modal.show();
+}
+
+function savePaymentUpdate() {
+  const paidAmount = parseFloat(document.getElementById('editPaidAmount').value);
+
+  if (isNaN(paidAmount) || paidAmount < 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
+  if (paidAmount > currentTotalCost) {
+    alert(`Amount cannot exceed total cost of ₹${currentTotalCost}`);
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+
+  fetch(`/users/venues/bookings/${currentBookingId}/update-payment`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ amountPaid: paidAmount })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const remaining = currentTotalCost - paidAmount;
+      document.getElementById('displayPaid').innerText = paidAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      const statusAlert = document.getElementById('paymentStatusAlert');
+      if (remaining > 0) {
+        statusAlert.innerHTML = `<div class="alert alert-warning small mb-0"><i class="bi bi-exclamation-circle me-1"></i><strong>Partial Paid:</strong> ₹${remaining.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})} remaining.</div>`;
+        document.getElementById('displayRemaining').innerHTML = `⚠ ₹${remaining.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('displayRemaining').className = 'text-danger fw-bold';
+      } else {
+        statusAlert.innerHTML = `<div class="alert alert-success small mb-0"><i class="bi bi-check-circle me-1"></i><strong>Full Paid:</strong> All payments have been received.</div>`;
+        document.getElementById('displayRemaining').innerHTML = `✓ ₹0.00 (Paid)`;
+        document.getElementById('displayRemaining').className = 'text-success fw-bold';
+      }
+      
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editPaymentModal'));
+      modal.hide();
+      alert('Payment amount updated successfully!');
+    } else {
+      alert('Error: ' + data.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Update Payment';
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Failed to update payment');
+    btn.disabled = false;
+    btn.innerHTML = 'Update Payment';
+  });
+}
+</script>

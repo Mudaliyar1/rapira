@@ -614,15 +614,10 @@ router.get('/:id/download-html', isLoggedIn, async (req, res) => {
     }
 
     // Check if concert exists and handle deleted concerts
-    let concert = null;
+    let concert = ticket.concert;
     let isDeletedConcert = false;
 
-    if (ticket.concert) {
-      concert = await Concert.findById(ticket.concert._id);
-      if (!concert) {
-        isDeletedConcert = true;
-      }
-    } else {
+    if (!concert) {
       isDeletedConcert = true;
     }
 

@@ -1,0 +1,140 @@
+<%- contentFor('body') %>
+
+<!-- Confirm Delete Learning Module Content Item -->
+<div class="glass-card-dark border border-secondary">
+  <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0 text-white">Confirm Delete Content Item</h5>
+    <a href="/learning/admin/edit/<%= module._id %>" class="btn btn-sm btn-outline-light">
+      <i class="bi bi-arrow-left"></i> Back to Edit Module
+    </a>
+  </div>
+  <div class="card-body p-4">
+    <!-- Module Information -->
+    <div class="mb-4">
+      <h6 class="text-white mb-2">From Learning Module:</h6>
+      <div class="glass-card-dark p-3 border border-secondary rounded">
+        <h5 class="text-white mb-2"><%= module.title %></h5>
+        <p class="text-white-75 mb-0"><%= module.description %></p>
+      </div>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-danger alert-lg" role="alert">
+      <div class="d-flex align-items-start gap-3">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.5rem; margin-top: 2px;"></i>
+        <div>
+          <h5 class="alert-heading text-danger mb-2">Warning: Permanent Deletion</h5>
+          <p class="mb-1">You are about to delete the following content item from this module.</p>
+          <p class="mb-0"><strong>This action cannot be undone.</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Item Preview -->
+    <div class="mb-4">
+      <h6 class="text-white mb-3">Content Item to Delete:</h6>
+      
+      <!-- Content Item Card -->
+      <div class="card bg-dark border-danger mb-4">
+        <div class="card-header bg-dark border-bottom border-danger">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge" style="background-color: <%= contentItem.type === 'video' ? '#3b82f6' : contentItem.type === 'pdf' ? '#ef4444' : contentItem.type === 'image' ? '#8b5cf6' : contentItem.type === 'link' ? '#06b6d4' : '#10b981' %>">
+              <% if (contentItem.type === 'video') { %>
+                <i class="bi bi-camera-video me-1"></i>Video
+              <% } else if (contentItem.type === 'text') { %>
+                <i class="bi bi-file-text me-1"></i>Text
+              <% } else if (contentItem.type === 'pdf') { %>
+                <i class="bi bi-file-pdf me-1"></i>PDF
+              <% } else if (contentItem.type === 'link') { %>
+                <i class="bi bi-link me-1"></i>Link
+              <% } else if (contentItem.type === 'image') { %>
+                <i class="bi bi-image me-1"></i>Image
+              <% } %>
+            </span>
+            <small class="text-white-75"><%= contentItem.type.toUpperCase() %> Content</small>
+          </div>
+        </div>
+        
+        <!-- Preview -->
+        <div class="card-body">
+          <% if (contentItem.type === 'video') { %>
+            <% if (contentItem.content.includes('youtube.com') || contentItem.content.includes('youtu.be')) { %>
+              <p class="text-white-75 small mb-2"><strong>YouTube Video:</strong></p>
+              <div class="ratio ratio-16x9" style="max-height: 300px;">
+                <%
+                  let videoUrl = contentItem.content;
+                  if (videoUrl.includes('youtube.com/watch?v=')) {
+                    videoUrl = videoUrl.replace('watch?v=', 'embed/');
+                  } else if (videoUrl.includes('youtu.be/')) {
+                    const videoId = videoUrl.split('youtu.be/')[1];
+                    videoUrl = `https://www.youtube.com/embed/${videoId}`;
+                  }
+                  if (videoUrl.includes('?')) {
+                    videoUrl += '&autoplay=0&rel=0';
+                  } else {
+                    videoUrl += '?autoplay=0&rel=0';
+                  }
+                %>
+                <iframe src="<%= videoUrl %>" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              </div>
+            <% } else { %>
+              <p class="text-white-75 small mb-2"><strong>Uploaded Video:</strong></p>
+              <video controls style="width: 100%; max-height: 300px;">
+                <source src="<%= contentItem.content %>" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            <% } %>
+          <% } else if (contentItem.type === 'text') { %>
+            <p class="text-white-75 small mb-2"><strong>Text Content Preview:</strong></p>
+            <div class="bg-secondary p-3 rounded text-white" style="max-height: 250px; overflow-y: auto;">
+              <%- contentItem.content.substring(0, 500) %>
+              <% if (contentItem.content.length > 500) { %>
+                <p class="mt-2 text-muted small">...</p>
+              <% } %>
+            </div>
+          <% } else if (contentItem.type === 'pdf') { %>
+            <p class="text-white-75 small mb-2"><strong>PDF Document:</strong></p>
+            <div class="bg-secondary p-3 rounded d-flex align-items-center gap-3">
+              <i class="bi bi-file-pdf" style="font-size: 2rem; color: #ef4444;"></i>
+              <div>
+                <p class="mb-1 text-white fw-medium">PDF File</p>
+                <p class="mb-0 text-white-75 small"><%= contentItem.content.split('/').pop().substring(0, 50) %></p>
+              </div>
+            </div>
+          <% } else if (contentItem.type === 'image') { %>
+            <p class="text-white-75 small mb-2"><strong>Image Preview:</strong></p>
+            <img src="<%= contentItem.content %>" alt="Content image" class="img-fluid rounded" style="max-height: 300px;">
+          <% } else if (contentItem.type === 'link') { %>
+            <p class="text-white-75 small mb-2"><strong>External Link:</strong></p>
+            <div class="bg-secondary p-3 rounded">
+              <a href="<%= contentItem.content %>" target="_blank" class="btn btn-sm btn-primary" rel="noopener noreferrer">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Open Link
+              </a>
+              <p class="mt-2 mb-0 text-white-75 small"><code><%= contentItem.content %></code></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm/Cancel Buttons -->
+    <div class="d-grid gap-2">
+      <form method="POST" action="/learning/admin/<%= module._id %>/delete-content-item/<%= contentItemIndex %>" class="mb-0">
+        <button type="submit" class="btn btn-danger btn-lg">
+          <i class="bi bi-trash me-2"></i>Yes, Delete This Content Item
+        </button>
+      </form>
+      <a href="/learning/admin/edit/<%= module._id %>" class="btn btn-outline-light btn-lg">
+        <i class="bi bi-x-circle me-2"></i>Cancel - Keep This Content
+      </a>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="alert alert-info mt-4 mb-0">
+      <small class="text-white">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Note:</strong> You can add this content type again after deletion by returning to the edit page.
+      </small>
+    </div>
+  </div>
+</div>

@@ -450,6 +450,7 @@
     let selectedVenueHourlyCommission = {}; // Store commission data for selected hour
     let currentVenue = null;
     let currentVenueCapacity = 0;
+    let currentVenueMinimumHours = 1; // Enforce venue-specific minimum hours
 
     function updateVenuePricing() {
       const selectedOption = venueSelect.options[venueSelect.selectedIndex];
@@ -478,6 +479,7 @@
         };
         
         currentVenueCapacity = capacity;
+        currentVenueMinimumHours = minimumHours;
         
         // Update venue capacity info and max tickets validation
         if (venueCapacityInfo && venueCapacityValue && maxTicketsInput) {
@@ -649,13 +651,14 @@
         bookingHours.innerHTML = '<option value="">Select hours</option>';
         
         if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates && currentVenue.pricing.hourlyRates.length > 0) {
-          // Sort rates by hour count
+          // Sort rates by hour count and enforce venue minimum hours
           const sortedRates = [...currentVenue.pricing.hourlyRates].sort((a, b) => a.hours - b.hours);
+          const filteredRates = sortedRates.filter(rateObj => rateObj.hours >= currentVenueMinimumHours);
           
           let validOptionsCount = 0;
           
           // Add options for each available hour rate WITH commission
-          sortedRates.forEach(rateObj => {
+          filteredRates.forEach(rateObj => {
             // Only add if has rate, commission percentage, and commission amount
             if (rateObj.hours && rateObj.rate && parseFloat(rateObj.rate) > 0 &&
                 rateObj.commissionPercentage !== undefined && rateObj.commissionPercentage >= 0) {
@@ -671,15 +674,17 @@
           });
           
           // Auto-select first available option
-          if (sortedRates.length > 0 && validOptionsCount > 0) {
-            bookingHours.value = sortedRates[0].hours;
+          if (filteredRates.length > 0 && validOptionsCount > 0) {
+            bookingHours.value = filteredRates[0].hours;
             calculateTotalCost();
           }
         } else {
           // Add informational option for no rates
           const noRatesOption = document.createElement('option');
           noRatesOption.disabled = true;
-          noRatesOption.textContent = 'No booking rates configured - Contact admin';
+          noRatesOption.textContent = filteredRates && filteredRates.length === 0 && currentVenueMinimumHours > 1
+            ? `No rates meet the minimum of ${currentVenueMinimumHours} hour(s) - contact admin`
+            : 'No booking rates configured - Contact admin';
           noRatesOption.style.fontStyle = 'italic';
           noRatesOption.style.color = '#dc3545';
           bookingHours.appendChild(noRatesOption);
@@ -688,7 +693,17 @@
     }
 
     function calculateTotalCost() {
-      const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      let hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      // Enforce venue minimum hours on selection
+      if (hours < currentVenueMinimumHours && bookingHours) {
+        const minOption = Array.from(bookingHours.options).find(opt => parseInt(opt.value) >= currentVenueMinimumHours);
+        if (minOption) {
+          bookingHours.value = minOption.value;
+          hours = parseInt(minOption.value);
+        } else {
+          hours = currentVenueMinimumHours;
+        }
+      }
       let totalCost = 0;
       let commissionPercentage = 0;
       let commissionAmount = 0;

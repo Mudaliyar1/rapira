@@ -319,6 +319,18 @@
               <strong>Admin Notes:</strong>
               <p><%= venueRequest.adminNotes %></p>
             <% } %>
+          <% } else if (venueRequest.status === 'cancelled') { %>
+            <div class="alert alert-secondary">
+              <i class="bi bi-slash-circle me-2"></i>
+              <strong>Cancelled by User</strong>
+            </div>
+            <% if (venueRequest.cancelReason) { %>
+              <strong>Cancel Reason:</strong>
+              <p><%= venueRequest.cancelReason %></p>
+            <% } %>
+            <% if (venueRequest.cancelledAt) { %>
+              <p class="text-muted mb-0">Cancelled on <%= new Date(venueRequest.cancelledAt).toLocaleString() %></p>
+            <% } %>
           <% } %>
         </div>
       </div>

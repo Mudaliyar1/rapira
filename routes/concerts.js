@@ -188,7 +188,20 @@ router.get('/create', isLoggedIn, canCreateConcert, async (req, res) => {
 });
 
 // Create payment order for venue booking
-router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields([]), async (req, res) => {
+router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, next) => {
+  // Use .any() to accept all text fields (no file uploads on this route)
+  upload.any()(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+    }
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({ success: false, error: 'An error occurred processing the form' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     console.log('Payment order request received');
     console.log('Request body keys:', Object.keys(req.body));
@@ -360,54 +373,18 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
     // Use venue city if not provided in form
     const finalCity = city || selectedVenue.city;
 
-    // Calculate venue booking cost
+    // Calculate venue booking cost using hourly rate from form (this is the FIXED price for the selected duration)
     const hours = parseInt(bookingHours) || 1;
-    let totalVenueCost = 0;
+    const hourlyRate = parseFloat(req.body.hourlyRate) || 0; // This is the FIXED price for selected hours, not per-hour
+    const totalVenueCost = hourlyRate; // Use the rate directly - it's already the full price
 
-    if (selectedVenue.pricing?.hourlyRates && Array.isArray(selectedVenue.pricing.hourlyRates)) {
-      if (selectedVenue.pricing.hourlyRates.length > 0 && 
-          typeof selectedVenue.pricing.hourlyRates[0] === 'object' && 
-          selectedVenue.pricing.hourlyRates[0].hasOwnProperty('hours') &&
-          selectedVenue.pricing.hourlyRates[0].hasOwnProperty('rate')) {
-        
-        for (let i = 0; i < hours; i++) {
-          const rateEntry = selectedVenue.pricing.hourlyRates.find(r => r.hours === (i + 1));
-          if (rateEntry && rateEntry.rate) {
-            totalVenueCost += parseFloat(rateEntry.rate) || 0;
-          } else if (selectedVenue.pricing.hourlyRates.length > 0) {
-            const lastEntry = selectedVenue.pricing.hourlyRates[selectedVenue.pricing.hourlyRates.length - 1];
-            totalVenueCost += parseFloat(lastEntry.rate) || 0;
-          }
-        }
-      } else {
-        for (let i = 0; i < hours && i < selectedVenue.pricing.hourlyRates.length; i++) {
-          totalVenueCost += parseFloat(selectedVenue.pricing.hourlyRates[i]) || 0;
-        }
-        
-        if (hours > selectedVenue.pricing.hourlyRates.length && selectedVenue.pricing.hourlyRates.length > 0) {
-          const lastRate = parseFloat(selectedVenue.pricing.hourlyRates[selectedVenue.pricing.hourlyRates.length - 1]) || 0;
-          totalVenueCost += lastRate * (hours - selectedVenue.pricing.hourlyRates.length);
-        }
-      }
-    } else if (selectedVenue.pricing?.hourlyRate) {
-      const hourlyRate = parseFloat(selectedVenue.pricing.hourlyRate) || 0;
-      totalVenueCost = hourlyRate * hours;
-    }
-
-    if (isNaN(totalVenueCost) || totalVenueCost < 0) {
-      totalVenueCost = 0;
-    }
-
-    // Calculate admin commission (for admin records only - not charged to artist)
+    // Calculate commission (artist pays this based on venue cost and commission percentage)
     const adminCommissionPercentage = parseFloat(selectedVenue.pricing?.adminCommission?.percentage) || 0;
-    const adminAdvanceAmount = parseFloat(selectedVenue.pricing?.adminCommission?.advanceAmount) || 0;
     const validCommissionPercentage = isNaN(adminCommissionPercentage) ? 0 : adminCommissionPercentage;
-    const validAdvanceAmount = isNaN(adminAdvanceAmount) ? 0 : adminAdvanceAmount;
 
-    // Artist only pays the advance amount set by admin
-    // Commission is for admin records only, venue cost is covered by advance
-    const commissionAmount = (totalVenueCost * validCommissionPercentage) / 100; // For records only
-    const totalAmountToPay = validAdvanceAmount; // Artist only pays advance amount
+    // Artist pays commission amount based on venue cost and commission percentage
+    const commissionAmount = (totalVenueCost * validCommissionPercentage) / 100;
+    const totalAmountToPay = commissionAmount;
 
     // Ensure minimum payment amount (Razorpay requires at least ₹1)
     const finalAmount = Math.max(totalAmountToPay, 1);
@@ -416,8 +393,8 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
       venueName: selectedVenue.name,
       hours,
       totalVenueCost,
+      commissionPercentage: validCommissionPercentage,
       commissionAmount,
-      advanceAmount: validAdvanceAmount,
       totalAmountToPay: finalAmount,
       artistEmail: artist.user.email
     });
@@ -435,8 +412,8 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
         venueName: selectedVenue.name,
         bookingHours: hours,
         totalVenueCost: totalVenueCost,
+        commissionPercentage: validCommissionPercentage,
         commissionAmount: commissionAmount,
-        advanceAmount: validAdvanceAmount,
         concertTitle: title
       }
     });
@@ -463,7 +440,7 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
         totalVenueCost: totalVenueCost,
         adminCommission: {
           percentage: validCommissionPercentage,
-          advanceAmount: validAdvanceAmount
+          advanceAmount: commissionAmount
         },
         isPaid: false
       },
@@ -491,8 +468,54 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, upload.fields
   }
 });
 
+// Wrapper to catch upload middleware errors
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// Custom error handler for multer
+const multerErrorHandler = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      req.flash('error', 'File size too large. Maximum size is 5MB.');
+      return res.redirect('/concerts/create');
+    }
+    if (err.code === 'UNEXPECTED_FILE') {
+      req.flash('error', 'Invalid file field. Please use the correct form.');
+      return res.redirect('/concerts/create');
+    }
+    req.flash('error', `File upload error: ${err.message}`);
+    return res.redirect('/concerts/create');
+  }
+  
+  if (err) {
+    console.error('Upload error:', err);
+    req.flash('error', 'An error occurred during file upload.');
+    return res.redirect('/concerts/create');
+  }
+  next();
+};
+
 // Verify payment and create concert
-router.post('/verify-payment', isLoggedIn, canCreateConcert, upload.single('posterImage'), async (req, res) => {
+router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) => {
+  // Handle upload with error catching - use .any() to accept all fields
+  upload.any()(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        req.flash('error', 'File size too large. Maximum size is 5MB.');
+        return res.redirect('/concerts/create');
+      }
+      req.flash('error', `File upload error: ${err.message}`);
+      return res.redirect('/concerts/create');
+    }
+    if (err) {
+      console.error('Upload error:', err);
+      req.flash('error', 'An error occurred during file upload.');
+      return res.redirect('/concerts/create');
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
@@ -637,8 +660,8 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, upload.single('post
     });
 
     // Set poster image if uploaded
-    if (req.file) {
-      newConcert.posterImage = getStoragePath('concerts', req.file.filename);
+    if (req.files && req.files['posterImage'] && req.files['posterImage'][0]) {
+      newConcert.posterImage = getStoragePath('concerts', req.files['posterImage'][0].filename);
     }
 
     await newConcert.save();
@@ -970,7 +993,22 @@ router.get('/:id/edit', isLoggedIn, isArtist, async (req, res) => {
 });
 
 // Update concert
-router.post('/:id/edit', isLoggedIn, isArtist, upload.single('posterImage'), async (req, res) => {
+router.post('/:id/edit', isLoggedIn, isArtist, (req, res, next) => {
+  // Use .any() to accept all fields including optional posterImage file
+  upload.any()(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      console.error('Multer error:', err);
+      req.flash('error', `Upload error: ${err.message}`);
+      return res.redirect(`/concerts/${req.params.id}/edit`);
+    }
+    if (err) {
+      console.error('Upload error:', err);
+      req.flash('error', 'An error occurred processing the form');
+      return res.redirect(`/concerts/${req.params.id}/edit`);
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const artist = await Artist.findOne({ user: req.session.user.id });
 
@@ -1046,16 +1084,19 @@ router.post('/:id/edit', isLoggedIn, isArtist, upload.single('posterImage'), asy
       concert.status = 'pending';
     }
 
-    // Update poster image if uploaded
-    if (req.file) {
-      // Delete old poster image if it's not the default
-      if (concert.posterImage && concert.posterImage !== '/images/default-concert.jpg') {
-        deleteFileIfExists(concert.posterImage);
+    // Update poster image if uploaded (files are stored in req.files array when using .any())
+    if (req.files && req.files.length > 0) {
+      const posterFile = req.files.find(f => f.fieldname === 'posterImage');
+      if (posterFile) {
+        // Delete old poster image if it's not the default
+        if (concert.posterImage && concert.posterImage !== '/images/default-concert.jpg') {
+          deleteFileIfExists(concert.posterImage);
       }
 
-      // Set new poster image using our helper
-      concert.posterImage = getStoragePath('concerts', req.file.filename);
-      console.log(`Updated concert poster image to: ${concert.posterImage}`);
+        // Set new poster image using our helper
+        concert.posterImage = getStoragePath('concerts', posterFile.filename);
+        console.log(`Updated concert poster image to: ${concert.posterImage}`);
+      }
     }
 
     await concert.save();
@@ -1119,7 +1160,22 @@ router.post('/:id/cancel', isLoggedIn, isArtist, async (req, res) => {
 // Concert Edit Request Routes for Approved Concerts
 
 // Submit edit request for approved concert
-router.post('/:id/request-edit', isLoggedIn, isArtist, upload.single('posterImage'), async (req, res) => {
+router.post('/:id/request-edit', isLoggedIn, isArtist, (req, res, next) => {
+  // Use .any() to accept all fields including optional posterImage file
+  upload.any()(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      console.error('Multer error:', err);
+      req.flash('error', `Upload error: ${err.message}`);
+      return res.redirect(`/concerts/${req.params.id}`);
+    }
+    if (err) {
+      console.error('Upload error:', err);
+      req.flash('error', 'An error occurred processing the form');
+      return res.redirect(`/concerts/${req.params.id}`);
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     const concertId = req.params.id;
     const { title, description, date, time, venue, city, price, maxTickets, reason } = req.body;
@@ -1182,13 +1238,17 @@ router.post('/:id/request-edit', isLoggedIn, isArtist, upload.single('posterImag
     if (price && parseFloat(price) !== parseFloat(concert.price)) requestedChanges.price = parseFloat(price);
     if (maxTickets && parseInt(maxTickets) !== parseInt(concert.maxTickets)) requestedChanges.maxTickets = parseInt(maxTickets);
 
-    // Handle poster image upload
-    if (req.file) {
-      requestedChanges.posterImage = '/uploads/concerts/' + req.file.filename;
+    // Handle poster image upload (files are stored in req.files array when using .any())
+    if (req.files && req.files.length > 0) {
+      const posterFile = req.files.find(f => f.fieldname === 'posterImage');
+      if (posterFile) {
+        requestedChanges.posterImage = '/uploads/concerts/' + posterFile.filename;
+      }
     }
 
     // Check if any changes were actually made
-    if (Object.keys(requestedChanges).length === 0 && !req.file) {
+    let hasPosterFile = req.files && req.files.length > 0 && req.files.find(f => f.fieldname === 'posterImage');
+    if (Object.keys(requestedChanges).length === 0 && !hasPosterFile) {
       req.flash('error', 'No changes detected. Please modify at least one field to submit an edit request.');
       return res.redirect(`/concerts/${concertId}/edit`);
     }

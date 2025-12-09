@@ -212,6 +212,32 @@ router.get('/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+// GET /users/venue-requests/:id/cancel - Confirm cancellation page
+router.get('/:id/cancel', isLoggedIn, async (req, res) => {
+  try {
+    const venueRequest = await VenueRequest.findOne({
+      _id: req.params.id,
+      user: req.session.user.id,
+      status: 'pending'
+    });
+
+    if (!venueRequest) {
+      req.flash('error', 'Venue request not found or cannot be cancelled');
+      return res.redirect('/users/venue-requests');
+    }
+
+    res.render('users/venue-requests/cancel', {
+      title: 'Cancel Venue Request',
+      venueRequest,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Error loading cancel page:', error);
+    req.flash('error', 'Failed to load cancel page');
+    res.redirect('/users/venue-requests');
+  }
+});
+
 // POST /users/venue-requests/:id/cancel - Cancel pending venue request
 router.post('/:id/cancel', isLoggedIn, async (req, res) => {
   try {
@@ -226,7 +252,11 @@ router.post('/:id/cancel', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venue-requests');
     }
 
-    await VenueRequest.findByIdAndDelete(req.params.id);
+    venueRequest.status = 'cancelled';
+    venueRequest.cancelReason = req.body.cancelReason || '';
+    venueRequest.cancelledAt = new Date();
+    venueRequest.cancelledBy = req.session.user.id;
+    await venueRequest.save();
 
     req.flash('success', 'Venue request cancelled successfully');
     res.redirect('/users/venue-requests');

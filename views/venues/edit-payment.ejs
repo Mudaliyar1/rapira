@@ -1,0 +1,114 @@
+<%- contentFor('body') %>
+
+<div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-1">
+      <li class="breadcrumb-item"><a href="/users/profile">Profile</a></li>
+      <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+      <li class="breadcrumb-item"><a href="/venue-dashboard/<%= venue._id %>/dashboard"><%= venue.name %></a></li>
+      <li class="breadcrumb-item"><a href="<%= returnTo %>">Revenue Analytics</a></li>
+      <li class="breadcrumb-item active">Edit Payment</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-cash-stack me-2"></i>Edit Payment</h2>
+      <p class="text-muted mb-0">Update artist payment for this booking without using the in-page modal.</p>
+    </div>
+    <a href="<%= returnTo %>" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to analytics</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Total Venue Cost</p>
+          <h4 class="mb-0">₹<%= bookingView.totalCost.toLocaleString('en-IN') %></h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Commission Collected</p>
+          <h4 class="mb-0">₹<%= bookingView.commissionPaid.toLocaleString('en-IN') %> <small class="text-muted">(<%= bookingView.commissionPercentage %>%)</small></h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Artist Paid (total)</p>
+          <h4 class="mb-0 text-success">₹<%= bookingView.artistPaidTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">Pending</p>
+          <h4 class="mb-0 <%= bookingView.pending > 0 ? 'text-warning' : 'text-success' %>">₹<%= bookingView.pending.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <h5 class="mb-1"><%= bookingView.title %></h5>
+          <p class="text-muted mb-0">Artist: <strong><%= bookingView.artistName %></strong> | Date: <%= new Date(bookingView.date).toLocaleDateString('en-IN') %></p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <span class="badge bg-light text-dark">Booking ID: <%= bookingView.id.toString().slice(-8).toUpperCase() %></span>
+        </div>
+      </div>
+
+      <form id="paymentForm" method="GET" action="/users/venues/bookings/<%= bookingView.id %>/confirm-payment">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Additional amount to pay to venue (only pending amount)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="hidden" name="returnTo" value="<%= returnTo %>">
+            <input type="number" step="0.01" min="0" max="<%= bookingView.pending %>" class="form-control" id="newAmount" name="amount" value="0" aria-describedby="paidHelp">
+          </div>
+          <div class="form-text" id="paidHelp">Commission already collected: ₹<%= bookingView.commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>. You can enter any amount from ₹0 to ₹<%= bookingView.pending.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+        </div>
+
+      <div id="statusBox" class="alert d-none" role="alert"></div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" id="updatePaymentBtn"><i class="bi bi-save me-1"></i>Update payment</button>
+        <a class="btn btn-outline-secondary" href="<%= returnTo %>">Cancel</a>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('[EDIT-PAYMENT] Page loaded');
+  
+  const form = document.getElementById('paymentForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const amountInput = document.getElementById('newAmount');
+      const amount = parseFloat(amountInput.value);
+      
+      console.log('[EDIT-PAYMENT] Form submitted with amount:', amount);
+      
+      if (isNaN(amount) || amount < 0) {
+        alert('❌ Please enter a valid amount (0 or higher)');
+        e.preventDefault();
+        return false;
+      }
+      
+      console.log('[EDIT-PAYMENT] Form is valid, allowing submission to:', form.action);
+      // Form will submit naturally via GET to the confirmation page
+    });
+  }
+});
+</script>

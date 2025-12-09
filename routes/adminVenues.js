@@ -305,8 +305,8 @@ router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-// GET /admin/venues/:id/edit - Edit venue form
-router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+// GET /admin/venues/:id/gallery - View venue image gallery
+router.get('/:id/gallery', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
 
@@ -315,11 +315,45 @@ router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/venues');
     }
 
+    const startIndex = parseInt(req.query.index) || 0;
+
+    res.render('admin/venues/gallery', {
+      layout: 'admin',
+      currentPath: '/admin/venues',
+      title: `${venue.name} - Gallery`,
+      venue,
+      startIndex
+    });
+  } catch (error) {
+    console.error('View venue gallery error:', error);
+    req.flash('error', 'Failed to load venue gallery');
+    res.redirect('/admin/venues');
+  }
+});
+
+// GET /admin/venues/:id/edit - Edit venue form
+router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const WebsiteSettings = require('../models/WebsiteSettings');
+    const venue = await Venue.findById(req.params.id);
+
+    if (!venue) {
+      req.flash('error', 'Venue not found');
+      return res.redirect('/admin/venues');
+    }
+
+    // Get website settings for commission defaults
+    const settings = await WebsiteSettings.getSettings();
+    const defaultCommissionPercentage = settings.venueSettings?.defaultCommissionPercentage || 10;
+    const allowUserCommissionEdit = settings.venueSettings?.allowUserCommissionEdit || false;
+
     res.render('admin/venues/edit', {
       layout: 'admin',
       currentPath: '/admin/venues',
       title: `Edit ${venue.name}`,
-      venue
+      venue,
+      defaultCommissionPercentage,
+      allowUserCommissionEdit
     });
   } catch (error) {
     console.error('Edit venue form error:', error);
@@ -345,6 +379,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
   });
   
   try {
+    const WebsiteSettings = require('../models/WebsiteSettings');
     const venue = await Venue.findById(req.params.id);
 
     if (!venue) {
@@ -354,6 +389,13 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     }
 
     console.log('✅ Venue found:', venue.name);
+
+    // Get website settings for commission defaults
+    const settings = await WebsiteSettings.getSettings();
+    const defaultCommissionPercentage = settings.venueSettings?.defaultCommissionPercentage || 10;
+    const allowUserCommissionEdit = settings.venueSettings?.allowUserCommissionEdit || false;
+
+    console.log('Commission settings - Default:', defaultCommissionPercentage, 'Allow Edit:', allowUserCommissionEdit);
 
     const {
       name, address, city, state, pincode, capacity, venueType,
@@ -389,9 +431,14 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     for (let i = 1; i <= 24; i++) {
       // Try both possible field name formats for robustness
       const hourlyRateValue = req.body[`hourlyRate${i}`] || req.body[`hourlyRate_${i}`];
-      const commissionValue = req.body[`commissionPercentage${i}`] || req.body[`commissionPercentage_${i}`];
+      let commissionValue = req.body[`commissionPercentage${i}`] || req.body[`commissionPercentage_${i}`];
       
-      // Only add if both rate and commission are provided
+      // If user commission edit is disabled, use admin default
+      if (!allowUserCommissionEdit) {
+        commissionValue = defaultCommissionPercentage;
+      }
+      
+      // Only add if rate is provided (commission will always be provided now)
       if (hourlyRateValue && parseFloat(hourlyRateValue) > 0 && 
           commissionValue && parseFloat(commissionValue) >= 0) {
         const rateVal = parseFloat(hourlyRateValue);

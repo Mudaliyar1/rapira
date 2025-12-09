@@ -713,12 +713,65 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     // Get ticket count for this concert
     const ticketCount = await Ticket.countDocuments({ concert: concert._id, paymentStatus: 'completed' });
 
+    // Get payment IDs from tickets if concert doesn't have them
+    let paymentIds = [];
+    let orderIds = [];
+    
+    if (!concert.paymentId || !concert.orderId) {
+      const tickets = await Ticket.find({ 
+        concert: concert._id, 
+        paymentStatus: 'completed',
+        $or: [
+          { paymentId: { $exists: true, $ne: '' } },
+          { orderId: { $exists: true, $ne: '' } }
+        ]
+      }).select('paymentId orderId');
+      
+      paymentIds = [...new Set(tickets.map(t => t.paymentId).filter(id => id))];
+      orderIds = [...new Set(tickets.map(t => t.orderId).filter(id => id))];
+    }
+
+    // Venue payment breakdown
+    const totalCost = concert.venueBooking?.totalVenueCost || 0;
+    const commissionPercentage = concert.venueBooking?.adminCommission?.percentage || 0;
+    const storedCommission = concert.venueBooking?.adminCommission?.advanceAmount;
+    const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
+      ? storedCommission
+      : (concert.venueBooking?.isPaid && commissionPercentage > 0
+          ? (totalCost * commissionPercentage) / 100
+          : 0);
+    const artistPaidDirect = concert.venueBooking?.amountPaidByArtist || 0;
+    const totalArtistPaid = commissionPaid + artistPaidDirect;
+    const remainingBalance = Math.max(totalCost - totalArtistPaid, 0);
+
+    let paymentStatus = 'Unpaid';
+    let paymentBadge = 'bg-secondary';
+    if (totalArtistPaid >= totalCost && totalCost > 0) {
+      paymentStatus = 'Full Paid';
+      paymentBadge = 'bg-success';
+    } else if (totalArtistPaid > 0) {
+      paymentStatus = 'Partial Paid';
+      paymentBadge = 'bg-warning text-dark';
+    }
+
     res.render('admin/concert-details-new', {
       layout: 'admin',
       currentPath: '/admin/concerts',
       title: 'Concert Details',
       concert,
-      ticketCount
+      ticketCount,
+      paymentIds,
+      orderIds,
+      venueFinancials: {
+        totalCost,
+        commissionPercentage,
+        commissionPaid,
+        artistPaidDirect,
+        totalArtistPaid,
+        remainingBalance,
+        paymentStatus,
+        paymentBadge
+      }
     });
   } catch (error) {
     console.error('Concert details error:', error);

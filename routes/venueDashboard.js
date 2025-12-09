@@ -77,25 +77,34 @@ router.get('/', isLoggedIn, async (req, res) => {
 router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, res) => {
   try {
     const venue = req.venue;
-    const { month, year } = req.query;
+    const { month, year, viewAll } = req.query;
     
     // Current date for filtering
     const currentDate = new Date();
     const targetYear = year ? parseInt(year) : currentDate.getFullYear();
     const targetMonth = month ? parseInt(month) - 1 : currentDate.getMonth();
     
-    // Get start and end of the month
-    const startOfMonth = new Date(targetYear, targetMonth, 1);
-    const endOfMonth = new Date(targetYear, targetMonth + 1, 0);
-
-    // Get website bookings
-    const websiteBookings = await Concert.find({
-      venue: venue._id,
-      date: {
+    // Date filter - either all time or specific month
+    let dateFilter = {};
+    if (viewAll !== 'true') {
+      // Get start and end of the month
+      const startOfMonth = new Date(targetYear, targetMonth, 1);
+      const endOfMonth = new Date(targetYear, targetMonth + 1, 0);
+      dateFilter = {
         $gte: startOfMonth,
         $lte: endOfMonth
-      }
-    })
+      };
+    }
+
+    // Get website bookings
+    const websiteBookingsQuery = {
+      venue: venue._id
+    };
+    if (viewAll !== 'true') {
+      websiteBookingsQuery.date = dateFilter;
+    }
+
+    const websiteBookings = await Concert.find(websiteBookingsQuery)
     .populate({
       path: 'artist',
       populate: { path: 'user', select: 'name email' }
@@ -104,14 +113,15 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
     .lean();
 
     // Get external bookings
-    const externalBookings = await VenueExternalBooking.find({
+    const externalBookingsQuery = {
       venue: venue._id,
-      date: {
-        $gte: startOfMonth,
-        $lte: endOfMonth
-      },
       status: 'active'
-    })
+    };
+    if (viewAll !== 'true') {
+      externalBookingsQuery.date = dateFilter;
+    }
+
+    const externalBookings = await VenueExternalBooking.find(externalBookingsQuery)
     .sort({ date: 1, startTime: 1 })
     .lean();
 
@@ -170,7 +180,6 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
       upcomingBookings: allBookings.filter(b => new Date(b.date) >= new Date()).length,
       pendingApprovals: websiteBookings.filter(b => b.status === 'pending').length
     };
-
     res.render('venues/dashboard', {
       title: `${venue.name} - Dashboard`,
       venue,
@@ -180,6 +189,7 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
       stats,
       currentMonth: targetMonth + 1,
       currentYear: targetYear,
+      viewAll: viewAll === 'true',
       user: req.session.user
     });
   } catch (error) {
@@ -380,6 +390,36 @@ router.get('/:venueId/external-bookings', isLoggedIn, checkVenueOwnership, async
   } catch (error) {
     console.error('Error loading external bookings:', error);
     req.flash('error', 'Failed to load external bookings');
+    res.redirect(`/venue-dashboard/${req.params.venueId}/dashboard`);
+  }
+});
+
+// GET /venue-dashboard/:venueId/external-bookings/:bookingId - View/Edit external booking details
+router.get('/:venueId/external-bookings/:bookingId', isLoggedIn, checkVenueOwnership, async (req, res) => {
+  try {
+    const venue = req.venue;
+    const { bookingId } = req.params;
+
+    // Get the specific external booking
+    const booking = await VenueExternalBooking.findOne({
+      _id: bookingId,
+      venue: venue._id
+    }).lean();
+
+    if (!booking) {
+      req.flash('error', 'External booking not found');
+      return res.redirect(`/venue-dashboard/${venue._id}/dashboard`);
+    }
+
+    res.render('venues/external-booking-details', {
+      title: `External Booking Details - ${venue.name}`,
+      venue,
+      booking,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Error loading external booking details:', error);
+    req.flash('error', 'Failed to load booking details');
     res.redirect(`/venue-dashboard/${req.params.venueId}/dashboard`);
   }
 });

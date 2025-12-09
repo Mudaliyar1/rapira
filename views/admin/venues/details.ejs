@@ -18,7 +18,7 @@
   <div class="col-lg-8">
     <div class="card mb-4">
       <div class="card-header">
-        <h5 class="card-title mb-0">Venue Information</h5>
+        <h5 class="card-title mb-0" style="color: white !important;">Venue Information</h5>
       </div>
       <div class="card-body">
         <div class="row">
@@ -78,7 +78,7 @@
             <h6 class="text-muted mb-2">Facilities</h6>
             <div class="d-flex flex-wrap gap-1">
               <% venue.facilities.forEach(facility => { %>
-                <span class="badge bg-light text-dark"><%= facility %></span>
+                <span class="badge bg-light" style="color: black !important;"><%= facility %></span>
               <% }); %>
             </div>
           </div>
@@ -106,7 +106,7 @@
     <% if (venue.contactPerson && (venue.contactPerson.name || venue.contactPerson.phone || venue.contactPerson.email)) { %>
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="card-title mb-0">Contact Information</h5>
+          <h5 class="card-title mb-0" style="color: white !important;">Contact Information</h5>
         </div>
         <div class="card-body">
           <div class="row">
@@ -137,31 +137,17 @@
     <% if (venue.images && venue.images.length > 0) { %>
       <div class="card">
         <div class="card-header">
-          <h5 class="card-title mb-0">Venue Images</h5>
+          <h5 class="card-title mb-0" style="color: white !important;">Venue Images</h5>
         </div>
         <div class="card-body">
           <div class="row g-3">
             <% venue.images.forEach((image, index) => { %>
               <div class="col-md-4">
                 <div class="card">
-                  <img src="<%= image %>" class="card-img-top" style="height: 200px; object-fit: cover;" 
-                       alt="Venue Image <%= index + 1 %>" data-bs-toggle="modal" data-bs-target="#imageModal<%= index %>"
-                       style="cursor: pointer;">
-                </div>
-                
-                <!-- Image Modal -->
-                <div class="modal fade" id="imageModal<%= index %>" tabindex="-1">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title"><%= venue.name %> - Image <%= index + 1 %></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body text-center">
-                        <img src="<%= image %>" class="img-fluid" alt="Venue Image <%= index + 1 %>">
-                      </div>
-                    </div>
-                  </div>
+                  <a href="/admin/venues/<%= venue._id %>/gallery?index=<%= index %>">
+                    <img src="<%= image %>" class="card-img-top" style="height: 200px; object-fit: cover; cursor: pointer;" 
+                         alt="Venue Image <%= index + 1 %>">
+                  </a>
                 </div>
               </div>
             <% }); %>
@@ -176,7 +162,7 @@
     <!-- Status Card -->
     <div class="card mb-4">
       <div class="card-header">
-        <h5 class="card-title mb-0">Status</h5>
+        <h5 class="card-title mb-0" style="color: white !important;">Status</h5>
       </div>
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -214,7 +200,7 @@
     <!-- Statistics -->
     <div class="card mb-4">
       <div class="card-header">
-        <h5 class="card-title mb-0">Statistics</h5>
+        <h5 class="card-title mb-0" style="color: white !important;">Statistics</h5>
       </div>
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -227,7 +213,7 @@
     <!-- Management Info -->
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Management Info</h5>
+        <h5 class="card-title mb-0" style="color: white !important;">Management Info</h5>
       </div>
       <div class="card-body">
         <div class="mb-3">

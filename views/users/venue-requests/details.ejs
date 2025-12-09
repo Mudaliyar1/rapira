@@ -37,10 +37,6 @@
                 <span class="badge bg-success fs-6">
                   <i class="bi bi-check-circle me-1"></i>Approved
                 </span>
-              <% } else if (venueRequest.status === 'rejected') { %>
-                <span class="badge bg-danger fs-6">
-                  <i class="bi bi-x-circle me-1"></i>Rejected
-                </span>
               <% } %>
             </div>
           </div>
@@ -337,10 +333,9 @@
             </h5>
           </div>
           <div class="card-body">
-            <button type="button" class="btn btn-danger w-100" 
-                    onclick="cancelRequest('<%= venueRequest._id %>', '<%= venueRequest.name %>')">
+            <a href="/users/venue-requests/<%= venueRequest._id %>/cancel" class="btn btn-danger w-100">
               <i class="bi bi-x me-1"></i> Cancel Request
-            </button>
+            </a>
           </div>
         </div>
       <% } %>
@@ -348,29 +343,8 @@
   </div>
 </div>
 
-<!-- Cancel Request Modal -->
-<% if (venueRequest.status === 'pending') { %>
-  <div class="modal fade" id="cancelModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Cancel Venue Request</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to cancel this venue request?</p>
-          <p class="text-muted">This action cannot be undone and you will need to submit a new request if you want to register this venue later.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Request</button>
-          <form id="cancelForm" method="POST" style="display: inline;">
-            <button type="submit" class="btn btn-danger">Cancel Request</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-<% } %>
+
+<!-- No modal needed; cancel handled on dedicated page -->
 
 <style>
 .timeline {
@@ -413,9 +387,5 @@
 </style>
 
 <script>
-function cancelRequest(requestId, venueName) {
-  document.getElementById('cancelForm').action = `/users/venue-requests/${requestId}/cancel`;
-  const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
-  modal.show();
-}
+// No additional JS needed for cancel link
 </script>

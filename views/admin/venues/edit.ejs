@@ -90,6 +90,20 @@
 
             <div class="col-md-12">
               <h6 class="mb-3">Hourly Rates with Commission (Hours 1-24)</h6>
+              
+              <!-- Commission Settings Info -->
+              <% if (!allowUserCommissionEdit) { %>
+                <div class="alert alert-warning mb-3">
+                  <i class="bi bi-lock me-2"></i>
+                  <strong>Commission Locked:</strong> Admin has disabled user commission editing. All commission percentages are set to <strong><%= defaultCommissionPercentage %>%</strong> (admin default).
+                </div>
+              <% } else { %>
+                <div class="alert alert-info mb-3">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <strong>Commission Enabled:</strong> Venues can set their own commission percentages. Default is <strong><%= defaultCommissionPercentage %>%</strong>.
+                </div>
+              <% } %>
+
               <div class="card border-info mb-3">
                 <div class="card-body">
                   <div class="row g-2 mb-3">
@@ -107,8 +121,11 @@
                         const rateObj = venue.pricing.hourlyRates.find(r => r.hours === hour);
                         if (rateObj) {
                           currentRate = rateObj.rate || '';
-                          currentCommission = rateObj.commissionPercentage || '';
+                          // If user edit is disabled, show admin default
+                          currentCommission = !allowUserCommissionEdit ? defaultCommissionPercentage : (rateObj.commissionPercentage || defaultCommissionPercentage);
                         }
+                      } else {
+                        currentCommission = defaultCommissionPercentage;
                       }
                     %>
                     <div class="row g-2 mb-2">
@@ -126,14 +143,15 @@
                       </div>
                       <div class="col-md-3">
                         <input type="number" 
-                               class="form-control form-control-sm" 
+                               class="form-control form-control-sm commission-input" 
                                name="commissionPercentage_<%= hour %>" 
                                min="0" 
                                max="100"
                                step="0.1" 
-                               placeholder="10"
+                               placeholder="<%= defaultCommissionPercentage %>"
                                value="<%= currentCommission %>"
-                               title="Commission percentage for <%= hour %> hour booking">
+                               <%= !allowUserCommissionEdit ? 'disabled readonly' : '' %>
+                               title="<%= allowUserCommissionEdit ? 'Commission percentage for ' + hour + ' hour booking' : 'Admin has locked commission editing' %>">
                       </div>
                     </div>
                   <% } %>
@@ -142,6 +160,9 @@
                     <i class="bi bi-info-circle"></i> 
                     Only hours with both rate and commission percentage will be available for booking.
                     Leave both fields empty to disable that hour option.
+                    <% if (!allowUserCommissionEdit) { %>
+                      <br><strong>Commission percentages are locked by admin.</strong>
+                    <% } %>
                   </small>
                 </div>
               </div>

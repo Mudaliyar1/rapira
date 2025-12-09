@@ -1,0 +1,212 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <% const filterParams = []; %>
+  <% if (filters && filters.concertId) { filterParams.push(`concertId=${encodeURIComponent(filters.concertId)}`); } %>
+  <% if (filters && filters.startDate) { filterParams.push(`startDate=${encodeURIComponent(filters.startDate)}`); } %>
+  <% if (filters && filters.endDate) { filterParams.push(`endDate=${encodeURIComponent(filters.endDate)}`); } %>
+  <% const returnTo = `/users/venues/${venue._id}/revenue-analytics${filterParams.length ? '?' + filterParams.join('&') : ''}`; %>
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+          <li class="breadcrumb-item"><a href="/users/profile">Profile</a></li>
+          <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+          <li class="breadcrumb-item"><a href="/venue-dashboard"><%= venue.name %></a></li>
+          <li class="breadcrumb-item active">Revenue Analytics</li>
+        </ol>
+      </nav>
+      <h2 class="text-dark mb-1">
+        <i class="bi bi-graph-up me-2"></i>Revenue Analytics
+      </h2>
+      <p class="text-muted mb-0">Track earnings from all approved bookings</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+      <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-primary text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-calendar-event-fill fs-1 mb-2"></i>
+          <h5 class="card-title">Total Bookings</h5>
+          <p class="card-text fs-4"><%= analytics.totalBookings %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-success text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-currency-rupee fs-1 mb-2"></i>
+          <h5 class="card-title">Total Venue Cost</h5>
+          <p class="card-text fs-4">₹<%= analytics.totalVenueCost.toLocaleString('en-IN') %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-info text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-check-circle-fill fs-1 mb-2"></i>
+          <h5 class="card-title">Artist Paid</h5>
+          <p class="card-text fs-4">✓ ₹<%= analytics.totalArtistPaid.toLocaleString('en-IN') %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm bg-warning text-white">
+        <div class="card-body text-center">
+          <i class="bi bi-exclamation-circle-fill fs-1 mb-2"></i>
+          <h5 class="card-title">Pending</h5>
+          <p class="card-text fs-4">⚠ ₹<%= analytics.totalPending.toLocaleString('en-IN') %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <form class="card shadow-sm p-3" method="get" action="/users/venues/<%= venue._id %>/revenue-analytics">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-5 col-md-6">
+            <label class="form-label fw-semibold">Concert</label>
+            <select class="form-select" name="concertId">
+              <option value="">All concerts</option>
+              <% availableConcerts.forEach(concert => { %>
+                <option value="<%= concert.id %>" <%= (filters && filters.concertId === concert.id.toString()) ? 'selected' : '' %>>
+                  <%= concert.title %> — <%= new Date(concert.date).toLocaleDateString('en-IN') %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label fw-semibold">Start date</label>
+            <input type="date" class="form-control" name="startDate" value="<%= filters?.startDate || '' %>">
+          </div>
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label fw-semibold">End date</label>
+            <input type="date" class="form-control" name="endDate" value="<%= filters?.endDate || '' %>">
+          </div>
+          <div class="col-lg-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Apply filters</button>
+            <a class="btn btn-outline-secondary flex-fill" href="/users/venues/<%= venue._id %>/revenue-analytics"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detailed Bookings Table -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="bi bi-table me-2"></i>Booking Revenue Details
+            <span class="badge bg-secondary ms-2"><%= analytics.bookingDetails.length %> booking(s)</span>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if (analytics.bookingDetails.length === 0) { %>
+            <div class="text-center py-5">
+              <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+              <h4 class="text-muted">No Bookings Found</h4>
+              <p class="text-muted">No approved bookings found for this venue.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Event Details</th>
+                    <th>Artist</th>
+                    <th>Date</th>
+                    <th>Total Cost</th>
+                    <th>Artist Paid</th>
+                    <th>Pending</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% analytics.bookingDetails.forEach(booking => { %>
+                    <tr>
+                      <td>
+                        <div>
+                          <h6 class="mb-0" style="color: #000000 !important;"><%= booking.title %></h6>
+                          <small class="text-muted">ID: <%= booking.id.toString().slice(-8).toUpperCase() %></small>
+                        </div>
+                      </td>
+                      <td><%= booking.artistName %></td>
+                      <td>
+                        <div>
+                          <div class="fw-bold" style="color: #000000;"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge bg-light text-dark">₹<%= booking.totalCost.toLocaleString('en-IN') %></span>
+                      </td>
+                      <td>
+                        <span class="badge bg-success">✓ ₹<%= booking.artistPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                      </td>
+                      <td>
+                        <% if (booking.pending > 0) { %>
+                          <span class="badge bg-warning">⚠ ₹<%= booking.pending.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                        <% } else { %>
+                          <span class="badge bg-light text-dark">₹0.00</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (booking.paymentStatus === 'Full Paid') { %>
+                          <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i><%= booking.paymentStatus %></span>
+                        <% } else if (booking.paymentStatus === 'Partial Paid') { %>
+                          <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-circle me-1"></i><%= booking.paymentStatus %></span>
+                        <% } else { %>
+                          <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i><%= booking.paymentStatus %></span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a class="btn btn-sm btn-outline-primary" 
+                          href="/users/venues/bookings/<%= booking.id %>/edit-payment?returnTo=<%= encodeURIComponent(returnTo) %>"
+                          title="Edit Payment">
+                          <i class="bi bi-pencil-square"></i> Edit Payment
+                        </a>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.table-hover tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.5em 0.8em;
+}
+
+.card {
+  border: none;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+</style>

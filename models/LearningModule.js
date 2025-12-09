@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+const ContentItemSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['video', 'text', 'pdf', 'link', 'image'],
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  }
+}, { _id: false });
+
 const LearningModuleSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -9,14 +21,16 @@ const LearningModuleSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  contentItems: [ContentItemSchema],
+  // Keep contentType for backward compatibility (first item's type)
   contentType: {
     type: String,
-    enum: ['video', 'text', 'pdf', 'link'],
-    required: true
+    enum: ['video', 'text', 'pdf', 'link', 'image'],
+    default: 'text'
   },
+  // Keep content for backward compatibility (first item's content)
   content: {
-    type: String,
-    required: true
+    type: String
   },
   thumbnailImage: {
     type: String,

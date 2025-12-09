@@ -26,6 +26,8 @@
                     <i class="bi bi-file-pdf me-1"></i> PDF
                   <% } else if (module.contentType === 'link') { %>
                     <i class="bi bi-link me-1"></i> External Link
+                  <% } else if (module.contentType === 'image') { %>
+                    <i class="bi bi-image me-1"></i> Image
                   <% } %>
                 </span>
                 <% if (module.isRequired) { %>
@@ -44,55 +46,92 @@
             </div>
 
             <div class="module-content mb-5">
-              <% if (module.contentType === 'video') { %>
-                <div class="ratio ratio-16x9 mb-4">
-                  <% if (module.content.includes('youtube.com') || module.content.includes('youtu.be')) { %>
-                    <%
-                      let videoUrl = module.content;
-                      // Handle youtube.com/watch?v= format
-                      if (videoUrl.includes('youtube.com/watch?v=')) {
-                        videoUrl = videoUrl.replace('watch?v=', 'embed/');
-                      }
-                      // Handle youtu.be/ format
-                      else if (videoUrl.includes('youtu.be/')) {
-                        const videoId = videoUrl.split('youtu.be/')[1];
-                        videoUrl = `https://www.youtube.com/embed/${videoId}`;
-                      }
-                      // Add autoplay=0 and related=0 parameters
-                      if (videoUrl.includes('?')) {
-                        videoUrl += '&autoplay=0&rel=0';
-                      } else {
-                        videoUrl += '?autoplay=0&rel=0';
-                      }
-                    %>
-                    <iframe src="<%= videoUrl %>" title="<%= module.title %>" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                  <% } else { %>
-                    <video controls>
-                      <source src="<%= module.content %>" type="video/mp4">
-                      Your browser does not support the video tag.
-                    </video>
+              <% 
+                // Display all content items if they exist
+                const itemsToDisplay = (module.contentItems && module.contentItems.length > 0) ? module.contentItems : 
+                                      [{type: module.contentType || 'text', content: module.content || ''}];
+              %>
+
+              <% itemsToDisplay.forEach((item, index) => { %>
+                <div class="content-item mb-5">
+                  <% if (itemsToDisplay.length > 1) { %>
+                    <h5 class="text-white mb-3">
+                      <span class="badge" style="background-color: <%= item.type === 'video' ? '#3b82f6' : item.type === 'pdf' ? '#ef4444' : item.type === 'image' ? '#8b5cf6' : item.type === 'link' ? '#06b6d4' : '#10b981' %>">
+                        <% if (item.type === 'video') { %>
+                          <i class="bi bi-camera-video me-1"></i> Video
+                        <% } else if (item.type === 'text') { %>
+                          <i class="bi bi-file-text me-1"></i> Text
+                        <% } else if (item.type === 'pdf') { %>
+                          <i class="bi bi-file-pdf me-1"></i> PDF
+                        <% } else if (item.type === 'link') { %>
+                          <i class="bi bi-link me-1"></i> External Link
+                        <% } else if (item.type === 'image') { %>
+                          <i class="bi bi-image me-1"></i> Image
+                        <% } %>
+                      </span>
+                    </h5>
+                  <% } %>
+
+                  <% if (item.type === 'video') { %>
+                    <div class="ratio ratio-16x9 mb-4">
+                      <% if (item.content.includes('youtube.com') || item.content.includes('youtu.be')) { %>
+                        <%
+                          let videoUrl = item.content;
+                          // Handle youtube.com/watch?v= format
+                          if (videoUrl.includes('youtube.com/watch?v=')) {
+                            videoUrl = videoUrl.replace('watch?v=', 'embed/');
+                          }
+                          // Handle youtu.be/ format
+                          else if (videoUrl.includes('youtu.be/')) {
+                            const videoId = videoUrl.split('youtu.be/')[1];
+                            videoUrl = `https://www.youtube.com/embed/${videoId}`;
+                          }
+                          // Add autoplay=0 and related=0 parameters
+                          if (videoUrl.includes('?')) {
+                            videoUrl += '&autoplay=0&rel=0';
+                          } else {
+                            videoUrl += '?autoplay=0&rel=0';
+                          }
+                        %>
+                        <iframe src="<%= videoUrl %>" title="<%= module.title %>" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      <% } else { %>
+                        <video controls>
+                          <source src="<%= item.content %>" type="video/mp4">
+                          Your browser does not support the video tag.
+                        </video>
+                      <% } %>
+                    </div>
+                  <% } else if (item.type === 'text') { %>
+                    <div class="text-white">
+                      <%- item.content %>
+                    </div>
+                  <% } else if (item.type === 'pdf') { %>
+                    <div class="ratio ratio-16x9 mb-4">
+                      <iframe src="<%= item.content %>" title="<%= module.title %>"></iframe>
+                    </div>
+                    <div class="d-grid">
+                      <a href="<%= item.content %>" class="btn btn-outline-light" target="_blank">
+                        <i class="bi bi-file-pdf me-2"></i> Open PDF in New Tab
+                      </a>
+                    </div>
+                  <% } else if (item.type === 'link') { %>
+                    <div class="d-grid">
+                      <a href="<%= item.content %>" class="btn btn-primary" target="_blank">
+                        <i class="bi bi-box-arrow-up-right me-2"></i> Open External Resource
+                      </a>
+                    </div>
+                  <% } else if (item.type === 'image') { %>
+                    <div class="text-center mb-4">
+                      <img src="<%= item.content %>" alt="<%= module.title %>" class="img-fluid rounded" style="max-height: 70vh; object-fit: contain;">
+                    </div>
+                    <div class="d-grid">
+                      <a href="<%= item.content %>" class="btn btn-outline-light" target="_blank">
+                        <i class="bi bi-image me-2"></i> Open Full Image
+                      </a>
+                    </div>
                   <% } %>
                 </div>
-              <% } else if (module.contentType === 'text') { %>
-                <div class="text-white">
-                  <%- module.content %>
-                </div>
-              <% } else if (module.contentType === 'pdf') { %>
-                <div class="ratio ratio-16x9 mb-4">
-                  <iframe src="<%= module.content %>" title="<%= module.title %>"></iframe>
-                </div>
-                <div class="d-grid">
-                  <a href="<%= module.content %>" class="btn btn-outline-light" target="_blank">
-                    <i class="bi bi-file-pdf me-2"></i> Open PDF in New Tab
-                  </a>
-                </div>
-              <% } else if (module.contentType === 'link') { %>
-                <div class="d-grid">
-                  <a href="<%= module.content %>" class="btn btn-primary" target="_blank">
-                    <i class="bi bi-box-arrow-up-right me-2"></i> Open External Resource
-                  </a>
-                </div>
-              <% } %>
+              <% }); %>
             </div>
 
             <% if (!progress || !progress.completed) { %>

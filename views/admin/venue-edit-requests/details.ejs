@@ -98,12 +98,12 @@
   <!-- Request Details -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">
-            <i class="bi bi-info-circle me-2"></i>Request Details
-          </h5>
-        </div>
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0" style="color: white !important;">
+              <i class="bi bi-info-circle me-2"></i>Request Details
+            </h5>
+          </div>
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
@@ -143,13 +143,15 @@
     </div>
   </div>
 
+  <!-- Debug Info Removed -->
+
   <!-- Changed Fields Comparison -->
   <% if (editRequest.changedFields && editRequest.changedFields.length > 0) { %>
     <div class="row mb-4">
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h5 class="mb-0">
+            <h5 class="mb-0" style="color: white !important;">
               <i class="bi bi-arrow-left-right me-2"></i>Proposed Changes
               <span class="badge bg-primary ms-2"><%= editRequest.changedFields.length %></span>
             </h5>
@@ -185,11 +187,14 @@
                               <% if (editRequest.originalData[field].hourlyRates && editRequest.originalData[field].hourlyRates.length > 0) { %>
                                 <strong>Hourly Rates:</strong><br>
                                 <% editRequest.originalData[field].hourlyRates.forEach(rate => { %>
-                                  <%= rate.hours %>h: ₹<%= rate.price %><br>
+                                  <%= rate.hours %>h: ₹<%= rate.rate %><br>
                                 <% }); %>
                               <% } %>
-                              <% if (editRequest.originalData[field].dailyRate) { %>
-                                <strong>Daily:</strong> ₹<%= editRequest.originalData[field].dailyRate %><br>
+                              <% if (editRequest.originalData[field].adminCommission) { %>
+                                <strong>Admin Commission:</strong> <%= editRequest.originalData[field].adminCommission.percentage %>%<br>
+                              <% } %>
+                              <% if (editRequest.originalData[field].minimumHours) { %>
+                                <strong>Minimum Hours:</strong> <%= editRequest.originalData[field].minimumHours %><br>
                               <% } %>
                             </div>
                           <% } else { %>
@@ -202,6 +207,14 @@
                             <% }); %>
                           <% } else { %>
                             <span class="text-muted">No amenities</span>
+                          <% } %>
+                        <% } else if (field === 'googleMapsLink') { %>
+                          <% if (editRequest.originalData[field] && editRequest.originalData[field].trim() !== '') { %>
+                            <a href="<%= editRequest.originalData[field] %>" target="_blank" class="text-primary">
+                              <i class="bi bi-geo-alt-fill me-1"></i><%= editRequest.originalData[field] %>
+                            </a>
+                          <% } else { %>
+                            <span class="text-muted">Not set</span>
                           <% } %>
                         <% } else { %>
                           <%= editRequest.originalData[field] || 'Not set' %>
@@ -224,11 +237,14 @@
                               <% if (editRequest.requestedChanges[field].hourlyRates && editRequest.requestedChanges[field].hourlyRates.length > 0) { %>
                                 <strong>Hourly Rates:</strong><br>
                                 <% editRequest.requestedChanges[field].hourlyRates.forEach(rate => { %>
-                                  <%= rate.hours %>h: ₹<%= rate.price %><br>
+                                  <%= rate.hours %>h: ₹<%= rate.rate %><br>
                                 <% }); %>
                               <% } %>
-                              <% if (editRequest.requestedChanges[field].dailyRate) { %>
-                                <strong>Daily:</strong> ₹<%= editRequest.requestedChanges[field].dailyRate %><br>
+                              <% if (editRequest.requestedChanges[field].adminCommission) { %>
+                                <strong>Admin Commission:</strong> <span class="text-success"><%= editRequest.requestedChanges[field].adminCommission.percentage %>%</span><br>
+                              <% } %>
+                              <% if (editRequest.requestedChanges[field].minimumHours) { %>
+                                <strong>Minimum Hours:</strong> <%= editRequest.requestedChanges[field].minimumHours %><br>
                               <% } %>
                             </div>
                           <% } else { %>
@@ -241,6 +257,15 @@
                             <% }); %>
                           <% } else { %>
                             <span class="text-muted">No amenities</span>
+                          <% } %>
+                        <% } else if (field === 'googleMapsLink') { %>
+                          <% if (editRequest.requestedChanges[field] && editRequest.requestedChanges[field].trim() !== '') { %>
+                            <a href="<%= editRequest.requestedChanges[field] %>" target="_blank" class="text-success fw-bold">
+                              <i class="bi bi-geo-alt-fill me-1"></i><%= editRequest.requestedChanges[field] %>
+                              <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                          <% } else { %>
+                            <span class="text-muted">Not set</span>
                           <% } %>
                         <% } else { %>
                           <span class="text-success"><%= editRequest.requestedChanges[field] || 'Not set' %></span>
@@ -288,7 +313,7 @@
       <div class="col-12">
         <div class="card">
           <div class="card-header">
-            <h5 class="mb-0">
+            <h5 class="mb-0" style="color: white !important;">
               <i class="bi bi-trash me-2"></i>Images to Remove
               <span class="badge bg-warning ms-2"><%= editRequest.imagesToRemove.length %></span>
             </h5>

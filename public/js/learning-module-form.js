@@ -1,57 +1,25 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const contentTypeSelect = document.getElementById('contentType');
-  const textContentInput = document.getElementById('textContentInput');
-  const urlContentInput = document.getElementById('urlContentInput');
-  const textContent = document.getElementById('textContent');
-  const urlContent = document.getElementById('urlContent');
   const moduleForm = document.querySelector('form[action*="/learning/admin"]');
 
-  if (contentTypeSelect) {
-    // Initialize content inputs based on default selection
-    updateContentInputs();
-
-    // Add event listener for changes
-    contentTypeSelect.addEventListener('change', updateContentInputs);
-  }
-
-  // Add form submit handler to ensure only one content field is submitted
+  // Validate that at least one content field is filled
   if (moduleForm) {
     moduleForm.addEventListener('submit', function(e) {
-      const selectedType = contentTypeSelect.value;
+      const textContent = document.getElementById('textContent')?.value.trim() || '';
+      const videoUrl = document.getElementById('videoUrl')?.value.trim() || '';
+      const videoFile = document.getElementById('videoFile')?.files.length || 0;
+      const pdfUrl = document.getElementById('pdfUrl')?.value.trim() || '';
+      const pdfFile = document.getElementById('pdfFile')?.files.length || 0;
+      const imageUrl = document.getElementById('imageUrl')?.value.trim() || '';
+      const imageFile = document.getElementById('imageFile')?.files.length || 0;
+      const externalLink = document.getElementById('externalLink')?.value.trim() || '';
 
-      // Disable the inactive input field so it's not submitted
-      if (selectedType === 'text') {
-        if (urlContent) urlContent.disabled = true;
-      } else {
-        if (textContent) textContent.disabled = true;
+      const hasContent = textContent || videoUrl || videoFile > 0 || pdfUrl || pdfFile > 0 || imageUrl || imageFile > 0 || externalLink;
+
+      if (!hasContent) {
+        e.preventDefault();
+        alert('Please provide content in at least one format (text, URL, or file upload).');
+        return;
       }
     });
-  }
-
-  function updateContentInputs() {
-    const selectedType = contentTypeSelect.value;
-
-    console.log('Selected content type:', selectedType);
-
-    // Reset all inputs
-    if (textContent) {
-      textContent.disabled = false; // Re-enable for editing
-      textContent.removeAttribute('required');
-    }
-    if (urlContent) {
-      urlContent.disabled = false; // Re-enable for editing
-      urlContent.removeAttribute('required');
-    }
-
-    // Show appropriate input based on selection
-    if (selectedType === 'text') {
-      if (textContentInput) textContentInput.style.display = 'block';
-      if (urlContentInput) urlContentInput.style.display = 'none';
-      if (textContent) textContent.setAttribute('required', 'required');
-    } else if (selectedType === 'video' || selectedType === 'pdf' || selectedType === 'link') {
-      if (textContentInput) textContentInput.style.display = 'none';
-      if (urlContentInput) urlContentInput.style.display = 'block';
-      if (urlContent) urlContent.setAttribute('required', 'required');
-    }
   }
 });

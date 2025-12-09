@@ -50,7 +50,7 @@
               <option value="">Select a venue</option>
               <% if (venues && venues.length > 0) { %>
                 <% venues.forEach(venue => { %>
-                  <option value="<%= venue._id %>" 
+                    <option value="<%= venue._id %>" 
                           data-city="<%= venue.city %>"
                           data-capacity="<%= venue.capacity || 0 %>"
                           data-hourly-rates='<%- JSON.stringify(venue.pricing && venue.pricing.hourlyRates ? venue.pricing.hourlyRates : []) %>'
@@ -242,10 +242,12 @@
             <div class="row">
               <div class="col-md-6">
                 <label for="price" class="form-label">Ticket Price (₹) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" id="price" name="price" min="1" step="1" placeholder="Enter price" required>
+                <input type="number" class="form-control" id="price" name="price" min="0" step="1" placeholder="Enter price" required>
                 <div class="form-text">
+                  <small><strong>Venue Suggestions:</strong></small><br>
                   Minimum: ₹<span id="minTicketPrice">0</span> | 
                   Suggested: ₹<span id="suggestedTicketPrice">100</span>
+                  <br><small class="text-muted">You can set any price you prefer</small>
                 </div>
               </div>
               <div class="col-md-6">
@@ -349,6 +351,7 @@
     let selectedVenueHourlyCommission = {}; // Store commission data for selected hour
     let currentVenue = null; // Store current venue data
     let currentVenueCapacity = 0;
+    let currentVenueMinimumHours = 1; // Enforce venue-specific minimum hours
     
     // Get current admin commission percentage from server
     const serverDataEl = document.getElementById('serverData');
@@ -381,6 +384,7 @@
         };
         
         currentVenueCapacity = capacity;
+        currentVenueMinimumHours = minimumHours;
         
         // Parse hourly rates
         console.log('=== VENUE RATES PARSING ===');
@@ -499,16 +503,15 @@
         // Clear previous commission data
         selectedVenueHourlyCommission = {};
         
-        // Update ticket pricing information
+        // Update ticket pricing information (for display only - these are suggestions)
         currentVenueMinTicketPrice = minTicketPrice;
         minPriceSpan.textContent = minTicketPrice;
         suggestedPriceSpan.textContent = suggestedTicketPrice;
         
-        // Set minimum ticket price validation
-        ticketPriceInput.min = minTicketPrice;
-        if (parseFloat(ticketPriceInput.value || 0) < minTicketPrice) {
-          ticketPriceInput.value = minTicketPrice;
-        }
+        // Remove minimum price enforcement - artists can set any price they want
+        // Venue suggestions are just informational
+        ticketPriceInput.min = '0'; // No minimum enforcement
+        ticketPriceInput.removeAttribute('required'); // Optional
         
         // Populate booking hours dropdown with available rates only
         populateBookingHoursDropdown();
@@ -556,14 +559,16 @@
       console.log('Hourly rates array:', currentVenue && currentVenue.pricing ? currentVenue.pricing.hourlyRates : null);
       
       if (currentVenue && currentVenue.pricing && currentVenue.pricing.hourlyRates && currentVenue.pricing.hourlyRates.length > 0) {
-        // Sort rates by hour count
+        // Sort rates by hour count and enforce venue minimum hours
         const sortedRates = [...currentVenue.pricing.hourlyRates].sort((a, b) => a.hours - b.hours);
+        const filteredRates = sortedRates.filter(rateObj => rateObj.hours >= currentVenueMinimumHours);
         console.log('Sorted rates:', sortedRates);
+        console.log('Filtered rates (respecting minimum hours):', filteredRates);
         
         let validOptionsCount = 0;
         
         // Add options for each available hour rate WITH commission
-        sortedRates.forEach(rateObj => {
+        filteredRates.forEach(rateObj => {
           console.log('Processing rate object:', rateObj);
           
           // Only add if has rate, commission percentage, and commission amount
@@ -586,10 +591,10 @@
         console.log(`Total valid options added: ${validOptionsCount}`);
         
         // Auto-select first available option
-        if (sortedRates.length > 0 && validOptionsCount > 0) {
-          bookingHours.value = sortedRates[0].hours;
+        if (filteredRates.length > 0 && validOptionsCount > 0) {
+          bookingHours.value = filteredRates[0].hours;
           calculateTotalCost();
-          console.log('Auto-selected first option:', sortedRates[0].hours, 'hours');
+          console.log('Auto-selected first option:', filteredRates[0].hours, 'hours');
         }
         
         // If only one option is available, show a helpful message
@@ -622,7 +627,9 @@
         // Add informational option for no rates
         const noRatesOption = document.createElement('option');
         noRatesOption.disabled = true;
-        noRatesOption.textContent = 'No booking rates configured - Contact admin';
+        noRatesOption.textContent = filteredRates.length === 0 && currentVenueMinimumHours > 1
+          ? `No rates meet the minimum of ${currentVenueMinimumHours} hour(s) - contact admin`
+          : 'No booking rates configured - Contact admin';
         noRatesOption.style.fontStyle = 'italic';
         noRatesOption.style.color = '#dc3545';
         bookingHours.appendChild(noRatesOption);
@@ -631,7 +638,17 @@
     }
 
     function calculateTotalCost() {
-      const hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      let hours = parseInt(bookingHours ? bookingHours.value : 1) || 1;
+      // Enforce venue minimum hours on selection
+      if (hours < currentVenueMinimumHours) {
+        const minOption = Array.from(bookingHours.options).find(opt => parseInt(opt.value) >= currentVenueMinimumHours);
+        if (minOption) {
+          bookingHours.value = minOption.value;
+          hours = parseInt(minOption.value);
+        } else {
+          hours = currentVenueMinimumHours;
+        }
+      }
       let totalCost = 0;
       let commissionPercentage = currentAdminCommission; // Use current admin commission
       let commissionAmount = 0;
@@ -643,8 +660,8 @@
       // Get rate data from selected option
       const selectedOption = bookingHours.options[bookingHours.selectedIndex];
       if (selectedOption && selectedOption.dataset.rate) {
-        totalCost = parseFloat(selectedOption.dataset.rate) || 0;
-        // Calculate commission based on current admin setting, not stored venue data
+        totalCost = parseFloat(selectedOption.dataset.rate) || 0; // This is the FIXED price for selected hours
+        // Calculate commission based on total cost and commission percentage
         commissionAmount = (totalCost * commissionPercentage) / 100;
         
         // Store commission data for this selection
@@ -660,7 +677,7 @@
         console.warn('No rate data found for selected option');
       }
       
-      // Artist pays commission amount only (commission-only model)
+      // Artist pays commission amount only
       const artistPayAmount = commissionAmount;
       
       // Update displays
@@ -694,17 +711,19 @@
       }
     }
 
-    // Ticket price validation
+    // Ticket price validation - informational only (venue prices are suggestions)
     function validateTicketPrice() {
       const currentPrice = parseFloat(ticketPriceInput.value || 0);
       
-      if (currentPrice < currentVenueMinTicketPrice) {
-        ticketPriceInput.setCustomValidity(`Ticket price cannot be less than ₹${currentVenueMinTicketPrice} for this venue`);
-        return false;
-      } else {
-        ticketPriceInput.setCustomValidity('');
-        return true;
+      // Show informational message if below venue suggestion, but don't block
+      if (currentPrice < currentVenueMinTicketPrice && currentVenueMinTicketPrice > 0) {
+        // Just clear any error - we allow any price
+        console.log(`Note: Your ticket price (₹${currentPrice}) is below the venue's suggested minimum (₹${currentVenueMinTicketPrice})`);
       }
+      
+      // Always clear validation - artists have full freedom
+      ticketPriceInput.setCustomValidity('');
+      return true;
     }
 
     // Max tickets validation based on venue capacity
@@ -730,6 +749,51 @@
     });
     if (bookingHours) bookingHours.addEventListener('change', calculateTotalCost); // Changed from 'input' to 'change'
     if (ticketPriceInput) ticketPriceInput.addEventListener('input', validateTicketPrice);
+    
+    // Add poster image file validation on change
+    const posterImageInput = document.getElementById('posterImage');
+    if (posterImageInput) {
+      posterImageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+          let errorMsg = '';
+          
+          // Check file size
+          if (file.size > maxSize) {
+            errorMsg = `File is too large (${(file.size / (1024 * 1024)).toFixed(2)}MB). Maximum size is 5MB.`;
+          }
+          // Check file type
+          else if (!allowedTypes.includes(file.type)) {
+            errorMsg = `Invalid file type. Only JPG, PNG, and GIF are allowed.`;
+          }
+          
+          if (errorMsg) {
+            // Show error message
+            posterImageInput.classList.add('is-invalid');
+            let errorDiv = posterImageInput.nextElementSibling;
+            if (errorDiv && !errorDiv.classList.contains('invalid-feedback')) {
+              errorDiv = document.createElement('div');
+              errorDiv.className = 'invalid-feedback d-block';
+              posterImageInput.parentNode.insertBefore(errorDiv, posterImageInput.nextSibling);
+            }
+            if (errorDiv) {
+              errorDiv.textContent = errorMsg;
+            }
+            // Clear file input
+            e.target.value = '';
+          } else {
+            // Clear error if file is valid
+            posterImageInput.classList.remove('is-invalid');
+            let errorDiv = posterImageInput.nextElementSibling;
+            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+              errorDiv.remove();
+            }
+          }
+        }
+      });
+    }
     
     // Add venue availability functionality
     const checkAvailabilityBtn = document.getElementById('checkAvailabilityBtn');
@@ -1233,11 +1297,39 @@
         payAndSubmitBtn.disabled = true;
         payAndSubmitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Creating Payment Order...';
 
+        // Validate poster image if uploaded
+        const posterImageInput = document.getElementById('posterImage');
+        if (posterImageInput && posterImageInput.files.length > 0) {
+          const file = posterImageInput.files[0];
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+          
+          // Check file size
+          if (file.size > maxSize) {
+            alert(`File size too large! Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+            resetPayButton();
+            return;
+          }
+          
+          // Check file type
+          if (!allowedTypes.includes(file.type)) {
+            alert(`Invalid file type! Only JPG, PNG, and GIF files are allowed. You uploaded: ${file.type}`);
+            resetPayButton();
+            return;
+          }
+        }
+
         console.log('Form element found:', concertForm);
         console.log('Form elements count:', concertForm.elements.length);
 
         // Prepare form data
         const formData = new FormData(concertForm);
+        
+        // Add hourly rate for the selected booking hours
+        const selectedHourOption = bookingHours.options[bookingHours.selectedIndex];
+        if (selectedHourOption && selectedHourOption.dataset.rate) {
+          formData.append('hourlyRate', selectedHourOption.dataset.rate);
+        }
         
         // Debug: Log form data being sent
         console.log('Preparing to send form data...');

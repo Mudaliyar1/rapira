@@ -1,0 +1,440 @@
+<%- include('../partials/artist-header') %>
+
+<style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .stat-card {
+      border-left: 4px solid #007bff;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: #6c757d;
+      font-weight: 500;
+    }
+    .info-value {
+      color: #212529;
+      font-weight: 600;
+    }
+    .financial-highlight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .badge-custom {
+      font-size: 0.85rem;
+      padding: 0.5em 1em;
+    }
+  </style>
+
+  <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/artists/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/artists/manage-concerts">Manage Concerts</a></li>
+            <li class="breadcrumb-item active">Concert Details</li>
+          </ol>
+        </nav>
+        <h1 class="fw-bold">
+          <i class="bi bi-music-note-beamed me-2"></i><%= concert.title %>
+        </h1>
+        <p class="text-muted mb-0">Complete details about your concert and bookings</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="/artists/manage-concerts" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Back to Concerts
+        </a>
+      </div>
+    </div>
+
+    <!-- Concert Status Alert -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <% 
+          let alertClass = 'info';
+          let statusIcon = 'info-circle';
+          let statusMessage = 'Concert information';
+          
+          if (concert.status === 'approved') {
+            alertClass = 'success';
+            statusIcon = 'check-circle';
+            statusMessage = 'This concert has been approved';
+          } else if (concert.status === 'pending') {
+            alertClass = 'warning';
+            statusIcon = 'clock';
+            statusMessage = 'This concert is pending approval';
+          } else if (concert.status === 'cancelled') {
+            alertClass = 'danger';
+            statusIcon = 'x-circle';
+            statusMessage = 'This concert has been cancelled';
+          } else if (concert.status === 'rejected') {
+            alertClass = 'danger';
+            statusIcon = 'x-circle';
+            statusMessage = 'This concert has been rejected';
+          }
+        %>
+        <div class="alert alert-<%= alertClass %> d-flex align-items-center">
+          <i class="bi bi-<%= statusIcon %> me-2 fs-5"></i>
+          <div>
+            <strong>Status: <%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %></strong>
+            <p class="mb-0"><%= statusMessage %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <!-- Tickets Sold -->
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <div class="stat-label mb-2">
+              <i class="bi bi-ticket-perforated me-1"></i> Tickets Sold
+            </div>
+            <div class="stat-value">
+              <%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Generated -->
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <div class="stat-label mb-2">
+              <i class="bi bi-currency-rupee me-1"></i> Revenue Generated
+            </div>
+            <div class="stat-value">
+              ₹<%= ticketRevenue.toLocaleString('en-IN') %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Venue Cost -->
+      <% if (venueFinancials) { %>
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <div class="stat-label mb-2">
+              <i class="bi bi-building me-1"></i> Total Venue Cost
+            </div>
+            <div class="stat-value">
+              ₹<%= venueFinancials.totalCost.toLocaleString('en-IN') %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remaining Balance -->
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card h-100">
+          <div class="card-body">
+            <div class="stat-label mb-2">
+              <i class="bi bi-cash-stack me-1"></i> Remaining Balance
+            </div>
+            <div class="stat-value">
+              ₹<%= venueFinancials.remainingBalance.toLocaleString('en-IN') %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="row">
+      <!-- Left Column -->
+      <div class="col-lg-8 mb-4">
+        <!-- Concert Information -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-music-note-beamed me-2"></i>Concert Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Title</div>
+              <div class="col-md-8 info-value"><%= concert.title %></div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Date & Time</div>
+              <div class="col-md-8 info-value">
+                <%= new Date(concert.date).toLocaleDateString('en-IN', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) %> • <%= concert.time %>
+              </div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">City</div>
+              <div class="col-md-8 info-value"><%= concert.city %></div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Concert Type</div>
+              <div class="col-md-8 info-value">
+                <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %> badge-custom">
+                  <%= concert.isPaid ? 'Paid' : 'Free' %>
+                </span>
+              </div>
+            </div>
+            <% if (concert.isPaid) { %>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Ticket Price</div>
+              <div class="col-md-8 info-value">₹<%= concert.price.toLocaleString('en-IN') %></div>
+            </div>
+            <% } %>
+            <% if (concert.description) { %>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Description</div>
+              <div class="col-md-8 info-value"><%= concert.description %></div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Venue Information -->
+        <% if (concert.venue && venueFinancials) { %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-building me-2"></i>Venue Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Venue Name</div>
+              <div class="col-md-8 info-value"><%= concert.venue.name %></div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Address</div>
+              <div class="col-md-8 info-value"><%= concert.venue.address %></div>
+            </div>
+            <% if (concert.venue.googleMapsLink) { %>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Location</div>
+              <div class="col-md-8 info-value">
+                <a href="<%= concert.venue.googleMapsLink %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-geo-alt-fill me-1"></i> Open in Google Maps
+                </a>
+              </div>
+            </div>
+            <% } %>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Total Capacity</div>
+              <div class="col-md-8 info-value"><%= venueFinancials.capacity.toLocaleString('en-IN') %> seats</div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Allocated to You</div>
+              <div class="col-md-8 info-value">
+                <%= venueFinancials.allocatedSeats.toLocaleString('en-IN') %> seats
+                <% if (venueFinancials.capacity > 0) { %>
+                <span class="text-muted">
+                  (<%= ((venueFinancials.allocatedSeats / venueFinancials.capacity) * 100).toFixed(1) %>% of total)
+                </span>
+                <% } %>
+              </div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Booking Duration</div>
+              <div class="col-md-8 info-value"><%= venueFinancials.duration %> hours</div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Ticket Sales Information -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-ticket-detailed me-2"></i>Ticket Sales Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Tickets Sold</div>
+              <div class="col-md-8 info-value"><%= concert.ticketsSold %></div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Maximum Tickets</div>
+              <div class="col-md-8 info-value"><%= concert.maxTickets > 0 ? concert.maxTickets : 'Unlimited' %></div>
+            </div>
+            <% if (concert.isPaid) { %>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Price per Ticket</div>
+              <div class="col-md-8 info-value">₹<%= concert.price.toLocaleString('en-IN') %></div>
+            </div>
+            <div class="info-row row">
+              <div class="col-md-4 info-label">Total Revenue</div>
+              <div class="col-md-8 info-value fw-bold text-success">
+                ₹<%= ticketRevenue.toLocaleString('en-IN') %>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-4">
+        <!-- Financial Details -->
+        <% if (venueFinancials) { %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="bi bi-cash-coin me-2"></i>Financial Details
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="financial-highlight">
+              <div class="mb-3">
+                <div class="small mb-1">Total Venue Cost</div>
+                <h3 class="mb-0">₹<%= venueFinancials.totalCost.toLocaleString('en-IN') %></h3>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="info-label">Commission Rate</span>
+                <span class="info-value"><%= venueFinancials.commissionPercentage %>%</span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="info-label">Commission Amount (Already Paid)</span>
+                <span class="info-value text-success">
+                  ₹<%= venueFinancials.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                </span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="info-label">Additional Payment to Venue</span>
+                <span class="info-value">
+                  ₹<%= venueFinancials.artistPaidDirect.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                </span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="info-label fw-bold">Total Paid</span>
+                <span class="info-value fw-bold text-info">
+                  ₹<%= venueFinancials.totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                </span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="info-label fw-bold">Remaining Balance</span>
+                <span class="info-value fw-bold <%= venueFinancials.remainingBalance > 0 ? 'text-danger' : 'text-success' %>">
+                  ₹<%= venueFinancials.remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                </span>
+              </div>
+            </div>
+
+            <div class="alert alert-info mt-3 mb-0">
+              <small>
+                <i class="bi bi-info-circle me-1"></i>
+                Commission paid: ₹<%= venueFinancials.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                <% if (venueFinancials.artistPaidDirect > 0) { %>
+                  + Additional payment: ₹<%= venueFinancials.artistPaidDirect.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> 
+                <% } %>
+                = Total Paid: ₹<%= venueFinancials.totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                <% if (venueFinancials.remainingBalance > 0) { %>
+                  | Still owe: ₹<%= venueFinancials.remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                <% } else { %>
+                  | <strong>✓ Fully paid!</strong>
+                <% } %>
+              </small>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Payment Information -->
+        <% if (concert.paymentId) { %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-credit-card me-2"></i>Payment Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="info-row">
+              <div class="info-label mb-1">Payment ID</div>
+              <div class="info-value">
+                <code class="bg-light p-2 d-block"><%= concert.paymentId %></code>
+              </div>
+            </div>
+            <% if (concert.orderId) { %>
+            <div class="info-row">
+              <div class="info-label mb-1">Order ID</div>
+              <div class="info-value">
+                <code class="bg-light p-2 d-block"><%= concert.orderId %></code>
+              </div>
+            </div>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-lightning me-2"></i>Quick Actions
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a href="/concerts/<%= concert._id %>" class="btn btn-primary">
+                <i class="bi bi-eye me-2"></i>View Public Page
+              </a>
+              <% if (concert.status === 'approved' || concert.status === 'pending') { %>
+              <a href="/concerts/<%= concert._id %>/edit" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-2"></i>Edit Concert
+              </a>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<%- include('../partials/artist-footer') %>

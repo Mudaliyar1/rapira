@@ -331,6 +331,13 @@
                   <% if (concert.venue.state) { %>, <%= concert.venue.state %><% } %>
                   <% if (concert.venue.pincode) { %> - <%= concert.venue.pincode %><% } %>
                 </small>
+                <% if (concert.venue.googleMapsLink) { %>
+                  <br><small style="margin-left: 25px; margin-top: 5px;">
+                    <a href="<%= concert.venue.googleMapsLink %>" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: 500;">
+                      📍 View on Google Maps
+                    </a>
+                  </small>
+                <% } %>
               <% } else { %>
                 <br><small style="color: #888; margin-left: 25px;">Full address will be provided closer to event date</small>
               <% } %>

@@ -737,6 +737,87 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
   }
 });
 
+// Concert details page for artist
+router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    // Get concert details with venue and ticket information
+    const concert = await Concert.findOne({ 
+      _id: req.params.id, 
+      artist: artist._id 
+    }).populate('venue');
+
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    // Get tickets sold for this concert
+    const Ticket = require('../models/Ticket');
+    const tickets = await Ticket.find({ concert: concert._id });
+    
+    // Calculate financial details
+    let venueFinancials = null;
+    if (concert.venueBooking && concert.venueBooking.totalVenueCost) {
+      const totalCost = concert.venueBooking.totalVenueCost || 0;
+      const commissionPercentage = concert.venueBooking.adminCommission?.percentage || 0;
+      const storedCommission = concert.venueBooking.adminCommission?.advanceAmount;
+      
+      // Get commission amount (from stored advance or calculate from percentage)
+      const commissionAmount = Number.isFinite(storedCommission) && storedCommission > 0
+        ? storedCommission
+        : (concert.venueBooking?.isPaid && commissionPercentage > 0
+            ? (totalCost * commissionPercentage) / 100
+            : 0);
+      
+      // Get amount paid by artist (direct payment to venue)
+      const artistPaidDirect = concert.venueBooking.amountPaidByArtist || 0;
+      
+      // Total paid = commission already collected + direct payment
+      const totalPaid = commissionAmount + artistPaidDirect;
+      
+      // Remaining balance = total cost - total paid
+      const remainingBalance = Math.max(totalCost - totalPaid, 0);
+      
+      venueFinancials = {
+        totalCost,
+        commissionPercentage,
+        commissionAmount,
+        artistPaidDirect,
+        totalPaid,
+        remainingBalance,
+        capacity: concert.venue.capacity || 0,
+        allocatedSeats: concert.maxTickets || 0,
+        duration: concert.venueBooking.bookingHours || 0
+      };
+    }
+
+    // Calculate revenue
+    const ticketRevenue = concert.ticketsSold * (concert.price || 0);
+
+    res.render('artists/concert-details', {
+      layout: false,
+      currentPath: '/artists/manage-concerts',
+      title: 'Concert Details',
+      artist,
+      concert,
+      venueFinancials,
+      ticketRevenue,
+      tickets
+    });
+  } catch (error) {
+    console.error('Concert details page error:', error);
+    req.flash('error', 'Failed to load concert details');
+    res.redirect('/artists/manage-concerts');
+  }
+});
+
 // Ticket management page
 router.get('/manage-tickets', isLoggedIn, isArtist, async (req, res) => {
   try {

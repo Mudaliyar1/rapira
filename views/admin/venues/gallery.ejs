@@ -1,0 +1,192 @@
+<%- contentFor('body') %>
+
+<!-- Venue Image Gallery Page -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold"><%= venue.name %> - Image Gallery</h1>
+    <a href="/admin/venues/<%= venue._id %>/details" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Details
+    </a>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <!-- Carousel -->
+      <div id="venueCarousel" class="carousel slide" data-bs-ride="false">
+        <div class="carousel-indicators">
+          <% venue.images.forEach((image, index) => { %>
+            <button type="button" data-bs-target="#venueCarousel" data-bs-slide-to="<%= index %>" 
+                    class="<%= index === startIndex ? 'active' : '' %>" 
+                    aria-current="<%= index === startIndex ? 'true' : 'false' %>" 
+                    aria-label="Slide <%= index + 1 %>"></button>
+          <% }); %>
+        </div>
+        
+        <div class="carousel-inner" style="background: #2a2a2a; border-radius: 12px; padding: 40px; box-shadow: 0 0 30px rgba(0,0,0,0.4);">
+          <!-- Zoom Controls -->
+          <div class="position-absolute" style="top: 10px; right: 60px; z-index: 10; display: flex; gap: 10px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="zoomIn()" title="Zoom In">
+              <i class="bi bi-zoom-in"></i> Zoom In
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="zoomOut()" title="Zoom Out">
+              <i class="bi bi-zoom-out"></i> Zoom Out
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="resetZoom()" title="Reset Zoom">
+              <i class="bi bi-arrow-clockwise"></i> Reset
+            </button>
+          </div>
+          
+          <% venue.images.forEach((image, index) => { %>
+            <div class="carousel-item <%= index === startIndex ? 'active' : '' %>">
+              <div class="text-center image-container" style="overflow: auto; max-height: 70vh; position: relative;">
+                <img src="<%= image %>" class="venue-image" id="venueImage<%= index %>"
+                     style="display: block; margin: 0 auto; max-height: 70vh; max-width: 100%; object-fit: contain; border-radius: 8px; transition: transform 0.2s ease; transform-origin: center center;" 
+                     alt="<%= venue.name %> - Image <%= index + 1 %>"
+                     data-zoom="1">
+              </div>
+              <div class="mt-3 text-center">
+                <h5 class="text-white">Image <%= index + 1 %> of <%= venue.images.length %></h5>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+        
+        <% if (venue.images.length > 1) { %>
+          <button class="carousel-control-prev" type="button" data-bs-target="#venueCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#venueCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        <% } %>
+      </div>
+
+      <!-- Thumbnail Strip -->
+      <div class="mt-4">
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+          <% venue.images.forEach((image, index) => { %>
+            <div class="thumbnail-item <%= index === startIndex ? 'active' : '' %>" 
+                 onclick="document.querySelector('[data-bs-slide-to=\\'<%= index %>\\']').click()"
+                 style="cursor: pointer; border: 3px solid <%= index === startIndex ? '#007bff' : 'transparent' %>; border-radius: 8px; transition: all 0.3s;">
+              <img src="<%= image %>" 
+                   style="width: 100px; height: 100px; object-fit: cover; border-radius: 6px;" 
+                   alt="Thumbnail <%= index + 1 %>">
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  padding: 20px;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.thumbnail-item:hover {
+  transform: scale(1.1);
+  border-color: #007bff !important;
+}
+
+.venue-image {
+  will-change: transform;
+}
+</style>
+
+<script>
+// Update thumbnail borders when carousel slides
+document.addEventListener('DOMContentLoaded', function() {
+  const carousel = document.getElementById('venueCarousel');
+  const thumbnails = document.querySelectorAll('.thumbnail-item');
+  
+  carousel.addEventListener('slid.bs.carousel', function(e) {
+    thumbnails.forEach((thumb, index) => {
+      if (index === e.to) {
+        thumb.classList.add('active');
+        thumb.style.border = '3px solid #007bff';
+      } else {
+        thumb.classList.remove('active');
+        thumb.style.border = '3px solid transparent';
+      }
+    });
+    
+    // Reset zoom when switching images
+    resetZoom();
+  });
+});
+
+// Get current active image
+function getCurrentImage() {
+  const activeItem = document.querySelector('.carousel-item.active .venue-image');
+  console.log('Current image:', activeItem);
+  return activeItem;
+}
+
+// Zoom In function
+function zoomIn() {
+  const img = getCurrentImage();
+  if (!img) {
+    console.log('No image found');
+    return;
+  }
+  
+  let currentZoom = parseFloat(img.getAttribute('data-zoom') || '1');
+  currentZoom = Math.min(currentZoom + 0.5, 4); // Max 4x zoom
+  console.log('Zooming in to:', currentZoom);
+  img.style.transform = `scale(${currentZoom})`;
+  img.setAttribute('data-zoom', currentZoom);
+  
+  // Enable scrolling when zoomed
+  const container = img.closest('.image-container');
+  if (container && currentZoom > 1) {
+    container.style.overflow = 'scroll';
+  }
+}
+
+// Zoom Out function
+function zoomOut() {
+  const img = getCurrentImage();
+  if (!img) {
+    console.log('No image found');
+    return;
+  }
+  
+  let currentZoom = parseFloat(img.getAttribute('data-zoom') || '1');
+  currentZoom = Math.max(currentZoom - 0.5, 0.5); // Min 0.5x zoom
+  console.log('Zooming out to:', currentZoom);
+  img.style.transform = `scale(${currentZoom})`;
+  img.setAttribute('data-zoom', currentZoom);
+  
+  // Disable scrolling when at normal size
+  const container = img.closest('.image-container');
+  if (container && currentZoom <= 1) {
+    container.style.overflow = 'auto';
+  }
+}
+
+// Reset Zoom function
+function resetZoom() {
+  const images = document.querySelectorAll('.venue-image');
+  console.log('Resetting zoom for', images.length, 'images');
+  images.forEach(img => {
+    img.style.transform = 'scale(1)';
+    img.setAttribute('data-zoom', '1');
+    const container = img.closest('.image-container');
+    if (container) {
+      container.style.overflow = 'auto';
+    }
+  });
+}
+</script>

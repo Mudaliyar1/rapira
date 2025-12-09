@@ -242,6 +242,34 @@
               <h6 class="fw-bold">Last Updated:</h6>
               <p class="mb-0"><%= new Date(concert.updatedAt).toLocaleDateString() %></p>
             </div>
+            
+            <div class="mb-3">
+              <h6 class="fw-bold">Artist's Payment ID:</h6>
+              <% if (concert.paymentId) { %>
+                <p class="mb-1">
+                  <code class="text-success"><%= concert.paymentId %></code>
+                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.paymentId %>').then(() => alert('Payment ID copied!'))" title="Copy Payment ID">
+                    <i class="bi bi-clipboard"></i>
+                  </button>
+                </p>
+              <% } else { %>
+                <p class="mb-0"><span class="text-muted">N/A</span></p>
+              <% } %>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="fw-bold">Artist's Order ID:</h6>
+              <% if (concert.orderId) { %>
+                <p class="mb-1">
+                  <code class="text-info"><%= concert.orderId %></code>
+                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.orderId %>').then(() => alert('Order ID copied!'))" title="Copy Order ID">
+                    <i class="bi bi-clipboard"></i>
+                  </button>
+                </p>
+              <% } else { %>
+                <p class="mb-0"><span class="text-muted">N/A</span></p>
+              <% } %>
+            </div>
           </div>
         </div>
         
@@ -315,12 +343,6 @@
                       </td>
                     </tr>
                     <% } %>
-                    <% if (concert.venue.pricing && concert.venue.pricing.adminCommission && concert.venue.pricing.adminCommission.advanceAmount) { %>
-                    <tr>
-                      <td><strong>Advance Amount:</strong></td>
-                      <td class="text-primary"><strong>₹<%= concert.venue.pricing.adminCommission.advanceAmount %></strong></td>
-                    </tr>
-                    <% } %>
                     <% if (concert.venue.pricing && concert.venue.pricing.ticketPricing && concert.venue.pricing.ticketPricing.minimumPrice) { %>
                     <tr>
                       <td><strong>Minimum Ticket Price:</strong></td>
@@ -360,6 +382,32 @@
                     <tr>
                       <td><strong>Commission Amount:</strong></td>
                       <td class="text-warning"><strong>₹<%= concert.venueBooking.commission %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (venueFinancials) { %>
+                    <tr>
+                      <td><strong>Paid by Artist (Admin Cut):</strong></td>
+                      <td>₹<%= venueFinancials.commissionPaid.toFixed(2) %></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Paid by Artist (Direct):</strong></td>
+                      <td>₹<%= venueFinancials.artistPaidDirect.toFixed(2) %></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Total Paid by Artist:</strong></td>
+                      <td class="text-success"><strong>₹<%= venueFinancials.totalArtistPaid.toFixed(2) %></strong></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Remaining Balance:</strong></td>
+                      <td class="text-warning"><strong>₹<%= venueFinancials.remainingBalance.toFixed(2) %></strong></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Payment Status:</strong></td>
+                      <td>
+                        <span class="badge <%= venueFinancials.paymentBadge %>">
+                          <%= venueFinancials.paymentStatus %>
+                        </span>
+                      </td>
                     </tr>
                     <% } %>
                   </tbody>

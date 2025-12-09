@@ -26,30 +26,259 @@
           </div>
 
           <div class="mb-3">
-            <label for="contentType" class="form-label text-white">Content Type</label>
-            <select class="form-select" id="contentType" name="contentType" required>
-              <option value="text" <%= module.contentType === 'text' ? 'selected' : '' %>>Text</option>
-              <option value="video" <%= module.contentType === 'video' ? 'selected' : '' %>>Video</option>
-              <option value="pdf" <%= module.contentType === 'pdf' ? 'selected' : '' %>>PDF</option>
-              <option value="link" <%= module.contentType === 'link' ? 'selected' : '' %>>External Link</option>
-            </select>
+            <label class="form-label text-white">Content (Add or Modify)</label>
+            <p class="text-white-75 small">Add more content types by filling additional fields below. System auto-detects all content types.</p>
+            
+            <% if (module.contentItems && module.contentItems.length > 0) { %>
+              <div class="alert alert-info p-3">
+                <strong class="d-block mb-3">Current content items:</strong>
+                
+                <!-- Content Items Display -->
+                <div id="contentItemsList" style="max-height: 500px; overflow-y: auto;">
+                  <% module.contentItems.forEach((item, index) => { %>
+                    <div class="card bg-dark border-secondary mb-3 content-item-card" id="item-<%= index %>">
+                      <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="badge" style="background-color: <%= item.type === 'video' ? '#3b82f6' : item.type === 'pdf' ? '#ef4444' : item.type === 'image' ? '#8b5cf6' : item.type === 'link' ? '#06b6d4' : '#10b981' %>">
+                            <% if (item.type === 'video') { %>
+                              <i class="bi bi-camera-video me-1"></i>Video
+                            <% } else if (item.type === 'text') { %>
+                              <i class="bi bi-file-text me-1"></i>Text
+                            <% } else if (item.type === 'pdf') { %>
+                              <i class="bi bi-file-pdf me-1"></i>PDF
+                            <% } else if (item.type === 'link') { %>
+                              <i class="bi bi-link me-1"></i>Link
+                            <% } else if (item.type === 'image') { %>
+                              <i class="bi bi-image me-1"></i>Image
+                            <% } %>
+                          </span>
+                          <small class="text-white-75">
+                            <code><%= item.content.substring(0, 60) %>...</code>
+                          </small>
+                        </div>
+                        <a href="/learning/admin/<%= module._id %>/confirm-delete-content/<%= index %>" class="btn btn-sm btn-danger delete-content-item" data-index="<%= index %>" title="Delete this content item">
+                          <i class="bi bi-trash"></i> Delete
+                        </a>
+                      </div>
+                      
+                      <!-- Content Preview -->
+                      <div class="card-body">
+                        <% if (item.type === 'video') { %>
+                          <% if (item.content.includes('youtube.com') || item.content.includes('youtu.be')) { %>
+                            <p class="text-white-75 small mb-2"><strong>YouTube Video:</strong></p>
+                            <div class="ratio ratio-16x9" style="max-height: 250px;">
+                              <%
+                                let videoUrl = item.content;
+                                if (videoUrl.includes('youtube.com/watch?v=')) {
+                                  videoUrl = videoUrl.replace('watch?v=', 'embed/');
+                                } else if (videoUrl.includes('youtu.be/')) {
+                                  const videoId = videoUrl.split('youtu.be/')[1];
+                                  videoUrl = `https://www.youtube.com/embed/${videoId}`;
+                                }
+                                if (videoUrl.includes('?')) {
+                                  videoUrl += '&autoplay=0&rel=0';
+                                } else {
+                                  videoUrl += '?autoplay=0&rel=0';
+                                }
+                              %>
+                              <iframe src="<%= videoUrl %>" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            </div>
+                          <% } else { %>
+                            <p class="text-white-75 small mb-2"><strong>Uploaded Video:</strong></p>
+                            <video controls style="width: 100%; max-height: 250px;">
+                              <source src="<%= item.content %>" type="video/mp4">
+                              Your browser does not support the video tag.
+                            </video>
+                          <% } %>
+                        <% } else if (item.type === 'text') { %>
+                          <p class="text-white-75 small mb-2"><strong>Text Content:</strong></p>
+                          <div class="bg-secondary p-2 rounded text-white" style="max-height: 200px; overflow-y: auto;">
+                            <%- item.content.substring(0, 300) %>
+                            <% if (item.content.length > 300) { %>
+                              ...
+                            <% } %>
+                          </div>
+                        <% } else if (item.type === 'pdf') { %>
+                          <p class="text-white-75 small mb-2"><strong>PDF File:</strong></p>
+                          <div class="ratio ratio-16x9" style="max-height: 250px;">
+                            <iframe src="<%= item.content %>"></iframe>
+                          </div>
+                          <div class="mt-2">
+                            <a href="<%= item.content %>" class="btn btn-sm btn-outline-light" target="_blank">
+                              <i class="bi bi-download me-1"></i> Download PDF
+                            </a>
+                          </div>
+                        <% } else if (item.type === 'image') { %>
+                          <p class="text-white-75 small mb-2"><strong>Image:</strong></p>
+                          <div class="text-center">
+                            <img src="<%= item.content %>" alt="Content image" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+                          </div>
+                        <% } else if (item.type === 'link') { %>
+                          <p class="text-white-75 small mb-2"><strong>External Link:</strong></p>
+                          <a href="<%= item.content %>" class="btn btn-sm btn-primary" target="_blank">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Open Link
+                          </a>
+                          <p class="text-white-75 small mt-2"><code><%= item.content %></code></p>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+              <input type="hidden" id="itemsToDelete" name="itemsToDelete" value="">
+            <% } %>
           </div>
 
+          <!-- Text Content -->
           <div class="mb-3">
-            <label for="content" class="form-label text-white">Content</label>
-            <div id="contentInputContainer">
-              <!-- Text content input (for text type) -->
-              <div id="textContentInput" class="content-input-group" <%= module.contentType !== 'text' ? 'style="display: none;"' : '' %>>
-                <textarea class="form-control" id="textContent" name="content" rows="6" placeholder="Enter HTML content here..." <%= module.contentType === 'text' ? 'required' : '' %>><%= module.contentType === 'text' ? module.content : '' %></textarea>
-                <div class="form-text">You can use HTML tags for formatting</div>
-              </div>
+            <label for="textContent" class="form-label text-white">
+              <i class="bi bi-file-text me-1"></i>Text Content (HTML supported)
+            </label>
+            <%
+              let existingTextContent = '';
+              if (module.contentItems) {
+                const textItem = module.contentItems.find(item => item.type === 'text');
+                if (textItem) existingTextContent = textItem.content;
+              }
+            %>
+            <textarea class="form-control" id="textContent" name="textContent" rows="5" placeholder="Enter text or HTML content here..."><%= existingTextContent %></textarea>
+            <div class="form-text">Optional: You can use HTML tags for formatting</div>
+          </div>
 
-              <!-- URL content input (for video, pdf, link types) -->
-              <div id="urlContentInput" class="content-input-group" <%= module.contentType === 'text' ? 'style="display: none;"' : '' %>>
-                <input type="url" class="form-control" id="urlContent" name="content" placeholder="Enter URL here..." value="<%= module.contentType !== 'text' ? module.content : '' %>" <%= module.contentType !== 'text' ? 'required' : '' %>>
-                <div class="form-text">Enter a valid URL (YouTube, PDF link, or external resource)</div>
-              </div>
-            </div>
+          <!-- Video Content -->
+          <div class="mb-3">
+            <label for="videoUrl" class="form-label text-white">
+              <i class="bi bi-camera-video me-1"></i>Video URL
+            </label>
+            <%
+              let existingVideoUrl = '';
+              if (module.contentItems) {
+                const videoItem = module.contentItems.find(item => item.type === 'video' && !item.content.startsWith('/uploads'));
+                if (videoItem) existingVideoUrl = videoItem.content;
+              }
+            %>
+            <input type="url" class="form-control" id="videoUrl" name="videoUrl" placeholder="Enter YouTube, Vimeo, or video file URL..." value="<%= existingVideoUrl %>">
+            <div class="form-text">Optional: YouTube link, Vimeo, or direct video URL</div>
+          </div>
+
+          <!-- Video Upload -->
+          <div class="mb-3">
+            <label for="videoFile" class="form-label text-white">
+              <i class="bi bi-film me-1"></i>Upload Video File(s)
+            </label>
+            <%
+              let existingVideoFiles = [];
+              if (module.contentItems) {
+                existingVideoFiles = module.contentItems.filter(item => item.type === 'video' && item.content.startsWith('/uploads'));
+              }
+            %>
+            <% if (existingVideoFiles.length > 0) { %>
+              <p class="text-info small"><strong>Current videos:</strong>
+                <ul class="mb-2">
+                  <% existingVideoFiles.forEach(item => { %>
+                    <li><code><%= item.content %></code></li>
+                  <% }); %>
+                </ul>
+              </p>
+            <% } %>
+            <input type="file" class="form-control" id="videoFile" name="videoFile" accept="video/mp4,video/webm" multiple>
+            <div class="form-text">Optional: Upload one or more MP4/WebM videos to add/replace (max 20MB each).</div>
+          </div>
+
+          <!-- PDF Content -->
+          <div class="mb-3">
+            <label for="pdfUrl" class="form-label text-white">
+              <i class="bi bi-file-pdf me-1"></i>PDF URL
+            </label>
+            <%
+              let existingPdfUrl = '';
+              if (module.contentItems) {
+                const pdfItem = module.contentItems.find(item => item.type === 'pdf' && !item.content.startsWith('/uploads'));
+                if (pdfItem) existingPdfUrl = pdfItem.content;
+              }
+            %>
+            <input type="url" class="form-control" id="pdfUrl" name="pdfUrl" placeholder="Enter PDF link..." value="<%= existingPdfUrl %>">
+            <div class="form-text">Optional: Direct link to a PDF file</div>
+          </div>
+
+          <!-- PDF Upload -->
+          <div class="mb-3">
+            <label for="pdfFile" class="form-label text-white">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Upload PDF File(s)
+            </label>
+            <%
+              let existingPdfFiles = [];
+              if (module.contentItems) {
+                existingPdfFiles = module.contentItems.filter(item => item.type === 'pdf' && item.content.startsWith('/uploads'));
+              }
+            %>
+            <% if (existingPdfFiles.length > 0) { %>
+              <p class="text-info small"><strong>Current PDFs:</strong>
+                <ul class="mb-2">
+                  <% existingPdfFiles.forEach(item => { %>
+                    <li><code><%= item.content %></code></li>
+                  <% }); %>
+                </ul>
+              </p>
+            <% } %>
+            <input type="file" class="form-control" id="pdfFile" name="pdfFile" accept=".pdf" multiple>
+            <div class="form-text">Optional: Upload one or more PDF files to add/replace (max 20MB each).</div>
+          </div>
+
+          <!-- Image Content -->
+          <div class="mb-3">
+            <label for="imageUrl" class="form-label text-white">
+              <i class="bi bi-image me-1"></i>Image URL
+            </label>
+            <%
+              let existingImageUrl = '';
+              if (module.contentItems) {
+                const imageItem = module.contentItems.find(item => item.type === 'image' && !item.content.startsWith('/uploads'));
+                if (imageItem) existingImageUrl = imageItem.content;
+              }
+            %>
+            <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="Enter image URL..." value="<%= existingImageUrl %>">
+            <div class="form-text">Optional: Direct link to an image (JPG, PNG, GIF)</div>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="mb-3">
+            <label for="imageFile" class="form-label text-white">
+              <i class="bi bi-image me-1"></i>Upload Image File(s)
+            </label>
+            <%
+              let existingImageFiles = [];
+              if (module.contentItems) {
+                existingImageFiles = module.contentItems.filter(item => item.type === 'image' && item.content.startsWith('/uploads'));
+              }
+            %>
+            <% if (existingImageFiles.length > 0) { %>
+              <p class="text-info small"><strong>Current images:</strong>
+                <ul class="mb-2">
+                  <% existingImageFiles.forEach(item => { %>
+                    <li><code><%= item.content %></code></li>
+                  <% }); %>
+                </ul>
+              </p>
+            <% } %>
+            <input type="file" class="form-control" id="imageFile" name="imageFile" accept="image/*" multiple>
+            <div class="form-text">Optional: Upload one or more image files to add/replace (max 20MB each).</div>
+          </div>
+
+          <!-- External Link -->
+          <div class="mb-3">
+            <label for="externalLink" class="form-label text-white">
+              <i class="bi bi-link me-1"></i>External Link
+            </label>
+            <%
+              let existingExternalLink = '';
+              if (module.contentItems) {
+                const linkItem = module.contentItems.find(item => item.type === 'link');
+                if (linkItem) existingExternalLink = linkItem.content;
+              }
+            %>
+            <input type="url" class="form-control" id="externalLink" name="externalLink" placeholder="Enter any external resource URL..." value="<%= existingExternalLink %>">
+            <div class="form-text">Optional: Link to an external learning resource</div>
           </div>
         </div>
 
@@ -102,3 +331,9 @@
 
 <%- contentFor('extraScripts') %>
 <script src="/js/learning-module-form.js"></script>
+<script>
+// Simple initialization to verify page is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Edit learning module page loaded');
+});
+</script>

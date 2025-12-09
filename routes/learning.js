@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit for richer content
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif|pdf|mp4|webm/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -470,35 +470,108 @@ router.get('/admin/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Admin: Add learning module process
-router.post('/admin/add', isLoggedIn, isAdmin, upload.single('thumbnailImage'), async (req, res) => {
+router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
+  { name: 'thumbnailImage', maxCount: 1 },
+  { name: 'videoFile', maxCount: 5 },
+  { name: 'pdfFile', maxCount: 5 },
+  { name: 'imageFile', maxCount: 5 }
+]), async (req, res) => {
   try {
-    const { title, description, contentType, content, forArtistLevel, order, isRequired } = req.body;
+    const { title, description, forArtistLevel, order, isRequired } = req.body;
+    const { textContent, videoUrl, pdfUrl, imageUrl, externalLink } = req.body;
 
-    // Validate input
-    if (!title || !description || !contentType || !forArtistLevel) {
-      req.flash('error', 'Please fill in all required fields');
+    // Validate required fields
+    if (!title || !description || !forArtistLevel) {
+      req.flash('error', 'Please fill in all required fields (title, description, artist level)');
       return res.redirect('/learning/admin/add');
     }
 
-    // Validate content based on content type
-    if (!content || (Array.isArray(content) && content.every(item => !item))) {
-      req.flash('error', 'Please provide content for the learning module');
+    // Collect all content items (support multiple content types)
+    const contentItems = [];
+
+    // Check video files (can be multiple)
+    if (req.files && req.files.videoFile && req.files.videoFile.length > 0) {
+      req.files.videoFile.forEach(file => {
+        contentItems.push({
+          type: 'video',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check video URL
+    if (videoUrl && videoUrl.trim()) {
+      contentItems.push({
+        type: 'video',
+        content: videoUrl.trim()
+      });
+    }
+
+    // Check PDF files (can be multiple)
+    if (req.files && req.files.pdfFile && req.files.pdfFile.length > 0) {
+      req.files.pdfFile.forEach(file => {
+        contentItems.push({
+          type: 'pdf',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check PDF URL
+    if (pdfUrl && pdfUrl.trim()) {
+      contentItems.push({
+        type: 'pdf',
+        content: pdfUrl.trim()
+      });
+    }
+
+    // Check image files (can be multiple)
+    if (req.files && req.files.imageFile && req.files.imageFile.length > 0) {
+      req.files.imageFile.forEach(file => {
+        contentItems.push({
+          type: 'image',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check image URL
+    if (imageUrl && imageUrl.trim()) {
+      contentItems.push({
+        type: 'image',
+        content: imageUrl.trim()
+      });
+    }
+
+    // Check external link
+    if (externalLink && externalLink.trim()) {
+      contentItems.push({
+        type: 'link',
+        content: externalLink.trim()
+      });
+    }
+
+    // Check text content
+    if (textContent && textContent.trim()) {
+      contentItems.push({
+        type: 'text',
+        content: textContent.trim()
+      });
+    }
+
+    // Validate at least one content item was provided
+    if (contentItems.length === 0) {
+      req.flash('error', 'Please provide content in at least one format (text, URL, or file upload)');
       return res.redirect('/learning/admin/add');
     }
 
-    // Handle content field (could be an array if both fields are submitted)
-    let moduleContent = content;
-    if (Array.isArray(content)) {
-      // Find the non-empty content value
-      moduleContent = content.find(item => item) || '';
-    }
-
-    // Create new learning module
+    // Create new learning module with multiple content items
     const newModule = new LearningModule({
       title,
       description,
-      contentType,
-      content: moduleContent,
+      contentItems, // Store all content items
+      contentType: contentItems[0].type, // Set primary type as first item
+      content: contentItems[0].content, // Set primary content as first item
       forArtistLevel,
       order: order || 0,
       isRequired: isRequired === 'on',
@@ -506,8 +579,8 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.single('thumbnailImage'), 
     });
 
     // Set thumbnail if uploaded
-    if (req.file) {
-      newModule.thumbnailImage = '/uploads/learning/' + req.file.filename;
+    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage[0]) {
+      newModule.thumbnailImage = '/uploads/learning/' + req.files.thumbnailImage[0].filename;
     }
 
     await newModule.save();
@@ -552,7 +625,12 @@ router.get('/admin/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Edit learning module process
-router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.single('thumbnailImage'), async (req, res) => {
+router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
+  { name: 'thumbnailImage', maxCount: 1 },
+  { name: 'videoFile', maxCount: 5 },
+  { name: 'pdfFile', maxCount: 5 },
+  { name: 'imageFile', maxCount: 5 }
+]), async (req, res) => {
   try {
     // Validate if the ID is a valid MongoDB ObjectId
     const mongoose = require('mongoose');
@@ -561,17 +639,12 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.single('thumbnailImag
       return res.redirect('/learning/admin');
     }
 
-    const { title, description, contentType, content, forArtistLevel, order, isRequired } = req.body;
+    const { title, description, forArtistLevel, order, isRequired } = req.body;
+    const { textContent, videoUrl, pdfUrl, imageUrl, externalLink } = req.body;
 
     // Validate input
-    if (!title || !description || !contentType || !forArtistLevel) {
+    if (!title || !description || !forArtistLevel) {
       req.flash('error', 'Please fill in all required fields');
-      return res.redirect(`/learning/admin/edit/${req.params.id}`);
-    }
-
-    // Validate content based on content type
-    if (!content || (Array.isArray(content) && content.every(item => !item))) {
-      req.flash('error', 'Please provide content for the learning module');
       return res.redirect(`/learning/admin/edit/${req.params.id}`);
     }
 
@@ -582,25 +655,123 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.single('thumbnailImag
       return res.redirect('/learning/admin');
     }
 
-    // Handle content field (could be an array if both fields are submitted)
-    let moduleContent = content;
-    if (Array.isArray(content)) {
-      // Find the non-empty content value
-      moduleContent = content.find(item => item) || '';
+    // Collect all NEW content items (replace old items)
+    const contentItems = [];
+
+    // Check video files (can be multiple)
+    if (req.files && req.files.videoFile && req.files.videoFile.length > 0) {
+      req.files.videoFile.forEach(file => {
+        contentItems.push({
+          type: 'video',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check video URL
+    if (videoUrl && videoUrl.trim()) {
+      contentItems.push({
+        type: 'video',
+        content: videoUrl.trim()
+      });
+    }
+
+    // Check PDF files (can be multiple)
+    if (req.files && req.files.pdfFile && req.files.pdfFile.length > 0) {
+      req.files.pdfFile.forEach(file => {
+        contentItems.push({
+          type: 'pdf',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check PDF URL
+    if (pdfUrl && pdfUrl.trim()) {
+      contentItems.push({
+        type: 'pdf',
+        content: pdfUrl.trim()
+      });
+    }
+
+    // Check image files (can be multiple)
+    if (req.files && req.files.imageFile && req.files.imageFile.length > 0) {
+      req.files.imageFile.forEach(file => {
+        contentItems.push({
+          type: 'image',
+          content: '/uploads/learning/' + file.filename
+        });
+      });
+    }
+    
+    // Check image URL
+    if (imageUrl && imageUrl.trim()) {
+      contentItems.push({
+        type: 'image',
+        content: imageUrl.trim()
+      });
+    }
+
+    // Check external link
+    if (externalLink && externalLink.trim()) {
+      contentItems.push({
+        type: 'link',
+        content: externalLink.trim()
+      });
+    }
+
+    // Check text content
+    if (textContent && textContent.trim()) {
+      contentItems.push({
+        type: 'text',
+        content: textContent.trim()
+      });
+    }
+
+    // If no new content provided, keep existing content items
+    if (contentItems.length === 0) {
+      if (!module.contentItems || module.contentItems.length === 0) {
+        req.flash('error', 'Please provide content in at least one format (text, URL, or file upload)');
+        return res.redirect(`/learning/admin/edit/${req.params.id}`);
+      }
+      // Keep existing contentItems, but remove deleted items
+    } else {
+      // Update with new content items
+      module.contentItems = contentItems;
+      module.contentType = contentItems[0].type; // Set primary type as first item
+      module.content = contentItems[0].content; // Set primary content as first item
+    }
+
+    // Handle deletion of specific content items
+    const itemsToDelete = req.body.itemsToDelete;
+    if (itemsToDelete && itemsToDelete.trim()) {
+      const indicesToDelete = itemsToDelete.split(',').map(i => parseInt(i)).sort((a, b) => b - a);
+      indicesToDelete.forEach(index => {
+        if (index >= 0 && index < module.contentItems.length) {
+          module.contentItems.splice(index, 1);
+        }
+      });
+      
+      // Validate we still have content
+      if (module.contentItems.length === 0) {
+        req.flash('error', 'Cannot delete all content items. Module must have at least one content item.');
+        return res.redirect(`/learning/admin/edit/${req.params.id}`);
+      }
+      
+      // Update primary content if needed
+      module.contentType = module.contentItems[0].type;
+      module.content = module.contentItems[0].content;
     }
 
     // Update module
     module.title = title;
     module.description = description;
-    module.contentType = contentType;
-    module.content = moduleContent;
     module.forArtistLevel = forArtistLevel;
     module.order = order || 0;
     module.isRequired = isRequired === 'on';
 
     // Update thumbnail if uploaded
-    if (req.file) {
-      // Delete old thumbnail if it's not the default
+    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage[0]) {
       if (module.thumbnailImage && module.thumbnailImage !== '/images/default-learning.jpg') {
         const oldImagePath = path.join(__dirname, '../public', module.thumbnailImage);
         if (fs.existsSync(oldImagePath)) {
@@ -608,8 +779,7 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.single('thumbnailImag
         }
       }
 
-      // Set new thumbnail
-      module.thumbnailImage = '/uploads/learning/' + req.file.filename;
+      module.thumbnailImage = '/uploads/learning/' + req.files.thumbnailImage[0].filename;
     }
 
     await module.save();
@@ -694,6 +864,95 @@ router.post('/admin/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Error in delete learning module:', error);
     req.flash('error', 'An error occurred while deleting the learning module');
     res.redirect('/learning/admin');
+  }
+});
+
+// Admin: Confirm delete content item page
+router.get('/admin/:id/confirm-delete-content/:itemIndex', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid module ID');
+      return res.redirect('/learning/admin');
+    }
+
+    const module = await LearningModule.findById(req.params.id);
+    if (!module) {
+      req.flash('error', 'Learning module not found');
+      return res.redirect('/learning/admin');
+    }
+
+    const itemIndex = parseInt(req.params.itemIndex);
+    if (itemIndex < 0 || !module.contentItems || itemIndex >= module.contentItems.length) {
+      req.flash('error', 'Content item not found');
+      return res.redirect(`/learning/admin/edit/${req.params.id}`);
+    }
+
+    const contentItem = module.contentItems[itemIndex];
+
+    res.render('admin/confirm-delete-content-item', {
+      layout: 'admin',
+      title: 'Confirm Delete Content Item',
+      currentPath: '/learning/admin',
+      module,
+      contentItem,
+      contentItemIndex: itemIndex
+    });
+  } catch (error) {
+    console.error('Error loading content item delete confirmation:', error);
+    req.flash('error', 'An error occurred');
+    res.redirect('/learning/admin');
+  }
+});
+
+// Admin: Delete content item
+router.post('/admin/:id/delete-content-item/:itemIndex', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid module ID');
+      return res.redirect('/learning/admin');
+    }
+
+    const module = await LearningModule.findById(req.params.id);
+    if (!module) {
+      req.flash('error', 'Learning module not found');
+      return res.redirect('/learning/admin');
+    }
+
+    const itemIndex = parseInt(req.params.itemIndex);
+    if (itemIndex < 0 || !module.contentItems || itemIndex >= module.contentItems.length) {
+      req.flash('error', 'Content item not found');
+      return res.redirect(`/learning/admin/edit/${req.params.id}`);
+    }
+
+    // Get the item being deleted (for logging/display)
+    const deletedItem = module.contentItems[itemIndex];
+    const contentTypeLabel = deletedItem.type.charAt(0).toUpperCase() + deletedItem.type.slice(1);
+
+    // Check if this would be the last item
+    if (module.contentItems.length <= 1) {
+      req.flash('error', 'Cannot delete the only content item. A module must have at least one content item.');
+      return res.redirect(`/learning/admin/edit/${req.params.id}`);
+    }
+
+    // Delete the item
+    module.contentItems.splice(itemIndex, 1);
+
+    // Update primary content if needed
+    if (module.contentItems.length > 0) {
+      module.contentType = module.contentItems[0].type;
+      module.content = module.contentItems[0].content;
+    }
+
+    await module.save();
+
+    req.flash('success', `${contentTypeLabel} content item deleted successfully`);
+    res.redirect(`/learning/admin/edit/${req.params.id}`);
+  } catch (error) {
+    console.error('Error deleting content item:', error);
+    req.flash('error', 'An error occurred while deleting the content item');
+    res.redirect(`/learning/admin/edit/${req.params.id}`);
   }
 });
 

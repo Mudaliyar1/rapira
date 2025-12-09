@@ -149,7 +149,7 @@ const VenueRequestSchema = new mongoose.Schema({
   // Request status and admin response
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
+    enum: ['pending', 'approved', 'rejected', 'cancelled'],
     default: 'pending'
   },
   
@@ -172,6 +172,20 @@ const VenueRequestSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
+  },
+
+  // Cancellation info (user-initiated)
+  cancelReason: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  cancelledAt: {
+    type: Date
+  },
+  cancelledBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   
   // Reference to created venue (if approved)

@@ -78,6 +78,11 @@ const ConcertSchema = new mongoose.Schema({
       min: 0,
       default: 0
     },
+    amountPaidByArtist: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
     adminCommission: {
       percentage: {
         type: Number,

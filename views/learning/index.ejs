@@ -63,9 +63,9 @@
               <p class="mb-0" style="color: #000;">As an Intermediate Artist, you can create concerts and continue learning to improve your skills. Complete all required modules to upgrade to Established level.</p>
             </div>
           <% } else if (artistLevel === 'Established') { %>
-            <div class="alert alert-primary mt-4" style="color: #000;">
-              <h5 class="alert-heading" style="color: #000;"><i class="bi bi-trophy-fill me-2"></i> Established Artist</h5>
-              <p class="mb-0" style="color: #000;">As an Established Artist, you have access to all platform features. Continue learning to enhance your skills further.</p>
+            <div class="alert alert-primary mt-4" style="color: #fff !important;">
+              <h5 class="alert-heading" style="color: #fff !important;"><i class="bi bi-trophy-fill me-2"></i> Established Artist</h5>
+              <p class="mb-0" style="color: #fff !important;">As an Established Artist, you have access to all platform features. Continue learning to enhance your skills further.</p>
             </div>
           <% } %>
         <% } %>
@@ -100,17 +100,27 @@
                 <h5 class="card-title text-white"><%= module.title %></h5>
                 <p class="card-text text-white-75"><%= module.description %></p>
                 <div class="d-flex justify-content-between align-items-center mt-3">
-                  <span class="badge bg-secondary">
-                    <% if (module.contentType === 'video') { %>
-                      <i class="bi bi-camera-video me-1"></i> Video
-                    <% } else if (module.contentType === 'text') { %>
-                      <i class="bi bi-file-text me-1"></i> Text
-                    <% } else if (module.contentType === 'pdf') { %>
-                      <i class="bi bi-file-pdf me-1"></i> PDF
-                    <% } else if (module.contentType === 'link') { %>
-                      <i class="bi bi-link me-1"></i> External Link
-                    <% } %>
-                  </span>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <% 
+                      const itemsToShow = (module.contentItems && module.contentItems.length > 0) ? module.contentItems : 
+                                         [{type: module.contentType || 'text'}];
+                      itemsToShow.forEach(item => {
+                    %>
+                      <span class="badge" style="background-color: <%= item.type === 'video' ? '#3b82f6' : item.type === 'pdf' ? '#ef4444' : item.type === 'image' ? '#8b5cf6' : item.type === 'link' ? '#06b6d4' : '#10b981' %>">
+                        <% if (item.type === 'video') { %>
+                          <i class="bi bi-camera-video me-1"></i> Video
+                        <% } else if (item.type === 'text') { %>
+                          <i class="bi bi-file-text me-1"></i> Text
+                        <% } else if (item.type === 'pdf') { %>
+                          <i class="bi bi-file-pdf me-1"></i> PDF
+                        <% } else if (item.type === 'link') { %>
+                          <i class="bi bi-link me-1"></i> Link
+                        <% } else if (item.type === 'image') { %>
+                          <i class="bi bi-image me-1"></i> Image
+                        <% } %>
+                      </span>
+                    <% }); %>
+                  </div>
                   <a href="/learning/module/<%= module._id %>" class="btn btn-outline-light">
                     <% if (completedModules[module._id]) { %>
                       <i class="bi bi-arrow-repeat me-1"></i> Review

@@ -165,7 +165,7 @@
                 </td>
                 <td style="color: #000000 !important;">
                   <div class="d-flex">
-                    <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-light me-1">
+                    <a href="/artists/concerts/<%= concert._id %>/details" class="btn btn-sm btn-light me-1" title="View Details">
                       <i class="bi bi-eye" style="color: #000000 !important;"></i>
                     </a>
                     <a href="/concerts/<%= concert._id %>/edit" class="btn btn-sm btn-light me-1">
@@ -231,7 +231,7 @@
                 </td>
                 <td style="color: #000000 !important;">
                   <div class="d-flex">
-                    <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-light me-1">
+                    <a href="/artists/concerts/<%= concert._id %>/details" class="btn btn-sm btn-light me-1" title="View Details">
                       <i class="bi bi-eye" style="color: #000000 !important;"></i>
                     </a>
                     <a href="/concerts/<%= concert._id %>/edit" class="btn btn-sm btn-light me-1">
@@ -294,7 +294,7 @@
                   <%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %>
                 <td style="color: #000000 !important;">
                   <div class="d-flex">
-                    <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-light me-1">
+                    <a href="/artists/concerts/<%= concert._id %>/details" class="btn btn-sm btn-light me-1" title="View Details">
                       <i class="bi bi-eye" style="color: #000000 !important;"></i>
                     </a>
                     <a href="/concerts/<%= concert._id %>/edit" class="btn btn-sm btn-light me-1">
@@ -362,7 +362,7 @@
                   <%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %>
                 <td style="color: #000000 !important;">
                   <div class="d-flex">
-                    <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-light">
+                    <a href="/artists/concerts/<%= concert._id %>/details" class="btn btn-sm btn-light me-1" title="View Details">
                       <i class="bi bi-eye" style="color: #000000 !important;"></i>
                     </a>
                   </div>
@@ -376,7 +376,7 @@
   </div>
 <% } %>
 
-<!-- No Concerts Message -->
+<!-- Upcoming Concerts -->
 <% if (!concerts || concerts.length === 0) { %>
   <div class="card mb-5">
     <div class="card-body text-center py-5">

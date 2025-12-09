@@ -64,7 +64,7 @@
       <!-- Venue Details -->
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="mb-0">
+          <h5 class="mb-0" style="color: white !important;">
             <i class="bi bi-info-circle me-2"></i>Venue Information
           </h5>
         </div>
@@ -98,6 +98,18 @@
                 <i class="bi bi-globe me-1"></i><a href="<%= venue.website %>" target="_blank"><%= venue.website %></a>
               </div>
             <% } %>
+            <% if (venue.googleMapsLink) { %>
+              <div class="col-md-12 mb-3">
+                <strong>Google Maps Location:</strong><br>
+                <a href="<%= venue.googleMapsLink %>" target="_blank" class="btn btn-primary btn-sm">
+                  <i class="bi bi-geo-alt-fill me-1"></i>View on Map
+                  <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
+                <span class="badge bg-success ms-2">
+                  <i class="bi bi-check-circle-fill"></i> Verified Location
+                </span>
+              </div>
+            <% } %>
           </div>
           
           <% if (venue.description) { %>
@@ -113,7 +125,7 @@
       <% if (venue.facilities && venue.facilities.length > 0) { %>
         <div class="card mb-4">
           <div class="card-header">
-            <h5 class="mb-0">
+            <h5 class="mb-0" style="color: white !important;">
               <i class="bi bi-list-check me-2"></i>Facilities & Amenities
             </h5>
           </div>
@@ -133,7 +145,7 @@
       <% if (venue.pricing && Object.keys(venue.pricing).length > 0) { %>
         <div class="card mb-4">
           <div class="card-header">
-            <h5 class="mb-0">
+            <h5 class="mb-0" style="color: white !important;">
               <i class="bi bi-currency-dollar me-2"></i>Pricing Information
             </h5>
           </div>
@@ -180,9 +192,7 @@
                         <% if (typeof value === 'object' && value !== null) { %>
                           <% if (value.percentage !== undefined) { %>
                             <%= value.percentage %>% commission
-                            <% if (value.advanceAmount) { %>
-                              <br><small class="text-muted">Advance: ₹<%= value.advanceAmount %></small>
-                            <% } %>
+
                           <% } else { %>
                             <!-- Debug: Show the actual structure -->
                             <div class="alert alert-info small mt-2">
@@ -267,7 +277,7 @@
       <!-- Quick Stats -->
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="mb-0">
+          <h5 class="mb-0" style="color: white !important;">
             <i class="bi bi-bar-chart me-2"></i>Booking Statistics
           </h5>
         </div>
