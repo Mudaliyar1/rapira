@@ -7,6 +7,9 @@ const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 
+// NEW: Import media backup service for MongoDB persistence
+const { backupMediaToMongo } = require('../utils/mediaBackupService');
+
 // Configure multer for venue image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -266,6 +269,20 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
     });
 
     await venue.save();
+
+    // NEW: Backup uploaded venue images to MongoDB for persistence
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        backupMediaToMongo(file, {
+          module: 'venueMedia',
+          ownerType: 'venue',
+          ownerId: venue._id
+        }).catch(err => {
+          console.error('Error backing up venue image:', err.message);
+          // Continue without blocking
+        });
+      });
+    }
 
     req.flash('success', 'Venue added successfully');
     res.redirect('/admin/venues');
@@ -562,6 +579,20 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     }
 
     console.log('Venue updated successfully with ID:', savedVenue._id);
+
+    // NEW: Backup newly uploaded venue images to MongoDB for persistence
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        backupMediaToMongo(file, {
+          module: 'venueMedia',
+          ownerType: 'venue',
+          ownerId: savedVenue._id
+        }).catch(err => {
+          console.error('Error backing up venue image:', err.message);
+          // Continue without blocking
+        });
+      });
+    }
 
     req.flash('success', 'Venue updated successfully');
     console.log('=== VENUE EDIT REQUEST END - SUCCESS ===');

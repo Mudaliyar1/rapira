@@ -1,0 +1,345 @@
+<!-- Admin Media Management Dashboard -->
+
+<div class="container-fluid mt-4">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h1 class="mb-4">
+        <i class="bi bi-image me-2"></i>Media Management
+      </h1>
+      <p class="text-muted">MongoDB-backed media storage for persistent file management across server restarts</p>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-primary bg-opacity-10 border-primary">
+        <div class="card-body text-center">
+          <h5 class="card-title text-primary">Total Media Items</h5>
+          <h2 class="text-primary"><%= stats.total %></h2>
+          <small class="text-muted"><%= formattedTotalSize %> total</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card bg-success bg-opacity-10 border-success">
+        <div class="card-body text-center">
+          <h5 class="card-title text-success">Images</h5>
+          <h2 class="text-success"><%= stats.byType.image || 0 %></h2>
+          <small class="text-muted">Image files</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card bg-warning bg-opacity-10 border-warning">
+        <div class="card-body text-center">
+          <h5 class="card-title text-warning">Videos</h5>
+          <h2 class="text-warning"><%= stats.byType.video || 0 %></h2>
+          <small class="text-muted">Video files</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card bg-info bg-opacity-10 border-info">
+        <div class="card-body text-center">
+          <h5 class="card-title text-info">Audio</h5>
+          <h2 class="text-info"><%= stats.byType.audio || 0 %></h2>
+          <small class="text-muted">Audio files</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Media Operations</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            Use these operations to manage media backups and restoration
+          </p>
+          <div class="row g-2">
+            <div class="col-md-auto">
+              <form method="POST" action="/admin/media/backup-now" style="display: inline;">
+                <button type="submit" class="btn btn-success" title="Scan /uploads folder and backup any missing files to MongoDB">
+                  <i class="bi bi-arrow-left-right me-2"></i>Scan & Backup Now
+                </button>
+              </form>
+            </div>
+            <div class="col-md-auto">
+              <form method="POST" action="/admin/media/restore-all" style="display: inline;">
+                <button type="submit" class="btn btn-warning" title="Restore all media from MongoDB to /uploads folder">
+                  <i class="bi bi-arrow-counterclockwise me-2"></i>Restore All Media
+                </button>
+              </form>
+            </div>
+            <div class="col-md-auto">
+              <a href="/admin/media/download-info" class="btn btn-info" title="Download metadata about stored media">
+                <i class="bi bi-download me-2"></i>Download Info (JSON)
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown by Module -->
+  <% if (Object.keys(stats.byModule).length > 0) { %>
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Media by Module</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                <% Object.entries(stats.byModule).forEach(([module, count]) => { %>
+                  <tr>
+                    <td><strong><%= module %></strong></td>
+                    <td><span class="badge bg-primary"><%= count %></span></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Media by Owner Type</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                <% Object.entries(stats.byOwnerType).forEach(([type, count]) => { %>
+                  <tr>
+                    <td><strong><%= type %></strong></td>
+                    <td><span class="badge bg-info"><%= count %></span></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Filter Media</h5>
+        </div>
+        <div class="card-body">
+          <form method="GET" action="/admin/media" class="row g-3">
+            <div class="col-md-3">
+              <label for="module" class="form-label">Module</label>
+              <select class="form-select" id="module" name="module">
+                <option value="">All Modules</option>
+                <% modules.forEach(module => { %>
+                  <option value="<%= module %>" <%= filters.module === module ? 'selected' : '' %>>
+                    <%= module %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="fileType" class="form-label">File Type</label>
+              <select class="form-select" id="fileType" name="fileType">
+                <option value="">All Types</option>
+                <% fileTypes.forEach(type => { %>
+                  <option value="<%= type %>" <%= filters.fileType === type ? 'selected' : '' %>>
+                    <%= type %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="ownerType" class="form-label">Owner Type</label>
+              <select class="form-select" id="ownerType" name="ownerType">
+                <option value="">All Owners</option>
+                <% ownerTypes.forEach(type => { %>
+                  <option value="<%= type %>" <%= filters.ownerType === type ? 'selected' : '' %>>
+                    <%= type %>
+                  </option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel me-2"></i>Filter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media List Table -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">
+            Media Items (<%= totalCount %> total)
+            <% if (totalCount > perPage) { %>
+              - Page <%= currentPage %> of <%= totalPages %>
+            <% } %>
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <% if (mediaList.length > 0) { %>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>File Name</th>
+                    <th>Module</th>
+                    <th>Owner</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Uploaded On</th>
+                    <th>Last Restored</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% mediaList.forEach(item => { %>
+                    <tr>
+                      <td>
+                        <small>
+                          <code><%= item.fileName %></code><br>
+                          <span class="text-muted"><%= item.filePath %></span>
+                        </small>
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary"><%= item.module %></span>
+                      </td>
+                      <td>
+                        <% if (item.ownerType === 'system') { %>
+                          <em class="text-muted">System</em>
+                        <% } else { %>
+                          <small><%= item.ownerType %><br><%= item.ownerId ? item.ownerId.toString().slice(-4) : 'N/A' %></small>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% const typeColors = { image: 'success', video: 'warning', audio: 'info', pdf: 'danger', document: 'primary', other: 'secondary' }; %>
+                        <span class="badge bg-<%= typeColors[item.fileType] %>"><%= item.fileType %></span>
+                      </td>
+                      <td><small><%= item.formattedSize %></small></td>
+                      <td><small><%= item.uploadedOnFormatted %></small></td>
+                      <td><small><%= item.lastRestoredOnFormatted %></small></td>
+                      <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                          <a href="/admin/media/<%= item._id %>/view" class="btn btn-outline-primary" title="View/Download media" target="_blank">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <form method="POST" action="/admin/media/<%= item._id %>/delete" style="display: inline;" onsubmit="return confirm('Delete this media backup?');">
+                            <button type="submit" class="btn btn-outline-danger" title="Delete media backup">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+              <div class="card-footer bg-light">
+                <nav aria-label="Page navigation">
+                  <ul class="pagination justify-content-center mb-0">
+                    <% if (currentPage > 1) { %>
+                      <li class="page-item">
+                        <a class="page-link" href="/admin/media?page=1<% Object.entries(filters).forEach(([k, v]) => { if (v) { %>?<%= k %>=<%= v %><% } }); %>">First</a>
+                      </li>
+                      <li class="page-item">
+                        <a class="page-link" href="/admin/media?page=<%= currentPage - 1 %><% Object.entries(filters).forEach(([k, v]) => { if (v) { %>?<%= k %>=<%= v %><% } }); %>">Previous</a>
+                      </li>
+                    <% } %>
+
+                    <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                      <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                        <a class="page-link" href="/admin/media?page=<%= i %><% Object.entries(filters).forEach(([k, v]) => { if (v) { %>?<%= k %>=<%= v %><% } }); %>"><%= i %></a>
+                      </li>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                      <li class="page-item">
+                        <a class="page-link" href="/admin/media?page=<%= currentPage + 1 %><% Object.entries(filters).forEach(([k, v]) => { if (v) { %>?<%= k %>=<%= v %><% } }); %>">Next</a>
+                      </li>
+                      <li class="page-item">
+                        <a class="page-link" href="/admin/media?page=<%= totalPages %><% Object.entries(filters).forEach(([k, v]) => { if (v) { %>?<%= k %>=<%= v %><% } }); %>">Last</a>
+                      </li>
+                    <% } %>
+                  </ul>
+                </nav>
+              </div>
+            <% } %>
+          <% } else { %>
+            <div class="alert alert-info m-0">
+              <i class="bi bi-info-circle me-2"></i>
+              No media found matching your filters.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Card -->
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="card bg-light border-info">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0"><i class="bi bi-question-circle me-2"></i>How This Works</h5>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li><strong>Scan & Backup Now:</strong> Scans your /uploads folder for any files not yet in MongoDB backup. Useful after manual file additions.</li>
+            <li><strong>Restore All Media:</strong> Restores all files from MongoDB back to /uploads folder. Use if /uploads gets wiped (e.g., server restart on Render).</li>
+            <li><strong>Automatic Startup:</strong> On every server start, media is automatically restored from MongoDB to ensure availability.</li>
+            <li><strong>Persistent Storage:</strong> MongoDB stores the binary data of all uploads, ensuring media survives ephemeral filesystem wipes.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .badge {
+    font-size: 0.85em;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  code {
+    background-color: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+</style>

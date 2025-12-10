@@ -449,10 +449,16 @@ const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
 
+// NEW: Admin media management routes for MongoDB-based media backup & restore
+const adminMediaRoutes = require('./routes/adminMedia');
+
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
 const { ensureUploadDirectories } = require('./utils/uploadHelper');
+
+// NEW: Import media backup service for global media persistence
+const { restoreAllMediaOnStartup } = require('./utils/mediaBackupService');
 
 // Ensure upload directories exist
 ensureUploadDirectories();
@@ -547,7 +553,8 @@ app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
 // Mount follow routes
 app.use('/follows', followRoutes);
 
-
+// NEW: Mount admin media management routes for media backup and restore
+app.use('/admin/media', adminMediaRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');
@@ -627,8 +634,18 @@ const { initializeNotifications } = require('./utils/notificationInitializer');
 
 // Start server
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+
+  // NEW: Restore all media from MongoDB backup on server startup
+  // This ensures that on Render restarts or local cleanups, media files are repopulated
+  try {
+    const mediaRestore = await restoreAllMediaOnStartup();
+    console.log(`Media restore summary: ${mediaRestore.restored} restored, ${mediaRestore.skipped} skipped, ${mediaRestore.errors} errors`);
+  } catch (error) {
+    console.error('Error during media restore on startup:', error.message);
+    // Don't block server startup if restore fails
+  }
 
   // Initialize notifications after server starts
   setTimeout(async () => {
