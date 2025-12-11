@@ -1,0 +1,200 @@
+<!-- Admin Cloudinary Media Management -->
+<div class="container mt-5 mb-5">
+  <h1 class="mb-4">📁 Cloudinary Media Management</h1>
+
+  <!-- Success/Error Messages -->
+  <% if (messages.success && messages.success.length) { %>
+    <% messages.success.forEach(msg => { %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% if (messages.error && messages.error.length) { %>
+    <% messages.error.forEach(msg => { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <% if (messages.info && messages.info.length) { %>
+    <% messages.info.forEach(msg => { %>
+      <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <%= msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% }); %>
+  <% } %>
+
+  <!-- Summary Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row text-center">
+        <div class="col-md-4">
+          <h5 class="text-muted">Total Media Assets</h5>
+          <h3 class="text-primary"><%= totalMedia %></h3>
+        </div>
+        <div class="col-md-4">
+          <h5 class="text-muted">Pages</h5>
+          <h3><%= currentPage %> / <%= totalPages %></h3>
+        </div>
+        <div class="col-md-4">
+          <h5 class="text-muted">Actions</h5>
+          <form method="POST" action="/admin/media/migrate-local" style="display: inline;">
+            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Migrate all local /uploads to Cloudinary? This may take a while.');">
+              🔄 Migrate Local Files
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Form -->
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5>Filters</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="/admin/media" class="row g-3 align-items-end">
+        <!-- Search -->
+        <div class="col-md-4">
+          <label for="search" class="form-label">Search (filename/public_id)</label>
+          <input type="text" class="form-control" id="search" name="search" value="<%= filters.search || '' %>" placeholder="e.g., artist_banner">
+        </div>
+
+        <!-- Module Filter -->
+        <div class="col-md-3">
+          <label for="module" class="form-label">Module</label>
+          <select class="form-select" id="module" name="module">
+            <option value="all">All Modules</option>
+            <option value="artistContent" <%= filters.module === 'artistContent' ? 'selected' : '' %>>Artist Content</option>
+            <option value="venueMedia" <%= filters.module === 'venueMedia' ? 'selected' : '' %>>Venue Media</option>
+            <option value="legacyMigration" <%= filters.module === 'legacyMigration' ? 'selected' : '' %>>Legacy Migration</option>
+            <option value="userProfile" <%= filters.module === 'userProfile' ? 'selected' : '' %>>User Profile</option>
+            <option value="adminUpload" <%= filters.module === 'adminUpload' ? 'selected' : '' %>>Admin Upload</option>
+          </select>
+        </div>
+
+        <!-- Owner Type Filter -->
+        <div class="col-md-3">
+          <label for="ownerType" class="form-label">Owner Type</label>
+          <select class="form-select" id="ownerType" name="ownerType">
+            <option value="all">All Types</option>
+            <option value="user" <%= filters.ownerType === 'user' ? 'selected' : '' %>>User</option>
+            <option value="artist" <%= filters.ownerType === 'artist' ? 'selected' : '' %>>Artist</option>
+            <option value="venue" <%= filters.ownerType === 'venue' ? 'selected' : '' %>>Venue</option>
+            <option value="admin" <%= filters.ownerType === 'admin' ? 'selected' : '' %>>Admin</option>
+            <option value="system" <%= filters.ownerType === 'system' ? 'selected' : '' %>>System</option>
+          </select>
+        </div>
+
+        <!-- Submit -->
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">🔍 Filter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Media Table -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Filename</th>
+            <th>Type</th>
+            <th>Module</th>
+            <th>Owner</th>
+            <th>Size</th>
+            <th>Uploaded</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (mediaList && mediaList.length > 0) { %>
+            <% mediaList.forEach(media => { %>
+              <tr>
+                <td>
+                  <a href="<%= media.secure_url %>" target="_blank" class="text-decoration-none">
+                    <%= media.original_filename %>
+                  </a>
+                </td>
+                <td>
+                  <span class="badge bg-<%= media.resource_type === 'image' ? 'success' : media.resource_type === 'video' ? 'danger' : 'secondary' %>">
+                    <%= media.resource_type %>
+                  </span>
+                </td>
+                <td><small><%= media.module || 'n/a' %></small></td>
+                <td><small><%= media.ownerType %> <% if (media.ownerId) { %>#<%= media.ownerId.toString().slice(-6) %><% } %></small></td>
+                <td><small><%= Math.round(media.bytes / 1024) %> KB</small></td>
+                <td><small><%= new Date(media.createdAt).toLocaleDateString() %></small></td>
+                <td>
+                  <a href="<%= media.secure_url %>" target="_blank" class="btn btn-sm btn-info" title="View">
+                    👁️
+                  </a>
+                  <form method="POST" action="/admin/media/delete/<%= media._id %>" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this media from Cloudinary?');" title="Delete">
+                      🗑️
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center text-muted py-3">No media found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+    <nav class="mt-4" aria-label="Pagination">
+      <ul class="pagination justify-content-center">
+        <% if (currentPage > 1) { %>
+          <li class="page-item">
+            <a class="page-link" href="/admin/media?page=1&<%= Object.entries(filters).map(([k,v]) => `${k}=${v}`).join('&') %>">« First</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/admin/media?page=<%= currentPage - 1 %>&<%= Object.entries(filters).map(([k,v]) => `${k}=${v}`).join('&') %>">‹ Prev</a>
+          </li>
+        <% } %>
+
+        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="/admin/media?page=<%= i %>&<%= Object.entries(filters).map(([k,v]) => `${k}=${v}`).join('&') %>"><%= i %></a>
+          </li>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+          <li class="page-item">
+            <a class="page-link" href="/admin/media?page=<%= currentPage + 1 %>&<%= Object.entries(filters).map(([k,v]) => `${k}=${v}`).join('&') %>">Next ›</a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="/admin/media?page=<%= totalPages %>&<%= Object.entries(filters).map(([k,v]) => `${k}=${v}`).join('&') %>">Last »</a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  <% } %>
+</div>
+
+<style>
+.table-hover tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+</style>

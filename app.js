@@ -448,8 +448,6 @@ const followRoutes = require('./routes/follows');
 const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
-
-// NEW: Admin media management routes for MongoDB-based media backup & restore
 const adminMediaRoutes = require('./routes/adminMedia');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');

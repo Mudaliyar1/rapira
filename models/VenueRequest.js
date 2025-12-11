@@ -137,6 +137,10 @@ const VenueRequestSchema = new mongoose.Schema({
     type: String,
     default: []
   }],
+  media: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  }],
   googleMapsLink: {
     type: String,
     trim: true

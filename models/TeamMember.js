@@ -20,6 +20,10 @@ const teamMemberSchema = new mongoose.Schema({
     type: String,
     default: '/images/default-profile.jpg'
   },
+  media: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  },
   socialLinks: {
     linkedin: {
       type: String,

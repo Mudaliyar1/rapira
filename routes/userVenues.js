@@ -4,23 +4,16 @@ const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
 const VenueEditRequest = require('../models/VenueEditRequest');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const Media = require('../models/Media');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { isLoggedIn } = require('../middleware/auth');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
-// Configure multer for venue image uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/uploads/venues/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -321,10 +314,24 @@ router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
 
     // Handle new image uploads
     const newImages = [];
+    const newImageMedia = [];
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        newImages.push(`/uploads/venues/${file.filename}`);
-      });
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'venueMedia',
+            ownerType: 'venue',
+            folder: 'rapira/venues/images'
+          });
+          if (media) {
+            newImages.push(media.secure_url);
+            newImageMedia.push(media._id);
+          }
+        } catch (err) {
+          console.error('Error uploading venue image:', err.message);
+          // Continue without blocking
+        }
+      }
     }
 
     // Prepare the requested changes
@@ -408,6 +415,7 @@ router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
       changedFields,
       reason,
       newImages,
+      newImageMedia: newImageMedia,
       imagesToRemove: Array.isArray(imagesToRemove) ? imagesToRemove : (imagesToRemove ? [imagesToRemove] : [])
     });
 

@@ -40,6 +40,10 @@ const ArtistSchema = new mongoose.Schema({
     type: String,
     default: '/images/default-banner.jpg'
   },
+  bannerMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  },
   aadharCard: {
     type: String,
     default: ''
@@ -63,6 +67,10 @@ const ArtistSchema = new mongoose.Schema({
   proofPhoto: {
     type: String,
     default: ''
+  },
+  proofPhotoMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
   },
   completedLearning: {
     type: Boolean,

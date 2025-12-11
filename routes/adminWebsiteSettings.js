@@ -2,29 +2,16 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const Media = require('../models/Media');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { getMenuConfiguration, getAllRoutes } = require('../utils/routeDiscovery');
 const { clearSettingsCache } = require('../middleware/websiteSettings');
 
-// Configure multer for logo uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = 'public/images/branding/';
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'logo-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for logo uploads (memory → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -121,16 +108,28 @@ router.post('/header', isLoggedIn, isAdmin, upload.single('logo'), async (req, r
     settings.headerSettings.logoHeight = parseInt(logoHeight) || 45;
     settings.headerSettings.showBrandText = showBrandText === 'on';
 
-    // Handle logo upload
+    // Handle logo upload (Cloudinary)
     if (req.file) {
-      // Delete old logo if exists
-      if (settings.headerSettings.logoUrl && settings.headerSettings.logoUrl.startsWith('/images/branding/')) {
-        const oldLogoPath = path.join(__dirname, '..', 'public', settings.headerSettings.logoUrl);
-        if (fs.existsSync(oldLogoPath)) {
-          fs.unlinkSync(oldLogoPath);
+      try {
+        if (settings.headerSettings.logoMedia) {
+          const prev = await Media.findById(settings.headerSettings.logoMedia);
+          await deleteMedia(prev);
         }
+
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'adminBranding',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: 'rapira/admin/branding'
+        });
+
+        settings.headerSettings.logoMedia = media._id;
+        settings.headerSettings.logoUrl = media.secure_url;
+      } catch (err) {
+        console.error('Cloud upload failed (logo):', err);
+        req.flash('error', 'Logo upload failed');
+        return res.redirect('/admin/website-settings');
       }
-      settings.headerSettings.logoUrl = '/images/branding/' + req.file.filename;
     }
 
     settings.lastUpdatedBy = req.session.user.id;

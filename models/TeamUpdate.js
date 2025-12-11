@@ -54,6 +54,10 @@ const TeamUpdateSchema = new mongoose.Schema({
     path: String,
     size: Number,
     mimetype: String,
+    mediaId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Media'
+    },
     uploadedAt: {
       type: Date,
       default: Date.now

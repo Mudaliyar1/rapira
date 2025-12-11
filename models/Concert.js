@@ -44,6 +44,10 @@ const ConcertSchema = new mongoose.Schema({
     type: String,
     default: '/images/default-concert.jpg'
   },
+  posterMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'completed', 'cancelled'],

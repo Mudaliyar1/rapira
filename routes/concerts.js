@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Ticket = require('../models/Ticket');
 const ConcertEditRequest = require('../models/ConcertEditRequest');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const Media = require('../models/Media');
 const { isLoggedIn, isArtist, canCreateConcert } = require('../middleware/auth');
 const { sendConcertSubmissionEmail } = require('../utils/emailService');
 const { applySubscriptionDiscount } = require('../middleware/subscription');
@@ -17,18 +18,14 @@ const fs = require('fs');
 // Import payment service
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 
-// Import upload helper
-const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
+// Import upload helper and media service
+const { getFileUrl } = require('../utils/fileHelper');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
-// Configure multer for concert image uploads
-const upload = createUpload({
-  uploadType: 'concerts',
-  fileSize: 5 * 1024 * 1024, // 5MB limit
-  filenameGenerator: (file) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    return 'concert-' + uniqueSuffix + ext;
-  },
+// Configure multer for concert image uploads (memory → Cloudinary)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -659,9 +656,22 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       }
     });
 
-    // Set poster image if uploaded
+    // Upload poster image to Cloudinary if provided
     if (req.files && req.files['posterImage'] && req.files['posterImage'][0]) {
-      newConcert.posterImage = getStoragePath('concerts', req.files['posterImage'][0].filename);
+      try {
+        const posterFile = req.files['posterImage'][0];
+        const { media } = await uploadFileToCloudinary(posterFile, {
+          module: 'concertPoster',
+          ownerType: 'artist',
+          ownerId: artist._id,
+          folder: 'rapira/concerts/posters'
+        });
+        newConcert.posterImage = media.secure_url;
+        newConcert.posterMedia = media._id;
+      } catch (err) {
+        console.error('Poster image upload error:', err);
+        req.flash('warning', 'Concert created, but poster image upload failed.');
+      }
     }
 
     await newConcert.save();
@@ -1084,18 +1094,31 @@ router.post('/:id/edit', isLoggedIn, isArtist, (req, res, next) => {
       concert.status = 'pending';
     }
 
-    // Update poster image if uploaded (files are stored in req.files array when using .any())
+    // Update poster image if uploaded to Cloudinary
     if (req.files && req.files.length > 0) {
       const posterFile = req.files.find(f => f.fieldname === 'posterImage');
       if (posterFile) {
-        // Delete old poster image if it's not the default
-        if (concert.posterImage && concert.posterImage !== '/images/default-concert.jpg') {
-          deleteFileIfExists(concert.posterImage);
-      }
+        try {
+          // Delete old poster from Cloudinary if exists
+          if (concert.posterMedia) {
+            const oldMedia = await Media.findById(concert.posterMedia);
+            if (oldMedia) await deleteMedia(oldMedia);
+          }
 
-        // Set new poster image using our helper
-        concert.posterImage = getStoragePath('concerts', posterFile.filename);
-        console.log(`Updated concert poster image to: ${concert.posterImage}`);
+          // Upload new poster to Cloudinary
+          const { media } = await uploadFileToCloudinary(posterFile, {
+            module: 'concertPoster',
+            ownerType: 'artist',
+            ownerId: concert.artist,
+            folder: 'rapira/concerts/posters'
+          });
+          concert.posterImage = media.secure_url;
+          concert.posterMedia = media._id;
+          console.log(`Updated concert poster image to: ${media.secure_url}`);
+        } catch (err) {
+          console.error('Error uploading poster:', err);
+          req.flash('warning', 'Failed to upload poster image');
+        }
       }
     }
 
@@ -1238,11 +1261,23 @@ router.post('/:id/request-edit', isLoggedIn, isArtist, (req, res, next) => {
     if (price && parseFloat(price) !== parseFloat(concert.price)) requestedChanges.price = parseFloat(price);
     if (maxTickets && parseInt(maxTickets) !== parseInt(concert.maxTickets)) requestedChanges.maxTickets = parseInt(maxTickets);
 
-    // Handle poster image upload (files are stored in req.files array when using .any())
+    // Handle poster image upload to Cloudinary
     if (req.files && req.files.length > 0) {
       const posterFile = req.files.find(f => f.fieldname === 'posterImage');
       if (posterFile) {
-        requestedChanges.posterImage = '/uploads/concerts/' + posterFile.filename;
+        try {
+          const { media: posterMedia } = await uploadFileToCloudinary(posterFile, {
+            module: 'concertPoster',
+            ownerType: 'artist',
+            ownerId: concert.artist,
+            folder: 'rapira/concerts/posters'
+          });
+          requestedChanges.posterImage = posterMedia.secure_url;
+          requestedChanges.posterMedia = posterMedia._id;
+        } catch (err) {
+          console.error('Error uploading poster:', err);
+          req.flash('warning', 'Failed to upload poster image');
+        }
       }
     }
 

@@ -5,24 +5,13 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
+const Media = require('../models/Media');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
-// NEW: Import media backup service for MongoDB persistence
-const { backupMediaToMongo } = require('../utils/mediaBackupService');
-
-// Configure multer for venue image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/uploads/venues/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'venue-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -196,10 +185,24 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
 
     // Process uploaded images
     const images = [];
+    const imageMedia = [];
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        images.push(`/uploads/venues/${file.filename}`);
-      });
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'venueMedia',
+            ownerType: 'venue',
+            folder: 'rapira/venues/images'
+          });
+          if (media) {
+            images.push(media.secure_url);
+            imageMedia.push(media._id);
+          }
+        } catch (err) {
+          console.error('Error uploading venue image:', err.message);
+          req.flash('warning', `Failed to upload one image: ${err.message}`);
+        }
+      }
     }
 
     // Process facilities (convert to array if it's a string)
@@ -262,6 +265,7 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
       },
       description: description ? description.trim() : '',
       images: images,
+      imageMedia: imageMedia,
       googleMapsLink: googleMapsLink ? googleMapsLink.trim() : '',
       website: website ? website.trim() : '',
       createdBy: req.session.user.id,
@@ -269,20 +273,6 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
     });
 
     await venue.save();
-
-    // NEW: Backup uploaded venue images to MongoDB for persistence
-    if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        backupMediaToMongo(file, {
-          module: 'venueMedia',
-          ownerType: 'venue',
-          ownerId: venue._id
-        }).catch(err => {
-          console.error('Error backing up venue image:', err.message);
-          // Continue without blocking
-        });
-      });
-    }
 
     req.flash('success', 'Venue added successfully');
     res.redirect('/admin/venues');
@@ -477,16 +467,44 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
 
     // Handle image removal
     let currentImages = venue.images || [];
+    let currentImageMedia = venue.imageMedia || [];
     if (removeImages) {
       const imagesToRemove = Array.isArray(removeImages) ? removeImages : [removeImages];
       currentImages = currentImages.filter(img => !imagesToRemove.includes(img));
+      // Also remove corresponding media docs
+      const mediaToDelete = venue.imageMedia || [];
+      for (const mediaId of mediaToDelete) {
+        try {
+          const mediaDoc = await Media.findById(mediaId);
+          if (mediaDoc) {
+            await deleteMedia(mediaDoc);
+          }
+        } catch (err) {
+          console.error('Error deleting media:', err.message);
+        }
+      }
+      currentImageMedia = [];
     }
 
     // Process new uploaded images
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        currentImages.push(`/uploads/venues/${file.filename}`);
-      });
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'venueMedia',
+            ownerType: 'venue',
+            ownerId: venue._id,
+            folder: 'rapira/venues/images'
+          });
+          if (media) {
+            currentImages.push(media.secure_url);
+            currentImageMedia.push(media._id);
+          }
+        } catch (err) {
+          console.error('Error uploading venue image:', err.message);
+          req.flash('warning', `Failed to upload one image: ${err.message}`);
+        }
+      }
     }
 
     // Update venue
@@ -504,6 +522,8 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
       email: contactEmail ? contactEmail.trim().toLowerCase() : ''
     };
     venue.priceRange = priceRange || 'Mid-Range';
+    venue.images = currentImages;
+    venue.imageMedia = currentImageMedia;
     
     // Update pricing structure with new format
     const existingPricing = venue.pricing || {};
@@ -579,20 +599,6 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     }
 
     console.log('Venue updated successfully with ID:', savedVenue._id);
-
-    // NEW: Backup newly uploaded venue images to MongoDB for persistence
-    if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        backupMediaToMongo(file, {
-          module: 'venueMedia',
-          ownerType: 'venue',
-          ownerId: savedVenue._id
-        }).catch(err => {
-          console.error('Error backing up venue image:', err.message);
-          // Continue without blocking
-        });
-      });
-    }
 
     req.flash('success', 'Venue updated successfully');
     console.log('=== VENUE EDIT REQUEST END - SUCCESS ===');

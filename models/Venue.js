@@ -153,6 +153,10 @@ const VenueSchema = new mongoose.Schema({
     type: String,
     default: []
   }],
+  imageMedia: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  }],
   isActive: {
     type: Boolean,
     default: true

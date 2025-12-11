@@ -2,30 +2,16 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
-
+const Media = require('../models/Media');
 const ProductReview = require('../models/ProductReview');
 const { isAdmin } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
-// Configure multer for product image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../public/uploads/products');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for product image uploads (memory → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -165,8 +151,29 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
     
     // Process uploaded images
     console.log('🔍 Processing uploaded images...');
+    // Process uploaded images → Cloudinary
     console.log('Files array:', req.files);
-    const images = req.files.map(file => `/uploads/products/${file.filename}`);
+    const images = [];
+    const mediaRefs = [];
+    
+    if (req.files && req.files.length > 0) {
+      try {
+        for (const file of req.files) {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'adminMerchandise',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/admin/merchandise/products'
+          });
+          images.push(media.secure_url);
+          mediaRefs.push(media._id);
+        }
+      } catch (err) {
+        console.error('Cloud upload failed (product images):', err);
+        req.flash('error', 'Image upload failed');
+        return res.redirect('/admin/merchandise/products/add');
+      }
+    }
     console.log('Processed images:', images);
 
     if (images.length === 0) {
@@ -241,7 +248,9 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
       weight: weight ? parseFloat(weight) : 0,
       dimensions: productDimensions,
       sku: sku ? sku.trim() : undefined,
-      createdBy: req.session.user.id
+      createdBy: req.session.user.id,
+      images: images,
+      imageMedia: mediaRefs
     };
 
     console.log('Product data to save:', productData);
@@ -414,12 +423,29 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
       console.log('✅ Using current product images:', updatedImages);
     }
 
-    // Add new images if any
+    // Add new images if any via Cloudinary
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
-      updatedImages = [...updatedImages, ...newImages];
-      console.log('✅ Added new images:', newImages);
-      console.log('✅ Final images array:', updatedImages);
+      const mediaRefs = [];
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'product',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/products/images'
+          });
+          updatedImages.push(media.secure_url);
+          mediaRefs.push(media._id);
+          console.log('✅ Uploaded image to Cloudinary:', media.secure_url);
+        } catch (err) {
+          console.error('Error uploading product image:', err);
+          req.flash('warning', `Failed to upload image: ${file.originalname}`);
+        }
+      }
+      if (mediaRefs.length > 0) {
+        product.imageMedia = [...(product.imageMedia || []), ...mediaRefs];
+      }
+      console.log('✅ Added new images from Cloudinary:', updatedImages);
     }
 
     // Ensure we always have at least the original images if nothing else

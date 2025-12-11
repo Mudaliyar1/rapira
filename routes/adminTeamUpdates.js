@@ -7,28 +7,16 @@ const methodOverride = require('method-override');
 const TeamUpdate = require('../models/TeamUpdate');
 const TeamComment = require('../models/TeamComment');
 const User = require('../models/User');
+const Media = require('../models/Media');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
 // Enable method override for PUT and DELETE requests
 router.use(methodOverride('_method'));
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../public/uploads/team-updates');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'team-update-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for file uploads (memory → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
@@ -175,13 +163,32 @@ router.post('/', isLoggedIn, isAdmin, upload.array('attachments', 5), async (req
     } = req.body;
 
     // Process attachments
-    const attachments = req.files ? req.files.map(file => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      path: `/uploads/team-updates/${file.filename}`,
-      size: file.size,
-      mimetype: file.mimetype
-    })) : [];
+    const attachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'teamUpdates',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/admin/team-updates'
+          });
+          if (media) {
+            attachments.push({
+              filename: media.public_id,
+              originalName: file.originalname,
+              path: media.secure_url,
+              size: file.size,
+              mimetype: file.mimetype,
+              mediaId: media._id
+            });
+          }
+        } catch (err) {
+          console.error('Error uploading team update attachment:', err.message);
+          // Continue without blocking
+        }
+      }
+    }
 
     // Process action items
     let processedActionItems = [];
@@ -389,31 +396,54 @@ router.put('/:id', isLoggedIn, isAdmin, upload.array('attachments', 5), async (r
     } = req.body;
 
     // Process new attachments
-    const newAttachments = req.files ? req.files.map(file => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      path: `/uploads/team-updates/${file.filename}`,
-      size: file.size,
-      mimetype: file.mimetype
-    })) : [];
+    const newAttachments = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'teamUpdates',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/admin/team-updates'
+          });
+          if (media) {
+            newAttachments.push({
+              filename: media.public_id,
+              originalName: file.originalname,
+              path: media.secure_url,
+              size: file.size,
+              mimetype: file.mimetype,
+              mediaId: media._id
+            });
+          }
+        } catch (err) {
+          console.error('Error uploading team update attachment:', err.message);
+          // Continue without blocking
+        }
+      }
+    }
 
     // Handle attachment removal
     let existingAttachments = update.attachments || [];
     if (removeAttachments && Array.isArray(removeAttachments)) {
+      // Delete media from Cloudinary
+      for (const attachmentId of removeAttachments) {
+        const attachment = update.attachments.find(att => att._id.toString() === attachmentId);
+        if (attachment && attachment.mediaId) {
+          try {
+            const mediaDoc = await Media.findById(attachment.mediaId);
+            if (mediaDoc) {
+              await deleteMedia(mediaDoc);
+            }
+          } catch (err) {
+            console.error('Error deleting attachment media:', err.message);
+          }
+        }
+      }
+      
       existingAttachments = existingAttachments.filter(attachment =>
         !removeAttachments.includes(attachment._id.toString())
       );
-
-      // Delete removed files from filesystem
-      removeAttachments.forEach(attachmentId => {
-        const attachment = update.attachments.find(att => att._id.toString() === attachmentId);
-        if (attachment) {
-          const filePath = path.join(__dirname, '../public', attachment.path);
-          fs.unlink(filePath, (err) => {
-            if (err) console.error('Error deleting file:', err);
-          });
-        }
-      });
     }
 
     // Process action items

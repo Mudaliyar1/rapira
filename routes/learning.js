@@ -4,31 +4,19 @@ const LearningModule = require('../models/LearningModule');
 const LearningProgress = require('../models/LearningProgress');
 const Artist = require('../models/Artist');
 const User = require('../models/User');
+const Media = require('../models/Media');
 const ArtistUpgradeRequest = require('../models/ArtistUpgradeRequest');
 const { isLoggedIn, isAdmin, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads/learning');
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'learning-' + uniqueSuffix + ext);
-  }
-});
+// Import media service for Cloudinary uploads
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
+// Configure multer for file uploads (memory → Cloudinary)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit for richer content
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif|pdf|mp4|webm/;
@@ -488,15 +476,28 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
 
     // Collect all content items (support multiple content types)
     const contentItems = [];
+    const mediaRefs = []; // Store Media ObjectIds for uploaded files
 
-    // Check video files (can be multiple)
+    // Check video files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.videoFile && req.files.videoFile.length > 0) {
-      req.files.videoFile.forEach(file => {
-        contentItems.push({
-          type: 'video',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.videoFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/videos'
+          });
+          contentItems.push({
+            type: 'video',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('Video upload error:', err);
+          req.flash('warning', `Failed to upload video file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check video URL
@@ -507,14 +508,26 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
       });
     }
 
-    // Check PDF files (can be multiple)
+    // Check PDF files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.pdfFile && req.files.pdfFile.length > 0) {
-      req.files.pdfFile.forEach(file => {
-        contentItems.push({
-          type: 'pdf',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.pdfFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/pdfs'
+          });
+          contentItems.push({
+            type: 'pdf',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('PDF upload error:', err);
+          req.flash('warning', `Failed to upload PDF file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check PDF URL
@@ -525,14 +538,26 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
       });
     }
 
-    // Check image files (can be multiple)
+    // Check image files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.imageFile && req.files.imageFile.length > 0) {
-      req.files.imageFile.forEach(file => {
-        contentItems.push({
-          type: 'image',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.imageFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/images'
+          });
+          contentItems.push({
+            type: 'image',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('Image upload error:', err);
+          req.flash('warning', `Failed to upload image file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check image URL
@@ -578,9 +603,22 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
       createdBy: req.session.user.id
     });
 
-    // Set thumbnail if uploaded
+    // Upload thumbnail to Cloudinary if provided
     if (req.files && req.files.thumbnailImage && req.files.thumbnailImage[0]) {
-      newModule.thumbnailImage = '/uploads/learning/' + req.files.thumbnailImage[0].filename;
+      try {
+        const thumbnailFile = req.files.thumbnailImage[0];
+        const { media } = await uploadFileToCloudinary(thumbnailFile, {
+          module: 'learningModule',
+          ownerType: 'admin',
+          ownerId: req.session.user.id,
+          folder: 'rapira/learning-modules/thumbnails'
+        });
+        newModule.thumbnailImage = media.secure_url;
+        newModule.thumbnailMedia = media._id;
+      } catch (err) {
+        console.error('Thumbnail upload error:', err);
+        req.flash('warning', 'Module created, but thumbnail upload failed.');
+      }
     }
 
     await newModule.save();
@@ -648,7 +686,7 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
       return res.redirect(`/learning/admin/edit/${req.params.id}`);
     }
 
-    const module = await LearningModule.findById(req.params.id);
+    const module = await LearningModule.findById(req.params.id).populate('thumbnailMedia');
 
     if (!module) {
       req.flash('error', 'Learning module not found');
@@ -657,15 +695,28 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
 
     // Collect all NEW content items (replace old items)
     const contentItems = [];
+    const mediaRefs = [];
 
-    // Check video files (can be multiple)
+    // Check video files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.videoFile && req.files.videoFile.length > 0) {
-      req.files.videoFile.forEach(file => {
-        contentItems.push({
-          type: 'video',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.videoFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/videos'
+          });
+          contentItems.push({
+            type: 'video',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('Video upload error:', err);
+          req.flash('warning', `Failed to upload video file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check video URL
@@ -676,14 +727,26 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
       });
     }
 
-    // Check PDF files (can be multiple)
+    // Check PDF files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.pdfFile && req.files.pdfFile.length > 0) {
-      req.files.pdfFile.forEach(file => {
-        contentItems.push({
-          type: 'pdf',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.pdfFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/pdfs'
+          });
+          contentItems.push({
+            type: 'pdf',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('PDF upload error:', err);
+          req.flash('warning', `Failed to upload PDF file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check PDF URL
@@ -694,14 +757,26 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
       });
     }
 
-    // Check image files (can be multiple)
+    // Check image files (can be multiple) - upload to Cloudinary
     if (req.files && req.files.imageFile && req.files.imageFile.length > 0) {
-      req.files.imageFile.forEach(file => {
-        contentItems.push({
-          type: 'image',
-          content: '/uploads/learning/' + file.filename
-        });
-      });
+      for (const file of req.files.imageFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'learningModule',
+            ownerType: 'admin',
+            ownerId: req.session.user.id,
+            folder: 'rapira/learning-modules/images'
+          });
+          contentItems.push({
+            type: 'image',
+            content: media.secure_url
+          });
+          mediaRefs.push(media._id);
+        } catch (err) {
+          console.error('Image upload error:', err);
+          req.flash('warning', `Failed to upload image file: ${file.originalname}`);
+        }
+      }
     }
     
     // Check image URL
@@ -770,16 +845,30 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
     module.order = order || 0;
     module.isRequired = isRequired === 'on';
 
-    // Update thumbnail if uploaded
+    // Update thumbnail if uploaded to Cloudinary
     if (req.files && req.files.thumbnailImage && req.files.thumbnailImage[0]) {
-      if (module.thumbnailImage && module.thumbnailImage !== '/images/default-learning.jpg') {
-        const oldImagePath = path.join(__dirname, '../public', module.thumbnailImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
-      }
+      try {
+        const thumbnailFile = req.files.thumbnailImage[0];
 
-      module.thumbnailImage = '/uploads/learning/' + req.files.thumbnailImage[0].filename;
+        // Delete old thumbnail from Cloudinary if it exists
+        if (module.thumbnailMedia) {
+          await deleteMedia(module.thumbnailMedia);
+        }
+
+        // Upload new thumbnail
+        const { media } = await uploadFileToCloudinary(thumbnailFile, {
+          module: 'learningModule',
+          ownerType: 'admin',
+          ownerId: req.session.user.id,
+          folder: 'rapira/learning-modules/thumbnails'
+        });
+
+        module.thumbnailImage = media.secure_url;
+        module.thumbnailMedia = media._id;
+      } catch (err) {
+        console.error('Thumbnail upload error:', err);
+        req.flash('warning', 'Module updated, but thumbnail upload failed.');
+      }
     }
 
     await module.save();
@@ -837,18 +926,19 @@ router.post('/admin/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/learning/admin');
     }
 
-    const module = await LearningModule.findById(req.params.id);
+    const module = await LearningModule.findById(req.params.id).populate('thumbnailMedia');
 
     if (!module) {
       req.flash('error', 'Learning module not found');
       return res.redirect('/learning/admin');
     }
 
-    // Delete thumbnail if it's not the default
-    if (module.thumbnailImage && module.thumbnailImage !== '/images/default-learning.jpg') {
-      const imagePath = path.join(__dirname, '../public', module.thumbnailImage);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+    // Delete thumbnail from Cloudinary if it exists
+    if (module.thumbnailMedia) {
+      try {
+        await deleteMedia(module.thumbnailMedia);
+      } catch (err) {
+        console.error('Error deleting thumbnail from Cloudinary:', err);
       }
     }
 

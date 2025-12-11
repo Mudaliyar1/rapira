@@ -7,22 +7,15 @@ const VenueRequest = require('../models/VenueRequest');
 const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const Media = require('../models/Media');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
 const DeletedAccount = require('../models/DeletedAccount');
 
-// Import upload helper
-const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
-
-// Configure multer for profile image uploads
-const upload = createUpload({
-  uploadType: 'profiles',
-  fileSize: 5 * 1024 * 1024, // 5MB limit
-  filenameGenerator: (file) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    return 'profile-' + uniqueSuffix + ext;
-  },
+// Configure multer for profile image uploads (memory → Cloudinary)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -177,18 +170,27 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
 
     // Update profile image if uploaded
     if (req.file) {
-      // Delete old profile image if it's not the default
-      if (user.profileImage && user.profileImage !== '/images/default-profile.svg' && user.profileImage !== '/images/default-profile.png') {
-        deleteFileIfExists(user.profileImage);
+      try {
+        if (user.profileMedia) {
+          const previous = await Media.findById(user.profileMedia);
+          await deleteMedia(previous);
+        }
+
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'userProfile',
+          ownerType: 'user',
+          ownerId: user._id,
+          folder: `rapira/users/${user._id}`
+        });
+
+        user.profileMedia = media._id;
+        user.profileImage = media.secure_url;
+        req.session.user.profileImage = user.profileImage;
+      } catch (err) {
+        console.error('Cloud upload failed (profile):', err);
+        req.flash('error', 'Profile image upload failed');
+        return res.redirect('/users/edit-profile');
       }
-
-      // Set new profile image using our helper
-      user.profileImage = getStoragePath('profiles', req.file.filename);
-
-      // Update session
-      req.session.user.profileImage = user.profileImage;
-
-      console.log(`Updated profile image for user ${user._id} to ${user.profileImage}`);
     }
 
     await user.save();

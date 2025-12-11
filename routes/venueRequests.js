@@ -5,19 +5,13 @@ const WebsiteSettings = require('../models/WebsiteSettings');
 const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const Media = require('../models/Media');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
-// Import upload helper
-const { createUpload } = require('../utils/uploadHelper');
-
-// Configure multer for venue image uploads
-const upload = createUpload({
-  uploadType: 'venues',
-  fileSize: 5 * 1024 * 1024, // 5MB limit
-  filenameGenerator: (file) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    return 'venue-request-' + uniqueSuffix + ext;
-  },
+// Configure multer for venue image uploads (memory → Cloudinary)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -100,12 +94,26 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
       return res.redirect('/users/venue-requests/create');
     }
 
-    // Process uploaded images
+    // Process uploaded images → Cloudinary
     const images = [];
+    const mediaRefs = [];
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        images.push(`/uploads/venues/${file.filename}`);
-      });
+      try {
+        for (const file of req.files) {
+          const { media } = await uploadFileToCloudinary(file, {
+            module: 'venueRequest',
+            ownerType: 'user',
+            ownerId: req.session.user.id,
+            folder: `rapira/venues/requests/${req.session.user.id}`
+          });
+          images.push(media.secure_url);
+          mediaRefs.push(media._id);
+        }
+      } catch (err) {
+        console.error('Cloud upload failed (venue request):', err);
+        req.flash('error', 'Image upload failed');
+        return res.redirect('/users/venue-requests/create');
+      }
     }
 
     // Process facilities (convert to array if it's a string)
@@ -170,6 +178,7 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
       },
       description: description ? description.trim() : '',
       images: images,
+      media: mediaRefs,
       googleMapsLink: googleMapsLink ? googleMapsLink.trim() : '',
       website: website ? website.trim() : ''
     });

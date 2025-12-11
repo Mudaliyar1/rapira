@@ -33,6 +33,10 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
+  imageMedia: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  }],
   sizes: [{
     size: {
       type: String,

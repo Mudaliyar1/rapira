@@ -3,10 +3,12 @@ const router = express.Router();
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ArtistApplication = require('../models/ArtistApplication');
+const Media = require('../models/Media');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { sendArtistApplicationEmail, sendArtistApprovalEmail, sendArtistRejectionEmail } = require('../utils/emailService');
 const { createArtistApplicationNotification } = require('../utils/notificationService');
 
@@ -215,17 +217,25 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
       return res.redirect('/artist-applications/status');
     }
 
-    // Create new application
-    // Build storage path and ensure file is written to disk for local access
-    const uploadPath = path.join(__dirname, '../public/uploads/proofs');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
+    // Create new application with proof photo uploaded to Cloudinary
+    let proofPhotoUrl = null;
+    let proofPhotoMedia = null;
+    
+    if (req.file) {
+      try {
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'artistApplication',
+          ownerType: 'user',
+          ownerId: req.session.user.id,
+          folder: 'rapira/artist-applications/proofs'
+        });
+        proofPhotoUrl = media.secure_url;
+        proofPhotoMedia = media._id;
+      } catch (err) {
+        console.error('Proof photo upload error:', err);
+        req.flash('warning', 'Application created, but proof photo upload failed. Please upload it later.');
+      }
     }
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(req.file.originalname) || '.pdf';
-    const fileName = 'proof-' + uniqueSuffix + ext;
-    const diskPath = path.join(uploadPath, fileName);
-    fs.writeFileSync(diskPath, req.file.buffer);
 
     const newApplication = new ArtistApplication({
       user: req.session.user.id,
@@ -235,9 +245,10 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
       city,
       age,
       phoneNumber,
-      proofPhoto: '/uploads/proofs/' + fileName,
-      proofPhotoData: req.file.buffer,
-      proofPhotoContentType: req.file.mimetype,
+      proofPhoto: proofPhotoUrl,
+      proofPhotoData: req.file ? req.file.buffer : null,
+      proofPhotoContentType: req.file ? req.file.mimetype : null,
+      proofPhotoMedia: proofPhotoMedia,
       status: 'pending'
     });
 

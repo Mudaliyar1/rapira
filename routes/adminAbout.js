@@ -2,34 +2,18 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const TeamMember = require('../models/TeamMember');
+const Media = require('../models/Media');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 
-// Configure multer for team member image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../public/uploads/team');
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'team-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for team member image uploads (memory storage → Cloudinary)
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: function (req, file, cb) {
-    // Check file type
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
@@ -92,9 +76,22 @@ router.post('/add', upload.single('image'), async (req, res) => {
       order: parseInt(order) || 0
     };
 
-    // Add image path if uploaded
+    // Upload to Cloudinary if provided
     if (req.file) {
-      teamMemberData.image = '/uploads/team/' + req.file.filename;
+      try {
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'adminTeam',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: 'rapira/admin/team'
+        });
+        teamMemberData.media = media._id;
+        teamMemberData.image = media.secure_url; // Cloud-first, legacy field for fallback
+      } catch (err) {
+        console.error('Cloud upload failed (team add):', err);
+        req.flash('error', 'Image upload failed');
+        return res.redirect('/admin/about/add');
+      }
     }
 
     const teamMember = new TeamMember(teamMemberData);
@@ -162,14 +159,27 @@ router.post('/edit/:id', upload.single('image'), async (req, res) => {
 
     // Update image if new one uploaded
     if (req.file) {
-      // Delete old image if it's not the default
-      if (teamMember.image && teamMember.image !== '/images/default-profile.jpg') {
-        const oldImagePath = path.join(__dirname, '../public', teamMember.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+      try {
+        // Remove previous Cloudinary asset if it exists
+        if (teamMember.media) {
+          const previous = await Media.findById(teamMember.media);
+          await deleteMedia(previous);
         }
+
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'adminTeam',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: 'rapira/admin/team'
+        });
+
+        teamMember.media = media._id;
+        teamMember.image = media.secure_url;
+      } catch (err) {
+        console.error('Cloud upload failed (team update):', err);
+        req.flash('error', 'Image upload failed');
+        return res.redirect(`/admin/about/edit/${req.params.id}`);
       }
-      teamMember.image = '/uploads/team/' + req.file.filename;
     }
 
     await teamMember.save();
@@ -192,12 +202,10 @@ router.post('/delete/:id', async (req, res) => {
       return res.redirect('/admin/about');
     }
 
-    // Delete image file if it's not the default
-    if (teamMember.image && teamMember.image !== '/images/default-profile.jpg') {
-      const imagePath = path.join(__dirname, '../public', teamMember.image);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
+    // Delete Cloudinary asset if present
+    if (teamMember.media) {
+      const media = await Media.findById(teamMember.media);
+      await deleteMedia(media);
     }
 
     await TeamMember.findByIdAndDelete(req.params.id);

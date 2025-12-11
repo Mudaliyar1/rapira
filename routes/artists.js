@@ -5,33 +5,17 @@ const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Concert = require('../models/Concert');
 const Follow = require('../models/Follow');
+const Media = require('../models/Media');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { getFileUrl } = require('../utils/fileHelper');
 
-// Import upload helper
-const { createUpload, getStoragePath, deleteFileIfExists } = require('../utils/uploadHelper');
-
-// Configure multer for artist content uploads
-const upload = createUpload({
-  uploadType: 'thumbnails',
-  fileSize: 5 * 1024 * 1024, // 5MB limit
-  filenameGenerator: (file) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-
-    if (file.fieldname === 'bannerImage') {
-      return 'banner-' + uniqueSuffix + ext;
-    } else if (file.fieldname === 'contentFile') {
-      return 'content-' + uniqueSuffix + ext;
-    } else if (file.fieldname === 'thumbnailImage') {
-      return 'thumbnail-' + uniqueSuffix + ext;
-    } else {
-      return 'file-' + uniqueSuffix + ext;
-    }
-  },
+// Configure multer for artist uploads (memory → Cloudinary)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -45,32 +29,23 @@ const upload = createUpload({
   }
 });
 
-// Configure multer for content uploads with more file types
-const contentUpload = createUpload({
-  uploadType: 'content',
-  fileSize: 50 * 1024 * 1024, // 50MB limit
-  filenameGenerator: (file) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    return 'content-' + uniqueSuffix + ext;
-  },
+// Configure multer for content uploads (memory → Cloudinary)
+const contentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'contentFile') {
-      // For content files, allow audio, video, and document files
       const filetypes = /mp3|wav|mp4|mov|pdf|doc|docx/;
       const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
       if (extname) {
         return cb(null, true);
       } else {
         cb(new Error('Only audio, video, and document files are allowed'));
       }
     } else {
-      // For images, only allow image files
       const filetypes = /jpeg|jpg|png|gif/;
       const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
       const mimetype = filetypes.test(file.mimetype);
-
       if (extname && mimetype) {
         return cb(null, true);
       } else {
@@ -367,10 +342,25 @@ router.post('/upload-content', isLoggedIn, isArtist,
         youtubeId
       });
 
-      // Set thumbnail if uploaded
+      // Upload thumbnail to Cloudinary if provided
+      let thumbnailMedia = null;
       if (req.files && req.files.thumbnailImage) {
-        const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
-        newContent.thumbnailUrl = thumbnailPath;
+        try {
+          const thumbnailFile = req.files.thumbnailImage[0];
+          const { media } = await uploadFileToCloudinary(thumbnailFile, {
+            module: 'artistContent',
+            ownerType: 'artist',
+            ownerId: artist._id,
+            folder: 'rapira/artist-content/thumbnails'
+          });
+          thumbnailMedia = media;
+          newContent.thumbnailUrl = media.secure_url;
+          newContent.thumbnailMedia = media._id;
+        } catch (err) {
+          console.error('Thumbnail upload error:', err);
+          req.flash('warning', 'Content uploaded, but thumbnail upload failed. Using YouTube thumbnail instead.');
+          newContent.thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+        }
       } else {
         // Use YouTube thumbnail if no custom thumbnail is provided
         newContent.thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
@@ -434,7 +424,7 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
         return res.redirect(`/artists/content/${req.params.id}/edit`);
       }
 
-      const content = await Content.findById(req.params.id);
+      const content = await Content.findById(req.params.id).populate('thumbnailMedia');
 
       if (!content) {
         req.flash('error', 'Content not found');
@@ -494,10 +484,30 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
         }
       }
 
-      // Update thumbnail if uploaded
+      // Update thumbnail if uploaded to Cloudinary
       if (req.files && req.files.thumbnailImage) {
-        const thumbnailPath = getStoragePath('thumbnails', req.files.thumbnailImage[0].filename);
-        content.thumbnailUrl = thumbnailPath;
+        try {
+          const thumbnailFile = req.files.thumbnailImage[0];
+
+          // Delete old thumbnail from Cloudinary if it exists
+          if (content.thumbnailMedia) {
+            await deleteMedia(content.thumbnailMedia);
+          }
+
+          // Upload new thumbnail
+          const { media } = await uploadFileToCloudinary(thumbnailFile, {
+            module: 'artistContent',
+            ownerType: 'artist',
+            ownerId: artist._id,
+            folder: 'rapira/artist-content/thumbnails'
+          });
+
+          content.thumbnailUrl = media.secure_url;
+          content.thumbnailMedia = media._id;
+        } catch (err) {
+          console.error('Thumbnail upload error:', err);
+          req.flash('warning', 'Content updated, but thumbnail upload failed.');
+        }
       }
 
       await content.save();
@@ -1126,7 +1136,7 @@ router.post('/update-profile', isLoggedIn, isArtist, upload.single('bannerImage'
   try {
     const { stageName, genre, yearsActive, about, achievements } = req.body;
 
-    const artist = await Artist.findOne({ user: req.session.user.id });
+    const artist = await Artist.findOne({ user: req.session.user.id }).populate('bannerMedia');
 
     if (!artist) {
       req.flash('error', 'Artist profile not found');
@@ -1144,18 +1154,28 @@ router.post('/update-profile', isLoggedIn, isArtist, upload.single('bannerImage'
       artist.achievements = achievements.split(',').map(a => a.trim());
     }
 
-    // Update banner image if uploaded
+    // Update banner image if uploaded to Cloudinary
     if (req.file) {
-      // Delete old banner image if it's not the default
-      if (artist.bannerImage && artist.bannerImage !== '/images/default-banner.jpg') {
-        const oldImagePath = path.join(__dirname, '../public', artist.bannerImage);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+      try {
+        // Delete old banner image from Cloudinary if it exists
+        if (artist.bannerMedia) {
+          await deleteMedia(artist.bannerMedia);
         }
-      }
 
-      // Set new banner image
-      artist.bannerImage = '/uploads/banners/' + req.file.filename;
+        // Upload new banner to Cloudinary
+        const { media } = await uploadFileToCloudinary(req.file, {
+          module: 'artistProfile',
+          ownerType: 'artist',
+          ownerId: artist._id,
+          folder: 'rapira/artist-profile/banners'
+        });
+
+        artist.bannerImage = media.secure_url;
+        artist.bannerMedia = media._id;
+      } catch (err) {
+        console.error('Banner image upload error:', err);
+        req.flash('warning', 'Profile updated, but banner image upload failed.');
+      }
     }
 
     await artist.save();

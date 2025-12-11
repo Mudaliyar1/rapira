@@ -25,6 +25,10 @@ const ContentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  fileMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  },
   isYoutubeLink: {
     type: Boolean,
     default: false
@@ -36,6 +40,10 @@ const ContentSchema = new mongoose.Schema({
   thumbnailUrl: {
     type: String,
     default: '/images/default-thumbnail.jpg'
+  },
+  thumbnailMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
   },
   releaseDate: {
     type: Date,

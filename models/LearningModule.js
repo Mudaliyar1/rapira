@@ -36,6 +36,10 @@ const LearningModuleSchema = new mongoose.Schema({
     type: String,
     default: '/images/default-learning.jpg'
   },
+  thumbnailMedia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Media'
+  },
   forArtistLevel: {
     type: String,
     enum: ['Beginner', 'Intermediate', 'Established', 'All'],

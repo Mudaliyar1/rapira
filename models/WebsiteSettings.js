@@ -16,6 +16,10 @@ const WebsiteSettingsSchema = new mongoose.Schema({
       type: String,
       default: ''
     },
+    logoMedia: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Media'
+    },
     logoHeight: {
       type: Number,
       default: 45

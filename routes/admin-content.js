@@ -3,29 +3,15 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const Content = require('../models/Content');
 const Artist = require('../models/Artist');
-const { getFileUrl, getStoragePath } = require('../utils/fileHelper');
+const Media = require('../models/Media');
+const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
+const { getFileUrl } = require('../utils/fileHelper');
 
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let uploadPath = 'public/uploads/content';
-
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Set up multer for file uploads (memory storage → Cloudinary)
+const storage = multer.memoryStorage();
 
 // Create a more comprehensive file filter
 const fileFilter = (req, file, cb) => {
@@ -133,8 +119,23 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
       return res.redirect('/admin/content/add');
     }
 
-    // Create new content
-    const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
+    // Upload content file to Cloudinary
+    let contentFileUrl;
+    let contentFileMediaId;
+    try {
+      const { media } = await uploadFileToCloudinary(req.files.contentFile[0], {
+        module: 'adminContent',
+        ownerType: 'admin',
+        ownerId: req.session?.user?.id,
+        folder: `rapira/admin/content/${artist}`
+      });
+      contentFileUrl = media.secure_url;
+      contentFileMediaId = media._id;
+    } catch (err) {
+      console.error('Cloud upload failed (content file):', err);
+      req.flash('error', 'Content upload failed');
+      return res.redirect('/admin/content/add');
+    }
 
     const newContent = new Content({
       title,
@@ -142,7 +143,8 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
       type,
       artist,
       featured: featured === 'on',
-      fileUrl: contentFilePath
+      fileUrl: contentFileUrl,
+      fileMedia: contentFileMediaId
     });
 
     // Add tags if provided
@@ -162,8 +164,20 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
 
     // Add thumbnail if provided
     if (req.files.thumbnailFile && req.files.thumbnailFile[0]) {
-      const thumbnailPath = getStoragePath('content', req.files.thumbnailFile[0].filename);
-      newContent.thumbnailUrl = thumbnailPath;
+      try {
+        const { media } = await uploadFileToCloudinary(req.files.thumbnailFile[0], {
+          module: 'adminContentThumb',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: `rapira/admin/content/${artist}`
+        });
+        newContent.thumbnailUrl = media.secure_url;
+        newContent.thumbnailMedia = media._id;
+      } catch (err) {
+        console.error('Cloud upload failed (thumbnail):', err);
+        req.flash('error', 'Thumbnail upload failed');
+        return res.redirect('/admin/content/add');
+      }
     }
 
     await newContent.save();
@@ -560,14 +574,52 @@ router.post('/:id/update', isLoggedIn, isAdmin, (req, res, next) => {
 
     // Update thumbnail if provided
     if (req.files && req.files.thumbnailFile && req.files.thumbnailFile[0]) {
-      const thumbnailPath = getStoragePath('content', req.files.thumbnailFile[0].filename);
-      content.thumbnailUrl = thumbnailPath;
+      try {
+        // Delete old thumbnail media if exists
+        if (content.thumbnailMedia) {
+          const oldMedia = await Media.findById(content.thumbnailMedia);
+          if (oldMedia) {
+            await deleteMedia(oldMedia);
+          }
+        }
+        // Upload new thumbnail
+        const { media } = await uploadFileToCloudinary(req.files.thumbnailFile[0], {
+          module: 'adminContentThumb',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: `rapira/admin/content/${content.artist}`
+        });
+        content.thumbnailUrl = media.secure_url;
+        content.thumbnailMedia = media._id;
+      } catch (err) {
+        console.error('Thumbnail update error:', err);
+        req.flash('warning', 'Failed to update thumbnail');
+      }
     }
 
     // Update content file if provided
     if (req.files && req.files.contentFile && req.files.contentFile[0]) {
-      const contentFilePath = getStoragePath('content', req.files.contentFile[0].filename);
-      content.fileUrl = contentFilePath;
+      try {
+        // Delete old content media if exists
+        if (content.fileMedia) {
+          const oldMedia = await Media.findById(content.fileMedia);
+          if (oldMedia) {
+            await deleteMedia(oldMedia);
+          }
+        }
+        // Upload new content file
+        const { media } = await uploadFileToCloudinary(req.files.contentFile[0], {
+          module: 'adminContent',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: `rapira/admin/content/${content.artist}`
+        });
+        content.fileUrl = media.secure_url;
+        content.fileMedia = media._id;
+      } catch (err) {
+        console.error('Content file update error:', err);
+        req.flash('warning', 'Failed to update content file');
+      }
     }
 
     await content.save();
