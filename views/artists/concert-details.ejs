@@ -387,7 +387,7 @@
         <% } %>
 
         <!-- Payment Information -->
-        <% if (concert.paymentId) { %>
+        <% if (concert.paymentId || concert.orderId || (concert.venueBooking && (concert.venueBooking.paymentId || concert.venueBooking.orderId))) { %>
         <div class="card shadow-sm mb-4">
           <div class="card-header bg-secondary text-white">
             <h5 class="mb-0">
@@ -395,17 +395,25 @@
             </h5>
           </div>
           <div class="card-body">
+            <% if (concert.paymentId || (concert.venueBooking && concert.venueBooking.paymentId)) { %>
             <div class="info-row">
               <div class="info-label mb-1">Payment ID</div>
               <div class="info-value">
-                <code class="bg-light p-2 d-block"><%= concert.paymentId %></code>
+                <code class="bg-dark text-white p-2 d-block"><%= concert.paymentId || concert.venueBooking.paymentId %></code>
+                <button class="btn btn-sm btn-outline-secondary mt-1" onclick="navigator.clipboard.writeText('<%= concert.paymentId || concert.venueBooking.paymentId %>').then(() => alert('Payment ID copied!'))" title="Copy Payment ID">
+                  <i class="bi bi-clipboard"></i> Copy
+                </button>
               </div>
             </div>
-            <% if (concert.orderId) { %>
+            <% } %>
+            <% if (concert.orderId || (concert.venueBooking && concert.venueBooking.orderId)) { %>
             <div class="info-row">
               <div class="info-label mb-1">Order ID</div>
               <div class="info-value">
-                <code class="bg-light p-2 d-block"><%= concert.orderId %></code>
+                <code class="bg-dark text-white p-2 d-block"><%= concert.orderId || concert.venueBooking.orderId %></code>
+                <button class="btn btn-sm btn-outline-secondary mt-1" onclick="navigator.clipboard.writeText('<%= concert.orderId || concert.venueBooking.orderId %>').then(() => alert('Order ID copied!'))" title="Copy Order ID">
+                  <i class="bi bi-clipboard"></i> Copy
+                </button>
               </div>
             </div>
             <% } %>

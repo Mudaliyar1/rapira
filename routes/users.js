@@ -170,12 +170,20 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
 
     // Update profile image if uploaded
     if (req.file) {
+      console.log('📸 Profile image upload started:', {
+        filename: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      });
+      
       try {
         if (user.profileMedia) {
+          console.log('🗑️ Deleting previous profile media:', user.profileMedia);
           const previous = await Media.findById(user.profileMedia);
           await deleteMedia(previous);
         }
 
+        console.log('☁️ Uploading to Cloudinary...');
         const { media } = await uploadFileToCloudinary(req.file, {
           module: 'userProfile',
           ownerType: 'user',
@@ -183,12 +191,20 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
           folder: `rapira/users/${user._id}`
         });
 
+        console.log('✅ Cloudinary upload successful:', {
+          mediaId: media._id,
+          url: media.secure_url
+        });
+
         user.profileMedia = media._id;
         user.profileImage = media.secure_url;
         req.session.user.profileImage = user.profileImage;
+        
+        console.log('💾 Session updated with new profile image');
       } catch (err) {
-        console.error('Cloud upload failed (profile):', err);
-        req.flash('error', 'Profile image upload failed');
+        console.error('❌ Cloud upload failed (profile):', err);
+        console.error('Error details:', err.message);
+        req.flash('error', 'Profile image upload failed: ' + err.message);
         return res.redirect('/users/edit-profile');
       }
     }
@@ -214,8 +230,14 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
     // Update session name
     req.session.user.name = user.name;
 
-    req.flash('success', 'Profile updated successfully');
-    res.redirect('/users/profile');
+    // Save session to ensure changes persist
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+      }
+      req.flash('success', 'Profile updated successfully');
+      res.redirect('/users/profile');
+    });
   } catch (error) {
     console.error('Update profile error:', error);
     req.flash('error', 'Failed to update profile');

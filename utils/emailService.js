@@ -456,7 +456,7 @@ const sendConcertApprovalEmail = async (artist, concert) => {
                 <h3 style="margin-top: 0;">Concert Details:</h3>
                 <p><strong>Title:</strong> ${concert.title}</p>
                 <p><strong>Date:</strong> ${formatDate(concert.date)}</p>
-                <p><strong>Venue:</strong> ${concert.venue}, ${concert.city}</p>
+                <p><strong>Venue:</strong> ${concert.venue?.name || concert.venue}, ${concert.city}</p>
               </div>
 
               <div style="text-align: center; margin: 30px 0;">
@@ -502,7 +502,7 @@ const sendConcertApprovalEmail = async (artist, concert) => {
         }],
         subject: subject,
         htmlContent: htmlContent,
-        textContent: "Great news! Your concert submission has been approved and is now live on Rapira. Concert Details: Title: " + concert.title + ", Date: " + formatDate(concert.date) + ", Venue: " + concert.venue + ", " + concert.city
+        textContent: "Great news! Your concert submission has been approved and is now live on Rapira. Concert Details: Title: " + concert.title + ", Date: " + formatDate(concert.date) + ", Venue: " + (concert.venue?.name || concert.venue) + ", " + concert.city
       };
 
       // Log the email being sent
@@ -675,7 +675,7 @@ const sendTicketPurchaseEmail = async (user, ticket, concert) => {
         concert_title: concert.title,
         concert_date: formatDate(concert.date),
         concert_time: concert.time,
-        concert_venue: concert.venue,
+        concert_venue: concert.venue?.name || concert.venue,
         concert_city: concert.city,
         ticket_number: ticket.ticketNumber || ticket._id.toString(),
         ticket_quantity: ticket.quantity,
@@ -737,7 +737,7 @@ const sendTicketPurchaseEmail = async (user, ticket, concert) => {
                   <p><strong>Concert:</strong> ${concert.title}</p>
                   <p><strong>Date:</strong> ${formatDate(concert.date)}</p>
                   <p><strong>Time:</strong> ${concert.time}</p>
-                  <p><strong>Venue:</strong> ${concert.venue}, ${concert.city}</p>
+                  <p><strong>Venue:</strong> ${concert.venue?.name || concert.venue}, ${concert.city}</p>
                   <p><strong>Ticket Type:</strong> ${ticketType}</p>
                   <p><strong>Number of Tickets:</strong> ${ticket.quantity}</p>
                   <p><strong>Total Amount:</strong> ${formattedAmount}</p>
@@ -765,7 +765,7 @@ const sendTicketPurchaseEmail = async (user, ticket, concert) => {
           </body>
         </html>
       `,
-      textContent: `Thank you for purchasing tickets to ${concert.title}. Your booking has been confirmed! Ticket Number: ${ticket.ticketNumber || ticket._id.toString()}, Concert: ${concert.title}, Date: ${formatDate(concert.date)}, Time: ${concert.time}, Venue: ${concert.venue}, ${concert.city}, Ticket Type: ${ticketType}, Number of Tickets: ${ticket.quantity}, Total Amount: ${formattedAmount}`
+      textContent: `Thank you for purchasing tickets to ${concert.title}. Your booking has been confirmed! Ticket Number: ${ticket.ticketNumber || ticket._id.toString()}, Concert: ${concert.title}, Date: ${formatDate(concert.date)}, Time: ${concert.time}, Venue: ${concert.venue?.name || concert.venue}, ${concert.city}, Ticket Type: ${ticketType}, Number of Tickets: ${ticket.quantity}, Total Amount: ${formattedAmount}`
     };
 
     // Send direct email

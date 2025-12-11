@@ -245,10 +245,10 @@
             
             <div class="mb-3">
               <h6 class="fw-bold">Artist's Payment ID:</h6>
-              <% if (concert.paymentId) { %>
+              <% if (concert.paymentId || (concert.venueBooking && concert.venueBooking.paymentId)) { %>
                 <p class="mb-1">
-                  <code class="text-success"><%= concert.paymentId %></code>
-                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.paymentId %>').then(() => alert('Payment ID copied!'))" title="Copy Payment ID">
+                  <code class="text-success"><%= concert.paymentId || concert.venueBooking.paymentId %></code>
+                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.paymentId || concert.venueBooking.paymentId %>').then(() => alert('Payment ID copied!'))" title="Copy Payment ID">
                     <i class="bi bi-clipboard"></i>
                   </button>
                 </p>
@@ -259,10 +259,10 @@
             
             <div class="mb-3">
               <h6 class="fw-bold">Artist's Order ID:</h6>
-              <% if (concert.orderId) { %>
+              <% if (concert.orderId || (concert.venueBooking && concert.venueBooking.orderId)) { %>
                 <p class="mb-1">
-                  <code class="text-info"><%= concert.orderId %></code>
-                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.orderId %>').then(() => alert('Order ID copied!'))" title="Copy Order ID">
+                  <code class="text-info"><%= concert.orderId || concert.venueBooking.orderId %></code>
+                  <button class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText('<%= concert.orderId || concert.venueBooking.orderId %>').then(() => alert('Order ID copied!'))" title="Copy Order ID">
                     <i class="bi bi-clipboard"></i>
                   </button>
                 </p>

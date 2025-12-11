@@ -448,7 +448,6 @@ const followRoutes = require('./routes/follows');
 const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
-const adminMediaRoutes = require('./routes/adminMedia');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -550,9 +549,6 @@ app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
 
 // Mount follow routes
 app.use('/follows', followRoutes);
-
-// NEW: Mount admin media management routes for media backup and restore
-app.use('/admin/media', adminMediaRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');

@@ -65,6 +65,12 @@ const ConcertSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  paymentId: {
+    type: String // Razorpay payment ID (root level for easy access)
+  },
+  orderId: {
+    type: String // Razorpay order ID (root level for easy access)
+  },
   venueBooking: {
     bookingHours: {
       type: Number,

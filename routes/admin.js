@@ -880,7 +880,8 @@ router.post('/concerts/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
       .populate({
         path: 'artist',
         populate: { path: 'user' }
-      });
+      })
+      .populate('venue');
 
     if (!concert) {
       req.flash('error', 'Concert not found');
@@ -895,7 +896,7 @@ router.post('/concerts/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     const { updateNotificationStatus } = require('../utils/notificationService');
     await updateNotificationStatus('Concert', concert._id, 'approved');
 
-    // Send email notification
+    // Send email notification to artist
     try {
       console.log('Attempting to send concert approval email to artist:', concert.artist.user.email);
       const emailResult = await sendConcertApprovalEmail(concert.artist.user, concert);
@@ -908,6 +909,55 @@ router.post('/concerts/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
       }
     } catch (emailError) {
       console.error('Error sending concert approval email:', emailError);
+      // Continue with the process even if email fails
+    }
+
+    // Send email notification to venue owner
+    try {
+      if (concert.venue && concert.venue.contactPerson && concert.venue.contactPerson.email) {
+        console.log('Attempting to send concert approval email to venue owner:', concert.venue.contactPerson.email);
+
+        const venueEmail = concert.venue.contactPerson.email;
+        const venueName = concert.venue.contactPerson.name || 'Venue Owner';
+
+        const venueApprovalHTML = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px;">
+              <h1 style="margin: 0; font-size: 28px;">Concert Approved ✅</h1>
+            </div>
+            <div style="background: white; padding: 30px; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <p style="font-size: 16px; color: #333;">Dear ${venueName},</p>
+              <p style="font-size: 16px; color: #555; line-height: 1.6;">Good news! The concert request for <strong>${concert.title}</strong> at your venue has been <strong style="color: #667eea;">APPROVED</strong> by our admin team.</p>
+              <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #667eea; margin: 0 0 15px 0;">Concert Details:</h3>
+                <p style="margin: 8px 0; color: #333;"><strong>Concert:</strong> ${concert.title}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Artist:</strong> ${concert.artist.user.name || 'Artist'}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Venue:</strong> ${concert.venue.name}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Date:</strong> ${new Date(concert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Status:</strong> <span style="color: #4caf50; font-weight: bold;">APPROVED</span></p>
+              </div>
+              <p style="font-size: 16px; color: #555; line-height: 1.6;">The concert is now officially scheduled at your venue. Please coordinate with the artist for any final arrangements.</p>
+              <p style="font-size: 16px; color: #333; margin-top: 20px;">Best regards,<br><strong>RAPIRA Admin Team</strong></p>
+            </div>
+          </div>
+        `;
+
+        const venueEmailResult = await sendDirectEmail({
+          to: venueEmail,
+          name: venueName,
+          subject: `Concert Approved at Your Venue - ${concert.title}`,
+          html: venueApprovalHTML
+        });
+
+        if (venueEmailResult.success || venueEmailResult.status === 201) {
+          console.log('Concert approval email sent successfully to venue owner:', venueEmail);
+          console.log('Venue email message ID:', venueEmailResult.data?.messageId || venueEmailResult.messageId || 'Not available');
+        } else {
+          console.error('Failed to send venue approval email:', venueEmailResult.error);
+        }
+      }
+    } catch (venueEmailError) {
+      console.error('Error sending venue approval email:', venueEmailError);
       // Continue with the process even if email fails
     }
 
@@ -929,7 +979,8 @@ router.post('/concerts/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
       .populate({
         path: 'artist',
         populate: { path: 'user' }
-      });
+      })
+      .populate('venue');
 
     if (!concert) {
       req.flash('error', 'Concert not found');
@@ -944,7 +995,7 @@ router.post('/concerts/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
     const { updateNotificationStatus } = require('../utils/notificationService');
     await updateNotificationStatus('Concert', concert._id, 'rejected');
 
-    // Send email notification
+    // Send email notification to artist
     try {
       console.log('Attempting to send concert rejection email to artist:', concert.artist.user.email);
       const emailResult = await sendConcertRejectionEmail(concert.artist.user, concert, reason);
@@ -957,6 +1008,59 @@ router.post('/concerts/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
       }
     } catch (emailError) {
       console.error('Error sending concert rejection email:', emailError);
+      // Continue with the process even if email fails
+    }
+
+    // Send email notification to venue owner
+    try {
+      if (concert.venue && concert.venue.contactPerson && concert.venue.contactPerson.email) {
+        console.log('Attempting to send concert rejection email to venue owner:', concert.venue.contactPerson.email);
+
+        const venueEmail = concert.venue.contactPerson.email;
+        const venueName = concert.venue.contactPerson.name || 'Venue Owner';
+
+        const venueRejectionHTML = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px;">
+              <h1 style="margin: 0; font-size: 28px;">Concert Rejected ❌</h1>
+            </div>
+            <div style="background: white; padding: 30px; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <p style="font-size: 16px; color: #333;">Dear ${venueName},</p>
+              <p style="font-size: 16px; color: #555; line-height: 1.6;">The concert request for <strong>${concert.title}</strong> at your venue has been <strong style="color: #f5576c;">REJECTED</strong> by our admin team.</p>
+              <div style="background: #ffe6e6; border-left: 4px solid #f5576c; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #f5576c; margin: 0 0 15px 0;">Concert Details:</h3>
+                <p style="margin: 8px 0; color: #333;"><strong>Concert:</strong> ${concert.title}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Artist:</strong> ${concert.artist.user.name || 'Artist'}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Venue:</strong> ${concert.venue.name}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Date:</strong> ${new Date(concert.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p style="margin: 8px 0; color: #333;"><strong>Status:</strong> <span style="color: #d32f2f; font-weight: bold;">REJECTED</span></p>
+              </div>
+              ${reason ? `<div style="background: #f5f5f5; border-left: 4px solid #757575; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0 0 8px 0; color: #333; font-weight: bold;">Reason:</p>
+                <p style="margin: 0; color: #555;">${reason}</p>
+              </div>` : ''}
+              <p style="font-size: 16px; color: #555; line-height: 1.6;">This concert will not be scheduled at your venue. Thank you for your understanding.</p>
+              <p style="font-size: 16px; color: #333; margin-top: 20px;">Best regards,<br><strong>RAPIRA Admin Team</strong></p>
+            </div>
+          </div>
+        `;
+
+        const venueEmailResult = await sendDirectEmail({
+          to: venueEmail,
+          name: venueName,
+          subject: `Concert Rejected at Your Venue - ${concert.title}`,
+          html: venueRejectionHTML
+        });
+
+        if (venueEmailResult.success || venueEmailResult.status === 201) {
+          console.log('Concert rejection email sent successfully to venue owner:', venueEmail);
+          console.log('Venue email message ID:', venueEmailResult.data?.messageId || venueEmailResult.messageId || 'Not available');
+        } else {
+          console.error('Failed to send venue rejection email:', venueEmailResult.error);
+        }
+      }
+    } catch (venueEmailError) {
+      console.error('Error sending venue rejection email:', venueEmailError);
       // Continue with the process even if email fails
     }
 

@@ -647,6 +647,8 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       isPaid: true, // All concerts are now paid
       price: parseFloat(concertData.ticketPrice || concertData.price || 0),
       maxTickets: concertData.maxTickets || 0,
+      paymentId: razorpay_payment_id, // Add payment ID at root level
+      orderId: razorpay_order_id, // Add order ID at root level
       venueBooking: {
         ...concertData.venueBooking,
         isPaid: true, // Mark venue booking as paid
