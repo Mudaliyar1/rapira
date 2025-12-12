@@ -183,6 +183,14 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
       artistFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'artist' })
     };
 
+    // Get artist's stories
+    const ArtistStory = require('../models/ArtistStory');
+    const now = new Date();
+    const stories = await ArtistStory.find({ 
+      artist: artist._id,
+      expiresAt: { $gt: now }
+    }).sort({ createdAt: -1 });
+
     // Check if the request is from the profile page (AJAX)
     console.log('Artist dashboard request received from user:', req.session.user.id);
     console.log('Headers:', req.headers);
@@ -236,6 +244,7 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
       content,
       followers,
       followerCounts,
+      stories,
       upcomingConcerts: concerts.filter(c => new Date(c.date) >= new Date() && c.status === 'approved'),
       pendingConcerts: concerts.filter(c => c.status === 'pending'),
       pastConcerts: concerts.filter(c => new Date(c.date) < new Date() && c.status === 'approved')
@@ -620,6 +629,30 @@ router.get('/manage-content', isLoggedIn, isArtist, async (req, res) => {
   } catch (error) {
     console.error('Manage content page error:', error);
     req.flash('error', 'Failed to load content management page');
+    res.redirect('/artists/dashboard');
+  }
+});
+
+// Manage Posts page
+router.get('/manage-posts', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id })
+      .populate('user');
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    res.render('artists/manage-posts-new', {
+      layout: false,
+      currentPath: '/artists/manage-posts',
+      title: 'Manage Posts',
+      artist
+    });
+  } catch (error) {
+    console.error('Manage posts page error:', error);
+    req.flash('error', 'Failed to load posts page');
     res.redirect('/artists/dashboard');
   }
 });
@@ -1277,6 +1310,17 @@ router.get('/:id', async (req, res) => {
       date: { $gte: new Date() }
     }).populate('venue').sort({ date: 1 });
 
+    // Get artist's approved posts
+    const ArtistPost = require('../models/ArtistPost');
+    const posts = await ArtistPost.find({
+      artist: artist._id,
+      isActive: true,
+      isApproved: true
+    })
+      .populate('likes', 'name profileImage')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
     // Check if current user is following this artist
     let isFollowing = false;
     let currentUser = null;
@@ -1295,6 +1339,7 @@ router.get('/:id', async (req, res) => {
       content,
       upcomingConcerts,
       followerCounts,
+      posts,
       isFollowing,
       currentUser,
       message: req.query.message || null
@@ -1302,6 +1347,28 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Artist profile error:', error);
     req.flash('error', 'Failed to load artist profile');
+    res.redirect('/artists');
+  }
+});
+
+// Artist Posts Gallery
+router.get('/:id/posts-gallery', async (req, res) => {
+  try {
+    const artist = await Artist.findById(req.params.id).populate('user');
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/artists');
+    }
+
+    res.render('artists/posts-gallery', {
+      artist,
+      user: req.session.user || null,
+      message: req.query.message || null
+    });
+  } catch (error) {
+    console.error('Posts gallery error:', error);
+    req.flash('error', 'Failed to load posts');
     res.redirect('/artists');
   }
 });

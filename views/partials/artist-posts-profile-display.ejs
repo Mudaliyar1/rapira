@@ -1,0 +1,227 @@
+<!-- Artist Posts Display for Profile -->
+<div class="container-fluid py-4">
+  <div id="postsContainer" class="row">
+    <div class="col-12 text-center text-muted py-5">
+      <i class="bi bi-images display-4 mb-3 d-block"></i>
+      <p>No posts yet</p>
+    </div>
+  </div>
+</div>
+
+<!-- Post Modal -->
+<div class="modal fade" id="postModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title">Post</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="postMediaContainer" style="max-height: 60vh; margin-bottom: 16px;"></div>
+        <div>
+          <h6 id="postCaption" class="mb-2"></h6>
+          <div id="postHashtags" class="text-primary small mb-3"></div>
+          <div class="d-flex gap-3 mb-3 text-muted">
+            <span><i class="bi bi-heart-fill text-danger"></i> <span id="postLikes">0</span></span>
+            <span><i class="bi bi-share"></i> <span id="postShares">0</span></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-light flex-grow-1" id="likeBtn">
+              <i class="bi bi-heart"></i> Like
+            </button>
+            <button class="btn btn-outline-light flex-grow-1" id="shareBtn">
+              <i class="bi bi-share"></i> Share
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .post-card {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #f0f0f0;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+
+  .post-card:hover {
+    transform: scale(1.05);
+  }
+
+  .post-card img,
+  .post-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .post-card:hover .post-overlay {
+    opacity: 1;
+  }
+
+  .post-overlay-content {
+    display: flex;
+    gap: 20px;
+    color: white;
+    text-align: center;
+  }
+
+  .post-overlay-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .post-overlay-item i {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+
+  .post-overlay-item span {
+    font-size: 0.9rem;
+  }
+</style>
+
+<script>
+let currentPostId = null;
+let postsCache = [];
+const artistId = '<%= artistId %>';
+const currentUserId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+
+async function loadArtistPosts() {
+  try {
+    const res = await fetch(`/artist/${artistId}/posts`);
+    const data = await res.json();
+
+    if (!data.success || !data.posts.length) {
+      document.getElementById('postsContainer').innerHTML = `
+        <div class="col-12 text-center text-muted py-5">
+          <i class="bi bi-images display-4 mb-3 d-block"></i>
+          <p>No posts yet</p>
+        </div>
+      `;
+      return;
+    }
+
+    postsCache = data.posts;
+    const html = `<div class="post-grid">${data.posts.map(post => `
+      <div class="post-card" onclick="viewPost('${post._id}')">
+        ${post.media.mediaType === 'image'
+          ? `<img src="${post.media.url}" alt="post">`
+          : `<video muted><source src="${post.media.url}"></video>`
+        }
+        <div class="post-overlay">
+          <div class="post-overlay-content">
+            <div class="post-overlay-item">
+              <i class="bi bi-heart-fill text-danger"></i>
+              <span>${post.likesCount || 0}</span>
+            </div>
+            <div class="post-overlay-item">
+              <i class="bi bi-share"></i>
+              <span>${post.shares || 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('')}</div>`;
+
+    document.getElementById('postsContainer').innerHTML = html;
+  } catch (err) {
+    console.error('Load posts error:', err);
+  }
+}
+
+function viewPost(postId) {
+  const post = postsCache.find(p => p._id === postId);
+  if (!post) return;
+
+  currentPostId = postId;
+
+  // Load media
+  const mediaContainer = document.getElementById('postMediaContainer');
+  if (post.media.mediaType === 'image') {
+    mediaContainer.innerHTML = `<img src="${post.media.url}" style="width: 100%; border-radius: 8px;">`;
+  } else {
+    mediaContainer.innerHTML = `<video controls style="width: 100%; border-radius: 8px;"><source src="${post.media.url}"></video>`;
+  }
+
+  // Load info
+  document.getElementById('postCaption').textContent = post.caption || '(no caption)';
+  document.getElementById('postHashtags').innerHTML = post.hashtags.map(tag => `<span class="me-2">#${tag}</span>`).join('') || '';
+  document.getElementById('postLikes').textContent = post.likesCount || 0;
+  document.getElementById('postShares').textContent = post.shares || 0;
+
+  // Update like button
+  const likeBtn = document.getElementById('likeBtn');
+  const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => l._id === currentUserId);
+  likeBtn.innerHTML = isLiked
+    ? '<i class="bi bi-heart-fill text-danger"></i> Unlike'
+    : '<i class="bi bi-heart"></i> Like';
+
+  // Show modal
+  new bootstrap.Modal(document.getElementById('postModal')).show();
+}
+
+document.getElementById('likeBtn')?.addEventListener('click', async function() {
+  if (!currentPostId || !currentUserId) return;
+
+  try {
+    const res = await fetch(`/posts/${currentPostId}/like`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('postLikes').textContent = data.likesCount;
+      this.innerHTML = data.liked
+        ? '<i class="bi bi-heart-fill text-danger"></i> Unlike'
+        : '<i class="bi bi-heart"></i> Like';
+      loadArtistPosts();
+    }
+  } catch (err) {
+    console.error('Like error:', err);
+  }
+});
+
+document.getElementById('shareBtn')?.addEventListener('click', async function() {
+  if (!currentPostId) return;
+
+  try {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: 'Check out this post', url });
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied!');
+    }
+    fetch(`/posts/${currentPostId}/share`, { method: 'POST' });
+  } catch (err) {
+    console.error('Share error:', err);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', loadArtistPosts);
+</script>

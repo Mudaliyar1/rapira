@@ -1,0 +1,47 @@
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0"><i class="bi bi-unlock"></i> Unrestrict Post</h4>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div style="width:120px;height:120px;overflow:hidden;border-radius:8px;background:#0f0f0f;border:1px solid rgba(255,255,255,0.08);">
+                <% if (media.mediaType === 'image') { %>
+                  <img src="<%= media.url %>" alt="post" style="width:120px;height:120px;object-fit:cover;display:block;">
+                <% } else { %>
+                  <video muted style="width:120px;height:120px;object-fit:cover;display:block;"><source src="<%= media.url %>"></video>
+                <% } %>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <h5 class="mb-2">Post by <%= artistName %></h5>
+              <p class="text-muted"><%= post.caption ? post.caption.slice(0, 200) : '(no caption)' %></p>
+              <% if (post.rejectionReason) { %>
+                <div class="alert alert-warning">
+                  <strong>Current Restriction Reason:</strong><br>
+                  <%= post.rejectionReason %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> This will reactivate the post and make it visible again (if approved).
+          </div>
+
+          <form method="POST" action="/admin/artist-posts/<%= post._id %>/unrestrict-do">
+            <div class="d-flex gap-3 justify-content-end">
+              <a href="/admin/posts" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-unlock"></i> Unrestrict Post
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

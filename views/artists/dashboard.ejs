@@ -328,6 +328,11 @@
             </a>
           </li>
           <li class="nav-item mb-2">
+            <a href="/artists/dashboard#post-story" class="nav-link text-white p-2 rounded">
+              <i class="bi bi-camera-reels me-2"></i> Post Story
+            </a>
+          </li>
+          <li class="nav-item mb-2">
             <a href="/artists/manage-tickets" class="nav-link text-white p-2 rounded">
               <i class="bi bi-ticket-perforated me-2"></i> Manage Tickets
             </a>
@@ -403,6 +408,27 @@
             </div>
             <button id="closeSuccessAnimation" class="btn btn-primary mt-3">Continue</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Post Story -->
+      <div class="card mb-5" id="post-story">
+        <div class="card-body">
+          <h5 class="card-title fw-bold mb-4">Post a Story</h5>
+          <form action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Media (image or short video)</label>
+              <input type="file" name="media" accept="image/*,video/*" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Caption (optional)</label>
+              <input type="text" name="caption" maxlength="120" class="form-control" placeholder="Say something..." />
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Post Story</button>
+              <span class="text-muted ms-2">Max 20 stories per 24 hours; up to 20MB.</span>
+            </div>
+          </form>
         </div>
       </div>
 

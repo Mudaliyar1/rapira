@@ -448,6 +448,7 @@ const followRoutes = require('./routes/follows');
 const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
+const postsRoutes = require('./routes/posts');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -529,6 +530,9 @@ app.use('/admin/sessions', adminSessionRoutes);
 // Mount website settings routes
 app.use('/admin/website-settings', adminWebsiteSettingsRoutes);
 
+// Mount posts routes
+app.use('/', postsRoutes);
+
 // Mount admin about routes
 app.use('/admin/about', adminAboutRoutes);
 
@@ -608,6 +612,10 @@ app.use('/admin*', async (req, res, next) => {
     next();
   }
 });
+
+// Stories routes
+const storiesRoutes = require('./routes/stories');
+app.use('/', storiesRoutes);
 
 // Mount admin content routes
 app.use('/admin/content', adminContentRoutes);

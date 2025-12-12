@@ -1,0 +1,288 @@
+<!-- Artist Posts Gallery -->
+<div class="container-fluid" style="background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%); min-height: 100vh; padding: 40px 20px;">
+  <div class="container">
+    <!-- Header -->
+    <div class="mb-5">
+      <a href="javascript:history.back()" class="btn btn-outline-light mb-4">
+        <i class="bi bi-chevron-left"></i> Back
+      </a>
+      <div class="d-flex align-items-center gap-4 mb-4">
+        <% if (artist.profileImage) { %>
+          <img src="<%= artist.profileImage %>" alt="<%= artist.stageName %>" 
+               style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #00d4ff;">
+        <% } else { %>
+          <div style="width:100px; height:100px; border-radius:50%; background:#444; display:flex; align-items:center; justify-content:center; border:3px solid #00d4ff;">
+            <i class="bi bi-person-fill text-muted" style="font-size:50px;"></i>
+          </div>
+        <% } %>
+        <div>
+          <h1 class="text-white fw-bold mb-0"><%= artist.stageName %></h1>
+          <p class="text-info mb-2"><i class="bi bi-images"></i> Posts Gallery</p>
+          <span class="badge bg-success" id="postCount">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div id="postsContainer" class="row g-3">
+      <div class="col-12 text-center py-5">
+        <i class="bi bi-hourglass-split text-muted" style="font-size:50px; display:block; margin-bottom:15px;"></i>
+        <p class="text-muted">Loading posts...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Post Modal -->
+<div class="modal fade" id="postModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Post</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="postMediaContainer" style="max-height: 60vh; margin-bottom: 20px; border-radius:8px; overflow:hidden;"></div>
+        <div class="text-white">
+          <h6 id="postCaption" class="mb-2"></h6>
+          <div id="postHashtags" class="text-info small mb-3"></div>
+          <div class="d-flex gap-3 mb-3 text-muted">
+            <span><i class="bi bi-heart-fill text-danger"></i> <span id="postLikes">0</span></span>
+            <span><i class="bi bi-share"></i> <span id="postShares">0</span></span>
+          </div>
+          <div class="d-flex gap-2" id="postActions"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .post-card-gallery {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #1a1a2e;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #333;
+  }
+
+  .post-card-gallery:hover {
+    transform: scale(1.02);
+    border-color: #00d4ff;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  }
+
+  .post-card-gallery img,
+  .post-card-gallery video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-overlay-gallery {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .post-card-gallery:hover .post-overlay-gallery {
+    opacity: 1;
+  }
+
+  .post-overlay-content-gallery {
+    display: flex;
+    gap: 30px;
+    color: white;
+    text-align: center;
+  }
+
+  .post-overlay-item-gallery {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .post-overlay-item-gallery i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #00d4ff;
+  }
+
+  .post-overlay-item-gallery span {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .empty-state i {
+    font-size: 80px;
+    color: #444;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .empty-state h4 {
+    color: #999;
+    margin-bottom: 10px;
+  }
+</style>
+
+<script>
+let currentPostId = null;
+let postsCache = [];
+const artistId = '<%= artist._id %>';
+const currentUserId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+
+async function loadPosts() {
+  try {
+    const res = await fetch(`/artist/${artistId}/posts`);
+    const data = await res.json();
+
+    if (!data.success || !data.posts.length) {
+      document.getElementById('postsContainer').innerHTML = `
+        <div class="col-12">
+          <div class="empty-state">
+            <i class="bi bi-images"></i>
+            <h4>No posts yet</h4>
+            <p class="text-muted">This artist hasn't shared any posts yet</p>
+          </div>
+        </div>
+      `;
+      document.getElementById('postCount').textContent = '0 posts';
+      return;
+    }
+
+    postsCache = data.posts;
+    document.getElementById('postCount').textContent = data.posts.length + (data.posts.length === 1 ? ' post' : ' posts');
+
+    const html = data.posts.map(post => `
+      <div class="col-md-6 col-lg-4 col-xl-3">
+        <div class="post-card-gallery" onclick="viewPost('${post._id}')">
+          ${post.media.mediaType === 'image'
+            ? `<img src="${post.media.url}" alt="post">`
+            : `<video muted><source src="${post.media.url}"></video>`
+          }
+          <div class="post-overlay-gallery">
+            <div class="post-overlay-content-gallery">
+              <div class="post-overlay-item-gallery">
+                <i class="bi bi-heart-fill"></i>
+                <span>${post.likesCount || 0}</span>
+              </div>
+              <div class="post-overlay-item-gallery">
+                <i class="bi bi-share"></i>
+                <span>${post.shares || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('postsContainer').innerHTML = html;
+  } catch (err) {
+    console.error('Load posts error:', err);
+    document.getElementById('postsContainer').innerHTML = `
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="bi bi-exclamation-circle"></i>
+          <h4>Error loading posts</h4>
+          <p class="text-muted">Please try refreshing the page</p>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function viewPost(postId) {
+  const post = postsCache.find(p => p._id === postId);
+  if (!post) return;
+
+  currentPostId = postId;
+
+  // Load media
+  const mediaContainer = document.getElementById('postMediaContainer');
+  if (post.media.mediaType === 'image') {
+    mediaContainer.innerHTML = `<img src="${post.media.url}" style="width: 100%; border-radius: 8px;">`;
+  } else {
+    mediaContainer.innerHTML = `<video controls style="width: 100%; border-radius: 8px;"><source src="${post.media.url}"></video>`;
+  }
+
+  // Load info
+  document.getElementById('postCaption').textContent = post.caption || '(no caption)';
+  document.getElementById('postHashtags').innerHTML = post.hashtags.map(tag => `<span class="me-2">#${tag}</span>`).join('') || '';
+  document.getElementById('postLikes').textContent = post.likesCount || 0;
+  document.getElementById('postShares').textContent = post.shares || 0;
+
+  // Update like button
+  const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => l._id === currentUserId);
+  document.getElementById('postActions').innerHTML = `
+    <button class="btn btn-outline-light flex-grow-1" id="likeBtn" onclick="toggleLike()">
+      <i class="bi bi-heart${isLiked ? '-fill text-danger' : ''}"></i> ${isLiked ? 'Unlike' : 'Like'}
+    </button>
+    <button class="btn btn-outline-light flex-grow-1" id="shareBtn" onclick="sharePost()">
+      <i class="bi bi-share"></i> Share
+    </button>
+  `;
+
+  // Show modal
+  new bootstrap.Modal(document.getElementById('postModal')).show();
+}
+
+async function toggleLike() {
+  if (!currentPostId || !currentUserId) {
+    alert('Please log in to like posts');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/posts/${currentPostId}/like`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('postLikes').textContent = data.likesCount;
+      const btn = document.getElementById('likeBtn');
+      if (data.liked) {
+        btn.innerHTML = '<i class="bi bi-heart-fill text-danger"></i> Unlike';
+      } else {
+        btn.innerHTML = '<i class="bi bi-heart"></i> Like';
+      }
+      loadPosts();
+    }
+  } catch (err) {
+    console.error('Like error:', err);
+  }
+}
+
+async function sharePost() {
+  if (!currentPostId) return;
+
+  try {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: 'Check out this post', url });
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+    fetch(`/posts/${currentPostId}/share`, { method: 'POST' });
+  } catch (err) {
+    console.error('Share error:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadPosts);
+</script>

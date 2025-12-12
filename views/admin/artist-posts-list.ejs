@@ -1,0 +1,98 @@
+<!-- New Admin Posts List (compact, SSR, no spinner) -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="fw-bold mb-1">📸 Manage Artist Posts</h2>
+      <p class="text-muted mb-0">Review, approve, reject, restrict, or delete artist posts</p>
+    </div>
+    <span class="badge bg-info fs-6">Total: <%= posts.length %></span>
+  </div>
+
+  <div class="card">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">All Posts</h5>
+      <span class="badge bg-secondary"><%= posts.length %></span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle" style="min-width: 980px; table-layout: fixed;">
+          <thead class="table-light">
+            <tr>
+              <th style="width:100px;">Media</th>
+              <th style="width:160px;">Artist</th>
+              <th>Caption</th>
+              <th style="width:150px;">Status</th>
+              <th style="width:70px;">Likes</th>
+              <th style="width:70px;">Shares</th>
+              <th style="width:120px;">Date</th>
+              <th style="width:240px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!posts.length) { %>
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">No posts found</td>
+              </tr>
+            <% } else { %>
+              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isApproved ? 'success' : 'warning text-dark'; const statusText = post.isApproved ? 'Approved' : 'Pending'; %>
+                <tr>
+                  <td style="width:100px;">
+                    <div style="width:80px;height:80px;overflow:hidden;border-radius:8px;background:#0f0f0f;border:1px solid rgba(255,255,255,0.08);">
+                      <% if (mediaType === 'image') { %>
+                        <img src="<%= mediaUrl %>" alt="post" style="width:80px;height:80px;object-fit:cover;display:block;border-radius:6px;">
+                      <% } else { %>
+                        <video muted style="width:80px;height:80px;object-fit:cover;display:block;border-radius:6px;"><source src="<%= mediaUrl %>"></video>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td><small><%= artistName %></small></td>
+                  <td style="max-width: 320px;"><small><%= (post.caption || '(no caption)').slice(0, 140) %></small></td>
+                  <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                      <span class="badge bg-<%= statusBadge %>" style="font-size:.8rem;"><%= statusText %></span>
+                      <% if (!post.isActive) { %>
+                        <span class="badge bg-secondary" style="font-size:.8rem;">Inactive</span>
+                      <% } %>
+                      <% if (post.rejectionReason) { %>
+                        <span class="badge bg-danger" style="font-size:.8rem;">Rejected</span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td><%= post.likesCount || 0 %></td>
+                  <td><%= post.shares || 0 %></td>
+                  <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-2">
+                      <a class="btn btn-sm btn-outline-info" href="/admin/artist-posts/<%= post._id %>" title="View">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <% if (!post.isActive) { %>
+                        <!-- Restricted: show unrestrict + delete -->
+                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/unrestrict" title="Unrestrict"><i class="bi bi-unlock"></i></a>
+                      <% } else if (post.rejectionReason) { %>
+                        <!-- Rejected: show approve + delete -->
+                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/approve" title="Approve"><i class="bi bi-check-circle"></i></a>
+                      <% } else if (post.isApproved) { %>
+                        <!-- Approved: show reject + restrict + delete -->
+                        <a class="btn btn-sm btn-outline-warning" href="/admin/artist-posts/<%= post._id %>/reject" title="Reject"><i class="bi bi-x-circle"></i></a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/admin/artist-posts/<%= post._id %>/restrict" title="Restrict"><i class="bi bi-lock"></i></a>
+                      <% } else { %>
+                        <!-- Pending: show approve + reject + restrict + delete -->
+                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/approve" title="Approve"><i class="bi bi-check-circle"></i></a>
+                        <a class="btn btn-sm btn-outline-warning" href="/admin/artist-posts/<%= post._id %>/reject" title="Reject"><i class="bi bi-x-circle"></i></a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/admin/artist-posts/<%= post._id %>/restrict" title="Restrict"><i class="bi bi-lock"></i></a>
+                      <% } %>
+                      <a class="btn btn-sm btn-outline-danger" href="/admin/artist-posts/<%= post._id %>/delete" title="Delete"><i class="bi bi-trash"></i></a>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script></script>

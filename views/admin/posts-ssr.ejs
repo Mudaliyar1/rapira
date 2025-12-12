@@ -1,0 +1,212 @@
+<!-- Admin Posts Management (Server Rendered) -->
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">📸 Manage Artist Posts</h2>
+      <p class="text-muted mb-0">Review, approve, reject, and manage artist posts</p>
+    </div>
+    <span class="badge bg-info fs-6">Total: <%= posts.length %></span>
+  </div>
+
+  <div class="card">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">All Posts</h5>
+      <span class="badge bg-secondary"><%= posts.length %></span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:110px;">Media</th>
+              <th style="width:140px;">Artist</th>
+              <th>Caption</th>
+              <th>Status</th>
+              <th style="width:70px;">Likes</th>
+              <th style="width:70px;">Shares</th>
+              <th style="width:110px;">Date</th>
+              <th style="width:220px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!posts.length) { %>
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">No posts found</td>
+              </tr>
+            <% } else { %>
+              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isApproved ? 'success' : 'warning text-dark'; const statusText = post.isApproved ? 'Approved' : 'Pending'; %>
+                <tr>
+                  <td>
+                    <div class="media-wrap">
+                      <% if (mediaType === 'image') { %>
+                        <img src="<%= mediaUrl %>" class="post-media-thumb" alt="post">
+                      <% } else { %>
+                        <video class="post-media-thumb" muted><source src="<%= mediaUrl %>"></video>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td><small><%= artistName %></small></td>
+                  <td style="max-width: 280px;"><small><%= (post.caption || '(no caption)').slice(0, 120) %></small></td>
+                  <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                      <span class="badge bg-<%= statusBadge %> status-badge"><%= statusText %></span>
+                      <% if (!post.isActive) { %>
+                        <span class="badge bg-danger status-badge">Inactive</span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td><%= post.likesCount || 0 %></td>
+                  <td><%= post.shares || 0 %></td>
+                  <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
+                  <td>
+                    <div class="d-flex flex-wrap gap-2">
+                      <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPostModal"
+                        data-id="<%= post._id %>" data-url="<%= mediaUrl %>" data-mediatype="<%= mediaType %>"
+                        data-artist="<%= artistName %>" data-caption="<%= (post.caption || '(no caption)').replace(/"/g,'&quot;') %>"
+                        data-hashtags="<%= (post.hashtags || []).join(' ') %>" data-likes="<%= post.likesCount || 0 %>"
+                        data-shares="<%= post.shares || 0 %>" data-created="<%= post.createdAt %>"
+                        data-rejection="<%= post.rejectionReason || '' %>">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-success" onclick="approvePost('<%= post._id %>')" title="Approve"><i class="bi bi-check-circle"></i></button>
+                      <button class="btn btn-sm btn-outline-warning" onclick="rejectPost('<%= post._id %>')" title="Reject"><i class="bi bi-x-circle"></i></button>
+                      <button class="btn btn-sm btn-outline-secondary" onclick="deactivatePost('<%= post._id %>')" title="Restrict"><i class="bi bi-lock"></i></button>
+                      <button class="btn btn-sm btn-outline-danger" onclick="deletePost('<%= post._id %>')" title="Delete"><i class="bi bi-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Post Modal -->
+<div class="modal fade" id="viewPostModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">View Post</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="viewPostContent"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .post-media-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 6px;
+  }
+  .media-wrap {
+    width: 96px;
+    height: 96px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #0f0f0f;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .status-badge { font-size: 0.85rem; }
+</style>
+
+<script>
+function showAlert(message, type = 'info') {
+  const alertId = `alert-${Date.now()}`;
+  const html = `
+    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 2000;">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => {
+    const el = document.getElementById(alertId);
+    if (el) el.remove();
+  }, 4500);
+}
+
+async function approvePost(id) {
+  if (!confirm('Approve this post?')) return;
+  await handleAction(`/admin/posts/${id}/approve`, 'PUT', { isApproved: true }, 'Post approved');
+}
+
+async function rejectPost(id) {
+  const reason = prompt('Enter rejection reason:');
+  if (reason === null) return;
+  await handleAction(`/admin/posts/${id}/approve`, 'PUT', { isApproved: false, rejectionReason: reason }, 'Post rejected');
+}
+
+async function deactivatePost(id) {
+  const reason = prompt('Reason for restricting:', 'Policy violation');
+  if (reason === null) return;
+  await handleAction(`/admin/posts/${id}/deactivate`, 'PUT', { reason }, 'Post restricted');
+}
+
+async function deletePost(id) {
+  if (!confirm('Delete this post? This cannot be undone.')) return;
+  await handleAction(`/admin/posts/${id}`, 'DELETE', null, 'Post deleted');
+}
+
+async function handleAction(url, method, body, successMsg) {
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showAlert(successMsg, 'success');
+      setTimeout(() => window.location.reload(), 500);
+    } else {
+      showAlert(data.message || 'Action failed', 'danger');
+    }
+  } catch (err) {
+    console.error(err);
+    showAlert('Unexpected error', 'danger');
+  }
+}
+
+const viewModal = document.getElementById('viewPostModal');
+if (viewModal) {
+  viewModal.addEventListener('show.bs.modal', event => {
+    const button = event.relatedTarget;
+    if (!button) return;
+    const mediaType = button.getAttribute('data-mediatype');
+    const url = button.getAttribute('data-url');
+    const artist = button.getAttribute('data-artist');
+    const caption = button.getAttribute('data-caption');
+    const hashtags = button.getAttribute('data-hashtags');
+    const likes = button.getAttribute('data-likes');
+    const shares = button.getAttribute('data-shares');
+    const created = button.getAttribute('data-created');
+    const rejection = button.getAttribute('data-rejection');
+
+    const mediaHtml = mediaType === 'image'
+      ? `<img src="${url}" style="width: 100%; border-radius: 8px;">`
+      : `<video controls style="width: 100%; border-radius: 8px;"><source src="${url}"></video>`;
+
+    const content = `
+      <div>
+        <div class="mb-3">${mediaHtml}</div>
+        <h6><strong>Artist:</strong> ${artist}</h6>
+        <h6><strong>Caption:</strong></h6>
+        <p>${caption}</p>
+        ${hashtags ? `<p class="text-muted">${hashtags.split(' ').map(t => t ? '#' + t : '').join(' ').trim()}</p>` : ''}
+        <p><strong>Likes:</strong> ${likes} | <strong>Shares:</strong> ${shares}</p>
+        <p><strong>Created:</strong> ${new Date(created).toLocaleString()}</p>
+        ${rejection ? `<p class="text-danger"><strong>Rejection:</strong> ${rejection}</p>` : ''}
+      </div>`;
+
+    document.getElementById('viewPostContent').innerHTML = content;
+  });
+}
+</script>

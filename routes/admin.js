@@ -8,6 +8,8 @@ const Ticket = require('../models/Ticket');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
 const DeletedAccount = require('../models/DeletedAccount');
+const ArtistPost = require('../models/ArtistPost');
+const { deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
@@ -2679,5 +2681,201 @@ router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, isAdmin, async
   }
 });
 
-module.exports = router;
+// Manage Artist Posts page (server-rendered table + detail page)
+// New compact list page (also keep alternate path)
+router.get(['/posts', '/artist-posts'], isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const posts = await ArtistPost.find()
+      .populate('artist', 'stageName user')
+      .populate('likes', 'name')
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+    const normalizedPosts = posts.map(doc => {
+      const post = doc.toObject();
+      const media = post.media || {};
+      if (typeof media === 'string') {
+        post.media = { url: media, mediaType: 'image' };
+      } else {
+        post.media = {
+          url: media.url,
+          mediaType: media.mediaType || media.type || 'image',
+          publicId: media.publicId
+        };
+      }
+      return post;
+    });
+
+    res.render('admin/artist-posts-list', {
+      layout: 'admin',
+      currentPath: '/admin/posts',
+      title: 'Manage Posts',
+      posts: normalizedPosts
+    });
+  } catch (error) {
+    console.error('Admin posts page error:', error);
+    req.flash('error', 'Failed to load posts');
+    res.render('admin/artist-posts-list', {
+      layout: 'admin',
+      currentPath: '/admin/posts',
+      title: 'Manage Posts',
+      posts: []
+    });
+  }
+});
+
+// Detail page (support both routes)
+router.get(['/posts/:id', '/artist-posts/:id'], isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const post = await ArtistPost.findById(req.params.id)
+      .populate('artist', 'stageName user')
+      .populate('likes', 'name');
+
+    if (!post) {
+      req.flash('error', 'Post not found');
+      return res.redirect('/admin/posts');
+    }
+
+    const media = post.media || {};
+    const normalizedMedia = typeof media === 'string'
+      ? { url: media, mediaType: 'image' }
+      : {
+          url: media.url,
+          mediaType: media.mediaType || media.type || 'image',
+          publicId: media.publicId
+        };
+
+    res.render('admin/artist-posts-detail', {
+      layout: 'admin',
+      currentPath: '/admin/posts',
+      title: 'Post Details',
+      post: post.toObject(),
+      media: normalizedMedia
+    });
+  } catch (error) {
+    console.error('Admin post detail error:', error);
+    req.flash('error', 'Failed to load post');
+    res.redirect('/admin/posts');
+  }
+});
+
+function normalizeMedia(post) {
+  const media = post.media || {};
+  return typeof media === 'string'
+    ? { url: media, mediaType: 'image' }
+    : { url: media.url, mediaType: media.mediaType || media.type || 'image', publicId: media.publicId };
+}
+
+function getArtistName(post) {
+  const a = post.artist || {};
+  return (a.user && a.user.name) || a.stageName || 'Unknown';
+}
+
+// Action pages
+router.get(['/artist-posts/:id/approve','/posts/:id/approve-page'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  if (!post) return res.redirect('/admin/posts');
+  res.render('admin/artist-posts-approve', { layout:'admin', currentPath:'/admin/posts', title:'Approve Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+});
+
+router.get(['/artist-posts/:id/reject'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  if (!post) return res.redirect('/admin/posts');
+  res.render('admin/artist-posts-reject', { layout:'admin', currentPath:'/admin/posts', title:'Reject Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+});
+
+router.get(['/artist-posts/:id/restrict'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  if (!post) return res.redirect('/admin/posts');
+  res.render('admin/artist-posts-restrict', { layout:'admin', currentPath:'/admin/posts', title:'Restrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+});
+
+router.get(['/artist-posts/:id/unrestrict'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  if (!post) return res.redirect('/admin/posts');
+  res.render('admin/artist-posts-unrestrict', { layout:'admin', currentPath:'/admin/posts', title:'Unrestrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+});
+
+router.get(['/artist-posts/:id/delete'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  if (!post) return res.redirect('/admin/posts');
+  res.render('admin/artist-posts-delete', { layout:'admin', currentPath:'/admin/posts', title:'Delete Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+});
+
+// Action POST handlers (no JS needed)
+router.post('/artist-posts/:id/approve-do', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    await ArtistPost.findByIdAndUpdate(req.params.id, {
+      isApproved: true,
+      rejectionReason: undefined,
+      approvedBy: req.session.user.id
+    });
+    req.flash('success', 'Post approved');
+  } catch (e) {
+    console.error('Approve-do error:', e);
+    req.flash('error', 'Failed to approve post');
+  }
+  res.redirect('/admin/posts');
+});
+
+router.post('/artist-posts/:id/reject-do', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { rejectionReason } = req.body;
+    await ArtistPost.findByIdAndUpdate(req.params.id, {
+      isApproved: false,
+      rejectionReason,
+      approvedBy: req.session.user.id
+    });
+    req.flash('success', 'Post rejected');
+  } catch (e) {
+    console.error('Reject-do error:', e);
+    req.flash('error', 'Failed to reject post');
+  }
+  res.redirect('/admin/posts');
+});
+
+router.post('/artist-posts/:id/restrict-do', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    await ArtistPost.findByIdAndUpdate(req.params.id, {
+      isActive: false,
+      rejectionReason: reason
+    });
+    req.flash('success', 'Post restricted');
+  } catch (e) {
+    console.error('Restrict-do error:', e);
+    req.flash('error', 'Failed to restrict post');
+  }
+  res.redirect('/admin/posts');
+});
+
+router.post('/artist-posts/:id/unrestrict-do', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    await ArtistPost.findByIdAndUpdate(req.params.id, {
+      isActive: true,
+      rejectionReason: undefined
+    });
+    req.flash('success', 'Post unrestricted');
+  } catch (e) {
+    console.error('Unrestrict-do error:', e);
+    req.flash('error', 'Failed to unrestrict post');
+  }
+  res.redirect('/admin/posts');
+});
+
+router.post('/artist-posts/:id/delete-do', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const post = await ArtistPost.findById(req.params.id);
+    if (post && post.media && post.media.publicId) {
+      await deleteMedia([post.media.publicId]);
+    }
+    await ArtistPost.findByIdAndDelete(req.params.id);
+    req.flash('success', 'Post deleted');
+  } catch (e) {
+    console.error('Delete-do error:', e);
+    req.flash('error', 'Failed to delete post');
+  }
+  res.redirect('/admin/posts');
+});
+
 module.exports = router;
