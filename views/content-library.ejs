@@ -226,6 +226,50 @@
           </ul>
         </nav>
       <% } %>
+    <% } else if (posts && posts.length > 0) { %>
+      <h3 class="mb-4">Latest Artist Posts</h3>
+      <div class="row g-4">
+        <% posts.forEach(p => { %>
+          <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="card h-100 shadow-sm content-card">
+              <div class="position-relative" style="background:#000;display:flex;align-items:center;justify-content:center;height:200px;overflow:hidden;">
+                <% if (p.media && p.media.mediaType === 'image') { %>
+                  <img src="<%= p.media.url %>" alt="post" class="content-thumbnail" style="object-fit:contain;background:#000;">
+                <% } else if (p.media && p.media.mediaType === 'video') { %>
+                  <video class="content-thumbnail" style="object-fit:contain;background:#000;" muted>
+                    <source src="<%= p.media.url %>" type="video/mp4">
+                  </video>
+                <% } %>
+                <span class="badge bg-info content-type-badge">
+                  <i class="bi <%= (p.media && p.media.mediaType === 'video') ? 'bi-camera-video' : 'bi-image' %>"></i>
+                  <%= (p.media && p.media.mediaType) ? p.media.mediaType.charAt(0).toUpperCase() + p.media.mediaType.slice(1) : 'Post' %>
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title"><%= (p.caption && p.caption.length > 0) ? (p.caption.length > 60 ? p.caption.substring(0,60)+'...' : p.caption) : 'Artist Post' %></h5>
+                <p class="card-text text-muted small">
+                  <% if (p.artist && p.artist.user) { %>
+                    By <a href="/artists/<%= p.artist._id %>" class="text-decoration-none"><%= p.artist.user.name %></a>
+                  <% } else { %>
+                    By Artist
+                  <% } %>
+                </p>
+                <p class="card-text">
+                  <small class="text-muted">
+                    <i class="bi bi-clock-history"></i>
+                    <%= new Date(p.createdAt).toLocaleDateString() %>
+                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesCount || 0 %></span>
+                    <span class="ms-2"><i class="bi bi-share"></i> <%= p.shares || 0 %></span>
+                  </small>
+                </p>
+              </div>
+              <div class="card-footer bg-white border-top-0">
+                <a href="/posts/view/<%= p._id %>" class="btn btn-outline-primary w-100">View Post</a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
     <% } else { %>
       <div class="text-center py-5">
         <div class="mb-4">

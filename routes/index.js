@@ -4,6 +4,7 @@ const Concert = require('../models/Concert');
 const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
+const ArtistPost = require('../models/ArtistPost');
 const { sendTestEmail, sendConcertSubmissionEmail } = require('../utils/emailService');
 
 // Home page
@@ -291,6 +292,17 @@ router.get('/content', async (req, res) => {
         populate: { path: 'user', select: 'name' }
       });
 
+    // Also load approved artist posts for library display
+    const postFilter = { isApproved: true, isActive: true };
+    if (artist && artist !== '') {
+      postFilter.artist = artist;
+    }
+    const posts = await ArtistPost.find(postFilter)
+      .sort({ createdAt: -1 })
+      .limit(24)
+      .populate({ path: 'artist', populate: { path: 'user', select: 'name' } })
+      .lean();
+
     // Get content statistics
     const stats = {
       total: await Content.countDocuments(),
@@ -301,6 +313,7 @@ router.get('/content', async (req, res) => {
 
     res.render('content-library', {
       content,
+      posts,
       artists: validArtists,
       currentFilters: {
         type: type || '',

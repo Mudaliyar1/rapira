@@ -298,12 +298,12 @@ async function loadMyPosts() {
             </div>
             ${post.rejectionReason ? `<div class="alert alert-danger py-1 mb-2"><small>Reason: ${escapeHtml(post.rejectionReason)}</small></div>` : ''}
             <div class="post-actions">
-              <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${post._id}')">
+              <a class="btn btn-sm btn-outline-primary" href="/artists/posts/${post._id}/edit">
                 <i class="bi bi-pencil"></i> Edit
-              </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('${post._id}')">
+              </a>
+              <a class="btn btn-sm btn-outline-danger" href="/artists/posts/${post._id}/delete">
                 <i class="bi bi-trash"></i> Delete
-              </button>
+              </a>
             </div>
           </div>
         </div>

@@ -657,6 +657,66 @@ router.get('/manage-posts', isLoggedIn, isArtist, async (req, res) => {
   }
 });
 
+// Dedicated edit post page (artist-owned)
+router.get('/posts/:id/edit', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    const ArtistPost = require('../models/ArtistPost');
+    const post = await ArtistPost.findById(req.params.id);
+    if (!post || post.artist.toString() !== artist._id.toString()) {
+      req.flash('error', 'Post not found');
+      return res.redirect('/artists/manage-posts');
+    }
+
+    res.render('artists/edit-post', {
+      layout: false,
+      title: 'Edit Post',
+      currentPath: '/artists/manage-posts',
+      artist,
+      post
+    });
+  } catch (error) {
+    console.error('Edit post page error:', error);
+    req.flash('error', 'Failed to load edit page');
+    res.redirect('/artists/manage-posts');
+  }
+});
+
+// Dedicated delete confirmation page (artist-owned)
+router.get('/posts/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    const ArtistPost = require('../models/ArtistPost');
+    const post = await ArtistPost.findById(req.params.id);
+    if (!post || post.artist.toString() !== artist._id.toString()) {
+      req.flash('error', 'Post not found');
+      return res.redirect('/artists/manage-posts');
+    }
+
+    res.render('artists/delete-post', {
+      layout: false,
+      title: 'Delete Post',
+      currentPath: '/artists/manage-posts',
+      artist,
+      post
+    });
+  } catch (error) {
+    console.error('Delete post page error:', error);
+    req.flash('error', 'Failed to load delete page');
+    res.redirect('/artists/manage-posts');
+  }
+});
+
 // Concert management page
 router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
   try {

@@ -44,6 +44,19 @@ let currentGroup = null;
 let currentIndex = 0;
 let timer = null;
 
+function formatTimeAgo(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
 function openStoryGroup(group) {
   // Find the index of this group in all groups
   currentGroupIndex = allStoryGroups.findIndex(g => g.artist._id === group.artist._id);
@@ -130,8 +143,12 @@ async function toggleLike(storyId) {
 function showStory(s) {
   const holder = document.getElementById('story-media');
   const caption = document.getElementById('story-caption');
+  const timeEl = document.getElementById('story-time-ago');
   holder.innerHTML = '';
   caption.textContent = s.caption || '';
+  if (timeEl) {
+    timeEl.textContent = formatTimeAgo(s.createdAt);
+  }
   clearTimeout(timer);
 
   if (s.mediaType === 'image') {

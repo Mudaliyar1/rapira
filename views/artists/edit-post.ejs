@@ -1,0 +1,43 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container py-4">
+  <div class="mb-3">
+    <a href="/artists/manage-posts" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Back to Manage Posts</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">Edit Post</h5>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <% if (post.media && post.media.mediaType === 'video') { %>
+          <video controls style="width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000;">
+            <source src="<%= post.media.url %>">
+          </video>
+        <% } else { %>
+          <img src="<%= post.media && post.media.url ? post.media.url : '/images/default-profile.svg' %>" alt="post" style="width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000;">
+        <% } %>
+      </div>
+
+      <form action="/posts/<%= post._id %>?_method=PUT" method="POST">
+        <div class="mb-3">
+          <label for="caption" class="form-label">Caption (add #hashtags)</label>
+          <textarea class="form-control" id="caption" name="caption" rows="4" maxlength="2200" required><%= post.caption || '' %></textarea>
+          <small class="text-muted"><span id="charCount">0</span>/2200</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
+        <a href="/artists/manage-posts" class="btn btn-outline-secondary ms-2">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const captionEl = document.getElementById('caption');
+  const counterEl = document.getElementById('charCount');
+  function updateCount(){ counterEl.textContent = captionEl.value.length; }
+  captionEl.addEventListener('input', updateCount);
+  updateCount();
+</script>
