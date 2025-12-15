@@ -16,11 +16,43 @@
 
 	async function openPostById(id){
 		try {
+			// Show modal with loading state immediately
+			const modalEl = document.getElementById('post-viewer');
+			if (modalEl) {
+				// Clear previous content and show loading state
+				const mediaHolder = document.getElementById('post-media');
+				const captionEl = document.getElementById('post-caption');
+				const tagsEl = document.getElementById('post-hashtags');
+				const likesEl = document.getElementById('post-likes-count');
+				const sharesEl = document.getElementById('post-shares-count');
+				
+				if (mediaHolder) mediaHolder.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+				if (captionEl) captionEl.textContent = '';
+				if (tagsEl) tagsEl.innerHTML = '';
+				if (likesEl) likesEl.textContent = '0';
+				if (sharesEl) sharesEl.textContent = '0';
+				
+				// Update like icon to default state
+				const likeIcon = document.getElementById('post-like-icon');
+				if (likeIcon) likeIcon.className = 'bi bi-heart';
+				
+				// Show modal immediately
+				if (window.bootstrap && window.bootstrap.Modal) {
+					const modal = new bootstrap.Modal(modalEl);
+					modal.show();
+				}
+			}
+
 			const res = await fetch(`/posts/${id}/json`);
 			const data = await res.json();
 			if (!data.success) {
 				console.warn('Post modal: post not available', data.message || '');
 				alert(data.message || 'Post not available');
+				// Hide modal on error
+				if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+					const modal = bootstrap.Modal.getInstance(modalEl);
+					if (modal) modal.hide();
+				}
 				return;
 			}
 			const post = data.post;
@@ -64,25 +96,20 @@
 			// counts + like state
 			document.getElementById('post-likes-count').textContent = post.likesCount || 0;
 			document.getElementById('post-shares-count').textContent = post.shares || 0;
+			document.getElementById('post-views-count').textContent = post.views || 0;
 			const likeIcon = document.getElementById('post-like-icon');
 			likeIcon.className = post.liked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
 			const likeBtn = document.getElementById('post-like-btn');
 			likeBtn.innerHTML = post.liked ? '<i class="bi bi-heart-fill text-danger"></i> Unlike' : '<i class="bi bi-heart"></i> Like';
 			likeBtn.disabled = false;
-
-			const modalEl = document.getElementById('post-viewer');
-			if (!modalEl) {
-				console.error('Post modal element not found');
-				return;
-			}
-			if (!window.bootstrap || !window.bootstrap.Modal) {
-				console.error('Bootstrap Modal is not available on this page');
-				return;
-			}
-			const modal = new bootstrap.Modal(modalEl);
-			modal.show();
-		} catch (e) {
+		} catch (e){
 			console.error('Open post error', e);
+			// Hide modal on error
+			const modalEl = document.getElementById('post-viewer');
+			if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+				const modal = bootstrap.Modal.getInstance(modalEl);
+				if (modal) modal.hide();
+			}
 		}
 	}
 
@@ -110,7 +137,8 @@
 	async function sharePost(){
 		if (!currentPost) return;
 		try {
-			const url = `${window.location.origin}/posts/view/${currentPost._id}`;
+			// Generate a URL that will open the post in a popup modal
+			const url = `${window.location.origin}#view-post-${currentPost._id}`;
 			if (navigator.share) {
 				await navigator.share({ title: 'Check out this post', url });
 			} else if (navigator.clipboard) {

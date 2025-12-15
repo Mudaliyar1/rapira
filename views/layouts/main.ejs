@@ -160,7 +160,29 @@
           window.location.reload();
         }, 1000);
       }
+      
+      // Handle post view hash on page load
+      handlePostViewHash();
     });
+    
+    // Handle hash changes for post viewing
+    function handlePostViewHash() {
+      const hash = window.location.hash;
+      if (hash.startsWith('#view-post-')) {
+        const postId = hash.substring(11); // Remove '#view-post-' prefix
+        // Try to open the post using available functions
+        if (typeof viewPost === 'function') {
+          viewPost(postId);
+        } else if (typeof window.openPost === 'function') {
+          window.openPost(postId);
+        }
+        // Clear the hash without triggering navigation
+        history.replaceState(null, null, ' ');
+      }
+    }
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handlePostViewHash);
   </script>
 </body>
 </html>

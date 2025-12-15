@@ -24,6 +24,7 @@
               <th style="width:150px;">Status</th>
               <th style="width:70px;">Likes</th>
               <th style="width:70px;">Shares</th>
+              <th style="width:70px;">Views</th>
               <th style="width:120px;">Date</th>
               <th style="width:240px;">Actions</th>
             </tr>
@@ -60,6 +61,7 @@
                   </td>
                   <td><%= post.likesCount || 0 %></td>
                   <td><%= post.shares || 0 %></td>
+                  <td><%= post.views || 0 %></td>
                   <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
                   <td>
                     <div class="d-flex flex-wrap gap-2">

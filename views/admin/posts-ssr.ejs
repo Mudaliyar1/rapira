@@ -24,6 +24,7 @@
               <th>Status</th>
               <th style="width:70px;">Likes</th>
               <th style="width:70px;">Shares</th>
+              <th style="width:70px;">Views</th>
               <th style="width:110px;">Date</th>
               <th style="width:220px;">Actions</th>
             </tr>
@@ -57,6 +58,7 @@
                   </td>
                   <td><%= post.likesCount || 0 %></td>
                   <td><%= post.shares || 0 %></td>
+                  <td><%= post.views || 0 %></td>
                   <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
                   <td>
                     <div class="d-flex flex-wrap gap-2">
@@ -64,7 +66,7 @@
                         data-id="<%= post._id %>" data-url="<%= mediaUrl %>" data-mediatype="<%= mediaType %>"
                         data-artist="<%= artistName %>" data-caption="<%= (post.caption || '(no caption)').replace(/"/g,'&quot;') %>"
                         data-hashtags="<%= (post.hashtags || []).join(' ') %>" data-likes="<%= post.likesCount || 0 %>"
-                        data-shares="<%= post.shares || 0 %>" data-created="<%= post.createdAt %>"
+                        data-shares="<%= post.shares || 0 %>" data-views="<%= post.views || 0 %>" data-created="<%= post.createdAt %>"
                         data-rejection="<%= post.rejectionReason || '' %>">
                         <i class="bi bi-eye"></i>
                       </button>
@@ -187,6 +189,7 @@ if (viewModal) {
     const hashtags = button.getAttribute('data-hashtags');
     const likes = button.getAttribute('data-likes');
     const shares = button.getAttribute('data-shares');
+    const views = button.getAttribute('data-views');
     const created = button.getAttribute('data-created');
     const rejection = button.getAttribute('data-rejection');
 
@@ -201,7 +204,7 @@ if (viewModal) {
         <h6><strong>Caption:</strong></h6>
         <p>${caption}</p>
         ${hashtags ? `<p class="text-muted">${hashtags.split(' ').map(t => t ? '#' + t : '').join(' ').trim()}</p>` : ''}
-        <p><strong>Likes:</strong> ${likes} | <strong>Shares:</strong> ${shares}</p>
+        <p><strong>Likes:</strong> ${likes} | <strong>Shares:</strong> ${shares} | <strong>Views:</strong> ${views}</p>
         <p><strong>Created:</strong> ${new Date(created).toLocaleString()}</p>
         ${rejection ? `<p class="text-danger"><strong>Rejection:</strong> ${rejection}</p>` : ''}
       </div>`;

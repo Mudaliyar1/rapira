@@ -553,7 +553,8 @@
           console.error('[POST DETAIL] Share API error:', err);
         }
         
-        const url = window.location.href;
+        // Generate a URL that will open the post in a popup modal
+        const url = `${window.location.origin}#view-post-${postId}`;
         const title = 'Check out this post on RAPIRA';
         const text = '<%= (post.caption || "Check out this post!").substring(0, 100).replace(/'/g, "\\'").replace(/\n/g, " ") %>';
         

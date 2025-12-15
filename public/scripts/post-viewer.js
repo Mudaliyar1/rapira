@@ -21,6 +21,30 @@ async function viewPost(postId) {
   try {
     console.log('[POST VIEWER] Loading post:', postId);
     
+    // Show modal immediately with loading state
+    const modalElement = document.getElementById('post-viewer');
+    if (modalElement) {
+      // Clear previous content and show loading state
+      const mediaContainer = document.getElementById('post-media-container');
+      const captionElement = document.getElementById('post-caption');
+      const hashtagsContainer = document.getElementById('post-hashtags');
+      const likesElement = document.getElementById('post-likes-count');
+      const sharesElement = document.getElementById('post-shares-count');
+      
+      if (mediaContainer) mediaContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+      if (captionElement) captionElement.textContent = '';
+      if (hashtagsContainer) hashtagsContainer.innerHTML = '';
+      if (likesElement) likesElement.textContent = '0';
+      if (sharesElement) sharesElement.textContent = '0';
+      
+      // Update like button to default state
+      updateLikeButton(false);
+      
+      // Show modal immediately
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
+    
     // Fetch post data
     const res = await fetch(`/posts/${postId}/json`);
     if (!res.ok) throw new Error('Failed to load post');
@@ -45,6 +69,7 @@ async function viewPost(postId) {
     document.getElementById('post-created-at').textContent = formatTimeAgo(currentPost.createdAt);
     document.getElementById('post-likes-count').textContent = currentPost.likesCount || 0;
     document.getElementById('post-shares-count').textContent = currentPost.shares || 0;
+    document.getElementById('post-views-count').textContent = currentPost.views || 0;
     
     // Handle caption with Read More
     const caption = currentPost.caption || '';
@@ -120,13 +145,16 @@ async function viewPost(postId) {
     // Update like button state
     updateLikeButton(currentPost.liked);
     
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('post-viewer'));
-    modal.show();
-    
   } catch (err) {
     console.error('[POST VIEWER] Error loading post:', err);
     showToast('Failed to load post', 'error');
+    
+    // Hide modal on error
+    const modalElement = document.getElementById('post-viewer');
+    if (modalElement) {
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      if (modal) modal.hide();
+    }
   }
 }
 
@@ -204,7 +232,8 @@ async function sharePostModal() {
     console.error('[POST VIEWER] Share API error:', err);
   }
   
-  const url = `${window.location.origin}/posts/view/${currentPost._id}`;
+  // Generate a URL that will open the post in a popup modal
+  const url = `${window.location.origin}#view-post-${currentPost._id}`;
   const title = 'Check out this post on RAPIRA';
   const text = currentPost.caption ? currentPost.caption.substring(0, 100) : 'Check out this post!';
   

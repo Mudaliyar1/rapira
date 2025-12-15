@@ -187,6 +187,10 @@ async function loadPosts() {
                 <i class="bi bi-share"></i>
                 <span>${post.shares || 0}</span>
               </div>
+              <div class="post-overlay-item-gallery">
+                <i class="bi bi-eye"></i>
+                <span>${post.views || 0}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,6 +218,7 @@ function viewPost(postId) {
 
   currentPostId = postId;
 
+  // Pre-populate modal content BEFORE showing it for instant display
   // Load media
   const mediaContainer = document.getElementById('postMediaContainer');
   if (post.media.mediaType === 'image') {
@@ -239,8 +244,10 @@ function viewPost(postId) {
     </button>
   `;
 
-  // Show modal
-  new bootstrap.Modal(document.getElementById('postModal')).show();
+  // Show modal instantly
+  const modalElement = document.getElementById('postModal');
+  const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 async function toggleLike() {
@@ -271,7 +278,8 @@ async function sharePost() {
   if (!currentPostId) return;
 
   try {
-    const url = window.location.href;
+    // Generate a URL that will open the post in a popup modal
+    const url = `${window.location.origin}#view-post-${currentPostId}`;
     if (navigator.share) {
       await navigator.share({ title: 'Check out this post', url });
     } else if (navigator.clipboard) {

@@ -86,7 +86,30 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 			.sort({ createdAt: -1 })
 			.limit(100);
 
-		res.json({ success: true, posts });
+		// Format posts consistently
+		const formattedPosts = posts.map(post => {
+			const postObj = post.toObject();
+			return {
+				_id: postObj._id,
+				caption: postObj.caption || '',
+				hashtags: Array.isArray(postObj.hashtags) ? postObj.hashtags : [],
+				media: {
+					url: postObj.media?.url || '',
+					mediaType: postObj.media?.mediaType || 'image',
+					publicId: postObj.media?.publicId || ''
+				},
+				likes: postObj.likes || [],
+				likesCount: postObj.likesCount || 0,
+				shares: postObj.shares || 0,
+				views: postObj.views || 0, // Add views to response
+				createdAt: postObj.createdAt,
+				isApproved: postObj.isApproved,
+				isActive: postObj.isActive,
+				rejectionReason: postObj.rejectionReason
+			};
+		});
+
+		res.json({ success: true, posts: formattedPosts });
 	} catch (err) {
 		res.status(500).json({ success: false });
 	}
@@ -121,6 +144,7 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
 				shares: postObj.shares || 0,
+				views: postObj.views || 0, // Add views to response
 				createdAt: postObj.createdAt,
 				isApproved: postObj.isApproved,
 				isActive: postObj.isActive
@@ -262,6 +286,20 @@ router.post('/posts/:id/share', async (req, res) => {
 	}
 });
 
+// View post (increments view count)
+router.post('/posts/:id/view', async (req, res) => {
+	try {
+		const post = await ArtistPost.findByIdAndUpdate(
+			req.params.id,
+			{ $inc: { views: 1 } },
+			{ new: true }
+		);
+		res.json({ success: true, views: post.views });
+	} catch (err) {
+		res.status(500).json({ success: false });
+	}
+});
+
 // JSON endpoint for single post (for modal rendering)
 router.get('/posts/:id/json', async (req, res) => {
 	try {
@@ -280,6 +318,10 @@ router.get('/posts/:id/json', async (req, res) => {
 			return res.status(404).json({ success: false, message: 'Post not available' });
 		}
 
+		// Increment view count
+		post.views = (post.views || 0) + 1;
+		await post.save();
+
 		const userId = req.session?.user?.id;
 		const liked = userId ? post.likes.some(l => l._id?.toString() === userId) : false;
 
@@ -294,6 +336,7 @@ router.get('/posts/:id/json', async (req, res) => {
 			},
 			likesCount: post.likesCount || 0,
 			shares: post.shares || 0,
+			views: post.views || 0, // Include views in response
 			createdAt: post.createdAt,
 			artist: {
 				_id: post.artist?._id,
@@ -365,6 +408,11 @@ router.get('/admin/posts', isLoggedIn, async (req, res) => {
 					mediaType: media.mediaType || media.type || 'image',
 					publicId: media.publicId
 				};
+			}
+
+			// Ensure all posts have views property
+			if (typeof post.views !== 'number') {
+				post.views = 0;
 			}
 
 			return post;
