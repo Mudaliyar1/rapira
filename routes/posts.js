@@ -205,11 +205,18 @@ router.delete('/posts/:id', isLoggedIn, async (req, res) => {
 // Like post
 router.post('/posts/:id/like', isLoggedIn, async (req, res) => {
 	try {
+		console.log('[POST LIKE] Request received for post ID:', req.params.id);
+		console.log('[POST LIKE] User ID:', req.session.user?.id);
+		
 		const post = await ArtistPost.findById(req.params.id);
-		if (!post || !post.isActive) return res.status(404).json({ success: false });
+		if (!post || !post.isActive) {
+			console.log('[POST LIKE] Post not found or inactive');
+			return res.status(404).json({ success: false, message: 'Post not found' });
+		}
 
 		const userId = req.session.user.id;
 		const alreadyLiked = post.likes.some(l => l.toString() === userId);
+		console.log('[POST LIKE] Already liked:', alreadyLiked);
 
 		if (alreadyLiked) {
 			post.likes = post.likes.filter(l => l.toString() !== userId);
@@ -220,9 +227,11 @@ router.post('/posts/:id/like', isLoggedIn, async (req, res) => {
 		}
 
 		await post.save();
+		console.log('[POST LIKE] Success! New like count:', post.likesCount);
 		res.json({ success: true, liked: !alreadyLiked, likesCount: post.likesCount });
 	} catch (err) {
-		res.status(500).json({ success: false });
+		console.error('[POST LIKE] Error:', err);
+		res.status(500).json({ success: false, message: err.message });
 	}
 });
 
@@ -257,7 +266,14 @@ router.post('/posts/:id/share', async (req, res) => {
 router.get('/posts/:id/json', async (req, res) => {
 	try {
 		const post = await ArtistPost.findById(req.params.id)
-			.populate('artist', 'stageName profileImage user')
+			.populate({
+				path: 'artist',
+				select: 'stageName user',
+				populate: {
+					path: 'user',
+					select: 'name profileImage'
+				}
+			})
 			.populate('likes', 'name profileImage');
 
 		if (!post || !post.isApproved || !post.isActive) {
@@ -282,14 +298,43 @@ router.get('/posts/:id/json', async (req, res) => {
 			artist: {
 				_id: post.artist?._id,
 				stageName: post.artist?.stageName || '',
-				profileImage: post.artist?.profileImage || '/images/default-profile.svg'
+				profileImage: post.artist?.user?.profileImage || '/images/default-profile.svg'
 			},
 			liked
 		};
 
 		res.json({ success: true, post: formatted });
 	} catch (err) {
+		console.error('[POST JSON] Error:', err);
 		res.status(500).json({ success: false });
+	}
+});
+
+// Get post likes
+router.get('/posts/:id/likes', async (req, res) => {
+	try {
+		console.log('[POST LIKES] Request for post ID:', req.params.id);
+		
+		const post = await ArtistPost.findById(req.params.id)
+			.populate('likes', 'name profileImage');
+
+		if (!post) {
+			console.log('[POST LIKES] Post not found for ID:', req.params.id);
+			return res.status(404).json({ success: false, message: 'Post not found' });
+		}
+
+		console.log('[POST LIKES] Found post with', post.likes.length, 'likes');
+		
+		// Format likes data
+		const formattedLikes = post.likes.map(user => ({
+			name: user.name || 'Anonymous User',
+			profileImage: user.profileImage || '/images/default-profile.svg'
+		}));
+
+		res.json({ success: true, likes: formattedLikes });
+	} catch (err) {
+		console.error('[POST LIKES] Error:', err);
+		res.status(500).json({ success: false, message: 'Failed to load likes: ' + err.message });
 	}
 });
 

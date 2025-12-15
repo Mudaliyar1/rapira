@@ -123,6 +123,12 @@ async function updateLikeUI(story) {
 }
 
 async function toggleLike(storyId) {
+  // GUARD: Don't run on post detail page
+  if (window.IS_POST_DETAIL_PAGE) {
+    console.log('[STORIES.JS] Skipping - on post detail page');
+    return;
+  }
+  
   try {
     const res = await fetch(`/stories/${storyId}/like`, { method: 'POST' });
     const data = await res.json();
@@ -183,7 +189,7 @@ function showStory(s) {
     }
   });
 
-  markViewed(s.id);
+  markViewed(s._id || s.id);
   updateLikeUI(s);
   timer = setTimeout(nextStory, s.durationMs || 5000);
 }
@@ -327,7 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (nextBtn) nextBtn.addEventListener('click', nextStory);
   if (likeBtn) likeBtn.addEventListener('click', () => {
     if (currentGroup && currentGroup.stories[currentIndex]) {
-      toggleLike(currentGroup.stories[currentIndex].id);
+      const storyId = currentGroup.stories[currentIndex]._id || currentGroup.stories[currentIndex].id;
+      if (storyId && storyId !== 'undefined') {
+        toggleLike(storyId);
+      } else {
+        console.error('Story ID is undefined', currentGroup.stories[currentIndex]);
+      }
     }
   });
 });

@@ -7,10 +7,25 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 100%);
       color: #fff;
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container, .container-fluid {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    img {
+      max-width: 100%;
+      height: auto;
     }
     
     .post-container {
@@ -18,13 +33,24 @@
       border-radius: 16px;
       border: 1px solid #333;
       overflow: hidden;
+      max-width: 100%;
     }
     
     .post-media {
       width: 100%;
+      max-width: 100%;
       max-height: 70vh;
+      height: auto;
       object-fit: contain;
       background: #000;
+      display: block;
+    }
+    
+    /* Ensure images are fully responsive */
+    .post-media[alt="post"] {
+      max-width: 100% !important;
+      width: 100% !important;
+      height: auto !important;
     }
     
     @media (max-width: 768px) {
@@ -323,12 +349,12 @@
       <!-- Post Container -->
       <div class="row g-4 g-md-3 g-lg-4">
         <!-- Media Column -->
-        <div class="col-12 col-lg-7">
-          <div class="post-container">
+        <div class="col-12 col-lg-7" style="max-width: 100%; overflow: hidden;">
+          <div class="post-container" style="max-width: 100%;">
             <% if (post.media && post.media.mediaType === 'image') { %>
-              <img src="<%= post.media.url %>" alt="post" class="post-media">
+              <img src="<%= post.media.url %>" alt="post" class="post-media" style="max-width: 100%; width: 100%; height: auto; display: block;">
             <% } else if (post.media && post.media.mediaType === 'video') { %>
-              <video controls class="post-media" style="width: 100%;">
+              <video controls class="post-media" style="width: 100%; max-width: 100%; height: auto; display: block;">
                 <source src="<%= post.media.url %>">
               </video>
             <% } %>
@@ -386,13 +412,16 @@
               </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="action-buttons">
-              <button class="btn-action" id="likeBtn" onclick="toggleLike('<%= post._id %>')">
-                <i class="bi bi-heart"></i> Like
+            <!-- Action Buttons - Icon Only -->
+            <div class="action-buttons" style="display: flex; gap: 20px; align-items: center; justify-content: center; padding: 20px 0;">
+              <!-- Like Button -->
+              <button id="likeBtn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255, 23, 68, 0.1)'; this.style.borderColor='#ff1744';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
+                <i class="bi bi-heart" style="font-size: 1.8rem; color: #fff; pointer-events: none;"></i>
               </button>
-              <button class="btn-action" onclick="sharePost()">
-                <i class="bi bi-share"></i> Share
+              
+              <!-- Share Button -->
+              <button id="shareBtn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(0, 212, 255, 0.2)'; this.style.borderColor='#00d4ff';" onmouseout="this.style.background='rgba(0, 212, 255, 0.1)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
+                <i class="bi bi-share" style="font-size: 1.8rem; color: #00d4ff; pointer-events: none;"></i>
               </button>
             </div>
 
@@ -410,58 +439,228 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const postId = '<%= post._id %>';
-    const userId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
-    const likes = <%- JSON.stringify(post.likes || []) %>;
+    // CRITICAL: Prevent global stories.js from interfering
+    window.IS_POST_DETAIL_PAGE = true;
     
-    // Check if current user has liked
-    function updateLikeButton() {
-      const likeBtn = document.getElementById('likeBtn');
-      const isLiked = userId && likes.some(l => l._id === userId || l === userId);
-      if (isLiked) {
-        likeBtn.innerHTML = '<i class="bi bi-heart-fill" style="color: #ff1744;"></i> Unlike';
-        likeBtn.style.borderColor = '#ff1744';
-        likeBtn.style.color = '#ff1744';
-      }
-    }
-    
-    async function toggleLike(id) {
-      if (!userId) {
-        alert('Please log in to like posts');
-        return;
-      }
-
-      try {
-        const res = await fetch(`/posts/${id}/like`, { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('likesCount').textContent = data.likesCount;
-          likes.length = 0;
-          (data.likes || []).forEach(l => likes.push(l));
-          updateLikeButton();
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('[POST DETAIL] DOM loaded, initializing...');
+      
+      const postId = '<%= post._id %>';
+      const userId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+      let isLiked = false;
+      let isProcessing = false;
+      
+      // Check initial like status
+      (() => {
+        const likes = <%- JSON.stringify(post.likes || []) %>;
+        isLiked = userId && Array.isArray(likes) && likes.some(l => {
+          const likeId = typeof l === 'string' ? l : (l._id || l);
+          return likeId.toString() === userId.toString();
+        });
+        console.log('[POST DETAIL] Initial like status:', isLiked);
+        updateLikeButton();
+      })();
+      
+      function updateLikeButton() {
+        const likeBtn = document.getElementById('likeBtn');
+        const likeIcon = likeBtn?.querySelector('i');
+        if (!likeBtn || !likeIcon) return;
+        
+        if (isLiked) {
+          likeIcon.className = 'bi bi-heart-fill';
+          likeIcon.style.color = '#ff1744';
+          likeBtn.style.background = 'rgba(255, 23, 68, 0.15)';
+          likeBtn.style.borderColor = '#ff1744';
+        } else {
+          likeIcon.className = 'bi bi-heart';
+          likeIcon.style.color = '#fff';
+          likeBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+          likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
         }
-      } catch (err) {
-        console.error('Like error:', err);
-        alert('Failed to like post');
       }
-    }
+      
+      // Define like function
+      async function postToggleLike() {
+        console.log('[POST DETAIL] postToggleLike called for postId:', postId);
+        
+        if (!userId) {
+          showToast('Please log in to like posts', 'info');
+          return;
+        }
+        
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        const likeBtn = document.getElementById('likeBtn');
+        likeBtn.disabled = true;
 
-    function sharePost() {
-      const url = window.location.href;
-      if (navigator.share) {
-        navigator.share({
-          title: 'Check out this post',
-          url: url
-        });
-      } else if (navigator.clipboard) {
-        navigator.clipboard.writeText(url).then(() => {
-          alert('Link copied to clipboard!');
-        });
+        try {
+          const endpoint = `/posts/${postId}/like`;
+          console.log('[POST DETAIL] Calling endpoint:', endpoint);
+          
+          const res = await fetch(endpoint, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          console.log('[POST DETAIL] Response status:', res.status);
+          
+          if (!res.ok) throw new Error('Network error');
+          
+          const data = await res.json();
+          console.log('[POST DETAIL] Response data:', data);
+          
+          if (data.success) {
+            document.getElementById('likesCount').textContent = data.likesCount;
+            isLiked = data.liked;
+            updateLikeButton();
+            
+            // Animate
+            likeBtn.style.animation = 'heartBeat 0.5s ease';
+            setTimeout(() => likeBtn.style.animation = '', 500);
+            
+            showToast(data.liked ? '❤️ Liked!' : 'Unliked', 'success');
+          } else {
+            showToast(data.message || 'Failed to like', 'error');
+          }
+        } catch (err) {
+          console.error('[POST DETAIL] Like error:', err);
+          showToast('Failed to like post', 'error');
+        } finally {
+          isProcessing = false;
+          likeBtn.disabled = false;
+        }
       }
-    }
 
-    // Initialize
-    updateLikeButton();
+      // Define share function
+      async function postSharePost() {
+        console.log('[POST DETAIL] postSharePost called');
+        
+        try {
+          const res = await fetch(`/posts/${postId}/share`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              document.getElementById('sharesCount').textContent = data.shares;
+            }
+          }
+        } catch (err) {
+          console.error('[POST DETAIL] Share API error:', err);
+        }
+        
+        const url = window.location.href;
+        const title = 'Check out this post on RAPIRA';
+        const text = '<%= (post.caption || "Check out this post!").substring(0, 100).replace(/'/g, "\\'").replace(/\n/g, " ") %>';
+        
+        if (navigator.share) {
+          try {
+            await navigator.share({ title, text, url });
+            showToast('📤 Shared!', 'success');
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.log('[POST DETAIL] Native share failed, using clipboard');
+              copyToClipboard(url);
+            }
+          }
+        } else {
+          copyToClipboard(url);
+        }
+      }
+      
+      function copyToClipboard(url) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            showToast('🔗 Link copied!', 'success');
+          }).catch(() => {
+            showToast('Failed to copy link', 'error');
+          });
+        } else {
+          showToast('Share not supported', 'info');
+        }
+      }
+      
+      function showToast(message, type) {
+        const colors = {
+          success: '#10b981',
+          error: '#ef4444',
+          info: '#3b82f6'
+        };
+        
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          background: ${colors[type] || colors.info};
+          color: white;
+          padding: 16px 24px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          font-weight: 600;
+          animation: slideIn 0.3s ease-out;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.style.animation = 'slideOut 0.3s ease-out';
+          setTimeout(() => toast.remove(), 300);
+        }, 2500);
+      }
+      
+      // Add animations
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes heartBeat {
+          0%, 100% { transform: scale(1); }
+          25% { transform: scale(1.3); }
+          50% { transform: scale(1.1); }
+          75% { transform: scale(1.25); }
+        }
+        @keyframes slideIn {
+          from { transform: translateX(400px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(400px); opacity: 0; }
+        }
+        button:hover {
+          transform: scale(1.15) !important;
+        }
+        button:active {
+          transform: scale(0.95) !important;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Attach event listeners to buttons
+      const likeBtn = document.getElementById('likeBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      
+      console.log('[POST DETAIL] Like button found:', !!likeBtn);
+      console.log('[POST DETAIL] Share button found:', !!shareBtn);
+      
+      if (likeBtn) {
+        likeBtn.addEventListener('click', postToggleLike);
+        console.log('[POST DETAIL] Like button listener attached');
+      } else {
+        console.error('[POST DETAIL] Like button not found!');
+      }
+      
+      if (shareBtn) {
+        shareBtn.addEventListener('click', postSharePost);
+        console.log('[POST DETAIL] Share button listener attached');
+      } else {
+        console.error('[POST DETAIL] Share button not found!');
+      }
+    });
   </script>
 </body>
 </html>

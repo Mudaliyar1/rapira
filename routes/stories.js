@@ -138,6 +138,7 @@ router.get('/stories/feed', isLoggedIn, async (req, res) => {
       const seen = s.viewers?.some(v => v.toString() === req.session.user.id);
       const liked = s.likes?.some(l => l.toString() === req.session.user.id);
       byArtist.get(artistId).stories.push({
+        _id: s._id,
         id: s._id,
         mediaUrl: s.mediaUrl,
         mediaType: s.mediaType,
@@ -182,7 +183,20 @@ router.post('/stories/:id/view', isLoggedIn, async (req, res) => {
 // Like/unlike a story
 router.post('/stories/:id/like', isLoggedIn, async (req, res) => {
   try {
-    const story = await ArtistStory.findById(req.params.id);
+    const storyId = req.params.id;
+    
+    // Validate ID
+    if (!storyId || storyId === 'undefined' || storyId === 'null') {
+      console.error('[STORY LIKE ERROR] Invalid story ID received:', storyId);
+      console.error('[STORY LIKE ERROR] Request URL:', req.originalUrl);
+      console.error('[STORY LIKE ERROR] Referer:', req.get('Referer'));
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid story ID. Are you trying to like a post instead of a story?' 
+      });
+    }
+    
+    const story = await ArtistStory.findById(storyId);
     if (!story || !story.isActive) return res.status(404).json({ success: false, message: 'Story not found' });
 
     const userId = req.session.user.id;
