@@ -1,13 +1,11 @@
 <%- contentFor('body') %>
 
-<!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="h3 mb-0 text-white">
     <i class="bi bi-shield-check me-2"></i>Ticket Validation
   </h1>
 </div>
 
-<!-- Validation Link Generator -->
 <div class="row">
   <div class="col-lg-8">
     <div class="glass-card-dark mb-4">
@@ -19,7 +17,7 @@
         <div class="mb-4">
           <label class="form-label text-white">Validation Link</label>
           <div class="input-group">
-            <input type="text" class="form-control bg-dark border-secondary text-white" id="validationLink" readonly value="<%= validationUrl %>">
+            <input type="text" class="form-control bg-dark border-secondary text-white" id="validationLink" readonly value="<%= validationUrl ? validationUrl : '' %>">
             <button class="btn btn-outline-primary" type="button" id="copyLinkBtn">
               <i class="bi bi-clipboard"></i> Copy & Open Link
             </button>
@@ -69,9 +67,6 @@
   </div>
 </div>
 
-<%- contentFor('title') %>Ticket Validation
-
-<%- contentFor('scripts') %>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const copyLinkBtn = document.getElementById('copyLinkBtn');
