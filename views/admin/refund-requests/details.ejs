@@ -28,6 +28,10 @@
               <div class="col-md-8 text-white"><%= refundRequest.ticket.ticketNumber %></div>
             </div>
             <div class="row mb-2">
+              <div class="col-md-4 text-white-50">Payment ID:</div>
+              <div class="col-md-8 text-white"><%= refundRequest.ticket.paymentId || 'N/A' %></div>
+            </div>
+            <div class="row mb-2">
               <div class="col-md-4 text-white-50">Concert:</div>
               <div class="col-md-8 text-white"><%= refundRequest.concert.title %></div>
             </div>
@@ -173,6 +177,7 @@
           <h4 class="fw-bold mb-0 text-white">User Information</h4>
         </div>
         <div class="card-body p-4">
+          <% if (refundRequest.user) { %>
           <div class="text-center mb-4">
             <div class="avatar-lg mx-auto mb-3">
               <span class="avatar-text rounded-circle bg-primary">
@@ -198,7 +203,11 @@
               <i class="bi bi-person me-1"></i> View User Profile
             </a>
           </div>
-        </div>
+          <% } else { %>
+            <div class="text-center">
+              <p class="text-white">User information not available</p>
+            </div>
+          <% } %>        </div>
       </div>
     </div>
   </div>

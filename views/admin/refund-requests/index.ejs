@@ -168,6 +168,7 @@
               <th>User</th>
               <th>Concert</th>
               <th>Ticket #</th>
+              <th>Payment ID</th>
               <th>Amount</th>
               <th>Status</th>
               <th>Date</th>
@@ -196,6 +197,7 @@
                     <% } %>
                   </td>
                   <td><%= request.ticket ? request.ticket.ticketNumber : 'N/A' %></td>
+                  <td><%= request.ticket && request.ticket.paymentId ? request.ticket.paymentId : 'N/A' %></td>
                   <td>₹<%= request.amount %></td>
                   <td>
                     <span class="badge <%= request.status === 'pending' ? 'bg-warning' : (request.status === 'approved' ? 'bg-success' : 'bg-danger') %>">

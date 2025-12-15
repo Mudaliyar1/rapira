@@ -39,7 +39,7 @@ router.get('/my-requests', isLoggedIn, async (req, res) => {
 router.get('/view/:id', isLoggedIn, async (req, res) => {
   try {
     const refundRequest = await RefundRequest.findById(req.params.id)
-      .populate('ticket')
+      .populate('ticket', 'ticketNumber concert user attendees quantity totalAmount originalAmount discountApplied discountPercentage discountType paymentId orderId paymentStatus purchaseDate')
       .populate('concert');
 
     if (!refundRequest) {
@@ -285,8 +285,9 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     let refundRequests = await RefundRequest.find(filter)
       .sort(sortOptions)
       .populate('user', 'name email')
-      .populate('ticket', 'ticketNumber')
-      .populate('concert', 'title date');
+      .populate('ticket', 'ticketNumber paymentId')
+      .populate('concert', 'title date')
+      .populate('reviewedBy', 'name');
 
     // Apply text search on populated data
     if (search && search.trim()) {
@@ -396,7 +397,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
     let refundRequests = await RefundRequest.find(filter)
       .sort(sortOptions)
       .populate('user', 'name email')
-      .populate('ticket', 'ticketNumber')
+      .populate('ticket', 'ticketNumber paymentId')
       .populate('concert', 'title date')
       .populate('reviewedBy', 'name');
 
@@ -419,13 +420,14 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     // Generate CSV content
-    const csvHeader = 'Request ID,User Name,Email,Concert,Ticket Number,Amount,Status,Reason,Request Date,Reviewed By,Reviewed Date,Transaction ID\n';
+    const csvHeader = 'Request ID,User Name,Email,Concert,Ticket Number,Payment ID,Amount,Status,Reason,Request Date,Reviewed By,Reviewed Date,Transaction ID\n';
     const csvRows = refundRequests.map(request => {
       const requestId = `"${request._id.toString().slice(-6).toUpperCase()}"`;
       const userName = `"${(request.user ? request.user.name : '').replace(/"/g, '""')}"`;
       const userEmail = `"${(request.user ? request.user.email : '').replace(/"/g, '""')}"`;
       const concertTitle = `"${(request.concert ? request.concert.title : '').replace(/"/g, '""')}"`;
       const ticketNumber = `"${(request.ticket ? request.ticket.ticketNumber : '').replace(/"/g, '""')}"`;
+      const paymentId = `"${(request.ticket ? request.ticket.paymentId : '').replace(/"/g, '""')}"`;
       const amount = request.amount || 0;
       const status = request.status || '';
       const reason = `"${(request.reason || '').replace(/"/g, '""')}"`;
@@ -434,7 +436,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
       const reviewedDate = request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '';
       const transactionId = `"${(request.transactionId || '').replace(/"/g, '""')}"`;
 
-      return `${requestId},${userName},${userEmail},${concertTitle},${ticketNumber},${amount},${status},${reason},${requestDate},${reviewedBy},${reviewedDate},${transactionId}`;
+      return `${requestId},${userName},${userEmail},${concertTitle},${ticketNumber},${paymentId},${amount},${status},${reason},${requestDate},${reviewedBy},${reviewedDate},${transactionId}`;
     }).join('\n');
 
     const csvContent = csvHeader + csvRows;
@@ -458,11 +460,10 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const refundRequest = await RefundRequest.findById(req.params.id)
-      .populate('user', 'name email')
-      .populate('ticket')
+      .populate('ticket', 'ticketNumber concert user attendees quantity totalAmount originalAmount discountApplied discountPercentage discountType paymentId orderId paymentStatus purchaseDate')
       .populate('concert')
-      .populate('reviewedBy', 'name');
-
+      .populate('reviewedBy', 'name')
+      .populate('user', 'name email');
     if (!refundRequest) {
       req.flash('error', 'Refund request not found');
       return res.redirect('/admin/refund-requests');
