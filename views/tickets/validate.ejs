@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Validation - Rapira</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .validation-container {
+      max-width: 500px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    .validation-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .scanner-area {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 10;
+    }
+    
+    .scanner-frame {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      border: 3px solid #00ff00;
+    }
+    
+    .scanner-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #00ff00;
+      animation: scan 2s infinite linear;
+    }
+    
+    @keyframes scan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(250px); }
+    }
+    
+    .result-card {
+      display: none;
+      margin-top: 20px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .status-icon {
+      font-size: 3rem;
+    }
+    
+    .manual-input {
+      display: none;
+    }
+    
+    .error-banner {
+      background: rgba(220, 53, 69, 0.2);
+      border: 1px solid rgba(220, 53, 69, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="validation-container">
+    <div class="text-center mb-4">
+      <h1 class="text-white">
+        <i class="bi bi-shield-check"></i> Ticket Validation
+      </h1>
+      <p class="text-white-50">Scan QR code or enter ticket number</p>
+    </div>
+    
+    <!-- Error Banner -->
+    <div class="error-banner" id="errorBanner">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill text-danger me-2" style="font-size: 1.5rem;"></i>
+        <div>
+          <h5 class="text-danger mb-1">Invalid Access</h5>
+          <p class="text-white-50 mb-0" id="errorMessage">This page is intended for security staff only. Please use the scanner or manual input below.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="validation-card p-4">
+      <!-- Scanner Section -->
+      <div class="scanner-section">
+        <div class="scanner-area">
+          <div class="scanner-overlay" id="scannerOverlay">
+            <div class="text-center">
+              <div class="scanner-frame mx-auto mb-3">
+                <div class="scanner-line"></div>
+              </div>
+              <p class="mb-0">Position QR code in frame</p>
+              <p class="small text-white-50">Scanning...</p>
+            </div>
+          </div>
+          <div id="scannerVideo" style="width: 100%; height: 300px; background: #000;"></div>
+        </div>
+        
+        <div class="text-center">
+          <button class="btn btn-outline-light" id="manualToggle">
+            <i class="bi bi-keyboard"></i> Enter Manually
+          </button>
+        </div>
+      </div>
+      
+      <!-- Manual Input Section -->
+      <div class="manual-input" id="manualInputSection">
+        <div class="mb-3">
+          <label for="ticketNumber" class="form-label text-white">Ticket Number</label>
+          <input type="text" class="form-control form-control-lg bg-dark text-white border-secondary" id="ticketNumber" placeholder="Enter ticket number or ID">
+        </div>
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary btn-lg" id="validateBtn">
+            <i class="bi bi-check-circle"></i> Validate Ticket
+          </button>
+          <button class="btn btn-outline-light" id="scanToggle">
+            <i class="bi bi-qr-code-scan"></i> Scan QR Code
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Result Section -->
+    <div class="result-card" id="resultCard">
+      <div class="validation-card p-4">
+        <div class="text-center">
+          <div id="resultIcon" class="status-icon mb-3"></div>
+          <h3 id="resultTitle" class="text-white"></h3>
+          <p id="resultMessage" class="text-white-50"></p>
+          
+          <div id="ticketDetails" class="text-start d-none">
+            <hr class="border-secondary">
+            <h5 class="text-white">Ticket Details</h5>
+            <div class="row">
+              <div class="col-6">
+                <small class="text-white-50">Ticket ID</small>
+                <p id="ticketId" class="text-white mb-1"></p>
+              </div>
+              <div class="col-6">
+                <small class="text-white-50">Concert</small>
+                <p id="concertTitle" class="text-white mb-1"></p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-6">
+                <small class="text-white-50">Date</small>
+                <p id="concertDate" class="text-white mb-1"></p>
+              </div>
+              <div class="col-6">
+                <small class="text-white-50">Ticket Holder</small>
+                <p id="ticketHolder" class="text-white mb-1"></p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-6">
+                <small class="text-white-50">Quantity</small>
+                <p id="ticketQuantity" class="text-white mb-1"></p>
+              </div>
+              <div class="col-6">
+                <small class="text-white-50">Status</small>
+                <p id="ticketStatus" class="text-white mb-1"></p>
+              </div>
+            </div>
+          </div>
+          
+          <button class="btn btn-outline-light mt-3" id="newValidation">
+            <i class="bi bi-arrow-repeat"></i> New Validation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    // DOM Elements
+    const scannerOverlay = document.getElementById('scannerOverlay');
+    const scannerVideo = document.getElementById('scannerVideo');
+    const manualToggle = document.getElementById('manualToggle');
+    const manualInputSection = document.getElementById('manualInputSection');
+    const scanToggle = document.getElementById('scanToggle');
+    const ticketNumber = document.getElementById('ticketNumber');
+    const validateBtn = document.getElementById('validateBtn');
+    const resultCard = document.getElementById('resultCard');
+    const resultIcon = document.getElementById('resultIcon');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMessage = document.getElementById('resultMessage');
+    const ticketDetails = document.getElementById('ticketDetails');
+    const ticketId = document.getElementById('ticketId'); // Add this line
+    const concertTitle = document.getElementById('concertTitle');
+    const concertDate = document.getElementById('concertDate');
+    const ticketHolder = document.getElementById('ticketHolder');
+    const ticketQuantity = document.getElementById('ticketQuantity');
+    const ticketStatus = document.getElementById('ticketStatus');
+    const newValidation = document.getElementById('newValidation');
+    const errorBanner = document.getElementById('errorBanner');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    // State
+    let html5QrCode = null;
+    let isScanning = false;
+    
+    // Check if there's an invalid ticket ID in the URL
+    function checkForInvalidTicketId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pathParts = window.location.pathname.split('/');
+      const lastPart = pathParts[pathParts.length - 1];
+      
+      // If there's something that looks like a ticket ID in the URL path
+      if (lastPart && lastPart.length > 10 && lastPart !== 'validate') {
+        errorBanner.style.display = 'block';
+        errorMessage.textContent = 'Invalid ticket ID detected. This page is intended for security staff. Please use the scanner or manual input below.';
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Initialize scanner
+    function initScanner() {
+      if (html5QrCode) {
+        html5QrCode.clear();
+      }
+      
+      html5QrCode = new Html5Qrcode("scannerVideo");
+      
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      };
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess,
+        onScanFailure
+      ).then(() => {
+        isScanning = true;
+        scannerOverlay.style.display = 'flex';
+      }).catch(err => {
+        console.error("Unable to start scanning", err);
+        scannerOverlay.innerHTML = `
+          <div class="text-center">
+            <p class="mb-0">Camera access required for scanning</p>
+            <p class="small text-white-50">Please allow camera access or enter ticket manually</p>
+          </div>
+        `;
+      });
+    }
+    
+    // Scan success callback
+    function onScanSuccess(decodedText, decodedResult) {
+      // Stop scanning
+      html5QrCode.stop().then(() => {
+        isScanning = false;
+      }).catch(err => {
+        console.error("Failed to stop scanning", err);
+      });
+      
+      // Extract ticket ID from URL if needed
+      let ticketId = decodedText;
+      if (decodedText.includes('/tickets/')) {
+        const urlParts = decodedText.split('/');
+        ticketId = urlParts[urlParts.length - 1];
+      }
+      
+      validateTicket(ticketId);
+    }
+    
+    // Scan failure callback
+    function onScanFailure(error) {
+      // Quietly ignore scan failures
+    }
+    
+    // Validate ticket
+    async function validateTicket(ticketId) {
+      try {
+        const response = await fetch(`/api/tickets/validate/${ticketId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          showResult(true, result);
+        } else {
+          showResult(false, { message: result.message || 'Invalid ticket' });
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        showResult(false, { message: 'Network error. Please try again.' });
+      }
+    }
+    
+    // Show validation result
+    function showResult(isValid, data) {
+      // Hide scanner/manual input
+      document.querySelector('.scanner-section').style.display = 'none';
+      manualInputSection.style.display = 'none';
+      
+      // Show result
+      resultCard.style.display = 'block';
+      
+      if (isValid) {
+        // Check if ticket is already validated
+        const isAlreadyValidated = data.message && data.message.includes('already validated');
+        
+        if (isAlreadyValidated) {
+          // Show in red for already validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+          resultIcon.className = 'status-icon text-danger';
+          resultTitle.textContent = 'Ticket Already Validated';
+          resultTitle.className = 'text-danger';
+          resultMessage.textContent = 'This ticket was previously validated and marked as attended';
+          
+          // Show ticket details with red accent
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-danger">ALREADY ATTENDED</span>`;
+          }
+        } else {
+          // Show in green for newly validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+          resultIcon.className = 'status-icon text-success';
+          resultTitle.textContent = 'Valid Ticket';
+          resultTitle.className = 'text-success';
+          resultMessage.textContent = data.message || 'Ticket is valid and has been marked as attended';
+          
+          // Show ticket details
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-success">ATTENDED</span>`;
+          }
+        }
+      } else {
+        resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+        resultIcon.className = 'status-icon text-danger';
+        resultTitle.textContent = 'Invalid Ticket';
+        resultTitle.className = 'text-danger';
+        resultMessage.textContent = data.message || 'This ticket is not valid';
+        ticketDetails.classList.add('d-none');
+      }
+    }
+    
+    // Reset for new validation
+    function resetValidation() {
+      // Hide result and error banner
+      resultCard.style.display = 'none';
+      errorBanner.style.display = 'none';
+      
+      // Show scanner by default
+      document.querySelector('.scanner-section').style.display = 'block';
+      manualInputSection.style.display = 'none';
+      
+      // Clear input
+      ticketNumber.value = '';
+      
+      // Restart scanner if needed
+      if (!isScanning) {
+        initScanner();
+      }
+    }
+    
+    // Event Listeners
+    manualToggle.addEventListener('click', () => {
+      document.querySelector('.scanner-section').style.display = 'none';
+      manualInputSection.style.display = 'block';
+      ticketNumber.focus();
+      
+      // Stop scanner
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().then(() => {
+          isScanning = false;
+        }).catch(err => {
+          console.error("Failed to stop scanning", err);
+        });
+      }
+    });
+    
+    scanToggle.addEventListener('click', () => {
+      document.querySelector('.scanner-section').style.display = 'block';
+      manualInputSection.style.display = 'none';
+      initScanner();
+    });
+    
+    validateBtn.addEventListener('click', () => {
+      if (ticketNumber.value.trim()) {
+        validateTicket(ticketNumber.value.trim());
+      }
+    });
+    
+    ticketNumber.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && ticketNumber.value.trim()) {
+        validateTicket(ticketNumber.value.trim());
+      }
+    });
+    
+    newValidation.addEventListener('click', resetValidation);
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check for invalid ticket ID in URL
+      if (!checkForInvalidTicketId()) {
+        initScanner();
+      }
+    });
+    
+    // Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      if (html5QrCode && isScanning) {
+        html5QrCode.stop().catch(console.error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -89,6 +89,19 @@
                       <p>Free</p>
                     </div>
                   <% } %>
+                  <!-- Add attended status -->
+                  <div class="col-md-6 mb-3">
+                    <p class="fw-medium mb-1">Attendance Status:</p>
+                    <p>
+                      <% if (ticket.attended) { %>
+                        <span class="badge bg-success">ATTENDED</span>
+                        <small class="d-block text-muted">Validated on <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                      <% } else { %>
+                        <span class="badge bg-warning">NOT ATTENDED</span>
+                        <small class="d-block text-muted">Not yet validated at venue</small>
+                      <% } %>
+                    </p>
+                  </div>
                 </div>
               </div>
 

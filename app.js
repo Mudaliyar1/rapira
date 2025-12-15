@@ -407,10 +407,12 @@ const artistRoutes = require('./routes/artists');
 const concertRoutes = require('./routes/concerts');
 const ticketRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
-const adminContentRoutes = require('./routes/admin-content');
+const adminMerchandiseRoutes = require('./routes/admin-merchandise');
+// Add the ticket validation routes
+const ticketValidationRoutes = require('./routes/ticketValidation');
 const adminAccessControlRoutes = require('./routes/adminAccessControl');
 const adminContactRoutes = require('./routes/adminContact');
-const adminMerchandiseRoutes = require('./routes/admin-merchandise');
+const adminContentRoutes = require('./routes/admin-content');
 const paymentRoutes = require('./routes/payments');
 const pageRoutes = require('./routes/pages');
 const emailStatusRoutes = require('./routes/email-status');
@@ -474,6 +476,8 @@ app.use('/users', userRoutes);
 app.use('/artists', artistRoutes);
 app.use('/concerts', concertRoutes);
 app.use('/venue-availability', venueAvailabilityRoutes);
+// Mount ticket validation routes BEFORE tickets routes to avoid conflicts
+app.use('/', ticketValidationRoutes);
 app.use('/tickets', ticketRoutes);
 // Mount admin ticket routes BEFORE admin routes to avoid conflicts
 app.use('/admin/tickets', adminTicketsRoutes);

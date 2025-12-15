@@ -1,0 +1,126 @@
+<%- contentFor('body') %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white">
+    <i class="bi bi-shield-check me-2"></i>Ticket Validation
+  </h1>
+</div>
+
+<!-- Validation Link Generator -->
+<div class="row">
+  <div class="col-lg-8">
+    <div class="glass-card-dark mb-4">
+      <div class="card-header bg-dark p-4 border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white">Generate Validation Link</h4>
+        <p class="text-white-50 mb-0">Create a secure link for venue security staff to validate tickets</p>
+      </div>
+      <div class="card-body p-4">
+        <div class="mb-4">
+          <label class="form-label text-white">Validation Link</label>
+          <div class="input-group">
+            <input type="text" class="form-control bg-dark border-secondary text-white" id="validationLink" readonly value="<%= validationUrl %>">
+            <button class="btn btn-outline-primary" type="button" id="copyLinkBtn">
+              <i class="bi bi-clipboard"></i> Copy & Open Link
+            </button>
+          </div>
+          <div class="form-text text-white-50">Share this link with venue security staff for ticket validation</div>
+        </div>
+        
+        <div class="alert alert-info">
+          <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Instructions</h5>
+          <ul class="mb-0">
+            <li>This link opens the security validation page for scanning QR codes or entering ticket numbers</li>
+            <li>Security staff should NOT manually add ticket IDs to this link</li>
+            <li>Validated tickets will be marked as "Attended" in the system</li>
+            <li>Refresh this page to generate a new link if needed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Security Validation Page Preview -->
+  <div class="col-lg-4">
+    <div class="glass-card-dark mb-4">
+      <div class="card-header bg-dark p-4 border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white">Preview</h4>
+      </div>
+      <div class="card-body p-4">
+        <div class="text-center mb-3">
+          <div class="bg-dark rounded p-3 mb-3">
+            <i class="bi bi-phone fs-1 text-primary"></i>
+          </div>
+          <h5 class="text-white">Security Validation Page</h5>
+          <p class="text-white-50 small">This is what security staff will see</p>
+        </div>
+        
+        <div class="border rounded p-3 bg-dark">
+          <div class="text-center mb-3">
+            <i class="bi bi-qr-code-scan fs-3 text-primary"></i>
+            <p class="text-white mb-2">Scan QR Code</p>
+            <p class="text-white-50 small">or</p>
+            <i class="bi bi-keyboard fs-3 text-primary"></i>
+            <p class="text-white mb-0">Enter Ticket Number</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('title') %>Ticket Validation
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const copyLinkBtn = document.getElementById('copyLinkBtn');
+  const validationLink = document.getElementById('validationLink');
+  
+  copyLinkBtn.addEventListener('click', function() {
+    validationLink.select();
+    
+    // Copy to clipboard
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(validationLink.value).then(() => {
+        // Show success feedback
+        const originalText = copyLinkBtn.innerHTML;
+        copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied & Opening!';
+        copyLinkBtn.classList.remove('btn-outline-primary');
+        copyLinkBtn.classList.add('btn-success');
+        
+        // Automatically open the link in a new tab
+        window.open(validationLink.value, '_blank');
+        
+        setTimeout(() => {
+          copyLinkBtn.innerHTML = originalText;
+          copyLinkBtn.classList.remove('btn-success');
+          copyLinkBtn.classList.add('btn-outline-primary');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+        // Fallback: select and prompt user to copy manually
+        validationLink.select();
+        try {
+          document.execCommand('copy');
+        } catch (e) {
+          console.error('execCommand failed: ', e);
+        }
+        // Open the link even if copy fails
+        window.open(validationLink.value, '_blank');
+        alert('Link opened in new tab. Please manually copy if needed.');
+      });
+    } else {
+      // Fallback for older browsers
+      validationLink.select();
+      try {
+        document.execCommand('copy');
+      } catch (e) {
+        console.error('execCommand failed: ', e);
+      }
+      window.open(validationLink.value, '_blank');
+      alert('Link opened in new tab. Please manually copy if needed.');
+    }
+  });
+});
+</script>

@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const AttendeeSchema = new mongoose.Schema({
@@ -69,6 +68,14 @@ const TicketSchema = new mongoose.Schema({
   purchaseDate: {
     type: Date,
     default: Date.now
+  },
+  // Add attended fields for ticket validation
+  attended: {
+    type: Boolean,
+    default: false
+  },
+  attendedAt: {
+    type: Date
   }
 }, { timestamps: true });
 

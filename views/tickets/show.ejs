@@ -207,6 +207,35 @@
               </div>
             <% } %>
 
+            <!-- Attendance Status -->
+            <hr class="my-4 border-secondary">
+            <div class="mb-4">
+              <h5 class="fw-bold mb-3 text-white">Attendance Status</h5>
+              <% if (ticket.attended) { %>
+                <div class="alert alert-success" style="background-color: rgba(40, 167, 69, 0.2); border-color: rgba(40, 167, 69, 0.3);">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;"></i>
+                    <div>
+                      <h6 class="text-success mb-0">Ticket Validated</h6>
+                      <p class="mb-0 text-white-50">This ticket has been successfully validated at the venue entrance.</p>
+                      <small class="text-white-50">Validated on <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                    </div>
+                  </div>
+                </div>
+              <% } else { %>
+                <div class="alert alert-warning" style="background-color: rgba(255, 193, 7, 0.2); border-color: rgba(255, 193, 7, 0.3);">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2" style="font-size: 1.5rem;"></i>
+                    <div>
+                      <h6 class="text-warning mb-0">Not Yet Validated</h6>
+                      <p class="mb-0 text-white-50">This ticket has not been validated at the venue entrance yet.</p>
+                      <small class="text-white-50">Please present this ticket at the venue entrance for validation.</small>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
             <!-- QR Code Section -->
             <hr class="my-4 border-secondary">
             <div class="row mb-4">
