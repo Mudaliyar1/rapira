@@ -432,6 +432,7 @@ const adminDailyConcertsRoutes = require('./routes/adminDailyConcerts');
 const demoRoutes = require('./routes/demo');
 const contentRoutes = require('./routes/content');
 const refundRequestRoutes = require('./routes/refundRequests');
+const adminTicketsRoutes = require('./routes/adminTickets');
 const { router: notificationRoutes } = require('./routes/notifications');
 const subscriptionRoutes = require('./routes/subscriptions');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
@@ -474,6 +475,8 @@ app.use('/artists', artistRoutes);
 app.use('/concerts', concertRoutes);
 app.use('/venue-availability', venueAvailabilityRoutes);
 app.use('/tickets', ticketRoutes);
+// Mount admin ticket routes BEFORE admin routes to avoid conflicts
+app.use('/admin/tickets', adminTicketsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/merchandise', adminMerchandiseRoutes);
 app.use('/payments', paymentRoutes);

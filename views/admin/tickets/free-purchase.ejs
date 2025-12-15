@@ -1,0 +1,359 @@
+<%- contentFor('body') %>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0 text-white">
+    <i class="bi bi-ticket-perforated me-2"></i>Free Ticket Issue
+  </h1>
+  <a href="/admin/tickets" class="btn btn-outline-light">
+    <i class="bi bi-arrow-left me-1"></i> Back to Tickets
+  </a>
+</div>
+<!-- Free Ticket Purchase Form -->
+<div class="row">
+  <div class="col-lg-8">
+    <div class="glass-card-dark mb-4">
+      <div class="card-header bg-dark p-4 border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white">Issue Free Ticket</h4>
+        <p class="text-white-50 mb-0">Select a concert and user to issue a free ticket</p>
+      </div>
+      <div class="card-body p-4">
+        <form action="/admin/tickets/free-issue" method="POST">
+          <!-- Concert Selection -->
+          <div class="mb-4">
+            <label for="concertId" class="form-label text-white">Select Concert</label>
+            <select class="form-select bg-dark border-secondary text-white" id="concertId" name="concertId" required>
+              <option value="">Choose a concert...</option>
+              <% if (concerts && concerts.length > 0) { %>
+                <% concerts.forEach(concert => { %>
+                  <option value="<%= concert._id %>" <%= concert.isSoldOut ? 'disabled' : '' %>>
+                    <%= concert.title %> - <%= concert.artist && concert.artist.user ? concert.artist.user.name : 'Unknown Artist' %> 
+                    (<%= new Date(concert.date).toLocaleDateString() %>)
+                    <% if (concert.isPaid) { %>
+                      (Paid - ₹<%= concert.price %>)
+                    <% } else { %>
+                      (Free)
+                    <% } %>
+                    (<span class="<%= concert.statusClass %>"><%= concert.displayText %></span>)
+                    <% if (concert.isSoldOut) { %>
+                      [SOLD OUT]
+                    <% } else if (concert.isLowAvailability) { %>
+                      [LOW AVAILABILITY]
+                    <% } %>
+                  </option>
+                <% }); %>
+              <% } %>
+            </select>
+            <div class="form-text text-white-50">Select the concert for which you want to issue a free ticket</div>
+          </div>
+
+          <!-- User Selection -->
+          <div class="mb-4">
+            <label for="userId" class="form-label text-white">User Email</label>
+            <input type="email" class="form-control bg-dark border-secondary text-white" id="userId" name="userId" placeholder="user@example.com" required>
+            <div class="form-text text-white-50">Enter the email address of the user who will receive the ticket</div>
+          </div>
+
+          <!-- Quantity -->
+          <div class="mb-4">
+            <label for="quantity" class="form-label text-white">Number of Tickets</label>
+            <input type="number" class="form-control bg-dark border-secondary text-white" id="quantity" name="quantity" min="1" max="10" value="1" required>
+            <div class="form-text text-white-50">Specify how many tickets to issue (1-10)</div>
+            <div class="form-text text-info" id="ticketAvailabilityInfo" style="display: none;"></div>
+          </div>
+
+          <!-- Attendees Information -->
+          <div class="mb-4">
+            <label class="form-label text-white">Attendee Information</label>
+            <div id="attendeesContainer">
+              <div class="row mb-3 attendee-row">
+                <div class="col-md-6">
+                  <input type="text" class="form-control bg-dark border-secondary text-white mb-2" name="attendees" placeholder="Full Name" required>
+                </div>
+                <div class="col-md-6">
+                  <input type="number" class="form-control bg-dark border-secondary text-white" name="ages" placeholder="Age" min="1" max="120" required>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="addAttendee">
+              <i class="bi bi-plus-circle me-1"></i> Add Another Attendee
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-ticket-perforated me-1"></i> Issue Free Ticket
+            </button>
+            <button type="reset" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Instructions Panel -->
+  <div class="col-lg-4">
+    <div class="glass-card-dark mb-4">
+      <div class="card-header bg-dark p-4 border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white">Instructions</h4>
+      </div>
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <h5 class="text-white mb-2"><i class="bi bi-info-circle-fill text-primary me-2"></i> How to Use</h5>
+          <ol class="text-white-50 small">
+            <li>Select a concert from the dropdown</li>
+            <li>Enter the user's email address</li>
+            <li>Specify the number of tickets needed</li>
+            <li>Enter attendee names and ages</li>
+            <li>Click "Issue Free Ticket"</li>
+          </ol>
+        </div>
+        
+        <div class="mb-3">
+          <h5 class="text-white mb-2"><i class="bi bi-ticket-perforated-fill text-info me-2"></i> Ticket Availability</h5>
+          <ul class="text-white-50 small">
+            <li><span class="text-success">Green text</span> - Tickets available</li>
+            <li><span class="text-warning">Yellow text</span> - Low availability (5 or fewer tickets remaining)</li>
+            <li><span class="text-danger">Red text</span> - Sold out</li>
+            <li>Concerts marked as "SOLD OUT" cannot be selected</li>
+            <li>Concerts with "LOW AVAILABILITY" have 5 or fewer tickets remaining</li>
+          </ul>
+        </div>
+        
+        <div class="mb-3">
+          <h5 class="text-white mb-2"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Important</h5>
+          <ul class="text-white-50 small">
+            <li>Free tickets are marked with special payment ID</li>
+            <li>Email notifications will be sent to users</li>
+            <li>Ticket counts are updated automatically</li>
+            <li>Only approved concerts are available</li>
+          </ul>
+        </div>
+        
+        <div class="mb-3">
+          <h5 class="text-white mb-2"><i class="bi bi-shield-lock-fill text-success me-2"></i> Security</h5>
+          <p class="text-white-50 small mb-0">
+            All free ticket issuances are logged and can be tracked in the ticket management system.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('title') %>Free Ticket Issue
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add attendee functionality
+  const addAttendeeBtn = document.getElementById('addAttendee');
+  const attendeesContainer = document.getElementById('attendeesContainer');
+  const quantityInput = document.getElementById('quantity');
+  const concertSelect = document.getElementById('concertId');
+  const ticketInfoDiv = document.getElementById('ticketAvailabilityInfo');
+  
+  // Store concert availability data
+  const concertData = {};
+  <% if (concerts && concerts.length > 0) { %>
+    <% concerts.forEach(concert => { %>
+      concertData['<%= concert._id %>'] = {
+        maxTickets: <%= concert.maxTickets %>,
+        ticketsSold: <%= concert.ticketsSold %>,
+        ticketsRemaining: <%= concert.ticketsRemaining %>,
+        isUnlimited: <%= concert.maxTickets === 0 ? 'true' : 'false' %>
+      };
+    <% }); %>
+  <% } %>
+  
+  // Update quantity max when concert changes
+  concertSelect.addEventListener('change', function() {
+    const selectedConcertId = this.value;
+    
+    if (selectedConcertId && concertData[selectedConcertId]) {
+      const concert = concertData[selectedConcertId];
+      
+      if (concert.isUnlimited) {
+        // For unlimited concerts, set a reasonable max
+        quantityInput.max = 10;
+        quantityInput.placeholder = "1-10 tickets";
+        ticketInfoDiv.textContent = "This concert has unlimited tickets available.";
+        ticketInfoDiv.style.display = "block";
+        ticketInfoDiv.className = "form-text text-info";
+      } else {
+        // For limited concerts, set max to remaining tickets (max 10)
+        const maxAllowed = Math.min(concert.ticketsRemaining, 10);
+        quantityInput.max = maxAllowed;
+        quantityInput.placeholder = `1-${maxAllowed} tickets`;
+        ticketInfoDiv.textContent = `This concert has ${concert.ticketsRemaining} tickets remaining.`;
+        ticketInfoDiv.style.display = "block";
+        
+        // If current quantity exceeds available tickets, reduce it
+        if (parseInt(quantityInput.value) > maxAllowed) {
+          quantityInput.value = maxAllowed;
+          // Update attendee fields
+          updateAttendeeFields();
+        }
+        
+        // Highlight low availability
+        if (concert.ticketsRemaining <= 5) {
+          ticketInfoDiv.className = "form-text text-warning";
+        } else {
+          ticketInfoDiv.className = "form-text text-info";
+        }
+      }
+    } else {
+      // Reset to defaults
+      quantityInput.max = 10;
+      quantityInput.placeholder = "1-10 tickets";
+      ticketInfoDiv.style.display = "none";
+    }
+  });
+  
+  // Trigger change event on page load to show initial ticket availability
+  if (concertSelect.value) {
+    concertSelect.dispatchEvent(new Event('change'));
+  }
+  
+  // Update attendee fields when quantity changes
+  quantityInput.addEventListener('change', updateAttendeeFields);
+  
+  function updateAttendeeFields() {
+    const attendees = document.querySelectorAll('.attendee-row');
+    const quantity = parseInt(quantityInput.value) || 1;
+    
+    // Remove excess attendee rows
+    while (attendees.length > quantity) {
+      attendees[attendees.length - 1].remove();
+    }
+    
+    // Add attendee rows if needed
+    while (attendees.length < quantity) {
+      addAttendeeRow();
+    }
+  }
+  
+  function addAttendeeRow() {
+    const newRow = document.createElement('div');
+    newRow.className = 'row mb-3 attendee-row';
+    newRow.innerHTML = `
+      <div class="col-md-6">
+        <input type="text" class="form-control bg-dark border-secondary text-white mb-2" name="attendees" placeholder="Full Name" required>
+      </div>
+      <div class="col-md-5">
+        <input type="number" class="form-control bg-dark border-secondary text-white" name="ages" placeholder="Age" min="1" max="120" required>
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-attendee">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    
+    attendeesContainer.appendChild(newRow);
+    
+    // Add event listener to remove button
+    const removeBtn = newRow.querySelector('.remove-attendee');
+    removeBtn.addEventListener('click', function() {
+      if (document.querySelectorAll('.attendee-row').length > 1) {
+        newRow.remove();
+        // Update the quantity input to reflect the new count
+        quantityInput.value = document.querySelectorAll('.attendee-row').length;
+      } else {
+        alert('At least one attendee is required.');
+      }
+    });
+  }
+  
+  addAttendeeBtn.addEventListener('click', function() {
+    // Check if we've reached the maximum number of attendees
+    const currentAttendees = document.querySelectorAll('.attendee-row').length;
+    const maxAttendees = parseInt(quantityInput.max) || 10;
+    
+    if (currentAttendees >= maxAttendees) {
+      const concertName = concertSelect.options[concertSelect.selectedIndex]?.text || 'selected concert';
+      alert(`Maximum ${maxAttendees} attendee(s) allowed for this quantity on the ${concertName}.`);
+      return;
+    }
+    
+    addAttendeeRow();
+  });
+  
+  // Add event listeners to existing remove buttons
+  document.querySelectorAll('.remove-attendee').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (document.querySelectorAll('.attendee-row').length > 1) {
+        this.closest('.attendee-row').remove();
+        // Update the quantity input to reflect the new count
+        quantityInput.value = document.querySelectorAll('.attendee-row').length;
+      } else {
+        alert('At least one attendee is required.');
+      }
+    });
+  });
+  
+  // Form submission handler - combine attendee data into the format expected by backend
+  const form = document.querySelector('form');
+  form.addEventListener('submit', function(e) {
+    // Prevent default submission
+    e.preventDefault();
+    
+    // Collect attendee data
+    const attendeeInputs = document.querySelectorAll('input[name="attendees"]');
+    const ageInputs = document.querySelectorAll('input[name="ages"]');
+    
+    // Validate that we have matching attendee and age data
+    if (attendeeInputs.length !== ageInputs.length) {
+      alert('Mismatch between attendee names and ages. Please ensure each attendee has a name and age.');
+      return;
+    }
+    
+    // Validate that all fields are filled
+    for (let i = 0; i < attendeeInputs.length; i++) {
+      if (!attendeeInputs[i].value.trim() || !ageInputs[i].value) {
+        alert('Please fill in all attendee names and ages.');
+        return;
+      }
+    }
+    
+    // Combine attendee data into the format expected by the backend
+    // Backend expects: attendees = "name|age,name|age,..."
+    const combinedAttendees = [];
+    for (let i = 0; i < attendeeInputs.length; i++) {
+      // Clean the data to prevent issues
+      const name = attendeeInputs[i].value.trim();
+      const age = ageInputs[i].value.trim();
+      if (name && age) {
+        combinedAttendees.push(name + '|' + age);
+      }
+    }
+    
+    // Create hidden input to hold combined data
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'attendees';
+    hiddenInput.value = combinedAttendees.join(',');
+    
+    // Remove existing hidden input if it exists
+    const existingHidden = form.querySelector('input[name="attendees"][type="hidden"]');
+    if (existingHidden) {
+      existingHidden.remove();
+    }
+    
+    // Add the hidden input to the form
+    form.appendChild(hiddenInput);
+    
+    // Show loading state
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Issuing...';
+    submitBtn.disabled = true;
+    
+    // Submit the form
+    form.submit();
+  });
+});
+</script>
