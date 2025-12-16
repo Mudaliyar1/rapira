@@ -340,13 +340,58 @@
 
               <div class="mb-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="maintenanceMode" 
+                  <input class="form-check-input" type="checkbox" name="maintenanceMode" id="maintenanceMode"
                          <%= settings.siteSettings.maintenanceMode ? 'checked' : '' %>>
-                  <label class="form-check-label text-white">
+                  <label class="form-check-label text-white" for="maintenanceMode">
                     Enable Maintenance Mode
                   </label>
                   <small class="d-block text-muted">When enabled, only admins can access the site</small>
                 </div>
+              </div>
+              
+              <div class="mb-3" id="maintenanceDetails" style="<%= settings.siteSettings.maintenanceMode ? 'display:block;' : 'display:none;' %>">
+                <label class="form-label text-white">Maintenance Reason</label>
+                <textarea class="form-control bg-dark text-white border-secondary" name="maintenanceReason" rows="3"><%= settings.siteSettings.maintenanceReason %></textarea>
+                <small class="d-block text-muted mt-1">Provide a reason for the maintenance that will be shown to users</small>
+              </div>
+              
+              <div class="mb-3" id="maintenanceDuration" style="<%= settings.siteSettings.maintenanceMode ? 'display:block;' : 'display:none;' %>">
+                <label class="form-label text-white">Maintenance Duration</label>
+                <div class="row">
+                  <div class="col-md-3">
+                    <input type="number" class="form-control bg-dark text-white border-secondary" name="maintenanceDays" 
+                           value="<%= settings.siteSettings.maintenanceDays || 0 %>" min="0" max="365">
+                    <small class="text-muted">Days</small>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" class="form-control bg-dark text-white border-secondary" name="maintenanceHours" 
+                           value="<%= settings.siteSettings.maintenanceHours || 0 %>" min="0" max="23">
+                    <small class="text-muted">Hours</small>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" class="form-control bg-dark text-white border-secondary" name="maintenanceMinutes" 
+                           value="<%= settings.siteSettings.maintenanceMinutes || 0 %>" min="0" max="59">
+                    <small class="text-muted">Minutes</small>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" class="form-control bg-dark text-white border-secondary" name="maintenanceSeconds" 
+                           value="<%= settings.siteSettings.maintenanceSeconds || 0 %>" min="0" max="59">
+                    <small class="text-muted">Seconds</small>
+                  </div>
+                </div>
+                <div class="mt-2" id="durationSummary" style="display: none;">
+                  <small class="text-info">Total duration: <span id="totalDurationText"></span></small>
+                </div>
+                <small class="d-block text-muted mt-1">Set how long maintenance should last</small>
+              </div>
+              
+              <div class="form-check mb-3" id="maintenanceAutoStart" style="<%= settings.siteSettings.maintenanceMode ? 'display:block;' : 'display:none;' %>">
+                <input class="form-check-input" type="checkbox" name="maintenanceAutoStart" id="maintenanceAutoStartCheck"
+                       <%= settings.siteSettings.maintenanceAutoStart ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="maintenanceAutoStartCheck">
+                  Start maintenance immediately
+                </label>
+                <small class="d-block text-muted">If unchecked, maintenance will start when you save these settings</small>
               </div>
             </div>
           </div>
@@ -881,6 +926,82 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (accentPreview) {
     accentPreview.style.color = '<%= settings.themeSettings.accentColor %>';
+  }
+  
+  // Toggle maintenance details visibility
+  const maintenanceCheckbox = document.getElementById('maintenanceMode');
+  const maintenanceDetails = document.getElementById('maintenanceDetails');
+  const maintenanceDuration = document.getElementById('maintenanceDuration');
+  const maintenanceAutoStart = document.getElementById('maintenanceAutoStart');
+  
+  if (maintenanceCheckbox && maintenanceDetails && maintenanceDuration && maintenanceAutoStart) {
+    maintenanceCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        maintenanceDetails.style.display = 'block';
+        maintenanceDuration.style.display = 'block';
+        maintenanceAutoStart.style.display = 'block';
+        updateDurationSummary();
+      } else {
+        maintenanceDetails.style.display = 'none';
+        maintenanceDuration.style.display = 'none';
+        maintenanceAutoStart.style.display = 'none';
+      }
+    });
+  }
+  
+  // Update duration summary when any input changes
+  const durationInputs = document.querySelectorAll('input[name^="maintenance"]');
+  durationInputs.forEach(input => {
+    input.addEventListener('input', updateDurationSummary);
+  });
+  
+  function updateDurationSummary() {
+    const days = parseInt(document.querySelector('input[name="maintenanceDays"]').value) || 0;
+    const hours = parseInt(document.querySelector('input[name="maintenanceHours"]').value) || 0;
+    const minutes = parseInt(document.querySelector('input[name="maintenanceMinutes"]').value) || 0;
+    const seconds = parseInt(document.querySelector('input[name="maintenanceSeconds"]').value) || 0;
+    
+    // Calculate total seconds
+    const totalSeconds = days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds;
+    
+    // Format duration in human readable form
+    let formattedDuration = '';
+    let totalDays = Math.floor(totalSeconds / (24 * 60 * 60));
+    let remainingSeconds = totalSeconds % (24 * 60 * 60);
+    let totalHours = Math.floor(remainingSeconds / (60 * 60));
+    remainingSeconds = remainingSeconds % (60 * 60);
+    let totalMinutes = Math.floor(remainingSeconds / 60);
+    remainingSeconds = remainingSeconds % 60;
+    
+    if (totalDays > 0) {
+      formattedDuration += totalDays + ' day' + (totalDays !== 1 ? 's' : '') + ' ';
+    }
+    if (totalHours > 0) {
+      formattedDuration += totalHours + ' hour' + (totalHours !== 1 ? 's' : '') + ' ';
+    }
+    if (totalMinutes > 0) {
+      formattedDuration += totalMinutes + ' minute' + (totalMinutes !== 1 ? 's' : '') + ' ';
+    }
+    if (remainingSeconds > 0) {
+      formattedDuration += remainingSeconds + ' second' + (remainingSeconds !== 1 ? 's' : '') + ' ';
+    }
+    
+    if (formattedDuration === '') {
+      formattedDuration = '0 seconds';
+    }
+    
+    // Update summary display
+    const summaryElement = document.getElementById('durationSummary');
+    const textElement = document.getElementById('totalDurationText');
+    if (summaryElement && textElement) {
+      textElement.textContent = formattedDuration.trim();
+      summaryElement.style.display = 'block';
+    }
+  }
+  
+  // Initialize duration summary if maintenance is already enabled
+  if (maintenanceCheckbox && maintenanceCheckbox.checked) {
+    updateDurationSummary();
   }
 });
 </script>

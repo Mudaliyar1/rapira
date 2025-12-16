@@ -69,7 +69,15 @@ async function initializeWebsiteSettings() {
           siteName: 'Rapira - Indian Rap Music Platform',
           siteDescription: 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.',
           favicon: '/images/favicon.ico',
-          maintenanceMode: false
+          maintenanceMode: false,
+          maintenanceReason: 'We are currently performing scheduled maintenance to improve your experience.',
+          maintenanceStartTime: null,
+          maintenanceEndTime: null,
+          maintenanceDays: 0,
+          maintenanceHours: 0,
+          maintenanceMinutes: 0,
+          maintenanceSeconds: 0,
+          maintenanceAutoStart: true
         },
         themeSettings: {
           primaryColor: '#6f42c1',

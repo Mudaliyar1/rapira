@@ -67,6 +67,36 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     maintenanceMode: {
       type: Boolean,
       default: false
+    },
+    maintenanceReason: {
+      type: String,
+      default: 'We are currently performing scheduled maintenance to improve your experience.'
+    },
+    maintenanceStartTime: {
+      type: Date
+    },
+    maintenanceEndTime: {
+      type: Date
+    },
+    maintenanceDays: {
+      type: Number,
+      default: 0
+    },
+    maintenanceHours: {
+      type: Number,
+      default: 0
+    },
+    maintenanceMinutes: {
+      type: Number,
+      default: 0
+    },
+    maintenanceSeconds: {
+      type: Number,
+      default: 0
+    },
+    maintenanceAutoStart: {
+      type: Boolean,
+      default: true
     }
   },
 

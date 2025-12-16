@@ -18,46 +18,99 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
+    
+    /* Animated background elements */
+    .floating-element {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      animation: float 15s infinite ease-in-out;
+      z-index: -1;
+      box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+    }
+    
+    .element-1 {
+      width: 100px;
+      height: 100px;
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.3), transparent 70%);
+    }
+    
+    .element-2 {
+      width: 150px;
+      height: 150px;
+      bottom: 15%;
+      right: 10%;
+      animation-delay: 2s;
+      background: radial-gradient(circle, rgba(118, 75, 162, 0.3), transparent 70%);
+    }
+    
+    .element-3 {
+      width: 80px;
+      height: 80px;
+      top: 40%;
+      right: 20%;
+      animation-delay: 4s;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.2), transparent 70%);
+    }
+    
     .maintenance-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      border-radius: 20px;
+      border-radius: 15px;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 3rem;
+      padding: 1.5rem;
       text-align: center;
       color: white;
-      max-width: 500px;
+      max-width: 400px;
       width: 90%;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+      animation: fadeInUp 1s ease-out;
     }
+    
     .maintenance-icon {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
-      color: #ffd700;
-    }
-    .maintenance-title {
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 3rem;
       margin-bottom: 1rem;
+      color: #ffd700;
+      animation: spin 20s linear infinite, pulse 2s infinite;
     }
+    
+    .maintenance-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      animation: slideInDown 0.8s ease-out;
+    }
+    
     .maintenance-text {
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
       opacity: 0.9;
+      animation: slideInUp 1s ease-out;
     }
+    
     .admin-login-btn {
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
       text-decoration: none;
       transition: all 0.3s ease;
+      animation: bounce 3s infinite;
+      font-size: 0.9rem;
     }
+    
     .admin-login-btn:hover {
       background: rgba(255, 255, 255, 0.3);
       color: white;
-      transform: translateY(-2px);
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
     }
 
     /* Admin Login Modal Styles */
@@ -73,6 +126,14 @@
       justify-content: center;
       z-index: 1000;
       backdrop-filter: blur(5px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-login-modal.show {
+      opacity: 1;
+      visibility: visible;
     }
 
     .admin-login-content {
@@ -84,55 +145,243 @@
       width: 90%;
       max-width: 400px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: translateY(50px);
+      transition: transform 0.4s ease;
+    }
+    
+    .admin-login-modal.show .admin-login-content {
+      transform: translateY(0);
     }
 
     .admin-login-content .form-control {
       background: rgba(255, 255, 255, 0.1) !important;
       border: 1px solid rgba(255, 255, 255, 0.3) !important;
       color: white !important;
+      transition: all 0.3s ease;
     }
 
     .admin-login-content .form-control:focus {
       background: rgba(255, 255, 255, 0.15) !important;
       border-color: rgba(255, 255, 255, 0.5) !important;
       box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+      transform: scale(1.02);
     }
 
     .admin-login-content .form-control::placeholder {
       color: rgba(255, 255, 255, 0.7) !important;
     }
-    .pulse {
-      animation: pulse 2s infinite;
-    }
+    
+    /* Animations */
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, 20px) rotate(90deg); }
+      50% { transform: translate(0, 40px) rotate(180deg); }
+      75% { transform: translate(-20px, 20px) rotate(270deg); }
+      100% { transform: translate(0, 0) rotate(360deg); }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    
+    /* Progress bar animation */
+    .progress-bar {
+      height: 10px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+      background-size: 200% 100%;
+      animation: progressAnimation 3s linear infinite;
+      border-radius: 10px;
+      margin: 20px 0;
+      transition: width 0.5s ease, background 0.3s ease;
+    }
+    
+    @keyframes progressAnimation {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    /* Glowing effect */
+    .glow {
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #e60073, 0 0 20px #e60073; }
+      to { text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6; }
+    }
+    
+    /* Countdown container */
+    #countdown-container {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    
+    /* Progress bar colors */
+    .progress-bar.bg-success {
+      background: linear-gradient(90deg, #28a745, #20c997, #28a745) !important;
+      background-size: 200% 100% !important;
+      animation: progressAnimation 2s linear infinite !important;
+    }
+    
+    .progress-bar.bg-warning {
+      background: linear-gradient(90deg, #ffc107, #fd7e14, #ffc107) !important;
+      background-size: 200% 100% !important;
+      animation: progressAnimation 1.5s linear infinite !important;
+    }
+    
+    .progress-bar.bg-danger {
+      background: linear-gradient(90deg, #dc3545, #e83e8c, #dc3545) !important;
+      background-size: 200% 100% !important;
+      animation: progressAnimation 1s linear infinite !important;
+    }
+    
+    /* Ensure color classes override default styles */
+    .bg-success {
+      background: linear-gradient(90deg, #28a745, #20c997, #28a745) !important;
+    }
+    
+    .bg-warning {
+      background: linear-gradient(90deg, #ffc107, #fd7e14, #ffc107) !important;
+    }
+    
+    .bg-danger {
+      background: linear-gradient(90deg, #dc3545, #e83e8c, #dc3545) !important;
+    }
   </style>
 </head>
 <body>
+  <!-- Expose server-side variables to client-side -->
+  <script>
+    // Maintenance timing variables from server-side
+    const maintenanceStartTimeStr = "<%= (typeof maintenanceStartTime !== 'undefined' && maintenanceStartTime) ? maintenanceStartTime.toISOString() : '' %>";
+    const maintenanceEndTimeStr = "<%= (typeof maintenanceEndTime !== 'undefined' && maintenanceEndTime) ? maintenanceEndTime.toISOString() : '' %>";
+    
+    const maintenanceStartTime = maintenanceStartTimeStr ? new Date(maintenanceStartTimeStr) : null;
+    const maintenanceEndTime = maintenanceEndTimeStr ? new Date(maintenanceEndTimeStr) : null;
+    
+    // Debug output
+    console.log('Maintenance Start Time String:', maintenanceStartTimeStr);
+    console.log('Maintenance End Time String:', maintenanceEndTimeStr);
+    console.log('Maintenance Start Time:', maintenanceStartTime);
+    console.log('Maintenance End Time:', maintenanceEndTime);
+    
+    // Check if maintenance has already expired on page load
+    if (maintenanceStartTime && maintenanceEndTime) {
+      const now = new Date();
+      if (now > maintenanceEndTime) {
+        // Maintenance has expired, redirect to homepage after a short delay
+        console.log('Maintenance has expired, redirecting...');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
+    }
+  </script>
+  <!-- Animated background elements -->
+  <div class="floating-element element-1"></div>
+  <div class="floating-element element-2"></div>
+  <div class="floating-element element-3"></div>
+  
   <div class="maintenance-card">
-    <div class="maintenance-icon pulse">
+    <div class="maintenance-icon pulse glow">
       <i class="bi bi-tools"></i>
     </div>
     <h1 class="maintenance-title">Under Maintenance</h1>
+    <!-- Main progress bar -->
+    <div class="progress-bar" style="height: 8px;"></div>
     <p class="maintenance-text">
       <strong><%= siteName %></strong> is currently performing scheduled maintenance to improve your experience.
-      We'll be back online shortly!
     </p>
-    <div class="mb-3">
-      <i class="bi bi-clock me-2"></i>
-      <span>Expected completion: Soon</span>
+    
+    <% if (typeof maintenanceReason !== 'undefined' && maintenanceReason) { %>
+    <div class="mb-2 p-2 bg-dark rounded">
+      <h6 class="text-warning mb-1"><i class="bi bi-info-circle me-1"></i>Maintenance Details</h6>
+      <p class="mb-0 small"><%= maintenanceReason %></p>
     </div>
-    <div class="mt-4">
+    <% } %>
+    
+    <div class="mb-2 small">
+      <i class="bi bi-clock me-1"></i>
+      <% if (typeof maintenanceStartTime !== 'undefined' && maintenanceStartTime && typeof maintenanceEndTime !== 'undefined' && maintenanceEndTime) { %>
+        <span>Maintenance: <%= new Date(maintenanceStartTime).toLocaleString() %> - <%= new Date(maintenanceEndTime).toLocaleString() %></span>
+      <% } else if (typeof maintenanceStartTime !== 'undefined' && maintenanceStartTime) { %>
+        <span>Started: <%= new Date(maintenanceStartTime).toLocaleString() %></span>
+      <% } else if (typeof maintenanceEndTime !== 'undefined' && maintenanceEndTime) { %>
+        <span>Ends: <%= new Date(maintenanceEndTime).toLocaleString() %></span>
+      <% } else { %>
+        <span>Completion: Soon</span>
+      <% } %>
+    </div>
+    
+    <!-- Real-time countdown and progress -->
+    <div id="countdown-container" class="mb-3" style="display: none;">
+      <div class="progress mb-2" style="height: 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.1);">
+        <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%; height: 12px;"></div>
+      </div>
+      <div class="d-flex justify-content-between small">
+        <span id="time-remaining">Calculating...</span>
+        <span id="progress-percent">0%</span>
+      </div>
+    </div>
+    <div class="mt-3">
       <button class="admin-login-btn" onclick="showAdminLogin()">
-        <i class="bi bi-shield-lock me-2"></i>Admin Access
+        <i class="bi bi-shield-lock me-1"></i>Admin Access
       </button>
+      <div class="mt-2 text-white-50 small">
+        <i class="bi bi-info-circle me-1"></i>Note: Regular users cannot log in during maintenance mode.
+      </div>
     </div>
 
     <!-- Admin Login Modal -->
-    <div class="admin-login-modal" id="adminLoginModal" style="display: none;">
+    <div class="admin-login-modal" id="adminLoginModal">
       <div class="admin-login-content">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0 text-white">Admin Login</h5>
@@ -169,12 +418,21 @@
 
   <script>
     function showAdminLogin() {
-      document.getElementById('adminLoginModal').style.display = 'flex';
+      const modal = document.getElementById('adminLoginModal');
+      modal.classList.add('show');
       document.getElementById('adminEmail').focus();
+      
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
     }
 
     function hideAdminLogin() {
-      document.getElementById('adminLoginModal').style.display = 'none';
+      const modal = document.getElementById('adminLoginModal');
+      modal.classList.remove('show');
+      
+      // Re-enable body scroll
+      document.body.style.overflow = '';
+      
       document.getElementById('loginError').style.display = 'none';
       document.getElementById('adminLoginForm').reset();
     }
@@ -183,6 +441,12 @@
       const errorDiv = document.getElementById('loginError');
       errorDiv.textContent = message;
       errorDiv.style.display = 'block';
+      
+      // Add animation effect
+      errorDiv.style.animation = 'none';
+      setTimeout(() => {
+        errorDiv.style.animation = 'shake 0.5s';
+      }, 10);
     }
 
     // Handle form submission
@@ -211,19 +475,44 @@
         const data = await response.json();
 
         if (data.success) {
-          // Redirect to admin dashboard
-          window.location.href = '/admin';
+          // Add success animation
+          loginBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Success!';
+          loginBtn.classList.add('btn-success');
+          
+          // Redirect to admin dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 1000);
         } else {
-          showError(data.message || 'Invalid admin credentials');
+          if (data.message.includes('administrators can access')) {
+            showNonAdminMessage();
+          } else {
+            showError(data.message || 'Invalid admin credentials');
+          }
+          
+          // Restore button state after error
+          setTimeout(() => {
+            loginBtn.innerHTML = originalText;
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('btn-success');
+          }, 2000);
         }
       } catch (error) {
         showError('Login failed. Please try again.');
-      } finally {
-        // Restore button state
-        loginBtn.innerHTML = originalText;
-        loginBtn.disabled = false;
+        
+        // Restore button state after error
+        setTimeout(() => {
+          loginBtn.innerHTML = originalText;
+          loginBtn.disabled = false;
+          loginBtn.classList.remove('btn-success');
+        }, 2000);
       }
     });
+
+    // Show appropriate message for non-admin users
+    function showNonAdminMessage() {
+      showError('Only administrators can access the site during maintenance mode. Regular users will be able to access the site once maintenance is complete.');
+    }
 
     // Close modal when clicking outside
     document.getElementById('adminLoginModal').addEventListener('click', function(e) {
@@ -238,6 +527,208 @@
         hideAdminLogin();
       }
     });
+    
+    // Add shake animation for errors
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+  <!-- Particles container -->
+  <div id="particles-js" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -2;"></div>
+  
+  <script>
+    // Simple particle system
+    document.addEventListener('DOMContentLoaded', function() {
+      const particlesContainer = document.createElement('div');
+      particlesContainer.id = 'particles-container';
+      particlesContainer.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+      `;
+      document.body.appendChild(particlesContainer);
+      
+      // Create particles
+      for (let i = 0; i < 30; i++) {
+        createParticle();
+      }
+      
+      function createParticle() {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 50%;
+          pointer-events: none;
+        `;
+        
+        // Random position
+        const startX = Math.random() * window.innerWidth;
+        const startY = Math.random() * window.innerHeight;
+        particle.style.left = startX + 'px';
+        particle.style.top = startY + 'px';
+        
+        particlesContainer.appendChild(particle);
+        
+        // Animate particle
+        animateParticle(particle, startX, startY);
+      }
+      
+      function animateParticle(particle, startX, startY) {
+        // Random movement parameters
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.2 + Math.random() * 0.3;
+        const amplitude = 20 + Math.random() * 30;
+        const frequency = 0.01 + Math.random() * 0.02;
+        
+        let time = 0;
+        
+        function move() {
+          time += 0.016; // ~60fps
+          
+          // Move in a wave pattern
+          const x = startX + Math.sin(time * frequency) * amplitude;
+          const y = startY + time * speed * 10;
+          
+          particle.style.transform = `translate(${x - startX}px, ${y - startY}px)`;
+          
+          // Fade out as it moves up
+          const alpha = Math.max(0, 1 - (y / window.innerHeight));
+          particle.style.background = `rgba(255, 255, 255, ${alpha * 0.5})`;
+          
+          // Reset particle when it goes off screen
+          if (y > window.innerHeight || alpha <= 0) {
+            startX = Math.random() * window.innerWidth;
+            startY = -10;
+            particle.style.left = startX + 'px';
+            particle.style.top = startY + 'px';
+            time = 0;
+          }
+          
+          requestAnimationFrame(move);
+        }
+        
+        move();
+      }
+      
+      // Test if DOM is loaded and functions are available
+      console.log('DOM Loaded, initializing countdown...');
+      
+      // Real-time countdown and progress bar
+      initializeCountdown();
+    });
+    
+    function initializeCountdown() {
+      // Get maintenance times from globally exposed variables
+      const startTime = maintenanceStartTime;
+      const endTime = maintenanceEndTime;
+      
+      // Debug: Check if times are available
+      console.log('Start time available:', !!startTime);
+      console.log('End time available:', !!endTime);
+      console.log('Start time value:', startTime);
+      console.log('End time value:', endTime);
+      
+      // Only show countdown if we have both start and end times
+      if (startTime && endTime) {
+        document.getElementById('countdown-container').style.display = 'block';
+        updateCountdown(startTime, endTime);
+        
+        // Update every second
+        setInterval(() => updateCountdown(startTime, endTime), 1000);
+      } else {
+        // Fallback: Show container anyway for testing with dummy data
+        console.log('No maintenance times available, using dummy data for testing');
+        // Uncomment the following lines to test with dummy data
+        const dummyStart = new Date(Date.now() - 3600000); // 1 hour ago
+        const dummyEnd = new Date(Date.now() + 7200000);   // 2 hours from now
+        document.getElementById('countdown-container').style.display = 'block';
+        updateCountdown(dummyStart, dummyEnd);
+        setInterval(() => updateCountdown(dummyStart, dummyEnd), 1000);
+      }
+      
+      // Initialize progress bar with default color
+      const progressBar = document.getElementById('progress-bar');
+      if (progressBar) {
+        progressBar.className = 'progress-bar bg-success';
+      }
+    }
+    
+    function updateCountdown(startTime, endTime) {
+      const now = new Date().getTime();
+      
+      // Calculate progress
+      const totalTime = endTime.getTime() - startTime.getTime();
+      const elapsed = now - startTime.getTime();
+      const remaining = endTime.getTime() - now;
+      
+      // Calculate percentage (0-100)
+      let percent = 0;
+      if (totalTime > 0) {
+        percent = Math.min(100, Math.max(0, (elapsed / totalTime) * 100));
+      }
+      
+      // Update progress bar
+      const progressBar = document.getElementById('progress-bar');
+      progressBar.style.width = percent + '%';
+      
+      // Add color based on progress
+      progressBar.className = 'progress-bar';
+      // Use a small delay to ensure proper class application
+      setTimeout(() => {
+        if (percent < 30) {
+          progressBar.classList.add('bg-success');
+        } else if (percent < 70) {
+          progressBar.classList.add('bg-warning');
+        } else {
+          progressBar.classList.add('bg-danger');
+        }
+      }, 10);
+      
+      // Update percentage text
+      document.getElementById('progress-percent').textContent = Math.round(percent) + '%';
+      
+      // Update time remaining
+      if (remaining > 0) {
+        const timeText = formatTimeRemaining(remaining);
+        document.getElementById('time-remaining').textContent = timeText + ' remaining';
+      } else {
+        document.getElementById('time-remaining').textContent = 'Maintenance completed!';
+        // Refresh page when maintenance is complete
+        setTimeout(() => {
+          location.reload();
+        }, 3000);
+      }
+    }
+    
+    function formatTimeRemaining(milliseconds) {
+      const seconds = Math.floor(milliseconds / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      
+      if (days > 0) {
+        return days + ' day' + (days > 1 ? 's' : '');
+      } else if (hours > 0) {
+        return hours + ' hour' + (hours > 1 ? 's' : '');
+      } else if (minutes > 0) {
+        return minutes + ' minute' + (minutes > 1 ? 's' : '');
+      } else {
+        return seconds + ' second' + (seconds !== 1 ? 's' : '');
+      }
+    }
   </script>
 </body>
 </html>

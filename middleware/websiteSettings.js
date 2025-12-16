@@ -6,6 +6,30 @@ let settingsCache = null;
 let lastCacheUpdate = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Periodically check for expired maintenance mode
+setInterval(async () => {
+  try {
+    // Only check if we have cached settings and maintenance is enabled
+    if (settingsCache && settingsCache.siteSettings.maintenanceMode) {
+      const now = new Date();
+      if (settingsCache.siteSettings.maintenanceEndTime && now > settingsCache.siteSettings.maintenanceEndTime) {
+        // Maintenance has expired, automatically disable it
+        const settings = await WebsiteSettings.getSettings();
+        if (settings.siteSettings.maintenanceMode) {
+          settings.siteSettings.maintenanceMode = false;
+          settings.siteSettings.maintenanceStartTime = null;
+          settings.siteSettings.maintenanceEndTime = null;
+          await settings.save();
+          console.log('Maintenance mode automatically disabled due to expiration (background check)');
+          clearSettingsCache(); // Clear cache to reflect changes
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in background maintenance check:', error);
+  }
+}, 60 * 1000); // Check every minute
+
 
 
 /**
@@ -31,17 +55,38 @@ const loadWebsiteSettings = async (req, res, next) => {
 
     // Check maintenance mode
     if (settingsCache.siteSettings.maintenanceMode) {
-      // Allow admins to access during maintenance
-      if (!req.session.user || req.session.user.role !== 'admin') {
-        // Allow access to maintenance login endpoint
-        if (req.path === '/auth/maintenance-login') {
-          return next();
+      // Check if maintenance has expired
+      const now = new Date();
+      if (settingsCache.siteSettings.maintenanceEndTime && now > settingsCache.siteSettings.maintenanceEndTime) {
+        // Maintenance has expired, automatically disable it
+        settingsCache.siteSettings.maintenanceMode = false;
+        settingsCache.siteSettings.maintenanceStartTime = null;
+        settingsCache.siteSettings.maintenanceEndTime = null;
+        
+        // Save the updated settings
+        try {
+          await settingsCache.save();
+          console.log('Maintenance mode automatically disabled due to expiration');
+          clearSettingsCache(); // Clear cache to reflect changes
+        } catch (saveError) {
+          console.error('Error saving maintenance mode disable:', saveError);
         }
+      } else {
+        // Maintenance is still active, check user access
+        if (!req.session.user || req.session.user.role !== 'admin') {
+          // Allow access to maintenance login endpoint
+          if (req.path === '/auth/maintenance-login') {
+            return next();
+          }
 
-        return res.render('maintenance', {
-          layout: false,
-          siteName: settingsCache.siteSettings.siteName
-        });
+          return res.render('maintenance', {
+            layout: false,
+            siteName: settingsCache.siteSettings.siteName,
+            maintenanceReason: settingsCache.siteSettings.maintenanceReason,
+            maintenanceStartTime: settingsCache.siteSettings.maintenanceStartTime,
+            maintenanceEndTime: settingsCache.siteSettings.maintenanceEndTime
+          });
+        }
       }
     }
 
@@ -92,7 +137,10 @@ const loadWebsiteSettings = async (req, res, next) => {
         siteName: 'Rapira - Indian Rap Music Platform',
         siteDescription: 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.',
         favicon: '/images/favicon.ico',
-        maintenanceMode: false
+        maintenanceMode: false,
+        maintenanceReason: 'We are currently performing scheduled maintenance to improve your experience.',
+        maintenanceStartTime: null,
+        maintenanceEndTime: null
       },
       themeSettings: {
         primaryColor: '#6f42c1',

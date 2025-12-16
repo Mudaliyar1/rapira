@@ -225,11 +225,47 @@ router.post('/menu', isLoggedIn, isAdmin, async (req, res) => {
 router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
-    const { siteName, siteDescription, maintenanceMode } = req.body;
+    const { siteName, siteDescription, maintenanceMode, maintenanceReason, maintenanceDays, maintenanceHours, maintenanceMinutes, maintenanceSeconds, maintenanceAutoStart } = req.body;
 
     settings.siteSettings.siteName = siteName || 'Rapira - Indian Rap Music Platform';
     settings.siteSettings.siteDescription = siteDescription || 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.';
     settings.siteSettings.maintenanceMode = maintenanceMode === 'on';
+    settings.siteSettings.maintenanceReason = maintenanceReason || 'We are currently performing scheduled maintenance to improve your experience.';
+    
+    // Handle duration fields and convert large values appropriately
+    let totalSeconds = 0;
+    
+    // Convert all inputs to seconds and sum them up
+    totalSeconds += (parseInt(maintenanceDays) || 0) * 24 * 60 * 60;
+    totalSeconds += (parseInt(maintenanceHours) || 0) * 60 * 60;
+    totalSeconds += (parseInt(maintenanceMinutes) || 0) * 60;
+    totalSeconds += parseInt(maintenanceSeconds) || 0;
+    
+    // Convert total seconds back to days, hours, minutes, seconds for storage
+    const days = Math.floor(totalSeconds / (24 * 60 * 60));
+    const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
+    
+    settings.siteSettings.maintenanceDays = days;
+    settings.siteSettings.maintenanceHours = hours;
+    settings.siteSettings.maintenanceMinutes = minutes;
+    settings.siteSettings.maintenanceSeconds = seconds;
+    settings.siteSettings.maintenanceAutoStart = maintenanceAutoStart === 'on';
+    
+    // Calculate start and end times based on duration if maintenance is enabled
+    if (maintenanceMode === 'on') {
+      const startTime = maintenanceAutoStart === 'on' ? new Date() : new Date(Date.now() + 5000); // Start in 5 seconds or now
+      const durationMs = totalSeconds * 1000; // Convert to milliseconds
+      const endTime = new Date(startTime.getTime() + durationMs);
+      
+      settings.siteSettings.maintenanceStartTime = startTime;
+      settings.siteSettings.maintenanceEndTime = endTime;
+    } else {
+      // Clear times when maintenance is disabled
+      settings.siteSettings.maintenanceStartTime = null;
+      settings.siteSettings.maintenanceEndTime = null;
+    }
 
     settings.lastUpdatedBy = req.session.user.id;
     await settings.save();

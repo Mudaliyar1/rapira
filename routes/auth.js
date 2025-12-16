@@ -191,11 +191,11 @@ router.post('/maintenance-login', async (req, res) => {
       });
     }
 
-    // Check if user is admin
-    if (user.role !== 'admin') {
+    // Check if user is admin or superAdmin
+    if (user.role !== 'admin' && user.role !== 'superAdmin') {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Admin privileges required during maintenance mode.'
+        message: 'Access denied. Only administrators can access the site during maintenance mode.'
       });
     }
 
