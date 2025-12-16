@@ -556,19 +556,17 @@ function displayActiveLinks(links) {
     return;
   }
   
-  let html = `
-    <div class="table-responsive">
-      <table class="table table-dark table-striped">
-        <thead>
-          <tr>
-            <th>Token</th>
-            <th>Created</th>
-            <th>Expires</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
+  let html = '<div class="table-responsive">';
+  html += '<table class="table table-dark table-striped">';
+  html += '<thead>';
+  html += '<tr>';
+  html += '<th>Token</th>';
+  html += '<th>Created</th>';
+  html += '<th>Expires</th>';
+  html += '<th>Actions</th>';
+  html += '</tr>';
+  html += '</thead>';
+  html += '<tbody>';
   
   links.forEach(link => {
     // Handle potential date parsing issues
@@ -592,200 +590,30 @@ function displayActiveLinks(links) {
       timeLeft = 'Unknown';
     }
     
-    html += `
-      <tr>
-        <td>
-          <small class="text-monospace">${link.token.substring(0, 8)}...</small>
-        </td>
-        <td>
-          <small>${createdDate}</small>
-        </td>
-        <td>
-          <small>${expiresDate} (${timeLeft})</small>
-        </td>
-        <td>
-          <button class="btn btn-sm btn-danger invalidate-link-btn" data-token="${link.token}">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
-      </tr>
-    `;
+    html += '<tr>';
+    html += '<td>';
+    html += '<small class="text-monospace">' + link.token.substring(0, 8) + '...</small>';
+    html += '</td>';
+    html += '<td>';
+    html += '<small>' + createdDate + '</small>';
+    html += '</td>';
+    html += '<td>';
+    html += '<small>' + expiresDate + ' (' + timeLeft + ')</small>';
+    html += '</td>';
+    html += '<td>';
+    html += '<button class="btn btn-sm btn-danger invalidate-link-btn" data-token="' + link.token + '">';
+    html += '<i class="bi bi-trash"></i>';
+    html += '</button>';
+    html += '</td>';
+    html += '</tr>';
   });
   
-  html += `
-        </tbody>
-      </table>
-    </div>
-    <p class="text-white-50 small">
-      <i class="bi bi-info-circle me-1"></i> ${links.length} active link(s)
-    </p>
-  `;
-  
-  activeLinksContainer.innerHTML = html;
-  
-  // Add event listeners to invalidate buttons
-  document.querySelectorAll('.invalidate-link-btn').forEach(button => {
-    button.addEventListener('click', function() {
-      const token = this.getAttribute('data-token');
-      invalidateLink(token);
-    });
-  });
-}
-
-// Invalidate a specific link
-function invalidateLink(token) {
-  console.log('Invalidating link:', token);
-  
-  if (confirm('Are you sure you want to invalidate this validation link?')) {
-    fetch(`/admin/ticket-validation/invalidate/${token}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Validation link has been invalidated.');
-        loadActiveLinks();
-      } else {
-        alert('Failed to invalidate link: ' + data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Invalidate link error:', error);
-      alert('Failed to invalidate link. Please try again.');
-    });
-  }
-}
-</script>
-      }, 300);
-    }
-  }, 3000);
-}
-
-// Load active links function
-function loadActiveLinks() {
-  console.log('=== LOADING ACTIVE LINKS ===');
-  
-  const activeLinksContainer = document.getElementById('activeLinksContainer');
-  
-  // Show loading message
-  if (activeLinksContainer) {
-    activeLinksContainer.innerHTML = '<p class="text-white-50">Loading active links... <span class="spinner-border spinner-border-sm" role="status"></span></p>';
-  }
-  
-  fetch('/admin/ticket-validation/active-links', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'same-origin'
-  })
-  .then(response => {
-    console.log('Active links response status:', response.status);
-    if (!response.ok) {
-      throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('Active links data received:', data);
-    if (data.links) {
-      displayActiveLinks(data.links);
-    } else {
-      if (activeLinksContainer) {
-        activeLinksContainer.innerHTML = '<p class="text-warning">No links data received.</p>';
-      }
-    }
-  })
-  .catch(error => {
-    console.error('Error loading active links:', error);
-    if (activeLinksContainer) {
-      activeLinksContainer.innerHTML = '<p class="text-danger">Failed to load active links. Please refresh the page.</p>';
-    }
-  });
-}
-
-// Display active links
-function displayActiveLinks(links) {
-  console.log('=== DISPLAYING ACTIVE LINKS ===', links);
-  
-  const activeLinksContainer = document.getElementById('activeLinksContainer');
-  if (!activeLinksContainer) {
-    console.log('Active links container not found');
-    return;
-  }
-  
-  if (links.length === 0) {
-    activeLinksContainer.innerHTML = '<p class="text-white-50">No active validation links.</p>';
-    return;
-  }
-  
-  let html = `
-    <div class="table-responsive">
-      <table class="table table-dark table-striped">
-        <thead>
-          <tr>
-            <th>Token</th>
-            <th>Created</th>
-            <th>Expires</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-  
-  links.forEach(link => {
-    // Handle potential date parsing issues
-    let createdDate, expiresDate, timeLeft;
-    try {
-      createdDate = new Date(link.createdAt).toLocaleString();
-      expiresDate = new Date(link.expiresAt).toLocaleString();
-      timeLeft = Math.ceil((new Date(link.expiresAt) - new Date()) / (1000 * 60 * 60)); // Hours left
-      
-      // Check if timeLeft is valid
-      if (isNaN(timeLeft)) {
-        timeLeft = 'Unknown';
-      } else if (timeLeft < 0) {
-        timeLeft = 'Expired';
-      } else {
-        timeLeft = timeLeft + 'h left';
-      }
-    } catch (dateError) {
-      createdDate = 'Invalid Date';
-      expiresDate = 'Invalid Date';
-      timeLeft = 'Unknown';
-    }
-    
-    html += `
-      <tr>
-        <td>
-          <small class="text-monospace">${link.token.substring(0, 8)}...</small>
-        </td>
-        <td>
-          <small>${createdDate}</small>
-        </td>
-        <td>
-          <small>${expiresDate} (${timeLeft})</small>
-        </td>
-        <td>
-          <button class="btn btn-sm btn-danger invalidate-link-btn" data-token="${link.token}">
-            <i class="bi bi-trash"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-  });
-  
-  html += `
-        </tbody>
-      </table>
-    </div>
-    <p class="text-white-50 small">
-      <i class="bi bi-info-circle me-1"></i> ${links.length} active link(s)
-    </p>
-  `;
+  html += '</tbody>';
+  html += '</table>';
+  html += '</div>';
+  html += '<p class="text-white-50 small">';
+  html += '<i class="bi bi-info-circle me-1"></i> ' + links.length + ' active link(s)';
+  html += '</p>';
   
   activeLinksContainer.innerHTML = html;
   
