@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Camera Ticket Validation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .scanner-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+    #video {
+      width: 100%;
+      height: 300px;
+      border: 2px dashed #007bff;
+      border-radius: 10px;
+      background-color: #1e1e1e;
+      object-fit: cover;
+    }
+    .scanner-placeholder {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-outline-light {
+      border-color: #666;
+    }
+    .btn-outline-light:hover {
+      background-color: #333;
+    }
+    .d-none {
+      display: none !important;
+    }
+    .status-icon {
+      font-size: 3rem;
+    }
+    /* Scanner overlay for QR code scanning */
+    .scan-region-highlight {
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      pointer-events: none;
+    }
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background-color: #007bff;
+      box-shadow: 0 0 10px #007bff;
+      animation: scan 2s infinite linear;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      50% { top: 100%; }
+      100% { top: 0; }
+    }
+    .permission-instructions {
+      background-color: #007bff;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .troubleshooting-steps {
+      background-color: #6c757d;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    .camera-active {
+      border-color: #28a745 !important;
+      box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-4">
+          <h1 class="display-6 fw-bold">Direct Camera Ticket Validation</h1>
+          <p class="lead text-white-50">Scan QR codes or enter ticket numbers to validate entry</p>
+        </div>
+        
+        <% if (error) { %>
+        <!-- Error Message -->
+        <div class="card border-danger mb-4">
+          <div class="card-body text-center">
+            <div class="status-icon text-danger mb-3">
+              <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <h3 class="text-danger">Invalid Validation Link</h3>
+            <p class="text-white"><%= error %></p>
+            <p class="text-white-50">Please contact your administrator for a new validation link.</p>
+          </div>
+        </div>
+        <% } else { %>
+        
+        <!-- Main Content -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <!-- Scanner Section -->
+            <div id="scannerSection">
+              <h5 class="card-title mb-3">Scan QR Code</h5>
+              
+              <!-- Permission Instructions -->
+              <div id="permissionInstructions" class="permission-instructions">
+                <h6 class="text-white"><i class="bi bi-info-circle"></i> Camera Access Required</h6>
+                <p class="mb-2 text-white">To scan QR codes, please:</p>
+                <ol class="text-white mb-2">
+                  <li>Click "Allow" when prompted for camera access</li>
+                  <li>If denied, follow troubleshooting steps below</li>
+                </ol>
+                <button class="btn btn-light btn-sm" id="retryCamera">
+                  <i class="bi bi-arrow-clockwise"></i> Retry Camera Access
+                </button>
+              </div>
+              
+              <!-- Troubleshooting Steps -->
+              <div class="troubleshooting-steps">
+                <h6 class="text-white"><i class="bi bi-exclamation-triangle"></i> Troubleshooting Camera Issues</h6>
+                <ol class="text-white mb-0 small">
+                  <li><strong>Refresh the page</strong> and click "Allow" when prompted</li>
+                  <li>Check browser settings: <strong>Settings → Privacy & Security → Camera</strong></li>
+                  <li>Close other apps that might be using the camera</li>
+                  <li>Try using a different browser (Chrome, Firefox, Edge)</li>
+                  <li>On mobile devices, ensure you're using the device's native browser</li>
+                  <li class="mt-2"><strong>For iOS Safari:</strong> Settings → Safari → Camera → Allow</li>
+                  <li class="mt-2"><strong>For Android Chrome:</strong> Settings → Site Settings → Camera → Allow</li>
+                </ol>
+                <div class="alert alert-info mt-2 p-2 small">
+                  <i class="bi bi-info-circle"></i> Note: Some browsers require HTTPS for camera access. 
+                  Make sure you're accessing this page over a secure connection.
+                </div>
+              </div>
+              
+              <div class="scanner-container mb-3">
+                <video id="video" autoplay playsinline></video>
+              </div>
+              <p class="text-white-50 text-center">Position QR code within the frame to scan</p>
+              <div class="text-center mt-3">
+                <button class="btn btn-outline-light btn-sm" id="manualToggle">
+                  <i class="bi bi-keyboard"></i> Enter Ticket Number Manually
+                </button>
+              </div>
+            </div>
+            
+            <!-- Manual Input Section -->
+            <div id="manualSection" class="d-none">
+              <h5 class="card-title mb-3">Enter Ticket Number</h5>
+              <div class="mb-3">
+                <label for="ticketNumber" class="form-label">Ticket Number</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" 
+                       id="ticketNumber" placeholder="e.g., RPR-20251215-801203">
+                <div class="form-text text-white-50">
+                  Enter the ticket ID exactly as it appears on the ticket.
+                </div>
+              </div>
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="validateBtn">Validate Ticket</button>
+                <button class="btn btn-outline-light btn-sm" id="backToScanner">
+                  <i class="bi bi-arrow-left"></i> Back to Scanner
+                </button>
+              </div>
+              <div class="alert alert-info mt-3 p-2 small">
+                <i class="bi bi-info-circle"></i> Tip: You can also press Enter after typing the ticket number to validate.
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result Section -->
+        <div id="resultSection" class="card d-none">
+          <div class="card-body text-center">
+            <div id="resultIcon" class="status-icon mb-3"></div>
+            <h3 id="resultTitle" class="mb-3"></h3>
+            <p id="resultMessage" class="text-white mb-4"></p>
+            
+            <!-- Ticket Details -->
+            <div id="ticketDetails" class="text-start d-none">
+              <hr class="border-secondary">
+              <h5 class="text-white">Ticket Details</h5>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Ticket ID</small>
+                  <p id="ticketId" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Concert</small>
+                  <p id="concertTitle" class="text-white mb-1"></p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Date</small>
+                  <p id="concertDate" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Ticket Holder</small>
+                  <p id="ticketHolder" class="text-white mb-1"></p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Quantity</small>
+                  <p id="ticketQuantity" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Status</small>
+                  <p id="ticketStatus" class="text-white mb-1"></p>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn btn-outline-light mt-4" id="newValidation">
+              <i class="bi bi-arrow-repeat"></i> New Validation
+            </button>
+          </div>
+        </div>
+        
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include jsQR library for QR code decoding -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  
+  <!-- Direct Camera QR Scanner Implementation -->
+  <script>
+    <% if (!error) { %>
+    // DOM Elements
+    const video = document.getElementById('video');
+    const manualSection = document.getElementById('manualSection');
+    const resultSection = document.getElementById('resultSection');
+    const permissionInstructions = document.getElementById('permissionInstructions');
+    const ticketNumber = document.getElementById('ticketNumber');
+    const validateBtn = document.getElementById('validateBtn');
+    const manualToggle = document.getElementById('manualToggle');
+    const backToScanner = document.getElementById('backToScanner');
+    const retryCamera = document.getElementById('retryCamera');
+    const newValidation = document.getElementById('newValidation');
+    const resultIcon = document.getElementById('resultIcon');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMessage = document.getElementById('resultMessage');
+    const ticketDetails = document.getElementById('ticketDetails');
+    const ticketId = document.getElementById('ticketId');
+    const concertTitle = document.getElementById('concertTitle');
+    const concertDate = document.getElementById('concertDate');
+    const ticketHolder = document.getElementById('ticketHolder');
+    const ticketQuantity = document.getElementById('ticketQuantity');
+    const ticketStatus = document.getElementById('ticketStatus');
+
+    // Token from template
+    const token = '<%= token || "" %>';
+    
+    // Camera variables
+    let stream = null;
+    let scanning = false;
+    let scanInterval = null;
+    
+    // Initialize camera when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Page loaded, initializing camera...');
+      
+      // Always try to initialize but don't show error immediately
+      // Add a small delay to let page load completely
+      setTimeout(startCamera, 800);
+    });
+    
+    // Start camera
+    async function startCamera() {
+      try {
+        console.log('Starting camera...');
+        
+        // Get camera stream
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        
+        // Attach stream to video element
+        video.srcObject = stream;
+        
+        // Hide permission instructions
+        permissionInstructions.classList.add('d-none');
+        
+        // Add visual indication that camera is active
+        video.classList.add('camera-active');
+        
+        // Start scanning for QR codes
+        startScanning();
+        
+      } catch (err) {
+        console.error('Camera error:', err);
+        showCameraError('Camera access failed: ' + err.message);
+      }
+    }
+    
+    // Start scanning for QR codes
+    function startScanning() {
+      console.log('Starting QR code scanning...');
+      scanning = true;
+      
+      // Clear any existing interval
+      if (scanInterval) {
+        clearInterval(scanInterval);
+      }
+      
+      // Set up canvas for image processing
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Scan for QR codes every 200ms
+      scanInterval = setInterval(() => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+          });
+          
+          if (code) {
+            console.log('QR Code detected:', code.data);
+            handleQRScan(code.data);
+          }
+        }
+      }, 200);
+    }
+    
+    // Stop camera
+    function stopCamera() {
+      if (stream) {
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+        stream = null;
+        video.srcObject = null;
+      }
+      
+      // Stop scanning
+      scanning = false;
+      if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+      }
+      
+      // Remove visual indication
+      video.classList.remove('camera-active');
+    }
+    
+    // Handle QR scan result
+    function handleQRScan(qrData) {
+      console.log('Processing QR scan:', qrData);
+      
+      try {
+        // Extract ticket ID from QR code data
+        let ticketId = null;
+        
+        // If it's a URL, try to extract ticket ID from query params or path
+        try {
+          const url = new URL(qrData);
+          ticketId = url.searchParams.get('ticket') || url.pathname.split('/').pop();
+        } catch (e) {
+          // If not a valid URL, treat as direct ticket ID
+          ticketId = qrData;
+        }
+        
+        if (ticketId) {
+          // Validate the ticket
+          validateTicketById(ticketId);
+        } else {
+          alert('Invalid QR code format');
+        }
+      } catch (error) {
+        console.error('QR processing error:', error);
+        alert('Error processing QR code');
+      }
+    }
+    
+    // Validate ticket by ID
+    async function validateTicketById(ticketId) {
+      console.log('Validating ticket by ID:', ticketId);
+      
+      try {
+        // Stop scanning while validating
+        stopCamera();
+        
+        // Call validation API
+        const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketId), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showResult(true, data);
+        } else {
+          showResult(false, data);
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        showResult(false, { message: 'Network error. Please try again.' });
+      }
+    }
+    
+    // Toggle to manual input
+    if (manualToggle) {
+      manualToggle.addEventListener('click', function() {
+        console.log('Switching to manual input');
+        
+        // Stop camera
+        stopCamera();
+        
+        // Hide scanner section and show manual section
+        document.getElementById('scannerSection').classList.add('d-none');
+        manualSection.classList.remove('d-none');
+      });
+    }
+    
+    // Back to scanner
+    if (backToScanner) {
+      backToScanner.addEventListener('click', function() {
+        console.log('Switching back to scanner');
+        
+        // Hide manual section and show scanner section
+        manualSection.classList.add('d-none');
+        document.getElementById('scannerSection').classList.remove('d-none');
+        
+        // Restart camera
+        startCamera();
+      });
+    }
+    
+    // Retry camera access
+    if (retryCamera) {
+      retryCamera.addEventListener('click', function() {
+        console.log('Retrying camera access...');
+        startCamera();
+      });
+    }
+    
+    // Validate ticket from manual input
+    if (validateBtn) {
+      validateBtn.addEventListener('click', async function() {
+        const ticketNum = ticketNumber.value.trim();
+        
+        if (!ticketNum) {
+          alert('Please enter a ticket number');
+          return;
+        }
+        
+        console.log('Validating ticket manually:', ticketNum);
+        
+        try {
+          validateBtn.disabled = true;
+          validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Validating...';
+          
+          // Call validation API
+          const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketNum), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showResult(true, data);
+          } else {
+            showResult(false, data);
+          }
+        } catch (error) {
+          console.error('Validation error:', error);
+          showResult(false, { message: 'Network error. Please try again.' });
+        } finally {
+          validateBtn.disabled = false;
+          validateBtn.innerHTML = 'Validate Ticket';
+        }
+      });
+    }
+    
+    // Show result
+    function showResult(isValid, data) {
+      console.log('Showing result:', isValid, data);
+      
+      // Hide input sections
+      document.getElementById('scannerSection').classList.add('d-none');
+      manualSection.classList.add('d-none');
+      
+      // Show result
+      resultSection.classList.remove('d-none');
+      
+      if (isValid) {
+        // Check if ticket is already validated
+        const isAlreadyValidated = data.message && data.message.includes('already validated');
+        
+        if (isAlreadyValidated) {
+          // Show in red for already validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+          resultIcon.className = 'status-icon text-danger';
+          resultTitle.textContent = 'Ticket Already Validated';
+          resultTitle.className = 'text-danger';
+          resultMessage.textContent = 'This ticket was previously validated and marked as attended';
+          
+          // Show ticket details with red accent
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-danger">ALREADY ATTENDED</span>`;
+          }
+        } else {
+          // Show in green for newly validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+          resultIcon.className = 'status-icon text-success';
+          resultTitle.textContent = 'Valid Ticket';
+          resultTitle.className = 'text-success';
+          resultMessage.textContent = data.message || 'Ticket is valid and has been marked as attended';
+          
+          // Show ticket details
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-success">ATTENDED</span>`;
+          }
+        }
+      } else {
+        resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+        resultIcon.className = 'status-icon text-danger';
+        resultTitle.textContent = 'Invalid Ticket';
+        resultTitle.className = 'text-danger';
+        resultMessage.textContent = data.message || 'This ticket is not valid';
+        ticketDetails.classList.add('d-none');
+      }
+    }
+    
+    // New validation
+    if (newValidation) {
+      newValidation.addEventListener('click', function() {
+        console.log('Starting new validation');
+        
+        // Hide result
+        resultSection.classList.add('d-none');
+        
+        // Show scanner
+        document.getElementById('scannerSection').classList.remove('d-none');
+        
+        // Clear input
+        if (ticketNumber) {
+          ticketNumber.value = '';
+        }
+        
+        // Reinitialize camera
+        startCamera();
+      });
+    }
+    
+    // Show camera error
+    function showCameraError(message) {
+      // Create error display
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'scanner-placeholder';
+      errorDiv.innerHTML = `
+        <div class="text-center">
+          <i class="bi bi-camera-video-off fs-1 text-warning"></i>
+          <p class="mt-2 mb-0 text-warning">Camera access blocked</p>
+          <p class="text-white-50 small">Click "Retry Camera Access" or check troubleshooting steps</p>
+          <p class="text-white-50 small mt-2">Error: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}</p>
+        </div>
+      `;
+      
+      // Replace video with error message
+      video.parentNode.replaceChild(errorDiv, video);
+      
+      // Show permission instructions
+      permissionInstructions.classList.remove('d-none');
+    }
+    
+    // Enter key in ticket number field
+    if (ticketNumber) {
+      ticketNumber.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && validateBtn) {
+          validateBtn.click();
+        }
+      });
+    }
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+      stopCamera();
+    });
+    <% } %>
+  </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera Test</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .scanner-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+    #scanner {
+      width: 100%;
+      height: 300px;
+      border: 2px dashed #007bff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #1e1e1e;
+      overflow: hidden;
+      position: relative;
+    }
+    .scanner-placeholder {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-outline-light {
+      border-color: #666;
+    }
+    .btn-outline-light:hover {
+      background-color: #333;
+    }
+    .d-none {
+      display: none !important;
+    }
+    .status-icon {
+      font-size: 3rem;
+    }
+    .camera-active {
+      border-color: #28a745 !important;
+      box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    .log-container {
+      background-color: #000;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 12px;
+      height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-4">
+          <h1 class="display-6 fw-bold">Camera Test</h1>
+          <p class="lead text-white-50">Debugging camera access issues</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Camera Access Test</h5>
+            
+            <div class="scanner-container mb-3">
+              <div id="scanner">
+                <div class="scanner-placeholder" id="scannerPlaceholder">
+                  <i class="bi bi-camera fs-1"></i>
+                  <p class="mt-2 mb-0">Initializing camera...</p>
+                  <p class="text-white-50 small">Please allow camera access when prompted</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" id="testCameraBtn">Test Camera Access</button>
+              <button class="btn btn-outline-light" id="stopCameraBtn">Stop Camera</button>
+            </div>
+            
+            <div class="mt-3">
+              <h6>Camera Status: <span id="cameraStatus">Unknown</span></h6>
+              <h6>Library Status: <span id="libraryStatus">Unknown</span></h6>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Console Logs</h5>
+            <div class="log-container" id="logContainer"></div>
+            <div class="d-grid gap-2 mt-2">
+              <button class="btn btn-sm btn-outline-light" id="clearLogsBtn">Clear Logs</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  
+  <script>
+    // DOM Elements
+    const scanner = document.getElementById('scanner');
+    const scannerPlaceholder = document.getElementById('scannerPlaceholder');
+    const testCameraBtn = document.getElementById('testCameraBtn');
+    const stopCameraBtn = document.getElementById('stopCameraBtn');
+    const cameraStatus = document.getElementById('cameraStatus');
+    const libraryStatus = document.getElementById('libraryStatus');
+    const logContainer = document.getElementById('logContainer');
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+    
+    // Variables
+    let html5QrCode = null;
+    let isScanning = false;
+    let cameraStream = null;
+    
+    // Logging function
+    function log(message) {
+      const timestamp = new Date().toISOString();
+      const logEntry = `[${timestamp}] ${message}`;
+      console.log(logEntry);
+      
+      const logDiv = document.createElement('div');
+      logDiv.textContent = logEntry;
+      logContainer.appendChild(logDiv);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    // Update status
+    function updateStatus() {
+      cameraStatus.textContent = isScanning ? 'Active' : 'Inactive';
+      cameraStatus.className = isScanning ? 'text-success' : 'text-danger';
+      
+      libraryStatus.textContent = typeof Html5Qrcode !== 'undefined' ? 'Loaded' : 'Not Loaded';
+      libraryStatus.className = typeof Html5Qrcode !== 'undefined' ? 'text-success' : 'text-danger';
+    }
+    
+    // Test camera access
+    async function testCameraAccess() {
+      log('Testing camera access...');
+      
+      try {
+        // First check if we have camera permissions
+        const hasPermission = await checkCameraPermission();
+        log(`Camera permission status: ${hasPermission}`);
+        
+        // Try to get camera stream
+        log('Requesting camera stream...');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        if (stream && stream.active) {
+          log('Camera stream acquired successfully');
+          cameraStream = stream;
+          
+          // Update UI
+          scannerPlaceholder.innerHTML = `
+            <div class="text-center">
+              <i class="bi bi-camera-video text-success fs-1"></i>
+              <p class="mt-2 mb-0 text-success">Camera Access Granted!</p>
+              <p class="text-white-50 small">Stream is active</p>
+            </div>
+          `;
+          
+          scanner.classList.add('camera-active');
+          updateStatus();
+          
+          // Stop the stream after 3 seconds
+          setTimeout(() => {
+            stopCameraStream();
+          }, 3000);
+        } else {
+          log('Camera stream is not active');
+          throw new Error('Camera stream is not active');
+        }
+      } catch (err) {
+        log(`Camera access failed: ${err.message}`);
+        
+        // Update UI
+        scannerPlaceholder.innerHTML = `
+          <div class="text-center">
+            <i class="bi bi-camera-video-off text-danger fs-1"></i>
+            <p class="mt-2 mb-0 text-danger">Camera Access Failed</p>
+            <p class="text-white-50 small">${err.message}</p>
+          </div>
+        `;
+        
+        scanner.classList.remove('camera-active');
+        updateStatus();
+      }
+    }
+    
+    // Stop camera stream
+    function stopCameraStream() {
+      if (cameraStream) {
+        log('Stopping camera stream...');
+        cameraStream.getTracks().forEach(track => {
+          track.stop();
+          log(`Stopped track: ${track.kind}`);
+        });
+        cameraStream = null;
+        log('Camera stream stopped');
+      }
+      
+      // Reset UI
+      scannerPlaceholder.innerHTML = `
+        <div class="text-center">
+          <i class="bi bi-camera fs-1"></i>
+          <p class="mt-2 mb-0">Camera Stopped</p>
+          <p class="text-white-50 small">Ready for next test</p>
+        </div>
+      `;
+      
+      scanner.classList.remove('camera-active');
+      updateStatus();
+    }
+    
+    // Check camera permission status
+    async function checkCameraPermission() {
+      try {
+        log('Checking camera permissions...');
+        
+        // Check if mediaDevices is supported
+        if (!navigator.mediaDevices) {
+          log('mediaDevices not supported');
+          return 'unsupported';
+        }
+        
+        // Check if enumerateDevices is supported
+        if (!navigator.mediaDevices.enumerateDevices) {
+          log('enumerateDevices not supported');
+          return 'unsupported';
+        }
+        
+        // Enumerate devices to check for cameras
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        log(`Found ${videoDevices.length} video devices`);
+        
+        if (videoDevices.length === 0) {
+          log('No camera found');
+          return 'no_camera';
+        }
+        
+        return 'available';
+      } catch (err) {
+        log(`Camera permission check error: ${err.message}`);
+        return 'error';
+      }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      log('Page loaded');
+      updateStatus();
+    });
+    
+    // Event listeners
+    if (testCameraBtn) {
+      testCameraBtn.addEventListener('click', testCameraAccess);
+    }
+    
+    if (stopCameraBtn) {
+      stopCameraBtn.addEventListener('click', stopCameraStream);
+    }
+    
+    if (clearLogsBtn) {
+      clearLogsBtn.addEventListener('click', () => {
+        logContainer.innerHTML = '';
+      });
+    }
+  </script>
+</body>
+</html>

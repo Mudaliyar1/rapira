@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robust Ticket Validation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .scanner-container {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      position: relative;
+    }
+    #scanner {
+      width: 100%;
+      height: 300px;
+      border: 2px dashed #007bff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #1e1e1e;
+      overflow: hidden;
+      position: relative;
+    }
+    .scanner-placeholder {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-outline-light {
+      border-color: #666;
+    }
+    .btn-outline-light:hover {
+      background-color: #333;
+    }
+    .d-none {
+      display: none !important;
+    }
+    .status-icon {
+      font-size: 3rem;
+    }
+    /* Scanner overlay for QR code scanning */
+    .scan-region-highlight {
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      pointer-events: none;
+    }
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background-color: #007bff;
+      box-shadow: 0 0 10px #007bff;
+      animation: scan 2s infinite linear;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      50% { top: 100%; }
+      100% { top: 0; }
+    }
+    .permission-instructions {
+      background-color: #007bff;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .troubleshooting-steps {
+      background-color: #6c757d;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    .camera-active {
+      border-color: #28a745 !important;
+      box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="text-center mb-4">
+          <h1 class="display-6 fw-bold">Robust Ticket Validation</h1>
+          <p class="lead text-white-50">Scan QR codes or enter ticket numbers to validate entry</p>
+        </div>
+        
+        <% if (error) { %>
+        <!-- Error Message -->
+        <div class="card border-danger mb-4">
+          <div class="card-body text-center">
+            <div class="status-icon text-danger mb-3">
+              <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <h3 class="text-danger">Invalid Validation Link</h3>
+            <p class="text-white"><%= error %></p>
+            <p class="text-white-50">Please contact your administrator for a new validation link.</p>
+          </div>
+        </div>
+        <% } else { %>
+        
+        <!-- Main Content -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <!-- Scanner Section -->
+            <div id="scannerSection">
+              <h5 class="card-title mb-3">Scan QR Code</h5>
+              
+              <!-- Permission Instructions -->
+              <div id="permissionInstructions" class="permission-instructions">
+                <h6 class="text-white"><i class="bi bi-info-circle"></i> Camera Access Required</h6>
+                <p class="mb-2 text-white">To scan QR codes, please:</p>
+                <ol class="text-white mb-2">
+                  <li>Click "Allow" when prompted for camera access</li>
+                  <li>If denied, follow troubleshooting steps below</li>
+                </ol>
+                <button class="btn btn-light btn-sm" id="retryCamera">
+                  <i class="bi bi-arrow-clockwise"></i> Retry Camera Access
+                </button>
+              </div>
+              
+              <!-- Troubleshooting Steps -->
+              <div class="troubleshooting-steps">
+                <h6 class="text-white"><i class="bi bi-exclamation-triangle"></i> Troubleshooting Camera Issues</h6>
+                <ol class="text-white mb-0 small">
+                  <li><strong>Refresh the page</strong> and click "Allow" when prompted</li>
+                  <li>Check browser settings: <strong>Settings → Privacy & Security → Camera</strong></li>
+                  <li>Close other apps that might be using the camera</li>
+                  <li>Try using a different browser (Chrome, Firefox, Edge)</li>
+                  <li>On mobile devices, ensure you're using the device's native browser</li>
+                  <li class="mt-2"><strong>For iOS Safari:</strong> Settings → Safari → Camera → Allow</li>
+                  <li class="mt-2"><strong>For Android Chrome:</strong> Settings → Site Settings → Camera → Allow</li>
+                </ol>
+                <div class="alert alert-info mt-2 p-2 small">
+                  <i class="bi bi-info-circle"></i> Note: Some browsers require HTTPS for camera access. 
+                  Make sure you're accessing this page over a secure connection.
+                </div>
+                <div class="d-grid gap-2 mt-2">
+                  <button class="btn btn-warning btn-sm" id="fullRestartBtn">
+                    <i class="bi bi-arrow-repeat"></i> Full Camera Restart
+                  </button>
+                </div>
+              </div>
+              
+              <div class="scanner-container mb-3">
+                <div id="scanner">
+                  <div class="scanner-placeholder" id="scannerPlaceholder">
+                    <i class="bi bi-camera fs-1"></i>
+                    <p class="mt-2 mb-0">Initializing camera...</p>
+                    <p class="text-white-50 small">Please allow camera access when prompted</p>
+                  </div>
+                  <!-- Scanner overlay for QR code detection -->
+                  <div class="scan-region-highlight d-none" id="scanRegion">
+                    <div class="scan-line"></div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-white-50 text-center">Position QR code within the frame to scan</p>
+              <div class="text-center mt-3">
+                <button class="btn btn-outline-light btn-sm" id="manualToggle">
+                  <i class="bi bi-keyboard"></i> Enter Ticket Number Manually
+                </button>
+              </div>
+            </div>
+            
+            <!-- Manual Input Section -->
+            <div id="manualSection" class="d-none">
+              <h5 class="card-title mb-3">Enter Ticket Number</h5>
+              <div class="mb-3">
+                <label for="ticketNumber" class="form-label">Ticket Number</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" 
+                       id="ticketNumber" placeholder="e.g., RPR-20251215-801203">
+                <div class="form-text text-white-50">
+                  Enter the ticket ID exactly as it appears on the ticket.
+                </div>
+              </div>
+              <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="validateBtn">Validate Ticket</button>
+                <button class="btn btn-outline-light btn-sm" id="backToScanner">
+                  <i class="bi bi-arrow-left"></i> Back to Scanner
+                </button>
+              </div>
+              <div class="alert alert-info mt-3 p-2 small">
+                <i class="bi bi-info-circle"></i> Tip: You can also press Enter after typing the ticket number to validate.
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result Section -->
+        <div id="resultSection" class="card d-none">
+          <div class="card-body text-center">
+            <div id="resultIcon" class="status-icon mb-3"></div>
+            <h3 id="resultTitle" class="mb-3"></h3>
+            <p id="resultMessage" class="text-white mb-4"></p>
+            
+            <!-- Ticket Details -->
+            <div id="ticketDetails" class="text-start d-none">
+              <hr class="border-secondary">
+              <h5 class="text-white">Ticket Details</h5>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Ticket ID</small>
+                  <p id="ticketId" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Concert</small>
+                  <p id="concertTitle" class="text-white mb-1"></p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Date</small>
+                  <p id="concertDate" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Ticket Holder</small>
+                  <p id="ticketHolder" class="text-white mb-1"></p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Quantity</small>
+                  <p id="ticketQuantity" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Status</small>
+                  <p id="ticketStatus" class="text-white mb-1"></p>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn btn-outline-light mt-4" id="newValidation">
+              <i class="bi bi-arrow-repeat"></i> New Validation
+            </button>
+          </div>
+        </div>
+        
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include QR Scanner Library with fallback -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js" 
+          onload="console.log('QR Code library loaded successfully')"
+          onerror="console.error('Failed to load QR Code library'); window.qrLibraryFailed = true;">
+  </script>
+
+  <!-- Fallback script to load library if CDN fails -->
+  <script>
+    // Check if library loaded, if not load it locally
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof Html5Qrcode === 'undefined') {
+        console.warn('QR Code library not loaded from CDN, attempting fallback...');
+        
+        // Create script element for fallback
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js';
+        script.onload = function() {
+          console.log('QR Code library loaded from fallback CDN');
+          window.qrLibraryFailed = false;
+        };
+        script.onerror = function() {
+          console.error('Failed to load QR Code library from fallback CDN');
+          window.qrLibraryFailed = true;
+        };
+        
+        document.head.appendChild(script);
+      } else {
+        console.log('QR Code library already loaded');
+        window.qrLibraryFailed = false;
+      }
+    });
+  </script>
+  
+  <!-- Robust QR Scanner Implementation -->
+  <script>
+    <% if (!error) { %>
+    // DOM Elements
+    const scannerSection = document.getElementById('scannerSection');
+    const manualSection = document.getElementById('manualSection');
+    const resultSection = document.getElementById('resultSection');
+    const scanner = document.getElementById('scanner');
+    const scannerPlaceholder = document.getElementById('scannerPlaceholder');
+    const scanRegion = document.getElementById('scanRegion');
+    const permissionInstructions = document.getElementById('permissionInstructions');
+    const ticketNumber = document.getElementById('ticketNumber');
+    const validateBtn = document.getElementById('validateBtn');
+    const manualToggle = document.getElementById('manualToggle');
+    const backToScanner = document.getElementById('backToScanner');
+    const retryCamera = document.getElementById('retryCamera');
+    const fullRestartBtn = document.getElementById('fullRestartBtn');
+    const newValidation = document.getElementById('newValidation');
+    const resultIcon = document.getElementById('resultIcon');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultMessage = document.getElementById('resultMessage');
+    const ticketDetails = document.getElementById('ticketDetails');
+    const ticketId = document.getElementById('ticketId');
+    const concertTitle = document.getElementById('concertTitle');
+    const concertDate = document.getElementById('concertDate');
+    const ticketHolder = document.getElementById('ticketHolder');
+    const ticketQuantity = document.getElementById('ticketQuantity');
+    const ticketStatus = document.getElementById('ticketStatus');
+
+    // Token from template
+    const token = '<%= token || "" %>';
+    
+    // QR Scanner instance
+    let html5QrCode = null;
+    let isScanning = false;
+    let cameraStream = null;
+    
+    // Check if library loaded
+    function isQrLibraryLoaded() {
+      return typeof Html5Qrcode !== 'undefined' && !window.qrLibraryFailed;
+    }
+
+    // Load QR library dynamically if needed
+    async function loadQrLibrary() {
+      return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (isQrLibraryLoaded()) {
+          resolve();
+          return;
+        }
+        
+        console.log('Dynamically loading QR library...');
+        
+        // Try multiple sources
+        const sources = [
+          'https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js',
+          'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js'
+        ];
+        
+        let attempts = 0;
+        
+        function tryNextSource() {
+          if (attempts >= sources.length) {
+            console.error('Failed to load QR library from all sources');
+            window.qrLibraryFailed = true;
+            reject(new Error('Failed to load QR library'));
+            return;
+          }
+          
+          const script = document.createElement('script');
+          script.src = sources[attempts];
+          script.onload = () => {
+            console.log('QR library loaded successfully from:', sources[attempts]);
+            window.qrLibraryFailed = false;
+            resolve();
+          };
+          script.onerror = () => {
+            console.warn('Failed to load QR library from:', sources[attempts]);
+            attempts++;
+            tryNextSource();
+          };
+          
+          document.head.appendChild(script);
+        }
+        
+        tryNextSource();
+      });
+    }
+    
+    // Quick camera access test without stopping streams
+    async function requestQuickCameraAccess() {
+      try {
+        console.log('Performing quick camera access test...');
+        
+        // Simple test - just check if we can enumerate devices
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          return videoDevices.length > 0;
+        }
+        return false;
+      } catch (err) {
+        console.warn('Quick camera access test failed:', err);
+        return false;
+      }
+    }
+    
+    // Initialize QR scanner
+    async function initQRScanner() {
+      console.log('Initializing QR scanner...');
+      
+      // Check if Html5Qrcode is available
+      if (!isQrLibraryLoaded()) {
+        console.error('Html5Qrcode library not loaded');
+        // Try to load it
+        try {
+          await loadQrLibrary();
+          // Check again
+          if (!isQrLibraryLoaded()) {
+            throw new Error('QR library failed to load after retry');
+          }
+        } catch (loadErr) {
+          showError('QR Scanner library failed to load. Please refresh the page or try a different browser. Error: ' + loadErr.message);
+          return;
+        }
+      }
+      
+      try {
+        // Always stop any existing scanner first
+        await stopQRScanner();
+        
+        // Wait a bit for cleanup
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Clear previous scanner instance if exists
+        if (html5QrCode) {
+          try {
+            html5QrCode.clear();
+            console.log('Previous scanner instance cleared');
+          } catch (clearErr) {
+            console.warn('Error clearing previous scanner:', clearErr);
+          }
+        }
+        
+        // Create new scanner instance
+        html5QrCode = new Html5Qrcode("scanner");
+        console.log('New scanner instance created');
+        
+        // Update placeholder
+        scannerPlaceholder.innerHTML = `
+          <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0">Accessing camera...</p>
+            <p class="text-white-50 small">Please allow camera access when prompted</p>
+          </div>
+        `;
+        
+        // Since we know the camera works (from simple test), let's try a more direct approach
+        // First check if we have camera permissions
+        const hasCameraPermission = await checkCameraPermission();
+        console.log('Camera permission status:', hasCameraPermission);
+        
+        // Try the most compatible configuration first
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+        
+        // Try to start with environment camera (rear camera on mobile)
+        let started = false;
+        let lastError = null;
+        
+        try {
+          console.log('Trying environment camera configuration...');
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText, decodedResult) => {
+              // QR code scanned successfully
+              console.log("QR Code scanned:", decodedText);
+              handleQRScan(decodedText);
+            },
+            (errorMessage) => {
+              // Scan failure - this is normal, ignore quietly
+            }
+          );
+          
+          started = true;
+          console.log('QR scanner started successfully with environment camera');
+        } catch (envErr) {
+          console.warn('Environment camera failed:', envErr);
+          lastError = envErr;
+          
+          // Try user camera (front camera) as fallback
+          try {
+            console.log('Trying user camera configuration...');
+            await html5QrCode.start(
+              { facingMode: "user" },
+              config,
+              (decodedText, decodedResult) => {
+                // QR code scanned successfully
+                console.log("QR Code scanned:", decodedText);
+                handleQRScan(decodedText);
+              },
+              (errorMessage) => {
+                // Scan failure - this is normal, ignore quietly
+              }
+            );
+            
+            started = true;
+            console.log('QR scanner started successfully with user camera');
+          } catch (userErr) {
+            console.warn('User camera failed:', userErr);
+            lastError = userErr;
+            
+            // Try any camera as final fallback
+            try {
+              console.log('Trying any camera configuration...');
+              await html5QrCode.start(
+                true,
+                config,
+                (decodedText, decodedResult) => {
+                  // QR code scanned successfully
+                  console.log("QR Code scanned:", decodedText);
+                  handleQRScan(decodedText);
+                },
+                (errorMessage) => {
+                  // Scan failure - this is normal, ignore quietly
+                }
+              );
+              
+              started = true;
+              console.log('QR scanner started successfully with any camera');
+            } catch (anyErr) {
+              console.error('Any camera configuration failed:', anyErr);
+              lastError = anyErr;
+            }
+          }
+        }
+        
+        if (!started) {
+          throw new Error('Failed to start camera with any configuration: ' + (lastError ? lastError.message : 'Unknown error'));
+        }
+        
+        isScanning = true;
+        
+        // Show scanner region and hide instructions
+        scanRegion.classList.remove('d-none');
+        scannerPlaceholder.classList.add('d-none');
+        permissionInstructions.classList.add('d-none');
+        
+        // Add visual indication that camera is active
+        scanner.classList.add('camera-active');
+        
+        // Add a verification step to ensure the camera is actually working
+        setTimeout(async () => {
+          if (isScanning && html5QrCode) {
+            console.log('Camera verification: Scanner is active');
+          } else {
+            console.warn('Camera verification: Scanner may not be active');
+          }
+        }, 2000);
+        
+      } catch (err) {
+        console.error('QR Scanner error:', err);
+        showError('Camera access failed: ' + err.message);
+      }
+    }
+    
+    // Show error message
+    function showError(message) {
+      // Update placeholder with error message
+      scannerPlaceholder.innerHTML = `
+        <div class="text-center">
+          <i class="bi bi-camera-video-off fs-1 text-warning"></i>
+          <p class="mt-2 mb-0 text-warning">Camera access blocked</p>
+          <p class="text-white-50 small">Click "Retry Camera Access" or check troubleshooting steps</p>
+          <p class="text-white-50 small mt-2">Error: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}</p>
+          <p class="text-white-50 small mt-1">Library Status: ${isQrLibraryLoaded() ? 'Loaded' : 'Not Loaded'}</p>
+        </div>
+      `;
+      
+      // Show permission instructions
+      permissionInstructions.classList.remove('d-none');
+      scanRegion.classList.add('d-none');
+      scannerPlaceholder.classList.remove('d-none');
+      scanner.classList.remove('camera-active');
+      
+      // Add a more descriptive troubleshooting message
+      const troubleshootingDiv = document.querySelector('.troubleshooting-steps');
+      if (troubleshootingDiv) {
+        // Check if we've already added the extra message
+        const existingMsg = troubleshootingDiv.querySelector('.camera-error-help');
+        if (!existingMsg) {
+          const helpMsg = document.createElement('div');
+          helpMsg.className = 'alert alert-warning mt-2 p-2 small camera-error-help';
+          helpMsg.innerHTML = `
+            <i class="bi bi-exclamation-triangle"></i> 
+            If the camera keeps turning on and off: 
+            <ol class="mb-0 mt-1 small">
+              <li>Close all other apps using the camera</li>
+              <li>Refresh the page completely</li>
+              <li>Click "Full Camera Restart" button above</li>
+              <li>Try a different browser if the issue persists</li>
+            </ol>
+          `;
+          troubleshootingDiv.appendChild(helpMsg);
+        }
+      }
+    }
+    
+    // Check camera permission status
+    async function checkCameraPermission() {
+      try {
+        // Check if mediaDevices is supported
+        if (!navigator.mediaDevices) {
+          console.warn('mediaDevices not supported.');
+          return 'unsupported';
+        }
+        
+        // Check if enumerateDevices is supported
+        if (!navigator.mediaDevices.enumerateDevices) {
+          console.warn('enumerateDevices() not supported.');
+          // Try alternative approach
+          return await requestCameraTest();
+        }
+        
+        // Enumerate devices to check for cameras
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        if (videoDevices.length === 0) {
+          console.warn('No camera found.');
+          return 'no_camera';
+        }
+        
+        // Check permission status for each device
+        const permissions = videoDevices.map(device => device.getPermissions ? device.getPermissions() : null);
+        const permissionStates = await Promise.all(permissions.filter(p => p !== null));
+        
+        // If we have any granted permissions, we likely have access
+        if (permissionStates.some(state => state === 'granted')) {
+          return 'granted';
+        }
+        
+        // Try to get permission by requesting a stream
+        return await requestCameraTest();
+      } catch (err) {
+        console.error('Camera permission check error:', err);
+        // Try alternative approach
+        return await requestCameraTest();
+      }
+    }
+    
+    // Test camera access by requesting a stream
+    async function requestCameraTest() {
+      try {
+        console.log('Testing camera access...');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+        console.log('Camera test successful');
+        return 'granted';
+      } catch (err) {
+        console.error('Camera test failed:', err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          return 'denied';
+        } else if (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') {
+          return 'no_camera';
+        } else {
+          return 'error';
+        }
+      }
+    }
+    
+    // Request camera access explicitly with better error handling
+    async function requestCameraAccess() {
+      try {
+        console.log('Requesting camera access...');
+        
+        // Check if we already have access
+        const permissionStatus = await checkCameraPermission();
+        console.log('Current camera permission status:', permissionStatus);
+        
+        if (permissionStatus === 'granted') {
+          console.log('Camera access already granted');
+          return true;
+        }
+        
+        // Try different constraints for better compatibility
+        const constraintsList = [
+          { 
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            } 
+          },
+          { 
+            video: {
+              facingMode: "environment",
+              width: { min: 640, ideal: 1280 },
+              height: { min: 480, ideal: 720 }
+            } 
+          },
+          { 
+            video: {
+              facingMode: { exact: "environment" }
+            } 
+          },
+          { 
+            video: {
+              facingMode: "user"
+            } 
+          },
+          { 
+            video: true 
+          }
+        ];
+        
+        // Try each constraint until one works
+        for (const constraints of constraintsList) {
+          try {
+            console.log('Trying constraints:', constraints);
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            // Verify the stream is active
+            if (stream && stream.active) {
+              console.log('Stream is active, camera access confirmed');
+              
+              // Stop all tracks immediately to release the camera
+              stream.getTracks().forEach(track => {
+                console.log('Stopping track:', track.kind, track.label);
+                track.stop();
+              });
+              
+              console.log('Camera access granted with constraints:', constraints);
+              return true;
+            } else {
+              console.warn('Stream is not active');
+              // Stop tracks anyway
+              if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+              }
+            }
+          } catch (constraintErr) {
+            console.warn('Constraint failed:', constraints, constraintErr);
+            // Continue to next constraint
+          }
+        }
+        
+        // If all constraints failed
+        console.log('All camera constraints failed');
+        return false;
+      } catch (err) {
+        console.error('Camera access request failed:', err);
+        return false;
+      }
+    }
+    
+    // Verify camera is working by testing if we can get a stream
+    async function verifyCameraWorking() {
+      try {
+        console.log('Verifying camera is working...');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // Check if stream is active
+        const isActive = stream && stream.active;
+        console.log('Camera verification result:', isActive);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        return isActive;
+      } catch (err) {
+        console.error('Camera verification failed:', err);
+        return false;
+      }
+    }
+    
+    // Manual camera access request with full restart
+    async function fullCameraRestart() {
+      console.log('Performing full camera restart...');
+      
+      // Show loading state
+      scannerPlaceholder.innerHTML = `
+        <div class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 mb-0">Performing full camera restart...</p>
+          <p class="text-white-50 small">Please wait</p>
+        </div>
+      `;
+      
+      // Hide permission instructions
+      permissionInstructions.classList.add('d-none');
+      
+      try {
+        // Completely stop and clean up
+        if (html5QrCode) {
+          try {
+            if (isScanning) {
+              await html5QrCode.stop();
+            }
+            await html5QrCode.clear();
+          } catch (err) {
+            console.warn('Error during cleanup:', err);
+          }
+          html5QrCode = null;
+        }
+        
+        isScanning = false;
+        scanner.classList.remove('camera-active');
+        
+        // Wait for cleanup
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check and reload library if needed
+        if (!isQrLibraryLoaded()) {
+          await loadQrLibrary();
+        }
+        
+        // Request fresh camera access
+        const accessGranted = await requestCameraAccess();
+        console.log('Fresh camera access request result:', accessGranted);
+        
+        // Wait a bit more
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Recreate scanner completely with simplified approach
+        await initQRScanner();
+        
+        // Add verification
+        setTimeout(async () => {
+          if (isScanning) {
+            console.log('Full restart completed, camera should be active');
+            const isWorking = await verifyCameraWorking();
+            console.log('Verification after full restart - camera working:', isWorking);
+          }
+        }, 3000);
+      } catch (err) {
+        console.error('Full camera restart failed:', err);
+        showError('Camera restart failed: ' + err.message);
+      }
+    }
+    
+    // Stop QR scanner
+    async function stopQRScanner() {
+      console.log('stopQRScanner called. Current state - html5QrCode:', !!html5QrCode, 'isScanning:', isScanning);
+      
+      if (html5QrCode && isScanning) {
+        try {
+          console.log('Stopping QR scanner...');
+          await html5QrCode.stop();
+          isScanning = false;
+          scanner.classList.remove('camera-active');
+          console.log('QR scanner stopped successfully');
+          return true;
+        } catch (err) {
+          console.error('Error stopping scanner:', err);
+          isScanning = false; // Force state update even if stop fails
+          scanner.classList.remove('camera-active');
+          return false;
+        }
+      } else if (html5QrCode) {
+        // Scanner exists but may not be scanning, still clean up
+        try {
+          console.log('Cleaning up QR scanner instance...');
+          await html5QrCode.clear(); // Clear any existing content
+          isScanning = false;
+          scanner.classList.remove('camera-active');
+          console.log('QR scanner cleaned up');
+          return true;
+        } catch (err) {
+          console.error('Error cleaning up scanner:', err);
+          isScanning = false;
+          scanner.classList.remove('camera-active');
+          return false;
+        }
+      }
+      
+      console.log('No scanner to stop');
+      isScanning = false;
+      scanner.classList.remove('camera-active');
+      // Return true if no scanner to stop
+      return true;
+    }
+    
+    // Handle QR scan result
+    function handleQRScan(qrData) {
+      console.log('Processing QR scan:', qrData);
+      
+      try {
+        // Extract ticket ID from QR code data
+        let ticketId = null;
+        
+        // If it's a URL, try to extract ticket ID from query params or path
+        try {
+          const url = new URL(qrData);
+          ticketId = url.searchParams.get('ticket') || url.pathname.split('/').pop();
+        } catch (e) {
+          // If not a valid URL, treat as direct ticket ID
+          ticketId = qrData;
+        }
+        
+        if (ticketId) {
+          // Validate the ticket
+          validateTicketById(ticketId);
+        } else {
+          alert('Invalid QR code format');
+        }
+      } catch (error) {
+        console.error('QR processing error:', error);
+        alert('Error processing QR code');
+      }
+    }
+    
+    // Validate ticket by ID
+    async function validateTicketById(ticketId) {
+      console.log('Validating ticket by ID:', ticketId);
+      
+      try {
+        // Stop scanning while validating
+        await stopQRScanner();
+        
+        // Call validation API
+        const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketId), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showResult(true, data);
+        } else {
+          showResult(false, data);
+        }
+      } catch (error) {
+        console.error('Validation error:', error);
+        showResult(false, { message: 'Network error. Please try again.' });
+      }
+    }
+    
+    // Toggle to manual input
+    if (manualToggle) {
+      manualToggle.addEventListener('click', async function() {
+        console.log('Switching to manual input');
+        
+        // Stop scanner
+        await stopQRScanner();
+        
+        // Hide scanner section and show manual section
+        scannerSection.classList.add('d-none');
+        manualSection.classList.remove('d-none');
+      });
+    }
+    
+    // Back to scanner
+    if (backToScanner) {
+      backToScanner.addEventListener('click', async function() {
+        console.log('Switching back to scanner');
+        
+        // Hide manual section and show scanner section
+        manualSection.classList.add('d-none');
+        scannerSection.classList.remove('d-none');
+        
+        // Restart scanner with full initialization
+        await stopQRScanner();
+        await new Promise(resolve => setTimeout(resolve, 300));
+        initQRScanner();
+      });
+    }
+    
+    // Enhanced retry camera access
+    if (retryCamera) {
+      retryCamera.addEventListener('click', async function() {
+        console.log('Retrying camera access...');
+        scannerPlaceholder.innerHTML = `
+          <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 mb-0">Requesting camera access...</p>
+            <p class="text-white-50 small">Please allow when prompted</p>
+          </div>
+        `;
+        
+        // Hide permission instructions temporarily
+        permissionInstructions.classList.add('d-none');
+        
+        try {
+          // Stop any existing scanner first
+          await stopQRScanner();
+          
+          // Wait a bit for cleanup
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Try to request camera access explicitly first
+          const accessGranted = await requestCameraAccess();
+          console.log('Explicit camera access request result:', accessGranted);
+          
+          // Wait a bit for permissions to settle
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Initialize scanner with simplified approach
+          await initQRScanner();
+          
+          // Add verification after initialization
+          setTimeout(async () => {
+            if (isScanning) {
+              console.log('Camera should be active now');
+              const isWorking = await verifyCameraWorking();
+              console.log('Verification after retry - camera working:', isWorking);
+            }
+          }, 3000);
+        } catch (err) {
+          console.error('Retry camera access failed:', err);
+          // Still try to initialize even if explicit request fails
+          await initQRScanner();
+        }
+      });
+    }
+    
+    // New validation
+    if (newValidation) {
+      newValidation.addEventListener('click', async function() {
+        console.log('Starting new validation');
+        
+        // Hide result
+        resultSection.classList.add('d-none');
+        
+        // Show scanner
+        scannerSection.classList.remove('d-none');
+        
+        // Clear input
+        if (ticketNumber) {
+          ticketNumber.value = '';
+        }
+        
+        // Reinitialize scanner with full cleanup
+        await stopQRScanner();
+        await new Promise(resolve => setTimeout(resolve, 300));
+        initQRScanner();
+      });
+    }
+    
+    // Validate ticket from manual input
+    if (validateBtn) {
+      validateBtn.addEventListener('click', async function() {
+        const ticketNum = ticketNumber.value.trim();
+        
+        if (!ticketNum) {
+          alert('Please enter a ticket number');
+          return;
+        }
+        
+        console.log('Validating ticket manually:', ticketNum);
+        
+        try {
+          validateBtn.disabled = true;
+          validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Validating...';
+          
+          // Call validation API
+          const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketNum), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showResult(true, data);
+          } else {
+            showResult(false, data);
+          }
+        } catch (error) {
+          console.error('Validation error:', error);
+          showResult(false, { message: 'Network error. Please try again.' });
+        } finally {
+          validateBtn.disabled = false;
+          validateBtn.innerHTML = 'Validate Ticket';
+        }
+      });
+    }
+    
+    // Show result
+    function showResult(isValid, data) {
+      console.log('Showing result:', isValid, data);
+      
+      // Hide input sections
+      scannerSection.classList.add('d-none');
+      manualSection.classList.add('d-none');
+      
+      // Show result
+      resultSection.classList.remove('d-none');
+      
+      if (isValid) {
+        // Check if ticket is already validated
+        const isAlreadyValidated = data.message && data.message.includes('already validated');
+        
+        if (isAlreadyValidated) {
+          // Show in red for already validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+          resultIcon.className = 'status-icon text-danger';
+          resultTitle.textContent = 'Ticket Already Validated';
+          resultTitle.className = 'text-danger';
+          resultMessage.textContent = 'This ticket was previously validated and marked as attended';
+          
+          // Show ticket details with red accent
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-danger">ALREADY ATTENDED</span>`;
+          }
+        } else {
+          // Show in green for newly validated tickets
+          resultIcon.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+          resultIcon.className = 'status-icon text-success';
+          resultTitle.textContent = 'Valid Ticket';
+          resultTitle.className = 'text-success';
+          resultMessage.textContent = data.message || 'Ticket is valid and has been marked as attended';
+          
+          // Show ticket details
+          if (data.ticket) {
+            ticketDetails.classList.remove('d-none');
+            ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+            concertTitle.textContent = data.ticket.concert.title;
+            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            ticketHolder.textContent = data.ticket.user.name;
+            ticketQuantity.textContent = data.ticket.quantity;
+            ticketStatus.innerHTML = `<span class="badge bg-success">ATTENDED</span>`;
+          }
+        }
+      } else {
+        resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+        resultIcon.className = 'status-icon text-danger';
+        resultTitle.textContent = 'Invalid Ticket';
+        resultTitle.className = 'text-danger';
+        resultMessage.textContent = data.message || 'This ticket is not valid';
+        ticketDetails.classList.add('d-none');
+      }
+    }
+    
+    // Enter key in ticket number field
+    if (ticketNumber) {
+      ticketNumber.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && validateBtn) {
+          validateBtn.click();
+        }
+      });
+    }
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', async function() {
+      await stopQRScanner();
+    });
+    
+    // Initialize scanner when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Page loaded, initializing QR scanner...');
+      
+      // Add event listeners
+      if (fullRestartBtn) {
+        fullRestartBtn.addEventListener('click', fullCameraRestart);
+      }
+      
+      // Always try to initialize but don't show error immediately
+      // Add a small delay to let page load completely
+      setTimeout(async function() {
+        console.log('Starting QR scanner initialization...');
+        
+        try {
+          // Check if library is loaded
+          if (!isQrLibraryLoaded()) {
+            console.warn('QR library not loaded, attempting to reload...');
+            await loadQrLibrary();
+          }
+          
+          // Verify library is now loaded
+          if (!isQrLibraryLoaded()) {
+            throw new Error('QR code library failed to load. Please check your internet connection and try refreshing the page.');
+          }
+          
+          // Try a quick camera access test first
+          const quickAccess = await requestQuickCameraAccess();
+          console.log('Quick camera access test result:', quickAccess);
+          
+          // Try to request camera access explicitly first
+          const accessGranted = await requestCameraAccess();
+          console.log('Initial camera access request result:', accessGranted);
+          
+          // Initialize scanner
+          await initQRScanner();
+        } catch (initError) {
+          console.error('Failed to initialize scanner:', initError);
+          showError('Initialization failed: ' + initError.message);
+        }
+      }, 1000); // Increased delay to 1000ms
+    });
+    <% } %>
+  </script>
+</body>
+</html>

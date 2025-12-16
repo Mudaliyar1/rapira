@@ -19,10 +19,17 @@
           <div class="input-group">
             <input type="text" class="form-control bg-dark border-secondary text-white" id="validationLink" readonly value="<%= validationUrl ? validationUrl : '' %>">
             <button class="btn btn-outline-primary" type="button" id="copyLinkBtn">
-              <i class="bi bi-clipboard"></i> Copy & Open Link
+              <i class="bi bi-clipboard"></i> Copy Link
             </button>
           </div>
           <div class="form-text text-white-50">Share this link with venue security staff for ticket validation</div>
+        </div>
+        
+        <!-- Share Button -->
+        <div class="mb-4">
+          <button class="btn btn-outline-info w-100" type="button" id="shareLinkBtn">
+            <i class="bi bi-share me-2"></i>Share Validation Link
+          </button>
         </div>
         
         <div class="alert alert-info">
@@ -33,6 +40,45 @@
             <li>Validated tickets will be marked as "Attended" in the system</li>
             <li>Refresh this page to generate a new link if needed</li>
           </ul>
+        </div>
+        
+        <!-- Additional Options -->
+        <div class="mt-4">
+          <h5 class="text-white">Alternative Validation Pages</h5>
+          <p class="text-white-50 small">If you're experiencing camera issues, try these alternative validation pages:</p>
+          
+          <div class="d-grid gap-2">
+            <a href="/tickets/validate-robust" target="_blank" class="btn btn-outline-warning">
+              <i class="bi bi-camera-video me-2"></i>Robust Camera Validation
+            </a>
+            <a href="/tickets/camera-test" target="_blank" class="btn btn-outline-info">
+              <i class="bi bi-bug me-2"></i>Camera Debug Tool
+            </a>
+            <a href="/tickets/simple-camera-test" target="_blank" class="btn btn-outline-success">
+              <i class="bi bi-camera me-2"></i>Simple Camera Test
+            </a>
+            <a href="/tickets/direct-camera-validation" target="_blank" class="btn btn-outline-primary">
+              <i class="bi bi-camera-reels me-2"></i>Direct Camera Validation
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Active Links Section -->
+    <div class="glass-card-dark mb-4">
+      <div class="card-header bg-dark p-4 border-bottom border-secondary">
+        <h4 class="fw-bold mb-0 text-white">Active Validation Links</h4>
+        <p class="text-white-50 mb-0">Manage currently active validation links</p>
+      </div>
+      <div class="card-body p-4">
+        <div id="activeLinksContainer">
+          <p class="text-white-50">Loading active links...</p>
+        </div>
+        <div class="d-grid gap-2 mt-3">
+          <button class="btn btn-outline-danger" id="invalidateAllBtn">
+            <i class="bi bi-trash me-2"></i>Invalidate All Links
+          </button>
         </div>
       </div>
     </div>
@@ -62,60 +108,720 @@
             <p class="text-white mb-0">Enter Ticket Number</p>
           </div>
         </div>
+        
+        <div class="mt-3">
+          <h6 class="text-white">Troubleshooting Tips</h6>
+          <ul class="text-white-50 small mb-0">
+            <li>If camera doesn't work, try the Robust Camera Validation link</li>
+            <li>Use Camera Debug Tool to diagnose issues</li>
+            <li>Ensure HTTPS for camera access on some browsers</li>
+            <li>Close other apps using the camera</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title" id="shareModalLabel">Share Validation Link</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-4">
+          <i class="bi bi-share fs-1 text-primary"></i>
+          <h5 class="mt-3">Share with Venue Staff</h5>
+          <p class="text-white-50">Send this link to security personnel for ticket validation</p>
+        </div>
+        
+        <div class="mb-4">
+          <label class="form-label">Validation Link</label>
+          <div class="input-group">
+            <input type="text" class="form-control bg-dark border-secondary text-white" id="shareModalLink" readonly>
+            <button class="btn btn-outline-primary" type="button" id="copyModalLinkBtn">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary" id="openLinkBtn">
+            <i class="bi bi-box-arrow-up-right me-2"></i>Open Validation Page
+          </button>
+          <button class="btn btn-success" id="whatsappShareBtn">
+            <i class="bi bi-whatsapp me-2"></i>Share via WhatsApp
+          </button>
+          <button class="btn btn-info" id="emailShareBtn">
+            <i class="bi bi-envelope me-2"></i>Share via Email
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-  const copyLinkBtn = document.getElementById('copyLinkBtn');
-  const validationLink = document.getElementById('validationLink');
+  console.log('DOM fully loaded and parsed');
   
-  copyLinkBtn.addEventListener('click', function() {
-    validationLink.select();
+  // Initialize all functionality after a short delay to ensure everything is ready
+  setTimeout(function() {
+    initializePage();
+  }, 100);
+});
+
+function initializePage() {
+  console.log('=== INITIALIZING PAGE FUNCTIONALITY ===');
+  
+  const copyLinkBtn = document.getElementById('copyLinkBtn');
+  const shareLinkBtn = document.getElementById('shareLinkBtn');
+  const validationLink = document.getElementById('validationLink');
+  const activeLinksContainer = document.getElementById('activeLinksContainer');
+  const invalidateAllBtn = document.getElementById('invalidateAllBtn');
+  
+  // Add explicit click handlers with error handling
+  if (shareLinkBtn) {
+    console.log('Share button found, attaching click handler');
+    shareLinkBtn.addEventListener('click', function(event) {
+      console.log('Share button clicked!');
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // ADD ALERT TO CONFIRM BUTTON IS WORKING
+      alert('Share button is working! Opening share modal...');
+      
+      if (validationLink && validationLink.value) {
+        openShareModal(validationLink.value);
+      } else {
+        console.log('No validation link found');
+        alert('Please generate a validation link first');
+      }
+    });
     
-    // Copy to clipboard
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(validationLink.value).then(() => {
-        // Show success feedback
-        const originalText = copyLinkBtn.innerHTML;
-        copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied & Opening!';
-        copyLinkBtn.classList.remove('btn-outline-primary');
-        copyLinkBtn.classList.add('btn-success');
+    // Also try jQuery approach just in case
+    if (typeof $ !== 'undefined') {
+      $('#shareLinkBtn').on('click', function(event) {
+        console.log('jQuery share button clicked!');
+        event.preventDefault();
+        event.stopPropagation();
         
-        // Automatically open the link in a new tab
-        window.open(validationLink.value, '_blank');
+        // ADD ALERT TO CONFIRM BUTTON IS WORKING
+        alert('Share button is working! Opening share modal...');
         
-        setTimeout(() => {
-          copyLinkBtn.innerHTML = originalText;
-          copyLinkBtn.classList.remove('btn-success');
-          copyLinkBtn.classList.add('btn-outline-primary');
-        }, 2000);
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
-        // Fallback: select and prompt user to copy manually
+        if (validationLink && validationLink.value) {
+          openShareModal(validationLink.value);
+        } else {
+          console.log('No validation link found');
+          alert('Please generate a validation link first');
+        }
+      });
+    }
+  } else {
+    console.log('Share button NOT found');
+  }
+  
+  // Copy link functionality
+  if (copyLinkBtn && validationLink) {
+    console.log('Setting up copy link functionality');
+    copyLinkBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      validationLink.select();
+      
+      // Copy to clipboard
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(validationLink.value).then(() => {
+          // Show success feedback
+          const originalText = copyLinkBtn.innerHTML;
+          copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+          copyLinkBtn.classList.remove('btn-outline-primary');
+          copyLinkBtn.classList.add('btn-success');
+          
+          setTimeout(() => {
+            copyLinkBtn.innerHTML = originalText;
+            copyLinkBtn.classList.remove('btn-success');
+            copyLinkBtn.classList.add('btn-outline-primary');
+          }, 2000);
+        }).catch(err => {
+          console.error('Copy failed:', err);
+          alert('Failed to copy link. Please try again.');
+        });
+      } else {
+        // Fallback for older browsers
         validationLink.select();
         try {
           document.execCommand('copy');
+          const originalText = copyLinkBtn.innerHTML;
+          copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+          copyLinkBtn.classList.remove('btn-outline-primary');
+          copyLinkBtn.classList.add('btn-success');
+          
+          setTimeout(() => {
+            copyLinkBtn.innerHTML = originalText;
+            copyLinkBtn.classList.remove('btn-success');
+            copyLinkBtn.classList.add('btn-outline-primary');
+          }, 2000);
         } catch (e) {
-          console.error('execCommand failed: ', e);
+          console.error('Copy failed:', e);
+          alert('Failed to copy link. Please try again.');
         }
-        // Open the link even if copy fails
-        window.open(validationLink.value, '_blank');
-        alert('Link opened in new tab. Please manually copy if needed.');
-      });
-    } else {
-      // Fallback for older browsers
-      validationLink.select();
-      try {
-        document.execCommand('copy');
-      } catch (e) {
-        console.error('execCommand failed: ', e);
       }
-      window.open(validationLink.value, '_blank');
-      alert('Link opened in new tab. Please manually copy if needed.');
+    });
+  } else {
+    console.log('Copy link elements not found');
+  }
+  
+  // Load active links if container exists
+  if (activeLinksContainer) {
+    console.log('Loading active links');
+    loadActiveLinks();
+  } else {
+    console.log('Active links container not found');
+  }
+  
+  // Invalidate all links if button exists
+  if (invalidateAllBtn) {
+    console.log('Setting up invalidate all functionality');
+    invalidateAllBtn.addEventListener('click', function() {
+      if (confirm('Are you sure you want to invalidate all active validation links?')) {
+        fetch('/admin/ticket-validation/invalidate-all', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('All validation links have been invalidated.');
+            loadActiveLinks();
+          } else {
+            alert('Failed to invalidate links: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Invalidate all error:', error);
+          alert('Failed to invalidate links. Please try again.');
+        });
+      }
+    });
+  } else {
+    console.log('Invalidate all button not found');
+  }
+  
+  // Initialize modal button handlers
+  initializeModalButtons();
+}
+
+// Initialize modal button handlers
+function initializeModalButtons() {
+  console.log('Initializing modal button handlers');
+  
+  // Copy button in modal
+  const copyModalLinkBtn = document.getElementById('copyModalLinkBtn');
+  if (copyModalLinkBtn) {
+    copyModalLinkBtn.addEventListener('click', function() {
+      const shareModalLink = document.getElementById('shareModalLink');
+      if (shareModalLink && shareModalLink.value) {
+        copyToClipboard(shareModalLink.value);
+      }
+    });
+  }
+  
+  // Open link button
+  const openLinkBtn = document.getElementById('openLinkBtn');
+  if (openLinkBtn) {
+    openLinkBtn.addEventListener('click', function() {
+      const shareModalLink = document.getElementById('shareModalLink');
+      if (shareModalLink && shareModalLink.value) {
+        window.open(shareModalLink.value, '_blank');
+      }
+    });
+  }
+  
+  // WhatsApp share button
+  const whatsappShareBtn = document.getElementById('whatsappShareBtn');
+  if (whatsappShareBtn) {
+    whatsappShareBtn.addEventListener('click', function() {
+      const shareModalLink = document.getElementById('shareModalLink');
+      if (shareModalLink && shareModalLink.value) {
+        const message = encodeURIComponent(`Use this link to validate event tickets at the venue: ${shareModalLink.value}`);
+        window.open(`https://wa.me/?text=${message}`, '_blank');
+      }
+    });
+  }
+  
+  // Email share button
+  const emailShareBtn = document.getElementById('emailShareBtn');
+  if (emailShareBtn) {
+    emailShareBtn.addEventListener('click', function() {
+      const shareModalLink = document.getElementById('shareModalLink');
+      if (shareModalLink && shareModalLink.value) {
+        const subject = encodeURIComponent('RAPIRA Ticket Validation Link');
+        const body = encodeURIComponent(`Use this link to validate event tickets at the venue:
+
+${shareModalLink.value}
+
+This link will expire in 24 hours.`);
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+      }
+    });
+  }
+}
+
+// Open share modal function
+function openShareModal(url) {
+  console.log('Opening share modal for URL:', url);
+  
+  // Set the URL in the modal
+  const shareModalLink = document.getElementById('shareModalLink');
+  if (shareModalLink) {
+    shareModalLink.value = url;
+  }
+  
+  // Show the modal using Bootstrap
+  const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+  shareModal.show();
+  
+  console.log('Modal should be shown now');
+}
+
+// Copy to clipboard function
+function copyToClipboard(url) {
+  console.log('Copying to clipboard:', url);
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        showToast('🔗 Link copied to clipboard!', 'success');
+      })
+      .catch((err) => {
+        console.error('Failed to copy: ', err);
+        // Fallback for older browsers
+        fallbackCopyTextToClipboard(url);
+      });
+  } else {
+    // Fallback for older browsers
+    fallbackCopyTextToClipboard(url);
+  }
+}
+
+// Fallback copy function
+function fallbackCopyTextToClipboard(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  
+  // Avoid scrolling to bottom
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    if (successful) {
+      showToast('🔗 Link copied to clipboard!', 'success');
+    } else {
+      showToast('Failed to copy link', 'error');
+    }
+  } catch (err) {
+    document.body.removeChild(textArea);
+    showToast('Failed to copy link', 'error');
+  }
+}
+
+// Toast notification function
+function showToast(message, type) {
+  // Remove any existing toast
+  const existingToast = document.getElementById('validation-toast');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.id = 'validation-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 300px;
+    ${type === 'success' ? 'background: linear-gradient(135deg, #28a745, #20c997);' : ''}
+    ${type === 'error' ? 'background: linear-gradient(135deg, #dc3545, #e74c3c);' : ''}
+    ${type === 'info' ? 'background: linear-gradient(135deg, #17a2b8, #007bff);' : ''}
+    animation: slideInRight 0.3s ease-out;
+  `;
+  
+  toast.innerHTML = message;
+  
+  // Add animation styles
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after delay
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.style.animation = 'slideOutRight 0.3s ease-out';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 300);
+    }
+  }, 3000);
+}
+
+// Load active links function
+function loadActiveLinks() {
+  console.log('=== LOADING ACTIVE LINKS ===');
+  
+  const activeLinksContainer = document.getElementById('activeLinksContainer');
+  
+  // Show loading message
+  if (activeLinksContainer) {
+    activeLinksContainer.innerHTML = '<p class="text-white-50">Loading active links... <span class="spinner-border spinner-border-sm" role="status"></span></p>';
+  }
+  
+  fetch('/admin/ticket-validation/active-links', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'same-origin'
+  })
+  .then(response => {
+    console.log('Active links response status:', response.status);
+    if (!response.ok) {
+      throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Active links data received:', data);
+    if (data.links) {
+      displayActiveLinks(data.links);
+    } else {
+      if (activeLinksContainer) {
+        activeLinksContainer.innerHTML = '<p class="text-warning">No links data received.</p>';
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error loading active links:', error);
+    if (activeLinksContainer) {
+      activeLinksContainer.innerHTML = '<p class="text-danger">Failed to load active links. Please refresh the page.</p>';
     }
   });
-});
+}
+
+// Display active links
+function displayActiveLinks(links) {
+  console.log('=== DISPLAYING ACTIVE LINKS ===', links);
+  
+  const activeLinksContainer = document.getElementById('activeLinksContainer');
+  if (!activeLinksContainer) {
+    console.log('Active links container not found');
+    return;
+  }
+  
+  if (links.length === 0) {
+    activeLinksContainer.innerHTML = '<p class="text-white-50">No active validation links.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="table-responsive">
+      <table class="table table-dark table-striped">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Created</th>
+            <th>Expires</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  links.forEach(link => {
+    // Handle potential date parsing issues
+    let createdDate, expiresDate, timeLeft;
+    try {
+      createdDate = new Date(link.createdAt).toLocaleString();
+      expiresDate = new Date(link.expiresAt).toLocaleString();
+      timeLeft = Math.ceil((new Date(link.expiresAt) - new Date()) / (1000 * 60 * 60)); // Hours left
+      
+      // Check if timeLeft is valid
+      if (isNaN(timeLeft)) {
+        timeLeft = 'Unknown';
+      } else if (timeLeft < 0) {
+        timeLeft = 'Expired';
+      } else {
+        timeLeft = timeLeft + 'h left';
+      }
+    } catch (dateError) {
+      createdDate = 'Invalid Date';
+      expiresDate = 'Invalid Date';
+      timeLeft = 'Unknown';
+    }
+    
+    html += `
+      <tr>
+        <td>
+          <small class="text-monospace">${link.token.substring(0, 8)}...</small>
+        </td>
+        <td>
+          <small>${createdDate}</small>
+        </td>
+        <td>
+          <small>${expiresDate} (${timeLeft})</small>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-danger invalidate-link-btn" data-token="${link.token}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+    </div>
+    <p class="text-white-50 small">
+      <i class="bi bi-info-circle me-1"></i> ${links.length} active link(s)
+    </p>
+  `;
+  
+  activeLinksContainer.innerHTML = html;
+  
+  // Add event listeners to invalidate buttons
+  document.querySelectorAll('.invalidate-link-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const token = this.getAttribute('data-token');
+      invalidateLink(token);
+    });
+  });
+}
+
+// Invalidate a specific link
+function invalidateLink(token) {
+  console.log('Invalidating link:', token);
+  
+  if (confirm('Are you sure you want to invalidate this validation link?')) {
+    fetch(`/admin/ticket-validation/invalidate/${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Validation link has been invalidated.');
+        loadActiveLinks();
+      } else {
+        alert('Failed to invalidate link: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Invalidate link error:', error);
+      alert('Failed to invalidate link. Please try again.');
+    });
+  }
+}
+</script>
+      }, 300);
+    }
+  }, 3000);
+}
+
+// Load active links function
+function loadActiveLinks() {
+  console.log('=== LOADING ACTIVE LINKS ===');
+  
+  const activeLinksContainer = document.getElementById('activeLinksContainer');
+  
+  // Show loading message
+  if (activeLinksContainer) {
+    activeLinksContainer.innerHTML = '<p class="text-white-50">Loading active links... <span class="spinner-border spinner-border-sm" role="status"></span></p>';
+  }
+  
+  fetch('/admin/ticket-validation/active-links', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'same-origin'
+  })
+  .then(response => {
+    console.log('Active links response status:', response.status);
+    if (!response.ok) {
+      throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Active links data received:', data);
+    if (data.links) {
+      displayActiveLinks(data.links);
+    } else {
+      if (activeLinksContainer) {
+        activeLinksContainer.innerHTML = '<p class="text-warning">No links data received.</p>';
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error loading active links:', error);
+    if (activeLinksContainer) {
+      activeLinksContainer.innerHTML = '<p class="text-danger">Failed to load active links. Please refresh the page.</p>';
+    }
+  });
+}
+
+// Display active links
+function displayActiveLinks(links) {
+  console.log('=== DISPLAYING ACTIVE LINKS ===', links);
+  
+  const activeLinksContainer = document.getElementById('activeLinksContainer');
+  if (!activeLinksContainer) {
+    console.log('Active links container not found');
+    return;
+  }
+  
+  if (links.length === 0) {
+    activeLinksContainer.innerHTML = '<p class="text-white-50">No active validation links.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="table-responsive">
+      <table class="table table-dark table-striped">
+        <thead>
+          <tr>
+            <th>Token</th>
+            <th>Created</th>
+            <th>Expires</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  links.forEach(link => {
+    // Handle potential date parsing issues
+    let createdDate, expiresDate, timeLeft;
+    try {
+      createdDate = new Date(link.createdAt).toLocaleString();
+      expiresDate = new Date(link.expiresAt).toLocaleString();
+      timeLeft = Math.ceil((new Date(link.expiresAt) - new Date()) / (1000 * 60 * 60)); // Hours left
+      
+      // Check if timeLeft is valid
+      if (isNaN(timeLeft)) {
+        timeLeft = 'Unknown';
+      } else if (timeLeft < 0) {
+        timeLeft = 'Expired';
+      } else {
+        timeLeft = timeLeft + 'h left';
+      }
+    } catch (dateError) {
+      createdDate = 'Invalid Date';
+      expiresDate = 'Invalid Date';
+      timeLeft = 'Unknown';
+    }
+    
+    html += `
+      <tr>
+        <td>
+          <small class="text-monospace">${link.token.substring(0, 8)}...</small>
+        </td>
+        <td>
+          <small>${createdDate}</small>
+        </td>
+        <td>
+          <small>${expiresDate} (${timeLeft})</small>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-danger invalidate-link-btn" data-token="${link.token}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+        </tbody>
+      </table>
+    </div>
+    <p class="text-white-50 small">
+      <i class="bi bi-info-circle me-1"></i> ${links.length} active link(s)
+    </p>
+  `;
+  
+  activeLinksContainer.innerHTML = html;
+  
+  // Add event listeners to invalidate buttons
+  document.querySelectorAll('.invalidate-link-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const token = this.getAttribute('data-token');
+      invalidateLink(token);
+    });
+  });
+}
+
+// Invalidate a specific link
+function invalidateLink(token) {
+  console.log('Invalidating link:', token);
+  
+  if (confirm('Are you sure you want to invalidate this validation link?')) {
+    fetch(`/admin/ticket-validation/invalidate/${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Validation link has been invalidated.');
+        loadActiveLinks();
+      } else {
+        alert('Failed to invalidate link: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Invalidate link error:', error);
+      alert('Failed to invalidate link. Please try again.');
+    });
+  }
+}
 </script>
