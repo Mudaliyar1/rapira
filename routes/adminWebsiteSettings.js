@@ -505,4 +505,74 @@ router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST - Lock a specific page
+router.post('/lock-page', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { pagePath, lockReason, lockDuration } = req.body;
+    const settings = await WebsiteSettings.getSettings();
+    
+    // Initialize lockedPages if it doesn't exist
+    if (!settings.siteSettings.lockedPages) {
+      settings.siteSettings.lockedPages = new Map();
+    }
+    
+    // Calculate unlock time if duration is provided
+    let unlockAt = null;
+    if (lockDuration && lockDuration > 0) {
+      unlockAt = new Date(Date.now() + (lockDuration * 60 * 1000)); // Convert minutes to milliseconds
+    }
+    
+    // Create or update page lock
+    settings.siteSettings.lockedPages.set(pagePath, {
+      isLocked: true,
+      reason: lockReason || 'This page is temporarily unavailable due to maintenance.',
+      lockedBy: req.session.user.id,
+      lockedAt: new Date(),
+      unlockAt: unlockAt
+    });
+    
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+    
+    // Clear cache to force reload of settings
+    clearSettingsCache();
+    
+    req.flash('success', `Page ${pagePath} has been locked successfully.`);
+    res.redirect('/admin/website-settings#page-lock');
+  } catch (error) {
+    console.error('Error locking page:', error);
+    req.flash('error', 'Failed to lock page');
+    res.redirect('/admin/website-settings#page-lock');
+  }
+});
+
+// POST - Unlock a specific page
+router.post('/unlock-page', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { pagePath } = req.body;
+    const settings = await WebsiteSettings.getSettings();
+    
+    // Remove page lock if it exists
+    if (settings.siteSettings.lockedPages && settings.siteSettings.lockedPages.has(pagePath)) {
+      settings.siteSettings.lockedPages.delete(pagePath);
+      
+      settings.lastUpdatedBy = req.session.user.id;
+      await settings.save();
+      
+      // Clear cache to force reload of settings
+      clearSettingsCache();
+      
+      req.flash('success', `Page ${pagePath} has been unlocked successfully.`);
+    } else {
+      req.flash('warning', `Page ${pagePath} is not currently locked.`);
+    }
+    
+    res.redirect('/admin/website-settings#page-lock');
+  } catch (error) {
+    console.error('Error unlocking page:', error);
+    req.flash('error', 'Failed to unlock page');
+    res.redirect('/admin/website-settings#page-lock');
+  }
+});
+
 module.exports = router;

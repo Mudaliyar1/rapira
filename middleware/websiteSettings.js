@@ -89,6 +89,38 @@ const loadWebsiteSettings = async (req, res, next) => {
         }
       }
     }
+    
+    // Check for locked pages
+    const currentPage = req.path;
+    if (settingsCache.siteSettings.lockedPages && settingsCache.siteSettings.lockedPages.has(currentPage)) {
+      const pageLockInfo = settingsCache.siteSettings.lockedPages.get(currentPage);
+      if (pageLockInfo.isLocked) {
+        // Check if lock has expired
+        if (pageLockInfo.unlockAt && new Date() > pageLockInfo.unlockAt) {
+          // Lock has expired, remove it
+          settingsCache.siteSettings.lockedPages.delete(currentPage);
+          try {
+            await settingsCache.save();
+            clearSettingsCache();
+          } catch (saveError) {
+            console.error('Error removing expired page lock:', saveError);
+          }
+        } else {
+          // Page is locked, check user access
+          if (!req.session.user || req.session.user.role !== 'admin') {
+            // Show locked page to non-admin users
+            return res.render('page-locked', {
+              layout: false,
+              siteName: settingsCache.siteSettings.siteName,
+              pagePath: currentPage,
+              lockReason: pageLockInfo.reason,
+              lockedAt: pageLockInfo.lockedAt,
+              unlockAt: pageLockInfo.unlockAt
+            });
+          }
+        }
+      }
+    }
 
     next();
   } catch (error) {

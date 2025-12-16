@@ -49,6 +49,11 @@
           <i class="bi bi-gear me-2"></i>Admin Settings
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="page-lock-tab" data-bs-toggle="tab" data-bs-target="#page-lock" type="button" role="tab">
+          <i class="bi bi-lock me-2"></i>Page Locking
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -627,6 +632,102 @@
             </button>
           </div>
         </form>
+      </div>
+
+      <!-- Page Locking Tab -->
+      <div class="tab-pane fade" id="page-lock" role="tabpanel">
+        <div class="mb-4">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Page Locking:</strong> Lock individual pages to restrict access. Only administrators can view locked pages.
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h5 class="text-white mb-3">Lock a Page</h5>
+            <form action="/admin/website-settings/lock-page" method="POST">
+              <div class="mb-3">
+                <label class="form-label text-white">Page Path</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="pagePath" 
+                       placeholder="/artists" required>
+                <small class="text-muted">Enter the full path of the page to lock (e.g., /artists, /concerts/123)</small>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label text-white">Lock Reason</label>
+                <textarea class="form-control bg-dark text-white border-secondary" name="lockReason" rows="3" 
+                          placeholder="This page is under maintenance..."></textarea>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label text-white">Auto Unlock After (minutes)</label>
+                <input type="number" class="form-control bg-dark text-white border-secondary" name="lockDuration" 
+                       min="1" max="1440" placeholder="Leave blank for indefinite">
+                <small class="text-muted">Optional: Automatically unlock after specified minutes</small>
+              </div>
+              
+              <button type="submit" class="btn btn-warning">
+                <i class="bi bi-lock me-1"></i>Lock Page
+              </button>
+            </form>
+          </div>
+          
+          <div class="col-md-6">
+            <h5 class="text-white mb-3">Unlock a Page</h5>
+            <form action="/admin/website-settings/unlock-page" method="POST">
+              <div class="mb-3">
+                <label class="form-label text-white">Page Path</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="pagePath" 
+                       placeholder="/artists" required>
+                <small class="text-muted">Enter the full path of the page to unlock</small>
+              </div>
+              
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-unlock me-1"></i>Unlock Page
+              </button>
+            </form>
+            
+            <div class="mt-4">
+              <h6 class="text-white">Currently Locked Pages</h6>
+              <% if (settings.siteSettings.lockedPages && settings.siteSettings.lockedPages.size > 0) { %>
+                <div class="table-responsive">
+                  <table class="table table-dark table-striped table-sm">
+                    <thead>
+                      <tr>
+                        <th>Page Path</th>
+                        <th>Locked At</th>
+                        <th>Unlock At</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% settings.siteSettings.lockedPages.forEach((pageData, pagePath) => { %>
+                        <% if (pageData.isLocked) { %>
+                          <tr>
+                            <td><%= pagePath %></td>
+                            <td><%= pageData.lockedAt ? new Date(pageData.lockedAt).toLocaleString() : 'N/A' %></td>
+                            <td><%= pageData.unlockAt ? new Date(pageData.unlockAt).toLocaleString() : 'Indefinite' %></td>
+                            <td>
+                              <form action="/admin/website-settings/unlock-page" method="POST" class="d-inline">
+                                <input type="hidden" name="pagePath" value="<%= pagePath %>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                  <i class="bi bi-unlock"></i> Unlock
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        <% } %>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <p class="text-muted">No pages are currently locked.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>

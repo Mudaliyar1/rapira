@@ -97,6 +97,18 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     maintenanceAutoStart: {
       type: Boolean,
       default: true
+    },
+    // Page locking settings
+    lockedPages: {
+      type: Map,
+      of: {
+        isLocked: { type: Boolean, default: false },
+        reason: { type: String, default: 'This page is temporarily unavailable due to maintenance.' },
+        lockedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        lockedAt: { type: Date },
+        unlockAt: { type: Date }
+      },
+      default: new Map()
     }
   },
 
