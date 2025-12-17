@@ -1,0 +1,43 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /login/
+Disallow: /register/
+Disallow: /profile/
+Disallow: /users/
+Disallow: /artists/
+Disallow: /concerts/create
+Disallow: /concerts/*/edit
+Disallow: /tickets/
+Disallow: /orders/
+Disallow: /payments/
+Disallow: /messages/
+Disallow: /settings/
+Disallow: /account/
+
+# Allow access to static assets even if parent folders are restricted
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /icons/
+Allow: /scripts/
+Allow: /uploads/
+
+# Allow specific file types
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.ico$
+Allow: /*.woff$
+Allow: /*.woff2$
+Allow: /*.ttf$
+Allow: /*.eot$
+
+# Sitemap
+Sitemap: https://rapiraa.onrender.com/sitemap.xml

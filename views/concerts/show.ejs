@@ -242,24 +242,36 @@
         <div class="glass-card-dark" data-aos="fade-up" data-aos-delay="300">
           <div class="card-body p-4">
             <h5 class="card-title fw-bold mb-3 gradient-text-orange">Venue Location</h5>
-            <div class="ratio ratio-4x3 mb-3 rounded-3 overflow-hidden">
-              <iframe
-                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>"
-                width="100%"
-                height="200"
-                style="border:0;"
-                allowfullscreen=""
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade">
-              </iframe>
-            </div>
-            <div class="text-center mb-3">
-              <a href="https://www.google.com/maps/search/<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>" 
-                 target="_blank" 
-                 class="btn btn-primary btn-lg">
-                <i class="bi bi-geo-alt-fill me-2"></i> Open Location in Maps
-              </a>
-            </div>
+            <% if (concert.venue && concert.venue.googleMapsLink) { %>
+              <!-- Use venue's specific Google Maps link if available -->
+              <div class="text-center mb-3">
+                <a href="<%= concert.venue.googleMapsLink %>" 
+                   target="_blank" 
+                   class="btn btn-primary btn-lg">
+                  <i class="bi bi-geo-alt-fill me-2"></i> Open Location in Maps
+                </a>
+              </div>
+            <% } else { %>
+              <!-- Fallback to address-based search -->
+              <div class="ratio ratio-4x3 mb-3 rounded-3 overflow-hidden">
+                <iframe
+                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>"
+                  width="100%"
+                  height="200"
+                  style="border:0;"
+                  allowfullscreen=""
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+              </div>
+              <div class="text-center mb-3">
+                <a href="https://www.google.com/maps/search/<%= encodeURIComponent(concert.venue && concert.venue.address ? concert.venue.address + (concert.venue.city ? ', ' + concert.venue.city : '') + (concert.venue.state ? ', ' + concert.venue.state : '') + (concert.venue.pincode ? ' ' + concert.venue.pincode : '') : concert.city) %>" 
+                   target="_blank" 
+                   class="btn btn-primary btn-lg">
+                  <i class="bi bi-geo-alt-fill me-2"></i> Open Location in Maps
+                </a>
+              </div>
+            <% } %>
             <div class="glass-card-dark p-3 rounded-3">
               <p class="mb-0 text-white">
                 <i class="bi bi-geo-alt text-primary me-2"></i>

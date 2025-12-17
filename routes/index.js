@@ -449,4 +449,128 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
+// Sitemap route
+router.get('/sitemap.xml', async (req, res) => {
+  try {
+    // Set cache control headers (cache for 1 hour)
+    res.set({
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600'
+    });
+
+    // Base URLs that are always included
+    const staticUrls = [
+      { url: '/', priority: '1.0', changefreq: 'daily' },
+      { url: '/about', priority: '0.8', changefreq: 'monthly' },
+      { url: '/contact', priority: '0.7', changefreq: 'yearly' },
+      { url: '/artists', priority: '0.9', changefreq: 'daily' },
+      { url: '/concerts', priority: '0.9', changefreq: 'hourly' },
+      { url: '/content', priority: '0.8', changefreq: 'daily' },
+      { url: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
+      { url: '/terms-of-service', priority: '0.3', changefreq: 'yearly' },
+      { url: '/refund-policy', priority: '0.3', changefreq: 'yearly' },
+      { url: '/subscription-policy', priority: '0.3', changefreq: 'yearly' },
+      { url: '/shopping-policy', priority: '0.3', changefreq: 'yearly' },
+      { url: '/faq', priority: '0.5', changefreq: 'monthly' }
+    ];
+
+    // Get dynamic URLs from MongoDB
+    const Concert = require('../models/Concert');
+    const Artist = require('../models/Artist');
+    const Content = require('../models/Content');
+    const Page = require('../models/Page');
+
+    // Get approved concerts
+    const concerts = await Concert.find({ status: 'approved' })
+      .select('_id date updatedAt')
+      .sort({ date: -1 });
+
+    // Get active artists
+    const artists = await Artist.find({ verified: true })
+      .select('_id updatedAt')
+      .populate('user', 'name');
+
+    // Get published content
+    const contents = await Content.find({})
+      .select('_id updatedAt')
+      .sort({ createdAt: -1 });
+
+    // Get published pages
+    const pages = await Page.find({ published: true })
+      .select('slug updatedAt');
+
+    // Build dynamic URLs
+    const dynamicUrls = [];
+
+    // Concert URLs
+    concerts.forEach(concert => {
+      dynamicUrls.push({
+        url: `/concerts/${concert._id}`,
+        lastmod: concert.updatedAt || concert.date,
+        priority: '0.8',
+        changefreq: 'daily'
+      });
+    });
+
+    // Artist URLs
+    artists.forEach(artist => {
+      dynamicUrls.push({
+        url: `/artists/${artist._id}`,
+        lastmod: artist.updatedAt,
+        priority: '0.7',
+        changefreq: 'weekly'
+      });
+    });
+
+    // Content URLs
+    contents.forEach(content => {
+      dynamicUrls.push({
+        url: `/content/${content._id}`,
+        lastmod: content.updatedAt,
+        priority: '0.6',
+        changefreq: 'monthly'
+      });
+    });
+
+    // Page URLs
+    pages.forEach(page => {
+      dynamicUrls.push({
+        url: `/page/${page.slug}`,
+        lastmod: page.updatedAt,
+        priority: '0.5',
+        changefreq: 'monthly'
+      });
+    });
+
+    // Combine all URLs
+    const allUrls = [...staticUrls, ...dynamicUrls];
+
+    // Generate XML
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+
+    allUrls.forEach(item => {
+      xml += '  <url>\n';
+      xml += `    <loc>https://${req.get('host')}${item.url}</loc>\n`;
+      
+      if (item.lastmod) {
+        // Format date as YYYY-MM-DD
+        const lastmodDate = new Date(item.lastmod);
+        xml += `    <lastmod>${lastmodDate.toISOString().split('T')[0]}</lastmod>\n`;
+      }
+      
+      xml += `    <changefreq>${item.changefreq}</changefreq>\n`;
+      xml += `    <priority>${item.priority}</priority>\n`;
+      xml += '  </url>\n';
+    });
+
+    xml += '</urlset>';
+
+    res.send(xml);
+  } catch (error) {
+    console.error('Sitemap generation error:', error);
+    res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+  }
+});
+
 module.exports = router;

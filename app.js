@@ -8,8 +8,192 @@ const methodOverride = require('method-override');
 const path = require('path');
 const expressLayouts = require('express-ejs-layouts');
 
+// Security middleware
+const helmet = require('helmet');
+const cors = require('cors');
+
 // Initialize Express app
 const app = express();
+
+// =============================================================================
+// SECURITY CONFIGURATION
+// =============================================================================
+
+// Trust proxy for secure cookies in production environments
+// This is important for hosting platforms like Render, Heroku, etc.
+app.set('trust proxy', 1);
+
+// Apply Helmet security middleware with custom configuration
+// This sets various HTTP headers to help protect the app from well-known web vulnerabilities
+app.use(helmet({
+  // Content Security Policy - Define where content can be loaded from
+  contentSecurityPolicy: {
+    directives: {
+      // By default, allow resources from the same origin
+      // This is a fallback for any directive not explicitly set
+      defaultSrc: ["'self'"],
+      
+      // Style sources - Allow stylesheets from self and CDNs needed for Bootstrap, AOS, and Bootstrap Icons
+      styleSrc: [
+        "'self'", 
+        "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap and dynamic styling)
+        "https://fonts.googleapis.com",  // Google Fonts
+        "https://cdn.jsdelivr.net",  // Bootstrap, AOS
+        "https://unpkg.com",  // Bootstrap Icons
+        "https://cdnjs.cloudflare.com"  // Alternative CDN
+      ],
+      
+      // Style element sources - Specifically for <style> elements and @import
+      styleSrcElem: [
+        "'self'", 
+        "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap)
+        "https://fonts.googleapis.com",  // Google Fonts
+        "https://cdn.jsdelivr.net",  // Bootstrap, AOS
+        "https://unpkg.com",  // Bootstrap Icons
+        "https://cdnjs.cloudflare.com"  // Alternative CDN
+      ],
+      
+      // Script sources - Allow scripts from self and trusted CDNs
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'",  // Allow inline scripts (needed for EJS templates and event handlers)
+        "'unsafe-eval'",    // Allow eval() for certain client-side templating (needed by some libraries)
+        "https://cdn.jsdelivr.net",  // Bootstrap, AOS
+        "https://unpkg.com",  // AOS
+        "https://code.jquery.com",  // jQuery
+        "https://cdnjs.cloudflare.com",  // Alternative CDN
+        "https://checkout.razorpay.com"  // For payment processing
+      ],
+      
+      // Script attribute sources - Specifically for inline event handlers (onclick, onsubmit, etc.)
+      scriptSrcAttr: [
+        "'self'",
+        "'unsafe-inline'"  // Allow inline event handlers (onclick, onsubmit, etc.)
+      ],
+      
+      // Allow connections to self and specific APIs
+      connectSrc: [
+        "'self'",
+        "https://api.cloudinary.com",  // For Cloudinary API
+        "https://checkout.razorpay.com",  // For payment processing
+        "https://cdn.jsdelivr.net",  // For dynamic resource loading
+        "https://unpkg.com",  // For dynamic resource loading
+        "https://code.jquery.com"  // For jQuery if needed
+      ],
+      
+      // Allow images from self, data URIs, and CDNs
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "https://res.cloudinary.com",  // For Cloudinary images
+        "https://images.unsplash.com",  // For Unsplash images
+        "https://cdn.jsdelivr.net",  // For images loaded from CDN
+        "https://unpkg.com",  // For images loaded from unpkg
+        "https://cdnjs.cloudflare.com",  // For images loaded from cdnjs
+        "https://*.cloudinary.com",  // Wildcard for Cloudinary subdomains
+        "https://ui-avatars.com"  // For UI avatar generation service
+      ],
+      
+      // Allow fonts from self and CDNs
+      fontSrc: [
+        "'self'", 
+        "https://fonts.gstatic.com",  // Google Fonts
+        "https://cdn.jsdelivr.net",  // Bootstrap Icons fonts
+        "https://unpkg.com",  // Bootstrap Icons fonts
+        "https://cdnjs.cloudflare.com"  // Alternative CDN
+      ],
+      
+      // Allow frames from self and specific sources
+      frameSrc: [
+        "'self'",
+        "https://www.google.com",  // For reCAPTCHA
+        "https://checkout.razorpay.com"  // For payment processing
+      ],
+      
+      // Allow media from self and Cloudinary
+      mediaSrc: [
+        "'self'",
+        "https://res.cloudinary.com",  // For Cloudinary videos/audio
+        "https://*.cloudinary.com"  // Wildcard for Cloudinary subdomains
+      ],
+      
+      // Object sources from self
+      objectSrc: ["'none'"],
+      
+      // Upgrade insecure requests
+      upgradeInsecureRequests: [],
+    },
+  },
+  // DNS Prefetch Control - Disable DNS prefetching to improve privacy
+  dnsPrefetchControl: {
+    allow: false,
+  },
+  // Frameguard - Prevent clickjacking
+  frameguard: {
+    action: 'deny',
+  },
+  // Hide Powered-By - Remove the X-Powered-By header
+  hidePoweredBy: true,
+  // HTTP Strict Transport Security (HSTS) - Enforce HTTPS
+  hsts: {
+    maxAge: 31536000,  // One year in seconds
+    includeSubDomains: true,
+    preload: true,
+  },
+  // Internet Explorer compatibility - Force IE to use latest rendering engine
+  ieNoOpen: true,
+  // No Sniff - Prevent MIME-type sniffing
+  noSniff: true,
+  // Referrer Policy - Control how much referrer information is sent
+  referrerPolicy: {
+    policy: 'strict-origin-when-cross-origin',
+  },
+  // Cross-Origin Embedder Policy
+  crossOriginEmbedderPolicy: false,  // Disabled to allow external resources
+  // Cross-Origin Opener Policy
+  crossOriginOpenerPolicy: {
+    policy: 'same-origin',
+  },
+  // Cross-Origin Resource Policy
+  crossOriginResourcePolicy: {
+    policy: 'cross-origin',
+  },
+  // Origin Agent Cluster
+  originAgentCluster: false,
+  // Permissions Policy - Control browser features
+  permissionsPolicy: {
+    features: {
+      fullscreen: ["'self'"],
+      geolocation: ["'none'"],
+      microphone: ["'none'"],
+      camera: ["'none'"],
+      payment: ["'self'"],  // Allow payment API for Razorpay
+    },
+  },
+}));
+
+// Custom security headers not covered by Helmet
+app.use((req, res, next) => {
+  // X-Content-Type-Options - Prevent MIME-type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // X-Frame-Options - Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // X-XSS-Protection - Enable XSS filtering (legacy browsers)
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer-Policy - Control how much referrer information is sent
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Permissions-Policy - Control browser features
+  res.setHeader('Permissions-Policy', "fullscreen=(self), geolocation=(), microphone=(), camera=(), payment=(self)");
+  
+  // Expect-CT - Certificate Transparency enforcement
+  res.setHeader('Expect-CT', 'max-age=86400, enforce');
+  
+  next();
+});
 
 // Trust proxy for secure cookies in production environments
 // This is important for hosting platforms like Render, Heroku, etc.
