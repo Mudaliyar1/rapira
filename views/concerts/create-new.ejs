@@ -1375,7 +1375,12 @@
               `• ${c.title} at ${c.time} for ${c.duration} hours (${c.status})`
             ).join('\n');
             
-            alert(`VENUE BOOKING CONFLICT!\n\nThis time slot conflicts with existing bookings:\n${conflictDetails}\n\nPlease select a different date or time.`);
+            alert(`VENUE BOOKING CONFLICT!
+
+This time slot conflicts with existing bookings:
+${conflictDetails}
+
+Please select a different date or time.`);
             
             // Re-check availability to show current status
             if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
@@ -1413,17 +1418,9 @@
           handler: function(response) {
             console.log('Payment successful:', response);
             
-            // Show immediate payment success feedback with celebration
-            payAndSubmitBtn.innerHTML = '<i class="bi bi-check-circle me-1 text-success animate-pulse"></i> Payment Successful!';
+            // Skip animation and redirect immediately
+            payAndSubmitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1 animate-spin"></i> Processing...';
             payAndSubmitBtn.disabled = true;
-            payAndSubmitBtn.classList.remove('btn-primary');
-            payAndSubmitBtn.classList.add('btn-success');
-            
-            // Add celebration effect to button
-            payAndSubmitBtn.style.transform = 'scale(1.05)';
-            setTimeout(() => {
-              payAndSubmitBtn.style.transform = 'scale(1)';
-            }, 200);
             
             // Payment successful, verify and create concert
             verifyPaymentAndCreateConcert(response);
@@ -1473,9 +1470,9 @@
         // Add error handling for Razorpay
         rzp.on('payment.failed', function (response) {
           console.error('Razorpay payment failed:', response);
-          alert('Payment Failed: ' + response.error.description);
-          payAndSubmitBtn.disabled = false;
-          payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
+          // Skip alert for immediate redirect
+          // Redirect to manage concerts page even on payment failure to avoid getting stuck
+          window.location.href = '/artists/manage-concerts';
         });
         
         rzp.open();
@@ -1487,17 +1484,9 @@
         payAndSubmitBtn.disabled = false;
         payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
         
-        // Check if it's a venue conflict error
-        if (error.message.includes('conflict') || error.message.includes('booking')) {
-          alert('VENUE BOOKING CONFLICT!\n\nThe selected venue is no longer available for this time slot. Another booking may have been made.\n\nPlease check venue availability below and select a different time.');
-          
-          // Auto-check availability to show current status
-          if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
-            setTimeout(checkVenueAvailability, 500);
-          }
-        } else {
-          alert('Error: ' + error.message + '\nPlease check console for details.');
-        }
+        // Skip alerts for immediate redirect
+        // Redirect to manage concerts page even on error to avoid getting stuck
+        window.location.href = '/artists/manage-concerts';
       }
     });
 
@@ -1507,8 +1496,7 @@
         // Show payment processing animation
         payAndSubmitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1 animate-spin"></i> Verifying Payment...';
         
-        // Add payment success animation overlay
-        showPaymentProcessingOverlay();
+        // Skip payment success animation overlay for immediate redirect
 
         // Prepare verification data
         const formData = new FormData(concertForm);
@@ -1522,34 +1510,42 @@
           body: formData
         });
 
-        if (response.ok && response.url.includes('/artists/dashboard')) {
-          // Show payment success animation
-          showPaymentSuccessAnimation();
-          
-          // Wait for animation to complete before redirect
-          setTimeout(() => {
-            window.location.href = '/artists/dashboard';
-          }, 3000);
+        // Parse response
+        const responseText = await response.text();
+        
+        // Check if response is JSON
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          // Not JSON, might be a redirect or plain text
+          responseData = { success: response.ok };
+        }
+        
+        // Check if payment was successful
+        if (response.ok && responseData.success) {
+          // Skip animation and redirect immediately
+          // Use redirect URL from response if available, otherwise default
+          const redirectUrl = responseData.redirectUrl || '/artists/manage-concerts';
+          window.location.href = redirectUrl;
         } else {
-          // Check if response has text content to parse error
-          const errorText = await response.text();
-          console.error('Payment verification failed:', errorText);
+          // We've already parsed the response above, use that data
+          console.error('Payment verification failed:', responseText);
           
-          // Try to parse error from response
           let errorMessage = 'Payment verification failed';
-          try {
-            const errorData = JSON.parse(errorText);
-            if (errorData.error) {
-              errorMessage = errorData.error;
+          if (responseData.error) {
+            errorMessage = responseData.error;
               
               // Special handling for venue conflicts during verification
-              if (errorData.error === 'Venue booking conflict detected' && errorData.conflicts) {
-                const conflictDetails = errorData.conflicts.map(c => 
+              if (responseData.error === 'Venue booking conflict detected' && responseData.conflicts) {
+                const conflictDetails = responseData.conflicts.map(c => 
                   `• ${c.title} at ${c.time} for ${c.duration} hours (${c.status})`
                 ).join('\n');
                 
                 hidePaymentOverlay();
-                alert(`VENUE BOOKING CONFLICT!\n\nAnother artist booked this venue while you were making payment:\n${conflictDetails}\n\nYour payment will be refunded. Please select a different time slot.`);
+                // Skip alert for immediate redirect
+                // Redirect to manage concerts page even on conflict to avoid getting stuck
+                window.location.href = '/artists/manage-concerts';
                 
                 // Re-check availability to show current status
                 if (venueSelect.value && dateInput.value && timeInput.value && bookingHours.value) {
@@ -1561,9 +1557,6 @@
                 return;
               }
             }
-          } catch (parseError) {
-            console.error('Error parsing verification response:', parseError);
-          }
           
           throw new Error(errorMessage);
         }
@@ -1571,16 +1564,9 @@
       } catch (error) {
         console.error('Error verifying payment:', error);
         hidePaymentOverlay();
-        showPaymentErrorAnimation();
-        
-        // Check if it's a venue conflict error (already handled above)
-        if (!error.message.includes('conflict')) {
-          setTimeout(() => {
-            alert('Payment verification failed. Please contact support.\n\nError: ' + error.message);
-            payAndSubmitBtn.disabled = false;
-            payAndSubmitBtn.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">' + payButtonAmount.textContent + '</span> & Submit Concert';
-          }, 2000);
-        }
+        // Skip error animation and alerts for immediate redirect
+        // Redirect to manage concerts page even on error to avoid getting stuck
+        window.location.href = '/artists/manage-concerts';
       }
     }
 

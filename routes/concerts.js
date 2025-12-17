@@ -444,6 +444,8 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
       orderId: orderResult.data.id,
       receipt: receipt
     };
+    
+    console.log('Stored pending concert in session:', req.session.pendingConcert);
 
     res.json({
       success: true,
@@ -516,6 +518,10 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+    console.log('Checking for pending concert in session...');
+    console.log('Session data:', req.session);
+    console.log('Pending concert in session:', req.session.pendingConcert);
+    
     if (!req.session.pendingConcert) {
       req.flash('error', 'No pending concert found');
       return res.redirect('/concerts/create');
@@ -676,7 +682,9 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       }
     }
 
+    console.log('Saving new concert:', newConcert);
     await newConcert.save();
+    console.log('Concert saved successfully with ID:', newConcert._id);
 
     // Clear pending concert from session
     delete req.session.pendingConcert;
@@ -692,7 +700,18 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
     }
 
     req.flash('success', 'Payment successful! Your concert has been submitted for approval.');
-    res.redirect('/artists/dashboard?payment=success&venue_booking=true');
+    
+    // For AJAX requests, send JSON response instead of redirect
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.json({ 
+        success: true, 
+        message: 'Payment successful! Your concert has been submitted for approval.',
+        redirectUrl: '/artists/manage-concerts'
+      });
+    }
+    
+    // For regular form submissions, use redirect
+    res.redirect('/artists/manage-concerts');
 
   } catch (error) {
     console.error('Error verifying payment:', error);
