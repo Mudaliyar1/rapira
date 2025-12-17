@@ -216,15 +216,21 @@ router.post('/api/tickets/validate/:token/:id', async (req, res) => {
     
     // If not found by ticketNumber, try by _id
     if (!ticket) {
-      ticket = await Ticket.findById(ticketIdentifier)
-        .populate({
-          path: 'concert',
-          select: 'title date'
-        })
-        .populate({
-          path: 'user',
-          select: 'name'
-        });
+      try {
+        ticket = await Ticket.findById(ticketIdentifier)
+          .populate({
+            path: 'concert',
+            select: 'title date'
+          })
+          .populate({
+            path: 'user',
+            select: 'name'
+          });
+      } catch (idError) {
+        // If findById fails (e.g., with CastError), it's likely because ticketIdentifier 
+        // is not a valid ObjectId, which is fine since we're checking for ticketNumber first
+        console.log('Ticket ID is not a valid ObjectId, continuing with ticketNumber search');
+      }
     }
     
     if (!ticket) {
@@ -287,7 +293,19 @@ router.post('/api/tickets/validate/:token/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Ticket validation error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    
+    // Handle CastError specifically
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        message: 'Invalid ticket identifier format',
+        error: 'Please provide a valid ticket number or ID'
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message 
+    });
   }
 });
 
