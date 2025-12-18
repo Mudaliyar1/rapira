@@ -386,6 +386,12 @@
                     <% } %>
                     <% if (venueFinancials) { %>
                     <tr>
+                      <td><strong>Total Expected Payment:</strong></td>
+                      <td class="text-info"><strong>₹<%= venueFinancials.totalExpectedPayment.toFixed(2) %></strong></td>
+                    </tr>
+                    <% } %>
+                    <% if (venueFinancials) { %>
+                    <tr>
                       <td><strong>Paid by Artist (Admin Cut):</strong></td>
                       <td>₹<%= venueFinancials.commissionPaid.toFixed(2) %></td>
                     </tr>

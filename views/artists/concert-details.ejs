@@ -322,6 +322,10 @@
                 <div class="small mb-1">Total Venue Cost</div>
                 <h3 class="mb-0">₹<%= venueFinancials.totalCost.toLocaleString('en-IN') %></h3>
               </div>
+              <div class="mb-3">
+                <div class="small mb-1">Total Expected Payment</div>
+                <h3 class="mb-0">₹<%= venueFinancials.totalExpectedPayment.toLocaleString('en-IN') %></h3>
+              </div>
             </div>
 
             <div class="info-row">
@@ -370,11 +374,10 @@
             <div class="alert alert-info mt-3 mb-0">
               <small>
                 <i class="bi bi-info-circle me-1"></i>
-                Commission paid: ₹<%= venueFinancials.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
-                <% if (venueFinancials.artistPaidDirect > 0) { %>
-                  + Additional payment: ₹<%= venueFinancials.artistPaidDirect.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> 
-                <% } %>
-                = Total Paid: ₹<%= venueFinancials.totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                Venue Cost: ₹<%= venueFinancials.totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                + Commission: ₹<%= venueFinancials.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                = Total Expected: ₹<%= venueFinancials.totalExpectedPayment.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                | Paid: ₹<%= venueFinancials.totalPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
                 <% if (venueFinancials.remainingBalance > 0) { %>
                   | Still owe: ₹<%= venueFinancials.remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
                 <% } else { %>

@@ -885,8 +885,11 @@ router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
       // Total paid = commission already collected + direct payment
       const totalPaid = commissionAmount + artistPaidDirect;
       
-      // Remaining balance = total cost - total paid
-      const remainingBalance = Math.max(totalCost - totalPaid, 0);
+      // Total expected payment = venue cost + commission
+      const totalExpectedPayment = totalCost + commissionAmount;
+      
+      // Remaining balance = total expected payment - total paid
+      const remainingBalance = Math.max(totalExpectedPayment - totalPaid, 0);
       
       venueFinancials = {
         totalCost,
@@ -894,6 +897,7 @@ router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
         commissionAmount,
         artistPaidDirect,
         totalPaid,
+        totalExpectedPayment,
         remainingBalance,
         capacity: concert.venue.capacity || 0,
         allocatedSeats: concert.maxTickets || 0,

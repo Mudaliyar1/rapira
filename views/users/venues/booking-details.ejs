@@ -285,7 +285,7 @@
               <% } %>
 
               <% 
-                // Calculate commission amount (total cost * commission percentage / 100)
+                // Calculate financial details
                 let commissionPercentage = booking.venueBooking.adminCommission.percentage || 0;
                 let totalCost = booking.venueBooking.totalVenueCost || 0;
                 let totalCommissionAmount = (totalCost * commissionPercentage) / 100;
@@ -302,14 +302,18 @@
                 // Total paid by artist (commission + direct payment)
                 let totalArtistPaid = commissionPaid + artistPaidDirect;
                 
-                // Remaining is the total cost minus total paid
-                let remainingBalance = Math.max(totalCost - totalArtistPaid, 0);
+                // Calculate total expected payment (venue cost + commission)
+                let totalExpectedPayment = totalCost + commissionPaid;
+                
+                // Remaining is the total expected payment minus total paid
+                let remainingBalance = Math.max(totalExpectedPayment - totalArtistPaid, 0);
               %>
 
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="text-muted small">Total Commission Amount</label>
                   <h6 class="fw-bold text-primary">₹<%= commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h6>
+                  <small class="text-muted">(Separate from venue cost)</small>
                 </div>
                 <div class="col-md-6">
                   <label class="text-muted small">Commission Percentage Calculation</label>
@@ -347,12 +351,12 @@
                 <% if (remainingBalance > 0) { %>
                   <div class="alert alert-warning small mb-0">
                     <i class="bi bi-exclamation-circle me-1"></i>
-                    <strong>Partial Paid:</strong> ₹<%= remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> remaining.
+                    <strong>Partial Paid:</strong> Total expected payment is ₹<%= totalExpectedPayment.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>. Paid ₹<%= totalArtistPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>, remaining ₹<%= remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>.
                   </div>
                 <% } else { %>
                   <div class="alert alert-success small mb-0">
                     <i class="bi bi-check-circle me-1"></i>
-                    <strong>Full Paid:</strong> All payments have been received.
+                    <strong>Full Paid:</strong> Total expected payment of ₹<%= totalExpectedPayment.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> has been fully paid.
                   </div>
                 <% } %>
               </div>

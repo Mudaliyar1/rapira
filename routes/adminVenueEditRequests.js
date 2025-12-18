@@ -176,7 +176,22 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     // Apply other changes
     Object.keys(updates).forEach(key => {
       if (key !== 'images') {
-        venue[key] = updates[key];
+        // Handle venueType validation - convert invalid types to closest valid one
+        if (key === 'venueType') {
+          const validTypes = ['Indoor Hall', 'Outdoor Venue', 'Auditorium', 'Stadium', 'Club', 'Restaurant', 'Hotel', 'Community Center', 'Other'];
+          if (!validTypes.includes(updates[key])) {
+            // Map common invalid types to valid ones
+            if (updates[key] === 'Concert Hall') {
+              venue[key] = 'Auditorium'; // Closest match for Concert Hall
+            } else {
+              venue[key] = 'Other'; // Default fallback
+            }
+          } else {
+            venue[key] = updates[key];
+          }
+        } else {
+          venue[key] = updates[key];
+        }
       }
     });
 

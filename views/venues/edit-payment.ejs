@@ -39,6 +39,14 @@
     <div class="col-md-3 col-6">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-body">
+          <p class="text-muted small mb-1">Total Expected Payment</p>
+          <h4 class="mb-0 text-info">₹<%= bookingView.totalExpectedPayment.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
           <p class="text-muted small mb-1">Artist Paid (total)</p>
           <h4 class="mb-0 text-success">₹<%= bookingView.artistPaidTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h4>
         </div>
@@ -74,7 +82,7 @@
             <input type="hidden" name="returnTo" value="<%= returnTo %>">
             <input type="number" step="0.01" min="0" max="<%= bookingView.pending %>" class="form-control" id="newAmount" name="amount" value="0" aria-describedby="paidHelp">
           </div>
-          <div class="form-text" id="paidHelp">Commission already collected: ₹<%= bookingView.commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>. You can enter any amount from ₹0 to ₹<%= bookingView.pending.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+          <div class="form-text" id="paidHelp">Total expected payment: ₹<%= bookingView.totalExpectedPayment.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> (Venue cost + commission). Already paid: ₹<%= bookingView.artistPaidTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>. You can enter any amount from ₹0 to ₹<%= bookingView.pending.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
         </div>
 
       <div id="statusBox" class="alert d-none" role="alert"></div>

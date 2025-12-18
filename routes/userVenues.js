@@ -463,11 +463,35 @@ router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
       return res.redirect(`/users/venues/${venueId}/bookings`);
     }
 
+    // Calculate financial details
+    const totalCost = booking.venueBooking?.totalVenueCost || 0;
+    const commissionPercentage = booking.venueBooking?.adminCommission?.percentage || 0;
+    const storedCommission = booking.venueBooking?.adminCommission?.advanceAmount;
+    const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
+      ? storedCommission
+      : (booking.venueBooking?.isPaid && commissionPercentage > 0
+          ? (totalCost * commissionPercentage) / 100
+          : 0);
+    const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
+    const totalArtistPaid = artistPaidDirect + commissionPaid;
+    // Calculate total expected payment (venue cost + commission)
+    const totalExpectedPayment = totalCost + commissionPaid;
+    const remainingBalance = Math.max(totalExpectedPayment - totalArtistPaid, 0);
+
     res.render('users/venues/booking-details', {
       title: `Booking Details - ${venue.name}`,
       venue,
       booking,
-      user: req.session.user
+      user: req.session.user,
+      financials: {
+        totalCost,
+        commissionPercentage,
+        commissionPaid,
+        artistPaidDirect,
+        totalArtistPaid,
+        totalExpectedPayment,
+        remainingBalance
+      }
     });
   } catch (error) {
     console.error('Error loading booking details:', error);
@@ -1157,7 +1181,9 @@ router.get('/bookings/:id/edit-payment', isLoggedIn, async (req, res) => {
 
     const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
     const artistPaidTotal = artistPaidDirect + commissionPaid;
-    const pending = Math.max(totalCost - artistPaidTotal, 0);
+    // Calculate total expected payment (venue cost + commission)
+    const totalExpectedPayment = totalCost + commissionPaid;
+    const pending = Math.max(totalExpectedPayment - artistPaidTotal, 0);
 
     const returnTo = req.query.returnTo || `/users/venues/${booking.venue._id}/revenue-analytics`;
 
@@ -1173,6 +1199,7 @@ router.get('/bookings/:id/edit-payment', isLoggedIn, async (req, res) => {
         commissionPaid,
         artistPaidDirect,
         artistPaidTotal,
+        totalExpectedPayment,
         pending
       },
       venue: booking.venue,

@@ -376,8 +376,22 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
     const totalVenueCost = hourlyRate; // Use the rate directly - it's already the full price
 
     // Calculate commission (artist pays this based on venue cost and commission percentage)
-    const adminCommissionPercentage = parseFloat(selectedVenue.pricing?.adminCommission?.percentage) || 0;
-    const validCommissionPercentage = isNaN(adminCommissionPercentage) ? 0 : adminCommissionPercentage;
+    // First get website settings to determine commission logic
+    const websiteSettings = await WebsiteSettings.getSettings();
+    const useUserCommission = websiteSettings.venueSettings?.allowUserCommissionEdit || false;
+    const defaultAdminCommission = parseFloat(websiteSettings.venueSettings?.defaultCommissionPercentage) || 10;
+    
+    let validCommissionPercentage = defaultAdminCommission; // Default to admin commission
+    
+    // If user commission is allowed, use venue-specific commission data
+    if (useUserCommission) {
+      // Use venue-specific commission percentage
+      const adminCommissionPercentage = parseFloat(selectedVenue.pricing?.adminCommission?.percentage) || 0;
+      validCommissionPercentage = isNaN(adminCommissionPercentage) ? 0 : adminCommissionPercentage;
+    } else {
+      // Use admin-set default commission percentage
+      validCommissionPercentage = defaultAdminCommission;
+    }
 
     // Artist pays commission amount based on venue cost and commission percentage
     const commissionAmount = (totalVenueCost * validCommissionPercentage) / 100;

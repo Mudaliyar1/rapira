@@ -532,7 +532,7 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
     // Venue filter (after population)
     if (venue && venue !== 'all') {
       realConcerts = realConcerts.filter(concert =>
-        (concert.venue || '').toLowerCase().includes(venue.toLowerCase())
+        (concert.venue ? (typeof concert.venue === 'string' ? concert.venue : (concert.venue.name || concert.venue.toString())) : '').toLowerCase().includes(venue.toLowerCase())
       );
     }
 
@@ -550,26 +550,28 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
     });
 
     // Get unique venues for filter dropdown
-    const allVenues = await Concert.find().distinct('venue');
-    const venues = allVenues
-      .filter(v => v)
-      .map(v => {
+    // First get all concerts with populated venues
+    const concertsWithVenues = await Concert.find().populate('venue');
+    const venues = [...new Set(concertsWithVenues
+      .filter(c => c.venue)
+      .map(c => {
         // Handle both string venues and populated venue objects
-        if (typeof v === 'string') {
-          return v.trim();
-        } else if (v && typeof v === 'object' && v.name) {
-          return v.name.trim();
+        if (typeof c.venue === 'string') {
+          return c.venue.trim();
+        } else if (c.venue && typeof c.venue === 'object' && c.venue.name) {
+          return c.venue.name.trim();
         }
         return null;
       })
       .filter(v => v && v.length > 0)
-      .sort();
+    )].sort();
 
     res.render('admin/concerts-new', {
       layout: 'admin',
       currentPath: '/admin/concerts',
       title: 'Manage Concerts',
       concerts: concertResult.data,
+      venues,
       searchParams: {
         search: search || '',
         status: status || 'all',
@@ -644,7 +646,7 @@ router.get('/concerts/export', isLoggedIn, isAdmin, async (req, res) => {
       const searchTerm = search.trim().toLowerCase();
       concerts = concerts.filter(concert => {
         const title = (concert.title || '').toLowerCase();
-        const venue = (concert.venue || '').toLowerCase();
+        const venue = (concert.venue ? (typeof concert.venue === 'string' ? concert.venue : (concert.venue.name || concert.venue.toString())) : '').toLowerCase();
         const city = (concert.city || '').toLowerCase();
         const artistName = (concert.artist && concert.artist.user ? concert.artist.user.name : '').toLowerCase();
 
@@ -658,7 +660,7 @@ router.get('/concerts/export', isLoggedIn, isAdmin, async (req, res) => {
     // Venue filter
     if (venue && venue !== 'all') {
       concerts = concerts.filter(concert =>
-        (concert.venue || '').toLowerCase().includes(venue.toLowerCase())
+        (concert.venue ? (typeof concert.venue === 'string' ? concert.venue : (concert.venue.name || concert.venue.toString())) : '').toLowerCase().includes(venue.toLowerCase())
       );
     }
 
@@ -744,11 +746,13 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
           : 0);
     const artistPaidDirect = concert.venueBooking?.amountPaidByArtist || 0;
     const totalArtistPaid = commissionPaid + artistPaidDirect;
-    const remainingBalance = Math.max(totalCost - totalArtistPaid, 0);
+    // Calculate total expected payment (venue cost + commission)
+    const totalExpectedPayment = totalCost + commissionPaid;
+    const remainingBalance = Math.max(totalExpectedPayment - totalArtistPaid, 0);
 
     let paymentStatus = 'Unpaid';
     let paymentBadge = 'bg-secondary';
-    if (totalArtistPaid >= totalCost && totalCost > 0) {
+    if (totalArtistPaid >= totalExpectedPayment && totalExpectedPayment > 0) {
       paymentStatus = 'Full Paid';
       paymentBadge = 'bg-success';
     } else if (totalArtistPaid > 0) {
@@ -770,6 +774,7 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
         commissionPaid,
         artistPaidDirect,
         totalArtistPaid,
+        totalExpectedPayment,
         remainingBalance,
         paymentStatus,
         paymentBadge
@@ -826,7 +831,7 @@ router.get('/concerts/pending', isLoggedIn, isAdmin, async (req, res) => {
       const searchTerm = search.trim().toLowerCase();
       pendingConcerts = pendingConcerts.filter(concert => {
         const title = (concert.title || '').toLowerCase();
-        const venue = (concert.venue || '').toLowerCase();
+        const venue = (concert.venue ? (typeof concert.venue === 'string' ? concert.venue : (concert.venue.name || concert.venue.toString())) : '').toLowerCase();
         const city = (concert.city || '').toLowerCase();
         const artistName = (concert.artist && concert.artist.user ? concert.artist.user.name : '').toLowerCase();
         const artistEmail = (concert.artist && concert.artist.user ? concert.artist.user.email : '').toLowerCase();
