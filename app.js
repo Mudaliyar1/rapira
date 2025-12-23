@@ -842,6 +842,7 @@ app.use((err, req, res, next) => {
 
 // Import notification initializer
 const { initializeNotifications } = require('./utils/notificationInitializer');
+const maintenanceService = require('./utils/maintenanceService');
 
 // Start server
 const PORT = process.env.PORT || 3000;
@@ -880,6 +881,13 @@ const server = app.listen(PORT, async () => {
       initializeCronJobs();
     } catch (error) {
       console.error('Error initializing cron jobs:', error);
+    }
+    
+    // Start maintenance service
+    try {
+      maintenanceService.startPeriodicCheck();
+    } catch (error) {
+      console.error('Error starting maintenance service:', error);
     }
   }, 5000); // Wait 5 seconds after server start to initialize notifications
 });

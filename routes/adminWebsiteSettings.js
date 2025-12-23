@@ -44,6 +44,29 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     const settings = await WebsiteSettings.getSettings();
     const menuConfiguration = await getMenuConfiguration();
     const allRoutes = await getAllRoutes();
+    
+    // Helper function to format duration in human-readable format
+    const formatDuration = (minutes) => {
+      if (minutes < 60) {
+        return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      } else if (minutes < 1440) {  // Less than a day
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        let result = `${hours} hour${hours !== 1 ? 's' : ''}`;
+        if (remainingMinutes > 0) {
+          result += ` ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`;
+        }
+        return result;
+      } else {
+        const days = Math.floor(minutes / 1440);
+        const remainingHours = Math.floor((minutes % 1440) / 60);
+        let result = `${days} day${days !== 1 ? 's' : ''}`;
+        if (remainingHours > 0) {
+          result += ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`;
+        }
+        return result;
+      }
+    };
 
     // Initialize menu items if they don't exist
     if (!settings.menuSettings.discoverMenu.items) settings.menuSettings.discoverMenu.items = {};
@@ -86,6 +109,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       settings,
       menuConfiguration,
       allRoutes,
+      formatDuration,
       success: req.flash('success'),
       error: req.flash('error')
     });
@@ -225,11 +249,29 @@ router.post('/menu', isLoggedIn, isAdmin, async (req, res) => {
 router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
-    const { siteName, siteDescription, maintenanceMode } = req.body;
+    const { siteName, siteDescription, maintenanceMode, maintenanceReason, maintenanceDuration, maintenanceAutoStart } = req.body;
 
     settings.siteSettings.siteName = siteName || 'Rapira - Indian Rap Music Platform';
     settings.siteSettings.siteDescription = siteDescription || 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.';
-    settings.siteSettings.maintenanceMode = maintenanceMode === 'on';
+    
+    // Handle maintenance mode
+    if (maintenanceMode === 'on') {
+      // Enable maintenance mode
+      settings.siteSettings.maintenanceMode = true;
+      settings.siteSettings.maintenanceReason = maintenanceReason || 'Scheduled maintenance in progress';
+      settings.siteSettings.maintenanceStartTime = new Date();
+      
+      // Validate maintenance duration (1 minute to 1 day)
+      let duration = parseInt(maintenanceDuration) || 60;
+      duration = Math.max(1, Math.min(1440, duration)); // Clamp between 1 minute and 1440 minutes (1 day)
+      settings.siteSettings.maintenanceDuration = duration;
+      
+      settings.siteSettings.maintenanceAutoStart = maintenanceAutoStart === 'on';
+    } else {
+      // Disable maintenance mode
+      settings.siteSettings.maintenanceMode = false;
+      settings.siteSettings.maintenanceStartTime = null;
+    }
 
     settings.lastUpdatedBy = req.session.user.id;
     await settings.save();

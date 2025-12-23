@@ -18,46 +18,151 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      position: relative;
     }
+    
+    /* Particle background effect */
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      animation: float 15s infinite linear;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    
     .maintenance-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      border-radius: 20px;
+      border-radius: 15px;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 3rem;
+      padding: 2rem;
       text-align: center;
       color: white;
-      max-width: 500px;
+      max-width: 400px;
       width: 90%;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: cardPulse 3s infinite;
     }
+    
+    @keyframes cardPulse {
+      0% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
+      100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+    }
+    
     .maintenance-icon {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
-      color: #ffd700;
-    }
-    .maintenance-title {
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 3rem;
       margin-bottom: 1rem;
+      color: #ffd700;
+      animation: glow 2s infinite alternate;
     }
+    
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px #fff, 0 0 10px #ffd700, 0 0 15px #ffd700, 0 0 20px #ffd700;
+      }
+      to {
+        text-shadow: 0 0 10px #fff, 0 0 20px #ffd700, 0 0 30px #ffd700, 0 0 40px #ffd700;
+      }
+    }
+    
+    .maintenance-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      animation: textGlow 3s infinite alternate;
+    }
+    
+    @keyframes textGlow {
+      from {
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      }
+      to {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+      }
+    }
+    
     .maintenance-text {
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
       opacity: 0.9;
     }
+    
+    .server-issues {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: #ffd700;
+    }
+    
+    .expected-completion {
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+    
     .admin-login-btn {
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
-      padding: 0.75rem 1.5rem;
+      padding: 0.5rem 1rem;
       border-radius: 50px;
       text-decoration: none;
       transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      font-size: 0.9rem;
     }
+    
+    .admin-login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .admin-login-btn:hover::before {
+      left: 100%;
+    }
+    
     .admin-login-btn:hover {
       background: rgba(255, 255, 255, 0.3);
       color: white;
       transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
 
     /* Admin Login Modal Styles */
@@ -73,23 +178,37 @@
       justify-content: center;
       z-index: 1000;
       backdrop-filter: blur(5px);
+      animation: modalAppear 0.3s ease-out;
+    }
+    
+    @keyframes modalAppear {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     .admin-login-content {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(15px);
-      border-radius: 20px;
+      border-radius: 15px;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 2rem;
+      padding: 1.5rem;
       width: 90%;
-      max-width: 400px;
+      max-width: 350px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transform: scale(1);
+      animation: modalContent 0.4s ease-out;
+    }
+    
+    @keyframes modalContent {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .admin-login-content .form-control {
       background: rgba(255, 255, 255, 0.1) !important;
       border: 1px solid rgba(255, 255, 255, 0.3) !important;
       color: white !important;
+      font-size: 0.9rem;
     }
 
     .admin-login-content .form-control:focus {
@@ -100,20 +219,94 @@
 
     .admin-login-content .form-control::placeholder {
       color: rgba(255, 255, 255, 0.7) !important;
+      font-size: 0.8rem;
     }
-    .pulse {
-      animation: pulse 2s infinite;
+    
+    /* Countdown Timer Styles */
+    .countdown-container {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      display: none;
+      animation: fadeIn 0.5s ease-in;
     }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .countdown-timer {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+    
+    .countdown-label {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+    
+    .progress-container {
+      margin-top: 0.5rem;
+    }
+    
+    .progress {
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.5s ease;
+      position: relative;
+    }
+    
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.1) 75%,
+        transparent 75%
+      );
+      background-size: 10px 10px;
+      animation: progressAnimation 1s linear infinite;
+      opacity: 0.3;
+    }
+    
+    @keyframes progressAnimation {
+      0% { background-position: 0 0; }
+      100% { background-position: 10px 10px; }
+    }
+    
+    .estimated-time {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
 <body>
+  <!-- Particle background -->
+  <div class="particles" id="particles"></div>
+  
   <div class="maintenance-card">
-    <div class="maintenance-icon pulse">
+    <div class="maintenance-icon">
       <i class="bi bi-tools"></i>
     </div>
     <h1 class="maintenance-title">Under Maintenance</h1>
@@ -121,42 +314,64 @@
       <strong><%= siteName %></strong> is currently performing scheduled maintenance to improve your experience.
       We'll be back online shortly!
     </p>
-    <div class="mb-3">
+    
+    <!-- Display maintenance reason if available -->
+    <% if (typeof maintenanceReason !== 'undefined' && maintenanceReason) { %>
+    <div class="server-issues">
+      <i class="bi bi-exclamation-circle me-2"></i>
+      <%= maintenanceReason %>
+    </div>
+    <% } %>
+    
+    <div class="expected-completion">
       <i class="bi bi-clock me-2"></i>
       <span>Expected completion: Soon</span>
     </div>
-    <div class="mt-4">
+    
+    <!-- Countdown and progress bar container -->
+    <div id="countdownContainer" class="countdown-container">
+      <div class="countdown-label">Time remaining:</div>
+      <div id="countdownTimer" class="countdown-timer">00:00:00</div>
+      <div class="progress-container">
+        <div class="progress">
+          <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div id="progressText" class="estimated-time">Calculating...</div>
+    </div>
+    
+    <div class="mt-3">
       <button class="admin-login-btn" onclick="showAdminLogin()">
-        <i class="bi bi-shield-lock me-2"></i>Admin Access
+        <i class="bi bi-shield-lock me-1"></i>Admin Access
       </button>
     </div>
 
     <!-- Admin Login Modal -->
     <div class="admin-login-modal" id="adminLoginModal" style="display: none;">
       <div class="admin-login-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0 text-white">Admin Login</h5>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0 text-white">Admin Login</h6>
           <button class="btn btn-sm btn-outline-light" onclick="hideAdminLogin()">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
-        <div id="loginError" class="alert alert-danger" style="display: none;"></div>
+        <div id="loginError" class="alert alert-danger" style="display: none; font-size: 0.8rem;"></div>
 
         <form id="adminLoginForm">
-          <div class="mb-3">
-            <label class="form-label text-white">Email</label>
+          <div class="mb-2">
+            <label class="form-label text-white" style="font-size: 0.9rem;">Email</label>
             <input type="email" class="form-control bg-dark text-white border-secondary"
                    id="adminEmail" required placeholder="Enter admin email">
           </div>
-          <div class="mb-3">
-            <label class="form-label text-white">Password</label>
+          <div class="mb-2">
+            <label class="form-label text-white" style="font-size: 0.9rem;">Password</label>
             <input type="password" class="form-control bg-dark text-white border-secondary"
                    id="adminPassword" required placeholder="Enter password">
           </div>
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary" id="loginBtn">
-              <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            <button type="submit" class="btn btn-primary btn-sm" id="loginBtn">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login
             </button>
           </div>
         </form>
@@ -191,10 +406,13 @@
 
       const loginBtn = document.getElementById('loginBtn');
       const originalText = loginBtn.innerHTML;
+      const emailInput = document.getElementById('adminEmail');
+      const passwordInput = document.getElementById('adminPassword');
 
       // Show loading state
-      loginBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Logging in...';
+      loginBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Logging in...';
       loginBtn.disabled = true;
+      loginBtn.classList.add('disabled');
 
       try {
         const response = await fetch('/auth/maintenance-login', {
@@ -203,25 +421,64 @@
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: document.getElementById('adminEmail').value,
-            password: document.getElementById('adminPassword').value
+            email: emailInput.value,
+            password: passwordInput.value
           })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          // Redirect to admin dashboard
-          window.location.href = '/admin';
+          // Success animation
+          loginBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Success!';
+          loginBtn.classList.add('btn-success');
+          loginBtn.classList.remove('btn-primary');
+          
+          // Add success pulse animation
+          document.querySelector('.admin-login-content').classList.add('success-pulse');
+          
+          // Redirect to admin dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = '/admin';
+          }, 1000);
         } else {
+          // Error animation
+          document.querySelector('.admin-login-content').classList.add('error-shake');
+          
+          // Remove animation class after it completes
+          setTimeout(() => {
+            document.querySelector('.admin-login-content').classList.remove('error-shake');
+          }, 500);
+          
           showError(data.message || 'Invalid admin credentials');
+          
+          // Add shake animation to inputs
+          emailInput.classList.add('error-shake');
+          passwordInput.classList.add('error-shake');
+          
+          setTimeout(() => {
+            emailInput.classList.remove('error-shake');
+            passwordInput.classList.remove('error-shake');
+          }, 500);
         }
       } catch (error) {
+        // Error animation
+        document.querySelector('.admin-login-content').classList.add('error-shake');
+        
+        // Remove animation class after it completes
+        setTimeout(() => {
+          document.querySelector('.admin-login-content').classList.remove('error-shake');
+        }, 500);
+        
         showError('Login failed. Please try again.');
       } finally {
-        // Restore button state
-        loginBtn.innerHTML = originalText;
-        loginBtn.disabled = false;
+        // Restore button state after a delay to show success/error state
+        setTimeout(() => {
+          loginBtn.innerHTML = originalText;
+          loginBtn.disabled = false;
+          loginBtn.classList.remove('disabled', 'btn-success');
+          loginBtn.classList.add('btn-primary');
+        }, 1000);
       }
     });
 
@@ -238,6 +495,99 @@
         hideAdminLogin();
       }
     });
+    
+    // Create particle background
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 20;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random size
+        const size = Math.random() * 15 + 3;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        // Random position
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        
+        // Random animation delay and duration
+        const delay = Math.random() * 15;
+        const duration = 10 + Math.random() * 20;
+        particle.style.animationDelay = `${delay}s`;
+        particle.style.animationDuration = `${duration}s`;
+        
+        // Random color
+        const colors = ['#ffd700', '#ffffff', '#667eea', '#764ba2'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.backgroundColor = color;
+        particle.style.opacity = Math.random() * 0.3 + 0.1;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+    
+    // Initialize particles
+    createParticles();
+    
+    // Countdown and progress bar functionality
+    <% if (typeof maintenanceStartTime !== 'undefined' && maintenanceStartTime && typeof maintenanceDuration !== 'undefined' && maintenanceDuration) { %>
+      // Calculate start and end times
+      const startTime = new Date('<%= new Date(maintenanceStartTime).toISOString() %>');
+      const durationInMinutes = <%= maintenanceDuration %>;
+      const endTime = new Date(startTime.getTime() + (durationInMinutes * 60000));
+      const totalTime = durationInMinutes * 60000; // Total duration in milliseconds
+      
+      // Show the countdown container
+      document.getElementById('countdownContainer').style.display = 'block';
+      
+      // Update countdown and progress bar
+      function updateCountdown() {
+        const now = new Date();
+        const timeRemaining = endTime - now;
+        
+        if (timeRemaining <= 0) {
+          // Maintenance period has ended
+          document.getElementById('countdownTimer').textContent = '00:00:00';
+          document.getElementById('progressBar').style.width = '100%';
+          document.getElementById('progressText').textContent = 'Maintenance complete! Reloading...';
+          
+          // Reload the page after a short delay
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          
+          return;
+        }
+        
+        // Calculate hours, minutes, seconds
+        const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+        const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+        
+        // Format the time display
+        const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        document.getElementById('countdownTimer').textContent = formattedTime;
+        
+        // Calculate progress percentage
+        const elapsed = totalTime - timeRemaining;
+        const progressPercent = Math.min(100, Math.max(0, (elapsed / totalTime) * 100));
+        document.getElementById('progressBar').style.width = progressPercent + '%';
+        
+        // Update progress text
+        const remainingPercent = 100 - progressPercent;
+        document.getElementById('progressText').textContent = `${Math.round(remainingPercent)}% remaining`;
+      }
+      
+      // Initial update
+      updateCountdown();
+      
+      // Update every second
+      setInterval(updateCountdown, 1000);
+    <% } %>
   </script>
 </body>
 </html>

@@ -341,12 +341,68 @@
               <div class="mb-3">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" name="maintenanceMode" 
-                         <%= settings.siteSettings.maintenanceMode ? 'checked' : '' %>>
+                         <%= settings.siteSettings.maintenanceMode ? 'checked' : '' %> id="maintenanceMode">
                   <label class="form-check-label text-white">
                     Enable Maintenance Mode
                   </label>
-                  <small class="d-block text-muted">When enabled, only admins can access the site</small>
+                  <small class="d-block text-muted">When enabled, only admins and superAdmins can access the site</small>
                 </div>
+              </div>
+              
+              <div id="maintenanceSettings" class="border-start border-secondary ps-3 mt-3" style="display: <%= settings.siteSettings.maintenanceMode ? 'block' : 'none' %>;
+                  background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 15px;">
+                <h6 class="text-white mb-3">Maintenance Details</h6>
+                
+                <div class="mb-3">
+                  <label class="form-label text-white">Maintenance Reason</label>
+                  <input type="text" class="form-control bg-dark text-white border-secondary" 
+                         name="maintenanceReason" 
+                         value="<%= settings.siteSettings.maintenanceReason %>"
+                         placeholder="Enter reason for maintenance">
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label text-white">Maintenance Duration (minutes)</label>
+                      <input type="number" class="form-control bg-dark text-white border-secondary" 
+                             name="maintenanceDuration" 
+                             value="<%= settings.siteSettings.maintenanceDuration %>"
+                             min="1" max="1440" step="1" id="maintenanceDuration">
+                      <small class="text-muted">1-1440 minutes (1 day)</small>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label text-white">Duration Summary</label>
+                      <div class="form-control-plaintext text-white" id="durationSummary">
+                        <%= formatDuration(settings.siteSettings.maintenanceDuration) %>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3 mt-4">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="maintenanceAutoStart" 
+                               <%= settings.siteSettings.maintenanceAutoStart ? 'checked' : '' %> id="maintenanceAutoStart">
+                        <label class="form-check-label text-white" for="maintenanceAutoStart">
+                          Auto-start when enabled
+                        </label>
+                        <small class="d-block text-muted">Start timer automatically when maintenance is enabled</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <% if (settings.siteSettings.maintenanceMode && settings.siteSettings.maintenanceStartTime) { %>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <strong>Maintenance Active:</strong><br>
+                  Started: <%= new Date(settings.siteSettings.maintenanceStartTime).toLocaleString() %><br>
+                  Duration: <%= settings.siteSettings.maintenanceDuration %> minutes<br>
+                  <span id="maintenanceEndTime"><strong>Ends: </strong><%= new Date(new Date(settings.siteSettings.maintenanceStartTime).getTime() + (settings.siteSettings.maintenanceDuration * 60000)).toLocaleString() %></span>
+                </div>
+                <% } %>
               </div>
             </div>
           </div>
@@ -589,6 +645,45 @@
 </div>
 
 <script>
+// Handle maintenance mode toggle
+document.getElementById('maintenanceMode').addEventListener('change', function() {
+  const maintenanceSettings = document.getElementById('maintenanceSettings');
+  if (this.checked) {
+    maintenanceSettings.style.display = 'block';
+  } else {
+    maintenanceSettings.style.display = 'none';
+  }
+});
+
+// Update duration summary when maintenance duration changes
+document.getElementById('maintenanceDuration').addEventListener('input', function() {
+  const duration = parseInt(this.value) || 0;
+  document.getElementById('durationSummary').textContent = formatDuration(duration);
+});
+
+// Helper function to format duration in human-readable format
+function formatDuration(minutes) {
+  if (minutes < 60) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  } else if (minutes < 1440) {  // Less than a day
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    let result = `${hours} hour${hours !== 1 ? 's' : ''}`;
+    if (remainingMinutes > 0) {
+      result += ` ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`;
+    }
+    return result;
+  } else {
+    const days = Math.floor(minutes / 1440);
+    const remainingHours = Math.floor((minutes % 1440) / 60);
+    let result = `${days} day${days !== 1 ? 's' : ''}`;
+    if (remainingHours > 0) {
+      result += ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`;
+    }
+    return result;
+  }
+}
+
 // Handle brand type changes
 document.getElementById('brandType').addEventListener('change', function() {
   const brandType = this.value;

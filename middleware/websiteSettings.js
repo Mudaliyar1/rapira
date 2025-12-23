@@ -30,9 +30,22 @@ const loadWebsiteSettings = async (req, res, next) => {
     res.locals.themeSettings = settingsCache.themeSettings;
 
     // Check maintenance mode
-    if (settingsCache.siteSettings.maintenanceMode) {
-      // Allow admins to access during maintenance
-      if (!req.session.user || req.session.user.role !== 'admin') {
+    if (settingsCache.isMaintenanceActive()) {
+      // Auto-disable maintenance if expired
+      if (settingsCache.isMaintenanceExpired()) {
+        settingsCache.siteSettings.maintenanceMode = false;
+        settingsCache.siteSettings.maintenanceStartTime = null;
+        await settingsCache.save();
+        
+        // Refresh the cache
+        await refreshSettingsCache();
+        
+        // Continue with normal flow since maintenance is now disabled
+        return next();
+      }
+      
+      // Allow admins and superAdmins to access during maintenance
+      if (!req.session.user || (req.session.user.role !== 'admin' && req.session.user.role !== 'superAdmin')) {
         // Allow access to maintenance login endpoint
         if (req.path === '/auth/maintenance-login') {
           return next();
@@ -40,7 +53,11 @@ const loadWebsiteSettings = async (req, res, next) => {
 
         return res.render('maintenance', {
           layout: false,
-          siteName: settingsCache.siteSettings.siteName
+          siteName: settingsCache.siteSettings.siteName,
+          maintenanceReason: settingsCache.siteSettings.maintenanceReason,
+          maintenanceStartTime: settingsCache.siteSettings.maintenanceStartTime,
+          maintenanceDuration: settingsCache.siteSettings.maintenanceDuration,
+          maintenanceEndTime: settingsCache.getMaintenanceEndTime()
         });
       }
     }

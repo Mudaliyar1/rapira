@@ -67,6 +67,22 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     maintenanceMode: {
       type: Boolean,
       default: false
+    },
+    maintenanceReason: {
+      type: String,
+      default: 'Scheduled maintenance in progress'
+    },
+    maintenanceStartTime: {
+      type: Date,
+      default: null
+    },
+    maintenanceDuration: {
+      type: Number, // duration in minutes
+      default: 60 // default 1 hour
+    },
+    maintenanceAutoStart: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -141,6 +157,43 @@ WebsiteSettingsSchema.statics.getSettings = async function() {
     settings = await this.create({});
   }
   return settings;
+};
+
+// Instance method to calculate maintenance end time
+WebsiteSettingsSchema.methods.getMaintenanceEndTime = function() {
+  if (!this.siteSettings.maintenanceMode || !this.siteSettings.maintenanceStartTime) {
+    return null;
+  }
+  
+  const startTime = new Date(this.siteSettings.maintenanceStartTime);
+  const durationInMinutes = this.siteSettings.maintenanceDuration || 60; // default to 60 minutes
+  
+  // Add duration in minutes to start time
+  const endTime = new Date(startTime.getTime() + (durationInMinutes * 60000));
+  return endTime;
+};
+
+// Instance method to check if maintenance mode is expired
+WebsiteSettingsSchema.methods.isMaintenanceExpired = function() {
+  const endTime = this.getMaintenanceEndTime();
+  if (!endTime) {
+    return false;
+  }
+  
+  return new Date() > endTime;
+};
+
+// Instance method to check if maintenance mode is active
+WebsiteSettingsSchema.methods.isMaintenanceActive = function() {
+  if (!this.siteSettings.maintenanceMode) {
+    return false;
+  }
+  
+  if (this.isMaintenanceExpired()) {
+    return false;
+  }
+  
+  return true;
 };
 
 module.exports = mongoose.model('WebsiteSettings', WebsiteSettingsSchema);
