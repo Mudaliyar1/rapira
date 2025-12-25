@@ -89,16 +89,28 @@
                       <p>Free</p>
                     </div>
                   <% } %>
-                  <!-- Add attended status -->
+                  <!-- Add attended status with validation count -->
                   <div class="col-md-6 mb-3">
                     <p class="fw-medium mb-1">Attendance Status:</p>
                     <p>
-                      <% if (ticket.attended) { %>
-                        <span class="badge bg-success">ATTENDED</span>
-                        <small class="d-block text-muted">Validated on <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                      <% 
+                        const validatedTicketsCount = ticket.validatedTicketsCount || 0;
+                        const totalTickets = ticket.quantity || 1;
+                        const remainingTickets = Math.max(0, totalTickets - validatedTicketsCount);
+                      %>
+                      <% if (validatedTicketsCount > 0) { %>
+                        <span class="badge bg-success">VALIDATED <%= validatedTicketsCount %>/<%= totalTickets %></span>
+                        <small class="d-block text-muted">Validated <%= validatedTicketsCount %> of <%= totalTickets %> tickets</small>
+                        <% if (ticket.attendedAt) { %>
+                          <small class="d-block text-muted">Last validation: <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                        <% } %>
+                        <% if (remainingTickets > 0) { %>
+                          <small class="d-block text-muted"><%= remainingTickets %> ticket<%= remainingTickets > 1 ? 's' : '' %> remaining</small>
+                        <% } %>
                       <% } else { %>
                         <span class="badge bg-warning">NOT ATTENDED</span>
                         <small class="d-block text-muted">Not yet validated at venue</small>
+                        <small class="d-block text-muted">Total tickets in purchase: <%= totalTickets %></small>
                       <% } %>
                     </p>
                   </div>

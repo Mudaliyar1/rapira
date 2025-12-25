@@ -108,74 +108,90 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/tickets/free-issue');
     }
 
-    // Parse attendees data - handle both formats
+    // For admin free ticket issuance, we only need quantity
+    // The attendees data from the form is not required for validation
+    // We'll create a generic attendee list based on the quantity
     let attendeesList = [];
-    console.log('Parsing attendees data:', { attendees, ages });
     
-    // Handle the case where we have separate attendees and ages arrays
-    if ((Array.isArray(attendees) && Array.isArray(ages)) || 
-        (typeof attendees === 'string' && typeof ages === 'string')) {
-      console.log('Processing separate attendees and ages');
+    // If specific attendee data was provided, use it; otherwise create generic entries
+    if (attendees && ages) {
+      console.log('Processing attendees data:', { attendees, ages });
       
-      // Convert to arrays if they're strings
-      const attendeesArray = Array.isArray(attendees) ? attendees : [attendees];
-      const agesArray = Array.isArray(ages) ? ages : [ages];
-      
-      console.log('Attendees array:', attendeesArray);
-      console.log('Ages array:', agesArray);
-      
-      // Make sure we have the same number of attendees and ages
-      if (attendeesArray.length !== agesArray.length) {
-        console.log('Mismatch between attendees and ages count:', { 
-          attendeesCount: attendeesArray.length, 
-          agesCount: agesArray.length 
-        });
-        req.flash('error', 'Mismatch between number of attendees and ages');
+      // Handle the case where we have separate attendees and ages arrays
+      if ((Array.isArray(attendees) && Array.isArray(ages)) || 
+          (typeof attendees === 'string' && typeof ages === 'string')) {
+        
+        // Convert to arrays if they're strings
+        const attendeesArray = Array.isArray(attendees) ? attendees : [attendees];
+        const agesArray = Array.isArray(ages) ? ages : [ages];
+        
+        console.log('Attendees array:', attendeesArray);
+        console.log('Ages array:', agesArray);
+        
+        // Make sure we have the same number of attendees and ages
+        if (attendeesArray.length !== agesArray.length) {
+          console.log('Mismatch between attendees and ages count:', { 
+            attendeesCount: attendeesArray.length, 
+            agesCount: agesArray.length 
+          });
+          req.flash('error', 'Mismatch between number of attendees and ages');
+          return res.redirect('/admin/tickets/free-issue');
+        }
+        
+        // Combine attendees and ages
+        for (let i = 0; i < attendeesArray.length; i++) {
+          const name = attendeesArray[i];
+          const age = agesArray[i];
+          
+          console.log('Processing attendee:', { name, age });
+          
+          if (name && name.trim() !== '' && age && !isNaN(parseInt(age))) {
+            attendeesList.push({ name: name.trim(), age: parseInt(age) });
+          }
+        }
+      } 
+      // Handle the legacy format where attendees contains "name|age" format
+      else if (typeof attendees === 'string' && !ages) {
+        console.log('Processing legacy string format attendees');
+        const attendeePairs = attendees.split(',').filter(pair => pair.trim() !== '');
+        console.log('Attendee pairs:', attendeePairs);
+        for (const pair of attendeePairs) {
+          const [name, age] = pair.split('|');
+          console.log('Processing pair:', { name, age });
+          if (name && age && name.trim() !== '' && !isNaN(parseInt(age))) {
+            attendeesList.push({ name: name.trim(), age: parseInt(age) });
+          }
+        }
+      } 
+      // Handle the legacy format where attendees is an array of "name|age" strings
+      else if (Array.isArray(attendees) && !ages) {
+        console.log('Processing legacy array format attendees');
+        for (const attendee of attendees) {
+          const [name, age] = attendee.split('|');
+          if (name && age && name.trim() !== '' && !isNaN(parseInt(age))) {
+            attendeesList.push({ name: name.trim(), age: parseInt(age) });
+          }
+        }
+      } 
+      else {
+        console.log('Invalid attendee data format:', { attendeesType: typeof attendees, agesType: typeof ages, attendees, ages });
+        req.flash('error', 'Invalid attendee data format');
         return res.redirect('/admin/tickets/free-issue');
       }
-      
-      // Combine attendees and ages
-      for (let i = 0; i < attendeesArray.length; i++) {
-        const name = attendeesArray[i];
-        const age = agesArray[i];
-        
-        console.log('Processing attendee:', { name, age });
-        
-        if (name && name.trim() !== '' && age && !isNaN(parseInt(age))) {
-          attendeesList.push({ name: name.trim(), age: parseInt(age) });
-        }
-      }
-    } 
-    // Handle the legacy format where attendees contains "name|age" format
-    else if (typeof attendees === 'string' && !ages) {
-      console.log('Processing legacy string format attendees');
-      const attendeePairs = attendees.split(',').filter(pair => pair.trim() !== '');
-      console.log('Attendee pairs:', attendeePairs);
-      for (const pair of attendeePairs) {
-        const [name, age] = pair.split('|');
-        console.log('Processing pair:', { name, age });
-        if (name && age && name.trim() !== '' && !isNaN(parseInt(age))) {
-          attendeesList.push({ name: name.trim(), age: parseInt(age) });
-        }
-      }
-    } 
-    // Handle the legacy format where attendees is an array of "name|age" strings
-    else if (Array.isArray(attendees) && !ages) {
-      console.log('Processing legacy array format attendees');
-      for (const attendee of attendees) {
-        const [name, age] = attendee.split('|');
-        if (name && age && name.trim() !== '' && !isNaN(parseInt(age))) {
-          attendeesList.push({ name: name.trim(), age: parseInt(age) });
-        }
-      }
-    } 
-    else {
-      console.log('Invalid attendee data format:', { attendeesType: typeof attendees, agesType: typeof ages, attendees, ages });
-      req.flash('error', 'Invalid attendee data format');
-      return res.redirect('/admin/tickets/free-issue');
     }
     
-    console.log('Parsed attendees list:', attendeesList);
+    // If we don't have enough attendees for the requested quantity, create generic ones
+    if (attendeesList.length < requestedQuantity) {
+      // Add generic attendee entries to match the requested quantity
+      for (let i = attendeesList.length; i < requestedQuantity; i++) {
+        attendeesList.push({
+          name: `Attendee ${i + 1}`,
+          age: 18 // Default age
+        });
+      }
+    }
+    
+    console.log('Final attendees list:', attendeesList);
     
     // Validate that we have the correct number of attendees
     if (attendeesList.length !== requestedQuantity) {

@@ -187,6 +187,108 @@ router.post('/admin/ticket-validation/invalidate-all', isLoggedIn, isAdmin, (req
   }
 });
 
+// API endpoint to get ticket details (public endpoint)
+router.get('/api/tickets/details/:token/:id', async (req, res) => {
+  try {
+    const { token, id: ticketIdentifier } = req.params;
+    
+    // Check if token is valid and not expired
+    const tokenData = activeTokens.get(token);
+    if (!tokenData) {
+      return res.status(401).json({ message: 'Invalid or expired validation link. Please generate a new link from admin panel.' });
+    }
+    
+    if (Date.now() > tokenData.expiresAt) {
+      activeTokens.delete(token); // Clean up expired token
+      return res.status(401).json({ message: 'Validation link has expired. Please generate a new link from admin panel.' });
+    }
+    
+    // Find ticket by ticketNumber or _id
+    let ticket = await Ticket.findOne({ ticketNumber: ticketIdentifier })
+      .populate({
+        path: 'concert',
+        select: 'title date'
+      })
+      .populate({
+        path: 'user',
+        select: 'name'
+      });
+    
+    // If not found by ticketNumber, try by _id
+    if (!ticket) {
+      try {
+        ticket = await Ticket.findById(ticketIdentifier)
+          .populate({
+            path: 'concert',
+            select: 'title date'
+          })
+          .populate({
+            path: 'user',
+            select: 'name'
+          });
+      } catch (idError) {
+        // If findById fails (e.g., with CastError), it's likely because ticketIdentifier 
+        // is not a valid ObjectId, which is fine since we're checking for ticketNumber first
+        console.log('Ticket ID is not a valid ObjectId, continuing with ticketNumber search');
+      }
+    }
+    
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+    
+    // Check if concert exists and hasn't been deleted
+    if (!ticket.concert) {
+      return res.status(400).json({ message: 'Concert no longer available' });
+    }
+    
+    // Check if ticket has been refunded
+    if (ticket.paymentStatus === 'refunded') {
+      return res.status(400).json({ message: 'This ticket has been refunded and is invalid' });
+    }
+    
+    // Calculate remaining tickets to validate based on validatedTicketsCount
+    const validatedTicketsCount = ticket.validatedTicketsCount || 0;
+    const remainingTickets = Math.max(0, ticket.quantity - validatedTicketsCount);
+    
+    // Return ticket details with validation info
+    res.status(200).json({
+      message: 'Ticket details retrieved successfully',
+      ticket: {
+        _id: ticket._id,
+        ticketNumber: ticket.ticketNumber,
+        concert: {
+          title: ticket.concert.title,
+          date: ticket.concert.date
+        },
+        user: {
+          name: ticket.user.name
+        },
+        quantity: ticket.quantity,
+        attended: ticket.attended,
+        attendedAt: ticket.attendedAt,
+        validatedTicketsCount: validatedTicketsCount,
+        remainingTickets: remainingTickets
+      }
+    });
+  } catch (error) {
+    console.error('Ticket details error:', error);
+    
+    // Handle CastError specifically
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        message: 'Invalid ticket identifier format',
+        error: 'Please provide a valid ticket number or ID'
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
+
 // API endpoint to validate ticket (public endpoint)
 router.post('/api/tickets/validate/:token/:id', async (req, res) => {
   try {
@@ -247,8 +349,8 @@ router.post('/api/tickets/validate/:token/:id', async (req, res) => {
       return res.status(400).json({ message: 'This ticket has been refunded and is invalid' });
     }
     
-    // Check if ticket is already marked as attended
-    if (ticket.attended) {
+    // Check if all tickets from this purchase are already validated
+    if (ticket.validatedTicketsCount >= ticket.quantity) {
       return res.status(200).json({
         message: 'Ticket already validated',
         ticket: {
@@ -262,15 +364,25 @@ router.post('/api/tickets/validate/:token/:id', async (req, res) => {
             name: ticket.user.name
           },
           quantity: ticket.quantity,
-          attended: ticket.attended,
-          attendedAt: ticket.attendedAt
+          attended: true, // All tickets are validated
+          attendedAt: ticket.attendedAt,
+          validatedTicketsCount: ticket.validatedTicketsCount
         }
       });
     }
     
-    // Mark ticket as attended
-    ticket.attended = true;
-    ticket.attendedAt = new Date();
+    // Validate one ticket from this purchase
+    ticket.validatedTicketsCount = (ticket.validatedTicketsCount || 0) + 1;
+    
+    // If all tickets in this purchase are now validated, mark the entire ticket as attended
+    if (ticket.validatedTicketsCount >= ticket.quantity) {
+      ticket.attended = true;
+      ticket.attendedAt = new Date();
+    } else {
+      // Otherwise, just update the validated count
+      ticket.attendedAt = new Date();
+    }
+    
     await ticket.save();
     
     // Return success response
@@ -287,12 +399,143 @@ router.post('/api/tickets/validate/:token/:id', async (req, res) => {
           name: ticket.user.name
         },
         quantity: ticket.quantity,
-        attended: ticket.attended,
-        attendedAt: ticket.attendedAt
+        attended: ticket.validatedTicketsCount >= ticket.quantity,
+        attendedAt: ticket.attendedAt,
+        validatedTicketsCount: ticket.validatedTicketsCount
       }
     });
   } catch (error) {
     console.error('Ticket validation error:', error);
+    
+    // Handle CastError specifically
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        message: 'Invalid ticket identifier format',
+        error: 'Please provide a valid ticket number or ID'
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message 
+    });
+  }
+});
+
+// API endpoint to validate multiple tickets from the same order (public endpoint)
+router.post('/api/tickets/validate-multiple/:token/:id', async (req, res) => {
+  try {
+    const { token, id: ticketIdentifier } = req.params;
+    const { quantityToValidate } = req.body;
+    
+    // Check if token is valid and not expired
+    const tokenData = activeTokens.get(token);
+    if (!tokenData) {
+      return res.status(401).json({ message: 'Invalid or expired validation link. Please generate a new link from admin panel.' });
+    }
+    
+    if (Date.now() > tokenData.expiresAt) {
+      activeTokens.delete(token); // Clean up expired token
+      return res.status(401).json({ message: 'Validation link has expired. Please generate a new link from admin panel.' });
+    }
+    
+    // Find ticket by ticketNumber or _id
+    let ticket = await Ticket.findOne({ ticketNumber: ticketIdentifier })
+      .populate({
+        path: 'concert',
+        select: 'title date'
+      })
+      .populate({
+        path: 'user',
+        select: 'name'
+      });
+    
+    // If not found by ticketNumber, try by _id
+    if (!ticket) {
+      try {
+        ticket = await Ticket.findById(ticketIdentifier)
+          .populate({
+            path: 'concert',
+            select: 'title date'
+          })
+          .populate({
+            path: 'user',
+            select: 'name'
+          });
+      } catch (idError) {
+        // If findById fails (e.g., with CastError), it's likely because ticketIdentifier 
+        // is not a valid ObjectId, which is fine since we're checking for ticketNumber first
+        console.log('Ticket ID is not a valid ObjectId, continuing with ticketNumber search');
+      }
+    }
+    
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+    
+    // Check if concert exists and hasn't been deleted
+    if (!ticket.concert) {
+      return res.status(400).json({ message: 'Concert no longer available' });
+    }
+    
+    // Check if ticket has been refunded
+    if (ticket.paymentStatus === 'refunded') {
+      return res.status(400).json({ message: 'This ticket has been refunded and is invalid' });
+    }
+    
+    // Calculate remaining tickets to validate based on validatedTicketsCount
+    const currentValidatedTicketsCount = ticket.validatedTicketsCount || 0;
+    const remainingTickets = Math.max(0, ticket.quantity - currentValidatedTicketsCount);
+    
+    // Validate the quantity to validate
+    if (!quantityToValidate || quantityToValidate <= 0) {
+      return res.status(400).json({ message: 'Please specify a valid quantity to validate' });
+    }
+    
+    if (quantityToValidate > remainingTickets) {
+      return res.status(400).json({ message: `Cannot validate ${quantityToValidate} tickets. Only ${remainingTickets} tickets remaining.` });
+    }
+    
+    // Update the validated tickets count
+    const newValidatedTicketsCount = currentValidatedTicketsCount + quantityToValidate;
+    
+    // Update the ticket document
+    ticket.validatedTicketsCount = newValidatedTicketsCount;
+    
+    // If all tickets are now validated, mark the entire ticket as attended
+    if (newValidatedTicketsCount >= ticket.quantity) {
+      ticket.attended = true;
+      ticket.attendedAt = new Date();
+    } else {
+      ticket.attendedAt = new Date();
+    }
+    
+    await ticket.save();
+    
+    // Calculate remaining tickets after validation
+    const newRemainingTickets = Math.max(0, ticket.quantity - newValidatedTicketsCount);
+    
+    // Return success response
+    res.status(200).json({
+      message: `Successfully validated ${quantityToValidate} ticket(s). ${newRemainingTickets} ticket(s) remaining.`,
+      validatedCount: quantityToValidate,
+      remainingTickets: newRemainingTickets,
+      ticket: {
+        _id: ticket._id,
+        ticketNumber: ticket.ticketNumber,
+        concert: {
+          title: ticket.concert.title,
+          date: ticket.concert.date
+        },
+        user: {
+          name: ticket.user.name
+        },
+        quantity: ticket.quantity,
+        validatedTicketsCount: newValidatedTicketsCount
+      }
+    });
+  } catch (error) {
+    console.error('Multi-ticket validation error:', error);
     
     // Handle CastError specifically
     if (error.name === 'CastError') {

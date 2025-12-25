@@ -70,14 +70,16 @@
                 <div class="col-md-6">
                   <input type="text" class="form-control bg-dark border-secondary text-white mb-2" name="attendees" placeholder="Full Name" required>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                   <input type="number" class="form-control bg-dark border-secondary text-white" name="ages" placeholder="Age" min="1" max="120" required>
+                </div>
+                <div class="col-md-1" style="display: flex; align-items: flex-end;">
+                  <button type="button" class="btn btn-outline-danger btn-sm remove-attendee" style="margin-bottom: 0.5rem;">
+                    <i class="bi bi-trash"></i>
+                  </button>
                 </div>
               </div>
             </div>
-            <button type="button" class="btn btn-outline-primary btn-sm" id="addAttendee">
-              <i class="bi bi-plus-circle me-1"></i> Add Another Attendee
-            </button>
           </div>
 
           <!-- Submit Button -->
@@ -150,7 +152,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Add attendee functionality
-  const addAttendeeBtn = document.getElementById('addAttendee');
   const attendeesContainer = document.getElementById('attendeesContainer');
   const quantityInput = document.getElementById('quantity');
   const concertSelect = document.getElementById('concertId');
@@ -218,20 +219,38 @@ document.addEventListener('DOMContentLoaded', function() {
     concertSelect.dispatchEvent(new Event('change'));
   }
   
+  // Update attendee fields on page load to match initial quantity value
+  setTimeout(updateAttendeeFields, 100); // Small delay to ensure DOM is fully loaded
+  
   // Update attendee fields when quantity changes
   quantityInput.addEventListener('change', updateAttendeeFields);
+  
+  // Also update when input value changes (not just blur)
+  quantityInput.addEventListener('input', function() {
+    // Use setTimeout to allow the value to update before processing
+    setTimeout(updateAttendeeFields, 0);
+  });
   
   function updateAttendeeFields() {
     const attendees = document.querySelectorAll('.attendee-row');
     const quantity = parseInt(quantityInput.value) || 1;
     
+    // Ensure quantity is between 1 and max allowed
+    const maxAllowed = parseInt(quantityInput.max) || 10;
+    const clampedQuantity = Math.max(1, Math.min(quantity, maxAllowed));
+    
+    // Update the quantity input to reflect the clamped value
+    if (clampedQuantity !== quantity) {
+      quantityInput.value = clampedQuantity;
+    }
+    
     // Remove excess attendee rows
-    while (attendees.length > quantity) {
+    while (attendees.length > clampedQuantity) {
       attendees[attendees.length - 1].remove();
     }
     
     // Add attendee rows if needed
-    while (attendees.length < quantity) {
+    while (attendees.length < clampedQuantity) {
       addAttendeeRow();
     }
   }
@@ -262,25 +281,15 @@ document.addEventListener('DOMContentLoaded', function() {
         newRow.remove();
         // Update the quantity input to reflect the new count
         quantityInput.value = document.querySelectorAll('.attendee-row').length;
+        // Also update attendee fields to match quantity
+        updateAttendeeFields();
       } else {
         alert('At least one attendee is required.');
       }
     });
   }
   
-  addAttendeeBtn.addEventListener('click', function() {
-    // Check if we've reached the maximum number of attendees
-    const currentAttendees = document.querySelectorAll('.attendee-row').length;
-    const maxAttendees = parseInt(quantityInput.max) || 10;
-    
-    if (currentAttendees >= maxAttendees) {
-      const concertName = concertSelect.options[concertSelect.selectedIndex]?.text || 'selected concert';
-      alert(`Maximum ${maxAttendees} attendee(s) allowed for this quantity on the ${concertName}.`);
-      return;
-    }
-    
-    addAttendeeRow();
-  });
+
   
   // Add event listeners to existing remove buttons
   document.querySelectorAll('.remove-attendee').forEach(btn => {
@@ -289,6 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
         this.closest('.attendee-row').remove();
         // Update the quantity input to reflect the new count
         quantityInput.value = document.querySelectorAll('.attendee-row').length;
+        // Also update attendee fields to match quantity
+        updateAttendeeFields();
       } else {
         alert('At least one attendee is required.');
       }
@@ -331,20 +342,27 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Create hidden input to hold combined data
-    const hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'attendees';
-    hiddenInput.value = combinedAttendees.join(',');
+    // Create hidden inputs to hold the combined data
+    const hiddenAttendeesInput = document.createElement('input');
+    hiddenAttendeesInput.type = 'hidden';
+    hiddenAttendeesInput.name = 'attendees';
+    hiddenAttendeesInput.value = combinedAttendees.join(',');
     
-    // Remove existing hidden input if it exists
-    const existingHidden = form.querySelector('input[name="attendees"][type="hidden"]');
-    if (existingHidden) {
-      existingHidden.remove();
-    }
+    // Also create separate arrays for attendees and ages
+    const hiddenAgesInput = document.createElement('input');
+    hiddenAgesInput.type = 'hidden';
+    hiddenAgesInput.name = 'ages';
+    hiddenAgesInput.value = Array.from(ageInputs).map(input => input.value.trim()).join(',');
     
-    // Add the hidden input to the form
-    form.appendChild(hiddenInput);
+    // Remove existing hidden inputs if they exist
+    const existingHiddenAttendees = form.querySelector('input[name="attendees"][type="hidden"]:not([name="ages"])');
+    const existingHiddenAges = form.querySelector('input[name="ages"][type="hidden"]');
+    if (existingHiddenAttendees) existingHiddenAttendees.remove();
+    if (existingHiddenAges) existingHiddenAges.remove();
+    
+    // Add the hidden inputs to the form
+    form.appendChild(hiddenAttendeesInput);
+    form.appendChild(hiddenAgesInput);
     
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');

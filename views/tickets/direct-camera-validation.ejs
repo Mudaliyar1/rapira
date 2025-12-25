@@ -224,12 +224,39 @@
               </div>
               <div class="row">
                 <div class="col-6">
-                  <small class="text-white-50">Quantity</small>
+                  <small class="text-white-50">Total Quantity</small>
                   <p id="ticketQuantity" class="text-white mb-1"></p>
                 </div>
                 <div class="col-6">
                   <small class="text-white-50">Status</small>
                   <p id="ticketStatus" class="text-white mb-1"></p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-white-50">Validated Tickets</small>
+                  <p id="validatedTicketsCount" class="text-white mb-1"></p>
+                </div>
+                <div class="col-6">
+                  <small class="text-white-50">Remaining Tickets</small>
+                  <p id="remainingTickets" class="text-white mb-1"></p>
+                </div>
+              </div>
+              
+              <!-- Multi-ticket validation section -->
+              <div id="multiTicketSection" class="d-none">
+                <hr class="border-secondary">
+                <h5 class="text-white">Validate Multiple Tickets</h5>
+                <div class="row">
+                  <div class="col-12">
+                    <label for="quantityToValidate" class="form-label text-white">Number of tickets to validate</label>
+                    <select id="quantityToValidate" class="form-select bg-dark text-white border-secondary">
+                      <option value="">Select quantity...</option>
+                    </select>
+                    <div class="mt-2">
+                      <button id="validateMultipleBtn" class="btn btn-success w-100">Validate Selected Quantity</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -272,6 +299,11 @@
     const ticketHolder = document.getElementById('ticketHolder');
     const ticketQuantity = document.getElementById('ticketQuantity');
     const ticketStatus = document.getElementById('ticketStatus');
+    const validatedTicketsCount = document.getElementById('validatedTicketsCount');
+    const remainingTickets = document.getElementById('remainingTickets');
+    const multiTicketSection = document.getElementById('multiTicketSection');
+    const quantityToValidate = document.getElementById('quantityToValidate');
+    const validateMultipleBtn = document.getElementById('validateMultipleBtn');
 
     // Token from template
     const token = '<%= token || "" %>';
@@ -413,20 +445,37 @@
         // Stop scanning while validating
         stopCamera();
         
-        // Call validation API
-        const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketId), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+        // First, get ticket details to check quantity and remaining tickets
+        const detailsResponse = await fetch('/api/tickets/details/' + token + '/' + encodeURIComponent(ticketId));
+        const detailsData = await detailsResponse.json();
         
-        const data = await response.json();
+        if (!detailsResponse.ok) {
+          showResult(false, detailsData);
+          return;
+        }
         
-        if (response.ok) {
-          showResult(true, data);
+        // Check if ticket has multiple quantities
+        const ticket = detailsData.ticket;
+        
+        if (ticket.quantity > 1 && ticket.remainingTickets > 0) {
+          // Show multi-ticket validation interface
+          showMultiTicketResult(true, detailsData);
         } else {
-          showResult(false, data);
+          // For single ticket or when all tickets are already validated, use the standard validation
+          const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketId), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showResult(true, data);
+          } else {
+            showResult(false, data);
+          }
         }
       } catch (error) {
         console.error('Validation error:', error);
@@ -486,20 +535,37 @@
           validateBtn.disabled = true;
           validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Validating...';
           
-          // Call validation API
-          const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketNum), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          });
+          // First, get ticket details to check quantity and remaining tickets
+          const detailsResponse = await fetch('/api/tickets/details/' + token + '/' + encodeURIComponent(ticketNum));
+          const detailsData = await detailsResponse.json();
           
-          const data = await response.json();
+          if (!detailsResponse.ok) {
+            showResult(false, detailsData);
+            return;
+          }
           
-          if (response.ok) {
-            showResult(true, data);
+          // Check if ticket has multiple quantities
+          const ticket = detailsData.ticket;
+          
+          if (ticket.quantity > 1 && ticket.remainingTickets > 0) {
+            // Show multi-ticket validation interface
+            showMultiTicketResult(true, detailsData);
           } else {
-            showResult(false, data);
+            // For single ticket or when all tickets are already validated, use the standard validation
+            const response = await fetch('/api/tickets/validate/' + token + '/' + encodeURIComponent(ticketNum), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+              showResult(true, data);
+            } else {
+              showResult(false, data);
+            }
           }
         } catch (error) {
           console.error('Validation error:', error);
@@ -542,7 +608,12 @@
             concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
             ticketHolder.textContent = data.ticket.user.name;
             ticketQuantity.textContent = data.ticket.quantity;
+            validatedTicketsCount.textContent = data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0);
+            remainingTickets.textContent = data.ticket.remainingTickets || (data.ticket.quantity - (data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0)));
             ticketStatus.innerHTML = `<span class="badge bg-danger">ALREADY ATTENDED</span>`;
+            
+            // Hide multi-ticket section for already validated tickets
+            multiTicketSection.classList.add('d-none');
           }
         } else {
           // Show in green for newly validated tickets
@@ -560,7 +631,18 @@
             concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
             ticketHolder.textContent = data.ticket.user.name;
             ticketQuantity.textContent = data.ticket.quantity;
-            ticketStatus.innerHTML = `<span class="badge bg-success">ATTENDED</span>`;
+            validatedTicketsCount.textContent = data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0);
+            remainingTickets.textContent = data.ticket.remainingTickets || (data.ticket.quantity - (data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0)));
+            
+            // Update status based on validation progress
+            if (data.ticket.validatedTicketsCount >= data.ticket.quantity) {
+              ticketStatus.innerHTML = `<span class="badge bg-success">ALL ATTENDED</span>`;
+            } else {
+              ticketStatus.innerHTML = `<span class="badge bg-warning">PARTIALLY ATTENDED</span>`;
+            }
+            
+            // Hide multi-ticket section for single ticket validation
+            multiTicketSection.classList.add('d-none');
           }
         }
       } else {
@@ -570,7 +652,127 @@
         resultTitle.className = 'text-danger';
         resultMessage.textContent = data.message || 'This ticket is not valid';
         ticketDetails.classList.add('d-none');
+        multiTicketSection.classList.add('d-none');
       }
+    }
+    
+    // Show multi-ticket result
+    function showMultiTicketResult(isValid, data) {
+      console.log('Showing multi-ticket result:', isValid, data);
+      
+      // Hide input sections
+      document.getElementById('scannerSection').classList.add('d-none');
+      manualSection.classList.add('d-none');
+      
+      // Show result
+      resultSection.classList.remove('d-none');
+      
+      if (isValid) {
+        // Show in blue for multi-ticket validation interface
+        resultIcon.innerHTML = '<i class="bi bi-ticket-perforated text-info"></i>';
+        resultIcon.className = 'status-icon text-info';
+        resultTitle.textContent = 'Multiple Tickets Available';
+        resultTitle.className = 'text-info';
+        resultMessage.textContent = 'Select the number of tickets to validate from this purchase';
+        
+        // Show ticket details
+        if (data.ticket) {
+          ticketDetails.classList.remove('d-none');
+          ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
+          concertTitle.textContent = data.ticket.concert.title;
+          concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+          ticketHolder.textContent = data.ticket.user.name;
+          ticketQuantity.textContent = data.ticket.quantity;
+          validatedTicketsCount.textContent = data.ticket.validatedTicketsCount;
+          remainingTickets.textContent = data.ticket.remainingTickets;
+          
+          // Update status based on remaining tickets
+          if (data.ticket.remainingTickets === 0) {
+            ticketStatus.innerHTML = `<span class="badge bg-success">ALL ATTENDED</span>`;
+            multiTicketSection.classList.add('d-none');
+          } else {
+            ticketStatus.innerHTML = `<span class="badge bg-warning">PARTIALLY ATTENDED</span>`;
+            
+            // Show multi-ticket section and populate quantity options
+            multiTicketSection.classList.remove('d-none');
+            populateQuantityOptions(data.ticket.remainingTickets);
+          }
+        }
+      } else {
+        resultIcon.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+        resultIcon.className = 'status-icon text-danger';
+        resultTitle.textContent = 'Invalid Ticket';
+        resultTitle.className = 'text-danger';
+        resultMessage.textContent = data.message || 'This ticket is not valid';
+        ticketDetails.classList.add('d-none');
+        multiTicketSection.classList.add('d-none');
+      }
+    }
+    
+    // Populate quantity options for multi-ticket validation
+    function populateQuantityOptions(remainingTickets) {
+      // Clear existing options
+      quantityToValidate.innerHTML = '<option value="">Select quantity...</option>';
+      
+      // Add options for each possible quantity
+      for (let i = 1; i <= remainingTickets; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        quantityToValidate.appendChild(option);
+      }
+    }
+    
+    // Validate multiple tickets
+    if (validateMultipleBtn) {
+      validateMultipleBtn.addEventListener('click', async function() {
+        const ticketNum = ticketId.textContent; // Get ticket number from displayed ticket ID
+        const quantity = parseInt(quantityToValidate.value);
+        
+        if (!quantity || quantity <= 0) {
+          alert('Please select a valid quantity to validate');
+          return;
+        }
+        
+        console.log('Validating multiple tickets:', ticketNum, 'quantity:', quantity);
+        
+        try {
+          validateMultipleBtn.disabled = true;
+          validateMultipleBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Validating Multiple Tickets...';
+          
+          // Call multi-ticket validation API
+          const response = await fetch('/api/tickets/validate-multiple/' + token + '/' + encodeURIComponent(ticketNum), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quantityToValidate: quantity })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Show success result with updated remaining tickets
+            showResult(true, {
+              message: data.message,
+              ticket: {
+                ...data.ticket,
+                quantity: data.ticket.quantity,
+                validatedTicketsCount: data.validatedCount,
+                remainingTickets: data.remainingTickets
+              }
+            });
+          } else {
+            showResult(false, data);
+          }
+        } catch (error) {
+          console.error('Multi-ticket validation error:', error);
+          showResult(false, { message: 'Network error. Please try again.' });
+        } finally {
+          validateMultipleBtn.disabled = false;
+          validateMultipleBtn.innerHTML = 'Validate Selected Quantity';
+        }
+      });
     }
     
     // New validation

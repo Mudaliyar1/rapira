@@ -115,34 +115,34 @@ function getChartColor(index) {
             <tbody id="followersTableBody">
               <% if (followers && followers.length > 0) { %>
                 <% followers.forEach(follower => { %>
-                  <tr data-role="<%= follower.followerId.role %>">
+                  <tr data-role="<%= follower.followerId?.role || 'unknown' %>">
                     <td>
                       <div class="d-flex align-items-center">
-                        <% if (follower.followerId.profileImage) { %>
-                          <img src="<%= follower.followerId.profileImage %>" alt="<%= follower.followerId.name %>" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                        <% if (follower.followerId?.profileImage) { %>
+                          <img src="<%= follower.followerId?.profileImage %>" alt="<%= follower.followerId?.name || 'Unknown Follower' %>" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
                         <% } else { %>
                           <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                             <i class="bi bi-person-fill text-white"></i>
                           </div>
                         <% } %>
                         <div>
-                          <h6 class="mb-0 text-white"><%= follower.followerId.name %></h6>
-                          <small class="text-white-50"><%= follower.followerId.email %></small>
+                          <h6 class="mb-0 text-white"><%= follower.followerId?.name || 'Unknown Follower' %></h6>
+                          <small class="text-white-50"><%= follower.followerId?.email || 'No email' %></small>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <% if (follower.followerId.role === 'user') { %>
+                      <% if (follower.followerId?.role === 'user') { %>
                         <span class="badge bg-success">Fan</span>
-                      <% } else if (follower.followerId.role === 'artist') { %>
+                      <% } else if (follower.followerId?.role === 'artist') { %>
                         <span class="badge bg-warning">Artist</span>
                       <% } else { %>
-                        <span class="badge bg-secondary"><%= follower.followerId.role %></span>
+                        <span class="badge bg-secondary"><%= follower.followerId?.role || 'Unknown' %></span>
                       <% } %>
                     </td>
                     <td>
-                      <% if (follower.followerId.city && follower.followerId.state) { %>
-                        <%= follower.followerId.city %>, <%= follower.followerId.state %>
+                      <% if (follower.followerId?.city && follower.followerId?.state) { %>
+                        <%= follower.followerId?.city %>, <%= follower.followerId?.state %>
                       <% } else { %>
                         <span class="text-muted">Not specified</span>
                       <% } %>

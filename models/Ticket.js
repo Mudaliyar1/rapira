@@ -76,6 +76,10 @@ const TicketSchema = new mongoose.Schema({
   },
   attendedAt: {
     type: Date
+  },
+  validatedTicketsCount: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 
