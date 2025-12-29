@@ -40,6 +40,11 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="theme-seasonal-tab" data-bs-toggle="tab" data-bs-target="#theme-seasonal" type="button" role="tab">
+          <i class="bi bi-snow me-2"></i>Seasonal Themes
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link text-white" id="venue-tab" data-bs-toggle="tab" data-bs-target="#venue" type="button" role="tab">
           <i class="bi bi-building me-2"></i>Venue Settings
         </button>
@@ -349,6 +354,17 @@
                 </div>
               </div>
               
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="enableButtonSounds" 
+                         <%= settings.siteSettings.enableButtonSounds ? 'checked' : '' %> id="enableButtonSounds">
+                  <label class="form-check-label text-white">
+                    Enable Button Sound Effects
+                  </label>
+                  <small class="d-block text-muted">When enabled, users will hear subtle sounds when clicking buttons across the website</small>
+                </div>
+              </div>
+              
               <div id="maintenanceSettings" class="border-start border-secondary ps-3 mt-3" style="display: <%= settings.siteSettings.maintenanceMode ? 'block' : 'none' %>;
                   background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 15px;">
                 <h6 class="text-white mb-3">Maintenance Details</h6>
@@ -487,6 +503,196 @@
           <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to reset theme colors to default and save? This action cannot be undone.')">
             <i class="bi bi-arrow-counterclockwise me-1"></i>Reset & Save to Default Colors
           </button>
+        </form>
+      </div>
+
+      <!-- Seasonal Themes Tab -->
+      <div class="tab-pane fade" id="theme-seasonal" role="tabpanel">
+        <form action="/admin/website-settings/theme-seasonal" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Seasonal Theme Management</h5>
+              
+              <div class="mb-4">
+                <p class="text-muted">Select and enable seasonal themes for your website. Only one theme can be active at a time.</p>
+                
+                <div class="row">
+                  <!-- Winter Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="winterTheme" value="winter" 
+                                 <%= settings.siteSettings.activeTheme === 'winter' ? 'checked' : '' %> onchange="updateThemePreview('winter')">
+                          <label class="form-check-label text-white" for="winterTheme">
+                            <i class="bi bi-snow2 me-2"></i>Winter Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features falling snowflakes and cool blue/white background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Summer Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="summerTheme" value="summer" 
+                                 <%= settings.siteSettings.activeTheme === 'summer' ? 'checked' : '' %> onchange="updateThemePreview('summer')">
+                          <label class="form-check-label text-white" for="summerTheme">
+                            <i class="bi bi-sun me-2"></i>Summer Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features warm sun rays and yellow/orange background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Rainy Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="rainyTheme" value="rainy" 
+                                 <%= settings.siteSettings.activeTheme === 'rainy' ? 'checked' : '' %> onchange="updateThemePreview('rainy')">
+                          <label class="form-check-label text-white" for="rainyTheme">
+                            <i class="bi bi-cloud-rain me-2"></i>Rainy Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features falling raindrops and blue background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- New Year Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="newyearTheme" value="newyear" 
+                                 <%= settings.siteSettings.activeTheme === 'newyear' ? 'checked' : '' %> onchange="updateThemePreview('newyear')">
+                          <label class="form-check-label text-white" for="newyearTheme">
+                            <i class="bi bi-stars me-2"></i>New Year Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features colorful confetti and festive background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Christmas Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="christmasTheme" value="christmas" 
+                                 <%= settings.siteSettings.activeTheme === 'christmas' ? 'checked' : '' %> onchange="updateThemePreview('christmas')">
+                          <label class="form-check-label text-white" for="christmasTheme">
+                            <i class="bi bi-tree me-2"></i>Christmas Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features Christmas decorations and green/red background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Spring Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="springTheme" value="spring" 
+                                 <%= settings.siteSettings.activeTheme === 'spring' ? 'checked' : '' %> onchange="updateThemePreview('spring')">
+                          <label class="form-check-label text-white" for="springTheme">
+                            <i class="bi bi-flower1 me-2"></i>Spring Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features falling petals and pastel background</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Autumn Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="autumnTheme" value="autumn" 
+                                 <%= settings.siteSettings.activeTheme === 'autumn' ? 'checked' : '' %> onchange="updateThemePreview('autumn')">
+                          <label class="form-check-label text-white" for="autumnTheme">
+                            <i class="bi bi-tree-fill me-2"></i>Autumn Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features falling leaves and warm colors</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Halloween Theme -->
+                  <div class="col-md-6 mb-3">
+                    <div class="card bg-dark border-secondary">
+                      <div class="card-body">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input theme-selector" type="radio" name="activeTheme" id="halloweenTheme" value="halloween" 
+                                 <%= settings.siteSettings.activeTheme === 'halloween' ? 'checked' : '' %> onchange="updateThemePreview('halloween')">
+                          <label class="form-check-label text-white" for="halloweenTheme">
+                            <i class="bi bi-emoji-frown me-2"></i>Halloween Theme
+                          </label>
+                        </div>
+                        <small class="text-muted">Features spooky elements and dark colors</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="activeTheme" id="noTheme" value="" 
+                         <%= !settings.siteSettings.activeTheme || settings.siteSettings.activeTheme === '' ? 'checked' : '' %> onchange="updateThemePreview('')">
+                  <label class="form-check-label text-white" for="noTheme">
+                    No Theme (Default)
+                  </label>
+                </div>
+              </div>
+              
+            </div>
+            
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Theme Information
+                  </h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Only one theme can be active at a time</li>
+                    <li class="mb-2">Themes apply site-wide to all pages</li>
+                    <li class="mb-2">Changes take effect immediately after saving</li>
+                    <li class="mb-2">Animations are optimized for performance</li>
+                    <li class="mb-2">All themes are responsive and mobile-friendly</li>
+                  </ul>
+                  
+                  <div class="mt-4">
+                    <h6 class="text-white mb-3">Current Theme Preview</h6>
+                    <div id="themePreview" class="border border-secondary rounded p-3 bg-dark" style="min-height: 150px;">
+                      <div class="text-center">
+                        <i class="bi bi-eye text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">Select a theme to see preview</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Theme Settings
+            </button>
+          </div>
         </form>
       </div>
 
@@ -831,6 +1037,97 @@ function previewDummyData() {
     btn.innerHTML = originalText;
     btn.disabled = false;
   });
+}
+
+// Update theme preview when theme selection changes
+function updateThemePreview(themeName) {
+  const previewDiv = document.getElementById('themePreview');
+  let previewContent = '';
+  
+  switch(themeName) {
+    case 'winter':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-snow2 text-primary" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Winter Theme Active</p>
+          <small class="text-muted">Falling snowflakes</small>
+        </div>
+      `;
+      break;
+    case 'summer':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-sun text-warning" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Summer Theme Active</p>
+          <small class="text-muted">Sun rays animation</small>
+        </div>
+      `;
+      break;
+    case 'rainy':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-cloud-rain text-info" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Rainy Theme Active</p>
+          <small class="text-muted">Raindrop effects</small>
+        </div>
+      `;
+      break;
+    case 'newyear':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-stars text-danger" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">New Year Theme Active</p>
+          <small class="text-muted">Confetti celebration</small>
+        </div>
+      `;
+      break;
+    case 'christmas':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-tree text-success" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Christmas Theme Active</p>
+          <small class="text-muted">Holiday decorations</small>
+        </div>
+      `;
+      break;
+    case 'spring':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-flower1 text-success" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Spring Theme Active</p>
+          <small class="text-muted">Falling petals</small>
+        </div>
+      `;
+      break;
+    case 'autumn':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-tree-fill text-warning" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Autumn Theme Active</p>
+          <small class="text-muted">Falling leaves</small>
+        </div>
+      `;
+      break;
+    case 'halloween':
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-emoji-frown text-warning" style="font-size: 2rem;"></i>
+          <p class="text-white mt-2 mb-0">Halloween Theme Active</p>
+          <small class="text-muted">Spooky elements</small>
+        </div>
+      `;
+      break;
+    default:
+      previewContent = `
+        <div class="text-center">
+          <i class="bi bi-eye text-muted" style="font-size: 2rem;"></i>
+          <p class="text-muted mt-2 mb-0">No Theme Active</p>
+          <small class="text-muted">Default appearance</small>
+        </div>
+      `;
+  }
+  
+  previewDiv.innerHTML = previewContent;
 }
 
 // Show dummy data preview in modal

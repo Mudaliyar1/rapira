@@ -249,7 +249,7 @@ router.post('/menu', isLoggedIn, isAdmin, async (req, res) => {
 router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
-    const { siteName, siteDescription, maintenanceMode, maintenanceReason, maintenanceDuration, maintenanceAutoStart } = req.body;
+    const { siteName, siteDescription, maintenanceMode, maintenanceReason, maintenanceDuration, maintenanceAutoStart, enableButtonSounds, activeTheme } = req.body;
 
     settings.siteSettings.siteName = siteName || 'Rapira - Indian Rap Music Platform';
     settings.siteSettings.siteDescription = siteDescription || 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.';
@@ -272,6 +272,12 @@ router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
       settings.siteSettings.maintenanceMode = false;
       settings.siteSettings.maintenanceStartTime = null;
     }
+    
+    // Update button sounds setting
+    settings.siteSettings.enableButtonSounds = enableButtonSounds === 'on';
+    
+    // Update active theme setting
+    settings.siteSettings.activeTheme = activeTheme || '';
 
     settings.lastUpdatedBy = req.session.user.id;
     await settings.save();
@@ -284,6 +290,30 @@ router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating site settings:', error);
     req.flash('error', 'Failed to update site settings');
+    res.redirect('/admin/website-settings');
+  }
+});
+
+// POST - Update Theme Settings (Seasonal Themes)
+router.post('/theme-seasonal', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const settings = await WebsiteSettings.getSettings();
+    const { activeTheme } = req.body;
+
+    // Update active theme setting
+    settings.siteSettings.activeTheme = activeTheme || '';
+
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    // Clear cache to force reload of settings
+    clearSettingsCache();
+
+    req.flash('success', 'Theme settings updated successfully');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating theme settings:', error);
+    req.flash('error', 'Failed to update theme settings');
     res.redirect('/admin/website-settings');
   }
 });

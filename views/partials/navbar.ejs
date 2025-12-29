@@ -293,21 +293,24 @@ function showUpdateBanner(update) {
 
 // Check for website updates when page loads
 document.addEventListener('DOMContentLoaded', async function() {
-  try {
-    // Fetch the latest active website update for ALL users
-    const response = await fetch('/api/latest-website-update');
-    if (response.ok) {
-      const update = await response.json();
-      if (update) {
-        // Check if this update has already been dismissed
-        const hasBeenDismissed = localStorage.getItem('dismissedUpdate_' + update._id) === 'true';
-        if (!hasBeenDismissed) {
-          showUpdateBanner(update);
+  // Only show the update banner on the home page
+  if (window.location.pathname === '/' || window.location.pathname === '') {
+    try {
+      // Fetch the latest active website update for ALL users
+      const response = await fetch('/api/latest-website-update');
+      if (response.ok) {
+        const update = await response.json();
+        if (update) {
+          // Check if this update has already been dismissed
+          const hasBeenDismissed = localStorage.getItem('dismissedUpdate_' + update._id) === 'true';
+          if (!hasBeenDismissed) {
+            showUpdateBanner(update);
+          }
         }
       }
+    } catch (error) {
+      console.error('Error fetching website update:', error);
     }
-  } catch (error) {
-    console.error('Error fetching website update:', error);
   }
 });
 </script>

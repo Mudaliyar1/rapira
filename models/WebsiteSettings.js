@@ -83,6 +83,15 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     maintenanceAutoStart: {
       type: Boolean,
       default: false
+    },
+    enableButtonSounds: {
+      type: Boolean,
+      default: true
+    },
+    activeTheme: {
+      type: String,
+      default: '',
+      enum: ['', 'winter', 'summer', 'rainy', 'newyear', 'christmas', 'spring', 'autumn', 'halloween']
     }
   },
 
