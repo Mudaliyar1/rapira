@@ -1,12 +1,12 @@
 
 <!-- Website Update Notification Banner -->
-<div id="websiteUpdateBanner" class="alert alert-info mb-0 d-none website-update-banner" role="alert">
+<div id="websiteUpdateBanner" class="alert alert-info mb-0 website-update-banner d-none" role="alert">
   <div class="container">
     <div class="d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center">
-        <i class="bi bi-megaphone-fill me-2"></i>
-        <strong>New Update : </strong>
-        <strong id="updateTitle"></strong>
+      <div class="d-flex align-items-center flex-nowrap overflow-hidden" style="flex-wrap: nowrap !important;">
+        <i class="bi bi-megaphone-fill me-1"></i>
+        <strong class="me-2" style="white-space: nowrap;">New Update:</strong>
+        <strong id="updateTitle" class="text-truncate" style="white-space: nowrap;">Loading update information...</strong>
       </div>
       <div class="d-flex align-items-center">
         <a href="#" id="updateLink" class="btn btn-sm btn-primary me-2">View Details</a>
@@ -15,6 +15,68 @@
     </div>
   </div>
 </div>
+
+<style>
+  .website-update-banner {
+    display: block !important;
+    padding: 0.5rem 1rem !important;
+    min-height: auto;
+  }
+  
+  .website-update-banner .container {
+    padding: 0;
+  }
+  
+  .website-update-banner .d-flex {
+    gap: 0.25rem;
+  }
+  
+  .website-update-banner .flex-nowrap,
+  .website-update-banner .d-flex {
+    flex-wrap: nowrap !important;
+    white-space: nowrap;
+  }
+  
+  .website-update-banner.closing {
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: all 0.5s ease-in-out;
+  }
+  
+  .website-update-banner.d-none {
+    display: none !important;
+  }
+  
+  .website-update-banner .text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  
+  /* Compact layout for small devices */
+  @media (max-width: 576px) {
+    .website-update-banner {
+      padding: 0.25rem 0.5rem !important;
+      font-size: 0.875rem;
+    }
+    
+    .website-update-banner .text-truncate {
+      max-width: 100px;
+    }
+    
+    .website-update-banner .btn-sm {
+      padding: 0.125rem 0.25rem !important;
+      font-size: 0.75rem;
+    }
+  }
+  
+  @media (max-width: 400px) {
+    .website-update-banner .text-truncate {
+      max-width: 70px;
+    }
+  }
+</style>
 
 <nav class="navbar navbar-expand-lg navbar-dark navbar-glass">
   <div class="container">
@@ -240,8 +302,12 @@ function dismissUpdateBanner() {
     // Add closing animation class before hiding
     banner.classList.add('closing');
     
-    // Wait for animation to complete before adding d-none class
+    // Wait for animation to complete before hiding
     setTimeout(() => {
+      // Remove the element from the layout flow completely
+      banner.style.display = 'none';
+      banner.style.visibility = 'hidden';
+      // Add d-none class as backup
       banner.classList.add('d-none');
       // Remove the closing class to reset for next time
       banner.classList.remove('closing');
@@ -262,7 +328,12 @@ function showUpdateBanner(update) {
   const link = document.getElementById('updateLink');
   
   if (banner && title && link) {
-    title.textContent = update.title || '';
+    // Truncate title to 5 characters with ellipsis if it exceeds 5 characters
+    let displayTitle = update.title || '';
+    if (displayTitle.length > 5) {
+      displayTitle = displayTitle.substring(0, 5) + '...';
+    }
+    title.textContent = displayTitle;
     link.href = '/website-updates/' + update._id;  // Link to specific update
     // Ensure the link works properly
     link.onclick = function(e) {
@@ -272,7 +343,10 @@ function showUpdateBanner(update) {
       return false;
     };
     banner.dataset.updateId = update._id;
+    
+    // Remove d-none class and ensure banner is visible
     banner.classList.remove('d-none');
+    banner.style.display = 'block';
     
     // Auto-hide after 8 seconds if not interacted with (within the 5-10 second range)
     setTimeout(() => {
@@ -282,6 +356,10 @@ function showUpdateBanner(update) {
         
         // Wait for animation to complete before hiding
         setTimeout(() => {
+          // Remove the element from the layout flow completely
+          banner.style.display = 'none';
+          banner.style.visibility = 'hidden';
+          // Add d-none class as backup
           banner.classList.add('d-none');
           // Remove the closing class to reset for next time
           banner.classList.remove('closing');
@@ -295,6 +373,28 @@ function showUpdateBanner(update) {
 document.addEventListener('DOMContentLoaded', async function() {
   // Only show the update banner on the home page
   if (window.location.pathname === '/' || window.location.pathname === '') {
+    // First, check if we have cached update data in localStorage
+    const cachedUpdate = localStorage.getItem('cachedWebsiteUpdate');
+    
+    if (cachedUpdate) {
+      try {
+        const updateData = JSON.parse(cachedUpdate);
+        const cacheTimestamp = localStorage.getItem('cachedWebsiteUpdateTimestamp');
+        const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        
+        // Check if cache is still valid (not older than 24 hours)
+        if (cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < cacheExpiry) {
+          // Show the banner immediately with cached data
+          const hasBeenDismissed = localStorage.getItem('dismissedUpdate_' + updateData._id) === 'true';
+          if (!hasBeenDismissed) {
+            showUpdateBanner(updateData);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing cached update:', e);
+      }
+    }
+    
     try {
       // Fetch the latest active website update for ALL users
       const response = await fetch('/api/latest-website-update');
@@ -304,8 +404,21 @@ document.addEventListener('DOMContentLoaded', async function() {
           // Check if this update has already been dismissed
           const hasBeenDismissed = localStorage.getItem('dismissedUpdate_' + update._id) === 'true';
           if (!hasBeenDismissed) {
+            // Update the cached data
+            localStorage.setItem('cachedWebsiteUpdate', JSON.stringify(update));
+            localStorage.setItem('cachedWebsiteUpdateTimestamp', Date.now().toString());
+            
+            // Show the banner with fresh data
             showUpdateBanner(update);
+          } else {
+            // If the current update has been dismissed, clear the cache
+            localStorage.removeItem('cachedWebsiteUpdate');
+            localStorage.removeItem('cachedWebsiteUpdateTimestamp');
           }
+        } else {
+          // If no update is returned, clear the cache
+          localStorage.removeItem('cachedWebsiteUpdate');
+          localStorage.removeItem('cachedWebsiteUpdateTimestamp');
         }
       }
     } catch (error) {
