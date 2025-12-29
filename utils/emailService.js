@@ -1785,6 +1785,72 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
   }
 };
 
+// Function to send bulk emails to multiple users
+const sendBulkEmail = async (recipients, subject, htmlContent, textContent = null) => {
+  try {
+    console.log('Attempting to send bulk email to', recipients.length, 'recipients');
+    
+    // If no text content is provided, generate it from HTML
+    if (!textContent) {
+      textContent = htmlContent.replace(/<[^>]*>/g, ' ')
+                       .replace(/\s+/g, ' ')
+                       .trim();
+    }
+    
+    // Prepare the request payload for multiple recipients
+    const payload = {
+      sender: {
+        name: SENDER_NAME,
+        email: SENDER_EMAIL
+      },
+      replyTo: {
+        name: 'Rapira Support',
+        email: SENDER_EMAIL
+      },
+      // Add headers for tracking
+      headers: {
+        'X-Mailin-Tag': 'bulk-email'
+      },
+      to: recipients.map(recipient => ({
+        email: recipient.email,
+        name: recipient.name || recipient.email.split('@')[0]
+      })),
+      subject: subject,
+      htmlContent: htmlContent,
+      textContent: textContent
+    };
+    
+    // Log the email being sent
+    console.log('Sending bulk email to:', recipients.map(r => r.email).join(', '));
+    
+    // Send the email
+    const response = await axios.post(BREVO_API_URL, payload, {
+      headers: {
+        'accept': 'application/json',
+        'api-key': BREVO_API_KEY,
+        'content-type': 'application/json'
+      }
+    });
+    
+    console.log('Bulk email sent successfully. Response:', response.status, response.statusText);
+    return { success: true, data: response.data, method: 'api', recipientCount: recipients.length };
+    
+  } catch (error) {
+    console.error('Error in sendBulkEmail:', error);
+    
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
+    
+    return { success: false, error: error.message, details: error.response?.data };
+  }
+};
+
 module.exports = {
   templates,
   sendEmail,
@@ -1802,7 +1868,8 @@ module.exports = {
   sendTeamBookingApprovalEmail,
   sendTeamBookingRejectionEmail,
   sendRefundApprovalEmail,
-  sendRefundRejectionEmail
+  sendRefundRejectionEmail,
+  sendBulkEmail
 };
 
 /**
@@ -1939,5 +2006,4 @@ const sendSubscriptionConfirmationEmail = async (user, subscription, plan) => {
   }
 };
 
-// Export the subscription confirmation email function
 module.exports.sendSubscriptionConfirmationEmail = sendSubscriptionConfirmationEmail;

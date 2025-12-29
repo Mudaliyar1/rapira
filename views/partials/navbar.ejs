@@ -1,4 +1,21 @@
 
+<!-- Website Update Notification Banner -->
+<div id="websiteUpdateBanner" class="alert alert-info mb-0 d-none website-update-banner" role="alert">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-megaphone-fill me-2"></i>
+        <strong>New Update : </strong>
+        <strong id="updateTitle"></strong>
+      </div>
+      <div class="d-flex align-items-center">
+        <a href="#" id="updateLink" class="btn btn-sm btn-primary me-2">View Details</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="dismissUpdateBanner()"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <nav class="navbar navbar-expand-lg navbar-dark navbar-glass">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" href="/">
@@ -131,9 +148,12 @@
             <% if (menuSettings.helpSupportMenu.items.shoppingPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/shopping-policy' ? 'active' : '' %>" href="/shopping-policy"><i class="bi bi-bag-check me-2"></i>Shopping Policy</a></li>
             <% } %>
+            <li><hr class="dropdown-divider border-secondary"></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/website-updates' ? 'active' : '' %>" href="/website-updates"><i class="bi bi-megaphone me-2"></i>Website Updates</a></li>
           </ul>
         </li>
         <% } %>
+
 
 
 
@@ -211,3 +231,83 @@
     </div>
   </div>
 </nav>
+
+<script>
+// Function to dismiss the update banner
+function dismissUpdateBanner() {
+  const banner = document.getElementById('websiteUpdateBanner');
+  if (banner) {
+    // Add closing animation class before hiding
+    banner.classList.add('closing');
+    
+    // Wait for animation to complete before adding d-none class
+    setTimeout(() => {
+      banner.classList.add('d-none');
+      // Remove the closing class to reset for next time
+      banner.classList.remove('closing');
+      
+      // Store in localStorage that this update has been dismissed
+      const updateId = banner.dataset.updateId;
+      if (updateId) {
+        localStorage.setItem('dismissedUpdate_' + updateId, 'true');
+      }
+    }, 500); // Match the animation duration (0.5s)
+  }
+}
+
+// Function to show the update banner
+function showUpdateBanner(update) {
+  const banner = document.getElementById('websiteUpdateBanner');
+  const title = document.getElementById('updateTitle');
+  const link = document.getElementById('updateLink');
+  
+  if (banner && title && link) {
+    title.textContent = update.title || '';
+    link.href = '/website-updates/' + update._id;  // Link to specific update
+    // Ensure the link works properly
+    link.onclick = function(e) {
+      e.preventDefault();
+      // Navigate to the specific update page
+      window.location.href = '/website-updates/' + update._id;
+      return false;
+    };
+    banner.dataset.updateId = update._id;
+    banner.classList.remove('d-none');
+    
+    // Auto-hide after 8 seconds if not interacted with (within the 5-10 second range)
+    setTimeout(() => {
+      if (!banner.classList.contains('d-none') && !banner.classList.contains('closing')) {
+        // Add closing animation before hiding
+        banner.classList.add('closing');
+        
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+          banner.classList.add('d-none');
+          // Remove the closing class to reset for next time
+          banner.classList.remove('closing');
+        }, 500); // Match the animation duration (0.5s)
+      }
+    }, 8000);
+  }
+}
+
+// Check for website updates when page loads
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    // Fetch the latest active website update for ALL users
+    const response = await fetch('/api/latest-website-update');
+    if (response.ok) {
+      const update = await response.json();
+      if (update) {
+        // Check if this update has already been dismissed
+        const hasBeenDismissed = localStorage.getItem('dismissedUpdate_' + update._id) === 'true';
+        if (!hasBeenDismissed) {
+          showUpdateBanner(update);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching website update:', error);
+  }
+});
+</script>

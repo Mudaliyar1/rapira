@@ -1,0 +1,130 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0"><%= title %></h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/website-updates">Website Updates</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= isEdit ? 'Edit Update' : 'New Update' %></li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0"><%= isEdit ? 'Edit' : 'Create' %> Website Update</h5>
+        </div>
+        <div class="card-body">
+          <form action="<%= isEdit ? `/admin/website-updates/${update._id}` : '/admin/website-updates' %>" method="POST">
+            <div class="mb-3">
+              <label for="title" class="form-label">Title</label>
+              <input type="text" class="form-control" id="title" name="title" 
+                     value="<%= isEdit ? update.title : '' %>" required>
+              <div class="form-text">Brief title for the website update</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3" required><%= isEdit ? update.description : '' %></textarea>
+              <div class="form-text">Short description that will appear in notifications</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="content" class="form-label">Detailed Content</label>
+              <textarea class="form-control" id="content" name="content" rows="8" required placeholder="Enter detailed information about the website update..."><%= isEdit ? update.content : '' %></textarea>
+              <div class="form-text">Detailed content that will appear on the updates page</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="priority" class="form-label">Priority</label>
+              <select class="form-select" id="priority" name="priority">
+                <option value="low" <%= isEdit && update.priority === 'low' ? 'selected' : '' %>>Low</option>
+                <option value="medium" <%= isEdit && update.priority === 'medium' ? 'selected' : '' %>>Medium</option>
+                <option value="high" <%= isEdit && update.priority === 'high' ? 'selected' : '' %>>High</option>
+                <option value="critical" <%= isEdit && update.priority === 'critical' ? 'selected' : '' %>>Critical</option>
+              </select>
+              <div class="form-text">How important is this update?</div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="tags" class="form-label">Tags</label>
+              <input type="text" class="form-control" id="tags" name="tags" 
+                     value="<%= isEdit ? update.tags.join(', ') : '' %>" 
+                     placeholder="Enter tags separated by commas (e.g., feature, bug fix, maintenance)">
+              <div class="form-text">Comma-separated tags to categorize the update</div>
+            </div>
+            
+            <% if (isEdit) { %>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="isActive" name="isActive" <%= update.isActive ? 'checked' : '' %>>
+                <label class="form-check-label" for="isActive">Active</label>
+                <div class="form-text">Uncheck to hide this update from users</div>
+              </div>
+            <% } %>
+            
+            <div class="d-flex justify-content-between">
+              <a href="/admin/website-updates" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i><%= isEdit ? 'Update' : 'Create' %> Update
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0">Update Guidelines</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Use clear, concise titles</li>
+            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Include important details in the description</li>
+            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Set priority based on impact</li>
+            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Use relevant tags for categorization</li>
+            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Review before publishing</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm mt-4">
+        <div class="card-header bg-secondary text-white">
+          <h5 class="card-title mb-0">Preview</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info" role="alert">
+            <h6 class="alert-heading">
+              <i class="bi bi-megaphone me-2"></i>New Update Available!
+            </h6>
+            <p class="mb-1" id="previewDescription">
+              <%= isEdit ? update.description : 'Your description will appear here...' %>
+            </p>
+            <small class="text-muted">
+              Posted <%= isEdit ? update.timestamp.toLocaleDateString() : new Date().toLocaleDateString() %>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const titleInput = document.getElementById('title');
+  const descriptionInput = document.getElementById('description');
+  const previewDescription = document.getElementById('previewDescription');
+  
+  // Update preview when description changes
+  if (descriptionInput && previewDescription) {
+    descriptionInput.addEventListener('input', function() {
+      previewDescription.textContent = this.value || 'Your description will appear here...';
+    });
+  }
+});
+</script>

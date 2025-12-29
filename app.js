@@ -639,12 +639,17 @@ const refundRequestRoutes = require('./routes/refundRequests');
 const adminTicketsRoutes = require('./routes/adminTickets');
 const { router: notificationRoutes } = require('./routes/notifications');
 const subscriptionRoutes = require('./routes/subscriptions');
+const adminComposeEmailRoutes = require('./routes/adminComposeEmail');
+// const adminSimpleEmailRoutes = require('./routes/adminSimpleEmail'); // REMOVED: Not needed as we have compose and basic email pages
+const adminBasicEmailRoutes = require('./routes/adminBasicEmail');
 const adminSubscriptionRoutes = require('./routes/adminSubscriptions');
 const adminSessionRoutes = require('./routes/adminSessions');
 const adminWebsiteSettingsRoutes = require('./routes/adminWebsiteSettings');
 const adminAboutRoutes = require('./routes/adminAbout');
 const adminTeamUpdatesRoutes = require('./routes/adminTeamUpdates');
+const adminWebsiteUpdateRoutes = require('./routes/adminWebsiteUpdates');
 const venueRequestRoutes = require('./routes/venueRequests');
+const websiteUpdateRoutes = require('./routes/websiteUpdates');
 const adminVenueRequestRoutes = require('./routes/adminVenueRequests');
 const adminVenuesRoutes = require('./routes/adminVenues');
 const adminVenueEditRequestRoutes = require('./routes/adminVenueEditRequests');
@@ -659,6 +664,7 @@ const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/clean
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
 const { initializeCronJobs } = require('./utils/cronJobs');
 const { ensureUploadDirectories } = require('./utils/uploadHelper');
+const apiRoutes = require('./routes/api');
 
 // NEW: Import media backup service for global media persistence
 const { restoreAllMediaOnStartup } = require('./utils/mediaBackupService');
@@ -718,6 +724,15 @@ app.use('/admin/daily-concerts', adminDailyConcertsRoutes);
 // Mount notification routes
 app.use('/admin/notifications', notificationRoutes);
 
+// Mount admin compose email routes
+app.use('/admin/compose-email', adminComposeEmailRoutes);
+
+// Mount admin simple email routes
+// app.use('/admin/simple-email', adminSimpleEmailRoutes); // REMOVED: Not needed as we have compose and basic email pages
+
+// Mount admin basic email routes
+app.use('/admin/basic-email', adminBasicEmailRoutes);
+
 // Mount admin access control routes
 app.use('/admin/access-control', adminAccessControlRoutes);
 
@@ -747,6 +762,12 @@ app.use('/admin/about', adminAboutRoutes);
 
 // Mount team updates routes
 app.use('/admin/team-updates', adminTeamUpdatesRoutes);
+
+// Mount admin website updates routes
+app.use('/admin/website-updates', adminWebsiteUpdateRoutes);
+
+// Mount website updates routes
+app.use('/website-updates', websiteUpdateRoutes);
 
 // Mount admin venues routes
 app.use('/admin/venues', adminVenuesRoutes);
@@ -828,6 +849,9 @@ app.use('/', storiesRoutes);
 
 // Mount admin content routes
 app.use('/admin/content', adminContentRoutes);
+
+// Mount API routes
+app.use('/api', apiRoutes);
 
 // 404 route
 app.use((req, res) => {

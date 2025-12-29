@@ -3307,6 +3307,195 @@ a:hover {
   color: var(--light-text);
 }
 
+/* Animation for notification appearing from top */
+@keyframes slideInFromTop {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animation for notification disappearing to top */
+@keyframes slideOutToTop {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* Website Update Banner Styling */
+.website-update-banner {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #6366f1);
+  background-size: 400% 400%; /* For gradient animation */
+  animation: gradientShift 8s ease infinite;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px; /* Added border radius */
+  color: white !important;
+  max-width: 800px; /* Increased width further to prevent collapse */
+  width: fit-content; /* Fit to content */
+  margin: 10px auto 0 auto; /* Add top gap and center */
+  padding: 0.5rem 0; /* Reduced height */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  /* Initial state for animation */
+  transform: translateY(-100%);
+  opacity: 0;
+  font-size: 0.9rem; /* Base font size for all text */
+}
+
+/* Responsive sizing for smaller screens */
+@media (max-width: 768px) {
+  .website-update-banner {
+    max-width: 95vw; /* Nearly full width on small screens */
+    padding: 0.3rem 0; /* More reduced height */
+    margin: 8px auto 0 auto; /* Slightly reduced top margin */
+    border-radius: 10px; /* Slightly smaller border radius */
+    font-size: 0.85rem; /* Smaller base font size on small screens */
+  }
+  
+  .website-update-banner #updateTitle {
+    font-size: 0.8rem; /* More smaller font on small screens */
+  }
+  
+  .website-update-banner strong:first-of-type {
+    font-size: 0.8rem; /* More smaller font on small screens */
+    margin-right: 0.4rem; /* Adjust spacing on small screens */
+  }
+}
+
+@media (max-width: 576px) {
+  .website-update-banner {
+    max-width: 98vw; /* Even more width on very small screens */
+    padding: 0.2rem 0; /* Further reduced height */
+    margin: 6px auto 0 auto; /* Further reduced top margin */
+    border-radius: 8px; /* Smaller border radius */
+    font-size: 0.75rem; /* Even smaller base font size on very small screens */
+  }
+  
+  .website-update-banner #updateTitle {
+    font-size: 0.75rem; /* Even smaller font on very small screens */
+    max-width: 180px; /* Limit title width on small screens */
+  }
+  
+  .website-update-banner strong:first-of-type {
+    font-size: 0.75rem; /* Even smaller font on very small screens */
+    margin-right: 0.25rem; /* Further adjust spacing */
+  }
+  
+  .website-update-banner .btn {
+    padding: 0.1rem 0.3rem; /* Smaller buttons on very small screens */
+    font-size: 0.7rem; /* Smaller button text */
+  }
+}
+
+@media (max-width: 480px) {
+  .website-update-banner {
+    max-width: 99vw; /* Full width on smallest screens */
+    padding: 0.15rem 0; /* Minimum height */
+    margin: 5px auto 0 auto; /* Minimum top margin */
+    border-radius: 6px; /* Smaller border radius */
+    font-size: 0.7rem; /* Smallest base font size on very small screens */
+  }
+  
+  .website-update-banner #updateTitle {
+    font-size: 0.7rem; /* Smallest font on very small screens */
+    max-width: 150px; /* Limit title width on smallest screens */
+  }
+  
+  .website-update-banner strong:first-of-type {
+    font-size: 0.7rem; /* Smallest font on very small screens */
+    margin-right: 0.2rem; /* Minimum spacing */
+  }
+  
+  .website-update-banner .btn {
+    padding: 0.08rem 0.25rem; /* Smallest buttons */
+    font-size: 0.65rem; /* Smallest button text */
+  }
+}
+
+/* Show animation when banner is visible */
+.website-update-banner:not(.d-none) {
+  animation: slideInFromTop 0.5s ease forwards, gradientShift 8s ease infinite;
+}
+
+/* Close animation */
+.website-update-banner.closing {
+  animation: slideOutToTop 0.5s ease forwards !important;
+}
+
+.website-update-banner .container {
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.website-update-banner .d-flex.justify-content-between {
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.website-update-banner .d-flex.align-items-center:first-child {
+  flex-grow: 1;
+  margin-right: 1rem; /* Add space between content and buttons */
+}
+
+.website-update-banner .d-flex.align-items-center:last-child {
+  flex-shrink: 0;
+}
+
+.website-update-banner .alert-link,
+.website-update-banner .btn {
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.website-update-banner .btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white !important;
+  transition: all 0.3s ease;
+  padding: 0.25rem 0.75rem; /* Smaller button */
+}
+
+.website-update-banner .btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.website-update-banner * {
+  color: white !important;
+}
+
+.website-update-banner #updateTitle {
+  font-weight: 700; /* Make title bolder */
+  font-size: 1rem; /* Match the size of 'New Update' text */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.website-update-banner strong:first-of-type {
+  margin-right: 0.5rem; /* More space after the colon */
+}
+
+.website-update-banner strong:last-of-type {
+  margin-left: 0.5rem; /* More space before the title */
+}
+
+.website-update-banner .btn-close {
+  filter: invert(1) !important; /* Make close button white */
+}
+
 .light-theme .glass-card-dark .card-footer {
   background-color: rgba(0, 0, 0, 0.02);
   border-top: 1px solid var(--light-border);
