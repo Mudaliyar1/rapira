@@ -659,6 +659,7 @@ const venueAvailabilityRoutes = require('./routes/venueAvailability');
 const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
 const postsRoutes = require('./routes/posts');
+const adminMediaRoutes = require('./routes/adminMedia');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -771,6 +772,9 @@ app.use('/website-updates', websiteUpdateRoutes);
 
 // Mount admin venues routes
 app.use('/admin/venues', adminVenuesRoutes);
+
+// Mount admin media management routes
+app.use('/admin/media', adminMediaRoutes);
 
 // Mount admin venue requests routes
 app.use('/admin/venue-requests', adminVenueRequestRoutes);

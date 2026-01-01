@@ -1,6 +1,15 @@
-<!-- Admin Cloudinary Media Management -->
-<div class="container mt-5 mb-5">
-  <h1 class="mb-4">📁 Cloudinary Media Management</h1>
+<!-- Admin Media Management -->
+<div class="container-fluid mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>📁 Media Management</h1>
+    <div>
+      <form method="POST" action="/admin/media/migrate-local" style="display: inline;">
+        <button type="submit" class="btn btn-success" onclick="return confirm('Migrate all local /uploads to Cloudinary? This may take a while.');">
+          🔄 Migrate Local Files
+        </button>
+      </form>
+    </div>
+  </div>
 
   <!-- Success/Error Messages -->
   <% if (messages.success && messages.success.length) { %>
@@ -21,69 +30,158 @@
     <% }); %>
   <% } %>
 
-  <% if (messages.info && messages.info.length) { %>
-    <% messages.info.forEach(msg => { %>
-      <div class="alert alert-info alert-dismissible fade show" role="alert">
-        <%= msg %>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    <% }); %>
-  <% } %>
 
-  <!-- Summary Card -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="row text-center">
-        <div class="col-md-4">
-          <h5 class="text-muted">Total Media Assets</h5>
-          <h3 class="text-primary"><%= totalMedia %></h3>
+  <!-- Statistics Cards Row -->
+  <div class="row mb-4">
+    <!-- Total Media -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="bi bi-folder-fill text-primary" style="font-size: 2.5rem;"></i>
+          <h3 class="mt-2 mb-0 text-primary"><%= totalMedia %></h3>
+          <p class="text-muted mb-0">Total Files</p>
         </div>
-        <div class="col-md-4">
-          <h5 class="text-muted">Pages</h5>
-          <h3><%= currentPage %> / <%= totalPages %></h3>
+      </div>
+    </div>
+
+    <!-- Images -->
+    <div class="col-md-2 mb-3">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="bi bi-image-fill text-success" style="font-size: 2rem;"></i>
+          <h4 class="mt-2 mb-0"><%= stats.images %></h4>
+          <small class="text-muted">Images</small>
         </div>
-        <div class="col-md-4">
-          <h5 class="text-muted">Actions</h5>
-          <form method="POST" action="/admin/media/migrate-local" style="display: inline;">
-            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Migrate all local /uploads to Cloudinary? This may take a while.');">
-              🔄 Migrate Local Files
-            </button>
-          </form>
+      </div>
+    </div>
+
+    <!-- Videos -->
+    <div class="col-md-2 mb-3">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="bi bi-camera-video-fill text-danger" style="font-size: 2rem;"></i>
+          <h4 class="mt-2 mb-0"><%= stats.videos - stats.audios %></h4>
+          <small class="text-muted">Videos</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audios -->
+    <div class="col-md-2 mb-3">
+      <div class="card h-100 shadow-sm border-0">
+        <div class="card-body text-center">
+          <i class="bi bi-music-note-beamed text-info" style="font-size: 2rem;"></i>
+          <h4 class="mt-2 mb-0"><%= stats.audios %></h4>
+          <small class="text-muted">Audios</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Size -->
+    <div class="col-md-3 mb-3">
+      <div class="card h-100 shadow-sm border-0 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="card-body text-center text-white">
+          <i class="bi bi-hdd-fill" style="font-size: 2rem;"></i>
+          <h4 class="mt-2 mb-0"><%= stats.totalSize %></h4>
+          <small>Total Storage</small>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Filter Form -->
-  <div class="card mb-4">
-    <div class="card-header bg-light">
-      <h5>Filters</h5>
+  <!-- Module Statistics -->
+  <% if (moduleStats && moduleStats.length > 0) { %>
+  <div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-white border-bottom">
+      <h5 class="mb-0">📊 Storage by Module</h5>
     </div>
     <div class="card-body">
-      <form method="GET" action="/admin/media" class="row g-3 align-items-end">
-        <!-- Search -->
-        <div class="col-md-4">
-          <label for="search" class="form-label">Search (filename/public_id)</label>
-          <input type="text" class="form-control" id="search" name="search" value="<%= filters.search || '' %>" placeholder="e.g., artist_banner">
+      <div class="row">
+        <% moduleStats.forEach(stat => { 
+          const moduleNames = {
+            'artistContent': '🎨 Artist Posts',
+            'userProfile': '👤 User Profiles',
+            'venueMedia': '🏛️ Venue Images',
+            'artistProfile': '🎭 Artist Profiles',
+            'products': '🛍️ Products',
+            'concerts': '🎵 Concerts',
+            'legacyMigration': '📦 Legacy Files',
+            'adminUpload': '⚙️ Admin Uploads',
+            'learning': '📚 Learning Content'
+          };
+          const moduleName = moduleNames[stat._id] || stat._id;
+          const totalBytes = moduleStats.reduce((sum, s) => sum + s.totalBytes, 0);
+          const percent = ((stat.totalBytes / totalBytes) * 100).toFixed(1);
+        %>
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><%= moduleName %></span>
+            <span class="badge bg-primary"><%= stat.count %> files</span>
+          </div>
+          <div class="progress mt-2" style="height: 8px;">
+            <div class="progress-bar bg-success" style="width: <%= percent %>%"></div>
+          </div>
+          <small class="text-muted">
+            <%= (stat.totalBytes / (1024 * 1024)).toFixed(2) %> MB
+          </small>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Filter Form -->
+  <div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-white border-bottom">
+      <h5 class="mb-0">🔍 Filters</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="/admin/media" class="row g-2 align-items-end" id="filterForm">
+        <!-- Search by Filename -->
+        <div class="col-lg-2">
+          <label for="search" class="form-label small fw-bold">🔍 Filename</label>
+          <input type="text" class="form-control form-control-sm" id="search" name="search" value="<%= filters.search || '' %>" placeholder="Search filename">
+        </div>
+
+        <!-- Search by Owner Email/Username -->
+        <div class="col-lg-2">
+          <label for="ownerSearch" class="form-label small fw-bold">👤 Owner</label>
+          <input type="text" class="form-control form-control-sm" id="ownerSearch" name="ownerSearch" value="<%= filters.ownerSearch || '' %>" placeholder="Email or name">
+        </div>
+
+        <!-- Resource Type Filter -->
+        <div class="col-lg-2">
+          <label for="resourceType" class="form-label small fw-bold">📁 Type</label>
+          <select class="form-select form-select-sm" id="resourceType" name="resourceType">
+            <option value="all">All Types</option>
+            <option value="image" <%= filters.resourceType === 'image' ? 'selected' : '' %>>📷 Images</option>
+            <option value="video" <%= filters.resourceType === 'video' ? 'selected' : '' %>>🎬 Videos/Audio</option>
+            <option value="raw" <%= filters.resourceType === 'raw' ? 'selected' : '' %>>📄 Documents</option>
+          </select>
         </div>
 
         <!-- Module Filter -->
-        <div class="col-md-3">
-          <label for="module" class="form-label">Module</label>
-          <select class="form-select" id="module" name="module">
+        <div class="col-lg-2">
+          <label for="module" class="form-label small fw-bold">🏷️ Module</label>
+          <select class="form-select form-select-sm" id="module" name="module">
             <option value="all">All Modules</option>
-            <option value="artistContent" <%= filters.module === 'artistContent' ? 'selected' : '' %>>Artist Content</option>
-            <option value="venueMedia" <%= filters.module === 'venueMedia' ? 'selected' : '' %>>Venue Media</option>
-            <option value="legacyMigration" <%= filters.module === 'legacyMigration' ? 'selected' : '' %>>Legacy Migration</option>
-            <option value="userProfile" <%= filters.module === 'userProfile' ? 'selected' : '' %>>User Profile</option>
-            <option value="adminUpload" <%= filters.module === 'adminUpload' ? 'selected' : '' %>>Admin Upload</option>
+            <option value="concertPoster" <%= filters.module === 'concertPoster' ? 'selected' : '' %>>🎵 Concert Poster</option>
+            <option value="artistStory" <%= filters.module === 'artistStory' ? 'selected' : '' %>>📰 Artist Story</option>
+            <option value="userProfile" <%= filters.module === 'userProfile' ? 'selected' : '' %>>👤 User Profile</option>
+            <option value="artistContent" <%= filters.module === 'artistContent' ? 'selected' : '' %>>🎨 Artist Posts</option>
+            <option value="venueMedia" <%= filters.module === 'venueMedia' ? 'selected' : '' %>>🏛️ Venues</option>
+            <option value="artistProfile" <%= filters.module === 'artistProfile' ? 'selected' : '' %>>🎭 Artist Profile</option>
+            <option value="products" <%= filters.module === 'products' ? 'selected' : '' %>>🛍️ Products</option>
+            <option value="learning" <%= filters.module === 'learning' ? 'selected' : '' %>>📚 Learning</option>
+            <option value="legacyMigration" <%= filters.module === 'legacyMigration' ? 'selected' : '' %>>📦 Legacy</option>
           </select>
         </div>
 
         <!-- Owner Type Filter -->
-        <div class="col-md-3">
-          <label for="ownerType" class="form-label">Owner Type</label>
-          <select class="form-select" id="ownerType" name="ownerType">
+        <div class="col-lg-2">
+          <label for="ownerType" class="form-label small fw-bold">⚙️ Owner Type</label>
+          <select class="form-select form-select-sm" id="ownerType" name="ownerType">
             <option value="all">All Types</option>
             <option value="user" <%= filters.ownerType === 'user' ? 'selected' : '' %>>User</option>
             <option value="artist" <%= filters.ownerType === 'artist' ? 'selected' : '' %>>Artist</option>
@@ -93,68 +191,229 @@
           </select>
         </div>
 
-        <!-- Submit -->
-        <div class="col-md-2">
-          <button type="submit" class="btn btn-primary w-100">🔍 Filter</button>
+        <!-- Filter & Clear Buttons -->
+        <div class="col-lg-2">
+          <button type="submit" class="btn btn-primary btn-sm w-100 mb-1">
+            <i class="bi bi-funnel"></i> Filter
+          </button>
+          <a href="/admin/media" class="btn btn-outline-secondary btn-sm w-100">
+            <i class="bi bi-arrow-clockwise"></i> Clear
+          </a>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Media Table -->
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table table-hover table-striped mb-0">
-        <thead class="table-dark">
-          <tr>
-            <th>Filename</th>
-            <th>Type</th>
-            <th>Module</th>
-            <th>Owner</th>
-            <th>Size</th>
-            <th>Uploaded</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (mediaList && mediaList.length > 0) { %>
-            <% mediaList.forEach(media => { %>
-              <tr>
-                <td>
-                  <a href="<%= media.secure_url %>" target="_blank" class="text-decoration-none">
+  <!-- Media Grid/Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Media Files (Page <%= currentPage %> of <%= totalPages %>)</h5>
+      <div class="btn-group btn-group-sm" role="group">
+        <button type="button" class="btn btn-outline-secondary active" onclick="toggleView('grid')">
+          <i class="bi bi-grid-3x3-gap"></i> Grid
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="toggleView('list')">
+          <i class="bi bi-list-ul"></i> List
+        </button>
+      </div>
+    </div>
+    <div class="card-body" id="mediaContainer">
+      
+      <!-- Grid View -->
+      <div id="gridView" class="row">
+        <% if (mediaList && mediaList.length > 0) { %>
+          <% mediaList.forEach(media => { %>
+            <div class="col-md-3 col-sm-4 col-6 mb-4">
+              <div class="card h-100 shadow-sm media-card">
+                <!-- Preview -->
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px; overflow: hidden;">
+                  <% if (media.resource_type === 'image') { %>
+                    <img src="<%= media.secure_url %>" alt="<%= media.original_filename %>" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                  <% } else if (media.resource_type === 'video') { %>
+                    <% if (['mp3', 'wav', 'ogg', 'm4a'].includes(media.format)) { %>
+                      <i class="bi bi-music-note-beamed text-info" style="font-size: 4rem;"></i>
+                    <% } else { %>
+                      <video src="<%= media.secure_url %>" style="max-height: 100%; max-width: 100%; object-fit: contain;"></video>
+                    <% } %>
+                  <% } else { %>
+                    <i class="bi bi-file-earmark-text text-secondary" style="font-size: 4rem;"></i>
+                  <% } %>
+                </div>
+
+                <!-- Details -->
+                <div class="card-body p-2">
+                  <h6 class="card-title text-truncate mb-1" title="<%= media.original_filename %>">
                     <%= media.original_filename %>
-                  </a>
-                </td>
-                <td>
-                  <span class="badge bg-<%= media.resource_type === 'image' ? 'success' : media.resource_type === 'video' ? 'danger' : 'secondary' %>">
-                    <%= media.resource_type %>
-                  </span>
-                </td>
-                <td><small><%= media.module || 'n/a' %></small></td>
-                <td><small><%= media.ownerType %> <% if (media.ownerId) { %>#<%= media.ownerId.toString().slice(-6) %><% } %></small></td>
-                <td><small><%= Math.round(media.bytes / 1024) %> KB</small></td>
-                <td><small><%= new Date(media.createdAt).toLocaleDateString() %></small></td>
-                <td>
-                  <a href="<%= media.secure_url %>" target="_blank" class="btn btn-sm btn-info" title="View">
-                    👁️
-                  </a>
-                  <form method="POST" action="/admin/media/delete/<%= media._id %>" style="display: inline;">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this media from Cloudinary?');" title="Delete">
-                      🗑️
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            <% }); %>
-          <% } else { %>
+                  </h6>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-<%= media.resource_type === 'image' ? 'success' : media.resource_type === 'video' ? 'danger' : 'secondary' %>">
+                      <%= media.resource_type %>
+                    </span>
+                    <small class="text-muted"><%= Math.round(media.bytes / 1024) %> KB</small>
+                  </div>
+                  <small class="text-muted d-block mb-2">
+                    <i class="bi bi-tag"></i> 
+                    <% 
+                      const moduleNames = {
+                        'artistContent': 'Artist Posts',
+                        'artistStory': 'Artist Story',
+                        'userProfile': 'User Profile',
+                        'venueMedia': 'Venue',
+                        'artistProfile': 'Artist Profile',
+                        'products': 'Product',
+                        'concerts': 'Concert',
+                        'concertPoster': 'Concert Poster',
+                        'legacyMigration': 'Legacy',
+                        'adminUpload': 'Admin Upload',
+                        'learning': 'Learning'
+                      };
+                    %>
+                    <%= moduleNames[media.module] || media.module || 'Unknown' %>
+                  </small>
+                  <small class="text-info d-block mb-2">
+                    <i class="bi bi-person"></i> 
+                    <% if (media.ownerDetails) { %>
+                      <%= media.ownerDetails.email || media.ownerDetails.stageName || media.ownerDetails.name || media.ownerDetails.username || 'N/A' %>
+                    <% } else { %>
+                      <%= media.ownerType ? media.ownerType.toUpperCase() : 'Unknown' %>
+                    <% } %>
+                  </small>
+                  <div class="d-flex gap-1">
+                    <a href="<%= media.secure_url %>" target="_blank" class="btn btn-sm btn-info flex-fill" title="View Media">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/admin/media/<%= media._id %>/details" class="btn btn-sm btn-secondary flex-fill" title="View Full Details">
+                      <i class="bi bi-person-circle"></i>
+                    </a>
+                    <form method="POST" action="/admin/media/delete/<%= media._id %>" style="flex: 1;">
+                      <button type="submit" class="btn btn-sm btn-danger w-100" onclick="return confirm('Delete this media from Cloudinary?');" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="col-12 text-center py-5">
+            <i class="bi bi-folder-x text-muted" style="font-size: 4rem;"></i>
+            <p class="text-muted mt-3">No media found</p>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- List View (Hidden by default) -->
+      <div id="listView" class="table-responsive" style="display: none;">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
             <tr>
-              <td colspan="7" class="text-center text-muted py-3">No media found</td>
+              <th style="width: 60px;">Preview</th>
+              <th>Filename</th>
+              <th>Type</th>
+              <th>Module</th>
+              <th>Owner (Email/Name)</th>
+              <th>Size</th>
+              <th>Uploaded</th>
+              <th style="width: 120px;">Actions</th>
             </tr>
-          <% } %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <% if (mediaList && mediaList.length > 0) { %>
+              <% mediaList.forEach(media => { %>
+                <tr>
+                  <td>
+                    <% if (media.resource_type === 'image') { %>
+                      <img src="<%= media.secure_url %>" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    <% } else if (media.resource_type === 'video') { %>
+                      <% if (['mp3', 'wav', 'ogg', 'm4a'].includes(media.format)) { %>
+                        <i class="bi bi-music-note-beamed text-info" style="font-size: 2rem;"></i>
+                      <% } else { %>
+                        <i class="bi bi-camera-video-fill text-danger" style="font-size: 2rem;"></i>
+                      <% } %>
+                    <% } else { %>
+                      <i class="bi bi-file-earmark-text text-secondary" style="font-size: 2rem;"></i>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="<%= media.secure_url %>" target="_blank" class="text-decoration-none">
+                      <%= media.original_filename %>
+                    </a>
+                  </td>
+                  <td>
+                    <span class="badge bg-<%= media.resource_type === 'image' ? 'success' : media.resource_type === 'video' ? 'danger' : 'secondary' %>">
+                      <%= media.resource_type %>
+                    </span>
+                  </td>
+                  <td>
+                    <small>
+                      <% 
+                        const moduleNames = {
+                          'artistContent': 'Artist Posts',
+                          'artistStory': 'Artist Story',
+                          'userProfile': 'User Profile',
+                          'venueMedia': 'Venue',
+                          'artistProfile': 'Artist Profile',
+                          'products': 'Product',
+                          'concerts': 'Concert',
+                          'concertPoster': 'Concert Poster',
+                          'legacyMigration': 'Legacy',
+                          'adminUpload': 'Admin Upload',
+                          'learning': 'Learning'
+                        };
+                      %>
+                      <%= moduleNames[media.module] || media.module || 'Unknown' %>
+                    </small>
+                  </td>
+                  <td>
+                    <small>
+                      <% if (media.ownerDetails) { %>
+                        <strong><%= media.ownerDetails.email || media.ownerDetails.stageName || media.ownerDetails.name || 'N/A' %></strong><br>
+                        <span class="badge bg-secondary"><%= media.ownerType %></span>
+                      <% } else { %>
+                        <span class="text-muted">Unknown</span>
+                      <% } %>
+                    </small>
+                  </td>
+                  <td><small><%= Math.round(media.bytes / 1024) %> KB</small></td>
+                  <td>
+                    <small>
+                      <% 
+                        const date = new Date(media.createdAt);
+                        const dateStr = date.toLocaleDateString();
+                        const timeStr = date.toLocaleTimeString();
+                      %>
+                      <%= dateStr %><br>
+                      <span class="text-muted"><%= timeStr %></span>
+                    </small>
+                  </td>
+                  <td>
+                    <a href="<%= media.secure_url %>" target="_blank" class="btn btn-sm btn-info" title="View Media">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/admin/media/<%= media._id %>/details" class="btn btn-sm btn-secondary" title="View Full Details">
+                      <i class="bi bi-person-circle"></i>
+                    </a>
+                    <form method="POST" action="/admin/media/delete/<%= media._id %>" style="display: inline;">
+                      <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this media from Cloudinary?');" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center text-muted py-3">No media found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
+
 
   <!-- Pagination -->
   <% if (totalPages > 1) { %>
@@ -189,12 +448,71 @@
 </div>
 
 <style>
+.media-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.media-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+}
+
 .table-hover tbody tr:hover {
   background-color: #f5f5f5;
 }
 
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+.progress {
+  border-radius: 10px;
+}
+
+.progress-bar {
+  border-radius: 10px;
+}
+
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.75rem;
+}
+
+.card-header {
+  font-weight: 600;
 }
 </style>
+
+<script>
+function toggleView(view) {
+  const gridView = document.getElementById('gridView');
+  const listView = document.getElementById('listView');
+  const buttons = document.querySelectorAll('.btn-group button');
+  
+  if (view === 'grid') {
+    gridView.style.display = 'flex';
+    listView.style.display = 'none';
+    buttons[0].classList.add('active');
+    buttons[1].classList.remove('active');
+  } else {
+    gridView.style.display = 'none';
+    listView.style.display = 'block';
+    buttons[0].classList.remove('active');
+    buttons[1].classList.add('active');
+  }
+  
+  // Save preference
+  localStorage.setItem('mediaViewPreference', view);
+}
+
+// Auto-submit form when filters change
+function autoSubmitForm() {
+  const form = document.getElementById('filterForm');
+  if (form) {
+    form.submit();
+  }
+}
+
+// Load saved preference
+document.addEventListener('DOMContentLoaded', function() {
+  const savedView = localStorage.getItem('mediaViewPreference');
+  if (savedView) {
+    toggleView(savedView);
+  }
+});
+</script>
