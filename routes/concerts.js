@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Concert = require('../models/Concert');
 const Artist = require('../models/Artist');
 const User = require('../models/User');
@@ -853,6 +854,12 @@ router.get('/edit-request/:requestId/details', isLoggedIn, isArtist, async (req,
 // View concert details
 router.get('/:id', async (req, res) => {
   try {
+    // Validate ObjectId
+    if (!req.params.id || req.params.id === 'null' || req.params.id === 'undefined' || !mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid concert ID');
+      return res.redirect('/concerts');
+    }
+    
     let concert = await Concert.findById(req.params.id)
       .populate({
         path: 'artist',
@@ -965,6 +972,12 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
       }
     }
 
+    // Get website settings for ticket commission
+    const WebsiteSettings = require('../models/WebsiteSettings');
+    const settings = await WebsiteSettings.getSettings();
+    const ticketCommissionEnabled = settings.ticketCommissionSettings?.enabled || false;
+    const ticketCommissionPercentage = settings.ticketCommissionSettings?.percentage || 0;
+
     // Add Razorpay script to the head section if it's a paid concert
     const extraScripts = concert.isPaid ?
       '<script src="https://checkout.razorpay.com/v1/checkout.js"></script>' : '';
@@ -978,7 +991,9 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
       extraScripts: extraScripts,
       originalPrice,
       discountedPrice,
-      subscriptionDiscount
+      subscriptionDiscount,
+      ticketCommissionEnabled,
+      ticketCommissionPercentage
     });
   } catch (error) {
     console.error('Book concert error:', error);

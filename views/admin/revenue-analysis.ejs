@@ -1,0 +1,543 @@
+<%- include('../partials/messages') %>
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="fw-bold mb-1">Revenue Analysis</h2>
+          <p class="text-muted mb-0">Track and analyze all revenue streams from the website</p>
+        </div>
+        <div class="d-flex gap-2">
+          <% 
+            const exportParams = [];
+            if (filters.startDate) exportParams.push(`startDate=${encodeURIComponent(filters.startDate)}`);
+            if (filters.endDate) exportParams.push(`endDate=${encodeURIComponent(filters.endDate)}`);
+            if (filters.revenueSource && filters.revenueSource !== 'all') exportParams.push(`revenueSource=${encodeURIComponent(filters.revenueSource)}`);
+            if (filters.userFilter) exportParams.push(`userFilter=${encodeURIComponent(filters.userFilter)}`);
+            if (filters.amountMin) exportParams.push(`amountMin=${encodeURIComponent(filters.amountMin)}`);
+            if (filters.amountMax) exportParams.push(`amountMax=${encodeURIComponent(filters.amountMax)}`);
+            if (filters.paymentStatus && filters.paymentStatus !== 'all') exportParams.push(`paymentStatus=${encodeURIComponent(filters.paymentStatus)}`);
+            if (filters.concertFilter) exportParams.push(`concertFilter=${encodeURIComponent(filters.concertFilter)}`);
+            if (filters.concertStatus && filters.concertStatus !== 'all') exportParams.push(`concertStatus=${encodeURIComponent(filters.concertStatus)}`);
+            if (filters.cityFilter) exportParams.push(`cityFilter=${encodeURIComponent(filters.cityFilter)}`);
+            if (filters.stateFilter) exportParams.push(`stateFilter=${encodeURIComponent(filters.stateFilter)}`);
+            const exportQueryString = exportParams.join('&');
+          %>
+          <a href="/admin/revenue-analysis/export?<%= exportQueryString %>" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export to CSV
+          </a>
+          <a href="/admin/revenue-analysis/password-entry?<%= exportQueryString %>" class="btn btn-primary">
+            <i class="bi bi-file-earmark-text me-1"></i> Export to HTML
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Total Revenue</p>
+              <h3 class="text-dark mb-0">₹<%= totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+            </div>
+            <div class="revenue-icon bg-primary">
+              <i class="bi bi-currency-rupee text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Ticket Commission</p>
+              <h3 class="text-dark mb-0">₹<%= (revenueSources.ticket.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+            </div>
+            <div class="revenue-icon bg-success">
+              <i class="bi bi-ticket-perforated text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Venue Commission</p>
+              <h3 class="text-dark mb-0">₹<%= (revenueSources.venue.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+            </div>
+            <div class="revenue-icon bg-info">
+              <i class="bi bi-music-note-beamed text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Subscription Revenue</p>
+              <h3 class="text-dark mb-0">₹<%= (revenueSources.subscription.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+            </div>
+            <div class="revenue-icon bg-warning">
+              <i class="bi bi-star text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Filters</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="/admin/revenue-analysis">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" class="form-control" name="startDate" value="<%= filters.startDate %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" class="form-control" name="endDate" value="<%= filters.endDate %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Revenue Source</label>
+            <select class="form-select" name="revenueSource">
+              <option value="all" <%= filters.revenueSource === 'all' ? 'selected' : '' %>>All Sources</option>
+              <option value="ticket" <%= filters.revenueSource === 'ticket' ? 'selected' : '' %>>Ticket Commission</option>
+              <option value="venue" <%= filters.revenueSource === 'venue' ? 'selected' : '' %>>Venue Commission</option>
+              <option value="subscription" <%= filters.revenueSource === 'subscription' ? 'selected' : '' %>>Subscription</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">User Filter</label>
+            <input type="text" class="form-control" name="userFilter" placeholder="User name or email" value="<%= filters.userFilter %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Concert Name</label>
+            <input type="text" class="form-control" name="concertFilter" placeholder="Concert name" value="<%= filters.concertFilter %>">
+          </div>
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-md-3">
+            <label class="form-label">Min Amount</label>
+            <input type="number" class="form-control" name="amountMin" placeholder="Min amount" value="<%= filters.amountMin %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Max Amount</label>
+            <input type="number" class="form-control" name="amountMax" placeholder="Max amount" value="<%= filters.amountMax %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Payment Status</label>
+            <select class="form-select" name="paymentStatus">
+              <option value="all" <%= filters.paymentStatus === 'all' ? 'selected' : '' %>>All Status</option>
+              <option value="completed" <%= filters.paymentStatus === 'completed' ? 'selected' : '' %>>Completed</option>
+              <option value="pending" <%= filters.paymentStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="failed" <%= filters.paymentStatus === 'failed' ? 'selected' : '' %>>Failed</option>
+              <option value="refunded" <%= filters.paymentStatus === 'refunded' ? 'selected' : '' %>>Refunded</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Concert Status</label>
+            <select class="form-select" name="concertStatus">
+              <option value="all" <%= filters.concertStatus === 'all' ? 'selected' : '' %>>All Concerts</option>
+              <option value="past" <%= filters.concertStatus === 'past' ? 'selected' : '' %>>Past Concerts</option>
+              <option value="upcoming" <%= filters.concertStatus === 'upcoming' ? 'selected' : '' %>>Upcoming Concerts</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" name="cityFilter" placeholder="City" value="<%= filters.cityFilter %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">State</label>
+            <input type="text" class="form-control" name="stateFilter" placeholder="State" value="<%= filters.stateFilter %>">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i> Apply Filters</button>
+            <a href="/admin/revenue-analysis" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i> Reset</a>
+          </div>
+        </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filtered Statistics -->
+  <div class="row mb-4">
+    <div class="col-xl-4 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Concerts (Filtered)</p>
+              <h3 class="text-dark mb-0"><%= stats.concerts %></h3>
+            </div>
+            <div class="revenue-icon bg-info">
+              <i class="bi bi-music-note-beamed text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Tickets Purchased (Filtered)</p>
+              <h3 class="text-dark mb-0"><%= stats.tickets %></h3>
+            </div>
+            <div class="revenue-icon bg-success">
+              <i class="bi bi-ticket-perforated text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Users Registered (Filtered)</p>
+              <h3 class="text-dark mb-0"><%= stats.users %></h3>
+            </div>
+            <div class="revenue-icon bg-primary">
+              <i class="bi bi-people text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applied Filters Summary -->
+  <% if (filters.userFilter || filters.concertFilter || filters.concertStatus !== 'all' || filters.cityFilter || filters.stateFilter || filters.startDate || filters.endDate) { %>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0"><i class="bi bi-funnel me-2"></i>Applied Filters</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <% if (filters.userFilter) { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">User: <%= filters.userFilter %></span>
+            </div>
+            <% } %>
+            <% if (filters.concertFilter) { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">Concert: <%= filters.concertFilter %></span>
+            </div>
+            <% } %>
+            <% if (filters.concertStatus !== 'all') { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">Status: <%= filters.concertStatus %></span>
+            </div>
+            <% } %>
+            <% if (filters.cityFilter) { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">City: <%= filters.cityFilter %></span>
+            </div>
+            <% } %>
+            <% if (filters.stateFilter) { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">State: <%= filters.stateFilter %></span>
+            </div>
+            <% } %>
+            <% if (filters.startDate || filters.endDate) { %>
+            <div class="col-md-2 mb-2">
+              <span class="badge bg-info">Date: <%= filters.startDate || 'Any' %> to <%= filters.endDate || 'Any' %></span>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+  
+  <!-- Filtered User Details -->
+  <% if (filters.userFilter) { %>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>Filtered Users (<%= filteredUserDetails.length %>)</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Registration Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (filteredUserDetails.length > 0) { %>
+                  <% filteredUserDetails.forEach(user => { %>
+                    <tr>
+                      <td><%= user._id.toString().slice(-6).toUpperCase() %></td>
+                      <td><%= user.name || 'N/A' %></td>
+                      <td><%= user.email || 'N/A' %></td>
+                      <td><%= user.role || 'N/A' %></td>
+                      <td><%= user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A' %></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted">No users found matching the filter criteria</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+  
+  <!-- Filtered Concert Details -->
+  <% if (filters.concertFilter || filters.concertStatus !== 'all' || filters.cityFilter || filters.stateFilter) { %>
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0"><i class="bi bi-music-note-beamed me-2"></i>Filtered Concerts (<%= filteredConcertDetails.length %>)</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Artist</th>
+                  <th>Venue</th>
+                  <th>Date</th>
+                  <th>City</th>
+                  <th>State</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (filteredConcertDetails.length > 0) { %>
+                  <% filteredConcertDetails.forEach(concert => { %>
+                    <tr>
+                      <td><%= concert.title || 'N/A' %></td>
+                      <td><%= concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'N/A') %></td>
+                      <td><%= concert.venue ? concert.venue.name : 'N/A' %></td>
+                      <td><%= concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= concert.city || (concert.venue ? concert.venue.city : 'N/A') %></td>
+                      <td><%= concert.venue ? concert.venue.state : 'N/A' %></td>
+                      <td><span class="badge bg-<%= concert.status === 'approved' ? 'success' : concert.status === 'pending' ? 'warning' : 'danger' %>"><%= concert.status || 'N/A' %></span></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted">No concerts found matching the filter criteria</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+  
+  <!-- Detailed Revenue Tables -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0"><i class="bi bi-table me-2"></i>Detailed Revenue Data</h5>
+        </div>
+        <div class="card-body">
+          <!-- Ticket Revenue Table -->
+          <h6 class="mb-3"><i class="bi bi-ticket-perforated text-success me-2"></i> Ticket Commission Revenue</h6>
+          <div class="table-responsive mb-4">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Ticket Number</th>
+                  <th>User</th>
+                  <th>Concert</th>
+                  <th>Date</th>
+                  <th>Base Amount</th>
+                  <th>Commission</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (revenueSources.ticket.items.length > 0) { %>
+                  <% revenueSources.ticket.items.forEach(ticket => { %>
+                    <tr>
+                      <td><%= ticket.ticketNumber || 'N/A' %></td>
+                      <td><%= ticket.user ? ticket.user.name : 'Unknown' %></td>
+                      <td><%= ticket.concert ? ticket.concert.title : 'N/A' %></td>
+                      <td><%= ticket.purchaseDate ? new Date(ticket.purchaseDate).toLocaleDateString() : 'N/A' %></td>
+                      <td>₹<%= (ticket.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td>₹<%= (ticket.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td>₹<%= ((ticket.totalAmount || 0) + (ticket.commissionAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td><span class="badge bg-<%= ticket.paymentStatus === 'completed' ? 'success' : ticket.paymentStatus === 'pending' ? 'warning' : 'danger' %>"><%= ticket.paymentStatus || 'N/A' %></span></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="8" class="text-center text-muted">No ticket commission revenue data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Subscription Revenue Table -->
+          <h6 class="mb-3"><i class="bi bi-star text-warning me-2"></i> Subscription Revenue</h6>
+          <div class="table-responsive mb-4">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Plan Name</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Purchase Date</th>
+                  <th>Expiry Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (revenueSources.subscription.items.length > 0) { %>
+                  <% revenueSources.subscription.items.forEach(sub => { %>
+                    <tr>
+                      <td><%= sub.plan ? sub.plan.name : 'N/A' %></td>
+                      <td><%= sub.user ? sub.user.name : 'Unknown' %></td>
+                      <td>₹<%= (sub.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td><%= sub.purchaseDate ? new Date(sub.purchaseDate).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= sub.expiryDate ? new Date(sub.expiryDate).toLocaleDateString() : 'N/A' %></td>
+                      <td><span class="badge bg-<%= sub.status === 'active' ? 'success' : sub.status === 'expired' ? 'secondary' : 'warning' %>"><%= sub.status || 'N/A' %></span></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="text-center text-muted">No subscription revenue data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Venue Commission Table -->
+          <h6 class="mb-3"><i class="bi bi-music-note-beamed text-info me-2"></i> Venue Booking Commission</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Concert Title</th>
+                  <th>Artist</th>
+                  <th>Venue</th>
+                  <th>Date</th>
+                  <th>Venue Cost</th>
+                  <th>Commission %</th>
+                  <th>Commission Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (revenueSources.venue.items.length > 0) { %>
+                  <% revenueSources.venue.items.forEach(concert => { %>
+                    <% const commission = concert.venueBooking?.adminCommission?.advanceAmount || 
+                          (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0; %>
+                    <tr>
+                      <td><%= concert.title || 'N/A' %></td>
+                      <td><%= concert.artist ? (concert.artist.user ? concert.artist.user.name : 'N/A') : 'N/A' %></td>
+                      <td><%= concert.venue ? concert.venue.name : 'N/A' %></td>
+                      <td><%= concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td>₹<%= (concert.venueBooking?.totalVenueCost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td><%= (concert.venueBooking?.adminCommission?.percentage || 0) %>%</td>
+                      <td>₹<%= (commission || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted">No venue commission revenue data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .revenue-card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+  }
+  
+  .revenue-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .revenue-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+  }
+  
+  .badge {
+    font-size: 0.8em;
+  }
+</style>
+
+<script>
+  // Page loaded successfully
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Revenue Analysis page loaded');
+  });
+  
+
+</script>

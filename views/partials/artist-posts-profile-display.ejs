@@ -100,7 +100,11 @@ async function loadArtistPosts() {
       <div class="post-card" onclick="viewPost('${post._id}')">
         ${post.media.mediaType === 'image'
           ? `<img src="${post.media.url}" alt="post">`
-          : `<video muted><source src="${post.media.url}"></video>`
+          : post.media.mediaType === 'video'
+          ? `<video muted><source src="${post.media.url}"></video>`
+          : `<div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+               <i class="bi bi-music-note-beamed" style="font-size: 3rem; color: white;"></i>
+             </div>`
         }
         <div class="post-overlay">
           <div class="post-overlay-content">

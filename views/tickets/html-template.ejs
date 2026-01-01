@@ -391,6 +391,16 @@
               <span class="info-label">Amount Paid:</span>
               <span class="info-value">₹<%= ticket.totalAmount %></span>
             </div>
+            <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
+            <div class="info-item">
+              <span class="info-label">Ticket Price:</span>
+              <span class="info-value">₹<%= (ticket.totalAmount / (1 + (ticket.commissionPercentage / 100))).toFixed(2) %></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Platform Charges:</span>
+              <span class="info-value">₹<%= ticket.commissionAmount %> (<%= ticket.commissionPercentage %>%)</span>
+            </div>
+            <% } %>
             <div class="info-item">
               <span class="info-label">Payment Status:</span>
               <span class="info-value">Completed</span>

@@ -45,6 +45,14 @@
             <% }); %>
           </select>
         </div>
+        <div class="col-md-2">
+          <label for="dateRange" class="form-label text-white">Date Range</label>
+          <select class="form-select bg-dark border-secondary text-white" id="dateRange" name="dateRange">
+            <option value="all">All Dates</option>
+            <option value="upcoming" <%= searchParams.dateRange === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+            <option value="past" <%= searchParams.dateRange === 'past' ? 'selected' : '' %>>Past</option>
+          </select>
+        </div>
         <div class="col-md-3 d-flex align-items-end">
           <button type="submit" class="btn btn-primary me-2">
             <i class="bi bi-search me-1"></i> Search
@@ -571,6 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const statusSelect = document.getElementById('status');
   const typeSelect = document.getElementById('type');
   const citySelect = document.getElementById('city');
+  const dateRangeSelect = document.getElementById('dateRange');
   const form = document.getElementById('concertSearchForm');
 
   let searchTimeout;
@@ -587,6 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
   statusSelect.addEventListener('change', () => form.submit());
   typeSelect.addEventListener('change', () => form.submit());
   citySelect.addEventListener('change', () => form.submit());
+  dateRangeSelect.addEventListener('change', () => form.submit());
 
   // Show/hide stats section based on filters
   function toggleStatsSection() {

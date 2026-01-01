@@ -82,6 +82,15 @@
     object-fit: cover;
   }
 
+  .audio-gallery-card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
   .post-overlay-gallery {
     position: absolute;
     top: 0;
@@ -153,6 +162,13 @@ async function loadPosts() {
     const res = await fetch(`/artist/${artistId}/posts`);
     const data = await res.json();
 
+    console.log('[loadPosts] API Response:', data);
+    console.log('[loadPosts] Total posts:', data.posts.length);
+    if (data.posts.length > 0) {
+      console.log('[loadPosts] First post:', data.posts[0]);
+      console.log('[loadPosts] Audio posts:', data.posts.filter(p => p.media.mediaType === 'audio'));
+    }
+
     if (!data.success || !data.posts.length) {
       document.getElementById('postsContainer').innerHTML = `
         <div class="col-12">
@@ -175,7 +191,11 @@ async function loadPosts() {
         <div class="post-card-gallery" onclick="viewPost('${post._id}')">
           ${post.media.mediaType === 'image'
             ? `<img src="${post.media.url}" alt="post">`
-            : `<video muted><source src="${post.media.url}"></video>`
+            : post.media.mediaType === 'video'
+            ? `<video muted><source src="${post.media.url}"></video>`
+            : `<div class="audio-gallery-card">
+                 <i class="bi bi-music-note-beamed" style="font-size: 3rem; color: white;"></i>
+               </div>`
           }
           <div class="post-overlay-gallery">
             <div class="post-overlay-content-gallery">
@@ -223,8 +243,18 @@ function viewPost(postId) {
   const mediaContainer = document.getElementById('postMediaContainer');
   if (post.media.mediaType === 'image') {
     mediaContainer.innerHTML = `<img src="${post.media.url}" style="width: 100%; border-radius: 8px;">`;
-  } else {
+  } else if (post.media.mediaType === 'video') {
     mediaContainer.innerHTML = `<video controls style="width: 100%; border-radius: 8px;"><source src="${post.media.url}"></video>`;
+  } else if (post.media.mediaType === 'audio') {
+    mediaContainer.innerHTML = `
+      <div class="text-center p-4 bg-dark rounded">
+        <i class="bi bi-music-note-beamed fs-1 text-primary mb-3"></i>
+        <div class="mb-3 text-white"><strong>Audio Post</strong></div>
+        <audio controls style="width: 100%;">
+          <source src="${post.media.url}">
+        </audio>
+      </div>
+    `;
   }
 
   // Load info

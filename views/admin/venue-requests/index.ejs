@@ -133,8 +133,12 @@
                 </td>
                 <td>
                   <div>
-                    <strong><%= request.user.name %></strong>
-                    <br><small class="text-muted"><%= request.user.email %></small>
+                    <% if (request.user) { %>
+                      <strong><%= request.user.name %></strong>
+                      <br><small class="text-muted"><%= request.user.email %></small>
+                    <% } else { %>
+                      <span class="text-muted">User not found</span>
+                    <% } %>
                   </div>
                 </td>
                 <td>

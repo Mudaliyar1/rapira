@@ -163,35 +163,77 @@ function showStory(s) {
     img.style.maxWidth = '100%';
     img.style.maxHeight = '70vh';
     holder.appendChild(img);
+    
+    // For images, use standard 5 second duration
+    const bars = document.querySelectorAll('.story-progress-bar');
+    bars.forEach((bar, idx) => {
+      bar.classList.remove('active', 'viewed');
+      if (idx < currentIndex) {
+        bar.classList.add('viewed');
+      } else if (idx === currentIndex) {
+        bar.classList.add('active');
+        const fill = bar.querySelector('.story-progress-fill');
+        if (fill) {
+          void fill.offsetWidth;
+          fill.style.animation = 'fillProgress 5s linear forwards';
+        }
+      }
+    });
+    
+    markViewed(s._id || s.id);
+    updateLikeUI(s);
+    timer = setTimeout(nextStory, 5000);
   } else {
     const video = document.createElement('video');
     video.src = s.mediaUrl;
-    video.controls = true;
+    video.autoplay = true;
+    video.controls = false;
     video.style.maxWidth = '100%';
     video.style.maxHeight = '70vh';
     holder.appendChild(video);
-  }
-
-  // Update progress bars with animation restart
-  const bars = document.querySelectorAll('.story-progress-bar');
-  bars.forEach((bar, idx) => {
-    bar.classList.remove('active', 'viewed');
-    if (idx < currentIndex) {
-      bar.classList.add('viewed');
-    } else if (idx === currentIndex) {
-      bar.classList.add('active');
-      // Force animation restart by removing and readding the animation
-      const fill = bar.querySelector('.story-progress-fill');
-      if (fill) {
-        void fill.offsetWidth; // Trigger reflow
-        fill.style.animation = 'fillProgress 5s linear forwards';
+    
+    // Wait for video metadata to get duration
+    video.addEventListener('loadedmetadata', function() {
+      const videoDuration = video.duration * 1000; // Convert to ms
+      const progressFill = document.querySelector('.story-progress-fill');
+      
+      // Update progress bar animation to match video duration
+      if (progressFill) {
+        void progressFill.offsetWidth; // Trigger reflow
+        progressFill.style.animation = `fillProgress ${video.duration}s linear forwards`;
       }
-    }
-  });
-
-  markViewed(s._id || s.id);
-  updateLikeUI(s);
-  timer = setTimeout(nextStory, s.durationMs || 5000);
+      
+      // Set timer to move to next story based on video duration
+      clearTimeout(timer);
+      timer = setTimeout(nextStory, videoDuration);
+    }, { once: true });
+    
+    // Fallback if metadata doesn't load
+    setTimeout(() => {
+      if (!timer) {
+        timer = setTimeout(nextStory, Math.min(video.duration ? video.duration * 1000 : 5000, 30000));
+      }
+    }, 1000);
+    
+    // Update progress bars
+    const bars = document.querySelectorAll('.story-progress-bar');
+    bars.forEach((bar, idx) => {
+      bar.classList.remove('active', 'viewed');
+      if (idx < currentIndex) {
+        bar.classList.add('viewed');
+      } else if (idx === currentIndex) {
+        bar.classList.add('active');
+        const fill = bar.querySelector('.story-progress-fill');
+        if (fill) {
+          void fill.offsetWidth;
+          fill.style.animation = 'fillProgress 5s linear forwards'; // Will be updated when metadata loads
+        }
+      }
+    });
+    
+    markViewed(s._id || s.id);
+    updateLikeUI(s);
+  }
 }
 
 function nextStory() {
@@ -341,4 +383,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+  
+  // Stop video/audio when story modal closes
+  const storyModal = document.getElementById('story-viewer');
+  if (storyModal) {
+    storyModal.addEventListener('hidden.bs.modal', function() {
+      // Stop any playing video
+      const video = document.querySelector('#story-media video');
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
+      
+      // Clear timer
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      
+      console.log('[Stories] Modal closed, video stopped');
+    });
+  }
 });

@@ -16,6 +16,28 @@ function formatTimeAgo(dateString) {
   return `${diffDays}d ago`;
 }
 
+// Stop all audio/video playback
+function stopMediaPlayback() {
+  const mediaContainer = document.getElementById('post-media-container');
+  if (mediaContainer) {
+    // Stop all audio and video elements
+    const audios = mediaContainer.querySelectorAll('audio');
+    const videos = mediaContainer.querySelectorAll('video');
+    
+    audios.forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    
+    videos.forEach(video => {
+      video.pause();
+      video.currentTime = 0;
+    });
+    
+    console.log('[POST VIEWER] Media playback stopped');
+  }
+}
+
 // Open post in modal
 async function viewPost(postId) {
   try {
@@ -129,11 +151,390 @@ async function viewPost(postId) {
     mediaContainer.innerHTML = '';
     
     if (currentPost.media.mediaType === 'video') {
+      // Create video container
+      const videoContainer = document.createElement('div');
+      videoContainer.style.cssText = 'position: relative; background: black; border-radius: 8px; overflow: hidden;';
+      
+      // Video element (without controls)
       const video = document.createElement('video');
       video.src = currentPost.media.url;
-      video.controls = true;
-      video.style.cssText = 'max-width: 100%; max-height: 500px; width: 100%; height: auto; object-fit: contain; display: block;';
-      mediaContainer.appendChild(video);
+      video.autoplay = true;
+      video.style.cssText = 'width: 100%; height: auto; display: block;';
+      videoContainer.appendChild(video);
+      
+      // Custom controls overlay
+      const controlsOverlay = document.createElement('div');
+      controlsOverlay.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 15px; display: flex; align-items: center; gap: 10px;';
+      
+      // Play/Pause button
+      const playBtn = document.createElement('button');
+      playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
+      playBtn.style.cssText = 'background: white; border: none; color: #333; cursor: pointer; padding: 8px 12px; border-radius: 4px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;';
+      
+      let isPlaying = false;
+      playBtn.addEventListener('click', function() {
+        if (isPlaying) {
+          video.pause();
+          playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
+          isPlaying = false;
+        } else {
+          video.play();
+          playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 1.2rem;"></i>';
+          isPlaying = true;
+        }
+      });
+      
+      video.addEventListener('play', function() {
+        playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 1.2rem;"></i>';
+        isPlaying = true;
+      });
+      
+      video.addEventListener('pause', function() {
+        playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
+        isPlaying = false;
+      });
+      
+      controlsOverlay.appendChild(playBtn);
+      
+      // Progress bar
+      const progressBar = document.createElement('div');
+      progressBar.style.cssText = 'flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; cursor: pointer; position: relative;';
+      
+      const progress = document.createElement('div');
+      progress.style.cssText = 'height: 100%; background: #ff006e; border-radius: 2px; width: 0%;';
+      progressBar.appendChild(progress);
+      
+      // Update progress bar
+      video.addEventListener('timeupdate', function() {
+        const percent = (video.currentTime / video.duration) * 100;
+        progress.style.width = percent + '%';
+      });
+      
+      // Click on progress bar to seek
+      progressBar.addEventListener('click', function(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        video.currentTime = percent * video.duration;
+      });
+      
+      // Draggable progress bar
+      let isDragging = false;
+      progressBar.addEventListener('mousedown', function() {
+        isDragging = true;
+      });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (isDragging && progressBar) {
+          const rect = progressBar.getBoundingClientRect();
+          if (e.clientX >= rect.left && e.clientX <= rect.right) {
+            const percent = (e.clientX - rect.left) / rect.width;
+            video.currentTime = percent * video.duration;
+          }
+        }
+      });
+      
+      document.addEventListener('mouseup', function() {
+        isDragging = false;
+      });
+      
+      controlsOverlay.appendChild(progressBar);
+      
+      // Time display
+      const timeDisplay = document.createElement('span');
+      timeDisplay.textContent = '0:00 / 0:00';
+      timeDisplay.style.cssText = 'color: white; font-size: 0.85rem; font-weight: bold; min-width: 60px;';
+      
+      video.addEventListener('loadedmetadata', function() {
+        updateTimeDisplay();
+      });
+      
+      video.addEventListener('timeupdate', function() {
+        updateTimeDisplay();
+      });
+      
+      function updateTimeDisplay() {
+        const current = formatTime(video.currentTime);
+        const duration = formatTime(video.duration);
+        timeDisplay.textContent = current + ' / ' + duration;
+      }
+      
+      function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+      }
+      
+      controlsOverlay.appendChild(timeDisplay);
+      
+      // Volume control
+      const volumeControl = document.createElement('div');
+      volumeControl.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+      
+      const volumeIcon = document.createElement('i');
+      volumeIcon.className = 'bi bi-volume-up';
+      volumeIcon.style.cssText = 'color: white; font-size: 0.9rem;';
+      
+      const volumeSlider = document.createElement('input');
+      volumeSlider.type = 'range';
+      volumeSlider.min = '0';
+      volumeSlider.max = '100';
+      volumeSlider.value = '100';
+      volumeSlider.className = 'video-volume-slider';
+      volumeSlider.style.cssText = 'width: 60px; cursor: pointer; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none;';
+      
+      volumeSlider.addEventListener('input', function() {
+        video.volume = this.value / 100;
+        // Update the background gradient to show fill
+        const percent = (this.value / 100) * 100;
+        this.style.background = `linear-gradient(to right, white 0%, white ${percent}%, rgba(255,255,255,0.25) ${percent}%, rgba(255,255,255,0.25) 100%)`;
+      });
+      
+      // Set initial fill
+      volumeSlider.style.background = 'linear-gradient(to right, white 0%, white 100%, rgba(255,255,255,0.25) 100%, rgba(255,255,255,0.25) 100%)';
+      
+      // Add slider thumb styling if not already added
+      if (!document.head.querySelector('style[data-volume-video-slider]')) {
+        const style = document.createElement('style');
+        style.setAttribute('data-volume-video-slider', 'true');
+        style.textContent = `
+          .video-volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+          }
+          .video-volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+          }
+          .video-volume-slider::-moz-range-thumb {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      volumeControl.appendChild(volumeIcon);
+      volumeControl.appendChild(volumeSlider);
+      controlsOverlay.appendChild(volumeControl);
+      
+      videoContainer.appendChild(controlsOverlay);
+      mediaContainer.appendChild(videoContainer);
+    } else if (currentPost.media.mediaType === 'audio') {
+      // Create audio player container (Spotify-like minimal design)
+      const audioContainer = document.createElement('div');
+      audioContainer.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 30px; border-radius: 12px; text-align: center; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%;';
+      
+      // Music icon
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-music-note-beamed';
+      icon.style.cssText = 'font-size: 4rem; color: white; display: block;';
+      audioContainer.appendChild(icon);
+      
+      // Label
+      const label = document.createElement('div');
+      label.textContent = 'Audio Post';
+      label.style.cssText = 'color: white; font-weight: 600; font-size: 1.3rem; letter-spacing: 0.5px;';
+      audioContainer.appendChild(label);
+      
+      // Audio player (hidden)
+      const audio = document.createElement('audio');
+      audio.src = currentPost.media.url;
+      audio.autoplay = true;
+      audio.style.cssText = 'display: none;';
+      audioContainer.appendChild(audio);
+      
+      // Minimal player container (Spotify style)
+      const playerContainer = document.createElement('div');
+      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 12px; width: 100%; max-width: 380px;';
+      
+      // Play/Pause button - minimal circular
+      const playBtn = document.createElement('button');
+      playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
+      playBtn.style.cssText = 'background: white; border: none; color: #667eea; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 0.9rem;';
+      playBtn.onmouseover = () => {
+        playBtn.style.transform = 'scale(1.08)';
+        playBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      };
+      playBtn.onmouseout = () => {
+        playBtn.style.transform = 'scale(1)';
+        playBtn.style.boxShadow = 'none';
+      };
+      
+      let isPlaying = false;
+      playBtn.addEventListener('click', function() {
+        if (isPlaying) {
+          audio.pause();
+          playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
+          isPlaying = false;
+        } else {
+          audio.play();
+          playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 0.9rem;"></i>';
+          isPlaying = true;
+        }
+      });
+      
+      audio.addEventListener('ended', function() {
+        playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
+        isPlaying = false;
+      });
+      
+      // Update button when autoplay starts playing
+      audio.addEventListener('play', function() {
+        playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 0.9rem;"></i>';
+        isPlaying = true;
+      });
+      
+      // Update button when audio is paused
+      audio.addEventListener('pause', function() {
+        playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
+        isPlaying = false;
+      });
+      
+      playerContainer.appendChild(playBtn);
+      
+      // Progress bar container
+      const progressContainer = document.createElement('div');
+      progressContainer.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
+      
+      // Progress bar - thin and subtle
+      const progressBar = document.createElement('div');
+      progressBar.style.cssText = 'height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; cursor: pointer; position: relative; overflow: hidden;';
+      
+      const progress = document.createElement('div');
+      progress.style.cssText = 'height: 100%; background: white; border-radius: 2px; width: 0%; transition: width 0.1s linear;';
+      progressBar.appendChild(progress);
+      
+      // Update progress bar
+      audio.addEventListener('timeupdate', function() {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + '%';
+      });
+      
+      // Click on progress bar to seek
+      progressBar.addEventListener('click', function(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+      });
+      
+      // Draggable progress bar for audio
+      let isAudioDragging = false;
+      progressBar.addEventListener('mousedown', function() {
+        isAudioDragging = true;
+      });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (isAudioDragging && progressBar) {
+          const rect = progressBar.getBoundingClientRect();
+          if (e.clientX >= rect.left && e.clientX <= rect.right) {
+            const percent = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+          }
+        }
+      });
+      
+      document.addEventListener('mouseup', function() {
+        isAudioDragging = false;
+      });
+      
+      progressContainer.appendChild(progressBar);
+      
+      // Time display - minimal
+      const timeDisplay = document.createElement('div');
+      timeDisplay.textContent = '0:00 / 0:00';
+      timeDisplay.style.cssText = 'color: rgba(255,255,255,0.8); font-size: 0.75rem; font-weight: 500; text-align: center; letter-spacing: 0.3px;';
+      
+      function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+      }
+      
+      audio.addEventListener('loadedmetadata', function() {
+        updateTimeDisplay();
+      });
+      
+      audio.addEventListener('timeupdate', function() {
+        updateTimeDisplay();
+      });
+      
+      function updateTimeDisplay() {
+        const current = formatTime(audio.currentTime);
+        const duration = formatTime(audio.duration);
+        timeDisplay.textContent = current + ' / ' + duration;
+      }
+      
+      progressContainer.appendChild(timeDisplay);
+      
+      // Volume control for audio
+      const volumeContainer = document.createElement('div');
+      volumeContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 12px;';
+      
+      const volumeIcon = document.createElement('i');
+      volumeIcon.className = 'bi bi-volume-up';
+      volumeIcon.style.cssText = 'color: rgba(255,255,255,0.8); font-size: 0.85rem;';
+      
+      const volumeSlider = document.createElement('input');
+      volumeSlider.type = 'range';
+      volumeSlider.min = '0';
+      volumeSlider.max = '100';
+      volumeSlider.value = '100';
+      volumeSlider.style.cssText = 'flex: 1; cursor: pointer; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none;';
+      volumeSlider.style.setProperty('-webkit-appearance', 'none');
+      
+      // Style the slider thumb
+      const style = document.createElement('style');
+      style.textContent = `
+        input[type='range'] {
+          -webkit-appearance: none;
+          width: 100%;
+        }
+        input[type='range']::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+        }
+        input[type='range']::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: white;
+          cursor: pointer;
+          border: none;
+        }
+      `;
+      if (!document.head.querySelector('style[data-volume-slider]')) {
+        style.setAttribute('data-volume-slider', 'true');
+        document.head.appendChild(style);
+      }
+      
+      volumeSlider.addEventListener('input', function() {
+        audio.volume = this.value / 100;
+      });
+      
+      volumeContainer.appendChild(volumeIcon);
+      volumeContainer.appendChild(volumeSlider);
+      progressContainer.appendChild(volumeContainer);
+      playerContainer.appendChild(progressContainer);
+      
+      audioContainer.appendChild(playerContainer);
+      mediaContainer.appendChild(audioContainer);
+      console.log('[POST VIEWER] Audio media loaded with minimal player');
     } else {
       const img = document.createElement('img');
       img.src = currentPost.media.url;
@@ -334,6 +735,15 @@ document.addEventListener('DOMContentLoaded', function() {
   if (shareBtn) {
     shareBtn.addEventListener('click', sharePostModal);
     console.log('[POST VIEWER] Share button listener attached');
+  }
+  
+  // Stop media playback when modal closes
+  const modalElement = document.getElementById('post-viewer');
+  if (modalElement) {
+    modalElement.addEventListener('hidden.bs.modal', function() {
+      stopMediaPlayback();
+      console.log('[POST VIEWER] Modal closed, media stopped');
+    });
   }
   
   // Add animations

@@ -230,6 +230,19 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
 
       console.log(`Applied subscription discount: ${discountPercentage}% - Original: ${originalAmount}, Discounted: ${totalAmount}`);
     }
+    
+    // Get website settings for ticket commission
+    const WebsiteSettings = require('../models/WebsiteSettings');
+    const settings = await WebsiteSettings.getSettings();
+    const ticketCommissionEnabled = settings.ticketCommissionSettings?.enabled || false;
+    const ticketCommissionPercentage = settings.ticketCommissionSettings?.percentage || 0;
+    
+    // Apply commission if enabled
+    if (ticketCommissionEnabled) {
+      const commissionAmount = (totalAmount * ticketCommissionPercentage) / 100;
+      totalAmount = totalAmount + commissionAmount;
+      console.log(`Applied ticket commission: ${ticketCommissionPercentage}% - Commission: ${commissionAmount}, Total: ${totalAmount}`);
+    }
 
     // Create temporary ticket
     const tempTicket = new Ticket({
@@ -242,6 +255,9 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
       discountApplied,
       discountPercentage,
       discountType,
+      commissionApplied: ticketCommissionEnabled,
+      commissionPercentage: ticketCommissionPercentage,
+      commissionAmount: ticketCommissionEnabled ? (originalAmount * ticketCommissionPercentage) / 100 : 0,
       paymentStatus: 'pending'
     });
 

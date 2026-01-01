@@ -148,6 +148,20 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Ticket Commission Settings
+  ticketCommissionSettings: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    percentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -200,6 +200,20 @@
                   <span class="text-success">₹<%= ticket.originalAmount - ticket.totalAmount %></span>
                 </p>
                 <% } %>
+                <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
+                <p class="mb-2">
+                  <span class="fw-medium text-white">Base Ticket Price:</span><br>
+                  <span class="text-white-50">₹<%= (ticket.totalAmount / (1 + (ticket.commissionPercentage / 100))).toFixed(2) %></span>
+                </p>
+                <p class="mb-2">
+                  <span class="fw-medium text-warning">Platform Commission:</span><br>
+                  <span class="text-warning"><%= ticket.commissionPercentage %>%</span>
+                </p>
+                <p class="mb-0">
+                  <span class="fw-medium text-white">Platform Fee:</span><br>
+                  <span class="text-warning">₹<%= ticket.commissionAmount %></span>
+                </p>
+                <% } %>
                 <p class="mb-0">
                   <span class="fw-medium text-white">Payment Status:</span><br>
                   <span class="badge bg-success">Completed</span>

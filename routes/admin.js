@@ -2883,4 +2883,788 @@ router.post('/artist-posts/:id/delete-do', isLoggedIn, isAdmin, async (req, res)
   res.redirect('/admin/posts');
 });
 
+// Revenue Analysis Routes
+router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters
+    const { startDate, endDate, revenueSource, userFilter, amountMin, amountMax, paymentStatus, concertFilter: concertNameFilter, concertStatus, cityFilter, stateFilter } = req.query;
+
+    // Build filter object
+    let filter = {};
+    if (startDate) filter.createdAt = { $gte: new Date(startDate) };
+    if (endDate) {
+      if (filter.createdAt) {
+        filter.createdAt.$lte = new Date(endDate);
+      } else {
+        filter.createdAt = { $lte: new Date(endDate) };
+      }
+    }
+
+    // Get all revenue data from different sources
+    // 1. Ticket revenue
+    let ticketFilter = { ...filter };
+    if (paymentStatus && paymentStatus !== 'all') {
+      ticketFilter.paymentStatus = paymentStatus;
+    }
+    if (amountMin) ticketFilter.totalAmount = { $gte: parseFloat(amountMin) };
+    if (amountMax) {
+      ticketFilter.totalAmount = ticketFilter.totalAmount ? { ...ticketFilter.totalAmount, $lte: parseFloat(amountMax) } : { $lte: parseFloat(amountMax) };
+    }
+
+    const tickets = await Ticket.find(ticketFilter)
+      .populate('user', 'name email')
+      .populate({
+        path: 'concert',
+        populate: { path: 'artist', populate: { path: 'user', select: 'name' } }
+      });
+
+    // 2. Subscription revenue
+    const subscriptionFilter = { ...filter };
+    const subscriptions = await require('../models/UserSubscription').find(subscriptionFilter)
+      .populate('user', 'name email')
+      .populate('plan', 'name price');
+
+    // 3. Venue booking revenue (commission)
+    const venueBookingFilter = { ...filter };
+    if (venueBookingFilter.createdAt) {
+      venueBookingFilter.createdAt = { $gte: venueBookingFilter.createdAt.$gte || new Date(0), $lte: venueBookingFilter.createdAt.$lte || new Date() };
+    }
+    const concerts = await Concert.find(venueBookingFilter)
+      .populate('venue', 'name')
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    // Calculate revenue breakdowns
+    const revenueSources = {
+      ticket: {
+        name: 'Ticket Commission Revenue',
+        total: tickets.filter(t => t.commissionApplied === true).reduce((sum, ticket) => sum + (ticket.commissionAmount || 0), 0),
+        count: tickets.filter(t => t.commissionApplied === true).length,
+        items: tickets.filter(t => t.commissionApplied === true)
+      },
+      venue: {
+        name: 'Venue Booking Commission',
+        total: concerts.reduce((sum, concert) => {
+          const commission = concert.venueBooking?.adminCommission?.advanceAmount || 
+            (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0;
+          return sum + commission;
+        }, 0),
+        count: concerts.length,
+        items: concerts
+      },
+      subscription: {
+        name: 'Subscription Revenue',
+        total: subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0),
+        count: subscriptions.length,
+        items: subscriptions
+      }
+    };
+
+    // Calculate totals
+    const totalRevenue = Object.values(revenueSources).reduce((sum, source) => sum + source.total, 0);
+    
+    // Get user-specific revenue if user filter is applied
+    let userRevenue = null;
+    if (userFilter) {
+      const user = await User.findOne({ $or: [{ name: new RegExp(userFilter, 'i') }, { email: new RegExp(userFilter, 'i') }] });
+      if (user) {
+        userRevenue = {
+          user: user,
+          ticketRevenue: tickets.filter(t => t.user && t.user._id.toString() === user._id.toString()).reduce((sum, t) => sum + (t.totalAmount || 0), 0),
+          subscriptionRevenue: subscriptions.filter(s => s.user && s.user._id.toString() === user._id.toString()).reduce((sum, s) => sum + (s.amount || 0), 0)
+        };
+      }
+    }
+
+    // Get filtered statistics
+    // For concerts, we use venueBookingFilter but may need to apply additional concert-specific filters
+    let concertFilter = { ...venueBookingFilter };
+    if (concertNameFilter) {
+      concertFilter.title = { $regex: concertNameFilter, $options: 'i' };
+    }
+    
+    // Add concert status filter (past/upcoming)
+    if (concertStatus === 'past') {
+      concertFilter.date = { $lt: new Date() };
+    } else if (concertStatus === 'upcoming') {
+      concertFilter.date = { $gte: new Date() };
+    }
+    
+    // Add city filter
+    if (cityFilter) {
+      concertFilter.city = { $regex: cityFilter, $options: 'i' };
+    }
+    
+    // Add state filter
+    if (stateFilter) {
+      concertFilter.state = { $regex: stateFilter, $options: 'i' };
+    }
+    
+    const filteredConcerts = await Concert.countDocuments(concertFilter);
+    
+    // For tickets, we use ticketFilter which already includes all ticket-specific filters
+    const filteredTickets = await Ticket.countDocuments(ticketFilter);
+    
+    // For users, we need to apply user-specific filters
+    let userStatsFilter = { ...filter };
+    if (userFilter) {  // userFilter comes from the destructuring at the top
+      userStatsFilter.$or = [
+        { name: { $regex: userFilter, $options: 'i' } },
+        { email: { $regex: userFilter, $options: 'i' } }
+      ];
+    }
+    const filteredUsers = await User.countDocuments(userStatsFilter);
+    
+    // Get filtered user details if user filter is applied
+    let filteredUserDetails = [];
+    if (userFilter) {
+      filteredUserDetails = await User.find(userStatsFilter).limit(10); // Limit to first 10 for display
+    }
+    
+    // Get filtered concert details if any concert filter is applied
+    let filteredConcertDetails = [];
+    if (concertNameFilter || concertStatus || cityFilter || stateFilter) {
+      filteredConcertDetails = await Concert.find(concertFilter)
+        .populate({
+          path: 'artist',
+          populate: { path: 'user', select: 'name' }
+        })
+        .populate('venue', 'name state city')
+        .limit(10); // Limit to first 10 for display
+    }
+
+    res.render('admin/revenue-analysis', {
+      layout: 'admin',
+      currentPath: '/admin/revenue-analysis',
+      title: 'Revenue Analysis',
+      revenueSources,
+      totalRevenue,
+      tickets,
+      subscriptions,
+      concerts,
+      userRevenue,
+      stats: {
+        concerts: filteredConcerts,
+        tickets: filteredTickets,
+        users: filteredUsers
+      },
+      filteredUserDetails,
+      filteredConcertDetails,
+      filters: {
+        startDate: startDate || '',
+        endDate: endDate || '',
+        revenueSource: revenueSource || 'all',
+        userFilter: userFilter || '',
+        amountMin: amountMin || '',
+        amountMax: amountMax || '',
+        paymentStatus: paymentStatus || 'all',
+        concertFilter: concertNameFilter || '',
+        concertStatus: concertStatus || 'all',
+        cityFilter: cityFilter || '',
+        stateFilter: stateFilter || ''
+      }
+    });
+  } catch (error) {
+    console.error('Revenue analysis error:', error);
+    req.flash('error', 'Failed to load revenue analysis');
+    res.redirect('/admin');
+  }
+});
+
+// Export revenue data to CSV
+router.get('/revenue-analysis/export', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { startDate, endDate, revenueSource } = req.query;
+
+    let filter = {};
+    if (startDate) filter.createdAt = { $gte: new Date(startDate) };
+    if (endDate) {
+      if (filter.createdAt) {
+        filter.createdAt.$lte = new Date(endDate);
+      } else {
+        filter.createdAt = { $lte: new Date(endDate) };
+      }
+    }
+
+    const tickets = await Ticket.find(filter)
+      .populate('user', 'name email')
+      .populate({
+        path: 'concert',
+        populate: { path: 'artist', populate: { path: 'user', select: 'name' } }
+      });
+
+    const subscriptions = await require('../models/UserSubscription').find(filter)
+      .populate('user', 'name email')
+      .populate('plan', 'name price');
+
+    // Generate CSV content
+    const csvHeader = 'Date,Revenue Type,User,Amount,Description\n';
+    const csvRows = [];
+
+    // Add ticket revenue
+    tickets.forEach(ticket => {
+      if (ticket.commissionApplied && (ticket.commissionAmount || 0) > 0) {
+        csvRows.push(`${new Date(ticket.createdAt).toLocaleDateString()},Ticket Commission,${ticket.user?.name || 'Unknown User'},${ticket.commissionAmount || 0},Ticket #${ticket._id} for ${ticket.concert?.title || 'Unknown Concert'}`);
+      }
+    });
+
+    // Add subscription revenue
+    subscriptions.forEach(sub => {
+      csvRows.push(`${new Date(sub.createdAt).toLocaleDateString()},Subscription,${sub.user?.name || 'Unknown User'},${sub.amount || 0},Subscription to ${sub.plan?.name || 'Unknown Plan'}`);
+    });
+
+    const csvContent = csvHeader + csvRows.join('\n');
+
+    // Set response headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `revenue_export_${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+  } catch (error) {
+    console.error('Export revenue error:', error);
+    req.flash('error', 'Failed to export revenue data');
+    res.redirect('/admin/revenue-analysis');
+  }
+});
+
+// Export revenue data to HTML
+router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get search parameters (same as main revenue analysis route)
+    const { startDate, endDate, revenueSource, userFilter, amountMin, amountMax, paymentStatus, concertFilter: concertNameFilter, concertStatus, cityFilter, stateFilter } = req.query;
+
+    // Build filter object
+    let filter = {};
+    if (startDate) filter.createdAt = { $gte: new Date(startDate) };
+    if (endDate) {
+      if (filter.createdAt) {
+        filter.createdAt.$lte = new Date(endDate);
+      } else {
+        filter.createdAt = { $lte: new Date(endDate) };
+      }
+    }
+
+    // Build concert filter
+    let concertFilterObj = {};
+    if (startDate) concertFilterObj.createdAt = { $gte: new Date(startDate) };
+    if (endDate) {
+      if (concertFilterObj.createdAt) {
+        concertFilterObj.createdAt.$lte = new Date(endDate);
+      } else {
+        concertFilterObj.createdAt = { $lte: new Date(endDate) };
+      }
+    }
+    if (concertNameFilter) {
+      concertFilterObj.title = { $regex: concertNameFilter, $options: 'i' };
+    }
+    
+    // Add concert status filter (past/upcoming)
+    if (concertStatus === 'past') {
+      concertFilterObj.date = { $lt: new Date() };
+    } else if (concertStatus === 'upcoming') {
+      concertFilterObj.date = { $gte: new Date() };
+    }
+    
+    // Add city filter
+    if (cityFilter) {
+      concertFilterObj.city = { $regex: cityFilter, $options: 'i' };
+    }
+    
+    // Add state filter
+    if (stateFilter) {
+      concertFilterObj.state = { $regex: stateFilter, $options: 'i' };
+    }
+
+    // Get all revenue data from different sources
+    // 1. Ticket revenue
+    let ticketFilter = { ...filter };
+    if (paymentStatus && paymentStatus !== 'all') {
+      ticketFilter.paymentStatus = paymentStatus;
+    }
+    if (amountMin) ticketFilter.totalAmount = { $gte: parseFloat(amountMin) };
+    if (amountMax) {
+      ticketFilter.totalAmount = ticketFilter.totalAmount ? { ...ticketFilter.totalAmount, $lte: parseFloat(amountMax) } : { $lte: parseFloat(amountMax) };
+    }
+
+    const tickets = await Ticket.find(ticketFilter)
+      .populate('user', 'name email')
+      .populate({
+        path: 'concert',
+        populate: { path: 'artist', populate: { path: 'user', select: 'name' } }
+      });
+
+    // 2. Subscription revenue
+    const subscriptionFilter = { ...filter };
+    const subscriptions = await require('../models/UserSubscription').find(subscriptionFilter)
+      .populate('user', 'name email')
+      .populate('plan', 'name price');
+
+    // 3. Venue booking revenue (commission)
+    const concerts = await Concert.find(concertFilterObj)
+      .populate('venue', 'name')
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
+
+    // Calculate revenue breakdowns
+    const revenueSources = {
+      ticket: {
+        name: 'Ticket Commission Revenue',
+        total: tickets.filter(t => t.commissionApplied === true).reduce((sum, ticket) => sum + (ticket.commissionAmount || 0), 0),
+        count: tickets.filter(t => t.commissionApplied === true).length,
+        items: tickets.filter(t => t.commissionApplied === true)
+      },
+      venue: {
+        name: 'Venue Booking Commission',
+        total: concerts.reduce((sum, concert) => {
+          const commission = concert.venueBooking?.adminCommission?.advanceAmount || 
+            (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0;
+          return sum + commission;
+        }, 0),
+        count: concerts.length,
+        items: concerts
+      },
+      subscription: {
+        name: 'Subscription Revenue',
+        total: subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0),
+        count: subscriptions.length,
+        items: subscriptions
+      }
+    };
+
+    // Calculate totals
+    const totalRevenue = Object.values(revenueSources).reduce((sum, source) => sum + source.total, 0);
+    
+    // Get user-specific revenue if user filter is applied
+    let userRevenue = null;
+    if (userFilter) {
+      const user = await User.findOne({ $or: [{ name: new RegExp(userFilter, 'i') }, { email: new RegExp(userFilter, 'i') }] });
+      if (user) {
+        userRevenue = {
+          user: user,
+          ticketRevenue: tickets.filter(t => t.user && t.user._id.toString() === user._id.toString()).reduce((sum, t) => sum + (t.totalAmount || 0), 0),
+          subscriptionRevenue: subscriptions.filter(s => s.user && s.user._id.toString() === user._id.toString()).reduce((sum, s) => sum + (s.amount || 0), 0)
+        };
+      }
+    }
+
+    // Get filtered statistics
+    const filteredConcerts = await Concert.countDocuments(concertFilterObj);
+    
+    // For tickets, we use ticketFilter which already includes all ticket-specific filters
+    const filteredTickets = await Ticket.countDocuments(ticketFilter);
+    
+    // For users, we need to apply user-specific filters
+    let userStatsFilter = { ...filter };
+    if (userFilter) {  // userFilter comes from the destructuring at the top
+      userStatsFilter.$or = [
+        { name: { $regex: userFilter, $options: 'i' } },
+        { email: { $regex: userFilter, $options: 'i' } }
+      ];
+    }
+    const filteredUsers = await User.countDocuments(userStatsFilter);
+    
+    // Get filtered user details if user filter is applied
+    let filteredUserDetails = [];
+    if (userFilter) {
+      filteredUserDetails = await User.find(userStatsFilter).limit(10); // Limit to first 10 for display
+    }
+    
+    // Get filtered concert details if any concert filter is applied
+    let filteredConcertDetails = [];
+    if (concertNameFilter || concertStatus !== 'all' || cityFilter || stateFilter) {
+      filteredConcertDetails = await Concert.find(concertFilterObj)
+        .populate({
+          path: 'artist',
+          populate: { path: 'user', select: 'name' }
+        })
+        .populate('venue', 'name state city')
+        .limit(10); // Limit to first 10 for display
+    }
+
+    // Get the password from query parameters
+    const { password } = req.query;
+    
+    // Generate HTML content
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>RAPIRA - Revenue Analysis Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+          .password-protected { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f8f9fa; }
+          .password-form { background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+          .password-form input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+          .password-form button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+          .password-form button:hover { background-color: #0056b3; }
+          .content { display: none; }
+          .header { text-align: center; margin-bottom: 30px; padding: 20px; background-color: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .section { margin-bottom: 25px; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+          .stat-card { border: 1px solid #e9ecef; padding: 15px; border-radius: 8px; text-align: center; background-color: #f8f9fa; }
+          table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+          th, td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
+          th { background-color: #e9ecef; font-weight: bold; }
+          .filter-info { background-color: #f1f8e9; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4caf50; }
+          .page-title { color: #495057; margin-bottom: 10px; }
+          .app-name { color: #495057; font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+          .generated-date { color: #6c757d; font-style: italic; }
+        </style>
+      </head>
+      <body>
+        <div id="passwordScreen" class="password-protected">
+          <div class="password-form">
+            <h2>RAPIRA</h2>
+            <h3>Revenue Analysis Report</h3>
+            <p>Please enter password to view this report</p>
+            <input type="password" id="password" placeholder="Enter password">
+            <button onclick="checkPassword()">Access Report</button>
+            <p style="margin-top: 15px; font-size: 12px; color: #6c757d;">Report generated on: ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+        
+        <div id="content" class="content">
+          <div class="header">
+            <h2 class="app-name">RAPIRA</h2>
+            <h1 class="page-title">Revenue Analysis Report</h1>
+            <p class="generated-date">Generated on: ${new Date().toLocaleString()}</p>
+          </div>
+          
+          <div class="section">
+            <h2>Applied Filters</h2>
+            <div class="filter-info">
+              ${startDate ? `<p><strong>Start Date:</strong> ${new Date(startDate).toLocaleDateString()}</p>` : '<p><strong>Start Date:</strong> All</p>'}
+              ${endDate ? `<p><strong>End Date:</strong> ${new Date(endDate).toLocaleDateString()}</p>` : '<p><strong>End Date:</strong> All</p>'}
+              ${userFilter ? `<p><strong>User Filter:</strong> ${userFilter}</p>` : '<p><strong>User Filter:</strong> All</p>'}
+              ${concertNameFilter ? `<p><strong>Concert Filter:</strong> ${concertNameFilter}</p>` : '<p><strong>Concert Filter:</strong> All</p>'}
+              ${concertStatus && concertStatus !== 'all' ? `<p><strong>Concert Status:</strong> ${concertStatus}</p>` : '<p><strong>Concert Status:</strong> All</p>'}
+              ${cityFilter ? `<p><strong>City:</strong> ${cityFilter}</p>` : '<p><strong>City:</strong> All</p>'}
+              ${stateFilter ? `<p><strong>State:</strong> ${stateFilter}</p>` : '<p><strong>State:</strong> All</p>'}
+              ${amountMin ? `<p><strong>Min Amount:</strong> ${amountMin}</p>` : ''}
+              ${amountMax ? `<p><strong>Max Amount:</strong> ${amountMax}</p>` : ''}
+              ${paymentStatus && paymentStatus !== 'all' ? `<p><strong>Payment Status:</strong> ${paymentStatus}</p>` : ''}
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Revenue Summary</h2>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <h3>₹${totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                <p>Total Revenue</p>
+              </div>
+              <div class="stat-card">
+                <h3>₹${revenueSources.ticket.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                <p>Ticket Commission</p>
+              </div>
+              <div class="stat-card">
+                <h3>₹${revenueSources.venue.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                <p>Venue Booking Commission</p>
+              </div>
+              <div class="stat-card">
+                <h3>₹${revenueSources.subscription.total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                <p>Subscription Revenue</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <h2>Filtered Statistics</h2>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <h3>${filteredConcerts}</h3>
+                <p>Filtered Concerts</p>
+              </div>
+              <div class="stat-card">
+                <h3>${filteredTickets}</h3>
+                <p>Filtered Tickets</p>
+              </div>
+              <div class="stat-card">
+                <h3>${filteredUsers}</h3>
+                <p>Filtered Users</p>
+              </div>
+            </div>
+          </div>
+          
+          ${filteredUserDetails.length > 0 ? `
+          <div class="section">
+            <h2>Filtered Users (${filteredUserDetails.length})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Registration Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredUserDetails.map(user => `
+                  <tr>
+                    <td>${user._id.toString().slice(-6).toUpperCase()}</td>
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.role || 'N/A'}</td>
+                    <td>${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          
+          ${filteredConcertDetails.length > 0 ? `
+          <div class="section">
+            <h2>Filtered Concerts (${filteredConcertDetails.length})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Artist</th>
+                  <th>Venue</th>
+                  <th>Date</th>
+                  <th>City</th>
+                  <th>State</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredConcertDetails.map(concert => `
+                  <tr>
+                    <td>${concert.title || 'N/A'}</td>
+                    <td>${concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'N/A')}</td>
+                    <td>${concert.venue ? concert.venue.name : 'N/A'}</td>
+                    <td>${concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A'}</td>
+                    <td>${concert.city || (concert.venue ? concert.venue.city : 'N/A')}</td>
+                    <td>${concert.venue ? concert.venue.state : 'N/A'}</td>
+                    <td>${concert.status || 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          ` : ''}
+          
+          <div class="section">
+            <h2>Ticket Revenue Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Revenue Type</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${revenueSources.ticket.items.map(ticket => `
+                  <tr>
+                    <td>${new Date(ticket.createdAt).toLocaleDateString()}</td>
+                    <td>Ticket Commission</td>
+                    <td>${ticket.user?.name || 'Unknown User'}</td>
+                    <td>₹${(ticket.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>Ticket #${ticket._id} for ${ticket.concert?.title || 'Unknown Concert'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <h2>Venue Booking Commission Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Revenue Type</th>
+                  <th>Concert</th>
+                  <th>Artist</th>
+                  <th>Venue</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${revenueSources.venue.items.map(concert => `
+                  <tr>
+                    <td>${concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A'}</td>
+                    <td>Venue Commission</td>
+                    <td>${concert.title || 'N/A'}</td>
+                    <td>${concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'N/A')}</td>
+                    <td>${concert.venue ? concert.venue.name : 'N/A'}</td>
+                    <td>₹${(concert.venueBooking?.adminCommission?.advanceAmount || 
+                      (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <h2>Subscription Revenue Details</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Revenue Type</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${revenueSources.subscription.items.map(sub => `
+                  <tr>
+                    <td>${new Date(sub.createdAt).toLocaleDateString()}</td>
+                    <td>Subscription</td>
+                    <td>${sub.user?.name || 'Unknown User'}</td>
+                    <td>₹${(sub.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>Subscription to ${sub.plan?.name || 'Unknown Plan'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <script>
+          // Password for this report - set during export
+          const correctPassword = "${password || 'admin'}";
+          
+          function checkPassword() {
+            const passwordInput = document.getElementById('password').value;
+            
+            if (passwordInput === correctPassword) {
+              document.getElementById('passwordScreen').style.display = 'none';
+              document.getElementById('content').style.display = 'block';
+            } else {
+              alert('Incorrect password. Please try again.');
+            }
+          }
+          
+          // Allow Enter key to submit password
+          document.getElementById('password').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+              checkPassword();
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `;
+
+    // Send HTML as download
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `revenue_analysis_report_${timestamp}.html`;
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(htmlContent);
+  } catch (error) {
+    console.error('Export revenue HTML error:', error);
+    req.flash('error', 'Failed to export revenue data to HTML');
+    res.redirect('/admin/revenue-analysis');
+  }
+});
+
+// Password entry page for HTML export
+router.get('/revenue-analysis/password-entry', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    // Get all filter parameters to pass to the password entry page
+    const {
+      startDate, endDate, revenueSource, userFilter, amountMin, amountMax, 
+      paymentStatus, concertFilter, concertStatus, cityFilter, stateFilter
+    } = req.query;
+    
+    res.render('admin/revenue-analysis-password', {
+      layout: 'admin',
+      currentPath: '/admin/revenue-analysis',
+      title: 'Set Export Password',
+      filters: {
+        startDate: startDate || '',
+        endDate: endDate || '',
+        revenueSource: revenueSource || 'all',
+        userFilter: userFilter || '',
+        amountMin: amountMin || '',
+        amountMax: amountMax || '',
+        paymentStatus: paymentStatus || 'all',
+        concertFilter: concertFilter || '',
+        concertStatus: concertStatus || 'all',
+        cityFilter: cityFilter || '',
+        stateFilter: stateFilter || ''
+      }
+    });
+  } catch (error) {
+    console.error('Password entry page error:', error);
+    req.flash('error', 'Failed to load password entry page');
+    res.redirect('/admin/revenue-analysis');
+  }
+});
+
+// Handle password submission for HTML export
+router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password || password.trim() === '') {
+      req.flash('error', 'Password cannot be empty');
+      // Get the filter parameters from the form
+      const {
+        startDate, endDate, revenueSource, userFilter, amountMin, amountMax, 
+        paymentStatus, concertFilter, concertStatus, cityFilter, stateFilter
+      } = req.body;
+      
+      return res.render('admin/revenue-analysis-password', {
+        layout: 'admin',
+        currentPath: '/admin/revenue-analysis',
+        title: 'Set Export Password',
+        filters: {
+          startDate: startDate || '',
+          endDate: endDate || '',
+          revenueSource: revenueSource || 'all',
+          userFilter: userFilter || '',
+          amountMin: amountMin || '',
+          amountMax: amountMax || '',
+          paymentStatus: paymentStatus || 'all',
+          concertFilter: concertFilter || '',
+          concertStatus: concertStatus || 'all',
+          cityFilter: cityFilter || '',
+          stateFilter: stateFilter || ''
+        }
+      });
+    }
+    
+    // Build query string with all filters and password
+    const exportParams = [];
+    if (req.body.startDate) exportParams.push(`startDate=${encodeURIComponent(req.body.startDate)}`);
+    if (req.body.endDate) exportParams.push(`endDate=${encodeURIComponent(req.body.endDate)}`);
+    if (req.body.revenueSource && req.body.revenueSource !== 'all') exportParams.push(`revenueSource=${encodeURIComponent(req.body.revenueSource)}`);
+    if (req.body.userFilter) exportParams.push(`userFilter=${encodeURIComponent(req.body.userFilter)}`);
+    if (req.body.amountMin) exportParams.push(`amountMin=${encodeURIComponent(req.body.amountMin)}`);
+    if (req.body.amountMax) exportParams.push(`amountMax=${encodeURIComponent(req.body.amountMax)}`);
+    if (req.body.paymentStatus && req.body.paymentStatus !== 'all') exportParams.push(`paymentStatus=${encodeURIComponent(req.body.paymentStatus)}`);
+    if (req.body.concertFilter) exportParams.push(`concertFilter=${encodeURIComponent(req.body.concertFilter)}`);
+    if (req.body.concertStatus && req.body.concertStatus !== 'all') exportParams.push(`concertStatus=${encodeURIComponent(req.body.concertStatus)}`);
+    if (req.body.cityFilter) exportParams.push(`cityFilter=${encodeURIComponent(req.body.cityFilter)}`);
+    if (req.body.stateFilter) exportParams.push(`stateFilter=${encodeURIComponent(req.body.stateFilter)}`);
+    exportParams.push(`password=${encodeURIComponent(password)}`);
+    
+    const exportQueryString = exportParams.join('&');
+    
+    // Redirect to the HTML export route with all parameters
+    res.redirect(`/admin/revenue-analysis/export-html?${exportQueryString}`);
+  } catch (error) {
+    console.error('Export with password error:', error);
+    req.flash('error', 'Failed to export with password');
+    res.redirect('/admin/revenue-analysis');
+  }
+});
+
 module.exports = router;

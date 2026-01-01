@@ -54,6 +54,11 @@
           <i class="bi bi-gear me-2"></i>Admin Settings
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="ticket-commission-tab" data-bs-toggle="tab" data-bs-target="#ticket-commission" type="button" role="tab">
+          <i class="bi bi-currency-rupee me-2"></i>Ticket Commission
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -841,6 +846,69 @@
             </button>
             <button type="button" class="btn btn-outline-info ms-2" onclick="previewDummyData()">
               <i class="bi bi-eye me-1"></i>Preview Dummy Data
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Ticket Commission Tab -->
+      <div class="tab-pane fade" id="ticket-commission" role="tabpanel">
+        <form action="/admin/website-settings/ticket-commission" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Ticket Commission Settings</h5>
+
+              <div class="mb-4">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="ticketCommissionEnabled" id="ticketCommissionEnabled"
+                         <%= (settings.ticketCommissionSettings && settings.ticketCommissionSettings.enabled) ? 'checked' : '' %> >
+                  <label class="form-check-label text-white fw-bold" for="ticketCommissionEnabled">
+                    Enable Ticket Commission
+                  </label>
+                </div>
+                <small class="text-muted">
+                  When enabled, a commission percentage will be added to all paid ticket purchases.
+                  This commission is collected as platform charges on top of the ticket price.
+                </small>
+              </div>
+
+              <div class="mb-4">
+                <label for="ticketCommissionPercentage" class="form-label text-white fw-bold">Commission Percentage</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="ticketCommissionPercentage" 
+                         name="ticketCommissionPercentage" 
+                         value="<%= settings.ticketCommissionSettings ? settings.ticketCommissionSettings.percentage : 0 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">
+                  This commission percentage will be added to the ticket price during checkout.
+                  <br><strong>Example:</strong> A ₹100 ticket with 5% commission = ₹100 ticket price + ₹5 commission = ₹105 total
+                </small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Commission Information
+                  </h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Commission is calculated on top of the ticket price</li>
+                    <li class="mb-2">Users will see a breakdown of ticket price and commission</li>
+                    <li class="mb-2">Commission applies to all paid ticket purchases</li>
+                    <li class="mb-2">Free tickets are not affected by this setting</li>
+                    <li class="mb-2"><strong class="text-info">Changes apply immediately to all ticket purchases</strong></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Ticket Commission Settings
             </button>
           </div>
         </form>

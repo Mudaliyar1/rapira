@@ -95,6 +95,18 @@
                       </div>
                       <% } %>
 
+                      <!-- Commission display - shown differently based on commission settings -->
+                      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+                      <div class="d-flex justify-content-between mb-2 text-warning">
+                        <span><i class="bi bi-currency-rupee me-1"></i> Platform Commission:</span>
+                        <span><%= ticketCommissionPercentage %>%</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Platform Charges:</span>
+                        <span>Excluded from ticket pricing</span>
+                      </div>
+                      <% } %>
+
                       <hr class="border-secondary">
                       <div class="d-flex justify-content-between fw-bold">
                         <span class="text-white">Total Amount:</span>
@@ -258,14 +270,31 @@
     // Update the total amount when the ticket quantity changes
     ticketQuantitySelect.addEventListener('change', function() {
       const quantity = parseInt(this.value);
-      const total = ticketPrice * quantity;
-
+      
+      // Calculate base total (ticket price * quantity)
+      const baseTotal = ticketPrice * quantity;
+      
+      // Calculate commission if enabled
+      let commissionAmount = 0;
+      let totalWithCommission = baseTotal;
+      
+      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+        const commissionPercentage = <%= ticketCommissionPercentage %>;
+        commissionAmount = (baseTotal * commissionPercentage) / 100;
+        totalWithCommission = baseTotal + commissionAmount;
+      <% } %>
+      
       // Update the ticket count
       ticketCountElement.textContent = quantity;
+      
+      // Update commission display if commission is enabled
+      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+        document.getElementById('commissionAmount').textContent = '₹' + commissionAmount.toFixed(2);
+      <% } %>
 
       // Update the total amount
-      totalAmountElement.textContent = total;
-      totalAmountInput.value = total;
+      totalAmountElement.textContent = totalWithCommission;
+      totalAmountInput.value = totalWithCommission;
 
       // Update attendee forms
       updateAttendeeForms(quantity);

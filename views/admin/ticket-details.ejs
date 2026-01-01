@@ -83,6 +83,16 @@
                       <p class="fw-medium mb-1">Payment ID:</p>
                       <p><%= ticket.paymentId || 'N/A' %></p>
                     </div>
+                    <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
+                    <div class="col-md-6 mb-3">
+                      <p class="fw-medium mb-1">Ticket Price:</p>
+                      <p>₹<%= (ticket.totalAmount / (1 + (ticket.commissionPercentage / 100))).toFixed(2) %></p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <p class="fw-medium mb-1">Platform Charges:</p>
+                      <p>₹<%= ticket.commissionAmount %> (<%= ticket.commissionPercentage %>%)</p>
+                    </div>
+                    <% } %>
                   <% } else { %>
                     <div class="col-md-6 mb-3">
                       <p class="fw-medium mb-1">Ticket Type:</p>

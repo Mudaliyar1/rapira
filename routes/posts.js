@@ -11,11 +11,11 @@ const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
 	fileFilter: (req, file, cb) => {
-		const allowed = /jpeg|jpg|png|gif|mp4|webm|ogg|mov|avi/;
+		const allowed = /jpeg|jpg|png|gif|mp4|webm|ogg|mov|avi|mp3|wav|m4a|aac|flac/;
 		const extname = allowed.test(path.extname(file.originalname).toLowerCase());
-		const mimetype = /image|video/.test(file.mimetype);
+		const mimetype = /image|video|audio/.test(file.mimetype);
 		if (extname && mimetype) return cb(null, true);
-		cb(new Error('Only image/video files allowed'));
+		cb(new Error('Only image/video/audio files allowed'));
 	}
 });
 
@@ -24,6 +24,10 @@ const upload = multer({
 // Create post
 router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 	try {
+		console.log('[POST /posts] Starting upload...');
+		console.log('[POST /posts] User role:', req.session.user.role);
+		console.log('[POST /posts] File:', req.file ? { name: req.file.originalname, type: req.file.mimetype, size: req.file.size } : 'NO FILE');
+		
 		if (req.session.user.role !== 'artist') {
 			return res.status(403).json({ success: false, message: 'Only artists can create posts' });
 		}
@@ -34,17 +38,30 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 		}
 
 		if (!req.file) {
-			return res.status(400).json({ success: false, message: 'Please upload an image or video' });
+			return res.status(400).json({ success: false, message: 'Please upload an image, video, or audio file' });
 		}
 
 		const isImage = req.file.mimetype.startsWith('image/');
 		const isVideo = req.file.mimetype.startsWith('video/');
-		if (!isImage && !isVideo) {
-			return res.status(400).json({ success: false, message: 'Only image/video files allowed' });
+		const isAudio = req.file.mimetype.startsWith('audio/');
+		
+		if (!isImage && !isVideo && !isAudio) {
+			return res.status(400).json({ success: false, message: 'Only image/video/audio files allowed' });
 		}
 
-		const folder = isImage ? 'rapira/artist-posts/images' : 'rapira/artist-posts/videos';
+		let folder = 'rapira/artist-posts/images';
+		let mediaType = 'image';
+		
+		if (isVideo) {
+			folder = 'rapira/artist-posts/videos';
+			mediaType = 'video';
+		} else if (isAudio) {
+			folder = 'rapira/artist-posts/audio';
+			mediaType = 'audio';
+		}
+		
 		const uploadRes = await uploadFileToCloudinary(req.file, { folder });
+		console.log('[POST /posts] Cloudinary upload result:', uploadRes.media ? 'SUCCESS' : 'FAILED');
 		if (!uploadRes.media || !uploadRes.result) {
 			return res.status(500).json({ success: false, message: 'Upload to Cloudinary failed' });
 		}
@@ -56,16 +73,21 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 			artist: artist._id,
 			media: {
 				url: uploadRes.media.secure_url || uploadRes.result.secure_url,
-				mediaType: isImage ? 'image' : 'video',
+				mediaType: mediaType,
 				publicId: uploadRes.media.public_id || uploadRes.result.public_id
 			},
 			caption,
 			hashtags: hashtags.map(tag => tag.substring(1).toLowerCase())
 		});
 
+		console.log('[POST /posts] About to save post:', JSON.stringify(post, null, 2));
 		await post.save();
+		console.log('[POST /posts] Post saved to DB:', post._id);
+		console.log('[POST /posts] Response being sent:', { success: true, message: 'Post created! Awaiting admin approval.' });
 		res.json({ success: true, post, message: 'Post created! Awaiting admin approval.' });
 	} catch (err) {
+		console.error('[POST /posts] ERROR:', err.message);
+		console.error('[POST /posts] Stack:', err.stack);
 		res.status(500).json({ success: false, message: err.message || 'Failed to create post' });
 	}
 });

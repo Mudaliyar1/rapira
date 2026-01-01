@@ -8,6 +8,220 @@
       console.log('This might be due to network issues or API key restrictions');
     }
   });
+  
+  // Function to show venue images in a carousel
+  function showVenueImages(images) {
+    const carouselContainer = document.getElementById('venueImageCarousel');
+    const carouselDiv = document.getElementById('venueImageCarouselContainer');
+    
+    if (images && images.length > 0) {
+      // Store images globally for lightbox access
+      window.venueImages = images;
+      
+      // Build carousel HTML
+      let carouselHTML = `
+        <div id="venueCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+          <div class="carousel-indicators">
+      `;
+      
+      // Add indicators
+      images.forEach((image, index) => {
+        carouselHTML += `
+          <button type="button" data-bs-target="#venueCarousel" data-bs-slide-to="${index}" ${index === 0 ? 'class="active"' : ''}></button>
+        `;
+      });
+      
+      carouselHTML += `
+          </div>
+          <div class="carousel-inner">
+      `;
+      
+      // Add images
+      images.forEach((image, index) => {
+        carouselHTML += `
+          <div class="carousel-item ${index === 0 ? 'active' : ''}">
+            <img src="${image}" class="d-block w-100 venue-carousel-image" style="height: 300px; object-fit: cover; cursor: pointer;" alt="Venue Image" onclick="openImageFullscreen(${index})">
+          </div>
+        `;
+      });
+      
+      carouselHTML += `
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#venueCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#venueCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      `;
+      
+      carouselDiv.innerHTML = carouselHTML;
+      carouselContainer.classList.remove('d-none');
+      
+      // Initialize the carousel
+      const carouselElement = document.getElementById('venueCarousel');
+      if (carouselElement) {
+        // Use Bootstrap's default initialization which respects data-bs-interval
+        const bsCarousel = new bootstrap.Carousel(carouselElement, {
+          wrap: true
+        });
+      }
+    } else {
+      // No images available
+      carouselDiv.innerHTML = `
+        <div class="text-center text-muted p-4">
+          <i class="bi bi-image fs-1 mb-2"></i>
+          <p>No images available for this venue</p>
+        </div>
+      `;
+      carouselContainer.classList.remove('d-none');
+    }
+  }
+  
+  // Function to open image in fullscreen carousel
+  function openImageFullscreen(index) {
+    // Create or update the fullscreen carousel overlay
+    let fullscreenCarousel = document.getElementById('fullscreenCarousel');
+    if (!fullscreenCarousel) {
+      fullscreenCarousel = document.createElement('div');
+      fullscreenCarousel.id = 'fullscreenCarousel';
+      fullscreenCarousel.innerHTML = `
+        <div class="fullscreen-carousel-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+          <div class="fullscreen-carousel-content" style="position: relative; width: 95%; height: 95%; max-width: 1200px; display: flex; flex-direction: column;">
+            <div class="fullscreen-carousel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: white; padding: 10px 0;">
+              <h5 class="mb-0">Venue Images</h5>
+              <button id="closeFullscreenCarousel" type="button" class="btn-close btn-close-white" style="font-size: 1.5rem;"></button>
+            </div>
+            <div class="fullscreen-carousel-container" style="flex: 1; position: relative;">
+              <div id="fullscreenCarouselInner" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000" style="width: 100%; height: 100%;">
+                <div class="carousel-indicators" id="fullscreenCarouselIndicators">
+                </div>
+                <div class="carousel-inner" id="fullscreenCarouselItems" style="width: 100%; height: 100%;">
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#fullscreenCarouselInner" data-bs-slide="prev" id="prevFullscreenCarousel">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#fullscreenCarouselInner" data-bs-slide="next" id="nextFullscreenCarousel">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+            </div>
+            <div id="fullscreenImageCounter" class="text-white text-center mt-2"></div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(fullscreenCarousel);
+    }
+    
+    // Set current image and images array
+    window.currentImageIndex = index;
+    window.currentImages = window.venueImages;
+    
+    // Build the carousel content
+    updateFullscreenCarouselContent();
+    
+    // Show the fullscreen carousel
+    fullscreenCarousel.style.display = 'flex';
+    
+    // Initialize the carousel
+    const carouselElement = document.getElementById('fullscreenCarouselInner');
+    if (carouselElement) {
+      // Wait for DOM to update before initializing
+      setTimeout(() => {
+        // Use Bootstrap's default initialization which respects data-bs-interval
+        const bsCarousel = new bootstrap.Carousel(carouselElement, {
+          wrap: true
+        });
+        
+        // Manually set the active slide
+        bsCarousel.to(window.currentImageIndex);
+      }, 100);
+    }
+    
+    // Add event listeners
+    document.getElementById('closeFullscreenCarousel').onclick = function() {
+      fullscreenCarousel.style.display = 'none';
+    };
+    
+    // Close when clicking outside the carousel
+    fullscreenCarousel.onclick = function(event) {
+      if (event.target === fullscreenCarousel) {
+        fullscreenCarousel.style.display = 'none';
+      }
+    };
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', handleFullscreenCarouselKeydown);
+  }
+  
+  // Function to update fullscreen carousel content
+  function updateFullscreenCarouselContent() {
+    const indicators = document.getElementById('fullscreenCarouselIndicators');
+    const items = document.getElementById('fullscreenCarouselItems');
+    const counter = document.getElementById('fullscreenImageCounter');
+    
+    if (!window.currentImages) return;
+    
+    // Clear existing content
+    indicators.innerHTML = '';
+    items.innerHTML = '';
+    
+    // Build indicators
+    window.currentImages.forEach((image, index) => {
+      const indicator = document.createElement('button');
+      indicator.type = 'button';
+      indicator.setAttribute('data-bs-target', '#fullscreenCarouselInner');
+      indicator.setAttribute('data-bs-slide-to', index);
+      indicator.className = index === window.currentImageIndex ? 'active' : '';
+      if (index === 0) indicator.className += ' active';
+      indicators.appendChild(indicator);
+    });
+    
+    // Build carousel items
+    window.currentImages.forEach((image, index) => {
+      const item = document.createElement('div');
+      item.className = `carousel-item ${index === window.currentImageIndex ? 'active' : ''}`;
+      item.innerHTML = `<img src="${image}" class="d-block w-100" style="height: 100%; object-fit: contain;" alt="Venue Image">`;
+      items.appendChild(item);
+    });
+    
+    // Update counter
+    counter.textContent = `${window.currentImageIndex + 1} / ${window.currentImages.length}`;
+  }
+  
+  // Handle keyboard events for fullscreen carousel
+  function handleFullscreenCarouselKeydown(event) {
+    const fullscreenCarousel = document.getElementById('fullscreenCarousel');
+    if (!fullscreenCarousel || fullscreenCarousel.style.display === 'none') return;
+    
+    switch(event.key) {
+      case 'Escape':
+        fullscreenCarousel.style.display = 'none';
+        break;
+      case 'ArrowLeft':
+        // Navigate to previous slide
+        const prevBtn = document.getElementById('prevFullscreenCarousel');
+        if (prevBtn) prevBtn.click();
+        break;
+      case 'ArrowRight':
+        // Navigate to next slide
+        const nextBtn = document.getElementById('nextFullscreenCarousel');
+        if (nextBtn) nextBtn.click();
+        break;
+    }
+  }
+  
+  // Function to open lightbox with first image
+  function openFullscreenLightbox() {
+    if (window.venueImages && window.venueImages.length > 0) {
+      openImageFullscreen(0); // Open with first image
+    }
+  }
 </script>
 <script src="https://checkout.razorpay.com/v1/checkout.js" 
         onerror="console.error('Razorpay SDK failed to load'); window.razorpayLoadError = true;"
@@ -59,10 +273,11 @@
                           data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
                           data-venue-name="<%= venue.name %>"
                           data-venue-type="<%= venue.venueType || 'Not specified' %>"
-                          data-capacity="<%= venue.capacity || 'Not specified' %>"
                           data-facilities='<%- JSON.stringify(venue.facilities || []) %>'
                           data-address="<%= venue.address %>"
-                          data-description="<%= venue.description || '' %>">
+                          data-description="<%= venue.description || '' %>"
+                          data-google-maps-link="<%= venue.googleMapsLink || '' %>"
+                          data-images='<%- JSON.stringify(venue.images || []) %>'>
                     <%= venue.name %> - <%= venue.city %> (<%= venue.venueType || 'Venue' %>) - Capacity: <%= venue.capacity || 'Unlimited' %>
                   </option>
                 <% }); %>
@@ -257,6 +472,39 @@
                 <div class="form-text text-info" id="venueCapacityInfo" style="display: none;">
                   <i class="bi bi-info-circle"></i> Venue capacity: <span id="venueCapacityValue">0</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Venue Image Carousel -->
+          <div id="venueImageCarousel" class="mb-3 d-none">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-images"></i> Venue Images</h6>
+              </div>
+              <div class="card-body">
+                <div id="venueImageCarouselContainer">
+                  <!-- Carousel will be populated here -->
+                </div>
+                <div class="text-center mt-3">
+                  <button class="btn btn-outline-info btn-sm" onclick="openFullscreenLightbox()">
+                    <i class="bi bi-arrows-fullscreen me-1"></i>View All Images Fullscreen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Venue Google Maps Link -->
+          <div id="venueMapLinkSection" class="mb-3 d-none">
+            <div class="card">
+              <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-geo-alt-fill"></i> Venue Location</h6>
+              </div>
+              <div class="card-body text-center">
+                <a id="venueGoogleMapsLink" href="javascript:void(0);" target="_blank" class="btn btn-primary" onclick="window.open(this.getAttribute('data-map-url'), '_blank')">
+                  <i class="bi bi-map me-2"></i>View Location on Google Maps
+                </a>
               </div>
             </div>
           </div>
@@ -494,6 +742,22 @@
           });
         } else {
           facilitiesContainer.innerHTML = '<span class="text-muted">No facilities listed</span>';
+        }
+        
+        // Update venue images carousel
+        const images = selectedOption.dataset.images ? JSON.parse(selectedOption.dataset.images) : [];
+        showVenueImages(images);
+        
+        // Update Google Maps link section
+        const googleMapsLink = selectedOption.dataset.googleMapsLink || '';
+        const mapLinkSection = document.getElementById('venueMapLinkSection');
+        const mapLinkBtn = document.getElementById('venueGoogleMapsLink');
+        if (googleMapsLink) {
+          mapLinkBtn.setAttribute('data-map-url', googleMapsLink);
+          mapLinkBtn.href = googleMapsLink;
+          mapLinkSection.classList.remove('d-none');
+        } else {
+          mapLinkSection.classList.add('d-none');
         }
         
         // Update commission details - will be updated when hour is selected

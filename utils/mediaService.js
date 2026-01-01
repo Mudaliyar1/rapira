@@ -10,7 +10,7 @@ const RESOURCE_RAW = 'raw';
 function detectResourceType(mimetype = '') {
   if (mimetype.startsWith('image/')) return RESOURCE_IMAGE;
   if (mimetype.startsWith('video/')) return RESOURCE_VIDEO;
-  if (mimetype.startsWith('audio/')) return RESOURCE_RAW; // audio treated as raw
+  if (mimetype.startsWith('audio/')) return RESOURCE_VIDEO; // audio treated as video for streaming
   return RESOURCE_RAW;
 }
 

@@ -181,13 +181,24 @@ async function initializeAdminPages() {
       
       // System
       {
+        name: 'Revenue Analysis',
+        slug: 'revenue_analysis',
+        description: 'Analyze all revenue streams from the website',
+        path: '/admin/revenue-analysis',
+        icon: 'bi-currency-rupee',
+        category: 'system',
+        displayOrder: 1,
+        alwaysAccessible: false,
+        superAdminOnly: false
+      },
+      {
         name: 'Storage Management',
         slug: 'storage_management',
         description: 'Manage file storage',
         path: '/admin/storage-management',
         icon: 'bi-hdd-stack',
         category: 'system',
-        displayOrder: 1,
+        displayOrder: 2,
         alwaysAccessible: false,
         superAdminOnly: false
       },

@@ -541,4 +541,32 @@ router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST /admin/website-settings/ticket-commission - Update ticket commission settings
+router.post('/ticket-commission', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { ticketCommissionEnabled, ticketCommissionPercentage } = req.body;
+
+    const settings = await WebsiteSettings.getSettings();
+    
+    // Initialize ticketCommissionSettings if it doesn't exist
+    if (!settings.ticketCommissionSettings) {
+      settings.ticketCommissionSettings = {};
+    }
+
+    // Update ticket commission settings
+    settings.ticketCommissionSettings.enabled = ticketCommissionEnabled === 'on';
+    settings.ticketCommissionSettings.percentage = parseFloat(ticketCommissionPercentage) || 0;
+    
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    req.flash('success', 'Ticket commission settings updated successfully!');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating ticket commission settings:', error);
+    req.flash('error', 'Failed to update ticket commission settings');
+    res.redirect('/admin/website-settings');
+  }
+});
+
 module.exports = router;

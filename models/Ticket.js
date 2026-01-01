@@ -48,6 +48,18 @@ const TicketSchema = new mongoose.Schema({
     enum: ['none', 'subscription', 'promo', 'other'],
     default: 'none'
   },
+  commissionApplied: {
+    type: Boolean,
+    default: false
+  },
+  commissionPercentage: {
+    type: Number,
+    default: 0
+  },
+  commissionAmount: {
+    type: Number,
+    default: 0
+  },
   paymentId: {
     type: String,
     default: ''

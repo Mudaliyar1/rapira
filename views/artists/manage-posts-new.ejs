@@ -17,9 +17,9 @@
     <div class="card-body">
       <form id="postForm" enctype="multipart/form-data">
         <div class="mb-3">
-          <label for="media" class="form-label">Upload Image or Video</label>
-          <input type="file" class="form-control" id="media" name="media" accept="image/*,video/*" required>
-          <small class="text-muted d-block mt-2">Formats: JPG, PNG, GIF, MP4, WebM, MOV, AVI (Max 50MB)</small>
+          <label for="media" class="form-label">Upload Image, Video, or Audio</label>
+          <input type="file" class="form-control" id="media" name="media" accept="image/*,video/*,audio/*" required>
+          <small class="text-muted d-block mt-2">Formats: JPG, PNG, GIF, MP4, WebM, MOV, AVI, MP3, WAV, M4A, AAC, FLAC (Max 50MB)</small>
         </div>
 
         <div id="mediaPreview" class="mb-3" style="max-height: 300px; border-radius: 8px; overflow: hidden; display: none;">
@@ -148,6 +148,26 @@
     height: 200px;
     object-fit: cover;
     background: #f8f9fa;
+  }
+
+  .audio-post-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+  }
+
+  .audio-icon {
+    font-size: 3rem;
+    color: white;
+    margin-bottom: 10px;
+  }
+
+  audio {
+    width: 100%;
+    margin-top: 10px;
   }
 
   .post-info {
@@ -323,6 +343,16 @@ document.getElementById('media').addEventListener('change', function(e) {
         preview.innerHTML = `<video controls style="width: 100%; border-radius: 8px;">
           <source src="${event.target.result}">
         </video>`;
+      } else if (file.type.startsWith('audio/')) {
+        preview.innerHTML = `
+          <div class="text-center p-4 bg-dark rounded">
+            <i class="bi bi-music-note-beamed fs-1 text-primary mb-3"></i>
+            <div class="mb-3"><strong>${file.name}</strong></div>
+            <audio controls style="width: 100%;">
+              <source src="${event.target.result}">
+            </audio>
+          </div>
+        `;
       }
       preview.style.display = 'block';
     };
