@@ -185,10 +185,10 @@
               </td>
               <td>
                 <div>
-                  <h6 class="text-white mb-1"><%= order.user.name %></h6>
-                  <small class="text-muted"><%= order.user.email %></small>
+                  <h6 class="text-white mb-1"><%= order.user ? order.user.name : 'Unknown Customer' %></h6>
+                  <small class="text-muted"><%= order.user ? order.user.email : 'N/A' %></small>
                   <br>
-                  <small class="text-muted"><%= order.shippingAddress.city %>, <%= order.shippingAddress.state %></small>
+                  <small class="text-muted"><%= order.shippingAddress ? order.shippingAddress.city + ', ' + order.shippingAddress.state : 'N/A' %></small>
                 </div>
               </td>
               <td>

@@ -206,6 +206,25 @@ app.use(helmet({
   },
 }));
 
+// Rate limiting middleware for API routes
+const rateLimit = require('express-rate-limit');
+
+const apiLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 500, // Limit each IP to 500 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  handler: (req, res) => {
+    res.status(429).render("tooManyRequests", {
+      title: "Too Many Requests",
+      retryAfter: Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) || 60
+    });
+  }
+});
+
+// Apply rate limiting only to API routes
+app.use('/api', apiLimiter);
+
 // Custom security headers not covered by Helmet
 app.use((req, res, next) => {
   // Permissions Policy (newer spec replacing Feature Policy)
@@ -318,6 +337,10 @@ app.locals.layouts = {
 };
 
 // Middleware
+// Set security limits for JSON and URL-encoded bodies
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+
 // Serve static files with proper CORS headers and content types
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
@@ -357,8 +380,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   }
 }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(methodOverride('_method'));
 
 // Session configuration

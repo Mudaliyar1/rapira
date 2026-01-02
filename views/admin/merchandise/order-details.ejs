@@ -33,7 +33,7 @@
           </p>
           <p class="text-muted mb-0">
             <i class="bi bi-person me-2"></i>
-            Customer: <%= order.user.name %> (<%= order.user.email %>)
+            Customer: <%= order.user ? order.user.name : 'Unknown Customer' %> (<%= order.user ? order.user.email : 'N/A' %>)
           </p>
         </div>
         <div class="text-end">

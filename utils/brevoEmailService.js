@@ -889,11 +889,175 @@ const sendOrderConfirmationEmail = async (userEmail, orderData) => {
   });
 };
 
+const crypto = require('crypto');
+
+/**
+ * Send account deletion notification with recovery link
+ * @param {Object} user - User object
+ * @param {String} recoveryToken - Token for account recovery
+ * @returns {Promise} - A promise that resolves when the email is sent
+ */
+const sendAccountDeletionNotification = async (user, recoveryToken) => {
+  // Create recovery URL - use BASE_URL from environment, default to localhost for development
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  const recoveryUrl = `${baseUrl}/users/recover-account/${recoveryToken}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+        }
+        .header {
+          background-color: #ef4444;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px 5px 0 0;
+        }
+        .content {
+          padding: 20px;
+        }
+        .account-info {
+          background-color: #f8f9fa;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+          color: #666;
+        }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #6366f1;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin: 15px 0;
+          font-weight: bold;
+        }
+        .warning {
+          background-color: #fef3c7;
+          border: 1px solid #fbbf24;
+          color: #92400e;
+          padding: 10px;
+          border-radius: 5px;
+          margin: 15px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Account Deletion Notification</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${user.name || 'User'},</p>
+          
+          <div class="warning">
+            <strong>Important:</strong> Your account has been successfully deleted from Rapira Music Platform.
+          </div>
+          
+          <p>We're sorry to see you go. Your account with the following details has been permanently removed:</p>
+          
+          <div class="account-info">
+            <h3>Account Information:</h3>
+            <p><strong>Username:</strong> ${user.name}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Account Type:</strong> ${user.role || 'User'}</p>
+          </div>
+          
+          <p>If you wish to recover your account within the next 30 days, please click the link below:</p>
+          
+          <p style="text-align: center;">
+            <a href="${recoveryUrl}" class="button">Recover My Account</a>
+          </p>
+          
+          <p style="text-align: center; margin: 15px 0;">
+            Or copy and paste this link in your browser:
+            <br>
+            <a href="${recoveryUrl}" style="word-break: break-all; color: #6366f1;">
+              ${recoveryUrl}
+            </a>
+          </p>
+          
+          <p><strong>Important:</strong> This recovery link is valid for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.</p>
+          
+          <p>If you did not request this account deletion or need assistance, please contact our support team.</p>
+          
+          <p>Thank you for being part of Rapira Music Platform.</p>
+          
+          <p>Best regards,<br>The Rapira Team</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email. Please do not reply to this message.</p>
+          <p>&copy; ${new Date().getFullYear()} Rapira Music Platform. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+    Account Deletion Notification
+
+    Hello ${user.name || 'User'},
+
+    We're sorry to see you go. Your account has been successfully deleted from Rapira Music Platform.
+
+    Account Information:
+    Username: ${user.name}
+    Email: ${user.email}
+    Account Type: ${user.role || 'User'}
+
+    If you wish to recover your account within the next 30 days, please click the link below:
+    ${recoveryUrl}
+
+    Important: This recovery link is valid for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.
+
+    If you did not request this account deletion or need assistance, please contact our support team.
+
+    Thank you for being part of Rapira Music Platform.
+
+    Best regards,
+    The Rapira Team
+
+    This is an automated email. Please do not reply to this message.
+    © ${new Date().getFullYear()} Rapira Music Platform. All rights reserved.
+  `;
+
+  return sendEmail({
+    to: user.email,
+    toName: user.name,
+    subject: 'Your Account Has Been Deleted - Recovery Available',
+    htmlContent,
+    textContent
+  });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendTicketEmail,
   sendArtistBookingRequestEmail,
-  sendOrderConfirmationEmail
+  sendOrderConfirmationEmail,
+  sendAccountDeletionNotification
 };

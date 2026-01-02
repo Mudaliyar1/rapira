@@ -8,9 +8,12 @@ const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const Media = require('../models/Media');
+const fs = require('fs');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
-const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
+const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail, sendAccountDeletionNotification } = require('../utils/brevoEmailService');
 const DeletedAccount = require('../models/DeletedAccount');
+const AccountRecoveryToken = require('../models/AccountRecoveryToken');
+const crypto = require('crypto');
 
 // Configure multer for profile image uploads (memory → Cloudinary)
 const upload = multer({
@@ -519,11 +522,230 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
     // Clear session
     req.session.destroy();
 
+    // Generate a recovery token that's valid for 30 days
+    const recoveryToken = crypto.randomBytes(32).toString('hex');
+    const recoveryTokenDoc = new AccountRecoveryToken({
+      user: user._id,
+      email: user.email,
+      token: recoveryToken,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+    });
+    
+    await recoveryTokenDoc.save();
+    console.log(`Created recovery token for user: ${user._id}`);
+    
+    // Send account deletion notification with recovery link
+    try {
+      const emailResult = await sendAccountDeletionNotification(user, recoveryToken);
+      if (emailResult.success) {
+        console.log(`Account deletion notification sent to: ${user.email}`);
+      } else {
+        console.error('Failed to send account deletion notification:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('Error sending account deletion notification:', emailError);
+    }
+
     res.redirect('/');
   } catch (error) {
     console.error('Delete account error:', error);
     req.flash('error', 'Failed to delete account');
     res.redirect('/users/profile');
+  }
+});
+
+// GET route for account recovery page when accessed directly without token
+router.get('/recover-account', async (req, res) => {
+  res.render('users/recover-account', {
+    error: null,
+    success: null,
+    showForm: false,
+    showSuccess: false
+  });
+});
+
+// GET route for account recovery page with token
+router.get('/recover-account/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Find the recovery token
+    const recoveryTokenDoc = await AccountRecoveryToken.findOne({
+      token,
+      expiresAt: { $gt: new Date() },
+      used: false
+    });
+    
+    if (!recoveryTokenDoc) {
+      return res.render('users/recover-account', {
+        error: 'Invalid or expired recovery token. Please contact support if you need assistance.',
+        showForm: false
+      });
+    }
+    
+    // Show the recovery form
+    res.render('users/recover-account', {
+      email: recoveryTokenDoc.email,
+      token,
+      showForm: true,
+      error: null,
+      success: null
+    });
+  } catch (error) {
+    console.error('Account recovery page error:', error);
+    res.render('users/recover-account', {
+      error: 'An error occurred while loading the recovery page. Please try again.',
+      showForm: false,
+      success: null
+    });
+  }
+});
+
+// POST route for account recovery
+router.post('/recover-account/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+    
+    // Validate password match
+    if (password !== confirmPassword) {
+      return res.render('users/recover-account', {
+        error: 'Passwords do not match',
+        email: req.body.email || '',
+        token,
+        showForm: true
+      });
+    }
+    
+    // Validate password length
+    if (password.length < 6) {
+      return res.render('users/recover-account', {
+        error: 'Password must be at least 6 characters long',
+        email: req.body.email || '',
+        token,
+        showForm: true
+      });
+    }
+    
+    // Find the recovery token
+    const recoveryTokenDoc = await AccountRecoveryToken.findOne({
+      token,
+      expiresAt: { $gt: new Date() },
+      used: false
+    });
+    
+    if (!recoveryTokenDoc) {
+      return res.render('users/recover-account', {
+        error: 'Invalid or expired recovery token. Please contact support if you need assistance.',
+        showForm: false
+      });
+    }
+    
+    // Check if user has been permanently deleted
+    const deletedAccount = await DeletedAccount.findOne({ email: recoveryTokenDoc.email });
+    if (!deletedAccount) {
+      return res.render('users/recover-account', {
+        error: 'Account information not found. The account may have already been permanently deleted.',
+        showForm: false,
+        success: null
+      });
+    }
+    
+    // Check if a user with this email already exists
+    const existingUser = await User.findOne({ email: recoveryTokenDoc.email });
+    let user;
+    
+    if (existingUser) {
+      // If user already exists, update their password and log them in
+      existingUser.password = password;
+      await existingUser.save();
+      user = existingUser;
+      console.log(`Existing user updated for recovery: ${user._id} with email: ${user.email}`);
+    } else {
+      // Create a new user with the original data
+      user = new User({
+        name: deletedAccount.name,
+        email: deletedAccount.email,
+        password: password,
+        role: deletedAccount.role,
+        profileImage: deletedAccount.profileImage,
+        bio: deletedAccount.bio,
+        city: deletedAccount.city,
+        socialLinks: deletedAccount.socialLinks,
+        walletBalance: deletedAccount.walletBalance,
+        isEmailVerified: true
+      });
+      
+      try {
+        await user.save();
+        console.log(`New user created for recovery: ${user._id} with email: ${user.email}`);
+      } catch (dbError) {
+        // Handle the case where the email already exists due to race condition or other issue
+        if (dbError.code === 11000) {
+          // Try to find and update the existing user
+          const raceConditionUser = await User.findOne({ email: recoveryTokenDoc.email });
+          if (raceConditionUser) {
+            raceConditionUser.password = password;
+            await raceConditionUser.save();
+            user = raceConditionUser;
+            console.log(`Race condition user updated for recovery: ${user._id} with email: ${user.email}`);
+          } else {
+            return res.render('users/recover-account', {
+              error: 'An account with this email already exists. Please contact support.',
+              showForm: false,
+              success: null
+            });
+          }
+        } else {
+          throw dbError; // Re-throw if it's a different error
+        }
+      }
+    }
+    console.log(`Account recovered for user: ${user._id} with email: ${user.email}`);
+    
+    // Mark the recovery token as used
+    recoveryTokenDoc.used = true;
+    await recoveryTokenDoc.save();
+    
+    // If the user was an artist, restore their artist profile
+    if (deletedAccount.artistData) {
+      const Artist = require('../models/Artist');
+      const artist = new Artist({
+        user: user._id,
+        stageName: deletedAccount.artistData.stageName,
+        genre: deletedAccount.artistData.genre,
+        yearsActive: deletedAccount.artistData.yearsActive,
+        about: deletedAccount.artistData.about,
+        followers: deletedAccount.artistData.followers,
+        city: deletedAccount.city
+      });
+      
+      await artist.save();
+      console.log(`Artist profile restored for user: ${user._id}`);
+    }
+    
+    // Log the user in
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage
+    };
+    
+    // Delete the deleted account record since the account is recovered
+    await DeletedAccount.deleteOne({ _id: deletedAccount._id });
+    
+    // Redirect to login with success message
+    req.flash('success', 'Account recovered successfully! You are now logged in.');
+    res.redirect('/auth/login');
+  } catch (error) {
+    console.error('Account recovery error:', error);
+    res.render('users/recover-account', {
+      error: 'An error occurred while recovering your account. Please try again.',
+      showForm: false,
+      success: null
+    });
   }
 });
 
