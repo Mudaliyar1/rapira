@@ -7,6 +7,7 @@ const { isLoggedIn } = require('../middleware/auth');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 const { sendTicketEmail } = require('../utils/brevoEmailService');
 const { getActiveSubscription, applyDiscount } = require('../utils/subscriptionService');
+const { isConcertPassed } = require('../utils/ticketHelper');
 const path = require('path');
 const ejs = require('ejs');
 
@@ -545,12 +546,16 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     // Check if there's a refund request for this ticket
     const RefundRequest = require('../models/RefundRequest');
     const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
+    
+    // Check if concert date has passed
+    const isPastConcert = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
 
     res.render('tickets/show', {
       ticket,
       concert: ticket.concert,
       isDeletedConcert,
-      refundRequest
+      refundRequest,
+      isPastConcert
     });
   } catch (error) {
     console.error('View ticket error:', error);
@@ -690,13 +695,15 @@ router.get('/', isLoggedIn, async (req, res) => {
     if (wantsJson) {
       // Format tickets for JSON response
       const formattedTickets = tickets.map(ticket => {
+        const isPast = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
         return {
           id: ticket._id,
           concertTitle: ticket.concert ? ticket.concert.title : 'Concert Unavailable',
           concertDate: ticket.concert ? ticket.concert.date : null,
           venue: ticket.concert ? ticket.concert.venue : 'N/A',
           quantity: ticket.quantity,
-          status: ticket.paymentStatus
+          status: ticket.paymentStatus,
+          isPastConcert: isPast
         };
       });
 
@@ -710,7 +717,17 @@ router.get('/', isLoggedIn, async (req, res) => {
 
     // Regular page request
     console.log('Rendering tickets/index view');
-    res.render('tickets/index', { tickets });
+    
+    // Add isPastConcert property to each ticket
+    const ticketsWithPastStatus = tickets.map(ticket => {
+      const isPast = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
+      return {
+        ...ticket.toObject(),
+        isPastConcert: isPast
+      };
+    });
+    
+    res.render('tickets/index', { tickets: ticketsWithPastStatus });
   } catch (error) {
     console.error('List tickets error:', error);
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
@@ -718,6 +735,108 @@ router.get('/', isLoggedIn, async (req, res) => {
     }
     req.flash('error', 'Failed to load tickets');
     res.redirect('/users/profile');
+  }
+});
+
+// Show delete confirmation page for a ticket
+router.get('/:id/delete', isLoggedIn, async (req, res) => {
+  try {
+    // Validate if the ID is a valid MongoDB ObjectId
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid ticket ID');
+      return res.redirect('/tickets');
+    }
+
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('user')
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue' }
+      });
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/tickets');
+    }
+
+    // Check if user owns the ticket
+    if (ticket.user._id.toString() !== req.session.user.id) {
+      req.flash('error', 'You do not have permission to delete this ticket');
+      return res.redirect('/tickets');
+    }
+
+    // Check if the concert date has passed
+    const isPastConcert = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
+    if (!isPastConcert) {
+      req.flash('error', 'You can only delete tickets for past concerts');
+      return res.redirect('/tickets');
+    }
+
+    // Check if the ticket is completed
+    if (ticket.paymentStatus !== 'completed') {
+      req.flash('error', 'Only completed tickets can be deleted');
+      return res.redirect('/tickets');
+    }
+
+    res.render('tickets/delete-confirmation', { ticket });
+  } catch (error) {
+    console.error('Delete confirmation page error:', error);
+    req.flash('error', 'Failed to load delete confirmation page');
+    res.redirect('/tickets');
+  }
+});
+
+// Delete a ticket
+router.post('/:id/delete', isLoggedIn, async (req, res) => {
+  try {
+    // Validate if the ID is a valid MongoDB ObjectId
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid ticket ID');
+      return res.redirect('/tickets');
+    }
+
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('user')
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue' }
+      });
+
+    if (!ticket) {
+      req.flash('error', 'Ticket not found');
+      return res.redirect('/tickets');
+    }
+
+    // Check if user owns the ticket
+    if (ticket.user._id.toString() !== req.session.user.id) {
+      req.flash('error', 'You do not have permission to delete this ticket');
+      return res.redirect('/tickets');
+    }
+
+    // Check if the concert date has passed
+    const isPastConcert = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
+    if (!isPastConcert) {
+      req.flash('error', 'You can only delete tickets for past concerts');
+      return res.redirect('/tickets');
+    }
+
+    // Check if the ticket is completed
+    if (ticket.paymentStatus !== 'completed') {
+      req.flash('error', 'Only completed tickets can be deleted');
+      return res.redirect('/tickets');
+    }
+
+    // Delete the ticket
+    await Ticket.findByIdAndDelete(req.params.id);
+
+    req.flash('success', 'Ticket deleted successfully');
+    res.redirect('/tickets');
+  } catch (error) {
+    console.error('Delete ticket error:', error);
+    req.flash('error', 'Failed to delete ticket');
+    res.redirect('/tickets');
   }
 });
 

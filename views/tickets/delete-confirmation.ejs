@@ -1,0 +1,107 @@
+<!-- Delete Ticket Confirmation Page -->
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="glass-card-dark p-4">
+          <div class="text-center mb-4">
+            <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+            <h2 class="fw-bold text-white mt-3">Confirm Ticket Deletion</h2>
+            <p class="text-white-50">You are about to delete a past concert ticket</p>
+          </div>
+
+          <div class="alert alert-warning" style="background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3);">
+            <h5 class="alert-heading text-warning"><i class="bi bi-shield-exclamation me-2"></i>Important Notice</h5>
+            <p class="mb-0 text-white-50">For record keeping, you must download your ticket as a backup before deletion. This action cannot be undone.</p>
+          </div>
+
+          <!-- Ticket Information -->
+          <div class="card mb-4 bg-dark border-secondary">
+            <div class="card-header bg-secondary">
+              <h4 class="card-title text-white mb-0">Ticket Information</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Ticket Number:</span><br>
+                    <span class="text-white-50"><%= ticket.ticketNumber || ticket._id.toString().slice(-6).toUpperCase() %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Concert:</span><br>
+                    <span class="text-white-50"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Date:</span><br>
+                    <span class="text-white-50"><%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A' %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Time:</span><br>
+                    <span class="text-white-50"><%= ticket.concert ? ticket.concert.time : 'N/A' %></span>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Quantity:</span><br>
+                    <span class="text-white-50"><%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Amount Paid:</span><br>
+                    <span class="text-white-50">₹<%= ticket.totalAmount %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Purchase Date:</span><br>
+                    <span class="text-white-50"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></span>
+                  </p>
+                  <p class="mb-2">
+                    <span class="fw-medium text-white">Status:</span><br>
+                    <span class="badge bg-success"><%= ticket.paymentStatus %></span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Section -->
+          <div class="card mb-4 bg-dark border-primary">
+            <div class="card-header bg-primary">
+              <h4 class="card-title text-white mb-0">Download Backup</h4>
+            </div>
+            <div class="card-body">
+              <p class="text-white-50 mb-3">Download your ticket as a backup before proceeding with deletion:</p>
+              <div class="d-grid gap-3">
+                <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary btn-lg">
+                  <i class="bi bi-download me-2"></i> Download Ticket as HTML
+                </a>
+                <a href="/tickets/<%= ticket._id %>" class="btn btn-outline-light">
+                  <i class="bi bi-eye me-2"></i> View Ticket Details
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmation Section -->
+          <div class="card bg-dark border-danger">
+            <div class="card-header bg-danger">
+              <h4 class="card-title text-white mb-0">Confirm Deletion</h4>
+            </div>
+            <div class="card-body">
+              <p class="text-white-50 mb-3">Are you sure you want to delete this ticket? This action cannot be undone.</p>
+              <div class="d-grid gap-3 d-md-flex justify-content-md-between">
+                <a href="/tickets" class="btn btn-secondary btn-lg flex-fill me-md-2">
+                  <i class="bi bi-arrow-left me-2"></i> Cancel
+                </a>
+                <form action="/tickets/<%= ticket._id %>/delete" method="POST" class="flex-fill">
+                  <button type="submit" class="btn btn-danger btn-lg w-100" 
+                          onclick="return confirm('This will permanently delete your ticket record. Are you sure you want to proceed? You should have downloaded the backup first.')">
+                    <i class="bi bi-trash me-2"></i> Delete Ticket
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

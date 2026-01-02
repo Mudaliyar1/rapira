@@ -376,14 +376,19 @@
 
                 <!-- Simple, always visible refund button -->
                 <div class="d-grid gap-3 d-md-flex justify-content-md-center">
-                  <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning btn-lg">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i> Request Refund
+                  <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i> Refund
                   </a>
-                  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary btn-lg">
-                    <i class="bi bi-download me-2"></i> Download Ticket
+                  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i> Download
                   </a>
-                  <a href="/tickets" class="btn btn-outline-light btn-lg">
-                    <i class="bi bi-arrow-left me-2"></i> Back to Tickets
+                  <% if (concert && isPastConcert) { %>
+                  <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')">
+                    <i class="bi bi-trash me-2"></i> Delete
+                  </a>
+                  <% } %>
+                  <a href="/tickets" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-2"></i> Back
                   </a>
                 </div>
 
@@ -444,6 +449,12 @@
     <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
       <i class="bi bi-download me-1"></i> Download
     </a>
+    <% if (concert && isPastConcert) { %>
+    <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')">
+      <i class="bi bi-trash me-1"></i> Delete
+    </a>
+    <% } %>
+
   </div>
 </div>
 

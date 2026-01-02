@@ -53,7 +53,15 @@ router.get('/', async (req, res) => {
       filter.city = city;
     }
 
-    if (date) {
+    // Only include upcoming concerts by default (hide past concerts)
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // If no specific date is selected, only show upcoming concerts
+    if (!date) {
+      filter.date = { $gte: today };
+    } else {
+      // If a specific date is selected, use that date
       const selectedDate = new Date(date);
       const nextDay = new Date(selectedDate);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -115,11 +123,10 @@ router.get('/', async (req, res) => {
     const cities = await Concert.distinct('city', { status: 'approved' });
 
     // Calculate statistics
-    const now = new Date();
     const totalConcerts = await Concert.countDocuments({ status: 'approved' });
     const upcomingConcerts = await Concert.countDocuments({
       status: 'approved',
-      date: { $gte: now }
+      date: { $gte: today }
     });
     const freeConcerts = await Concert.countDocuments({
       status: 'approved',
