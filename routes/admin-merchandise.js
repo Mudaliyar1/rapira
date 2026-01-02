@@ -7,6 +7,7 @@ const ProductReview = require('../models/ProductReview');
 const { isAdmin } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
 // Configure multer for product image uploads (memory → Cloudinary)

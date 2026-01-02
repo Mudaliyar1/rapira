@@ -262,4 +262,27 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST /admin/venue-edit-requests/:id/delete - Delete edit request
+router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const editRequest = await VenueEditRequest.findById(req.params.id);
+    
+    if (!editRequest) {
+      req.flash('error', 'Edit request not found');
+      return res.redirect('/admin/venue-edit-requests');
+    }
+
+    // Delete the edit request
+    await VenueEditRequest.findByIdAndDelete(req.params.id);
+    
+    req.flash('success', 'Venue edit request deleted successfully');
+    res.redirect('/admin/venue-edit-requests');
+
+  } catch (error) {
+    console.error('Error deleting edit request:', error);
+    req.flash('error', 'Failed to delete edit request');
+    res.redirect(`/admin/venue-edit-requests`);
+  }
+});
+
 module.exports = router;

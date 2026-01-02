@@ -573,4 +573,27 @@ router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// POST /admin/refund-requests/:id/delete - Delete individual refund request
+router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const refundRequest = await RefundRequest.findById(req.params.id);
+    
+    if (!refundRequest) {
+      req.flash('error', 'Refund request not found');
+      return res.redirect('/admin/refund-requests');
+    }
+
+    // Delete the refund request
+    await RefundRequest.findByIdAndDelete(req.params.id);
+    
+    req.flash('success', 'Refund request deleted successfully');
+    res.redirect('/admin/refund-requests');
+
+  } catch (error) {
+    console.error('Error deleting refund request:', error);
+    req.flash('error', 'Failed to delete refund request');
+    res.redirect(`/admin/refund-requests`);
+  }
+});
+
 module.exports = router;
