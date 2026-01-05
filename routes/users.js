@@ -749,6 +749,340 @@ router.post('/recover-account/:token', async (req, res) => {
   }
 });
 
+// GET route for account reactivation page
+router.get('/account-reactivation', async (req, res) => {
+  res.render('users/account-reactivation', {
+    error: null,
+    success: null,
+    showOtpForm: false,
+    email: null
+  });
+});
+
+// POST route for account reactivation - initiate the process
+router.post('/account-reactivation', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Check if the email exists in Deleted Accounts collection
+    const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
+    
+    if (!deletedAccount) {
+      return res.render('users/account-reactivation', {
+        error: 'This account is not available for reactivation',
+        success: null,
+        showOtpForm: false,
+        email: email
+      });
+    }
+    
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+    
+    // Save OTP in AccountRecoveryToken collection
+    const recoveryToken = new AccountRecoveryToken({
+      user: deletedAccount.userId,
+      email: email.toLowerCase(),
+      token: otp,
+      expiresAt: otpExpiry,
+      used: false
+    });
+    
+    await recoveryToken.save();
+    
+    // Send OTP to user's email
+    const emailResult = await sendEmail({
+      to: email,
+      toName: email.split('@')[0], // Use part before @ as name
+      subject: 'Account Reactivation OTP - Rapira',
+      htmlContent: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+            .header { background-color: #6366f1; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+            .content { padding: 20px; }
+            .otp { font-size: 24px; font-weight: bold; text-align: center; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; letter-spacing: 5px; }
+            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Account Reactivation</h1>
+            </div>
+            <div class="content">
+              <p>Hello,</p>
+              <p>We received a request to reactivate your account. Please use the following OTP to complete the reactivation process:</p>
+              <div class="otp">${otp}</div>
+              <p>This OTP is valid for 15 minutes. If you did not request this reactivation, please ignore this email.</p>
+              <p>If you don't see this email in your inbox, please check your spam or junk folder.</p>
+              <p>Thank you,<br>The Rapira Team</p>
+            </div>
+            <div class="footer">
+              <p>This is an automated email. Please do not reply to this message.</p>
+              <p>&copy; ${new Date().getFullYear()} Rapira. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      textContent: `Account Reactivation OTP Request
+
+Hello,
+
+We received a request to reactivate your account. Please use the following OTP to complete the reactivation process:
+
+OTP: ${otp}
+
+This OTP is valid for 15 minutes. If you did not request this reactivation, please ignore this email.
+
+If you don't see this email in your inbox, please check your spam or junk folder.
+
+Thank you,
+The Rapira Team
+
+This is an automated email. Please do not reply to this message.
+© ${new Date().getFullYear()} Rapira. All rights reserved.`
+    });
+    
+    res.render('users/account-reactivation', {
+      success: 'OTP sent to your email. Please check your inbox and enter the OTP below.',
+      error: null,
+      showOtpForm: true,
+      email: email
+    });
+  } catch (error) {
+    console.error('Account reactivation error:', error);
+    res.render('users/account-reactivation', {
+      error: 'An error occurred while initiating account reactivation. Please try again.',
+      success: null,
+      showOtpForm: false,
+      email: req.body.email || null
+    });
+  }
+});
+
+// POST route for account reactivation OTP verification
+router.post('/account-reactivation/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    // Find the OTP token
+    const recoveryToken = await AccountRecoveryToken.findOne({
+      email: email.toLowerCase(),
+      token: otp,
+      expiresAt: { $gt: new Date() },
+      used: false
+    });
+    
+    if (!recoveryToken) {
+      return res.render('users/account-reactivation', {
+        error: 'Invalid or expired OTP. Please try again.',
+        success: null,
+        showOtpForm: true,
+        email: email
+      });
+    }
+    
+    // Mark the OTP token as used
+    recoveryToken.used = true;
+    await recoveryToken.save();
+    
+    // Check if the deleted account still exists
+    const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
+    if (!deletedAccount) {
+      return res.render('users/account-reactivation', {
+        error: 'Account information not found. The account may have already been permanently deleted.',
+        success: null,
+        showOtpForm: false,
+        email: email
+      });
+    }
+    
+    // OTP is valid, now show password form
+    res.render('users/account-reactivation', {
+      success: 'OTP verified successfully. Please set a new password to complete reactivation.',
+      error: null,
+      showPasswordForm: true, // Show password form instead of redirecting
+      email: email
+    });
+  } catch (error) {
+    console.error('Account reactivation OTP verification error:', error);
+    res.render('users/account-reactivation', {
+      error: 'An error occurred while verifying OTP. Please try again.',
+      success: null,
+      showOtpForm: true,
+      email: req.body.email || null
+    });
+  }
+});
+
+// POST route for setting password after account reactivation OTP verification
+router.post('/account-reactivation/set-password', async (req, res) => {
+  try {
+    const { email, password, confirmPassword } = req.body;
+    
+    // Validate password match
+    if (password !== confirmPassword) {
+      return res.render('users/account-reactivation', {
+        error: 'Passwords do not match',
+        success: null,
+        showPasswordForm: true,
+        email: email
+      });
+    }
+    
+    // Validate password length
+    if (password.length < 6) {
+      return res.render('users/account-reactivation', {
+        error: 'Password must be at least 6 characters long',
+        success: null,
+        showPasswordForm: true,
+        email: email
+      });
+    }
+    
+    // Check if the user is trying to reactivate an account by checking if there's a valid recovery token
+    // Find any unused recovery tokens for this email that haven't expired
+    const recoveryToken = await AccountRecoveryToken.findOne({
+      email: email.toLowerCase(),
+      expiresAt: { $gt: new Date() },
+      used: false
+    });
+    
+    if (!recoveryToken) {
+      return res.render('users/account-reactivation', {
+        error: 'Invalid or expired session. Please restart the reactivation process.',
+        success: null,
+        showOtpForm: false,
+        email: email
+      });
+    }
+    
+    // Check if the deleted account still exists
+    const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
+    if (!deletedAccount) {
+      return res.render('users/account-reactivation', {
+        error: 'Account information not found. The account may have already been permanently deleted.',
+        success: null,
+        showPasswordForm: false,
+        email: email
+      });
+    }
+    
+    // Check if a user with this email already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    let user;
+    
+    if (existingUser) {
+      // If user already exists, update their password and log them in
+      existingUser.password = password;
+      await existingUser.save();
+      user = existingUser;
+      console.log(`Existing user updated for reactivation: ${user._id} with email: ${user.email}`);
+    } else {
+      // Create a new user with the original data and new password
+      user = new User({
+        name: deletedAccount.name,
+        email: deletedAccount.email,
+        password: password,
+        role: deletedAccount.role,
+        profileImage: deletedAccount.profileImage,
+        bio: deletedAccount.bio,
+        city: deletedAccount.city,
+        socialLinks: deletedAccount.socialLinks,
+        walletBalance: deletedAccount.walletBalance,
+        isEmailVerified: true
+      });
+      
+      try {
+        await user.save();
+        console.log(`New user created for reactivation: ${user._id} with email: ${user.email}`);
+      } catch (dbError) {
+        // Handle the case where the email already exists due to race condition or other issue
+        if (dbError.code === 11000) {
+          // Try to find and update the existing user
+          const raceConditionUser = await User.findOne({ email: email.toLowerCase() });
+          if (raceConditionUser) {
+            raceConditionUser.password = password;
+            await raceConditionUser.save();
+            user = raceConditionUser;
+            console.log(`Race condition user updated for reactivation: ${user._id} with email: ${user.email}`);
+          } else {
+            return res.render('users/account-reactivation', {
+              error: 'An account with this email already exists. Please contact support.',
+              success: null,
+              showPasswordForm: false,
+              email: email
+            });
+          }
+        } else {
+          throw dbError; // Re-throw if it's a different error
+        }
+      }
+    }
+    
+    console.log(`Account reactivated for user: ${user._id} with email: ${user.email}`);
+    
+    // If the user was an artist, restore their artist profile
+    if (deletedAccount.artistData) {
+      const Artist = require('../models/Artist');
+      
+      // Check if required artist fields exist before creating the artist profile
+      if (deletedAccount.artistData.stageName && deletedAccount.artistData.genre) {
+        const artist = new Artist({
+          user: user._id,
+          stageName: deletedAccount.artistData.stageName,
+          genre: deletedAccount.artistData.genre,
+          yearsActive: deletedAccount.artistData.yearsActive,
+          about: deletedAccount.artistData.about,
+          followers: deletedAccount.artistData.followers,
+          city: deletedAccount.city
+        });
+        
+        await artist.save();
+        console.log(`Artist profile restored for user: ${user._id}`);
+      } else {
+        console.log(`Incomplete artist data found for user: ${user._id}, skipping artist profile restoration`);
+        // Optionally, you could create a basic artist profile with default values
+        // or notify the user to update their artist profile after login
+      }
+    }
+    
+    // Mark the recovery token as used
+    recoveryToken.used = true;
+    await recoveryToken.save();
+    
+    // Log the user in
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage
+    };
+    
+    // Delete the deleted account record since the account is reactivated
+    await DeletedAccount.deleteOne({ _id: deletedAccount._id });
+    
+    // Redirect to home page with success message
+    req.flash('success', 'Account reactivated successfully! You are now logged in.');
+    res.redirect('/');
+  } catch (error) {
+    console.error('Account reactivation set password error:', error);
+    res.render('users/account-reactivation', {
+      error: 'An error occurred while setting your password. Please try again.',
+      success: null,
+      showPasswordForm: true,
+      email: req.body.email || null
+    });
+  }
+});
+
 // View public profile (MUST be last route with :id parameter)
 router.get('/:id', async (req, res) => {
   try {

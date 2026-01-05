@@ -36,7 +36,9 @@ const STATIC_ROUTES = {
     privacy_policy: { path: '/privacy-policy', name: 'Privacy Policy', icon: 'bi-shield-check' },
     refund_policy: { path: '/refund-policy', name: 'Refund Policy', icon: 'bi-arrow-return-left' },
     subscription_policy: { path: '/subscription-policy', name: 'Subscription Policy', icon: 'bi-file-earmark-text' },
-    shopping_policy: { path: '/shopping-policy', name: 'Shopping Policy', icon: 'bi-cart-check' }
+    shopping_policy: { path: '/shopping-policy', name: 'Shopping Policy', icon: 'bi-cart-check' },
+    event_attending_policy: { path: '/event-attending-policy', name: 'Event Attending Policy', icon: 'bi-ticket-perforated' },
+    account_reactivation: { path: '/account-reactivation', name: 'Account Reactivation', icon: 'bi-person-plus' }
   }
 };
 
@@ -183,7 +185,9 @@ function getNavbarMenuSettings(menuSettings) {
         privacyPolicy: items.privacy_policy || false, // Map privacy_policy -> privacyPolicy
         refundPolicy: items.refund_policy || false, // Map refund_policy -> refundPolicy
         subscriptionPolicy: items.subscription_policy || false, // Map subscription_policy -> subscriptionPolicy
-        shoppingPolicy: items.shopping_policy || false // Map shopping_policy -> shoppingPolicy
+        shoppingPolicy: items.shopping_policy || false, // Map shopping_policy -> shoppingPolicy
+        eventAttendingPolicy: items.event_attending_policy || false, // Map event_attending_policy -> eventAttendingPolicy
+        accountReactivation: items.account_reactivation || false // Map account_reactivation -> accountReactivation
       };
     }
 

@@ -181,7 +181,7 @@
         <!-- Help & Support Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/demo') ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/event-attending-policy' || path === '/account-reactivation' || path === '/demo') ? 'active' : '' %>"
              href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-question-circle me-1"></i> Help & Support
           </a>
@@ -209,6 +209,12 @@
             <% } %>
             <% if (menuSettings.helpSupportMenu.items.shoppingPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/shopping-policy' ? 'active' : '' %>" href="/shopping-policy"><i class="bi bi-bag-check me-2"></i>Shopping Policy</a></li>
+            <% } %>
+            <% if (menuSettings.helpSupportMenu.items.eventAttendingPolicy) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/event-attending-policy' ? 'active' : '' %>" href="/event-attending-policy"><i class="bi bi-ticket-perforated me-2"></i>Event Attending Policy</a></li>
+            <% } %>
+            <% if (menuSettings.helpSupportMenu.items.accountReactivation) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/account-reactivation' ? 'active' : '' %>" href="/account-reactivation"><i class="bi bi-person-plus me-2"></i>Account Reactivation</a></li>
             <% } %>
             <li><hr class="dropdown-divider border-secondary"></li>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/website-updates' ? 'active' : '' %>" href="/website-updates"><i class="bi bi-megaphone me-2"></i>Website Updates</a></li>

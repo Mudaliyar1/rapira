@@ -36,6 +36,22 @@ module.exports = {
     res.redirect('/');
   },
 
+  // Clear the login error message from flash (for public auth pages)
+  clearLoginError: (req, res, next) => {
+    // Get current flash messages
+    const flash = req.session.flash || {};
+    
+    // If there's an error message that matches the login required message, clear it
+    if (flash.error && Array.isArray(flash.error)) {
+      flash.error = flash.error.filter(msg => msg !== 'You must be logged in to access this page');
+    } else if (flash.error === 'You must be logged in to access this page') {
+      delete flash.error;
+    }
+    
+    req.session.flash = flash;
+    next();
+  },
+
   // Check if user is an admin or super admin
   isAdmin: (req, res, next) => {
     if (req.session.user && (req.session.user.role === 'admin' || req.session.user.role === 'superAdmin')) {

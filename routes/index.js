@@ -207,6 +207,28 @@ router.get('/shopping-policy', (req, res) => {
   });
 });
 
+// Event attending policy
+router.get('/event-attending-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('event-attending-policy', {
+    currentUser,
+    path: '/event-attending-policy',
+    title: 'Event Attending Policy - Rapira',
+    description: 'Rapira event attending policy outlines the rules and conditions applicable to attendees of events and concerts.'
+  });
+});
+
+// Account reactivation
+router.get('/account-reactivation', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('users/account-reactivation', {
+    currentUser,
+    path: '/account-reactivation',
+    title: 'Account Reactivation - Rapira',
+    description: 'Reactivate your deleted account on Rapira.'
+  });
+});
+
 // FAQ page
 router.get('/faq', (req, res) => {
   const currentUser = req.session.user || null;

@@ -898,8 +898,8 @@ const crypto = require('crypto');
  * @returns {Promise} - A promise that resolves when the email is sent
  */
 const sendAccountDeletionNotification = async (user, recoveryToken) => {
-  // Create recovery URL - use BASE_URL from environment, default to localhost for development
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  // Use the primary domain as specified by the user
+  const baseUrl = 'https://rapiraa.onrender.com';
   const recoveryUrl = `${baseUrl}/users/recover-account/${recoveryToken}`;
 
   const htmlContent = `
@@ -984,21 +984,17 @@ const sendAccountDeletionNotification = async (user, recoveryToken) => {
             <p><strong>Account Type:</strong> ${user.role || 'User'}</p>
           </div>
           
-          <p>If you wish to recover your account within the next 30 days, please click the link below:</p>
+          <p>If you wish to recover your account within the next 30 days, please follow these steps:</p>
           
-          <p style="text-align: center;">
-            <a href="${recoveryUrl}" class="button">Recover My Account</a>
-          </p>
+          <ol>
+            <li>Visit our website at <a href="https://rapiraa.onrender.com" style="color: #6366f1;">https://rapiraa.onrender.com</a> or <a href="https://rapira.officialbac.in" style="color: #6366f1;">https://rapira.officialbac.in</a></li>
+            <li>Go to the Account Reactivation page at <a href="https://rapiraa.onrender.com/account-reactivation" style="color: #6366f1;">https://rapiraa.onrender.com/account-reactivation</a> or <a href="https://rapira.officialbac.in/account-reactivation" style="color: #6366f1;">https://rapira.officialbac.in/account-reactivation</a></li>
+            <li>Enter your email address (<strong>${user.email}</strong>) to initiate reactivation</li>
+            <li>Check your email for an OTP (One-Time Password)</li>
+            <li>Enter the OTP and set a new password to complete reactivation</li>
+          </ol>
           
-          <p style="text-align: center; margin: 15px 0;">
-            Or copy and paste this link in your browser:
-            <br>
-            <a href="${recoveryUrl}" style="word-break: break-all; color: #6366f1;">
-              ${recoveryUrl}
-            </a>
-          </p>
-          
-          <p><strong>Important:</strong> This recovery link is valid for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.</p>
+          <p><strong>Important:</strong> Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.</p>
           
           <p>If you did not request this account deletion or need assistance, please contact our support team.</p>
           
@@ -1027,10 +1023,15 @@ const sendAccountDeletionNotification = async (user, recoveryToken) => {
     Email: ${user.email}
     Account Type: ${user.role || 'User'}
 
-    If you wish to recover your account within the next 30 days, please click the link below:
-    ${recoveryUrl}
+    If you wish to recover your account within the next 30 days, please follow these steps:
 
-    Important: This recovery link is valid for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.
+    1. Visit our website at https://rapiraa.onrender.com or https://rapira.officialbac.in
+    2. Go to the Account Reactivation page at https://rapiraa.onrender.com/account-reactivation or https://rapira.officialbac.in/account-reactivation
+    3. Enter your email address (${user.email}) to initiate reactivation
+    4. Check your email for an OTP (One-Time Password)
+    5. Enter the OTP and set a new password to complete reactivation
+
+    Important: Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.
 
     If you did not request this account deletion or need assistance, please contact our support team.
 

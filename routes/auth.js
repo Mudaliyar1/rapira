@@ -92,7 +92,7 @@ router.get('/session-check', (req, res) => {
 });
 
 // Login page
-router.get('/login', isNotLoggedIn, (req, res) => {
+router.get('/login', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   res.render('auth/login');
 });
 
@@ -248,7 +248,7 @@ router.post('/maintenance-login', async (req, res) => {
 });
 
 // Register page
-router.get('/register', isNotLoggedIn, (req, res) => {
+router.get('/register', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   res.render('auth/register');
 });
 
@@ -305,7 +305,7 @@ router.post('/register', isNotLoggedIn, async (req, res) => {
 });
 
 // Register verify page
-router.get('/register/verify', isNotLoggedIn, (req, res) => {
+router.get('/register/verify', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   if (!req.session.registerData || !req.session.registerOTP) {
     req.flash('error', 'Please start registration again');
     return res.redirect('/auth/register');
@@ -463,7 +463,7 @@ router.get('/logout', (req, res) => {
 });
 
 // Forgot password page
-router.get('/forgot-password', isNotLoggedIn, (req, res) => {
+router.get('/forgot-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   // Check if this is a resend OTP request
   const { email, resend } = req.query;
 
@@ -530,7 +530,7 @@ router.post('/forgot-password', isNotLoggedIn, async (req, res) => {
 });
 
 // Reset password page
-router.get('/reset-password', isNotLoggedIn, (req, res) => {
+router.get('/reset-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   const { email } = req.query;
 
   if (!email) {
@@ -542,7 +542,7 @@ router.get('/reset-password', isNotLoggedIn, (req, res) => {
 });
 
 // Set new password page
-router.get('/set-new-password', isNotLoggedIn, (req, res) => {
+router.get('/set-new-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   const { email, otp } = req.query;
 
   if (!email || !otp) {
