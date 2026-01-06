@@ -191,10 +191,13 @@ router.post('/admin/ticket-validation/invalidate-all', isLoggedIn, isAdmin, (req
 router.get('/api/tickets/details/:token/:id', async (req, res) => {
   try {
     const { token, id: ticketIdentifier } = req.params;
+    console.log('🎫 API /api/tickets/details called with:', { token, ticketIdentifier });
     
     // Check if token is valid and not expired
     const tokenData = activeTokens.get(token);
+    console.log('Token validation result:', tokenData ? 'Valid' : 'Invalid');
     if (!tokenData) {
+      console.log('❌ Token not found in activeTokens');
       return res.status(401).json({ message: 'Invalid or expired validation link. Please generate a new link from admin panel.' });
     }
     

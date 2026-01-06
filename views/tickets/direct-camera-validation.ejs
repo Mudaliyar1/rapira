@@ -308,6 +308,30 @@
     // Token from template
     const token = '<%= token || "" %>';
     
+    // Date formatting helper functions
+    function toISTDateString(dateInput) {
+      const date = new Date(dateInput);
+      return date.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    }
+    
+    function toISTLocaleString(dateInput) {
+      const date = new Date(dateInput);
+      return date.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+    
     // Camera variables
     let stream = null;
     let scanning = false;
