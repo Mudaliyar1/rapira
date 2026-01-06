@@ -647,9 +647,10 @@ router.get('/:id/download-html', isLoggedIn, async (req, res) => {
     const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
 
     // Render the ticket template with wrapper to HTML
+    const { toISTDateString, toISTLocaleString, toISTTimeString } = require('../utils/dateFormatter');
     const ticketHtml = await ejs.renderFile(
       path.join(__dirname, '../views/tickets/html-template-wrapper.ejs'),
-      { ticket, concert, isDeletedConcert, refundRequest, downloadMode: true }
+      { ticket, concert, isDeletedConcert, refundRequest, downloadMode: true, toISTDateString, toISTLocaleString, toISTTimeString }
     );
 
     // Set response headers

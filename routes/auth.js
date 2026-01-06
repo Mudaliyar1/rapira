@@ -6,6 +6,7 @@ const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
 const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
 const DeletedAccount = require('../models/DeletedAccount');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const ActivityLogger = require('../utils/activityLogger');
 
 // Simple session test for production debugging
 router.get('/session-test', (req, res) => {
@@ -117,9 +118,22 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      // Log failed login attempt
+      await ActivityLogger.logLogin(user._id, req, false);
       req.flash('error', 'Invalid email or password');
       return res.redirect('/auth/login');
     }
+
+    // Update login tracking
+    user.lastLogin = user.currentLoginTime || new Date();
+    user.currentLoginTime = new Date();
+    user.isOnline = true;
+    user.currentPage = 'Home'; // Reset to home on fresh login
+    user.lastPageUpdate = new Date();
+    await user.save();
+    
+    // Log successful login
+    await ActivityLogger.logLogin(user._id, req, true);
 
     // Create session with more user data
     req.session.user = {
@@ -398,13 +412,29 @@ router.post('/register/verify', isNotLoggedIn, async (req, res) => {
 });
 
 // Logout
-router.get('/logout', (req, res) => {
+router.get('/logout', async (req, res) => {
   // Get the user info for logging
   const userEmail = req.session && req.session.user ? req.session.user.email : 'unknown';
+  const userId = req.session && req.session.user ? req.session.user.id : null;
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Log the logout attempt
   console.log(`Logout attempt for user ${userEmail} in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+
+  // Mark user as offline in database
+  if (userId) {
+    try {
+      await User.findByIdAndUpdate(userId, { 
+        isOnline: false,
+        currentPage: null,
+        lastPageUpdate: new Date()
+      });
+      // Log logout
+      await ActivityLogger.logLogout(userId, req);
+    } catch (err) {
+      console.error('Error updating user online status:', err);
+    }
+  }
 
   // Different logout strategies for development and production
   if (!isProduction) {

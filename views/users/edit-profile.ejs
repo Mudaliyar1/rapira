@@ -23,6 +23,17 @@
                   <label for="city" class="form-label">City</label>
                   <input type="text" class="form-control" id="city" name="city" value="<%= user.city %>">
                 </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="age" class="form-label">Age (optional)</label>
+                    <input type="number" class="form-control" id="age" name="age" min="0" max="120" value="<%= user.age || '' %>" placeholder="Enter your age">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="heardFrom" class="form-label">How did you hear about us? (optional)</label>
+                    <input type="text" class="form-control" id="heardFrom" name="heardFrom" value="<%= user.heardFrom || '' %>" placeholder="Friend, Instagram, ad, etc.">
+                  </div>
+                </div>
               </div>
               
               <div class="col-md-6">

@@ -4,6 +4,9 @@
       <a href="/admin/deleted-accounts" class="btn btn-outline-secondary mb-3">
         <i class="bi bi-arrow-left"></i> Back to Deleted Accounts
       </a>
+      <div class="badge bg-danger fs-6 ms-2">
+        <i class="bi bi-trash"></i> DELETED ACCOUNT
+      </div>
     </div>
   </div>
 
@@ -12,10 +15,13 @@
     <div class="col-lg-8">
       <div class="card bg-dark border-secondary">
         <div class="card-header bg-dark border-secondary py-3">
-          <h5 class="card-title fw-bold mb-0">Account Information</h5>
+          <h5 class="card-title fw-bold mb-0">
+            <i class="bi bi-person-x"></i> Deleted Account Details
+          </h5>
         </div>
         <div class="card-body">
-          <div class="row g-4">
+          <!-- Header Section -->
+          <div class="row g-4 mb-4">
             <div class="col-md-6 text-center">
               <img src="<%= (deletedAccount.profileImage && deletedAccount.profileImage !== '/images/default-profile.svg') ? deletedAccount.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(deletedAccount.name.charAt(0).toUpperCase()) + '&background=FF6B6B&color=fff&bold=true&size=200') %>" 
                    alt="<%= deletedAccount.name %>" 
@@ -28,75 +34,131 @@
               </p>
             </div>
             <div class="col-md-6">
-              <ul class="list-unstyled">
-                <li class="mb-3">
-                  <strong>Role:</strong>
-                  <span class="badge <%= deletedAccount.role === 'admin' ? 'bg-danger' : deletedAccount.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
-                    <%= deletedAccount.role %>
-                  </span>
-                </li>
-                <li class="mb-3">
-                  <strong>Deleted At:</strong>
-                  <br><small class="text-muted"><%= toISTLocaleString(deletedAccount.deletedAt) %></small>
-                </li>
-                <li class="mb-3">
-                  <strong>Deletion Method:</strong>
-                  <br><small class="badge bg-info"><%= deletedAccount.deletedBy === 'user' ? 'User Requested' : 'Admin Action' %></small>
-                </li>
-                <li class="mb-3">
-                  <strong>Reason:</strong>
-                  <br><small class="text-muted"><%= deletedAccount.deletionReason %></small>
-                </li>
-                <li class="mb-3">
-                  <strong>Wallet Balance:</strong>
-                  <br><span>₹<%= deletedAccount.walletBalance || 0 %></span>
-                </li>
-              </ul>
+              <div class="bg-secondary bg-opacity-25 p-3 rounded mb-3">
+                <h6 class="text-warning mb-3">
+                  <i class="bi bi-info-circle"></i> Deletion Information
+                </h6>
+                <ul class="list-unstyled">
+                  <li class="mb-2">
+                    <strong>Role:</strong>
+                    <br><span class="badge <%= deletedAccount.role === 'admin' ? 'bg-danger' : deletedAccount.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                      <%= deletedAccount.role.toUpperCase() %>
+                    </span>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Account Created:</strong>
+                    <br><small class="text-info"><%= toISTLocaleString(deletedAccount.createdAt) %></small>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Last Login:</strong>
+                    <br><small class="text-info"><%= deletedAccount.lastLogin ? toISTLocaleString(deletedAccount.lastLogin) : 'Never logged in' %></small>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Deleted At:</strong>
+                    <br><small class="text-warning"><%= toISTLocaleString(deletedAccount.deletedAt) %></small>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Account Age:</strong>
+                    <br><small class="text-success">
+                      <% 
+                        const createdDate = new Date(deletedAccount.createdAt);
+                        const deletedDate = new Date(deletedAccount.deletedAt);
+                        const daysActive = Math.floor((deletedDate - createdDate) / (1000 * 60 * 60 * 24));
+                      %>
+                      <%= daysActive %> days
+                    </small>
+                  </li>
+                  <li class="mb-2">
+                    <strong>Deletion Method:</strong>
+                    <br><span class="badge <%= deletedAccount.deletedBy === 'user' ? 'bg-info' : 'bg-warning' %>">
+                      <%= deletedAccount.deletedBy === 'user' ? 'User Requested' : 'Admin Action' %>
+                    </span>
+                  </li>
+                  <li>
+                    <strong>Reason:</strong>
+                    <br><small class="text-white"><%= deletedAccount.deletionReason || 'Not provided' %></small>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="bg-info bg-opacity-10 p-3 rounded border border-info">
+                <strong>Wallet Balance:</strong>
+                <h5 class="text-info mb-0">₹<%= (deletedAccount.walletBalance || 0).toFixed(2) %></h5>
+              </div>
             </div>
           </div>
 
+          <hr class="border-secondary"
+          <hr class="border-secondary">
+
           <!-- User Details -->
-          <hr class="border-secondary my-4">
-          <h6 class="fw-bold mb-3">Details</h6>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label text-muted small">Bio</label>
-              <p class="mb-0"><%= deletedAccount.bio || 'N/A' %></p>
+          <h6 class="fw-bold mb-3 mt-4">
+            <i class="bi bi-file-text"></i> User Profile Details
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                <label class="form-label text-muted small">Age</label>
+                <p class="mb-0"><%= deletedAccount.age || 'N/A' %></p>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label text-muted small">City</label>
-              <p class="mb-0"><%= deletedAccount.city || 'N/A' %></p>
+            <div class="col-md-3">
+              <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                <label class="form-label text-muted small">Verified</label>
+                <p class="mb-0"><span class="badge <%= deletedAccount.isVerified ? 'bg-success' : 'bg-warning' %>"><%= deletedAccount.isVerified ? 'Yes' : 'No' %></span></p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                <label class="form-label text-muted small">Bio</label>
+                <p class="mb-0 small" title="<%= deletedAccount.bio || '' %>"><%= (deletedAccount.bio || 'N/A').substring(0, 20) %><%= (deletedAccount.bio || '').length > 20 ? '...' : '' %></p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                <label class="form-label text-muted small">City</label>
+                <p class="mb-0"><%= deletedAccount.city || 'N/A' %></p>
+              </div>
             </div>
           </div>
 
           <!-- Social Links -->
           <% if (deletedAccount.socialLinks) { %>
             <% if (deletedAccount.socialLinks.instagram || deletedAccount.socialLinks.twitter || deletedAccount.socialLinks.youtube || deletedAccount.socialLinks.spotify) { %>
-              <hr class="border-secondary my-4">
-              <h6 class="fw-bold mb-3">Social Media</h6>
-              <div class="row g-3">
+              <h6 class="fw-bold mb-3 mt-4">
+                <i class="bi bi-share"></i> Social Media Links
+              </h6>
+              <div class="row g-3 mb-4">
               <% if (deletedAccount.socialLinks.instagram) { %>
                 <div class="col-md-6">
-                  <label class="form-label text-muted small"><i class="bi bi-instagram"></i> Instagram</label>
-                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.instagram %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.instagram %></a></p>
+                  <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                    <label class="form-label text-muted small"><i class="bi bi-instagram text-danger"></i> Instagram</label>
+                    <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.instagram %>" target="_blank" class="text-decoration-none text-info"><%= deletedAccount.socialLinks.instagram %></a></p>
+                  </div>
                 </div>
               <% } %>
               <% if (deletedAccount.socialLinks.twitter) { %>
                 <div class="col-md-6">
-                  <label class="form-label text-muted small"><i class="bi bi-twitter-x"></i> Twitter</label>
-                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.twitter %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.twitter %></a></p>
+                  <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                    <label class="form-label text-muted small"><i class="bi bi-twitter-x"></i> Twitter/X</label>
+                    <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.twitter %>" target="_blank" class="text-decoration-none text-info"><%= deletedAccount.socialLinks.twitter %></a></p>
+                  </div>
                 </div>
               <% } %>
               <% if (deletedAccount.socialLinks.youtube) { %>
                 <div class="col-md-6">
-                  <label class="form-label text-muted small"><i class="bi bi-youtube"></i> YouTube</label>
-                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.youtube %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.youtube %></a></p>
+                  <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                    <label class="form-label text-muted small"><i class="bi bi-youtube text-danger"></i> YouTube</label>
+                    <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.youtube %>" target="_blank" class="text-decoration-none text-info"><%= deletedAccount.socialLinks.youtube %></a></p>
+                  </div>
                 </div>
               <% } %>
               <% if (deletedAccount.socialLinks.spotify) { %>
                 <div class="col-md-6">
-                  <label class="form-label text-muted small"><i class="bi bi-spotify"></i> Spotify</label>
-                  <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.spotify %>" target="_blank" class="text-decoration-none"><%= deletedAccount.socialLinks.spotify %></a></p>
+                  <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                    <label class="form-label text-muted small"><i class="bi bi-spotify text-success"></i> Spotify</label>
+                    <p class="mb-0 small"><a href="<%= deletedAccount.socialLinks.spotify %>" target="_blank" class="text-decoration-none text-info"><%= deletedAccount.socialLinks.spotify %></a></p>
+                  </div>
                 </div>
               <% } %>
               </div>
@@ -105,46 +167,113 @@
 
           <!-- Artist Data -->
           <% if (deletedAccount.role === 'artist' && deletedAccount.artistData) { %>
-            <hr class="border-secondary my-4">
-            <h6 class="fw-bold mb-3">Artist Information</h6>
-            <div class="row g-3">
+            <h6 class="fw-bold mb-3 mt-4">
+              <i class="bi bi-music-note-beamed"></i> Artist Information
+            </h6>
+            <div class="row g-3 mb-4">
               <div class="col-md-6">
-                <label class="form-label text-muted small">Stage Name</label>
-                <p class="mb-0"><%= deletedAccount.artistData.stageName || 'N/A' %></p>
+                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                  <label class="form-label text-muted small">Stage Name</label>
+                  <p class="mb-0"><%= deletedAccount.artistData.stageName || 'N/A' %></p>
+                </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label text-muted small">Genre</label>
-                <p class="mb-0"><%= deletedAccount.artistData.genre || 'N/A' %></p>
+                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                  <label class="form-label text-muted small">Genre</label>
+                  <p class="mb-0"><%= deletedAccount.artistData.genre || 'N/A' %></p>
+                </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label text-muted small">Years Active</label>
-                <p class="mb-0"><%= deletedAccount.artistData.yearsActive || 'N/A' %></p>
+                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                  <label class="form-label text-muted small">Years Active</label>
+                  <p class="mb-0"><%= deletedAccount.artistData.yearsActive || 'N/A' %></p>
+                </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label text-muted small">Followers</label>
-                <p class="mb-0"><%= deletedAccount.artistData.followers || 0 %></p>
+                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                  <label class="form-label text-muted small">Followers</label>
+                  <p class="mb-0"><%= deletedAccount.artistData.followers || 0 %></p>
+                </div>
               </div>
               <div class="col-12">
-                <label class="form-label text-muted small">About</label>
-                <p class="mb-0"><%= deletedAccount.artistData.about || 'N/A' %></p>
+                <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                  <label class="form-label text-muted small">About</label>
+                  <p class="mb-0"><%= deletedAccount.artistData.about || 'N/A' %></p>
+                </div>
               </div>
             </div>
           <% } %>
 
           <!-- Stats -->
-          <hr class="border-secondary my-4">
-          <h6 class="fw-bold mb-3">Account Statistics</h6>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="bg-dark p-3 rounded border border-secondary">
+          <h6 class="fw-bold mb-3 mt-4">
+            <i class="bi bi-graph-up"></i> Account Statistics & Summary
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="bg-success bg-opacity-10 border border-success p-3 rounded text-center">
                 <small class="text-muted d-block">Tickets Purchased</small>
-                <h5 class="fw-bold mb-0"><%= deletedAccount.totalTicketsPurchased || 0 %></h5>
+                <h4 class="fw-bold text-success mb-0"><%= deletedAccount.totalTicketsPurchased || 0 %></h4>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="bg-dark p-3 rounded border border-secondary">
+            <div class="col-md-3">
+              <div class="bg-info bg-opacity-10 border border-info p-3 rounded text-center">
                 <small class="text-muted d-block">Concerts Created</small>
-                <h5 class="fw-bold mb-0"><%= deletedAccount.totalConcerts || 0 %></h5>
+                <h4 class="fw-bold text-info mb-0"><%= deletedAccount.totalConcerts || 0 %></h4>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="bg-warning bg-opacity-10 border border-warning p-3 rounded text-center">
+                <small class="text-muted d-block">Wallet Balance</small>
+                <h4 class="fw-bold text-warning mb-0">₹<%= (deletedAccount.walletBalance || 0).toFixed(0) %></h4>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="bg-secondary bg-opacity-10 border border-secondary p-3 rounded text-center">
+                <small class="text-muted d-block">Account Age</small>
+                <h4 class="fw-bold text-secondary mb-0">
+                  <%= Math.floor((new Date(deletedAccount.deletedAt) - new Date(deletedAccount.createdAt)) / (1000 * 60 * 60 * 24)) %> days
+                </h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <h6 class="fw-bold mb-3 mt-4">
+            <i class="bi bi-calendar-event"></i> Account Timeline
+          </h6>
+          <div class="timeline mb-4">
+            <div class="d-flex gap-3 mb-3">
+              <div>
+                <i class="bi bi-check-circle text-success" style="font-size: 1.5rem;"></i>
+              </div>
+              <div class="flex-grow-1 bg-secondary bg-opacity-10 p-3 rounded">
+                <p class="mb-1"><strong>Account Created</strong></p>
+                <small class="text-muted"><%= toISTLocaleString(deletedAccount.createdAt) %></small>
+              </div>
+            </div>
+
+            <% if (deletedAccount.lastLogin) { %>
+            <div class="d-flex gap-3 mb-3">
+              <div>
+                <i class="bi bi-clock-history text-info" style="font-size: 1.5rem;"></i>
+              </div>
+              <div class="flex-grow-1 bg-secondary bg-opacity-10 p-3 rounded">
+                <p class="mb-1"><strong>Last Login</strong></p>
+                <small class="text-muted"><%= toISTLocaleString(deletedAccount.lastLogin) %></small>
+              </div>
+            </div>
+            <% } %>
+
+            <div class="d-flex gap-3">
+              <div>
+                <i class="bi bi-trash text-danger" style="font-size: 1.5rem;"></i>
+              </div>
+              <div class="flex-grow-1 bg-danger bg-opacity-10 p-3 rounded border border-danger">
+                <p class="mb-1"><strong>Account Deleted</strong></p>
+                <small class="text-muted"><%= toISTLocaleString(deletedAccount.deletedAt) %></small>
+                <p class="mb-0 text-warning small mt-2">
+                  Method: <strong><%= deletedAccount.deletedBy === 'user' ? 'User Requested' : 'Admin Action' %></strong>
+                </p>
               </div>
             </div>
           </div>

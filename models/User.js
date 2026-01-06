@@ -37,6 +37,16 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  age: {
+    type: Number,
+    min: 0,
+    max: 120,
+    default: null
+  },
+  heardFrom: {
+    type: String,
+    default: ''
+  },
   socialLinks: {
     instagram: { type: String, default: '' },
     twitter: { type: String, default: '' },
@@ -74,6 +84,26 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  lastLogin: {
+    type: Date,
+    default: null
+  },
+  currentLoginTime: {
+    type: Date,
+    default: null
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  currentPage: {
+    type: String,
+    default: null
+  },
+  lastPageUpdate: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 

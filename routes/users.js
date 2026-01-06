@@ -14,6 +14,7 @@ const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail, sendAccountDeletion
 const DeletedAccount = require('../models/DeletedAccount');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const crypto = require('crypto');
+const ActivityLogger = require('../utils/activityLogger');
 
 // Configure multer for profile image uploads (memory → Cloudinary)
 const upload = multer({
@@ -155,12 +156,38 @@ router.get('/edit-profile', isLoggedIn, async (req, res) => {
 // Update profile
 router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async (req, res) => {
   try {
-    const { name, bio, city, instagram, twitter, youtube, spotify } = req.body;
+    const { name, bio, city, instagram, twitter, youtube, spotify, age, heardFrom } = req.body;
 
     // Find user
     const user = await User.findById(req.session.user.id);
+    
+    // Track changes for activity log
+    const changes = {};
+    const oldValues = {
+      name: user.name,
+      bio: user.bio,
+      city: user.city,
+      age: user.age,
+      heardFrom: user.heardFrom,
+      profileImage: user.profileImage
+    };
 
     // Update user fields
+    if (name !== user.name) {
+      await ActivityLogger.logNameChange(user._id, user.name, name, req);
+      changes.name = { old: user.name, new: name };
+    }
+    
+    if (city && city !== user.city) {
+      await ActivityLogger.logCityChange(user._id, user.city, city, req);
+      changes.city = { old: user.city, new: city };
+    }
+    
+    if (bio !== user.bio) {
+      await ActivityLogger.logBioChange(user._id, user.bio, bio, req);
+      changes.bio = { old: user.bio?.substring(0, 50), new: bio?.substring(0, 50) };
+    }
+    
     user.name = name;
     user.bio = bio || '';
     user.city = city || '';
@@ -170,6 +197,10 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
       youtube: youtube || '',
       spotify: spotify || ''
     };
+
+    // Optional demographics
+    user.age = age ? Number(age) : null;
+    user.heardFrom = heardFrom || '';
 
     // Update profile image if uploaded
     if (req.file) {
@@ -202,6 +233,9 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
         user.profileMedia = media._id;
         user.profileImage = media.secure_url;
         req.session.user.profileImage = user.profileImage;
+        
+        // Log profile image change
+        await ActivityLogger.logProfileImageChange(user._id, oldValues.profileImage, media.secure_url, req);
         
         console.log('💾 Session updated with new profile image');
       } catch (err) {
@@ -397,6 +431,9 @@ router.post('/change-password', isLoggedIn, async (req, res) => {
     // Update password
     user.password = newPassword;
     await user.save();
+    
+    // Log password change
+    await ActivityLogger.logPasswordChange(user._id, req);
 
     req.flash('success', 'Password changed successfully');
     res.redirect('/users/profile');

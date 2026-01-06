@@ -504,19 +504,19 @@ console.log('Using new session configuration. Previous sessions have been cleare
 // Flash messages
 app.use(flash());
 
-// Import models for user roles check
-const UserRole = require('./models/UserRole');
-const Role = require('./models/Role');
-
 // Import middleware
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
 const { createMediaMiddleware } = require('./middleware/mediaMiddleware');
 const { checkSubscription } = require('./middleware/subscription');
 const { loadWebsiteSettings } = require('./middleware/websiteSettings');
+const { trackUserPage } = require('./middleware/pageTracking');
 
 
 // Check subscription status for all requests
 app.use(checkSubscription);
+
+// Track which page user is currently viewing
+app.use(trackUserPage);
 
 // Load website settings for all requests
 app.use(loadWebsiteSettings);
@@ -527,6 +527,10 @@ app.use(loadWebsiteSettings);
 
 // Import the getImageUrl function from uploadHelper
 const { getImageUrl } = require('./utils/uploadHelper');
+
+// Import models for user roles check
+const UserRole = require('./models/UserRole');
+const Role = require('./models/Role');
 
 // Cart middleware
 const cartMiddleware = require('./middleware/cart');

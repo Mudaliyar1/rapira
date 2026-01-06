@@ -203,6 +203,153 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// View user details page
+router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const Ticket = require('../models/Ticket');
+    const UserSubscription = require('../models/UserSubscription');
+    const Cart = require('../models/Cart');
+    const ActivityLogger = require('../utils/activityLogger');
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      req.flash('error', 'User not found');
+      return res.redirect('/admin/users');
+    }
+
+    // Get user's tickets
+    const tickets = await Ticket.find({ user: user._id })
+      .populate('concert', 'title date')
+      .sort({ createdAt: -1 });
+
+    // Get user's subscriptions
+    const subscriptions = await UserSubscription.find({ user: user._id })
+      .sort({ createdAt: -1 });
+
+    // Get user's cart items (pending purchases)
+    const cart = await Cart.findOne({ user: user._id })
+      .populate('items.product');
+      
+    // Get user's activity history (last 100 entries)
+    const activityHistory = await ActivityLogger.getUserHistory(user._id, 100);
+    
+    // Get password-related activities
+    const passwordChanges = activityHistory.filter(a => a.activityType === 'password_change');
+    const lastPasswordChange = passwordChanges.length > 0 ? passwordChanges[0].createdAt : user.createdAt;
+    const totalPasswordChanges = passwordChanges.length;
+    const failedLogins = activityHistory.filter(a => a.activityType === 'failed_login').length;
+    const successfulLogins = activityHistory.filter(a => a.activityType === 'login').length;
+
+    // Calculate activity stats
+    const ticketCount = tickets.length;
+    const ticketsPurchased = tickets.filter(t => t.paymentStatus === 'completed').length;
+    const refundedTickets = tickets.filter(t => t.paymentStatus === 'refunded').length;
+    const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
+    const totalSpent = tickets
+      .filter(t => t.paymentStatus === 'completed')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    res.render('admin/user-details', {
+      layout: 'admin',
+      currentPath: '/admin/users',
+      user,
+      tickets,
+      subscriptions,
+      cart,
+      activityHistory,
+      stats: {
+        ticketCount,
+        ticketsPurchased,
+        refundedTickets,
+        activeSubscriptions,
+        totalSpent,
+        lastLogin: user.lastLogin,
+        currentLoginTime: user.currentLoginTime,
+        isOnline: user.isOnline,
+        lastPasswordChange,
+        totalPasswordChanges,
+        failedLogins,
+        successfulLogins,
+        accountAge: Math.floor((new Date() - user.createdAt) / (1000 * 60 * 60 * 24))
+      }
+    });
+  } catch (error) {
+    console.error('View user details error:', error);
+    req.flash('error', 'Failed to load user details');
+    res.redirect('/admin/users');
+  }
+});
+
+// Admin force password reset
+router.post('/users/:id/reset-password', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { newPassword, confirmPassword, notifyUser } = req.body;
+    const ActivityLogger = require('../utils/activityLogger');
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      req.flash('error', 'Passwords do not match');
+      return res.redirect(`/admin/users/${req.params.id}/details`);
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+      req.flash('error', 'Password must be at least 6 characters');
+      return res.redirect(`/admin/users/${req.params.id}/details`);
+    }
+
+    // Find user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      req.flash('error', 'User not found');
+      return res.redirect('/admin/users');
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    // Log the password change by admin
+    await ActivityLogger.log({
+      userId: user._id,
+      activityType: 'password_change',
+      description: `Password was reset by admin ${req.session.user.name}`,
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent'),
+      performedBy: req.session.user.id
+    });
+
+    // Send email notification if checked
+    if (notifyUser) {
+      const { sendEmail } = require('../utils/brevoEmailService');
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: 'Your Password Has Been Reset',
+          html: `
+            <h2>Password Reset Notification</h2>
+            <p>Hello ${user.name},</p>
+            <p>Your password has been reset by an administrator.</p>
+            <p>If you did not request this change, please contact support immediately.</p>
+            <p>You can now log in with your new password.</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">This is an automated message from RAPIRA.</p>
+          `
+        });
+      } catch (emailError) {
+        console.error('Failed to send password reset notification:', emailError);
+      }
+    }
+
+    req.flash('success', `Password reset successfully for ${user.name}`);
+    res.redirect(`/admin/users/${user._id}/details`);
+  } catch (error) {
+    console.error('Admin password reset error:', error);
+    req.flash('error', 'Failed to reset password');
+    res.redirect(`/admin/users/${req.params.id}/details`);
+  }
+});
+
 // Export users to CSV
 router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
   try {
