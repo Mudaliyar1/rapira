@@ -63,7 +63,7 @@
               </tr>
               <tr>
                 <th class="text-white">Submitted On</th>
-                <td class="text-white"><%= new Date(application.createdAt).toLocaleString() %></td>
+                <td class="text-white"><%= toISTLocaleString(application.createdAt) %></td>
               </tr>
               <tr>
                 <th class="text-white">Status</th>

@@ -407,7 +407,7 @@
               </div>
               <div class="stat-item">
                 <i class="bi bi-calendar-event"></i>
-                <strong><%= new Date(post.createdAt).toLocaleDateString() %></strong>
+                <strong><%= toISTDateString(post.createdAt) %></strong>
                 <small>Posted</small>
               </div>
             </div>

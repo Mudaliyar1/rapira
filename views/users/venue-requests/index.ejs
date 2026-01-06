@@ -139,19 +139,11 @@
                   </td>
                   <td>
                     <small class="text-muted">
-                      <%= request.createdAt.toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric' 
-                      }) %>
+                      <%= toISTDateString(request.createdAt) %>
                     </small>
                     <% if (request.reviewedAt) { %>
                       <br><small class="text-muted">
-                        Reviewed: <%= request.reviewedAt.toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric' 
-                        }) %>
+                        Reviewed: <%= toISTDateString(request.reviewedAt) %>
                       </small>
                     <% } %>
                   </td>

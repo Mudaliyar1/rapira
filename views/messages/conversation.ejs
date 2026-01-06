@@ -73,7 +73,7 @@
                             <%= message.content %>
                             <div class="message-time text-end mt-1">
                               <small class="opacity-75">
-                                <%= new Date(message.createdAt).toLocaleString() %>
+                                <%= toISTLocaleString(message.createdAt) %>
                                 <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
                               </small>
                             </div>
@@ -88,7 +88,7 @@
                             <%= message.content %>
                             <div class="message-time mt-1">
                               <small class="opacity-75">
-                                <%= new Date(message.createdAt).toLocaleString() %>
+                                <%= toISTLocaleString(message.createdAt) %>
                               </small>
                             </div>
                           </div>

@@ -36,11 +36,7 @@
                 <div>
                   <h6 class="text-white mb-1">Order #<%= order.orderNumber %></h6>
                   <small class="text-muted">
-                    <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    }) %>
+                    <%= toISTDateString(order.createdAt) %>
                   </small>
                 </div>
                 <%

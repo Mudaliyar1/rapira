@@ -31,11 +31,11 @@
                 <ul class="list-group list-group-flush mb-4">
                   <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                     <span>Purchase Date:</span>
-                    <span><%= new Date(activeSubscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    <span><%= toISTDateString(activeSubscription.purchaseDate) %></span>
                   </li>
                   <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                     <span>Expiry Date:</span>
-                    <span><%= new Date(activeSubscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    <span><%= toISTDateString(activeSubscription.expiryDate) %></span>
                   </li>
                   <li class="list-group-item bg-transparent text-white-50 border-secondary">
                     <div class="mb-2 d-flex align-items-center">
@@ -188,8 +188,8 @@
                   <% subscriptionHistory.forEach(subscription => { %>
                     <tr>
                       <td><%= subscription.plan.name %></td>
-                      <td><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
-                      <td><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                      <td><%= toISTDateString(subscription.purchaseDate) %></td>
+                      <td><%= toISTDateString(subscription.expiryDate) %></td>
                       <td>
                         <% if (subscription.status === 'active' && new Date(subscription.expiryDate) > new Date()) { %>
                           <span class="badge bg-success">Active</span>

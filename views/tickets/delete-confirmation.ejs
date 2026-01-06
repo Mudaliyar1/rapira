@@ -33,7 +33,7 @@
                   </p>
                   <p class="mb-2">
                     <span class="fw-medium text-white">Date:</span><br>
-                    <span class="text-white-50"><%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A' %></span>
+                    <span class="text-white-50"><%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></span>
                   </p>
                   <p class="mb-2">
                     <span class="fw-medium text-white">Time:</span><br>
@@ -51,7 +51,7 @@
                   </p>
                   <p class="mb-2">
                     <span class="fw-medium text-white">Purchase Date:</span><br>
-                    <span class="text-white-50"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></span>
+                    <span class="text-white-50"><%= toISTDateString(ticket.purchaseDate) %></span>
                   </p>
                   <p class="mb-2">
                     <span class="fw-medium text-white">Status:</span><br>

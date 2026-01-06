@@ -64,7 +64,7 @@
                         <strong class="text-dark">🎵 <%= conflictDetails.requestedBooking.title %></strong><br>
                         <small class="text-dark">
                           👤 Artist: <%= conflictDetails.requestedBooking.artistName %><br>
-                          📅 Date: <%= new Date(conflictDetails.requestedBooking.date).toLocaleDateString('en-IN') %><br>
+                          📅 Date: <%= toISTDateString(conflictDetails.requestedBooking.date) %><br>
                           🕐 Time: <%= conflictDetails.requestedBooking.startTime %><br>
                           ⏱️ Duration: <%= conflictDetails.requestedBooking.durationHours %> hours
                         </small>

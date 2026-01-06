@@ -37,7 +37,7 @@
                 <% } %>
                 <% if (progress && progress.completed) { %>
                   <span class="badge bg-success p-2">
-                    <i class="bi bi-check-circle-fill me-1"></i> Completed on <%= new Date(progress.completedAt).toLocaleDateString() %>
+                    <i class="bi bi-check-circle-fill me-1"></i> Completed on <%= toISTDateString(progress.completedAt) %>
                   </span>
                 <% } %>
               </div>

@@ -86,7 +86,7 @@
                 <% if (viewAll) { %>
                   All Bookings - All Time
                 <% } else { %>
-                  Bookings Calendar - <%= new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %>
+                  Bookings Calendar - <%= toISTDateString(new Date(currentYear, currentMonth - 1)) %>
                 <% } %>
               </h5>
             </div>
@@ -111,7 +111,7 @@
                     <i class="bi bi-chevron-left"></i> Previous
                   </a>
                   <button class="btn btn-outline-primary" disabled>
-                    <%= new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) %>
+                    <%= toISTDateString(new Date(currentYear, currentMonth - 1)) %>
                   </button>
                   <a href="?month=<%= currentMonth === 12 ? 1 : currentMonth + 1 %>&year=<%= currentMonth === 12 ? currentYear + 1 : currentYear %>" 
                      class="btn btn-outline-primary">
@@ -209,7 +209,7 @@
                       </td>
                       <td>
                         <div>
-                          <div class="fw-bold"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                          <div class="fw-bold"><%= toISTDateString(booking.date) %></div>
                           <small class="text-muted">
                             <i class="bi bi-clock me-1"></i><%= booking.startTime %>
                           </small>

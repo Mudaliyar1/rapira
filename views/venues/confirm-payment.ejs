@@ -22,7 +22,7 @@
             <h6 class="text-muted"><%= bookingView.title %></h6>
             <p class="small text-muted">
               Artist: <strong><%= bookingView.artistName %></strong> | 
-              Date: <%= new Date(bookingView.date).toLocaleDateString('en-IN') %>
+              Date: <%= toISTDateString(bookingView.date) %>
             </p>
           </div>
 

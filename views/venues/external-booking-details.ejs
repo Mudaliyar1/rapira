@@ -59,7 +59,7 @@
               <label class="text-muted small">Date</label>
               <div class="fw-bold">
                 <i class="bi bi-calendar-event me-1"></i>
-                <%= new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                <%= toISTDateString(booking.date) %>
               </div>
             </div>
             <div class="col-md-3 mb-3">
@@ -189,12 +189,12 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="text-muted small">Created At</label>
-              <div><%= new Date(booking.createdAt).toLocaleString('en-IN') %></div>
+              <div><%= toISTLocaleString(booking.createdAt) %></div>
             </div>
             <% if (booking.updatedAt && booking.updatedAt.toString() !== booking.createdAt.toString()) { %>
               <div class="col-md-6 mb-3">
                 <label class="text-muted small">Last Updated</label>
-                <div><%= new Date(booking.updatedAt).toLocaleString('en-IN') %></div>
+                <div><%= toISTLocaleString(booking.updatedAt) %></div>
               </div>
             <% } %>
           </div>

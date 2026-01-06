@@ -247,7 +247,7 @@
           <h3><i>⏳</i> Refund Pending</h3>
           <p>Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
           <p style="font-size: 12px; margin-top: 10px;">
-            <strong>Request Date:</strong> <%= new Date(refundRequest.createdAt).toLocaleString() %>
+            <strong>Request Date:</strong> <%= toISTLocaleString(refundRequest.createdAt) %>
           </p>
         </div>
       <% } %>
@@ -261,7 +261,7 @@
           <% } else { %>
             <h2 class="concert-title"><%= concert.title %></h2>
             <p class="concert-info-item">
-              <i>📅</i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+              <i>📅</i> <%= toISTDateString(concert.date) %>
             </p>
             <p class="concert-info-item">
               <i>🕒</i> Concert Time: <%= concert.time %>

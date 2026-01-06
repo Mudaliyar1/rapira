@@ -220,13 +220,7 @@
               <div class="timeline-content">
                 <h6 class="mb-1">Request Submitted</h6>
                 <small class="text-muted">
-                  <%= venueRequest.createdAt.toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                  }) %>
+                  <%= toISTLocaleString(venueRequest.createdAt) %>
                 </small>
               </div>
             </div>

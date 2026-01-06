@@ -336,6 +336,12 @@ app.locals.layouts = {
   demo: 'layouts/demo'
 };
 
+// Make date formatter available in all EJS templates
+const { toISTLocaleString, toISTDateString, toISTTimeString } = require('./utils/dateFormatter');
+app.locals.toISTLocaleString = toISTLocaleString;
+app.locals.toISTDateString = toISTDateString;
+app.locals.toISTTimeString = toISTTimeString;
+
 // Middleware
 // Set security limits for JSON and URL-encoded bodies
 app.use(express.json({ limit: '100kb' }));

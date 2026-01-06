@@ -256,7 +256,7 @@
           <h3><i>⏳</i> Refund Pending</h3>
           <p>Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
           <p style="font-size: 12px; margin-top: 10px;">
-            <strong>Request Date:</strong> <%= new Date(refundRequest.createdAt).toLocaleString() %>
+            <strong>Request Date:</strong> <%= toISTLocaleString(refundRequest.createdAt) %>
           </p>
         </div>
       <% } %>
@@ -270,7 +270,7 @@
           <% } else { %>
             <h2 class="concert-title"><%= concert.title %></h2>
             <p class="concert-info-item">
-              <i>📅</i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+              <i>📅</i> <%= toISTDateString(concert.date) %>
             </p>
             <p class="concert-info-item">
               <i>🕒</i> Concert Time: <%= concert.time %>
@@ -426,7 +426,7 @@
                   <h4 style="margin: 0 0 5px 0; color: #28a745;"><%= validatedTicketsCount %> of <%= totalTickets %> Ticket<%= totalTickets > 1 ? 's' : '' %> Validated</h4>
                   <p style="margin: 0; color: #666; font-size: 14px;">Successfully validated <%= validatedTicketsCount %> out of <%= totalTickets %> ticket<%= totalTickets > 1 ? 's' : '' %> for this purchase.</p>
                   <% if (ticket.attendedAt) { %>
-                    <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Last validated on <%= new Date(ticket.attendedAt).toLocaleString() %></p>
+                    <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;">Last validated on <%= toISTLocaleString(ticket.attendedAt) %></p>
                   <% } %>
                   <% if (remainingTickets > 0) { %>
                     <p style="margin: 5px 0 0 0; color: #888; font-size: 12px;"><%= remainingTickets %> ticket<%= remainingTickets > 1 ? 's' : '' %> remaining to be validated</p>

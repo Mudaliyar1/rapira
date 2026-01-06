@@ -22,7 +22,7 @@
               <% if (pendingUpgradeRequest && pendingUpgradeRequest.currentLevel === 'Beginner') { %>
                 <div class="alert alert-warning mt-3" style="color: #000;">
                   <h6 class="alert-heading" style="color: #000;"><i class="bi bi-hourglass-split me-2"></i> Upgrade Request Pending</h6>
-                  <p class="mb-0" style="color: #000;">You have already submitted a request to upgrade to Intermediate Artist level on <%= new Date(pendingUpgradeRequest.createdAt).toLocaleDateString() %>. Your request is currently under review.</p>
+                  <p class="mb-0" style="color: #000;">You have already submitted a request to upgrade to Intermediate Artist level on <%= toISTDateString(pendingUpgradeRequest.createdAt) %>. Your request is currently under review.</p>
                   <a href="/artist-upgrade/pending" class="btn btn-warning btn-sm mt-2" style="color: #000;">
                     <i class="bi bi-eye me-1"></i> View Request Details
                   </a>
