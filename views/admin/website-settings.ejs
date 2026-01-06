@@ -419,9 +419,9 @@
                 <div class="alert alert-info">
                   <i class="bi bi-info-circle me-2"></i>
                   <strong>Maintenance Active:</strong><br>
-                  Started: <%= new Date(settings.siteSettings.maintenanceStartTime).toLocaleString() %><br>
+                  Started: <%= toISTLocaleString(settings.siteSettings.maintenanceStartTime) %><br>
                   Duration: <%= settings.siteSettings.maintenanceDuration %> minutes<br>
-                  <span id="maintenanceEndTime"><strong>Ends: </strong><%= new Date(new Date(settings.siteSettings.maintenanceStartTime).getTime() + (settings.siteSettings.maintenanceDuration * 60000)).toLocaleString() %></span>
+                  <span id="maintenanceEndTime"><strong>Ends: </strong><%= toISTLocaleString(new Date(new Date(settings.siteSettings.maintenanceStartTime).getTime() + (settings.siteSettings.maintenanceDuration * 60000))) %></span>
                 </div>
                 <% } %>
               </div>

@@ -29,12 +29,7 @@
             <div class="mb-3">
               <strong>Date & Time:</strong><br>
               <% if (ticket.concert) { %>
-                <%= new Date(ticket.concert.date).toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                }) %> at <%= ticket.concert.time %>
+                <%= toISTDateString(ticket.concert.date) %> at <%= ticket.concert.time %>
               <% } else { %>
                 N/A
               <% } %>
@@ -64,14 +59,7 @@
             </div>
             <div class="mb-3">
               <strong>Purchase Date:</strong><br>
-              <%= new Date(ticket.purchaseDate).toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }) %>
+              <%= toISTDateString(ticket.purchaseDate) %>
             </div>
             <div class="mb-3">
               <strong>Payment Status:</strong><br>
@@ -137,7 +125,7 @@
         </div>
         <div class="mb-3">
           <strong>Transaction Date:</strong><br>
-          <%= new Date(ticket.purchaseDate).toLocaleDateString() %>
+          <%= toISTDateString(ticket.purchaseDate) %>
         </div>
         <div class="mb-3">
           <strong>Amount Paid:</strong><br>

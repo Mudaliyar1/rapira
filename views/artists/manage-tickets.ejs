@@ -89,13 +89,13 @@
                   <div>
                     <h6 class="mb-0 fw-bold" style="color: #000000 !important;"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></h6>
                     <small class="text-muted" style="color: #6c757d !important;">
-                      <%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : '' %>
+                      <%= ticket.concert ? toISTDateString(ticket.concert.date) : '' %>
                     </small>
                   </div>
                 </td>
                 <td style="color: #000000 !important;"><%= ticket.user ? ticket.user.name : 'Unknown User' %></td>
                 <td style="color: #000000 !important;"><%= ticket.user ? ticket.user.email : 'N/A' %></td>
-                <td style="color: #000000 !important;"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></td>
+                <td style="color: #000000 !important;"><%= toISTDateString(ticket.purchaseDate) %></td>
                 <td>
                   <span class="badge bg-primary rounded-pill"><%= ticket.quantity %></span>
                 </td>

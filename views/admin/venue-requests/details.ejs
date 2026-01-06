@@ -329,7 +329,7 @@
               <p><%= venueRequest.cancelReason %></p>
             <% } %>
             <% if (venueRequest.cancelledAt) { %>
-              <p class="text-muted mb-0">Cancelled on <%= new Date(venueRequest.cancelledAt).toLocaleString() %></p>
+              <p class="text-muted mb-0">Cancelled on <%= toISTLocaleString(venueRequest.cancelledAt) %></p>
             <% } %>
           <% } %>
         </div>

@@ -122,12 +122,7 @@
               <i class="bi bi-gear me-2"></i>
               <strong>Processing:</strong> Your order is being prepared for shipment.
               <% if (order.estimatedDelivery) { %>
-                <br><strong>Expected Delivery:</strong> <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                }) %>
+                <br><strong>Expected Delivery:</strong> <%= toISTDateString(order.estimatedDelivery) %>
               <% } %>
             </div>
           <% } else if (order.orderStatus === 'shipped') { %>
@@ -211,19 +206,9 @@
                 <small class="text-muted">
                   Order confirmed<br>
                   <% if (order.confirmedAt) { %>
-                    <%= new Date(order.confirmedAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.confirmedAt) %>
                   <% } else { %>
-                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.updatedAt) %>
                   <% } %>
                 </small>
               </div>
@@ -241,19 +226,9 @@
                 <small class="text-muted">
                   Being prepared<br>
                   <% if (order.processingAt) { %>
-                    <%= new Date(order.processingAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.processingAt) %>
                   <% } else { %>
-                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.updatedAt) %>
                   <% } %>
                 </small>
               </div>
@@ -275,19 +250,9 @@
                     On the way<br>
                   <% } %>
                   <% if (order.shippedAt) { %>
-                    <%= new Date(order.shippedAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.shippedAt) %>
                   <% } else { %>
-                    <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.updatedAt) %>
                   <% } %>
                 </small>
               </div>
@@ -304,12 +269,7 @@
                 <h6 class="text-white">Delivered</h6>
                 <small class="text-muted">
                   <% if (order.deliveredAt) { %>
-                    <%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.deliveredAt) %>
                   <% } else { %>
                     Completed
                   <% } %>
@@ -328,12 +288,7 @@
                 <h6 class="text-white">Cancelled</h6>
                 <small class="text-muted">
                   <% if (order.cancelledAt) { %>
-                    <%= new Date(order.cancelledAt).toLocaleDateString('en-IN', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }) %>
+                    <%= toISTDateString(order.cancelledAt) %>
                   <% } else { %>
                     Order cancelled
                   <% } %>
@@ -352,12 +307,7 @@
                 <h6 class="text-white">Returned</h6>
                 <small class="text-muted">
                   Order returned<br>
-                  <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  }) %>
+                  <%= toISTDateString(order.updatedAt) %>
                 </small>
               </div>
             </div>
@@ -474,16 +424,8 @@
               <i class="bi bi-calendar-event me-2"></i>Expected Delivery
             </div>
             <div class="text-white">
-              <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-              }) %>
-              at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              }) %>
+              <%= toISTDateString(order.estimatedDelivery) %>
+              at <%= toISTTimeString(order.estimatedDelivery) %>
             </div>
             <%
               const today = new Date();
@@ -553,13 +495,7 @@
         <div class="mb-2">
           <small class="text-muted">Order Date:</small>
           <div class="text-white">
-            <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) %>
+            <%= toISTDateString(order.createdAt) %>
           </div>
         </div>
 
@@ -579,16 +515,8 @@
           <div class="mb-2">
             <small class="text-muted">Expected Delivery:</small>
             <div class="text-white">
-              <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              }) %>
-              at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              }) %>
+              <%= toISTDateString(order.estimatedDelivery) %>
+              at <%= toISTTimeString(order.estimatedDelivery) %>
             </div>
           </div>
         <% } %>

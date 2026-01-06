@@ -37,7 +37,7 @@
                 </li>
                 <li class="mb-3">
                   <strong>Deleted At:</strong>
-                  <br><small class="text-muted"><%= new Date(deletedAccount.deletedAt).toLocaleString() %></small>
+                  <br><small class="text-muted"><%= toISTLocaleString(deletedAccount.deletedAt) %></small>
                 </li>
                 <li class="mb-3">
                   <strong>Deletion Method:</strong>

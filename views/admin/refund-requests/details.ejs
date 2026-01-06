@@ -37,7 +37,7 @@
             </div>
             <div class="row mb-2">
               <div class="col-md-4 text-white-50">Date:</div>
-              <div class="col-md-8 text-white"><%= refundRequest.concert ? new Date(refundRequest.concert.date).toLocaleDateString() : 'N/A' %></div>
+              <div class="col-md-8 text-white"><%= refundRequest.concert ? toISTDateString(refundRequest.concert.date) : 'N/A' %></div>
             </div>
             <div class="row mb-2">
               <div class="col-md-4 text-white-50">Venue:</div>
@@ -104,7 +104,7 @@
                   </div>
                   <div class="row">
                     <div class="col-md-4 text-white-50">Refunded On:</div>
-                    <div class="col-md-8 text-white"><%= refundRequest.refundedAt ? new Date(refundRequest.refundedAt).toLocaleString() : 'N/A' %></div>
+                    <div class="col-md-8 text-white"><%= refundRequest.refundedAt ? toISTLocaleString(refundRequest.refundedAt) : 'N/A' %></div>
                   </div>
                 </div>
               </div>
@@ -120,7 +120,7 @@
                 </div>
                 <div class="row">
                   <div class="col-md-4 text-white-50">Processed On:</div>
-                  <div class="col-md-8 text-white"><%= refundRequest.reviewedAt ? new Date(refundRequest.reviewedAt).toLocaleString() : 'N/A' %></div>
+                  <div class="col-md-8 text-white"><%= refundRequest.reviewedAt ? toISTLocaleString(refundRequest.reviewedAt) : 'N/A' %></div>
                 </div>
               </div>
             </div>
@@ -195,7 +195,7 @@
 
           <div class="mb-3">
             <p class="fw-medium mb-1 text-white-50">Request Date:</p>
-            <p class="text-white"><%= new Date(refundRequest.createdAt).toLocaleString() %></p>
+            <p class="text-white"><%= toISTLocaleString(refundRequest.createdAt) %></p>
           </div>
 
           <div class="mt-4">

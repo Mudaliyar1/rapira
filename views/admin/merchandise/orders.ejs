@@ -251,18 +251,11 @@
               </td>
               <td>
                 <small class="text-white">
-                  <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric'
-                  }) %>
+                  <%= toISTDateString(order.createdAt) %>
                 </small>
                 <br>
                 <small class="text-muted">
-                  <%= new Date(order.createdAt).toLocaleTimeString('en-IN', { 
-                    hour: '2-digit', 
-                    minute: '2-digit'
-                  }) %>
+                  <%= toISTTimeString(order.createdAt) %>
                 </small>
               </td>
               <td>

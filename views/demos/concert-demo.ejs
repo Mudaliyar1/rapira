@@ -279,12 +279,7 @@
         const price = type === 'paid' ? document.getElementById('concertPrice').value : 0;
         
         // Format date for display
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        const formattedDate = toISTDateString(date);
         
         // Update concert table
         const tableBody = document.getElementById('concertTableBody');

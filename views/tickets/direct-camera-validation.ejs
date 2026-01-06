@@ -605,7 +605,7 @@
             ticketDetails.classList.remove('d-none');
             ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
             concertTitle.textContent = data.ticket.concert.title;
-            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            concertDate.textContent = toISTDateString(data.ticket.concert.date);
             ticketHolder.textContent = data.ticket.user.name;
             ticketQuantity.textContent = data.ticket.quantity;
             validatedTicketsCount.textContent = data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0);
@@ -628,7 +628,7 @@
             ticketDetails.classList.remove('d-none');
             ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
             concertTitle.textContent = data.ticket.concert.title;
-            concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+            concertDate.textContent = toISTDateString(data.ticket.concert.date);
             ticketHolder.textContent = data.ticket.user.name;
             ticketQuantity.textContent = data.ticket.quantity;
             validatedTicketsCount.textContent = data.ticket.validatedTicketsCount || (data.ticket.attended ? data.ticket.quantity : 0);
@@ -680,7 +680,7 @@
           ticketDetails.classList.remove('d-none');
           ticketId.textContent = data.ticket.ticketNumber || data.ticket._id;
           concertTitle.textContent = data.ticket.concert.title;
-          concertDate.textContent = new Date(data.ticket.concert.date).toLocaleDateString();
+          concertDate.textContent = toISTDateString(data.ticket.concert.date);
           ticketHolder.textContent = data.ticket.user.name;
           ticketQuantity.textContent = data.ticket.quantity;
           validatedTicketsCount.textContent = data.ticket.validatedTicketsCount;

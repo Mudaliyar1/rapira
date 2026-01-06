@@ -23,13 +23,7 @@
           <h4 class="text-white mb-2">Order #<%= order.orderNumber %></h4>
           <p class="text-muted mb-1">
             <i class="bi bi-calendar me-2"></i>
-            Placed on <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) %>
+            Placed on <%= toISTDateString(order.createdAt) %>
           </p>
           <p class="text-muted mb-0">
             <i class="bi bi-person me-2"></i>
@@ -164,13 +158,7 @@
           <div class="timeline-content">
             <h6 class="text-white mb-1">Order Placed</h6>
             <p class="text-muted mb-0">
-              <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }) %>
+              <%= toISTDateString(order.createdAt) %>
             </p>
           </div>
         </div>
@@ -188,13 +176,7 @@
                 <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
               </h6>
               <p class="text-muted mb-1">
-                <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) %>
+                <%= toISTDateString(order.updatedAt) %>
               </p>
               <% if (order.notes) { %>
                 <p class="text-muted small mb-0"><%= order.notes %></p>
@@ -210,13 +192,7 @@
             <div class="timeline-content">
               <h6 class="text-white mb-1">Delivered</h6>
               <p class="text-muted mb-0">
-                <%= new Date(order.deliveredAt).toLocaleDateString('en-IN', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) %>
+                <%= toISTDateString(order.deliveredAt) %>
               </p>
             </div>
           </div>
@@ -229,13 +205,7 @@
             <div class="timeline-content">
               <h6 class="text-white mb-1">Cancelled</h6>
               <p class="text-muted mb-1">
-                <%= new Date(order.cancelledAt).toLocaleDateString('en-IN', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) %>
+                <%= toISTDateString(order.cancelledAt) %>
               </p>
               <% if (order.cancellationReason) { %>
                 <p class="text-muted small mb-0">Reason: <%= order.cancellationReason %></p>
@@ -257,13 +227,7 @@
           <p class="text-white mb-2"><%= order.notes %></p>
           <small class="text-muted">
             <i class="bi bi-clock me-1"></i>
-            Last updated: <%= new Date(order.updatedAt).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) %>
+            Last updated: <%= toISTDateString(order.updatedAt) %>
           </small>
         </div>
         <small class="text-muted">You can edit these notes in the form below</small>
@@ -369,16 +333,8 @@
         <div class="mb-2">
           <span class="text-muted">Expected Delivery:</span>
           <span class="text-white">
-            <%= new Date(order.estimatedDelivery).toLocaleDateString('en-IN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            }) %>
-            at <%= new Date(order.estimatedDelivery).toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            }) %>
+            <%= toISTDateString(order.estimatedDelivery) %>
+            at <%= toISTTimeString(order.estimatedDelivery) %>
           </span>
           <small class="text-muted d-block">You can update this date and time using the form above</small>
         </div>

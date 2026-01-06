@@ -16,7 +16,7 @@
         <div class="row">
           <div class="col-md-6">
             <p><strong>Title:</strong> <%= concert.title %></p>
-            <p><strong>Date:</strong> <%= new Date(concert.date).toLocaleDateString() %></p>
+            <p><strong>Date:</strong> <%= toISTDateString(concert.date) %></p>
             <p><strong>Time:</strong> <%= concert.time %></p>
             <p><strong>Venue:</strong> <%= concert.venue ? concert.venue.name : 'N/A' %></p>
           </div>

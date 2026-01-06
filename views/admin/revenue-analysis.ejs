@@ -310,7 +310,7 @@
                       <td><%= user.name || 'N/A' %></td>
                       <td><%= user.email || 'N/A' %></td>
                       <td><%= user.role || 'N/A' %></td>
-                      <td><%= user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= user.createdAt ? toISTDateString(user.createdAt) : 'N/A' %></td>
                     </tr>
                   <% }); %>
                 <% } else { %>
@@ -356,7 +356,7 @@
                       <td><%= concert.title || 'N/A' %></td>
                       <td><%= concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'N/A') %></td>
                       <td><%= concert.venue ? concert.venue.name : 'N/A' %></td>
-                      <td><%= concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= concert.date ? toISTDateString(concert.date) : 'N/A' %></td>
                       <td><%= concert.city || (concert.venue ? concert.venue.city : 'N/A') %></td>
                       <td><%= concert.venue ? concert.venue.state : 'N/A' %></td>
                       <td><span class="badge bg-<%= concert.status === 'approved' ? 'success' : concert.status === 'pending' ? 'warning' : 'danger' %>"><%= concert.status || 'N/A' %></span></td>
@@ -407,7 +407,7 @@
                       <td><%= ticket.ticketNumber || 'N/A' %></td>
                       <td><%= ticket.user ? ticket.user.name : 'Unknown' %></td>
                       <td><%= ticket.concert ? ticket.concert.title : 'N/A' %></td>
-                      <td><%= ticket.purchaseDate ? new Date(ticket.purchaseDate).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= ticket.purchaseDate ? toISTDateString(ticket.purchaseDate) : 'N/A' %></td>
                       <td>₹<%= (ticket.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                       <td>₹<%= (ticket.commissionAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                       <td>₹<%= ((ticket.totalAmount || 0) + (ticket.commissionAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
@@ -444,8 +444,8 @@
                       <td><%= sub.plan ? sub.plan.name : 'N/A' %></td>
                       <td><%= sub.user ? sub.user.name : 'Unknown' %></td>
                       <td>₹<%= (sub.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
-                      <td><%= sub.purchaseDate ? new Date(sub.purchaseDate).toLocaleDateString() : 'N/A' %></td>
-                      <td><%= sub.expiryDate ? new Date(sub.expiryDate).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= sub.purchaseDate ? toISTDateString(sub.purchaseDate) : 'N/A' %></td>
+                      <td><%= sub.expiryDate ? toISTDateString(sub.expiryDate) : 'N/A' %></td>
                       <td><span class="badge bg-<%= sub.status === 'active' ? 'success' : sub.status === 'expired' ? 'secondary' : 'warning' %>"><%= sub.status || 'N/A' %></span></td>
                     </tr>
                   <% }); %>
@@ -482,7 +482,7 @@
                       <td><%= concert.title || 'N/A' %></td>
                       <td><%= concert.artist ? (concert.artist.user ? concert.artist.user.name : 'N/A') : 'N/A' %></td>
                       <td><%= concert.venue ? concert.venue.name : 'N/A' %></td>
-                      <td><%= concert.date ? new Date(concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= concert.date ? toISTDateString(concert.date) : 'N/A' %></td>
                       <td>₹<%= (concert.venueBooking?.totalVenueCost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
                       <td><%= (concert.venueBooking?.adminCommission?.percentage || 0) %>%</td>
                       <td>₹<%= (commission || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>

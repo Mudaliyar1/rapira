@@ -59,7 +59,7 @@
                       </td>
                       <td><%= concert.artist && concert.artist.user ? concert.artist.user.name : 'Unknown' %></td>
                       <td>
-                        <%= new Date(concert.date).toLocaleDateString() %><br>
+                        <%= toISTDateString(concert.date) %><br>
                         <small class="text-muted"><%= concert.time %></small>
                       </td>
                       <td><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>

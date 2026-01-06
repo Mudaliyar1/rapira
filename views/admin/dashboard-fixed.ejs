@@ -299,7 +299,7 @@
                       <td><%= ticket.user.name %></td>
                       <td><%= ticket.concert ? ticket.concert.title : 'N/A' %></td>
                       <td>₹<%= ticket.totalAmount %></td>
-                      <td><%= new Date(ticket.createdAt).toLocaleDateString() %></td>
+                      <td><%= toISTDateString(ticket.createdAt) %></td>
                     </tr>
                   <% }); %>
                 <% } else { %>
@@ -352,7 +352,7 @@
                 <tr>
                   <td><%= concert.title %></td>
                   <td><%= concert.artist.user.name %></td>
-                  <td><%= new Date(concert.date).toLocaleDateString() %></td>
+                  <td><%= toISTDateString(concert.date) %></td>
                   <td><%= concert.venue %></td>
                   <td><%= concert.city %></td>
                   <td><%= concert.ticketsSold %> / <%= concert.maxTickets > 0 ? concert.maxTickets : '∞' %></td>

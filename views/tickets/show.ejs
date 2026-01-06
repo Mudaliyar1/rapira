@@ -72,7 +72,7 @@
                   <h4 class="fw-bold mb-2 text-white ticket-title"><%= concert.title %></h4>
                   <p class="text-white-50 mb-0 concert-date-info">
                     <i class="bi bi-calendar3 me-2 text-primary"></i>
-                    <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                    <%= toISTDateString(concert.date) %>
                   </p>
                   <p class="text-white-50 mb-0">
                     <i class="bi bi-clock me-2 text-primary"></i>
@@ -137,7 +137,7 @@
               <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <% if (!isDeletedConcert) { %>
                   <div class="concert-date mx-auto mx-md-0 ms-md-auto me-md-0">
-                    <div class="month"><%= new Date(concert.date).toLocaleDateString('en-US', { month: 'short' }) %></div>
+                    <div class="month"><%= toISTDateString(concert.date).split('/')[0].padStart(2, '0').slice(-2) %></div>
                     <div class="day"><%= new Date(concert.date).getDate() %></div>
                   </div>
                 <% } %>
@@ -159,7 +159,7 @@
                 </p>
                 <p class="mb-0">
                   <span class="fw-medium text-white">Purchase Date:</span><br>
-                  <span class="text-white-50"><%= new Date(ticket.purchaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                  <span class="text-white-50"><%= toISTDateString(ticket.purchaseDate) %></span>
                 </p>
               </div>
               <div class="col-md-6">
@@ -238,7 +238,7 @@
                       <h6 class="text-success mb-0"><%= validatedTicketsCount %> of <%= totalTickets %> Ticket<%= totalTickets > 1 ? 's' : '' %> Validated</h6>
                       <p class="mb-0 text-white-50">Successfully validated <%= validatedTicketsCount %> out of <%= totalTickets %> ticket<%= totalTickets > 1 ? 's' : '' %> for this purchase.</p>
                       <% if (ticket.attendedAt) { %>
-                        <small class="text-white-50">Last validated on <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                        <small class="text-white-50">Last validated on <%= toISTLocaleString(ticket.attendedAt) %></small>
                       <% } %>
                       <% if (remainingTickets > 0) { %>
                         <small class="text-white-50 d-block"><%= remainingTickets %> ticket<%= remainingTickets > 1 ? 's' : '' %> remaining to be validated</small>

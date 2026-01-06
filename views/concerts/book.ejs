@@ -30,7 +30,7 @@
                     displayTime = `${hour12}:${minutes} ${amPm}`;
                   }
                 %>
-                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= displayTime %>
+                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= toISTDateString(concert.date) %> • <%= displayTime %>
               </p>
               <p class="text-white mb-0">
                 <i class="bi bi-geo-alt me-1 text-primary"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
@@ -169,7 +169,7 @@
 
             <div class="d-flex align-items-center mb-3">
               <div class="concert-date me-3">
-                <div class="month"><%= new Date(concert.date).toLocaleDateString('en-US', { month: 'short' }) %></div>
+                <div class="month"><%= toISTDateString(concert.date) %></div>
                 <div class="day"><%= new Date(concert.date).getDate() %></div>
               </div>
               <div>

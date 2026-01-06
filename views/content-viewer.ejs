@@ -252,7 +252,7 @@
           </a>
         </p>
         <p class="text-white-50 mb-3">
-          <i class="bi bi-calendar3 me-1"></i> <%= new Date(content.releaseDate).toLocaleDateString() %>
+          <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(content.releaseDate) %>
           <span class="ms-3">
             <i class="bi bi-eye me-1"></i> <%= content.views %> views
           </span>
@@ -386,7 +386,7 @@
                   <span class="text-white" style="font-size: 1.25rem; font-weight: 500;"><%= item.type.toLowerCase() %></span>
                 </div>
                 <p class="card-text text-white">
-                  <i class="bi bi-calendar3 me-1"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                  <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(item.releaseDate) %>
                 </p>
               </div>
               <div class="card-footer bg-transparent">
@@ -422,7 +422,7 @@
                   <span class="text-white" style="font-size: 1.25rem; font-weight: 500;"><%= item.type.toLowerCase() %></span>
                 </div>
                 <p class="card-text text-white">
-                  <i class="bi bi-calendar3 me-1"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                  <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(item.releaseDate) %>
                 </p>
               </div>
               <div class="card-footer bg-transparent">

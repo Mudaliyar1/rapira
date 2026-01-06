@@ -76,13 +76,13 @@
                   <div class="mb-2">
                     <strong class="text-white-50">Purchase Date:</strong>
                     <span class="text-white">
-                      <%= subscription.purchaseDate ? new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %>
+                      <%= subscription.purchaseDate ? toISTDateString(subscription.purchaseDate) : 'N/A' %>
                     </span>
                   </div>
                   <div class="mb-2">
                     <strong class="text-white-50">Expiry Date:</strong>
                     <span class="text-white">
-                      <%= subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %>
+                      <%= subscription.expiryDate ? toISTDateString(subscription.expiryDate) : 'N/A' %>
                     </span>
                   </div>
                   <% if (subscription.paymentId) { %>

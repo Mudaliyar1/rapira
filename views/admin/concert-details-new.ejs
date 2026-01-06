@@ -83,7 +83,7 @@
             <div class="mb-3">
               <h6 class="fw-bold">Date & Time:</h6>
               <p class="mb-0">
-                <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+                <%= toISTDateString(concert.date) %> • <%= concert.time %>
               </p>
             </div>
             
@@ -235,12 +235,12 @@
             
             <div class="mb-3">
               <h6 class="fw-bold">Created:</h6>
-              <p class="mb-0"><%= new Date(concert.createdAt).toLocaleDateString() %></p>
+              <p class="mb-0"><%= toISTDateString(concert.createdAt) %></p>
             </div>
             
             <div class="mb-3">
               <h6 class="fw-bold">Last Updated:</h6>
-              <p class="mb-0"><%= new Date(concert.updatedAt).toLocaleDateString() %></p>
+              <p class="mb-0"><%= toISTDateString(concert.updatedAt) %></p>
             </div>
             
             <div class="mb-3">

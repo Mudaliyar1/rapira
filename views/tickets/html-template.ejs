@@ -346,7 +346,7 @@
         </div>
         <% if (!isDeletedConcert) { %>
           <div class="concert-date">
-            <div class="month"><%= new Date(concert.date).toLocaleDateString('en-US', { month: 'short' }) %></div>
+            <div class="month"><%= toISTDateString(concert.date).split('/')[0].padStart(2, '0').slice(-2) %></div>
             <div class="day"><%= new Date(concert.date).getDate() %></div>
           </div>
         <% } %>
@@ -365,7 +365,7 @@
           </div>
           <div class="info-item">
             <span class="info-label">Purchase Date:</span>
-            <span class="info-value"><%= new Date(ticket.purchaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+            <span class="info-value"><%= toISTDateString(ticket.purchaseDate) %></span>
           </div>
         </div>
         <div class="info-column">

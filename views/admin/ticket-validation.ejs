@@ -572,8 +572,8 @@ function displayActiveLinks(links) {
     // Handle potential date parsing issues
     let createdDate, expiresDate, timeLeft;
     try {
-      createdDate = new Date(link.createdAt).toLocaleString();
-      expiresDate = new Date(link.expiresAt).toLocaleString();
+      createdDate = toISTLocaleString(link.createdAt);
+      expiresDate = toISTLocaleString(link.expiresAt);
       timeLeft = Math.ceil((new Date(link.expiresAt) - new Date()) / (1000 * 60 * 60)); // Hours left
       
       // Check if timeLeft is valid

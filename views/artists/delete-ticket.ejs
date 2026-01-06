@@ -26,13 +26,13 @@
                 <div class="col-md-6">
                   <p class="mb-2 text-white"><strong>Ticket Number:</strong> <%= ticket.ticketNumber %></p>
                   <p class="mb-2 text-white"><strong>Concert:</strong> <%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></p>
-                  <p class="mb-2 text-white"><strong>Date:</strong> <%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : 'N/A' %></p>
+                  <p class="mb-2 text-white"><strong>Date:</strong> <%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></p>
                   <p class="mb-2 text-white"><strong>Venue:</strong> <%= ticket.concert ? ticket.concert.venue : 'N/A' %></p>
                 </div>
                 <div class="col-md-6">
                   <p class="mb-2 text-white"><strong>Purchased By:</strong> <%= ticket.user ? ticket.user.name : 'Unknown User' %></p>
                   <p class="mb-2 text-white"><strong>Email:</strong> <%= ticket.user ? ticket.user.email : 'N/A' %></p>
-                  <p class="mb-2 text-white"><strong>Purchase Date:</strong> <%= new Date(ticket.purchaseDate).toLocaleDateString() %></p>
+                  <p class="mb-2 text-white"><strong>Purchase Date:</strong> <%= toISTDateString(ticket.purchaseDate) %></p>
                   <p class="mb-2 text-white"><strong>Quantity:</strong> <%= ticket.quantity %> ticket(s)</p>
                   <p class="mb-2 text-white"><strong>Amount:</strong> ₹<%= ticket.totalAmount %></p>
                 </div>

@@ -198,7 +198,7 @@
                   </div>
                 </td>
                 <td class="text-white"><%= application.phoneNumber || 'Not provided' %></td>
-                <td class="text-white"><%= new Date(application.createdAt).toLocaleString() %></td>
+                <td class="text-white"><%= toISTLocaleString(application.createdAt) %></td>
                 <td>
                   <% if (application.status === 'pending') { %>
                     <span class="badge bg-warning">Pending</span>

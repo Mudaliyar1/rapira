@@ -245,7 +245,7 @@
                     <% } %>
                     <tr>
                       <td><i class="bi bi-calendar-event"></i> Uploaded</td>
-                      <td><%= new Date(media.createdAt).toLocaleString() %></td>
+                      <td><%= toISTLocaleString(media.createdAt) %></td>
                     </tr>
                   </tbody>
                 </table>

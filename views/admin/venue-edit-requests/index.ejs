@@ -200,8 +200,8 @@
                         <% } %>
                       </td>
                       <td>
-                        <strong><%= new Date(request.createdAt).toLocaleDateString() %></strong><br>
-                        <small class="text-muted"><%= new Date(request.createdAt).toLocaleTimeString() %></small>
+                        <strong><%= toISTDateString(request.createdAt) %></strong><br>
+                        <small class="text-muted"><%= toISTTimeString(request.createdAt) %></small>
                       </td>
                       <td>
                         <% 

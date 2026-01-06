@@ -59,7 +59,7 @@
                   <td><%= post.likesCount || 0 %></td>
                   <td><%= post.shares || 0 %></td>
                   <td><%= post.views || 0 %></td>
-                  <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
+                  <td><small><%= toISTDateString(post.createdAt) %></small></td>
                   <td>
                     <div class="d-flex flex-wrap gap-2">
                       <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPostModal"
@@ -205,7 +205,7 @@ if (viewModal) {
         <p>${caption}</p>
         ${hashtags ? `<p class="text-muted">${hashtags.split(' ').map(t => t ? '#' + t : '').join(' ').trim()}</p>` : ''}
         <p><strong>Likes:</strong> ${likes} | <strong>Shares:</strong> ${shares} | <strong>Views:</strong> ${views}</p>
-        <p><strong>Created:</strong> ${new Date(created).toLocaleString()}</p>
+        <p><strong>Created:</strong> ${toISTLocaleString(created)}</p>
         ${rejection ? `<p class="text-danger"><strong>Rejection:</strong> ${rejection}</p>` : ''}
       </div>`;
 

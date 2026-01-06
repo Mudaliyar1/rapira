@@ -416,7 +416,7 @@ function viewStoryLikes(storyId) {
               <tr>
                 <td style="color: #000000 !important;"><%= concert.title %></td>
                 <td style="color: #000000 !important;">
-                  <%= new Date(concert.date).toLocaleDateString() %><br>
+                  <%= toISTDateString(concert.date) %><br>
                   <small class="text-muted" style="color: #6c757d !important;"><%= concert.time %></small>
                 </td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
@@ -507,7 +507,7 @@ function viewStoryLikes(storyId) {
               <tr>
                 <td style="color: #000000 !important;"><%= concert.title %></td>
                 <td style="color: #000000 !important;">
-                  <%= new Date(concert.date).toLocaleDateString() %><br>
+                  <%= toISTDateString(concert.date) %><br>
                   <small class="text-muted" style="color: #6c757d !important;"><%= concert.time %></small>
                 </td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
@@ -571,7 +571,7 @@ function viewStoryLikes(storyId) {
                 <% } %>
                 <p class="card-text">
                   <small style="color: #aaa;">
-                    <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                    <i class="bi bi-calendar3"></i> <%= toISTDateString(item.releaseDate) %>
                   </small>
                 </p>
               </div>

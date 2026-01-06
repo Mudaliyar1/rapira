@@ -195,7 +195,7 @@
                     <% if (request.concert) { %>
                       <div class="d-flex flex-column">
                         <span class="fw-medium"><%= request.concert.title %></span>
-                        <span class="small text-muted"><%= new Date(request.concert.date).toLocaleDateString() %></span>
+                        <span class="small text-muted"><%= toISTDateString(request.concert.date) %></span>
                       </div>
                     <% } else { %>
                       <span class="text-muted">N/A</span>
@@ -209,7 +209,7 @@
                       <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
                     </span>
                   </td>
-                  <td><%= new Date(request.createdAt).toLocaleDateString() %></td>
+                  <td><%= toISTDateString(request.createdAt) %></td>
                   <td>
                     <div class="btn-group btn-group-sm" role="group">
                       <a href="/admin/refund-requests/<%= request._id %>" class="btn btn-outline-primary">

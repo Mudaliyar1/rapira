@@ -21,8 +21,8 @@
             </span>
           </h4>
           <p class="mb-0">
-            Requested on <%= new Date(editRequest.requestedAt).toLocaleDateString() %> 
-            at <%= new Date(editRequest.requestedAt).toLocaleTimeString() %>
+            Requested on <%= toISTDateString(editRequest.requestedAt) %> 
+            at <%= toISTTimeString(editRequest.requestedAt) %>
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@
               
               <div class="col-6">
                 <p><strong>Date:</strong><br>
-                <%= new Date(editRequest.concert.date).toLocaleDateString() %></p>
+                <%= toISTDateString(editRequest.concert.date) %></p>
                 
                 <p><strong>Time:</strong><br>
                 <%= editRequest.concert.time %></p>
@@ -113,7 +113,7 @@
               <div class="col-6">
                 <% if (changes.date) { %>
                   <p><strong>New Date:</strong><br>
-                  <span class="text-primary"><%= new Date(changes.date).toLocaleDateString() %></span></p>
+                  <span class="text-primary"><%= toISTDateString(changes.date) %></span></p>
                 <% } %>
                 
                 <% if (changes.time) { %>
@@ -202,8 +202,8 @@
           <div class="card-body">
             <p><%= editRequest.adminResponse.message %></p>
             <small class="text-muted">
-              Responded on <%= new Date(editRequest.adminResponse.respondedAt).toLocaleDateString() %> 
-              at <%= new Date(editRequest.adminResponse.respondedAt).toLocaleTimeString() %>
+              Responded on <%= toISTDateString(editRequest.adminResponse.respondedAt) %> 
+              at <%= toISTTimeString(editRequest.adminResponse.respondedAt) %>
             </small>
           </div>
         </div>

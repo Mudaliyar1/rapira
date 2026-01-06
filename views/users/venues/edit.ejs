@@ -409,12 +409,12 @@
             </div>
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span>Created:</span>
-              <span class="text-muted"><%= new Date(venue.createdAt).toLocaleDateString() %></span>
+              <span class="text-muted"><%= toISTDateString(venue.createdAt) %></span>
             </div>
             <% if (venue.updatedAt && venue.updatedAt.getTime() !== venue.createdAt.getTime()) { %>
               <div class="d-flex justify-content-between align-items-center">
                 <span>Last Updated:</span>
-                <span class="text-muted"><%= new Date(venue.updatedAt).toLocaleDateString() %></span>
+                <span class="text-muted"><%= toISTDateString(venue.updatedAt) %></span>
               </div>
             <% } %>
           </div>

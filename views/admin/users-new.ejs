@@ -169,7 +169,7 @@
                     <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
                   </span>
                 </td>
-                <td class="text-white"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                <td class="text-white"><%= toISTDateString(user.createdAt) %></td>
                 <td>
                   <span class="badge <%= user.isVerified ? 'bg-success' : 'bg-warning' %>">
                     <%= user.isVerified ? 'Verified' : 'Unverified' %>

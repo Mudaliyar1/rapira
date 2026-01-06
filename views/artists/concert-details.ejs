@@ -189,12 +189,7 @@
             <div class="info-row row">
               <div class="col-md-4 info-label">Date & Time</div>
               <div class="col-md-8 info-value">
-                <%= new Date(concert.date).toLocaleDateString('en-IN', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                }) %> • <%= concert.time %>
+                <%= toISTDateString(concert.date) %> • <%= concert.time %>
               </div>
             </div>
             <div class="info-row row">

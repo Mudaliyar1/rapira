@@ -123,7 +123,7 @@
                         <div style="color: black !important;">
                           <strong style="color: black !important;"><%= request.concert.title %></strong><br>
                           <small style="color: #666 !important;">
-                            <%= new Date(request.concert.date).toLocaleDateString() %> | 
+                            <%= toISTDateString(request.concert.date) %> | 
                             <%= request.concert.city %>
                           </small>
                         </div>
@@ -138,8 +138,8 @@
                     </span>
                   </td>
                   <td class="text-dark" style="color: black !important; background-color: white;">
-                    <span style="color: black !important;"><%= new Date(request.requestedAt).toLocaleDateString() %></span><br>
-                    <small style="color: #666 !important;"><%= new Date(request.requestedAt).toLocaleTimeString() %></small>
+                    <span style="color: black !important;"><%= toISTDateString(request.requestedAt) %></span><br>
+                    <small style="color: #666 !important;"><%= toISTTimeString(request.requestedAt) %></small>
                   </td>
                   <td class="text-dark" style="color: black !important; background-color: white;">
                     <% 
@@ -292,7 +292,7 @@ function displayRequestDetails(request) {
     changesHtml = '<div class="row">';
     if (changes.title) changesHtml += `<div class="col-12 mb-2"><strong>Title:</strong> ${changes.title}</div>`;
     if (changes.description) changesHtml += `<div class="col-12 mb-2"><strong>Description:</strong> ${changes.description}</div>`;
-    if (changes.date) changesHtml += `<div class="col-6 mb-2"><strong>Date:</strong> ${new Date(changes.date).toLocaleDateString()}</div>`;
+    if (changes.date) changesHtml += `<div class="col-6 mb-2"><strong>Date:</strong> ${toISTDateString(changes.date)}</div>`;
     if (changes.time) changesHtml += `<div class="col-6 mb-2"><strong>Time:</strong> ${changes.time}</div>`;
     if (changes.city) changesHtml += `<div class="col-6 mb-2"><strong>City:</strong> ${changes.city}</div>`;
     if (changes.venue && request.requestedVenue) changesHtml += `<div class="col-6 mb-2"><strong>Venue:</strong> ${request.requestedVenue.name}</div>`;
@@ -312,7 +312,7 @@ function displayRequestDetails(request) {
         <div class="card-body">
           <p>${request.adminResponse.message}</p>
           <small class="text-muted">
-            ${new Date(request.adminResponse.respondedAt).toLocaleString()}
+            ${toISTLocaleString(new Date(request.adminResponse.respondedAt))}
           </small>
         </div>
       </div>
@@ -324,7 +324,7 @@ function displayRequestDetails(request) {
       <h6>Request #${request._id.toString().slice(-6)} 
         <span class="badge bg-${statusColor}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>
       </h6>
-      <p class="text-muted mb-0">Requested on ${new Date(request.requestedAt).toLocaleString()}</p>
+      <p class="text-muted mb-0">Requested on ${toISTLocaleString(new Date(request.requestedAt))}</p>
     </div>
     
     ${request.concert ? `
@@ -335,7 +335,7 @@ function displayRequestDetails(request) {
         <div class="card-body">
           <p class="mb-2">${request.concert.description}</p>
           <small class="text-muted">
-            ${new Date(request.concert.date).toLocaleDateString()} | 
+            ${toISTDateString(request.concert.date)} | 
             ${request.concert.time} | 
             ${request.concert.city} | 
             ₹${request.concert.price}

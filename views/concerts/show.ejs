@@ -27,7 +27,7 @@
                     <i class="bi bi-calendar3 text-primary me-3 fs-4"></i>
                     <div>
                       <small class="text-primary d-block">Date</small>
-                      <span class="text-white"><%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                      <span class="text-white"><%= toISTDateString(concert.date) %></span>
                     </div>
                   </div>
                 </div>

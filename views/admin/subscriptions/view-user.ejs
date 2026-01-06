@@ -109,11 +109,11 @@
               </li>
               <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                 <span>Purchase Date:</span>
-                <span><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                <span><%= toISTDateString(subscription.purchaseDate) %></span>
               </li>
               <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                 <span>Expiry Date:</span>
-                <span><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                <span><%= toISTDateString(subscription.expiryDate) %></span>
               </li>
               <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                 <span>Time Remaining:</span>

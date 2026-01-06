@@ -239,7 +239,7 @@
                             <small class="text-white-50 d-flex align-items-center">
                               <i class="bi bi-clock me-1"></i>
                               <span class="time-ago" data-time="<%= notification.createdAt %>">
-                                <%= new Date(notification.createdAt).toLocaleString() %>
+                                <%= toISTLocaleString(notification.createdAt) %>
                               </span>
                             </small>
                           </div>

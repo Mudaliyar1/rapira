@@ -42,7 +42,7 @@
                         <i class="bi bi-person me-1"></i> <%= concert.artist.user.name %>
                       </p>
                       <p class="text-muted mb-1">
-                        <i class="bi bi-calendar3 me-1"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %> • <%= concert.time %>
+                        <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(concert.date) %> • <%= concert.time %>
                       </p>
                       <p class="text-muted mb-0">
                         <i class="bi bi-geo-alt me-1"></i> <%= concert.venue %>, <%= concert.city %>
@@ -72,7 +72,7 @@
                   </div>
                   <div class="col-md-6 mb-3">
                     <p class="fw-medium mb-1">Purchase Date:</p>
-                    <p><%= new Date(ticket.createdAt).toLocaleDateString() %></p>
+                    <p><%= toISTLocaleString(ticket.createdAt) %></p>
                   </div>
                   <% if (ticket.totalAmount > 0) { %>
                     <div class="col-md-6 mb-3">
@@ -112,7 +112,7 @@
                         <span class="badge bg-success">VALIDATED <%= validatedTicketsCount %>/<%= totalTickets %></span>
                         <small class="d-block text-muted">Validated <%= validatedTicketsCount %> of <%= totalTickets %> tickets</small>
                         <% if (ticket.attendedAt) { %>
-                          <small class="d-block text-muted">Last validation: <%= new Date(ticket.attendedAt).toLocaleString() %></small>
+                          <small class="d-block text-muted">Last validation: <%= toISTLocaleString(ticket.attendedAt) %></small>
                         <% } %>
                         <% if (remainingTickets > 0) { %>
                           <small class="d-block text-muted"><%= remainingTickets %> ticket<%= remainingTickets > 1 ? 's' : '' %> remaining</small>
@@ -192,7 +192,7 @@
 
               <div>
                 <p class="fw-medium mb-1">Joined:</p>
-                <p><%= new Date(ticket.user.createdAt).toLocaleDateString() %></p>
+                <p><%= toISTDateString(ticket.user.createdAt) %></p>
               </div>
 
               <div class="mt-4">

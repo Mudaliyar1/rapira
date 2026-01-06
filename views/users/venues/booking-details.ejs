@@ -94,12 +94,7 @@
                 <label class="text-muted small">Event Date</label>
                 <h6 class="fw-bold text-info">
                   <i class="bi bi-calendar3 me-1"></i>
-                  <%= new Date(booking.date).toLocaleDateString('en-IN', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) %>
+                  <%= toISTDateString(booking.date) %>
                 </h6>
               </div>
               <div class="mb-3">
@@ -392,7 +387,7 @@
           
           <div class="d-grid">
             <% if (booking.artist && booking.artist.user && booking.artist.user.email) { %>
-              <a href="mailto:<%= booking.artist.user.email %>?subject=Regarding Your Venue Booking - <%= venue.name %>&body=Hello <%= booking.artist.stageName || booking.artist.user.name %>,\n\nI hope this email finds you well. I am writing regarding your venue booking for <%= venue.name %> on <%= new Date(booking.date).toLocaleDateString('en-IN') %>.\n\nBest regards,\n<%= venue.contactPerson ? venue.contactPerson.name : 'Venue Owner' %>" class="btn btn-outline-secondary">
+              <a href="mailto:<%= booking.artist.user.email %>?subject=Regarding Your Venue Booking - <%= venue.name %>&body=Hello <%= booking.artist.stageName || booking.artist.user.name %>,\n\nI hope this email finds you well. I am writing regarding your venue booking for <%= venue.name %> on <%= toISTDateString(booking.date) %>.\n\nBest regards,\n<%= venue.contactPerson ? venue.contactPerson.name : 'Venue Owner' %>" class="btn btn-outline-secondary">
                 <i class="bi bi-envelope me-1"></i>Contact Artist
               </a>
             <% } else { %>

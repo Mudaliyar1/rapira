@@ -48,7 +48,7 @@
             </p>
             <small class="text-muted">
               <i class="bi bi-clock me-1"></i>
-              <%= new Date(message.createdAt).toLocaleString() %>
+              <%= toISTLocaleString(message.createdAt) %>
             </small>
           </div>
         </div>

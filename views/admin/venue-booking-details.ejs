@@ -179,7 +179,7 @@
                       </td>
                       <td>
                         <div>
-                          <div class="fw-bold"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                          <div class="fw-bold"><%= toISTDateString(booking.date) %></div>
                           <small class="text-muted">
                             <i class="bi bi-clock me-1"></i><%= booking.time %>
                           </small>

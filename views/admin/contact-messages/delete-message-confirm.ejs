@@ -84,26 +84,14 @@
                   <div class="mb-2">
                     <strong class="text-white-50">Received Date:</strong>
                     <span class="text-white">
-                      <%= message.createdAt ? new Date(message.createdAt).toLocaleDateString('en-IN', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) : 'Unknown' %>
+                      <%= message.createdAt ? toISTDateString(message.createdAt) : 'Unknown' %>
                     </span>
                   </div>
                   <% if (message.updatedAt && message.updatedAt !== message.createdAt) { %>
                     <div class="mb-2">
                       <strong class="text-white-50">Last Updated:</strong>
                       <span class="text-white">
-                        <%= new Date(message.updatedAt).toLocaleDateString('en-IN', { 
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        }) %>
+                        <%= toISTDateString(message.updatedAt) %>
                       </span>
                     </div>
                   <% } %>

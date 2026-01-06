@@ -199,7 +199,7 @@
                     <span class="badge bg-secondary">Regular</span>
                   <% } %>
                 </td>
-                <td><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                <td><%= toISTDateString(item.createdAt) %></td>
                 <td>
                   <div class="d-flex gap-2">
                     <a href="/content/<%= item._id %>" class="btn btn-sm btn-outline-primary" target="_blank" title="View Content">

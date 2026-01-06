@@ -141,7 +141,7 @@
                 <% } %>
                 <p class="card-text">
                   <small class="text-muted">
-                    <i class="bi bi-calendar3"></i> <%= new Date(item.createdAt).toLocaleDateString() %>
+                    <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
                     <span class="ms-2"><i class="bi bi-eye"></i> <%= item.views || 0 %> views</span>
                     <% if (item.likesCount > 0) { %>
                       <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likesCount %> likes</span>
@@ -260,7 +260,7 @@
                 <p class="card-text">
                   <small class="text-muted">
                     <i class="bi bi-clock-history"></i>
-                    <%= new Date(p.createdAt).toLocaleDateString() %>
+                    <%= toISTDateString(p.createdAt) %>
                     <span class="ms-2"><i class="bi bi-eye"></i> <%= p.views || 0 %> views</span>
                     <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesCount || 0 %></span>
                     <span class="ms-2"><i class="bi bi-share"></i> <%= p.shares || 0 %></span>

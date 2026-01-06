@@ -462,7 +462,7 @@ async function loadMyPosts() {
               <span><i class="bi bi-heart-fill text-danger"></i> ${post.likesCount || 0}</span>
               <span><i class="bi bi-share"></i> ${post.shares || 0}</span>
               <span><i class="bi bi-eye"></i> ${post.views || 0}</span>
-              <span class="ms-auto">${new Date(post.createdAt).toLocaleDateString()}</span>
+              <span class="ms-auto">${toISTDateString(post.createdAt)}</span>
             </div>
             <div class="mb-2">
               ${post.isApproved && post.isActive ? '<span class="badge bg-success">✅ Approved</span>' : ''}

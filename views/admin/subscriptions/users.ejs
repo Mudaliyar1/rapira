@@ -187,8 +187,8 @@
                   </div>
                 </td>
                 <td><%= subscription.plan ? subscription.plan.name : 'Plan Deleted' %></td>
-                <td><%= subscription.purchaseDate ? new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></td>
-                <td><%= subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></td>
+                <td><%= subscription.purchaseDate ? toISTDateString(subscription.purchaseDate) : 'N/A' %></td>
+                <td><%= subscription.expiryDate ? toISTDateString(subscription.expiryDate) : 'N/A' %></td>
                 <td>
                   <%
                     const isExpired = subscription.expiryDate ? new Date(subscription.expiryDate) < new Date() : true;

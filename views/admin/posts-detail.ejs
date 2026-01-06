@@ -26,7 +26,7 @@
           <h5 class="fw-bold mb-3"><i class="bi bi-person"></i> Artist</h5>
           <p class="mb-1"><strong>Name:</strong> <%= (post.artist && post.artist.user && post.artist.user.name) || (post.artist && post.artist.stageName) || 'Unknown' %></p>
           <p class="mb-1"><strong>Post ID:</strong> <%= post._id %></p>
-          <p class="mb-1"><strong>Created:</strong> <%= new Date(post.createdAt).toLocaleString() %></p>
+          <p class="mb-1"><strong>Created:</strong> <%= toISTLocaleString(post.createdAt) %></p>
           <p class="mb-0"><strong>Status:</strong>
             <% if (post.isApproved) { %>
               <span class="badge bg-success">Approved</span>

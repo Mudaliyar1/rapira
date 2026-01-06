@@ -174,7 +174,7 @@
                   <% } %>
                 </td>
                 <td>
-                  <div class="text-white"><%= new Date(concert.date).toLocaleDateString() %></div>
+                  <div class="text-white"><%= toISTDateString(concert.date) %></div>
                   <div class="small text-primary"><%= concert.time %></div>
                 </td>
                 <td>

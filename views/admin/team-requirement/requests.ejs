@@ -199,7 +199,7 @@
                     <% } %>
                   </td>
                   <td><%= request.city %>, <%= request.state %></td>
-                  <td><%= new Date(request.createdAt).toLocaleDateString() %></td>
+                  <td><%= toISTDateString(request.createdAt) %></td>
                   <td>
                     <% if (request.status === 'pending') { %>
                       <span class="badge bg-warning text-dark">Pending</span>

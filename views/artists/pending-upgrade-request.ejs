@@ -32,7 +32,7 @@
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-4 text-white">Submitted On:</div>
-                  <div class="col-md-8 text-white"><%= new Date(request.createdAt).toLocaleString() %></div>
+                  <div class="col-md-8 text-white"><%= toISTLocaleString(request.createdAt) %></div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-4 text-white">Status:</div>

@@ -1276,7 +1276,7 @@
               <h6 class="text-success mb-2">Your Booking Slot</h6>
               <div class="border rounded p-2 bg-dark text-light">
                 <strong class="text-light">${venue.name}</strong><br>
-                <i class="bi bi-calendar3 me-1"></i> ${new Date(dateInput.value).toLocaleDateString('en-IN')}<br>
+                <i class="bi bi-calendar3 me-1"></i> ${toISTDateString(dateInput.value)}<br>
                 <i class="bi bi-clock me-1"></i> ${requestedSlot.startTime} - ${requestedSlot.endTime}<br>
                 <i class="bi bi-hourglass-split me-1"></i> ${requestedSlot.duration} hour(s)
               </div>
