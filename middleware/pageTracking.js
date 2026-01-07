@@ -283,6 +283,7 @@ const trackUserPage = async (req, res, next) => {
     User.findByIdAndUpdate(
       req.session.user.id,
       {
+        isOnline: true,
         currentPage: pageName,
         lastPageUpdate: new Date()
       },

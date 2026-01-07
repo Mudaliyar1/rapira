@@ -126,6 +126,95 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// Live Users by Page - dashboard view
+router.get('/live-users', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const initialPage = req.query.page || '';
+    const threshold = new Date(Date.now() - 10 * 1000); // last 10 seconds
+    const users = await User.find({
+      lastPageUpdate: { $gte: threshold }
+    }).select('_id name email role currentPage lastPageUpdate');
+
+    // Group by currentPage
+    const pageMap = new Map();
+    users.forEach(u => {
+      const page = u.currentPage || 'Unknown';
+      if (!pageMap.has(page)) pageMap.set(page, []);
+      pageMap.get(page).push(u);
+    });
+
+    const pages = Array.from(pageMap.entries()).map(([page, list]) => ({
+      page,
+      count: list.length
+    })).sort((a, b) => b.count - a.count || a.page.localeCompare(b.page));
+
+    let initialPageUsers = [];
+    if (initialPage && pageMap.has(initialPage)) {
+      initialPageUsers = pageMap.get(initialPage).map(u => ({
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        currentPage: u.currentPage || 'Unknown',
+        lastPageUpdate: u.lastPageUpdate
+      }));
+    }
+
+    res.render('admin/live-users', {
+      layout: 'admin',
+      currentPath: '/admin/live-users',
+      title: 'Live Users by Page',
+      pages,
+      users,
+      initialPage,
+      initialPageUsers
+    });
+  } catch (error) {
+    console.error('Live users view error:', error);
+    req.flash('error', 'Failed to load live users');
+    res.redirect('/admin');
+  }
+});
+
+// Live Users by Page - JSON data for polling
+router.get('/live-users/data', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const threshold = new Date(Date.now() - 10 * 1000);
+    const users = await User.find({
+      lastPageUpdate: { $gte: threshold }
+    }).select('_id name email role currentPage lastPageUpdate');
+
+    const pageMap = new Map();
+    users.forEach(u => {
+      const page = u.currentPage || 'Unknown';
+      if (!pageMap.has(page)) pageMap.set(page, []);
+      pageMap.get(page).push({
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        currentPage: page,
+        lastPageUpdate: u.lastPageUpdate
+      });
+    });
+
+    const pages = Array.from(pageMap.entries()).map(([page, list]) => ({
+      page,
+      count: list.length,
+      users: list
+    })).sort((a, b) => b.count - a.count || a.page.localeCompare(b.page));
+
+    res.json({
+      success: true,
+      totalOnline: users.length,
+      pages
+    });
+  } catch (error) {
+    console.error('Live users data error:', error);
+    res.json({ success: false, message: 'Failed to load data' });
+  }
+});
+
 // Manage users
 router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
   try {
