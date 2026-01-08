@@ -1,0 +1,103 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="glass-card-dark border border-warning p-4">
+        <div class="d-flex align-items-center mb-4">
+          <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 2rem;"></i>
+          <h3 class="text-warning ms-3 mb-0">Confirm Block Artist</h3>
+        </div>
+
+        <!-- Artist Info -->
+        <div class="glass-card-dark border border-secondary p-3 mb-4">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <% if (artist.user && artist.user.profileImage) { %>
+                <img src="<%= artist.user.profileImage %>" alt="<%= artist.stageName %>" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #ffc107;">
+              <% } else { %>
+                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                  <i class="bi bi-person-fill text-white" style="font-size: 2rem;"></i>
+                </div>
+              <% } %>
+            </div>
+            <div class="col">
+              <h5 class="text-white mb-1"><%= artist.stageName %></h5>
+              <p class="text-white-50 mb-1"><%= artist.user ? artist.user.email : 'N/A' %></p>
+              <p class="text-white-50 mb-0"><i class="bi bi-music-note-beamed"></i> <%= artist.genre %></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Alert -->
+        <div class="alert alert-warning border-warning mb-4">
+          <h6 class="text-warning fw-bold mb-2">
+            <i class="bi bi-exclamation-triangle-fill"></i> Important Notice
+          </h6>
+          <ul class="mb-0">
+            <li>The artist will <strong>not be able to access their dashboard</strong></li>
+            <li>The artist's profile will show as <strong>banned</strong> to other users</li>
+            <li>The artist can submit an <strong>unblock request</strong> which you can review</li>
+            <li>This action can be reversed at any time by unblocking the artist</li>
+          </ul>
+        </div>
+
+        <!-- Block Form -->
+        <form method="POST" action="/admin/artists/<%= artist._id %>/block">
+          <div class="mb-4">
+            <label for="blockReason" class="form-label text-white fw-bold">
+              <i class="bi bi-chat-left-text"></i> Reason for Blocking
+            </label>
+            <textarea 
+              class="form-control bg-dark border-secondary text-white" 
+              id="blockReason" 
+              name="blockReason" 
+              rows="4" 
+              required 
+              placeholder="Please explain why this artist is being blocked. This reason will be shown to the artist when they are blocked."
+              style="color: white !important;"
+            ></textarea>
+            <small class="text-white-50">This reason will be visible to the artist</small>
+          </div>
+
+          <!-- Confirmation Checkbox -->
+          <div class="mb-4">
+            <div class="form-check">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="confirmBlock" 
+                required
+              >
+              <label class="form-check-label text-white" for="confirmBlock">
+                I confirm that I want to block <strong><%= artist.stageName %></strong> and understand the consequences
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-2">
+            <a href="/admin/artists" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-lock-fill"></i> Yes, Block This Artist
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  textarea {
+    resize: vertical;
+  }
+  
+  .alert ul li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .alert ul li:last-child {
+    margin-bottom: 0;
+  }
+</style>

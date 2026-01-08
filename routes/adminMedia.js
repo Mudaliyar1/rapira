@@ -243,7 +243,12 @@ router.get('/:id/details', async (req, res) => {
         if (media.ownerType === 'user') {
           ownerDetails = await User.findById(media.ownerId).select('email username firstName lastName profileImage phone city state bio').lean();
         } else if (media.ownerType === 'artist') {
-          ownerDetails = await Artist.findById(media.ownerId).select('email stageName firstName lastName profileImage phone city state bio description').lean();
+          const artist = await Artist.findById(media.ownerId).populate('user', 'email').select('stageName firstName lastName profileImage phone city state bio description').lean();
+          ownerDetails = artist;
+          // Add email from user
+          if (artist && artist.user) {
+            ownerDetails.email = artist.user.email;
+          }
         } else if (media.ownerType === 'venue') {
           ownerDetails = await Venue.findById(media.ownerId).select('email name venueImage phone city state description').lean();
         }

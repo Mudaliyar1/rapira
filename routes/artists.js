@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Concert = require('../models/Concert');
 const Follow = require('../models/Follow');
 const Media = require('../models/Media');
+const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -160,6 +162,16 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     if (!artist) {
       req.flash('error', 'Artist profile not found');
       return res.redirect('/');
+    }
+
+    // Check if artist is blocked
+    if (artist.isBlocked) {
+      return res.render('artists/blocked', {
+        layout: false,
+        title: 'Account Blocked',
+        artist,
+        blockReason: artist.blockReason || 'Your account has been blocked by the administration.'
+      });
     }
 
     // Get artist's concerts
@@ -1351,6 +1363,12 @@ router.get('/:id', async (req, res) => {
       return res.redirect('/artist-upgrade/request');
     }
 
+    // Validate if the ID is a valid MongoDB ObjectId
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      req.flash('error', 'Invalid artist ID');
+      return res.redirect('/artists');
+    }
+
     // Otherwise, try to find the artist by ID
     const artist = await Artist.findById(req.params.id)
       .populate('user');
@@ -1358,6 +1376,15 @@ router.get('/:id', async (req, res) => {
     if (!artist) {
       req.flash('error', 'Artist not found');
       return res.redirect('/artists');
+    }
+
+    // Check if artist is blocked
+    if (artist.isBlocked) {
+      return res.render('artists/profile-blocked', {
+        artist,
+        blockReason: artist.blockReason || 'This artist has been banned.',
+        layout: false
+      });
     }
 
     // Get follower counts
@@ -1434,6 +1461,46 @@ router.get('/:id/posts-gallery', async (req, res) => {
     console.error('Posts gallery error:', error);
     req.flash('error', 'Failed to load posts');
     res.redirect('/artists');
+  }
+});
+
+// Submit unblock request
+router.post('/request-unblock', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist) {
+      return res.json({ success: false, message: 'Artist profile not found' });
+    }
+
+    if (!artist.isBlocked) {
+      return res.json({ success: false, message: 'Your account is not blocked' });
+    }
+
+    // Check if there's already a pending request
+    const existingRequest = await ArtistUnblockRequest.findOne({
+      artist: artist._id,
+      status: 'pending'
+    });
+
+    if (existingRequest) {
+      return res.json({ success: false, message: 'You already have a pending unblock request' });
+    }
+
+    // Create new unblock request
+    const unblockRequest = new ArtistUnblockRequest({
+      artist: artist._id,
+      user: req.session.user.id,
+      message: message || 'Please unblock my account'
+    });
+
+    await unblockRequest.save();
+
+    res.json({ success: true, message: 'Unblock request submitted successfully. Admin will review it soon.' });
+  } catch (error) {
+    console.error('Submit unblock request error:', error);
+    res.json({ success: false, message: 'Failed to submit unblock request' });
   }
 });
 

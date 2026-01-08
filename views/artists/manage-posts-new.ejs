@@ -329,6 +329,29 @@ let editingPostId = null;
 let deletingPostId = null;
 let postCache = [];
 
+// Helper function to convert date to IST string
+function toISTDateString(date) {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  const options = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  };
+  return d.toLocaleString('en-IN', options);
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Media preview
 document.getElementById('media').addEventListener('change', function(e) {
   const file = this.files[0];

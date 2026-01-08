@@ -244,28 +244,19 @@ router.get('/faq', (req, res) => {
 router.get('/content', async (req, res) => {
   try {
     // Get filter parameters with proper defaults
-    const { type, artist, sort = 'latest', search } = req.query;
+    const { mediaType = '', artist = '', sort = 'latest' } = req.query;
 
-    // Build filter object
-    const filter = {};
+    // Build post filter object for artist posts
+    const postFilter = { isApproved: true, isActive: true };
 
-    // Content type filter (only allow valid types)
-    if (type && ['song', 'video'].includes(type)) {
-      filter.type = type;
+    // Media type filter for artist posts (images/videos/audio)
+    if (mediaType && ['image', 'video', 'audio'].includes(mediaType)) {
+      postFilter['media.mediaType'] = mediaType;
     }
 
     // Artist filter
     if (artist && artist !== '') {
-      filter.artist = artist;
-    }
-
-    // Search filter (search in title and description)
-    if (search && search.trim() !== '') {
-      const searchRegex = new RegExp(search.trim(), 'i');
-      filter.$or = [
-        { title: searchRegex },
-        { description: searchRegex }
-      ];
+      postFilter.artist = artist;
     }
 
     // Build sort object
@@ -277,71 +268,54 @@ router.get('/content', async (req, res) => {
       case 'popular':
         sortOption = { views: -1, createdAt: -1 };
         break;
-      case 'alphabetical':
-        sortOption = { title: 1 };
-        break;
       case 'latest':
       default:
         sortOption = { createdAt: -1 };
         break;
     }
 
-    // Get all artists for filter dropdown (only those with content)
-    const artistsWithContent = await Content.distinct('artist');
-    const artists = await Artist.find({ _id: { $in: artistsWithContent } })
+    // Get all artists for filter dropdown (only those with posts)
+    const artistsWithPosts = await ArtistPost.find({ isApproved: true, isActive: true }).distinct('artist');
+    const artists = await Artist.find({ _id: { $in: artistsWithPosts } })
       .populate('user', 'name')
       .sort({ 'user.name': 1 });
 
     // Filter out artists with no user
     const validArtists = artists.filter(artist => artist.user);
 
-    // Get content with pagination
+    // Get artist posts with pagination
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    // Count total content for pagination
-    const totalContent = await Content.countDocuments(filter);
-    const totalPages = Math.ceil(totalContent / limit);
+    // Count total posts for pagination
+    const totalPosts = await ArtistPost.countDocuments(postFilter);
+    const totalPages = Math.ceil(totalPosts / limit);
 
-    // Get content
-    const content = await Content.find(filter)
+    // Get posts
+    const posts = await ArtistPost.find(postFilter)
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
-      .populate({
-        path: 'artist',
-        populate: { path: 'user', select: 'name' }
-      });
-
-    // Also load approved artist posts for library display
-    const postFilter = { isApproved: true, isActive: true };
-    if (artist && artist !== '') {
-      postFilter.artist = artist;
-    }
-    const posts = await ArtistPost.find(postFilter)
-      .sort({ createdAt: -1 })
-      .limit(24)
       .populate({ path: 'artist', populate: { path: 'user', select: 'name' } })
       .lean();
 
-    // Get content statistics
+    // Get statistics
     const stats = {
-      total: await Content.countDocuments(),
-      songs: await Content.countDocuments({ type: 'song' }),
-      videos: await Content.countDocuments({ type: 'video' }),
-      filtered: totalContent
+      total: await ArtistPost.countDocuments({ isApproved: true, isActive: true }),
+      images: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'image' }),
+      videos: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'video' }),
+      audio: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'audio' }),
+      filtered: totalPosts
     };
 
     res.render('content-library', {
-      content,
       posts,
       artists: validArtists,
       currentFilters: {
-        type: type || '',
+        mediaType: mediaType || '',
         artist: artist || '',
-        sort: sort || 'latest',
-        search: search || ''
+        sort: sort || 'latest'
       },
       pagination: {
         page,

@@ -35,31 +35,19 @@
         <div class="card-body">
         <form action="/content" method="GET" id="contentFilterForm">
           <div class="row g-3">
-            <!-- Search Input -->
-            <div class="col-md-4">
-              <label for="searchInput" class="form-label fw-semibold">Search Content</label>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-end-0">
-                  <i class="bi bi-search text-primary"></i>
-                </span>
-                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
-                       placeholder="Search by title or description..."
-                       value="<%= currentFilters.search %>">
-              </div>
-            </div>
-
-            <!-- Content Type Filter -->
-            <div class="col-md-2">
-              <label for="typeFilter" class="form-label fw-semibold">Content Type</label>
-              <select class="form-select" id="typeFilter" name="type">
+            <!-- Media Type Filter -->
+            <div class="col-md-3">
+              <label for="mediaTypeFilter" class="form-label fw-semibold">Media Type</label>
+              <select class="form-select" id="mediaTypeFilter" name="mediaType">
                 <option value="">All Types</option>
-                <option value="song" <%= currentFilters.type === 'song' ? 'selected' : '' %>>Songs</option>
-                <option value="video" <%= currentFilters.type === 'video' ? 'selected' : '' %>>Videos</option>
+                <option value="image" <%= currentFilters.mediaType === 'image' ? 'selected' : '' %>>Images</option>
+                <option value="video" <%= currentFilters.mediaType === 'video' ? 'selected' : '' %>>Videos</option>
+                <option value="audio" <%= currentFilters.mediaType === 'audio' ? 'selected' : '' %>>Audio</option>
               </select>
             </div>
 
             <!-- Artist Filter -->
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="artistFilter" class="form-label fw-semibold">Artist</label>
               <select class="form-select" id="artistFilter" name="artist">
                 <option value="">All Artists</option>
@@ -80,7 +68,6 @@
                 <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
                 <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
                 <option value="popular" <%= currentFilters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-                <option value="alphabetical" <%= currentFilters.sort === 'alphabetical' ? 'selected' : '' %>>Alphabetical</option>
               </select>
             </div>
           </div>
@@ -90,12 +77,11 @@
             <div class="col-12">
               <div class="d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary px-4">
-                  <i class="bi bi-search me-1"></i> Search
+                  <i class="bi bi-filter me-1"></i> Filter
                 </button>
                 <a href="/content" class="btn btn-outline-secondary px-4">
-                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                  <i class="bi bi-x-circle me-1"></i> Clear
                 </a>
-
               </div>
             </div>
           </div>
@@ -113,17 +99,29 @@
 <!-- Content Grid -->
 <section class="py-5">
   <div class="container">
-    <% if (content && content.length > 0) { %>
+    <% if (posts && posts.length > 0) { %>
       <div class="row g-4">
-        <% content.forEach(item => { %>
+        <% posts.forEach(item => { %>
           <div class="col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 shadow-sm content-card">
               <div class="position-relative">
-                <img src="<%= item.fullThumbnailUrl || item.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title %>">
-                <span class="badge <%= item.type === 'song' ? 'bg-primary' : item.type === 'video' ? 'bg-danger' : 'bg-info' %> content-type-badge">
-                  <i class="bi <%= item.type === 'song' ? 'bi-music-note' : item.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %>"></i>
-                  <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
-                </span>
+                <% if (item.media && item.media.mediaType === 'audio') { %>
+                  <div class="card-img-top content-thumbnail d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="bi bi-music-note-beamed text-white" style="font-size: 4rem;"></i>
+                  </div>
+                <% } else if (item.media && item.media.mediaType === 'video') { %>
+                  <video class="card-img-top content-thumbnail" preload="metadata" muted playsinline>
+                    <source src="<%= item.media && item.media.url ? item.media.url : '' %>#t=0.1">
+                  </video>
+                <% } else { %>
+                  <img src="<%= item.media && item.media.url ? item.media.url : '/images/placeholder.jpg' %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
+                <% } %>
+                <% if (item.media && item.media.mediaType) { %>
+                  <span class="badge <%= item.media.mediaType === 'image' ? 'bg-primary' : item.media.mediaType === 'video' ? 'bg-danger' : 'bg-success' %> content-type-badge">
+                    <i class="bi <%= item.media.mediaType === 'image' ? 'bi-image' : item.media.mediaType === 'video' ? 'bi-camera-video' : 'bi-music-note-beamed' %>"></i>
+                    <%= item.media.mediaType.charAt(0).toUpperCase() + item.media.mediaType.slice(1) %>
+                  </span>
+                <% } %>
               </div>
               <div class="card-body">
                 <h5 class="card-title" style="color:#fff !important;"><%= item.title %></h5>
@@ -143,20 +141,17 @@
                   <small class="text-muted">
                     <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
                     <span class="ms-2"><i class="bi bi-eye"></i> <%= item.views || 0 %> views</span>
-                    <% if (item.likesCount > 0) { %>
-                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likesCount %> likes</span>
-                    <% } %>
-                    <% if (item.shares > 0) { %>
-                      <span class="ms-2"><i class="bi bi-share"></i> <%= item.shares %> shares</span>
+                    <% if (item.likes && item.likes.length > 0) { %>
+                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likes.length %> likes</span>
                     <% } %>
                   </small>
                 </p>
               </div>
               <div class="card-footer bg-white border-top-0">
-                <a href="/content/<%= item._id %>"
+                <button onclick="viewPost('<%= item._id %>')"
                    class="btn btn-outline-primary w-100">
-                  <%= item.type === 'song' ? 'Listen' : item.type === 'video' ? 'Watch' : 'Read' %>
-                </a>
+                  <%= (item.media && item.media.mediaType === 'video') ? 'Watch' : (item.media && item.media.mediaType === 'audio') ? 'Listen' : (item.media && item.media.mediaType === 'image') ? 'View' : 'Open' %>
+                </button>
               </div>
             </div>
           </div>
@@ -169,10 +164,9 @@
           // Build query string for pagination links
           const buildPaginationUrl = (page) => {
             const params = new URLSearchParams();
-            if (currentFilters.type) params.set('type', currentFilters.type);
+            if (currentFilters.mediaType) params.set('mediaType', currentFilters.mediaType);
             if (currentFilters.artist) params.set('artist', currentFilters.artist);
             if (currentFilters.sort) params.set('sort', currentFilters.sort);
-            if (currentFilters.search) params.set('search', currentFilters.search);
             params.set('page', page);
             return '?' + params.toString();
           };
@@ -296,34 +290,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Enhanced form handling with auto-submit for filters
   const form = document.getElementById('contentFilterForm');
-  const searchInput = document.getElementById('searchInput');
-  const typeFilter = document.getElementById('typeFilter');
+  const mediaTypeFilter = document.getElementById('mediaTypeFilter');
   const artistFilter = document.getElementById('artistFilter');
   const sortFilter = document.getElementById('sortFilter');
 
   let searchTimeout;
 
-  // Debounced search input
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        form.submit();
-      }, 800); // 800ms delay for better UX
-    });
-
-    // Immediate search on Enter key
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        clearTimeout(searchTimeout);
-        form.submit();
-      }
-    });
-  }
-
   // Auto-submit on filter changes
-  [typeFilter, artistFilter, sortFilter].forEach(filter => {
+  [mediaTypeFilter, artistFilter, sortFilter].forEach(filter => {
     if (filter) {
       filter.addEventListener('change', function() {
         clearTimeout(searchTimeout);
@@ -387,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Show active filter indicators
   function updateFilterIndicators() {
-    const hasFilters = '<%= currentFilters.search || currentFilters.type || currentFilters.artist || currentFilters.sort !== "latest" || currentFilters.featured || currentFilters.hasViews || currentFilters.recent %>';
+    const hasFilters = '<%= currentFilters.mediaType || currentFilters.artist || currentFilters.sort !== "latest" %>';
 
     if (hasFilters) {
       const filterHeader = document.querySelector('.card-header h5');

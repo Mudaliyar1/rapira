@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Rapira</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .blocked-container {
+      max-width: 380px;
+      width: 100%;
+      padding: 0;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .blocked-card {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .lock-icon {
+      font-size: 3rem;
+      color: #fff;
+      margin-bottom: 0.8rem;
+      animation: pulse 2s infinite;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .blocked-title {
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      font-size: 1.5rem;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .blocked-subtitle {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      line-height: 1.3;
+    }
+
+    .reason-box {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 0.8rem;
+      margin: 0.8rem 0;
+      border-radius: 8px;
+      text-align: left;
+    }
+
+    .reason-box h6 {
+      color: #fff;
+      margin-bottom: 0.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .reason-box p {
+      color: rgba(255, 255, 255, 0.95);
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0.8rem 0;
+      border: none;
+    }
+
+    .alert-custom {
+      border-radius: 8px;
+      padding: 0.7rem;
+      margin: 0.8rem 0;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    .alert-custom i {
+      margin-right: 0.4rem;
+    }
+
+    .alert-info-custom {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+
+    .unblock-form {
+      background: rgba(0, 0, 0, 0.15);
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-top: 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .unblock-form h5 {
+      color: #fff;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .unblock-form textarea {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .unblock-form textarea::placeholder {
+      color: #999;
+    }
+
+    .btn-submit {
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #fff;
+      font-size: 0.8rem;
+      width: 100%;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-submit:hover {
+      background: rgba(255, 255, 255, 0.35);
+      color: #fff;
+      transform: none;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .alert-custom {
+      display: none;
+      margin-top: 0.5rem;
+    }
+
+    .btn-group-custom {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-group-custom a,
+    .btn-group-custom button {
+      flex: 1;
+      min-width: 100px;
+      padding: 0.45rem 0.8rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+
+    .btn-group-custom a:hover,
+    .btn-group-custom button:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+
+    .btn-logout {
+      background: rgba(220, 53, 69, 0.6);
+      color: #fff;
+      border: 1px solid rgba(220, 53, 69, 0.8);
+    }
+
+    .btn-logout:hover {
+      background: rgba(220, 53, 69, 0.8);
+      border-color: rgba(220, 53, 69, 1);
+      color: #fff;
+    }
+
+    @media (max-width: 480px) {
+      .blocked-card {
+        padding: 1.2rem;
+      }
+
+      .lock-icon {
+        font-size: 2.5rem;
+      }
+
+      .blocked-title {
+        font-size: 1.3rem;
+      }
+
+      .btn-group-custom {
+        flex-direction: column;
+      }
+
+      .btn-group-custom a,
+      .btn-group-custom button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="blocked-container">
+    <div class="blocked-card">
+      <i class="bi bi-lock-fill lock-icon"></i>
+      <h1 class="blocked-title">Account Blocked</h1>
+      <p class="blocked-subtitle">Your artist account has been temporarily blocked.</p>
+
+      <hr class="section-divider">
+
+      <div class="reason-box">
+        <h6 class="mb-2"><i class="bi bi-exclamation-triangle"></i> Reason:</h6>
+        <p class="mb-0"><%= blockReason %></p>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="alert-custom alert-info-custom">
+        <i class="bi bi-info-circle"></i>
+        You cannot access your dashboard while blocked. Submit an appeal below.
+      </div>
+
+      <div class="unblock-form">
+        <h5 class="mb-2"><i class="bi bi-envelope"></i> Request Unblock</h5>
+        <form id="unblockRequestForm">
+          <div class="mb-2">
+            <label for="message" class="form-label" style="color: rgba(255,255,255,0.9); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Your Message</label>
+            <textarea 
+              class="form-control" 
+              id="message" 
+              name="message" 
+              rows="2" 
+              required 
+              placeholder="Explain why you should be unblocked..."
+              style="font-size: 0.8rem; border: 1px solid #ddd;"
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-submit">
+            <i class="bi bi-send"></i> Submit
+          </button>
+        </form>
+
+        <div class="alert alert-success alert-custom" id="successAlert" style="background: rgba(13, 202, 240, 0.2); border: 1px solid rgba(13, 202, 240, 0.3); color: #fff;">
+          <i class="bi bi-check-circle"></i>
+          <span id="successMessage"></span>
+        </div>
+
+        <div class="alert alert-danger alert-custom" id="errorAlert" style="background: rgba(220, 53, 69, 0.2); border: 1px solid rgba(220, 53, 69, 0.3); color: #fff;">
+          <i class="bi bi-x-circle"></i>
+          <span id="errorMessage"></span>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="btn-group-custom">
+        <a href="/" class="btn-home">
+          <i class="bi bi-house"></i> Home
+        </a>
+        <a href="/logout" class="btn-logout">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.getElementById('unblockRequestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const message = document.getElementById('message').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.innerHTML;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+
+      try {
+        const response = await fetch('/artists/request-unblock', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('successMessage').textContent = data.message;
+          document.getElementById('successAlert').style.display = 'block';
+          document.getElementById('errorAlert').style.display = 'none';
+          document.getElementById('unblockRequestForm').reset();
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Request Submitted';
+        } else {
+          document.getElementById('errorMessage').textContent = data.message;
+          document.getElementById('errorAlert').style.display = 'block';
+          document.getElementById('successAlert').style.display = 'none';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+        document.getElementById('errorAlert').style.display = 'block';
+        document.getElementById('successAlert').style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    });
+  </script>
+</body>
+</html>

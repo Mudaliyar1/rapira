@@ -9,6 +9,7 @@ const Content = require('../models/Content');
 const Page = require('../models/Page');
 const DeletedAccount = require('../models/DeletedAccount');
 const ArtistPost = require('../models/ArtistPost');
+const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const { deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
@@ -306,6 +307,14 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/users');
     }
 
+    // Get artist data if user is an artist
+    let artist = null;
+    if (user.role === 'artist') {
+      artist = await Artist.findOne({ user: user._id })
+        .populate('blockHistory.blockedBy', 'name')
+        .populate('blockHistory.unblockedBy', 'name');
+    }
+
     // Get user's tickets
     const tickets = await Ticket.find({ user: user._id })
       .populate('concert', 'title date')
@@ -320,7 +329,65 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
       .populate('items.product');
       
     // Get user's activity history (last 100 entries)
-    const activityHistory = await ActivityLogger.getUserHistory(user._id, 100);
+    let activityHistory = await ActivityLogger.getUserHistory(user._id, 100);
+
+    // Advanced filters for activity history
+    const {
+      type: filterType = 'all',
+      performedBy: filterPerformedBy = 'all',
+      desc: filterDesc = '',
+      oldValue: filterOldValue = '',
+      newValue: filterNewValue = '',
+      startDate: filterStartDate = '',
+      endDate: filterEndDate = ''
+    } = req.query;
+
+    // Apply filters in-memory (activityHistory already includes latest 100)
+    if (filterType && filterType !== 'all') {
+      activityHistory = activityHistory.filter(a => a.activityType === filterType);
+    }
+
+    if (filterPerformedBy && filterPerformedBy !== 'all') {
+      if (filterPerformedBy === 'self') {
+        activityHistory = activityHistory.filter(a => !a.performedBy);
+      } else if (filterPerformedBy === 'admin') {
+        activityHistory = activityHistory.filter(a => !!a.performedBy);
+      }
+    }
+
+    if (filterDesc && filterDesc.trim()) {
+      const d = filterDesc.trim().toLowerCase();
+      activityHistory = activityHistory.filter(a => (a.description || '').toLowerCase().includes(d));
+    }
+
+    if (filterOldValue && filterOldValue.trim()) {
+      const ov = filterOldValue.trim().toLowerCase();
+      activityHistory = activityHistory.filter(a => (a.oldValue || '').toLowerCase().includes(ov));
+    }
+
+    if (filterNewValue && filterNewValue.trim()) {
+      const nv = filterNewValue.trim().toLowerCase();
+      activityHistory = activityHistory.filter(a => (a.newValue || '').toLowerCase().includes(nv));
+    }
+
+    if ((filterStartDate && filterStartDate.trim()) || (filterEndDate && filterEndDate.trim())) {
+      const start = filterStartDate ? new Date(filterStartDate + 'T00:00:00.000Z') : null;
+      const end = filterEndDate ? new Date(filterEndDate + 'T23:59:59.999Z') : null;
+      activityHistory = activityHistory.filter(a => {
+        const ts = new Date(a.createdAt);
+        if (start && ts < start) return false;
+        if (end && ts > end) return false;
+        return true;
+      });
+    }
+
+    // Limit and View More mechanics
+    const parsedLimit = parseInt(req.query.limit, 10);
+    const filterLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 3;
+    const activityTotal = activityHistory.length;
+    const activityHistoryDisplay = activityHistory.slice(0, Math.min(filterLimit, activityTotal));
+    const hasMore = activityTotal > activityHistoryDisplay.length;
+    const nextLimit = Math.min(filterLimit + 3, activityTotal || filterLimit + 3);
     
     // Get password-related activities
     const passwordChanges = activityHistory.filter(a => a.activityType === 'password_change');
@@ -335,17 +402,19 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     const refundedTickets = tickets.filter(t => t.paymentStatus === 'refunded').length;
     const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
     const totalSpent = tickets
-      .filter(t => t.paymentStatus === 'completed')
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
+      .filter(t => t.paymentStatus === 'completed' && t.paymentId !== 'ADMIN_FREE_TICKET')
+      .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
 
     res.render('admin/user-details', {
       layout: 'admin',
       currentPath: '/admin/users',
       user,
+      artist,
       tickets,
       subscriptions,
       cart,
       activityHistory,
+      activityHistoryDisplay,
       stats: {
         ticketCount,
         ticketsPurchased,
@@ -360,6 +429,37 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
         failedLogins,
         successfulLogins,
         accountAge: Math.floor((new Date() - user.createdAt) / (1000 * 60 * 60 * 24))
+      },
+      // Pass filter values and type options to view
+      activityFilters: {
+        filterType,
+        filterPerformedBy,
+        filterDesc,
+        filterOldValue,
+        filterNewValue,
+        filterStartDate,
+        filterEndDate
+      },
+      activityTypes: [
+        'login',
+        'logout',
+        'failed_login',
+        'password_change',
+        'profile_update',
+        'profile_image_change',
+        'email_change',
+        'name_change',
+        'role_change'
+      ],
+      activityTotal,
+      hasMore,
+      nextLimit,
+      activityLimit: filterLimit,
+      activityFilters: {
+        ...(
+          typeof activityFilters !== 'undefined' ? activityFilters : {}
+        ),
+        filterLimit
       }
     });
   } catch (error) {
@@ -1693,6 +1793,300 @@ router.post('/artists/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Delete artist error:', error);
     req.flash('error', 'Failed to delete artist');
     res.redirect('/admin/artists');
+  }
+});
+
+// Block artist (POST) confirmation page
+router.get('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const artist = await Artist.findById(req.params.id)
+      .populate('user', 'name email profileImage');
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    res.render('admin/artist-block-confirm', {
+      layout: 'admin',
+      currentPath: '/admin/artists',
+      title: 'Confirm Block Artist',
+      artist
+    });
+  } catch (error) {
+    console.error('Block confirmation page error:', error);
+    req.flash('error', 'Failed to load block confirmation');
+    res.redirect('/admin/artists');
+  }
+});
+
+// Unblock artist confirmation page
+router.get('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const artist = await Artist.findById(req.params.id)
+      .populate('user', 'name email profileImage')
+      .populate('blockedBy', 'name');
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    if (!artist.isBlocked) {
+      req.flash('error', 'This artist is not blocked');
+      return res.redirect('/admin/artists');
+    }
+
+    res.render('admin/artist-unblock-confirm', {
+      layout: 'admin',
+      currentPath: '/admin/artists',
+      title: 'Confirm Unblock Artist',
+      artist
+    });
+  } catch (error) {
+    console.error('Unblock confirmation page error:', error);
+    req.flash('error', 'Failed to load unblock confirmation');
+    res.redirect('/admin/artists');
+  }
+});
+
+// Block artist
+router.post('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { blockReason } = req.body;
+    const artist = await Artist.findById(req.params.id);
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    const blockDate = new Date();
+    
+    artist.isBlocked = true;
+    artist.blockReason = blockReason || 'Violated platform policies';
+    artist.blockedAt = blockDate;
+    artist.blockedBy = req.session.user.id;
+    
+    // Add to block history
+    artist.blockHistory.push({
+      blockedAt: blockDate,
+      blockedBy: req.session.user.id,
+      blockReason: blockReason || 'Violated platform policies'
+    });
+    
+    await artist.save();
+
+    req.flash('success', 'Artist blocked successfully');
+    res.redirect('/admin/artists');
+  } catch (error) {
+    console.error('Block artist error:', error);
+    req.flash('error', 'Failed to block artist');
+    res.redirect('/admin/artists');
+  }
+});
+
+// Unblock artist
+router.post('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const artist = await Artist.findById(req.params.id);
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    const unblockDate = new Date();
+    
+    artist.isBlocked = false;
+    artist.blockReason = '';
+    artist.blockedAt = undefined;
+    artist.blockedBy = undefined;
+    
+    // Update the latest block history entry with unblock info
+    if (artist.blockHistory && artist.blockHistory.length > 0) {
+      const latestBlock = artist.blockHistory[artist.blockHistory.length - 1];
+      if (!latestBlock.unblockedAt) {
+        latestBlock.unblockedAt = unblockDate;
+        latestBlock.unblockedBy = req.session.user.id;
+      }
+    }
+    
+    await artist.save();
+
+    // Mark any pending unblock requests as approved
+    await ArtistUnblockRequest.updateMany(
+      { artist: artist._id, status: 'pending' },
+      { 
+        status: 'approved', 
+        reviewedBy: req.session.user.id,
+        reviewedAt: new Date()
+      }
+    );
+
+    req.flash('success', 'Artist unblocked successfully');
+    res.redirect('/admin/artists');
+  } catch (error) {
+    console.error('Unblock artist error:', error);
+    req.flash('error', 'Failed to unblock artist');
+    res.redirect('/admin/artists');
+  }
+});
+
+// Manage unblock requests
+router.get('/unblock-requests', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { status, email, name, location, sort } = req.query;
+
+    // Build base query from status
+    const baseQuery = {};
+    if (status && status !== 'all') {
+      baseQuery.status = status;
+    }
+
+    // Determine sort order
+    const sortOrder = sort === 'oldest' ? 1 : -1; // default newest
+
+    // Fetch requests with artist + user populated
+    let requests = await ArtistUnblockRequest.find(baseQuery)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email profileImage' }
+      })
+      .populate('reviewedBy', 'name')
+      .sort({ createdAt: sortOrder });
+
+    // In-memory filters for email, name, location
+    if (email && email.trim()) {
+      const emailRegex = new RegExp(email.trim(), 'i');
+      requests = requests.filter(r => r.artist && r.artist.user && emailRegex.test(r.artist.user.email || ''));
+    }
+
+    if (name && name.trim()) {
+      const nameRegex = new RegExp(name.trim(), 'i');
+      requests = requests.filter(r =>
+        (r.artist && nameRegex.test(r.artist.stageName || '')) ||
+        (r.artist && r.artist.user && nameRegex.test(r.artist.user.name || ''))
+      );
+    }
+
+    if (location && location.trim()) {
+      const locRegex = new RegExp(location.trim(), 'i');
+      requests = requests.filter(r => r.artist && (locRegex.test(r.artist.city || '') || locRegex.test(r.artist.state || '')));
+    }
+
+    const stats = {
+      total: await ArtistUnblockRequest.countDocuments(),
+      pending: await ArtistUnblockRequest.countDocuments({ status: 'pending' }),
+      approved: await ArtistUnblockRequest.countDocuments({ status: 'approved' }),
+      rejected: await ArtistUnblockRequest.countDocuments({ status: 'rejected' })
+    };
+
+    res.render('admin/unblock-requests', {
+      layout: 'admin',
+      currentPath: '/admin/unblock-requests',
+      title: 'Artist Unblock Requests',
+      requests,
+      stats,
+      filterStatus: status || 'all',
+      filterEmail: email || '',
+      filterName: name || '',
+      filterLocation: location || '',
+      sortOrder: sort || 'newest'
+    });
+  } catch (error) {
+    console.error('Unblock requests error:', error);
+    req.flash('error', 'Failed to load unblock requests');
+    res.redirect('/admin');
+  }
+});
+
+// View single unblock request details
+router.get('/unblock-requests/:id', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const request = await ArtistUnblockRequest.findById(req.params.id)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email profileImage' }
+      })
+      .populate('reviewedBy', 'name email');
+
+    if (!request) {
+      req.flash('error', 'Unblock request not found');
+      return res.redirect('/admin/unblock-requests');
+    }
+
+    res.render('admin/unblock-request-view', {
+      layout: 'admin',
+      currentPath: '/admin/unblock-requests',
+      title: 'Unblock Request Details',
+      request
+    });
+  } catch (error) {
+    console.error('Unblock request view error:', error);
+    req.flash('error', 'Failed to load unblock request details');
+    res.redirect('/admin/unblock-requests');
+  }
+});
+
+// Approve unblock request
+router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const request = await ArtistUnblockRequest.findById(req.params.id).populate('artist');
+
+    if (!request) {
+      req.flash('error', 'Request not found');
+      return res.redirect('/admin/unblock-requests');
+    }
+
+    // Unblock the artist
+    const artist = await Artist.findById(request.artist._id);
+    if (artist) {
+      artist.isBlocked = false;
+      artist.blockReason = '';
+      artist.blockedAt = undefined;
+      artist.blockedBy = undefined;
+      await artist.save();
+    }
+
+    // Update request status
+    request.status = 'approved';
+    request.reviewedBy = req.session.user.userId;
+    request.reviewedAt = new Date();
+    request.adminResponse = req.body.adminResponse || 'Request approved';
+    await request.save();
+
+    req.flash('success', 'Unblock request approved and artist unblocked');
+    res.redirect('/admin/unblock-requests');
+  } catch (error) {
+    console.error('Approve unblock request error:', error);
+    req.flash('error', 'Failed to approve request');
+    res.redirect('/admin/unblock-requests');
+  }
+});
+
+// Reject unblock request
+router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const request = await ArtistUnblockRequest.findById(req.params.id);
+
+    if (!request) {
+      req.flash('error', 'Request not found');
+      return res.redirect('/admin/unblock-requests');
+    }
+
+    request.status = 'rejected';
+    request.reviewedBy = req.session.user.userId;
+    request.reviewedAt = new Date();
+    request.adminResponse = req.body.adminResponse || 'Request rejected';
+    await request.save();
+
+    req.flash('success', 'Unblock request rejected');
+    res.redirect('/admin/unblock-requests');
+  } catch (error) {
+    console.error('Reject unblock request error:', error);
+    req.flash('error', 'Failed to reject request');
+    res.redirect('/admin/unblock-requests');
   }
 });
 

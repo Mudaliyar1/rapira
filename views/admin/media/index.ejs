@@ -99,17 +99,21 @@
       <div class="row">
         <% moduleStats.forEach(stat => { 
           const moduleNames = {
-            'artistContent': '🎨 Artist Posts',
+            'artistContent': '🎨 Artist Content',
+            'artistPost': '📱 Artist Posts',
             'userProfile': '👤 User Profiles',
             'venueMedia': '🏛️ Venue Images',
+            'venueRequest': '🏛️ Venue Requests',
             'artistProfile': '🎭 Artist Profiles',
+            'artistApplication': '📋 Artist Applications',
             'products': '🛍️ Products',
             'concerts': '🎵 Concerts',
+            'concertPoster': '🎬 Concert Posters',
             'legacyMigration': '📦 Legacy Files',
             'adminUpload': '⚙️ Admin Uploads',
             'learning': '📚 Learning Content'
           };
-          const moduleName = moduleNames[stat._id] || stat._id;
+          const moduleName = moduleNames[stat._id] || (stat._id ? stat._id : 'Uncategorized');
           const totalBytes = moduleStats.reduce((sum, s) => sum + s.totalBytes, 0);
           const percent = ((stat.totalBytes / totalBytes) * 100).toFixed(1);
         %>
@@ -206,16 +210,8 @@
 
   <!-- Media Grid/Table -->
   <div class="card shadow-sm border-0">
-    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+    <div class="card-header bg-white border-bottom">
       <h5 class="mb-0">Media Files (Page <%= currentPage %> of <%= totalPages %>)</h5>
-      <div class="btn-group btn-group-sm" role="group">
-        <button type="button" class="btn btn-outline-secondary active" onclick="toggleView('grid')">
-          <i class="bi bi-grid-3x3-gap"></i> Grid
-        </button>
-        <button type="button" class="btn btn-outline-secondary" onclick="toggleView('list')">
-          <i class="bi bi-list-ul"></i> List
-        </button>
-      </div>
     </div>
     <div class="card-body" id="mediaContainer">
       

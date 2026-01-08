@@ -60,7 +60,12 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 			mediaType = 'audio';
 		}
 		
-		const uploadRes = await uploadFileToCloudinary(req.file, { folder });
+		const uploadRes = await uploadFileToCloudinary(req.file, { 
+			folder,
+			module: 'artistPost',
+			ownerType: 'artist',
+			ownerId: artist._id
+		});
 		console.log('[POST /posts] Cloudinary upload result:', uploadRes.media ? 'SUCCESS' : 'FAILED');
 		if (!uploadRes.media || !uploadRes.result) {
 			return res.status(500).json({ success: false, message: 'Upload to Cloudinary failed' });
@@ -101,7 +106,7 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 
 		const artist = await Artist.findOne({ user: req.session.user.id });
 		if (!artist) {
-			return res.status(404).json({ success: false });
+			return res.status(404).json({ success: false, message: 'Artist profile not found' });
 		}
 
 		const posts = await ArtistPost.find({ artist: artist._id })
@@ -117,13 +122,13 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 				hashtags: Array.isArray(postObj.hashtags) ? postObj.hashtags : [],
 				media: {
 					url: postObj.media?.url || '',
-					mediaType: postObj.media?.mediaType || 'image',
+					mediaType: postObj.media?.mediaType || postObj.mediaType || 'image',
 					publicId: postObj.media?.publicId || ''
 				},
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
 				shares: postObj.shares || 0,
-				views: postObj.views || 0, // Add views to response
+				views: postObj.views || 0,
 				createdAt: postObj.createdAt,
 				isApproved: postObj.isApproved,
 				isActive: postObj.isActive,
@@ -133,7 +138,8 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 
 		res.json({ success: true, posts: formattedPosts });
 	} catch (err) {
-		res.status(500).json({ success: false });
+		console.error('[GET /my-posts] ERROR:', err);
+		res.status(500).json({ success: false, message: err.message || 'Failed to fetch posts' });
 	}
 });
 

@@ -31,6 +31,42 @@ const ArtistSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  blockReason: {
+    type: String,
+    default: ''
+  },
+  blockedAt: {
+    type: Date
+  },
+  blockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  blockHistory: [{
+    blockedAt: {
+      type: Date,
+      required: true
+    },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    blockReason: {
+      type: String,
+      default: ''
+    },
+    unblockedAt: {
+      type: Date
+    },
+    unblockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
   about: {
     type: String,
     default: ''
