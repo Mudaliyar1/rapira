@@ -120,6 +120,17 @@
 
     <!-- Main Content -->
     <div class="admin-content">
+      <!-- Toggle Button for Sidebar (Mobile & Desktop) -->
+      <div class="d-flex align-items-center mb-3 p-3" style="background: transparent;">
+        <button class="btn btn-primary me-3" id="sidebarToggle" style="padding: 0.5rem 0.75rem;">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <h4 class="mb-0 text-dark">
+          <i class="bi bi-building me-2"></i>
+          <%= typeof title !== 'undefined' ? title : 'Venue Dashboard' %>
+        </h4>
+      </div>
+      
       <!-- Flash Messages -->
       <% if (typeof locals.messages !== 'undefined') { %>
         <% if (messages.error && messages.error.length > 0) { %>
@@ -160,6 +171,9 @@
     </div>
   </div>
 
+  <!-- Sidebar Overlay for Mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" style="display: none;"></div>
+
   <!-- Loading Spinner -->
   <div id="loadingSpinner" class="loading-spinner" style="display: none;">
     <div class="spinner-content">
@@ -177,6 +191,7 @@
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('venueSidebar');
     const closeSidebarBtn = document.getElementById('closeSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
 
     if (sidebarToggle) {
       sidebarToggle.addEventListener('click', function(e) {
@@ -185,15 +200,35 @@
           // On desktop: collapse/expand sidebar
           sidebar?.classList.toggle('collapsed');
         } else {
-          // On mobile: slide in/out sidebar
+          // On mobile: slide in/out sidebar with overlay
           sidebar?.classList.toggle('show');
+          if (sidebar?.classList.contains('show')) {
+            sidebarOverlay.style.display = 'block';
+          } else {
+            sidebarOverlay.style.display = 'none';
+          }
         }
       });
     }
 
     if (closeSidebarBtn) {
       closeSidebarBtn.addEventListener('click', function() {
+        if (window.innerWidth > 991.98) {
+          // On desktop: collapse sidebar
+          sidebar?.classList.toggle('collapsed');
+        } else {
+          // On mobile: hide sidebar
+          sidebar?.classList.remove('show');
+          sidebarOverlay.style.display = 'none';
+        }
+      });
+    }
+
+    // Close sidebar when clicking overlay
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener('click', function() {
         sidebar?.classList.remove('show');
+        sidebarOverlay.style.display = 'none';
       });
     }
 
@@ -204,6 +239,7 @@
       if (window.innerWidth <= 991.98) {
         if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
           sidebar.classList.remove('show');
+          sidebarOverlay.style.display = 'none';
         }
       }
     });
@@ -212,6 +248,9 @@
     window.addEventListener('resize', function() {
       if (window.innerWidth > 991.98) {
         sidebar?.classList.remove('show');
+        sidebarOverlay.style.display = 'none';
+      } else {
+        sidebar?.classList.remove('collapsed');
       }
     });
 
