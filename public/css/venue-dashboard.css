@@ -1,0 +1,478 @@
+/* =====================================================
+   VENUE DASHBOARD STYLES
+   ===================================================== */
+
+.venue-content {
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.venue-content .admin-sidebar {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-right: 2px solid var(--secondary);
+}
+
+.venue-content .admin-sidebar .nav-link {
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem !important;
+}
+
+.venue-content .admin-sidebar .nav-link:hover {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  color: var(--primary) !important;
+  padding-left: 1.25rem !important;
+}
+
+.venue-content .admin-sidebar .nav-link.active {
+  background: var(--primary) !important;
+  color: white !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.venue-content .admin-sidebar .sidebar-heading {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  color: rgba(245, 158, 11, 0.8) !important;
+}
+
+.venue-content .admin-sidebar .admin-profile {
+  background: rgba(99, 102, 241, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+.venue-content .admin-sidebar .admin-profile h6 {
+  color: white;
+  font-weight: 600;
+}
+
+.venue-content .admin-sidebar .admin-avatar img {
+  border: 2px solid var(--primary);
+  transition: transform 0.3s ease;
+}
+
+.venue-content .admin-sidebar .admin-avatar img:hover {
+  transform: scale(1.05);
+}
+
+/* Sidebar Collapsed State (Desktop) */
+.venue-content .admin-sidebar.collapsed {
+  width: 80px;
+  padding: 0;
+}
+
+.venue-content .admin-sidebar.collapsed .d-flex {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.venue-content .admin-sidebar.collapsed h5 {
+  display: none;
+}
+
+.venue-content .admin-sidebar.collapsed .admin-profile {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+}
+
+.venue-content .admin-sidebar.collapsed .admin-profile h6,
+.venue-content .admin-sidebar.collapsed .admin-profile small {
+  display: none;
+}
+
+.venue-content .admin-sidebar.collapsed .admin-avatar {
+  margin: 0 auto 0.5rem auto;
+}
+
+.venue-content .admin-sidebar.collapsed .nav-link {
+  padding: 0.75rem 0.5rem !important;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.venue-content .admin-sidebar.collapsed .nav-link i {
+  display: block;
+  margin: 0 auto 0.25rem auto;
+  font-size: 1.25rem;
+}
+
+.venue-content .admin-sidebar.collapsed .sidebar-heading,
+.venue-content .admin-sidebar.collapsed .nav-link span {
+  display: none;
+}
+
+.venue-content .admin-sidebar.collapsed .p-3 {
+  padding: 0.75rem !important;
+}
+
+/* Adjust content margin when sidebar is collapsed */
+.admin-layout.venue-content .admin-content {
+  margin-left: 250px;
+  transition: margin-left 0.3s ease;
+}
+
+.admin-layout.venue-content .admin-sidebar.collapsed ~ .admin-content {
+  margin-left: 80px;
+}
+
+/* Mobile Sidebar Toggle */
+@media (max-width: 991.98px) {
+  .venue-content .admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-280px);
+    transition: transform 0.3s ease;
+  }
+
+  .venue-content .admin-sidebar.show {
+    transform: translateX(0);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .venue-content .admin-content {
+    margin-left: 0 !important;
+  }
+
+  /* Add backdrop when sidebar is open */
+  .venue-content .admin-sidebar.show::before {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    cursor: pointer;
+  }
+}
+
+/* Venue Dashboard Content */
+.venue-dashboard-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dashboard Cards */
+.venue-dashboard-content .card {
+  border: 1px solid var(--border);
+  background: rgba(30, 30, 46, 0.6);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.venue-dashboard-content .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+  border-color: var(--primary);
+}
+
+.venue-dashboard-content .card-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-bottom: 1px solid var(--border);
+}
+
+.venue-dashboard-content .card-header h5 {
+  color: white !important;
+  margin: 0;
+}
+
+.venue-dashboard-content .card-body {
+  padding: 1.5rem;
+}
+
+/* Stats Cards */
+.venue-stat-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(245, 158, 11, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.venue-stat-card:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(245, 158, 11, 0.1));
+  border-color: var(--primary);
+  transform: translateY(-4px);
+}
+
+.venue-stat-card h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.venue-stat-card p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Venue List */
+.venue-item {
+  background: rgba(30, 30, 46, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.venue-item:hover {
+  background: rgba(30, 30, 46, 0.7);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.venue-item-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.venue-item-content {
+  flex: 1;
+}
+
+.venue-item-content h5 {
+  margin: 0 0 0.5rem 0;
+  color: white;
+  font-weight: 600;
+}
+
+.venue-item-content p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.venue-item-stats {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.venue-item-stat {
+  text-align: center;
+}
+
+.venue-item-stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+}
+
+.venue-item-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+/* Buttons */
+.venue-dashboard-content .btn {
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.venue-dashboard-content .btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.venue-dashboard-content .btn-primary:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.venue-dashboard-content .btn-outline-secondary {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.venue-dashboard-content .btn-outline-secondary:hover {
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+
+/* Table Styling */
+.venue-dashboard-content .table {
+  color: var(--text);
+}
+
+.venue-dashboard-content .table thead {
+  background: rgba(99, 102, 241, 0.1);
+  border-bottom: 2px solid var(--border);
+}
+
+.venue-dashboard-content .table thead th {
+  color: var(--primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  padding: 1rem;
+  border: none;
+}
+
+.venue-dashboard-content .table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+.venue-dashboard-content .table tbody tr:hover {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.venue-dashboard-content .table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* Badges */
+.venue-dashboard-content .badge {
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+/* Empty State */
+.venue-empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.venue-empty-state i {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.venue-empty-state h5 {
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.venue-empty-state p {
+  color: var(--text-muted);
+}
+
+/* Form Elements */
+.venue-dashboard-content .form-label {
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.venue-dashboard-content .form-control,
+.venue-dashboard-content .form-select {
+  background: rgba(30, 30, 46, 0.6);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.venue-dashboard-content .form-control:focus,
+.venue-dashboard-content .form-select:focus {
+  background: rgba(30, 30, 46, 0.8);
+  border-color: var(--primary);
+  color: var(--text);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+/* Alert Messages */
+.venue-dashboard-content .alert {
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.venue-dashboard-content .alert-success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.venue-dashboard-content .alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.venue-dashboard-content .alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .venue-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .venue-item-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .venue-stat-card h3 {
+    font-size: 2rem;
+  }
+
+  .venue-dashboard-content .table {
+    font-size: 0.85rem;
+  }
+
+  .venue-dashboard-content .table thead th,
+  .venue-dashboard-content .table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Dark Theme Adjustments */
+[data-theme="dark"] .venue-content {
+  background: var(--bg);
+}
+
+[data-theme="dark"] .venue-dashboard-content .card {
+  background: rgba(30, 30, 46, 0.5);
+}
+
+[data-theme="dark"] .venue-dashboard-content .form-control,
+[data-theme="dark"] .venue-dashboard-content .form-select {
+  background: rgba(30, 30, 46, 0.7);
+}

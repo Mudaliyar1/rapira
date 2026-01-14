@@ -507,14 +507,38 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
- * Handle browser back/forward buttons
+ * Handle browser back/forward buttons - using pageshow event
  */
-window.addEventListener('popstate', function () {
-  window.loaderManager.show('Loading...');
-  setTimeout(() => {
-    window.loaderManager.hide();
-  }, 500);
+window.addEventListener('pageshow', function (event) {
+  // If page is loaded from cache (back/forward navigation)
+  if (event.persisted) {
+    window.location.reload();
+  }
 });
+
+/**
+ * Handle browser navigation - alternative approach
+ */
+window.addEventListener('popstate', function (event) {
+  // Show loading spinner
+  if (window.loaderManager) {
+    window.loaderManager.show('Navigating...');
+  }
+  
+  // Reload the page
+  window.location.reload();
+});
+
+/**
+ * Detect browser navigation and force reload
+ */
+(function() {
+  // Store the current page in performance navigation
+  if (performance.navigation.type === 2) {
+    // Page accessed from back/forward button
+    window.location.reload();
+  }
+})();
 
 /**
  * Handle page visibility changes (tab switching)

@@ -1123,6 +1123,12 @@ router.post('/account-reactivation/set-password', async (req, res) => {
 // View public profile (MUST be last route with :id parameter)
 router.get('/:id', async (req, res) => {
   try {
+    // Validate that :id is a valid MongoDB ObjectId
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      req.flash('error', 'Invalid user ID format');
+      return res.redirect('/');
+    }
+
     const user = await User.findById(req.params.id);
 
     if (!user) {

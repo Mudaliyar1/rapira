@@ -58,7 +58,10 @@ router.get('/', isLoggedIn, async (req, res) => {
     }));
 
     res.render('users/venues/index', {
+      layout: 'layouts/venue',
       title: 'My Registered Venues',
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       venues: venuesWithStats,
       user: req.session.user
     });
@@ -116,7 +119,10 @@ router.get('/:id', isLoggedIn, async (req, res) => {
       .slice(0, 5);
 
     res.render('users/venues/details', {
+      layout: 'layouts/venue',
       title: `${venue.name} - Venue Details`,
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       venue,
       bookings,
       bookingStats: {
@@ -206,7 +212,10 @@ router.get('/:id/bookings', isLoggedIn, async (req, res) => {
     }
 
     res.render('users/venues/bookings-new', {
+      layout: 'layouts/venue',
       title: `${venue.name} - Venue Bookings`,
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       venue,
       bookings,
       user: req.session.user
@@ -249,7 +258,10 @@ router.get('/:id/edit', async (req, res) => {
     const allowUserCommissionEdit = settings.venueSettings?.allowUserCommissionEdit || false;
 
     res.render('users/venues/edit', {
+      layout: 'layouts/venue',
       title: `Edit ${venue.name}`,
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       venue,
       user: req.session.user,
       defaultCommissionPercentage,
@@ -506,7 +518,10 @@ router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
     const remainingBalance = Math.max(totalExpectedPayment - totalArtistPaid, 0);
 
     res.render('users/venues/booking-details', {
+      layout: 'layouts/venue',
       title: `Booking Details - ${venue.name}`,
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       venue,
       booking,
       user: req.session.user,
@@ -1157,6 +1172,9 @@ router.get('/:venueId/revenue-analytics', isLoggedIn, async (req, res) => {
     });
 
     res.render('venues/revenue-analytics', {
+      layout: 'layouts/venue',
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
       title: `${venue.name} - Revenue Analytics`,
       venue,
       analytics,

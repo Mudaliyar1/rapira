@@ -62,6 +62,9 @@ router.get('/', isLoggedIn, async (req, res) => {
     }));
 
     res.render('venues/dashboard-list', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: 'My Venue Dashboards',
       venues: venuesWithStats,
       user: req.session.user
@@ -181,6 +184,9 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
       pendingApprovals: websiteBookings.filter(b => b.status === 'pending').length
     };
     res.render('venues/dashboard', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `${venue.name} - Dashboard`,
       venue,
       bookings: allBookings,
@@ -213,6 +219,9 @@ router.get('/:venueId/add-external-booking', isLoggedIn, checkVenueOwnership, as
     }
 
     res.render('venues/add-external-booking', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `Add External Booking - ${venue.name}`,
       venue,
       user: req.session.user,
@@ -379,6 +388,9 @@ router.get('/:venueId/external-bookings', isLoggedIn, checkVenueOwnership, async
       .lean();
 
     res.render('venues/external-bookings', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `External Bookings - ${venue.name}`,
       venue,
       bookings: externalBookings,
@@ -412,6 +424,9 @@ router.get('/:venueId/external-bookings/:bookingId', isLoggedIn, checkVenueOwner
     }
 
     res.render('venues/external-booking-details', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `External Booking Details - ${venue.name}`,
       venue,
       booking,

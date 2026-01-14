@@ -31,7 +31,10 @@ router.get('/', isLoggedIn, async (req, res) => {
     const venueRequests = await VenueRequest.getByUser(req.session.user.id);
 
     res.render('users/venue-requests/index', {
+      layout: 'layouts/venue',
       title: 'My Venue Requests',
+      currentPath: '/users/venue-requests',
+      currentUser: req.session.user,
       venueRequests,
       user: req.session.user
     });
@@ -57,7 +60,10 @@ router.get('/create', isLoggedIn, async (req, res) => {
     }
 
     res.render('users/venue-requests/create', {
+      layout: 'layouts/venue',
       title: 'Request New Venue Registration',
+      currentPath: '/users/venue-requests',
+      currentUser: req.session.user,
       user: req.session.user
     });
   } catch (error) {
@@ -210,7 +216,10 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     }
 
     res.render('users/venue-requests/details', {
+      layout: 'layouts/venue',
       title: `Venue Request - ${venueRequest.name}`,
+      currentPath: '/users/venue-requests',
+      currentUser: req.session.user,
       venueRequest,
       user: req.session.user
     });
@@ -236,7 +245,10 @@ router.get('/:id/cancel', isLoggedIn, async (req, res) => {
     }
 
     res.render('users/venue-requests/cancel', {
+      layout: 'layouts/venue',
       title: 'Cancel Venue Request',
+      currentPath: '/users/venue-requests',
+      currentUser: req.session.user,
       venueRequest,
       user: req.session.user
     });
