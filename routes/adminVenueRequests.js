@@ -3,6 +3,7 @@ const router = express.Router();
 const VenueRequest = require('../models/VenueRequest');
 const Venue = require('../models/Venue');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { toISTCustomFormat } = require('../utils/dateFormatter');
 
 // GET /admin/venue-requests - List all venue requests
 router.get('/', isLoggedIn, isAdmin, async (req, res) => {
@@ -223,7 +224,8 @@ router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
       layout: 'admin',
       currentPath: '/admin/venue-requests',
       title: `Reject Venue Request - ${venueRequest.name}`,
-      venueRequest
+      venueRequest,
+      toISTCustomFormat
     });
   } catch (error) {
     console.error('Error loading reject form:', error);

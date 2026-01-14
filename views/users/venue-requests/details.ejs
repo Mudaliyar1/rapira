@@ -9,7 +9,7 @@
         <i class="bi bi-arrow-left me-1"></i> Back to My Requests
       </a>
       <% if (venueRequest.status === 'approved' && venueRequest.createdVenue) { %>
-        <a href="/admin/venues/<%= venueRequest.createdVenue._id %>/details" 
+        <a href="/users/venues/<%= venueRequest.createdVenue._id %>/public-view" 
            class="btn btn-success" target="_blank">
           <i class="bi bi-building me-1"></i> View Created Venue
         </a>

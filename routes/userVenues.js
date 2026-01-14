@@ -137,6 +137,33 @@ router.get('/:id', isLoggedIn, async (req, res) => {
   }
 });
 
+// GET /users/venues/:id/public-view - View venue from public perspective
+router.get('/:id/public-view', async (req, res) => {
+  try {
+    const venue = await Venue.findById(req.params.id)
+      .populate('createdBy', 'name email');
+
+    if (!venue) {
+      req.flash('error', 'Venue not found');
+      return res.redirect('/');
+    }
+
+    // Check if the current user is the venue owner
+    const isOwner = req.session.user && req.session.user.id === venue.createdBy._id.toString();
+
+    res.render('users/venues/public-view', {
+      title: `${venue.name} - Venue Preview`,
+      venue,
+      isOwner,
+      user: req.session.user || null
+    });
+  } catch (error) {
+    console.error('Error loading venue public view:', error);
+    req.flash('error', 'Failed to load venue');
+    res.redirect('/');
+  }
+});
+
 // GET /users/venues/:id/bookings - View venue bookings calendar
 router.get('/:id/bookings', isLoggedIn, async (req, res) => {
   try {
