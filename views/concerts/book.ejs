@@ -45,25 +45,16 @@
                 <input type="hidden" name="concertId" value="<%= concert._id %>">
                 <input type="hidden" id="userName" value="<%= currentUser.name %>">
                 <input type="hidden" id="userEmail" value="<%= currentUser.email %>">
+                <input type="hidden" id="ticketQuantity" name="quantity" value="<%= selectedQuantity %>">
                 <!-- This div will hold the attendee data inputs -->
                 <div id="attendeeDataInputs"></div>
 
                 <div class="mb-4">
-                  <label for="ticketQuantity" class="form-label fw-medium text-white">Number of Tickets</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
-                    <select class="form-select" id="ticketQuantity" name="quantity" required>
-                      <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
-                        <option value="<%= i %>"><%= i %></option>
-                      <% } %>
-                    </select>
-                  </div>
-                  <div class="form-text text-primary mt-2">
-                    <i class="bi bi-info-circle me-1"></i>
-                    <% if (ticketsRemaining === 'Unlimited') { %>
-                      Unlimited tickets available
-                    <% } else { %>
-                      <%= ticketsRemaining %> tickets remaining
+                  <div class="alert alert-info">
+                    <i class="bi bi-ticket-perforated me-2"></i>
+                    <strong>Booking <%= selectedQuantity %> <%= selectedQuantity === 1 ? 'Ticket' : 'Tickets' %></strong>
+                    <% if (ticketsRemaining !== 'Unlimited') { %>
+                      • <%= ticketsRemaining %> tickets remaining
                     <% } %>
                   </div>
                 </div>
@@ -81,7 +72,7 @@
                       <h5 class="card-title fw-bold mb-3 text-white" style="color: white !important;">Price Summary</h5>
                       <div class="d-flex justify-content-between mb-2">
                         <span class="text-white">Ticket Price:</span>
-                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span> × <span id="ticketCount" class="text-primary fw-bold">1</span></span>
+                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span> × <span id="ticketCount" class="text-primary fw-bold"><%= selectedQuantity %></span></span>
                       </div>
 
                       <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
@@ -91,28 +82,47 @@
                       </div>
                       <div class="d-flex justify-content-between mb-2 small text-muted">
                         <span>Original Price:</span>
-                        <span><s>₹<%= originalPrice %></s></span>
+                        <span><s>₹<%= originalPrice * selectedQuantity %></s></span>
                       </div>
                       <% } %>
+
+                      <% 
+                        const baseTotal = parseFloat((discountedPrice * selectedQuantity).toFixed(2));
+                        let initialCommissionAmount = 0;
+                        let initialTotalWithCommission = baseTotal;
+                        
+                        if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) {
+                          initialCommissionAmount = parseFloat(((baseTotal * ticketCommissionPercentage) / 100).toFixed(2));
+                          initialTotalWithCommission = parseFloat((baseTotal + initialCommissionAmount).toFixed(2));
+                        }
+                        
+                        // Debug logging
+                        console.log('Debug - baseTotal:', baseTotal);
+                        console.log('Debug - initialCommissionAmount:', initialCommissionAmount);
+                        console.log('Debug - initialTotalWithCommission:', initialTotalWithCommission);
+                        console.log('Debug - ticketCommissionEnabled:', typeof ticketCommissionEnabled !== 'undefined' ? ticketCommissionEnabled : 'undefined');
+                      %>
 
                       <!-- Commission display - shown differently based on commission settings -->
                       <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
                       <div class="d-flex justify-content-between mb-2 text-warning">
                         <span><i class="bi bi-currency-rupee me-1"></i> Platform Commission:</span>
-                        <span><%= ticketCommissionPercentage %>%</span>
+                        <span id="commissionDisplay"><%= ticketCommissionPercentage %>%</span>
                       </div>
                       <div class="d-flex justify-content-between mb-2 small text-muted">
                         <span>Platform Charges:</span>
-                        <span>Excluded from ticket pricing</span>
+                        <span id="platformChargesAmount">₹<span id="chargesAmount"><%= initialCommissionAmount.toFixed(2) %></span> (<%= ticketCommissionPercentage %>%)</span>
                       </div>
                       <% } %>
 
                       <hr class="border-secondary">
                       <div class="d-flex justify-content-between fw-bold">
                         <span class="text-white">Total Amount:</span>
-                        <span class="gradient-text-purple fs-5">₹<span id="totalAmount"><%= discountedPrice %></span></span>
+                        <span class="gradient-text-purple fs-5">
+                          ₹<%= Number(initialTotalWithCommission).toFixed(2) %>
+                        </span>
                       </div>
-                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= discountedPrice %>">
+                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= Number(initialTotalWithCommission).toFixed(2) %>">
                     </div>
                   </div>
                 </div>
@@ -257,51 +267,14 @@
 
 
   document.addEventListener('DOMContentLoaded', function() {
-    const ticketQuantitySelect = document.getElementById('ticketQuantity');
-    const ticketPriceElement = document.getElementById('ticketPrice');
-    const ticketCountElement = document.getElementById('ticketCount');
-    const totalAmountElement = document.getElementById('totalAmount');
-    const totalAmountInput = document.getElementById('totalAmountInput');
+    const ticketQuantityInput = document.getElementById('ticketQuantity');
     const razorpayForm = document.getElementById('razorpayForm');
 
-    // Get the ticket price from the data attribute
-    const ticketPrice = parseFloat(ticketPriceElement.getAttribute('data-price'));
+    // Get the selected quantity
+    const quantity = parseInt(ticketQuantityInput.value);
 
-    // Update the total amount when the ticket quantity changes
-    ticketQuantitySelect.addEventListener('change', function() {
-      const quantity = parseInt(this.value);
-      
-      // Calculate base total (ticket price * quantity)
-      const baseTotal = ticketPrice * quantity;
-      
-      // Calculate commission if enabled
-      let commissionAmount = 0;
-      let totalWithCommission = baseTotal;
-      
-      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
-        const commissionPercentage = <%= ticketCommissionPercentage %>;
-        commissionAmount = (baseTotal * commissionPercentage) / 100;
-        totalWithCommission = baseTotal + commissionAmount;
-      <% } %>
-      
-      // Update the ticket count
-      ticketCountElement.textContent = quantity;
-      
-      // Update commission display if commission is enabled
-      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
-        document.getElementById('commissionAmount').textContent = '₹' + commissionAmount.toFixed(2);
-      <% } %>
-
-      // Update the total amount
-      totalAmountElement.textContent = totalWithCommission;
-      totalAmountInput.value = totalWithCommission;
-
-      // Update attendee forms
-      updateAttendeeForms(quantity);
-    });
-
-    // Initialize attendee forms
-    updateAttendeeForms(1);
+    // Initialize attendee forms with the selected quantity
+    updateAttendeeForms(quantity);
 
     // Function to update attendee forms
     function updateAttendeeForms(count) {

@@ -919,6 +919,62 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Select quantity page
+router.get('/:id/select-quantity', isLoggedIn, async (req, res) => {
+  try {
+    let concert = await Concert.findById(req.params.id)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      })
+      .populate('venue');
+
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/concerts');
+    }
+
+    // Check if concert is approved
+    if (concert.status !== 'approved') {
+      req.flash('error', 'This concert is not available for booking');
+      return res.redirect('/concerts');
+    }
+
+    // Check if concert date has passed
+    const concertDate = new Date(concert.date);
+    const today = new Date();
+    if (concertDate < today) {
+      req.flash('error', 'This concert has already taken place');
+      return res.redirect(`/concerts/${concert._id}`);
+    }
+
+    // Check if tickets are available
+    if (concert.maxTickets > 0 && concert.ticketsSold >= concert.maxTickets) {
+      req.flash('error', 'Sorry, this concert is sold out');
+      return res.redirect(`/concerts/${concert._id}`);
+    }
+
+    // Calculate tickets remaining
+    const ticketsRemaining = concert.maxTickets > 0
+      ? concert.maxTickets - concert.ticketsSold
+      : 'Unlimited';
+
+    const maxTicketsPerBooking = concert.maxTickets > 0
+      ? Math.min(10, concert.maxTickets - concert.ticketsSold)
+      : 10;
+
+    res.render('concerts/select-quantity', {
+      concert,
+      ticketsRemaining,
+      maxTicketsPerBooking
+    });
+  } catch (error) {
+    console.error('Select quantity error:', error);
+    req.flash('error', 'Failed to load quantity selection page');
+    res.redirect('/concerts');
+  }
+});
+
 // Book concert page
 router.get('/:id/book', isLoggedIn, async (req, res) => {
   try {
@@ -985,6 +1041,19 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
     const ticketCommissionEnabled = settings.ticketCommissionSettings?.enabled || false;
     const ticketCommissionPercentage = settings.ticketCommissionSettings?.percentage || 0;
 
+    // Get selected quantity from query parameter (default to 1)
+    const selectedQuantity = parseInt(req.query.quantity) || 1;
+    
+    // Validate quantity
+    const maxAllowedTickets = concert.maxTickets > 0
+      ? Math.min(10, concert.maxTickets - concert.ticketsSold)
+      : 10;
+    
+    if (selectedQuantity < 1 || selectedQuantity > maxAllowedTickets) {
+      req.flash('error', 'Invalid ticket quantity selected');
+      return res.redirect(`/concerts/${concert._id}`);
+    }
+
     // Add Razorpay script to the head section if it's a paid concert
     const extraScripts = concert.isPaid ?
       '<script src="https://checkout.razorpay.com/v1/checkout.js"></script>' : '';
@@ -992,9 +1061,8 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
     res.render('concerts/book', {
       concert,
       ticketsRemaining,
-      maxTicketsPerBooking: concert.maxTickets > 0
-        ? Math.min(10, concert.maxTickets - concert.ticketsSold)
-        : 10, // Allow up to 10 tickets per booking if unlimited
+      selectedQuantity,
+      maxTicketsPerBooking: maxAllowedTickets,
       extraScripts: extraScripts,
       originalPrice,
       discountedPrice,

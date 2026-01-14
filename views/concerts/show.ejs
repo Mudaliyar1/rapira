@@ -150,7 +150,7 @@
                     <div class="d-flex gap-2">
                       <a href="/tickets/<%= userTickets[0]._id %>" class="btn btn-gradient-blue">View Ticket</a>
                       <% if (ticketsRemaining !== 0 && ticketsRemaining !== 'Sold Out') { %>
-                        <a href="/concerts/<%= concert._id %>/book" class="btn btn-outline-primary">Book More Tickets</a>
+                        <a href="/concerts/<%= concert._id %>/select-quantity" class="btn btn-outline-primary">Book More Tickets</a>
                       <% } %>
                     </div>
                   </div>
@@ -163,7 +163,7 @@
                     <h5 class="gradient-text-orange"><i class="bi bi-x-circle-fill me-2"></i> This concert is sold out.</h5>
                   </div>
                 <% } else { %>
-                  <a href="/concerts/<%= concert._id %>/book" class="btn btn-gradient-purple btn-lg px-5 animate-pulse">Book Tickets</a>
+                  <a href="/concerts/<%= concert._id %>/select-quantity" class="btn btn-gradient-purple btn-lg px-5 animate-pulse">Book Tickets</a>
                 <% } %>
               <% } else { %>
                 <div class="glass-card-dark p-4 rounded-3 mb-4 border-start border-5 border-info">
