@@ -27,23 +27,41 @@ class LoadingSpinnerManager {
       this.createProgressBar();
     }
 
+    // Show spinner on page load/refresh
+    this.detectPageLoadOrRefresh();
+
     // Add event listeners to all redirect buttons
     this.attachRedirectListeners();
 
-    // Listen for navigation events
+    console.log('✓ Loading Spinner Manager initialized');
+  }
+
+  /**
+   * Detect page load and refresh
+   */
+  detectPageLoadOrRefresh() {
+    // Show spinner on page load
+    if (document.readyState === 'loading' || document.readyState === 'interactive') {
+      this.show('Loading...');
+    }
+
+    // Hide spinner when page fully loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        this.hide();
+      }, 500);
+    });
+
+    // Listen for page unload/navigation (single listener for all cases)
     window.addEventListener('beforeunload', () => {
-      // Don't show loader if we're just downloading
       if (this.isDownloading) {
         return;
       }
-      // Show loader when page is about to unload
       const timeSinceLastClick = Date.now() - this.lastClickTime;
       if (timeSinceLastClick < 1000) {
-        this.show('Redirecting...');
+        this.show('Loading...');
       }
     });
-
-    console.log('✓ Loading Spinner Manager initialized');
   }
 
   /**
@@ -75,11 +93,6 @@ class LoadingSpinnerManager {
     overlay.innerHTML = `
       <div class="spinner-container">
         <div class="spinner"></div>
-        <div class="spinner-dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
         <div class="loading-text" id="loading-text">Loading</div>
       </div>
     `;
