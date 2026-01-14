@@ -45,11 +45,24 @@ class LoadingSpinnerManager {
       this.show('Loading...');
     }
 
-    // Hide spinner when page fully loads
+    // Hide spinner when page fully loads - wait for all resources
     window.addEventListener('load', () => {
+      // Wait for all images and resources to fully load
+      if (document.readyState === 'complete') {
+        setTimeout(() => {
+          this.hide();
+        }, 300);
+      }
+    });
+
+    // Additional check - hide spinner when document is interactive and all scripts loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check again after a delay to ensure everything is ready
       setTimeout(() => {
-        this.hide();
-      }, 500);
+        if (document.readyState === 'complete' && !this.isLoading) {
+          this.hide();
+        }
+      }, 1000);
     });
 
     // Listen for page unload/navigation (single listener for all cases)
@@ -122,8 +135,17 @@ class LoadingSpinnerManager {
   hide() {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
-      overlay.classList.remove('active');
-      this.isLoading = false;
+      // Only hide if document is complete or we're forcing it
+      if (document.readyState === 'complete' || this.isDownloading) {
+        overlay.classList.remove('active');
+        this.isLoading = false;
+      } else {
+        // If document not ready, wait a bit and try again
+        setTimeout(() => {
+          overlay.classList.remove('active');
+          this.isLoading = false;
+        }, 500);
+      }
     }
   }
 
