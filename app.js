@@ -706,6 +706,11 @@ ensureUploadDirectories();
 
 // Serve files from uploads directory with enhanced media middleware
 app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'public/uploads')));
+
+// Lightweight connectivity check for clients (used by offline detector)
+app.head('/ping', (req, res) => res.sendStatus(204));
+app.get('/ping', (req, res) => res.sendStatus(204));
+
 // Use routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);

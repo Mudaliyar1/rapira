@@ -4591,6 +4591,134 @@ html body div.admin-layout div.container-fluid div.card div.card-body table.tabl
   flex: 1;
 }
 
+/* Offline full-screen overlay */
+.offline-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.03), transparent 40%),
+    linear-gradient(135deg, #0f172a 0%, #111827 50%, #0b1224 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.offline-screen.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.offline-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 28px 26px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.offline-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, #22d3ee, #a855f7, #f97316);
+  background-size: 200% 200%;
+  color: #0b1020;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  text-transform: uppercase;
+  box-shadow: 0 12px 30px rgba(168, 85, 247, 0.35);
+  animation: brandGlow 6s ease infinite;
+}
+
+.offline-radar {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.offline-radar .ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.35);
+  animation: offlinePulse 2.4s ease-out infinite;
+}
+
+.offline-radar .ring.ring-2 {
+  animation-delay: 0.6s;
+}
+
+.offline-radar i {
+  font-size: 48px;
+  color: #f87171;
+  animation: offlineBounce 1.2s ease-in-out infinite;
+}
+
+.offline-card h2 {
+  color: #ffffff;
+  font-size: 22px;
+  margin: 4px 0 8px;
+  font-weight: 700;
+}
+
+.offline-text {
+  color: #cbd5e1;
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+body.offline-lock {
+  overflow: hidden;
+}
+
+@keyframes brandGlow {
+  0% { background-position: 0% 50%; box-shadow: 0 12px 30px rgba(34, 211, 238, 0.35); }
+  50% { background-position: 100% 50%; box-shadow: 0 12px 30px rgba(249, 115, 22, 0.35); }
+  100% { background-position: 0% 50%; box-shadow: 0 12px 30px rgba(34, 211, 238, 0.35); }
+}
+
+@keyframes offlinePulse {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.45;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes offlineBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 @keyframes slideInDown {
   from {
     transform: translateX(-50%) translateY(-150%);
