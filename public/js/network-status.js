@@ -97,27 +97,58 @@
 
   // Connectivity check with timeout to detect captive/blocked Wi-Fi
   async function checkConnection() {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    // Try local server first (fastest)
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      
       const res = await fetch('/ping', {
         method: 'HEAD',
         cache: 'no-cache',
         signal: controller.signal
       });
+      
       clearTimeout(timeout);
-      return res.ok;
+      if (res.ok) return true;
     } catch (e) {
-      clearTimeout(timeout);
-      return false;
+      // Local check failed, continue to external check
     }
+    
+    // Try multiple external URLs as fallback
+    const urls = [
+      'https://www.google.com/favicon.ico',
+      'https://www.cloudflare.com/favicon.ico',
+      'https://www.github.com/favicon.ico'
+    ];
+    
+    for (const url of urls) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        
+        await fetch(url, {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'no-cache',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeout);
+        return true; // Successfully reached external URL
+      } catch (e) {
+        // Try next URL
+        continue;
+      }
+    }
+    
+    return false; // All checks failed
   }
 
   let currentStatus = 'unknown';
   let checkInProgress = false;
   let retryCount = 0;
 
-  async function evaluateStatus(reason = 'poll', skipIfChecking = false) {
+  async function evaluateStatus(reason = 'poll', skipIfChecking = false, silent = false) {
     // Prevent multiple simultaneous checks
     if (checkInProgress && skipIfChecking) return;
     if (checkInProgress) {
@@ -137,7 +168,7 @@
       return;
     }
 
-    // Browser says online, verify with ping
+    // Browser says online, verify with ping (even on initial load to catch WiFi without internet)
     const reachable = await checkConnection();
     const nextStatus = reachable ? 'online' : 'offline';
 
@@ -146,7 +177,17 @@
       if (nextStatus === 'online') {
         console.log('Network: confirmed online via', reason);
         retryCount = 0;
-        showOnline();
+        // Only show notification if we're recovering from offline, not on initial load
+        if (reason !== 'initial' && !silent) {
+          showOnline();
+        } else if (reason === 'initial') {
+          // Just update status silently on initial load
+          const screen = document.getElementById('offline-screen');
+          if (screen) {
+            screen.classList.remove('show');
+          }
+          document.body.classList.remove('offline-lock');
+        }
       } else {
         console.log('Network: confirmed offline via', reason);
         showOffline();
@@ -156,7 +197,7 @@
           setTimeout(() => {
             console.log('Retrying connection check...', retryCount);
             checkInProgress = false;
-            evaluateStatus('retry');
+            evaluateStatus('retry', false, true);
           }, 5000);
         }
       }
@@ -187,10 +228,8 @@
 
   // Initialize
   function init() {
-    // Initial check with delay to let page load first
-    setTimeout(() => {
-      evaluateStatus('initial');
-    }, 1000);
+    // Initial check immediately - will detect WiFi without internet
+    evaluateStatus('initial');
 
     // Listen for online/offline events
     window.addEventListener('online', handleOnline);
