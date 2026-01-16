@@ -893,12 +893,13 @@ router.get('/:id', async (req, res) => {
       return res.redirect('/concerts');
     }
 
-    // Check if user has already booked tickets
+    // Check if user has already booked tickets (only completed payments)
     let userTickets = [];
     if (req.session.user) {
       userTickets = await Ticket.find({
         concert: concert._id,
-        user: req.session.user.id
+        user: req.session.user.id,
+        paymentStatus: 'completed' // Only show completed tickets
       });
     }
 

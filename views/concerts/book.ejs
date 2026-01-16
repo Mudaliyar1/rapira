@@ -66,79 +66,145 @@
                   </div>
                 </div>
 
-                <div class="glass-card-dark mb-4 border-gradient">
-                  <div class="border-gradient-content">
-                    <div class="card-body">
-                      <h5 class="card-title fw-bold mb-3 text-white" style="color: white !important;">Price Summary</h5>
-                      <div class="d-flex justify-content-between mb-2">
-                        <span class="text-white">Ticket Price:</span>
-                        <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span></span>
-                      </div>
+                <!-- Price Summary & Payment Instructions - Side by Side -->
+                <div class="row g-3 mb-4">
+                  <!-- Left Column: Price Summary -->
+                  <div class="col-lg-6">
+                    <div class="glass-card-dark border-gradient h-100">
+                      <div class="border-gradient-content">
+                        <div class="card-body">
+                          <h5 class="card-title fw-bold mb-3 text-white" style="color: white !important;">Price Summary</h5>
+                          <div class="d-flex justify-content-between mb-2">
+                            <span class="text-white">Ticket Price:</span>
+                            <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span></span>
+                          </div>
 
-                      <div class="d-flex justify-content-between mb-2">
-                        <span class="text-white">Quantity:</span>
-                        <span class="text-white"><span id="ticketCount" class="text-primary fw-bold"><%= selectedQuantity %></span></span>
-                      </div>
+                          <div class="d-flex justify-content-between mb-2">
+                            <span class="text-white">Quantity:</span>
+                            <span class="text-white"><span id="ticketCount" class="text-primary fw-bold"><%= selectedQuantity %></span></span>
+                          </div>
 
-                      <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>Subtotal:</span>
-                        <span class="text-white">₹<span id="subtotalAmount"><%= (discountedPrice * selectedQuantity).toFixed(2) %></span></span>
-                      </div>
+                          <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Subtotal:</span>
+                            <span class="text-white">₹<span id="subtotalAmount"><%= (discountedPrice * selectedQuantity).toFixed(2) %></span></span>
+                          </div>
 
-                      <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
-                      <div class="d-flex justify-content-between mb-2 text-success">
-                        <span><i class="bi bi-star-fill me-1"></i> Subscription Discount:</span>
-                        <span><%= subscriptionDiscount %>% off</span>
-                      </div>
-                      <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>Original Price:</span>
-                        <span><s>₹<%= originalPrice * selectedQuantity %></s></span>
-                      </div>
-                      <% } %>
+                          <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
+                          <div class="d-flex justify-content-between mb-2 text-success">
+                            <span><i class="bi bi-star-fill me-1"></i> Subscription Discount:</span>
+                            <span><%= subscriptionDiscount %>% off</span>
+                          </div>
+                          <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Original Price:</span>
+                            <span><s>₹<%= originalPrice * selectedQuantity %></s></span>
+                          </div>
+                          <% } %>
 
-                      <% 
-                        const baseTotal = parseFloat((discountedPrice * selectedQuantity).toFixed(2));
-                        let initialCommissionAmount = 0;
-                        let initialTotalWithCommission = baseTotal;
-                        
-                        if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) {
-                          initialCommissionAmount = parseFloat(((baseTotal * ticketCommissionPercentage) / 100).toFixed(2));
-                          initialTotalWithCommission = parseFloat((baseTotal + initialCommissionAmount).toFixed(2));
-                        }
-                        
-                        // Debug logging
-                        console.log('Debug - baseTotal:', baseTotal);
-                        console.log('Debug - initialCommissionAmount:', initialCommissionAmount);
-                        console.log('Debug - initialTotalWithCommission:', initialTotalWithCommission);
-                        console.log('Debug - ticketCommissionEnabled:', typeof ticketCommissionEnabled !== 'undefined' ? ticketCommissionEnabled : 'undefined');
-                      %>
+                          <% 
+                            const baseTotal = parseFloat((discountedPrice * selectedQuantity).toFixed(2));
+                            let initialCommissionAmount = 0;
+                            let initialTotalWithCommission = baseTotal;
+                            
+                            if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) {
+                              initialCommissionAmount = parseFloat(((baseTotal * ticketCommissionPercentage) / 100).toFixed(2));
+                              initialTotalWithCommission = parseFloat((baseTotal + initialCommissionAmount).toFixed(2));
+                            }
+                            
+                            console.log('Debug - baseTotal:', baseTotal);
+                            console.log('Debug - initialCommissionAmount:', initialCommissionAmount);
+                            console.log('Debug - initialTotalWithCommission:', initialTotalWithCommission);
+                            console.log('Debug - ticketCommissionEnabled:', typeof ticketCommissionEnabled !== 'undefined' ? ticketCommissionEnabled : 'undefined');
+                          %>
 
-                      <!-- Commission display - shown differently based on commission settings -->
-                      <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
-                      <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>
-                          Platform Charges:
-                          <i class="bi bi-info-circle ms-1" 
-                             style="cursor: pointer; color: var(--primary);"
-                             data-bs-toggle="tooltip" 
-                             data-bs-placement="top" 
-                             title="Platform charges help us maintain and improve the quality of our service, including payment processing, security, and platform features.">
-                          </i>
-                        </span>
-                        <span id="platformChargesAmount">₹<span id="chargesAmount"><%= initialCommissionAmount.toFixed(2) %></span> (<%= ticketCommissionPercentage %>%)</span>
-                      </div>
-                      <% } %>
+                          <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+                          <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>
+                              Platform Charges:
+                              <i class="bi bi-info-circle ms-1" 
+                                 style="cursor: pointer; color: var(--primary);"
+                                 data-bs-toggle="tooltip" 
+                                 data-bs-placement="top" 
+                                 title="Platform charges help us maintain and improve the quality of our service, including payment processing, security, and platform features.">
+                              </i>
+                            </span>
+                            <span id="platformChargesAmount">₹<span id="chargesAmount"><%= initialCommissionAmount.toFixed(2) %></span> (<%= ticketCommissionPercentage %>%)</span>
+                          </div>
+                          <% } else { %>
+                          <!-- Show No Platform Charges Message when commission is disabled -->
+                          <div class="alert alert-success mb-2 py-2 px-3 d-flex align-items-center" style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
+                            <i class="bi bi-check-circle-fill me-2" style="color: #10b981; font-size: 1.1rem;"></i>
+                            <small class="mb-0" style="color: #10b981; font-weight: 500;">
+                              No platform charges! You pay exactly what you see - no hidden fees.
+                            </small>
+                          </div>
+                          <% } %>
 
-                      <hr class="border-secondary">
-                      <div class="d-flex justify-content-between fw-bold">
-                        <span class="text-white">Total Amount:</span>
-                        <span class="gradient-text-purple fs-5">
-                          ₹<%= Number(initialTotalWithCommission).toFixed(2) %>
-                        </span>
+                          <hr class="border-secondary">
+                          <div class="d-flex justify-content-between fw-bold">
+                            <span class="text-white">Total Amount:</span>
+                            <span class="gradient-text-purple fs-5">
+                              ₹<%= Number(initialTotalWithCommission).toFixed(2) %>
+                            </span>
+                          </div>
+                          <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= Number(initialTotalWithCommission).toFixed(2) %>">
+                        </div>
                       </div>
-                      <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= Number(initialTotalWithCommission).toFixed(2) %>">
                     </div>
                   </div>
+
+                  <!-- Right Column: Payment Instructions -->
+                  <div class="col-lg-6">
+                    <div class="payment-instruction-card h-100">
+                      <div class="instruction-header">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <h5 class="mb-0">Important Payment Instructions</h5>
+                      </div>
+                      
+                      <div class="instruction-content">
+                        <div class="instruction-item">
+                          <div class="item-icon">⚠️</div>
+                          <div class="item-text">
+                            <strong>Do not refresh</strong> this page during payment
+                          </div>
+                        </div>
+                        
+                        <div class="instruction-item">
+                          <div class="item-icon">⚠️</div>
+                          <div class="item-text">
+                            <strong>Do not close</strong> this tab until payment completes
+                          </div>
+                        </div>
+                        
+                        <div class="instruction-item">
+                          <div class="item-icon">⚠️</div>
+                          <div class="item-text">
+                            <strong>Keep your browser open</strong> for automatic redirect
+                          </div>
+                        </div>
+                        
+                        <div class="instruction-item info-item">
+                          <div class="item-icon">ℹ️</div>
+                          <div class="item-text">
+                            You will be automatically redirected after successful payment
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Checkbox Confirmation - REDESIGNED -->
+                <div class="payment-agreement-section mb-4">
+                  <div class="agreement-box">
+                    <input class="form-check-input agreement-checkbox" type="checkbox" id="paymentAgreement" name="paymentAgreement" required>
+                    <label class="agreement-label" for="paymentAgreement">
+                      I understand the payment instructions and will not close, refresh, or navigate away from this page until the payment is complete
+                    </label>
+                  </div>
+                  <small class="agreement-error text-danger d-none" id="checkboxError">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    You must confirm the payment instructions to proceed
+                  </small>
                 </div>
 
                 <button type="submit" class="btn btn-gradient-purple btn-lg w-100 animate-pulse"><i class="bi bi-credit-card me-2"></i>Proceed to Payment</button>

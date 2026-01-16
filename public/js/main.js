@@ -868,6 +868,37 @@ document.addEventListener('DOMContentLoaded', function() {
     razorpayForm.addEventListener('submit', async function(e) {
       e.preventDefault();
 
+      // Check if payment agreement checkbox is checked
+      const paymentAgreement = document.getElementById('paymentAgreement');
+      const checkboxError = document.getElementById('checkboxError');
+      
+      if (paymentAgreement && !paymentAgreement.checked) {
+        // Show error message with styling
+        checkboxError.classList.remove('d-none');
+        paymentAgreement.classList.add('is-invalid');
+        
+        // Scroll to the checkbox section
+        paymentAgreement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add visual feedback
+        paymentAgreement.style.animation = 'none';
+        setTimeout(() => {
+          paymentAgreement.style.animation = 'shake 0.5s ease';
+        }, 10);
+        
+        // Auto-hide error after 5 seconds
+        setTimeout(() => {
+          checkboxError.classList.add('d-none');
+          paymentAgreement.classList.remove('is-invalid');
+        }, 5000);
+        
+        return; // Stop here, don't proceed without checkbox
+      }
+
+      // Clear any previous error states
+      checkboxError.classList.add('d-none');
+      paymentAgreement.classList.remove('is-invalid');
+
       // Validate attendee forms
       const attendeeInputs = document.getElementsByName('attendees');
       let isValid = true;
