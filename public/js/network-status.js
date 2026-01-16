@@ -115,10 +115,15 @@
 
   let currentStatus = 'unknown';
   let checkInProgress = false;
+  let retryCount = 0;
 
-  async function evaluateStatus(reason = 'poll') {
+  async function evaluateStatus(reason = 'poll', skipIfChecking = false) {
     // Prevent multiple simultaneous checks
-    if (checkInProgress) return;
+    if (checkInProgress && skipIfChecking) return;
+    if (checkInProgress) {
+      console.log('Check already in progress, skipping');
+      return;
+    }
     checkInProgress = true;
 
     // If browser says offline, show immediately without ping
@@ -140,10 +145,30 @@
       currentStatus = nextStatus;
       if (nextStatus === 'online') {
         console.log('Network: confirmed online via', reason);
+        retryCount = 0;
         showOnline();
       } else {
         console.log('Network: confirmed offline via', reason);
         showOffline();
+        // Auto-retry after 5 seconds if initial check failed
+        if (reason === 'initial' && retryCount < 3) {
+          retryCount++;
+          setTimeout(() => {
+            console.log('Retrying connection check...', retryCount);
+            checkInProgress = false;
+            evaluateStatus('retry');
+          }, 5000);
+        }
+      }
+    } else if (currentStatus === 'offline' && retryCount > 0) {
+      // Keep retrying if we think we're offline
+      if (retryCount < 3) {
+        retryCount++;
+        setTimeout(() => {
+          console.log('Retrying connection check...', retryCount);
+          checkInProgress = false;
+          evaluateStatus('retry');
+        }, 5000);
       }
     }
     
@@ -162,15 +187,21 @@
 
   // Initialize
   function init() {
-    // Initial check
-    evaluateStatus('initial');
+    // Initial check with delay to let page load first
+    setTimeout(() => {
+      evaluateStatus('initial');
+    }, 1000);
 
     // Listen for online/offline events
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Periodic verification to catch Wi-Fi without internet
-    setInterval(() => evaluateStatus('periodic'), 20000);
+    // Check every 15 seconds if we're in offline state to recover quickly
+    setInterval(() => {
+      if (currentStatus === 'offline' && navigator.onLine) {
+        evaluateStatus('periodic-recovery', true);
+      }
+    }, 15000);
   }
 
   // Initialize when DOM is ready
