@@ -1,4 +1,11 @@
 require('dotenv').config();
+
+// Force Node.js DNS to use Google DNS (8.8.8.8) to bypass local DNS issues
+const dns = require('dns');
+const { Resolver } = require('dns').promises;
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+console.log('DNS servers configured to use Google DNS (8.8.8.8, 8.8.4.4)');
+
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -263,8 +270,6 @@ const connectWithRetry = () => {
   }
 
   mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 30000, // Increased timeout to 30 seconds
     socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     family: 4, // Use IPv4, skip trying IPv6
@@ -407,8 +412,6 @@ const sessionOptions = {
     collectionName: 'sessions', // Use a specific collection name
     autoReconnect: true, // Automatically reconnect to MongoDB if connection is lost
     mongoOptions: {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000, // Timeout for server selection
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     }
