@@ -13,53 +13,80 @@
         <div class="card-body">
           <div class="alert alert-danger">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Warning:</strong> This action cannot be undone!
+            <strong>Warning:</strong> This action cannot be undone.
           </div>
           
-          <h5>Are you sure you want to permanently delete your account?</h5>
-          <p>This will:</p>
+          <h5 class="fw-semibold">Are you sure you want to permanently delete your account?</h5>
+          <p class="mb-2">You will lose access to:</p>
           
           <ul class="list-group list-group-flush mb-4">
             <li class="list-group-item">
               <i class="bi bi-person-x me-2 text-danger"></i>
-              Delete all your personal information
+              All personal information and profile data
             </li>
             <li class="list-group-item">
               <i class="bi bi-ticket-perforated me-2 text-danger"></i>
-              Delete all your tickets and bookings
+              All tickets, bookings, and purchase history
+            </li>
+            <li class="list-group-item">
+              <i class="bi bi-wallet2 me-2 text-danger"></i>
+              Wallet balance and any stored credits
             </li>
             <% if (user.role === 'artist') { %>
               <li class="list-group-item">
                 <i class="bi bi-music-note-beamed me-2 text-danger"></i>
-                Delete your artist profile
+                Your artist profile, followers, and all artist data
               </li>
               <li class="list-group-item">
                 <i class="bi bi-calendar-event me-2 text-danger"></i>
-                Delete all concerts you've created
+                All concerts and events you've created
               </li>
               <li class="list-group-item">
                 <i class="bi bi-file-earmark me-2 text-danger"></i>
-                Delete all content you've uploaded
+                All content, posts, and media you've uploaded
               </li>
             <% } %>
             <li class="list-group-item">
+              <i class="bi bi-building me-2 text-danger"></i>
+              Any venue requests or venues you manage
+            </li>
+            <li class="list-group-item">
               <i class="bi bi-box-arrow-right me-2 text-danger"></i>
-              Log you out immediately
+              Immediate sign-out from all devices
             </li>
           </ul>
           
-          <p class="fw-bold">You will not be able to recover any of this information later.</p>
-          
-          <div class="d-flex justify-content-end mt-4">
-            <a href="/users/profile" class="btn btn-outline-secondary me-2">
-              <i class="bi bi-arrow-left me-1"></i> Cancel
-            </a>
-            <form action="/users/delete-account" method="POST">
+          <form action="/users/delete-account" method="POST" class="mt-3">
+            <div class="mb-3">
+              <label for="password" class="form-label fw-semibold">
+                <i class="bi bi-lock me-1"></i> Enter your password to confirm:
+              </label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="password" name="password" 
+                       placeholder="Enter your account password" required>
+                <button class="btn btn-outline-secondary password-toggle-btn" type="button" data-target="password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <small class="form-text text-muted">For security, you must enter your current password to delete your account.</small>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" value="yes" id="confirmDelete" name="confirmDelete" required>
+              <label class="form-check-label" for="confirmDelete">
+                I understand this is permanent and want to delete my account.
+              </label>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+              <a href="/users/profile" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left me-1"></i> Keep Account
+              </a>
               <button type="submit" class="btn btn-danger">
                 <i class="bi bi-trash me-1"></i> Delete My Account
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>

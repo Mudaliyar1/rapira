@@ -35,6 +35,17 @@
                 <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>" style="font-size: 0.9rem;">
                   <%= user.role.toUpperCase() %>
                 </span>
+                <% if (assignedRoles && assignedRoles.length) { %>
+                  <% const baseRoleLower = (user.role || '').toLowerCase(); %>
+                  <% assignedRoles.forEach(r => { %>
+                    <% if (r && r.name && r.name.toLowerCase() !== baseRoleLower) { %>
+                      <span class="badge bg-info text-dark d-inline-flex align-items-center gap-1" style="font-size: 0.9rem;">
+                        <% if (r.icon) { %><i class="bi <%= r.icon %>"></i><% } %>
+                        <%= r.name %>
+                      </span>
+                    <% } %>
+                  <% }); %>
+                <% } %>
                 <span class="badge <%= user.isVerified ? 'bg-success' : 'bg-warning' %>" style="font-size: 0.9rem;">
                   <%= user.isVerified ? 'VERIFIED' : 'UNVERIFIED' %>
                 </span>

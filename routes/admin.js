@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const UserRole = require('../models/UserRole');
+const Role = require('../models/Role');
 const Artist = require('../models/Artist');
+const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
 const Ticket = require('../models/Ticket');
 const Content = require('../models/Content');
@@ -235,9 +238,33 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
       ];
     }
 
-    // Role filter
+    // Role filter (supports base roles + venue/custom roles)
     if (role && role !== 'all') {
-      query.role = role;
+      if (['user', 'artist', 'admin'].includes(role)) {
+        query.role = role;
+      } else if (role === 'venue') {
+        const venueRoleIds = await Role.find({ name: { $regex: '^venue$', $options: 'i' } })
+          .select('_id')
+          .lean();
+        const assignedVenueUsers = venueRoleIds.length
+          ? await UserRole.find({ role: { $in: venueRoleIds.map(r => r._id) } }).distinct('user')
+          : [];
+        const ownedVenueUsers = await Venue.find({ createdBy: { $exists: true, $ne: null } }).distinct('createdBy');
+        const venueUserIds = Array.from(new Set([
+          ...assignedVenueUsers.map(id => id.toString()),
+          ...ownedVenueUsers.map(id => id.toString())
+        ]));
+        query._id = { $in: venueUserIds.length ? venueUserIds : ['__none__'] };
+      } else {
+        // Fallback: match custom role name
+        const targetRoles = await Role.find({ name: { $regex: `^${role}$`, $options: 'i' } })
+          .select('_id')
+          .lean();
+        const matchedUsers = targetRoles.length
+          ? await UserRole.find({ role: { $in: targetRoles.map(r => r._id) } }).distinct('user')
+          : [];
+        query._id = { $in: matchedUsers.length ? matchedUsers : ['__none__'] };
+      }
     }
 
     // Status filter (verified/unverified)
@@ -255,8 +282,51 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
     // Execute query for real users
     const realUsers = await User.find(query).sort(sortOptions);
 
+    // Fetch assigned roles for these users (for multi-role display)
+    let userRoleMap = {};
+    if (realUsers.length) {
+      const userIds = realUsers.map(u => u._id);
+      const userRoles = await UserRole.find({ user: { $in: userIds } })
+        .populate('role', 'name icon')
+        .lean();
+
+      userRoles.forEach(assignment => {
+        if (!assignment.role) return;
+        const uid = assignment.user.toString();
+        const rid = assignment.role._id.toString();
+        if (!userRoleMap[uid]) userRoleMap[uid] = [];
+        const exists = userRoleMap[uid].some(r => r.id === rid);
+        if (!exists) {
+          userRoleMap[uid].push({
+            id: rid,
+            name: assignment.role.name,
+            icon: assignment.role.icon || 'bi-person'
+          });
+        }
+      });
+
+      // Mark users who own a venue
+      const venues = await Venue.find({ createdBy: { $in: userIds } }).select('createdBy').lean();
+      const venueOwners = new Set(venues.map(v => v.createdBy.toString()));
+      venueOwners.forEach(uid => {
+        if (!userRoleMap[uid]) userRoleMap[uid] = [];
+        const exists = userRoleMap[uid].some(r => r.name && r.name.toLowerCase() === 'venue');
+        if (!exists) {
+          userRoleMap[uid].push({ id: `venue-${uid}`, name: 'Venue', icon: 'bi-building' });
+        }
+      });
+    }
+
     // Merge with dummy data if enabled
     const userResult = await dummyDataHelper.mergeWithDummyData(realUsers, 'users', { shuffle: true });
+
+    // Attach assigned roles to each user (post-merge to align with shuffled data)
+    if (userResult.data && userResult.data.length) {
+      userResult.data.forEach(u => {
+        const uid = u && u._id && u._id.toString ? u._id.toString() : null;
+        u.assignedRoles = uid && userRoleMap[uid] ? userRoleMap[uid] : [];
+      });
+    }
 
     // Get total counts for stats (only real data)
     const totalUsers = await User.countDocuments();
@@ -405,11 +475,33 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
       .filter(t => t.paymentStatus === 'completed' && t.paymentId !== 'ADMIN_FREE_TICKET')
       .reduce((sum, t) => sum + (t.totalAmount || 0), 0);
 
+    // Load additional assigned roles (e.g., Venue) for the user
+    const userRoles = await UserRole.find({ user: user._id })
+      .populate('role', 'name icon')
+      .lean();
+    const assignedRoles = userRoles
+      .filter(ur => ur.role)
+      .map(ur => ({
+        id: ur.role._id.toString(),
+        name: ur.role.name,
+        icon: ur.role.icon || 'bi-person'
+      }));
+
+    // If the user owns a venue, add a Venue role badge
+    const hasVenue = await Venue.exists({ createdBy: user._id });
+    if (hasVenue) {
+      const alreadyVenue = assignedRoles.some(r => r.name && r.name.toLowerCase() === 'venue');
+      if (!alreadyVenue) {
+        assignedRoles.push({ id: `venue-${user._id.toString()}`, name: 'Venue', icon: 'bi-building' });
+      }
+    }
+
     res.render('admin/user-details', {
       layout: 'admin',
       currentPath: '/admin/users',
       user,
       artist,
+      assignedRoles,
       tickets,
       subscriptions,
       cart,

@@ -465,12 +465,30 @@ router.get('/confirm-delete-account', isLoggedIn, async (req, res) => {
 // Delete account
 router.post('/delete-account', isLoggedIn, async (req, res) => {
   try {
+    if (req.body.confirmDelete !== 'yes') {
+      req.flash('error', 'Please confirm you understand this action is permanent.');
+      return res.redirect('/users/confirm-delete-account');
+    }
+
     const userId = req.session.user.id;
     const user = await User.findById(userId);
 
     if (!user) {
       req.flash('error', 'User not found');
       return res.redirect('/users/profile');
+    }
+
+    // Verify password before deletion
+    const { password } = req.body;
+    if (!password) {
+      req.flash('error', 'Password is required to delete your account.');
+      return res.redirect('/users/confirm-delete-account');
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      req.flash('error', 'Incorrect password. Account deletion cancelled.');
+      return res.redirect('/users/confirm-delete-account');
     }
 
     let artistData = null;

@@ -25,6 +25,7 @@
             <option value="all" <%= searchParams.role === 'all' ? 'selected' : '' %>>All Roles</option>
             <option value="user" <%= searchParams.role === 'user' ? 'selected' : '' %>>User</option>
             <option value="artist" <%= searchParams.role === 'artist' ? 'selected' : '' %>>Artist</option>
+            <option value="venue" <%= searchParams.role === 'venue' ? 'selected' : '' %>>Venue</option>
             <option value="admin" <%= searchParams.role === 'admin' ? 'selected' : '' %>>Admin</option>
           </select>
         </div>
@@ -165,9 +166,28 @@
                 </td>
                 <td class="text-white"><%= user.email %></td>
                 <td>
-                  <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
-                    <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
-                  </span>
+                  <div class="d-flex flex-wrap gap-1">
+                    <% const baseRole = (user.role || 'user').toString(); %>
+                    <span class="badge <%= baseRole === 'admin' ? 'bg-danger' : baseRole === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                      <%= baseRole.charAt(0).toUpperCase() + baseRole.slice(1) %>
+                    </span>
+                    <% const userIdStr = user._id ? user._id.toString() : ''; %>
+                    <% const assignedRoles = (user.assignedRoles && user.assignedRoles.length)
+                      ? user.assignedRoles
+                      : ((typeof userRoleMap !== 'undefined' && userRoleMap[userIdStr]) ? userRoleMap[userIdStr] : []); %>
+                    <% const baseRoleLower = baseRole.toLowerCase(); %>
+                    <% assignedRoles.forEach(role => { %>
+                      <% if (role && role.name) { %>
+                        <% const nameLower = role.name.toLowerCase(); %>
+                        <% if (nameLower !== baseRoleLower) { %>
+                          <span class="badge bg-info text-dark d-inline-flex align-items-center gap-1">
+                            <% if (role.icon) { %><i class="bi <%= role.icon %>"></i><% } %>
+                            <%= role.name %>
+                          </span>
+                        <% } %>
+                      <% } %>
+                    <% }); %>
+                  </div>
                 </td>
                 <td class="text-white"><%= toISTDateString(user.createdAt) %></td>
                 <td>
