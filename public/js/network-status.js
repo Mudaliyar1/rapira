@@ -96,11 +96,15 @@
   }
 
   // Connectivity check with timeout to detect captive/blocked Wi-Fi
-  async function checkConnection() {
+  async function checkConnection(isInitialCheck = false) {
+    // Use longer timeouts for initial checks to handle slow connections
+    const localTimeout = isInitialCheck ? 8000 : 5000;
+    const externalTimeout = isInitialCheck ? 10000 : 7000;
+    
     // Try local server first (fastest)
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2000);
+      const timeout = setTimeout(() => controller.abort(), localTimeout);
       
       const res = await fetch('/ping', {
         method: 'HEAD',
@@ -124,7 +128,7 @@
     for (const url of urls) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        const timeout = setTimeout(() => controller.abort(), externalTimeout);
         
         await fetch(url, {
           method: 'HEAD',
@@ -147,6 +151,8 @@
   let currentStatus = 'unknown';
   let checkInProgress = false;
   let retryCount = 0;
+  let consecutiveFailures = 0;
+  let initialCheckDone = false;
 
   async function evaluateStatus(reason = 'poll', skipIfChecking = false, silent = false) {
     // Prevent multiple simultaneous checks
@@ -157,10 +163,13 @@
     }
     checkInProgress = true;
 
+    const isInitialCheck = reason === 'initial' || reason === 'initial-retry';
+
     // If browser says offline, show immediately without ping
     if (!navigator.onLine) {
       if (currentStatus !== 'offline') {
         currentStatus = 'offline';
+        consecutiveFailures++;
         console.log('Network: confirmed offline via navigator');
         showOffline();
       }
@@ -168,19 +177,29 @@
       return;
     }
 
-    // Browser says online, verify with ping (even on initial load to catch WiFi without internet)
-    const reachable = await checkConnection();
+    // Browser says online, verify with ping
+    const reachable = await checkConnection(isInitialCheck);
     const nextStatus = reachable ? 'online' : 'offline';
+
+    // Track consecutive failures
+    if (reachable) {
+      consecutiveFailures = 0;
+    } else {
+      consecutiveFailures++;
+    }
 
     if (nextStatus !== currentStatus) {
       currentStatus = nextStatus;
       if (nextStatus === 'online') {
         console.log('Network: confirmed online via', reason);
         retryCount = 0;
+        consecutiveFailures = 0;
+        initialCheckDone = true;
+        
         // Only show notification if we're recovering from offline, not on initial load
-        if (reason !== 'initial' && !silent) {
+        if (reason !== 'initial' && reason !== 'initial-retry' && !silent) {
           showOnline();
-        } else if (reason === 'initial') {
+        } else {
           // Just update status silently on initial load
           const screen = document.getElementById('offline-screen');
           if (screen) {
@@ -189,28 +208,43 @@
           document.body.classList.remove('offline-lock');
         }
       } else {
-        console.log('Network: confirmed offline via', reason);
-        showOffline();
-        // Auto-retry after 5 seconds if initial check failed
-        if (reason === 'initial' && retryCount < 3) {
+        console.log('Network: detected offline via', reason, '- failures:', consecutiveFailures);
+        
+        // On initial check, require multiple failures before showing offline screen
+        if (isInitialCheck && consecutiveFailures < 2) {
+          console.log('Initial check failed, retrying before showing offline (attempt', consecutiveFailures, ')');
           retryCount++;
           setTimeout(() => {
-            console.log('Retrying connection check...', retryCount);
             checkInProgress = false;
-            evaluateStatus('retry', false, true);
-          }, 5000);
+            evaluateStatus('initial-retry', false, true);
+          }, 3000);
+        } else if (reason === 'initial-retry' && retryCount < 2) {
+          // Additional retry on initial check
+          retryCount++;
+          console.log('Initial retry', retryCount, 'of 2...');
+          setTimeout(() => {
+            checkInProgress = false;
+            evaluateStatus('initial-retry', false, true);
+          }, 3000);
+        } else {
+          // Show offline only after confirming multiple times
+          showOffline();
+          initialCheckDone = true;
         }
       }
-    } else if (currentStatus === 'offline' && retryCount > 0) {
-      // Keep retrying if we think we're offline
-      if (retryCount < 3) {
-        retryCount++;
-        setTimeout(() => {
-          console.log('Retrying connection check...', retryCount);
-          checkInProgress = false;
-          evaluateStatus('retry');
-        }, 5000);
-      }
+    } else if (currentStatus === 'offline' && navigator.onLine && consecutiveFailures < 3) {
+      // We think we're offline but navigator says online - try to recover
+      retryCount++;
+      console.log('Attempting recovery check...', retryCount);
+      setTimeout(() => {
+        checkInProgress = false;
+        evaluateStatus('recovery', false, true);
+      }, 3000);
+    } else if (isInitialCheck && currentStatus === 'unknown') {
+      // Initial check didn't change status (no connection check was attempted), assume online
+      currentStatus = 'online';
+      initialCheckDone = true;
+      console.log('Initial check: assuming online');
     }
     
     checkInProgress = false;
@@ -228,19 +262,25 @@
 
   // Initialize
   function init() {
-    // Initial check immediately - will detect WiFi without internet
-    evaluateStatus('initial');
+    // Delay initial check to allow page to fully load before checking connectivity
+    // This prevents false negatives from checking too early
+    setTimeout(() => {
+      console.log('Starting delayed initial connectivity check...');
+      evaluateStatus('initial');
+    }, 2000);
 
-    // Listen for online/offline events
+    // Listen for online/offline events (these are automatic browser events)
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check every 15 seconds if we're in offline state to recover quickly
+    // Only check periodically if we're showing offline screen (to detect when internet returns)
+    // This helps users see when they're back online
     setInterval(() => {
       if (currentStatus === 'offline' && navigator.onLine) {
+        console.log('Attempting recovery check (offline → online transition)...');
         evaluateStatus('periodic-recovery', true);
       }
-    }, 15000);
+    }, 30000);
   }
 
   // Initialize when DOM is ready
