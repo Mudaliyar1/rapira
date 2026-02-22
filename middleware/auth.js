@@ -55,6 +55,13 @@ module.exports = {
       errorMessage = 'You must be logged in to send messages';
     }
 
+    if (!req.xhr && req.method === 'GET' && req.accepts('html')) {
+      const returnTo = req.originalUrl || '';
+      if (returnTo && !returnTo.startsWith('/auth') && !req.session.returnTo) {
+        req.session.returnTo = returnTo;
+      }
+    }
+
     req.flash('error', errorMessage);
     
     // For AJAX requests, send JSON response instead of redirect
