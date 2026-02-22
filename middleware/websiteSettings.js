@@ -28,6 +28,7 @@ const loadWebsiteSettings = async (req, res, next) => {
     res.locals.headerSettings = settingsCache.headerSettings;
     res.locals.menuSettings = getNavbarMenuSettings(settingsCache.menuSettings);
     res.locals.themeSettings = settingsCache.themeSettings;
+    res.locals.heroCarouselSettings = settingsCache.heroCarouselSettings;
 
     // Check maintenance mode
     if (settingsCache.isMaintenanceActive()) {
@@ -116,6 +117,11 @@ const loadWebsiteSettings = async (req, res, next) => {
         secondaryColor: '#e91e63',
         accentColor: '#ff9800'
       },
+      heroCarouselSettings: {
+        autoplay: true,
+        intervalMs: 5000,
+        slides: []
+      },
       adminSettings: {
         showDummyData: false,
         dummyDataCount: 10
@@ -127,6 +133,7 @@ const loadWebsiteSettings = async (req, res, next) => {
     res.locals.headerSettings = res.locals.websiteSettings.headerSettings;
     res.locals.menuSettings = res.locals.websiteSettings.menuSettings;
     res.locals.themeSettings = res.locals.websiteSettings.themeSettings;
+    res.locals.heroCarouselSettings = res.locals.websiteSettings.heroCarouselSettings;
     
     next();
   }

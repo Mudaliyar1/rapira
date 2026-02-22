@@ -412,23 +412,26 @@
               </div>
             </div>
 
-            <!-- Action Buttons - Icon Only -->
-            <div class="action-buttons" style="display: flex; gap: 20px; align-items: center; justify-content: center; padding: 20px 0;">
-              <!-- Like Button -->
-              <button id="likeBtn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255, 23, 68, 0.1)'; this.style.borderColor='#ff1744';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
-                <i class="bi bi-heart" style="font-size: 1.8rem; color: #fff; pointer-events: none;"></i>
-              </button>
-              
-              <!-- Share Button -->
-              <button id="shareBtn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(0, 212, 255, 0.2)'; this.style.borderColor='#00d4ff';" onmouseout="this.style.background='rgba(0, 212, 255, 0.1)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
-                <i class="bi bi-share" style="font-size: 1.8rem; color: #00d4ff; pointer-events: none;"></i>
-              </button>
-            </div>
-
-            <!-- Login Message (if not logged in) -->
-            <% if (!user) { %>
-              <div class="login-message">
-                <p class="mb-0 text-muted">Please log in to like and share posts</p>
+            <!-- Action Buttons - Only show if logged in -->
+            <% if (user) { %>
+              <div class="action-buttons" style="display: flex; gap: 20px; align-items: center; justify-content: center; padding: 20px 0;">
+                <!-- Like Button -->
+                <button id="likeBtn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255, 23, 68, 0.1)'; this.style.borderColor='#ff1744';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
+                  <i class="bi bi-heart" style="font-size: 1.8rem; color: #fff; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Share Button -->
+                <button id="shareBtn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(0, 212, 255, 0.2)'; this.style.borderColor='#00d4ff';" onmouseout="this.style.background='rgba(0, 212, 255, 0.1)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
+                  <i class="bi bi-share" style="font-size: 1.8rem; color: #00d4ff; pointer-events: none;"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <!-- Login Message (if not logged in) -->
+              <div class="login-message" style="text-align: center; padding: 20px 0;">
+                <p class="mb-0 text-muted" style="font-size: 1.1rem;">
+                  <i class="bi bi-lock me-2"></i>
+                  <a href="/auth/login" class="text-decoration-none text-primary fw-bold">Login to like the post</a>
+                </p>
               </div>
             <% } %>
           </div>
@@ -486,6 +489,9 @@
         
         if (!userId) {
           showToast('Please log in to like posts', 'info');
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 1500);
           return;
         }
         
@@ -506,17 +512,22 @@
           
           console.log('[POST DETAIL] Response status:', res.status);
           
-          // Handle 401 Unauthorized (not logged in)
+          // Handle 401 Unauthorized (not logged in or session expired)
           if (res.status === 401) {
             const data = await res.json();
-            showToast(data.message || 'You must be logged in to like posts', 'info');
+            showToast(data.message || 'Your session expired. Please log in again.', 'info');
             setTimeout(() => {
               window.location.href = '/auth/login';
             }, 1500);
             return;
           }
           
-          if (!res.ok) throw new Error('Network error');
+          // Handle other errors
+          if (!res.ok) {
+            const data = await res.json();
+            showToast(data.message || 'Failed to like post', 'error');
+            return;
+          }
           
           const data = await res.json();
           console.log('[POST DETAIL] Response data:', data);
@@ -532,11 +543,11 @@
             
             showToast(data.liked ? '❤️ Liked!' : 'Unliked', 'success');
           } else {
-            showToast(data.message || 'Failed to like', 'error');
+            showToast(data.message || 'Failed to like post', 'error');
           }
         } catch (err) {
           console.error('[POST DETAIL] Like error:', err);
-          showToast('Failed to like post', 'error');
+          showToast('Network error. Please try again.', 'error');
         } finally {
           isProcessing = false;
           likeBtn.disabled = false;

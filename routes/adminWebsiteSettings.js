@@ -9,6 +9,119 @@ const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { getMenuConfiguration, getAllRoutes } = require('../utils/routeDiscovery');
 const { clearSettingsCache } = require('../middleware/websiteSettings');
 
+const getDefaultHeroCarouselSlides = () => {
+  const currentYear = new Date().getFullYear();
+  return [
+    {
+      title: 'Experience the Best of Indian Rap',
+      description: 'Discover artists, book concerts, and connect with the hip-hop community',
+      badge: 'LIVE CULTURE',
+      dateText: `${currentYear} • RAPIRA`,
+      buttonText: 'Explore Concerts',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1571266028243-100ffcfb6f4f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: `Summer Rap Festival ${currentYear}`,
+      description: 'Join the biggest hip-hop event of the year with top artists performing live!',
+      badge: 'FEATURED EVENT',
+      dateText: `June 15-17, ${currentYear}`,
+      buttonText: 'Book Now',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Go Premium',
+      description: 'Get exclusive access to VIP tickets, backstage passes, and special discounts!',
+      badge: 'NEW FEATURE',
+      dateText: `Premium Access • ${currentYear}`,
+      buttonText: 'Upgrade Now',
+      linkUrl: '/subscriptions',
+      imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Become a Featured Artist',
+      description: 'Showcase your talent and reach thousands of fans on our platform!',
+      badge: 'ARTIST SPOTLIGHT',
+      dateText: `Applications Open • ${currentYear}`,
+      buttonText: 'Join as Artist',
+      linkUrl: '/artists/register',
+      imageUrl: 'https://images.unsplash.com/photo-1521335629791-ce4aec67dd53?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Reels-Ready Cypher Nights',
+      description: 'Shoot viral moments, tag your crew, and perform in camera-first live sessions.',
+      badge: 'TRENDING NOW',
+      dateText: `Friday Nights • ${currentYear}`,
+      buttonText: 'See Lineup',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Streetwear Drop Live',
+      description: 'Limited-edition rap merch drops with creator collabs and early access.',
+      badge: 'LIMITED DROP',
+      dateText: `Fresh Drop • ${currentYear}`,
+      buttonText: 'Shop Drop',
+      linkUrl: '/shop',
+      imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Creator Collab Rooms',
+      description: 'Match with rappers, producers, and videographers to create your next hit.',
+      badge: 'FOR CREATORS',
+      dateText: `Collab Season • ${currentYear}`,
+      buttonText: 'Start Collab',
+      linkUrl: '/find-my-artist',
+      imageUrl: 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    }
+  ];
+};
+
+const appendCuratedSlidesIfMissing = (settings) => {
+  if (!settings.heroCarouselSettings) return false;
+  if (!Array.isArray(settings.heroCarouselSettings.slides)) {
+    settings.heroCarouselSettings.slides = [];
+  }
+
+  const existingTitleSet = new Set(
+    settings.heroCarouselSettings.slides
+      .map((slide) => (slide?.title || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+
+  const curatedSlides = getDefaultHeroCarouselSlides();
+  let changed = false;
+
+  curatedSlides.forEach((slide) => {
+    const key = (slide.title || '').trim().toLowerCase();
+    if (key && !existingTitleSet.has(key)) {
+      settings.heroCarouselSettings.slides.push(slide);
+      existingTitleSet.add(key);
+      changed = true;
+    }
+  });
+
+  return changed;
+};
+
+const toArray = (value) => (Array.isArray(value) ? value : (value !== undefined ? [value] : []));
+
+const normalizeLinkUrl = (value) => {
+  const input = (value || '').trim();
+  if (!input) return '/';
+  if (input.startsWith('/')) return input;
+  if (/^https?:\/\//i.test(input)) return input;
+  return `/${input}`;
+};
+
 // Configure multer for logo uploads (memory → Cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -74,6 +187,20 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     if (!settings.menuSettings.shopMenu.items) settings.menuSettings.shopMenu.items = {};
     if (!settings.menuSettings.helpSupportMenu.items) settings.menuSettings.helpSupportMenu.items = {};
 
+    if (!settings.heroCarouselSettings) {
+      settings.heroCarouselSettings = {
+        autoplay: true,
+        intervalMs: 5000,
+        slides: getDefaultHeroCarouselSlides()
+      };
+    }
+
+    if (!settings.heroCarouselSettings.slides || settings.heroCarouselSettings.slides.length === 0) {
+      settings.heroCarouselSettings.slides = getDefaultHeroCarouselSlides();
+    }
+
+    const curatedSlidesAdded = appendCuratedSlidesIfMissing(settings);
+
     // Initialize all route items with default values if they don't exist
     Object.keys(allRoutes.discover).forEach(key => {
       if (settings.menuSettings.discoverMenu.items[key] === undefined) {
@@ -100,7 +227,9 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     });
 
     // Save the updated settings
-    await settings.save();
+    if (curatedSlidesAdded || settings.isModified()) {
+      await settings.save();
+    }
 
     res.render('admin/website-settings', {
       layout: 'admin',
@@ -117,6 +246,126 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Error loading website settings:', error);
     req.flash('error', 'Failed to load website settings');
     res.redirect('/admin');
+  }
+});
+
+// POST - Update Home Hero Carousel Settings
+router.post('/carousel', isLoggedIn, isAdmin, upload.any(), async (req, res) => {
+  try {
+    const settings = await WebsiteSettings.getSettings();
+
+    if (!settings.heroCarouselSettings) {
+      settings.heroCarouselSettings = { autoplay: true, intervalMs: 5000, slides: [] };
+    }
+
+    const existingTitles = toArray(req.body.existingTitle);
+    const existingDescriptions = toArray(req.body.existingDescription);
+    const existingBadges = toArray(req.body.existingBadge);
+    const existingDateTexts = toArray(req.body.existingDateText);
+    const existingButtonTexts = toArray(req.body.existingButtonText);
+    const existingLinkUrls = toArray(req.body.existingLinkUrl);
+    const existingImageUrls = toArray(req.body.existingImageUrl);
+    const existingImageMediaIds = toArray(req.body.existingImageMediaId);
+    const existingIsActiveValues = toArray(req.body.existingIsActive);
+    const removeSlideIndices = new Set(toArray(req.body.removeSlideIndices).map(value => parseInt(value, 10)));
+
+    const maxLength = Math.max(
+      existingTitles.length,
+      existingDescriptions.length,
+      existingBadges.length,
+      existingDateTexts.length,
+      existingButtonTexts.length,
+      existingLinkUrls.length,
+      existingImageUrls.length,
+      existingImageMediaIds.length
+    );
+
+    const updatedSlides = [];
+    const uploadedFiles = req.files || [];
+
+    for (let index = 0; index < maxLength; index += 1) {
+      if (removeSlideIndices.has(index)) {
+        const mediaId = existingImageMediaIds[index];
+        if (mediaId) {
+          const mediaDoc = await Media.findById(mediaId);
+          await deleteMedia(mediaDoc);
+        }
+        continue;
+      }
+
+      let imageUrl = (existingImageUrls[index] || '').trim();
+      let imageMediaId = existingImageMediaIds[index] || null;
+
+      const replacementFile = uploadedFiles.find(file => file.fieldname === `existingSlideImage_${index}`);
+      if (replacementFile) {
+        if (imageMediaId) {
+          const previousMediaDoc = await Media.findById(imageMediaId);
+          await deleteMedia(previousMediaDoc);
+        }
+
+        const { media } = await uploadFileToCloudinary(replacementFile, {
+          module: 'homeHeroCarousel',
+          ownerType: 'admin',
+          ownerId: req.session?.user?.id,
+          folder: 'rapira/admin/home-hero-carousel'
+        });
+
+        imageUrl = media.secure_url;
+        imageMediaId = media._id;
+      }
+
+      if (!imageUrl) {
+        continue;
+      }
+
+      updatedSlides.push({
+        title: (existingTitles[index] || '').trim(),
+        description: (existingDescriptions[index] || '').trim(),
+        badge: (existingBadges[index] || '').trim(),
+        dateText: (existingDateTexts[index] || '').trim(),
+        buttonText: (existingButtonTexts[index] || '').trim(),
+        linkUrl: normalizeLinkUrl(existingLinkUrls[index]),
+        imageUrl,
+        imageMedia: imageMediaId,
+        isActive: existingIsActiveValues.includes(String(index))
+      });
+    }
+
+    const newSlideFile = uploadedFiles.find(file => file.fieldname === 'newSlideImage');
+    if (newSlideFile) {
+      const { media } = await uploadFileToCloudinary(newSlideFile, {
+        module: 'homeHeroCarousel',
+        ownerType: 'admin',
+        ownerId: req.session?.user?.id,
+        folder: 'rapira/admin/home-hero-carousel'
+      });
+
+      updatedSlides.push({
+        title: (req.body.newTitle || '').trim(),
+        description: (req.body.newDescription || '').trim(),
+        badge: (req.body.newBadge || '').trim(),
+        dateText: (req.body.newDateText || '').trim(),
+        buttonText: (req.body.newButtonText || '').trim(),
+        linkUrl: normalizeLinkUrl(req.body.newLinkUrl),
+        imageUrl: media.secure_url,
+        imageMedia: media._id,
+        isActive: true
+      });
+    }
+
+    settings.heroCarouselSettings.autoplay = req.body.autoplay === 'on';
+    settings.heroCarouselSettings.intervalMs = Math.min(Math.max(parseInt(req.body.intervalMs, 10) || 5000, 2000), 20000);
+    settings.heroCarouselSettings.slides = updatedSlides;
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    clearSettingsCache();
+    req.flash('success', 'Hero carousel settings updated successfully');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating hero carousel settings:', error);
+    req.flash('error', 'Failed to update hero carousel settings');
+    res.redirect('/admin/website-settings');
   }
 });
 

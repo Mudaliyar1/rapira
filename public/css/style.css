@@ -792,6 +792,128 @@ h5.card-title.text-white,
   background-color: #000;
 }
 
+/* Full-image mode for admin-managed hero slides */
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide {
+  height: 80vh;
+  min-height: 500px;
+  background-color: transparent;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .carousel-bg {
+  height: 80vh !important;
+  min-height: 500px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .carousel-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  max-height: none;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg circle {
+  fill: rgba(255, 255, 255, 0.18);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg-top {
+  top: -6%;
+  left: 0;
+  height: 42%;
+  animation: heroFloatX 18s ease-in-out infinite alternate;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg-mid {
+  top: 12%;
+  left: 0;
+  height: 62%;
+  animation: heroPulse 10s ease-in-out infinite;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg-bottom {
+  bottom: -8%;
+  left: 0;
+  height: 44%;
+  animation: heroFloatX 22s ease-in-out infinite alternate-reverse;
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-1 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-1 .hero-svg circle {
+  fill: rgba(168, 85, 247, 0.28);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-2 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-2 .hero-svg circle {
+  fill: rgba(244, 63, 94, 0.24);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-3 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-3 .hero-svg circle {
+  fill: rgba(251, 191, 36, 0.24);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-4 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-4 .hero-svg circle {
+  fill: rgba(34, 211, 238, 0.24);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-5 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-5 .hero-svg circle {
+  fill: rgba(236, 72, 153, 0.24);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-6 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-6 .hero-svg circle {
+  fill: rgba(139, 92, 246, 0.24);
+}
+
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-7 .hero-svg path,
+.main-slider-section #mainCarousel .carousel-item.hero-image-slide.hero-svg-theme-7 .hero-svg circle {
+  fill: rgba(34, 197, 94, 0.24);
+}
+
+@keyframes heroFloatX {
+  0% {
+    transform: translateX(-1.5%) translateY(0);
+  }
+  100% {
+    transform: translateX(1.5%) translateY(0);
+  }
+}
+
+@keyframes heroPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.48;
+  }
+}
+
 .carousel-bg {
   width: 100%;
   position: relative;

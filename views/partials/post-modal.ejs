@@ -46,18 +46,28 @@
               </div>
             </div>
             
-            <!-- Action Buttons -->
-            <div class="action-buttons" style="display: flex; gap: 15px; align-items: center; justify-content: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
-              <!-- Like Button -->
-              <button id="post-modal-like-btn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-heart" style="font-size: 1.6rem; color: #fff; pointer-events: none;"></i>
-              </button>
-              
-              <!-- Share Button -->
-              <button id="post-modal-share-btn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-share" style="font-size: 1.6rem; color: #00d4ff; pointer-events: none;"></i>
-              </button>
-            </div>
+            <!-- Action Buttons - Only for logged-in users -->
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+              <div class="action-buttons" style="display: flex; gap: 15px; align-items: center; justify-content: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
+                <!-- Like Button -->
+                <button id="post-modal-like-btn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-heart" style="font-size: 1.6rem; color: #fff; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Share Button -->
+                <button id="post-modal-share-btn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-share" style="font-size: 1.6rem; color: #00d4ff; pointer-events: none;"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <!-- Login message for non-logged-in users -->
+              <div style="text-align: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
+                <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                  <i class="bi bi-lock me-2"></i>
+                  <a href="/auth/login" class="text-decoration-none text-primary fw-bold">Login to like and share</a>
+                </p>
+              </div>
+            <% } %>
             
             <!-- Caption with Read More -->
             <div style="margin-bottom: 15px;">

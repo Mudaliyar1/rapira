@@ -155,7 +155,7 @@
 let currentPostId = null;
 let postsCache = [];
 const artistId = '<%= artist._id %>';
-const currentUserId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+const currentUserId = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser._id) ? currentUser._id : "" %>';
 
 async function loadPosts() {
   try {
@@ -265,14 +265,25 @@ function viewPost(postId) {
 
   // Update like button
   const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => l._id === currentUserId);
-  document.getElementById('postActions').innerHTML = `
-    <button class="btn btn-outline-light flex-grow-1" id="likeBtn" onclick="toggleLike()">
-      <i class="bi bi-heart${isLiked ? '-fill text-danger' : ''}"></i> ${isLiked ? 'Unlike' : 'Like'}
-    </button>
-    <button class="btn btn-outline-light flex-grow-1" id="shareBtn" onclick="sharePost()">
-      <i class="bi bi-share"></i> Share
-    </button>
-  `;
+  
+  if (currentUserId) {
+    // User is logged in - show like and share buttons
+    document.getElementById('postActions').innerHTML = `
+      <button class="btn btn-outline-light flex-grow-1" id="likeBtn" onclick="toggleLike()">
+        <i class="bi bi-heart${isLiked ? '-fill text-danger' : ''}"></i> ${isLiked ? 'Unlike' : 'Like'}
+      </button>
+      <button class="btn btn-outline-light flex-grow-1" id="shareBtn" onclick="sharePost()">
+        <i class="bi bi-share"></i> Share
+      </button>
+    `;
+  } else {
+    // User is not logged in - show login prompt
+    document.getElementById('postActions').innerHTML = `
+      <a href="/auth/login" class="btn btn-link text-primary flex-grow-1 text-decoration-none">
+        <i class="bi bi-lock me-2"></i>Login to like and share
+      </a>
+    `;
+  }
 
   // Show modal instantly
   const modalElement = document.getElementById('postModal');
