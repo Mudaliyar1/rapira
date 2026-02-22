@@ -193,13 +193,13 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         intervalMs: 5000,
         slides: getDefaultHeroCarouselSlides()
       };
+      await settings.save();
     }
 
-    if (!settings.heroCarouselSettings.slides || settings.heroCarouselSettings.slides.length === 0) {
-      settings.heroCarouselSettings.slides = getDefaultHeroCarouselSlides();
+    // Ensure slides array exists (but don't auto-populate if empty)
+    if (!settings.heroCarouselSettings.slides) {
+      settings.heroCarouselSettings.slides = [];
     }
-
-    const curatedSlidesAdded = appendCuratedSlidesIfMissing(settings);
 
     // Initialize all route items with default values if they don't exist
     Object.keys(allRoutes.discover).forEach(key => {
@@ -226,8 +226,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       }
     });
 
-    // Save the updated settings
-    if (curatedSlidesAdded || settings.isModified()) {
+    // Save the updated settings if any were modified
+    if (settings.isModified()) {
       await settings.save();
     }
 

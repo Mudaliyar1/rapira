@@ -2197,6 +2197,43 @@ router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res
   }
 });
 
+// Delete single unblock request (history entry)
+router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const request = await ArtistUnblockRequest.findById(req.params.id);
+
+    if (!request) {
+      req.flash('error', 'Request not found');
+      return res.redirect('/admin/unblock-requests');
+    }
+
+    await ArtistUnblockRequest.deleteOne({ _id: req.params.id });
+    req.flash('success', 'Unblock request deleted');
+    res.redirect('/admin/unblock-requests');
+  } catch (error) {
+    console.error('Delete unblock request error:', error);
+    req.flash('error', 'Failed to delete request');
+    res.redirect('/admin/unblock-requests');
+  }
+});
+
+// Delete approved/rejected unblock request history
+router.post('/unblock-requests/delete-history', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const result = await ArtistUnblockRequest.deleteMany({
+      status: { $in: ['approved', 'rejected'] }
+    });
+
+    const deletedCount = result?.deletedCount || 0;
+    req.flash('success', `Deleted ${deletedCount} history record${deletedCount === 1 ? '' : 's'}`);
+    res.redirect('/admin/unblock-requests');
+  } catch (error) {
+    console.error('Delete unblock request history error:', error);
+    req.flash('error', 'Failed to delete history');
+    res.redirect('/admin/unblock-requests');
+  }
+});
+
 // Manage tickets
 router.get('/tickets', isLoggedIn, isAdmin, async (req, res) => {
   try {
