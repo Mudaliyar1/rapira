@@ -232,6 +232,11 @@
               <a class="nav-link <%= typeof path !== 'undefined' && path && path.includes('dashboard') ? 'active' : '' %>" href="/artists/dashboard">Artist Dashboard</a>
             </li>
           <% } %>
+          <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+            <li class="nav-item">
+              <a class="nav-link <%= typeof path !== 'undefined' && path && path.startsWith('/producer-dashboard') ? 'active' : '' %>" href="/producer-dashboard">Producer Dashboard</a>
+            </li>
+          <% } %>
           <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
             <li class="nav-item">
               <a class="nav-link <%= typeof path !== 'undefined' && path && path.startsWith('/admin') ? 'active' : '' %>" href="/admin">Admin Dashboard</a>
@@ -255,13 +260,6 @@
         </div>
 
 
-        <% if (typeof currentUser !== 'undefined' && currentUser && typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
-          <li class="nav-item me-2">
-            <a class="nav-link position-relative" href="/messages">
-              <i class="bi bi-chat-dots"></i> Messages
-            </a>
-          </li>
-        <% } %>
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -278,9 +276,8 @@
               <li><a class="dropdown-item text-white" href="/tickets"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a></li>
               <li><a class="dropdown-item text-white" href="/orders/my-orders"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
               <li><a class="dropdown-item text-white" href="/subscriptions/my-subscriptions"><i class="bi bi-star me-2"></i>My Subscriptions</a></li>
-              <% if (typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
-              <li><a class="dropdown-item text-white" href="/messages"><i class="bi bi-chat-dots me-2"></i>Messages</a></li>
-              <li><a class="dropdown-item text-white" href="/messages/find"><i class="bi bi-people me-2"></i>Connect with Artists</a></li>
+              <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+              <li><a class="dropdown-item text-white" href="/producer-dashboard"><i class="bi bi-mic-fill me-2"></i>Producer Dashboard</a></li>
               <% } %>
               <li><hr class="dropdown-divider border-secondary"></li>
               <li><a class="dropdown-item text-white" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>

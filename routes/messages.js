@@ -8,6 +8,34 @@ const UserRole = require('../models/UserRole');
 const { isLoggedIn } = require('../middleware/auth');
 const mongoose = require('mongoose');
 
+const getDashboardMessagingContext = async (sessionUser) => {
+  if (!sessionUser || !sessionUser.id) return null;
+
+  if (sessionUser.role === 'artist') {
+    const artist = await Artist.findOne({ user: sessionUser.id }).populate('user');
+    if (artist) {
+      return {
+        dashboardType: 'artist',
+        artist,
+        producerUser: null
+      };
+    }
+  }
+
+  const userRoles = await UserRole.find({ user: sessionUser.id }).populate('role');
+  const hasProducerRole = userRoles.some(entry => entry.role && entry.role.name && entry.role.name.toLowerCase() === 'producer');
+
+  if (hasProducerRole) {
+    return {
+      dashboardType: 'producer',
+      artist: null,
+      producerUser: sessionUser
+    };
+  }
+
+  return null;
+};
+
 // Middleware to check if user can message a specific role
 const canMessageRole = async (req, res, next) => {
   try {
@@ -112,6 +140,14 @@ const canMessageRole = async (req, res, next) => {
 // Messages inbox
 router.get('/', isLoggedIn, async (req, res) => {
   try {
+    await Message.updateMany(
+      {
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
     // Get conversations (grouped by the other user)
     const conversations = await Message.aggregate([
       {
@@ -207,7 +243,11 @@ router.get('/', isLoggedIn, async (req, res) => {
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    res.render('messages/inbox', {
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/inbox-dashboard' : 'messages/inbox';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: 'Messages',
       conversations,
       userMap,
@@ -216,7 +256,11 @@ router.get('/', isLoggedIn, async (req, res) => {
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages'
     });
   } catch (error) {
     console.error('Error in messages inbox:', error);
@@ -238,6 +282,15 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       return res.redirect('/messages');
     }
 
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
     // Get messages between the two users
     const messages = await Message.find({
       $or: [
@@ -253,7 +306,7 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
         receiver: req.session.user.id,
         isRead: false
       },
-      { isRead: true }
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
     );
 
     // Get other user's artist profile if they are an artist
@@ -281,7 +334,11 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    res.render('messages/conversation', {
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/conversation-dashboard' : 'messages/conversation';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: `Conversation with ${otherUser.name}`,
       otherUser,
       otherUserArtist,
@@ -290,7 +347,11 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages'
     });
   } catch (error) {
     console.error('Error in view conversation:', error);
@@ -397,7 +458,9 @@ router.post('/send', isLoggedIn, async (req, res) => {
     const newMessage = new Message({
       sender: req.session.user.id,
       receiver: recipientId,
-      content
+      content,
+      deliveredAt: null,
+      readAt: null
     });
 
     await newMessage.save();
@@ -407,6 +470,241 @@ router.post('/send', isLoggedIn, async (req, res) => {
     console.error('Error in send message:', error);
     req.flash('error', 'An error occurred while sending the message');
     res.redirect('/messages');
+  }
+});
+
+router.get('/api/conversation/:userId', isLoggedIn, canMessageRole, async (req, res) => {
+  try {
+    const otherUserId = req.params.userId;
+
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        isRead: false
+      },
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
+    );
+
+    let messages = await Message.find({
+      $or: [
+        { sender: req.session.user.id, receiver: otherUserId },
+        { sender: otherUserId, receiver: req.session.user.id }
+      ]
+    }).sort({ createdAt: 1 }).lean();
+
+    // Filter out deleted messages based on user
+    messages = messages.map(msg => {
+      const deletedFor = msg.deletedFor || [];
+      if (msg.isDeleted || deletedFor.some(id => id.toString() === req.session.user.id)) {
+        return {
+          ...msg,
+          content: null,
+          isDeleted: true,
+          isEdited: false
+        };
+      }
+      return msg;
+    });
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Conversation API error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch conversation' });
+  }
+});
+
+router.post('/api/send', isLoggedIn, canMessageRole, async (req, res) => {
+  try {
+    const { recipientId, content } = req.body;
+
+    if (!recipientId || !content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Recipient and content are required' });
+    }
+
+    const recipient = await User.findById(recipientId);
+    if (!recipient) {
+      return res.status(404).json({ success: false, message: 'Recipient not found' });
+    }
+
+    const newMessage = new Message({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      content: content.trim(),
+      deliveredAt: null,
+      readAt: null
+    });
+
+    await newMessage.save();
+
+    res.json({ success: true, message: newMessage });
+  } catch (error) {
+    console.error('Send API error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+});
+
+router.post('/api/mark-read/:userId', isLoggedIn, async (req, res) => {
+  try {
+    await Message.updateMany(
+      {
+        sender: req.params.userId,
+        receiver: req.session.user.id,
+        isRead: false
+      },
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark read API error:', error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Edit message
+router.put('/api/edit/:messageId', isLoggedIn, async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Content cannot be empty' });
+    }
+
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    // Only sender can edit their message
+    if (message.sender.toString() !== req.session.user.id) {
+      return res.status(403).json({ success: false, message: 'You can only edit your own messages' });
+    }
+
+    // Cannot edit deleted messages
+    if (message.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Cannot edit deleted messages' });
+    }
+
+    // Store original content if not already stored
+    if (!message.originalContent) {
+      message.originalContent = message.content;
+    }
+
+    message.content = content.trim();
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('Edit message error:', error);
+    res.status(500).json({ success: false, message: 'Failed to edit message' });
+  }
+});
+
+// Delete message
+router.delete('/api/delete/:messageId', isLoggedIn, async (req, res) => {
+  try {
+    const { deleteFor } = req.body; // 'me' or 'everyone'
+
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    // Check permissions
+    const isSender = message.sender.toString() === req.session.user.id;
+    const isReceiver = message.receiver.toString() === req.session.user.id;
+
+    if (!isSender && !isReceiver) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    if (deleteFor === 'everyone' && !isSender) {
+      return res.status(403).json({ success: false, message: 'Only sender can delete for everyone' });
+    }
+
+    if (deleteFor === 'everyone') {
+      // Delete for everyone
+      message.isDeleted = true;
+      message.deletedAt = new Date();
+      message.deletedFor = [message.sender, message.receiver];
+    } else {
+      // Delete for me only
+      if (!message.deletedFor.includes(req.session.user.id)) {
+        message.deletedFor.push(req.session.user.id);
+      }
+    }
+
+    await message.save();
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete message' });
+  }
+});
+
+// Bulk delete messages
+router.post('/api/bulk-delete', isLoggedIn, async (req, res) => {
+  try {
+    const { messageIds, deleteFor } = req.body; // deleteFor: 'me' or 'everyone'
+
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No messages selected' });
+    }
+
+    const messages = await Message.find({ _id: { $in: messageIds } });
+
+    // Check permissions
+    for (const msg of messages) {
+      const isSender = msg.sender.toString() === req.session.user.id;
+      const isReceiver = msg.receiver.toString() === req.session.user.id;
+
+      if (!isSender && !isReceiver) {
+        return res.status(403).json({ success: false, message: 'Unauthorized to delete some messages' });
+      }
+
+      if (deleteFor === 'everyone' && !isSender) {
+        return res.status(403).json({ success: false, message: 'Only sender can delete messages for everyone' });
+      }
+    }
+
+    // Update all messages
+    if (deleteFor === 'everyone') {
+      await Message.updateMany(
+        { _id: { $in: messageIds } },
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedFor: [messages[0].sender, messages[0].receiver]
+        }
+      );
+    } else {
+      for (const msg of messages) {
+        if (!msg.deletedFor.includes(req.session.user.id)) {
+          msg.deletedFor.push(req.session.user.id);
+        }
+        await msg.save();
+      }
+    }
+
+    res.json({ success: true, deletedCount: messages.length });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete messages' });
   }
 });
 
@@ -430,126 +728,157 @@ router.get('/find', isLoggedIn, async (req, res) => {
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    // Get all roles
+    // Get all roles for filter dropdown
     const roles = await Role.find().sort({ name: 1 });
 
-    // Prepare to find users with roles
+    // Build users list based on current user type
+    let usersToShow = [];
+    let artistMap = {};
 
-    // If role is specified, filter by role
-    let roleFilter = null;
+    if (currentUserArtist) {
+      // Current user is ARTIST - show all producers and users with producer role
+      // Get all users with Producer role
+      const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+      let producerUsers = [];
 
-    if (role) {
-      const selectedRole = await Role.findById(role);
-
-      if (selectedRole) {
-        roleFilter = selectedRole;
+      if (producerRole) {
+        const userRoles = await UserRole.find({ role: producerRole._id }).populate('user');
+        producerUsers = userRoles
+          .filter(ur => ur.user && ur.user._id.toString() !== req.session.user.id)
+          .map(ur => ur.user);
       }
-    }
 
-    // Get users with roles
-    let usersWithRoles = [];
+      usersToShow = producerUsers;
 
-    if (roleFilter) {
-      // Get users with the selected role
-      const userRoles = await UserRole.find({ role: roleFilter._id })
-        .populate('user');
+      // Optionally: If you want to also show other users with any role
+      if (!role) {
+        const otherRoleUsers = await UserRole.find()
+          .populate('user')
+          .populate('role');
 
-      usersWithRoles = userRoles.map(ur => ur.user);
+      const userMap = {};
+      // Add producer users first
+      producerUsers.forEach(u => {
+        if (u && u._id) {
+          userMap[u._id.toString()] = u;
+        }
+      });
+
+      // Add other role users (won't override if already exists)
+      otherRoleUsers.forEach(ur => {
+        if (ur.user && ur.role && ur.user._id.toString() !== req.session.user.id) {
+          if (!userMap[ur.user._id.toString()]) {
+            userMap[ur.user._id.toString()] = ur.user;
+          }
+        }
+      });
+
+      usersToShow = Object.values(userMap);
+      }
+    } else if (hasRoles) {
+      // Current user is PRODUCER or has roles - show all artists regardless of role assignment
+      const allArtists = await Artist.find().populate('user');
+      usersToShow = allArtists
+        .filter(a => a.user && a.user._id.toString() !== req.session.user.id)
+        .map(a => a.user);
+
+      // Create artist map
+      allArtists.forEach(artist => {
+        if (artist.user) {
+          artistMap[artist.user._id.toString()] = artist;
+        }
+      });
     } else {
-      // Get all users with any role
+      // Regular user - show users with any role
       const userRoles = await UserRole.find()
         .populate('user')
         .populate('role');
 
-      // Group by user
       const userRoleMap = {};
-
       userRoles.forEach(ur => {
-        // Skip entries with null user or role references
-        if (!ur.user || !ur.role) {
-          console.log('Found user role with null user or role reference:', ur);
-          return;
+        if (ur.user && ur.role && ur.user._id.toString() !== req.session.user.id) {
+          if (!userRoleMap[ur.user._id]) {
+            userRoleMap[ur.user._id] = ur.user;
+          }
         }
-
-        if (!userRoleMap[ur.user._id]) {
-          userRoleMap[ur.user._id] = {
-            user: ur.user,
-            roles: []
-          };
-        }
-
-        userRoleMap[ur.user._id].roles.push(ur.role);
       });
 
-      usersWithRoles = Object.values(userRoleMap).map(ur => ur.user);
+      usersToShow = Object.values(userRoleMap);
     }
 
-    // Filter out the current user
-    usersWithRoles = usersWithRoles.filter(u => u._id.toString() !== req.session.user.id);
+    // Apply role filter if specified
+    if (role) {
+      const selectedRole = await Role.findById(role);
+      if (selectedRole) {
+        const userRoles = await UserRole.find({ role: selectedRole._id }).populate('user');
+        const roleUserIds = userRoles.map(ur => ur.user._id.toString());
+        usersToShow = usersToShow.filter(u => roleUserIds.includes(u._id.toString()));
+      }
+    }
 
-    // Get artist details for users who are artists
-    const artistUsers = usersWithRoles.filter(u => u.role === 'artist').map(u => u._id);
-    const artists = await Artist.find({ user: { $in: artistUsers } });
-
-    // Create a map of artist details for easier access
-    const artistMap = {};
-    artists.forEach(artist => {
-      artistMap[artist.user.toString()] = artist;
-    });
-
-    // Filter by state if specified
+    // Apply state/location filter if specified
     if (state) {
-      // Filter artists by state
-      const artistsInState = artists.filter(a => a.state === state);
-      const artistUserIds = artistsInState.map(a => a.user.toString());
-
-      // Filter users by state or by artist state
-      usersWithRoles = usersWithRoles.filter(u => {
-        if (u.role === 'artist') {
-          return artistUserIds.includes(u._id.toString());
+      usersToShow = usersToShow.filter(u => {
+        if (currentUserArtist) {
+          // For artists, match producer's state if available
+          return u.state === state;
         } else {
-          return u.city && u.city.includes(state);
+          // For producers, match artist's state
+          const artist = artistMap[u._id.toString()];
+          return artist && artist.state === state;
         }
       });
     }
 
     // Get user roles for display
-    const userIds = usersWithRoles.map(u => u._id);
+    const userIds = usersToShow.map(u => u._id);
     const userRoles = await UserRole.find({ user: { $in: userIds } })
       .populate('role');
 
     // Create a map of user roles for easier access
     const userRoleMap = {};
     userRoles.forEach(ur => {
-      // Skip entries with null role references
-      if (!ur.role) {
-        console.log('Found user role with null role reference:', ur);
-        return;
+      if (ur.role) {
+        if (!userRoleMap[ur.user.toString()]) {
+          userRoleMap[ur.user.toString()] = [];
+        }
+        userRoleMap[ur.user.toString()].push(ur.role);
       }
-
-      if (!userRoleMap[ur.user.toString()]) {
-        userRoleMap[ur.user.toString()] = [];
-      }
-
-      userRoleMap[ur.user.toString()].push(ur.role);
     });
 
-    // Get list of states from artists
-    const states = [...new Set(artists.map(a => a.state).filter(s => s))];
+    // Get list of states
+    let states = [];
+    if (currentUserArtist) {
+      // For artists, show producer states
+      const allUsers = await User.find().select('state').distinct('state');
+      states = [...new Set(allUsers)].filter(Boolean).sort();
+    } else {
+      // For producers, show artist states
+      const allArtists = await Artist.find().select('state').distinct('state');
+      states = [...new Set(allArtists)].filter(Boolean).sort();
+    }
 
-    res.render('messages/find', {
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/find-dashboard' : 'messages/find';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: 'Find Users',
-      users: usersWithRoles,
+      users: usersToShow,
       artistMap,
       userRoleMap,
       roles,
       states,
-      selectedRole: roleFilter,
-      selectedState: state,
+      selectedRole: role || '',
+      selectedState: state || '',
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages/find'
     });
   } catch (error) {
     console.error('Error in find users:', error);

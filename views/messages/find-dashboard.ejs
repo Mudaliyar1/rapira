@@ -1,0 +1,113 @@
+<% const headerPartial = dashboardType === 'artist' ? '../partials/artist-header' : '../partials/producer-header'; %>
+<% const footerPartial = dashboardType === 'artist' ? '../partials/artist-footer' : '../partials/producer-footer'; %>
+<%- include(headerPartial) %>
+
+<section>
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="glass-card-dark">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0 text-white">Find Users to Message</h2>
+            <a href="/messages" class="btn btn-outline-light"><i class="bi bi-arrow-left me-2"></i> Back to Messages</a>
+          </div>
+          <div class="card-body">
+            <form action="/messages/find" method="GET" class="mb-4">
+              <div class="row g-3">
+                <div class="col-md-5">
+                  <label for="role" class="form-label text-white">Filter by Role</label>
+                  <select class="form-select bg-dark text-white" id="role" name="role" style="color: white !important; background-color: #2b2b2b !important;">
+                    <option value="">All</option>
+                    <% roles.forEach(role => { %>
+                      <option value="<%= role._id %>" <%= selectedRole && selectedRole.toString && selectedRole.toString() === role._id.toString() ? 'selected' : selectedRole === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="col-md-5">
+                  <label for="state" class="form-label text-white">Filter by Location</label>
+                  <select class="form-select bg-dark text-white" id="state" name="state" style="color: white !important; background-color: #2b2b2b !important;">
+                    <option value="">All Locations</option>
+                    <% states.forEach(state => { %>
+                      <option value="<%= state %>" <%= selectedState === state ? 'selected' : '' %>><%= state %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                    <a href="/messages/find" class="btn btn-secondary"><i class="bi bi-arrow-counterclockwise"></i></a>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <div class="row g-4">
+              <% if (users && users.length > 0) { %>
+                <% users.forEach(user => { %>
+                  <div class="col-md-6 col-lg-4">
+                    <div class="glass-card-dark h-100">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                          <img src="<%= user.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-3" width="50" height="50" alt="<%= user.name %>" style="object-fit: cover;">
+                          <div>
+                            <h5 class="card-title mb-0 text-white"><%= user.name %></h5>
+                            <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                              <span class="badge bg-primary"><%= artistMap[user._id.toString()].artistLevel %> Artist</span>
+                            <% } %>
+                          </div>
+                        </div>
+
+                        <!-- Artist Bio -->
+                        <% if (user.role === 'artist' && artistMap[user._id.toString()] && artistMap[user._id.toString()].bio) { %>
+                          <p class="text-white-75 small mb-2"><%= artistMap[user._id.toString()].bio.substring(0, 80) %>...</p>
+                        <% } %>
+
+                        <!-- Roles Display -->
+                        <% if (userRoleMap[user._id.toString()] && userRoleMap[user._id.toString()].length > 0) { %>
+                          <div class="mb-3">
+                            <h6 class="text-white-75 mb-2">Roles:</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                              <% userRoleMap[user._id.toString()].forEach(role => { %>
+                                <span class="badge bg-secondary"><i class="bi <%= role.icon %> me-1"></i> <%= role.name %></span>
+                              <% }); %>
+                            </div>
+                          </div>
+                        <% } %>
+
+                        <!-- Artist Location -->
+                        <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                          <div class="mb-3">
+                            <h6 class="text-white-75 mb-2">Location:</h6>
+                            <p class="card-text text-white-50 mb-0 small">
+                              <i class="bi bi-geo-alt me-1"></i>
+                              <%= artistMap[user._id.toString()].city ? artistMap[user._id.toString()].city + ', ' : '' %><%= artistMap[user._id.toString()].state || 'N/A' %>
+                            </p>
+                          </div>
+                        <% } %>
+
+                        <div class="d-grid gap-2 mt-auto">
+                          <a href="/messages/conversation/<%= user._id %>" class="btn btn-outline-light btn-sm"><i class="bi bi-chat-text me-2"></i> Message</a>
+                          <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                            <a href="/artists/<%= artistMap[user._id.toString()]._id %>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person me-1"></i> View Profile</a>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <div class="col-12 text-center py-5">
+                  <i class="bi bi-search display-1 text-muted mb-3"></i>
+                  <h3 class="text-white">No Users Found</h3>
+                  <p class="text-white-75 mb-4">Try adjusting your filters or check back later.</p>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include(footerPartial) %>

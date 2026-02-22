@@ -761,6 +761,8 @@ const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
 const postsRoutes = require('./routes/posts');
 const adminMediaRoutes = require('./routes/adminMedia');
+const producerApplicationRoutes = require('./routes/producerApplications');
+const producerDashboardRoutes = require('./routes/producerDashboard');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -833,6 +835,8 @@ app.use('/shop', shopRoutes);
 app.use('/orders', orderRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/artist-applications', artistApplicationRoutes);
+app.use('/producer-applications', producerApplicationRoutes);
+app.use('/producer-dashboard', producerDashboardRoutes);
 app.use('/roles', roleRoutes);
 app.use('/learning', learningRoutes);
 app.use('/messages', messageRoutes);

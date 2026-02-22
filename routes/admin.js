@@ -768,8 +768,14 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/users');
     }
 
+    let producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const hasProducerRole = producerRole
+      ? await UserRole.exists({ user: user._id, role: producerRole._id })
+      : false;
+
     res.render('admin/edit-user', {
       user,
+      hasProducerRole,
       layout: 'admin',
       currentPath: '/admin/users'
     });
@@ -783,7 +789,7 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 // Update user
 router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const { role } = req.body;
+    const { role, makeProducer } = req.body;
 
     // Find user
     const user = await User.findById(req.params.id);
@@ -829,6 +835,29 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
       }
 
       user.role = role;
+    }
+
+    let producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    if (!producerRole && makeProducer === 'on') {
+      producerRole = new Role({
+        name: 'Producer',
+        description: 'Music producer role with artist messaging access',
+        icon: 'bi-mic-fill',
+        createdBy: req.session.user.id
+      });
+      await producerRole.save();
+    }
+
+    if (producerRole) {
+      if (makeProducer === 'on') {
+        await UserRole.findOneAndUpdate(
+          { user: user._id, role: producerRole._id },
+          { user: user._id, role: producerRole._id },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else {
+        await UserRole.findOneAndDelete({ user: user._id, role: producerRole._id });
+      }
     }
 
     await user.save();

@@ -1,0 +1,152 @@
+<% const headerPartial = dashboardType === 'artist' ? '../partials/artist-header' : '../partials/producer-header'; %>
+<% const footerPartial = dashboardType === 'artist' ? '../partials/artist-footer' : '../partials/producer-footer'; %>
+<%- include(headerPartial) %>
+
+<section>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-4 mb-4 mb-lg-0 d-none d-lg-block">
+        <div class="glass-card-dark h-100">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 text-white">Messages</h5>
+            <a href="/messages/find" class="btn btn-sm btn-primary"><i class="bi bi-search"></i> Find Users</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="list-group list-group-flush border-bottom scrollarea" style="max-height: 600px; overflow-y: auto;">
+              <a href="/messages" class="list-group-item list-group-item-action py-3 lh-tight border-secondary bg-dark text-white">
+                <div class="d-flex w-100 align-items-center justify-content-between">
+                  <strong class="mb-1"><i class="bi bi-arrow-left me-2"></i> Back to Inbox</strong>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="glass-card-dark h-100 d-flex flex-column">
+          <div class="card-header border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <a href="/messages" class="btn btn-sm btn-outline-light me-2 d-lg-none"><i class="bi bi-arrow-left"></i></a>
+              <div class="d-flex align-items-center">
+                <img src="<%= otherUser.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-2" width="40" height="40" alt="<%= otherUser.name %>">
+                <div>
+                  <h5 class="card-title mb-0 text-white"><%= otherUser.name %></h5>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body p-0 flex-grow-1 d-flex flex-column">
+            <div class="chat-messages p-3 scrollarea" style="flex: 1; overflow-y: auto; max-height: 400px;"></div>
+            <div class="chat-input p-3 border-top border-secondary">
+              <form action="/messages/send" method="POST">
+                <input type="hidden" name="recipientId" value="<%= otherUser._id %>">
+                <div class="input-group">
+                  <input type="text" class="form-control" name="content" placeholder="Type your message..." required>
+                  <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .chat-messages { width: 100%; scroll-behavior: smooth; overflow-anchor: none; }
+  .message-bubble { word-wrap: break-word; word-break: break-word; position: relative; }
+  .message-bubble::before { content: ''; position: absolute; width: 0; height: 0; top: 15px; }
+  .bg-primary.message-bubble::before { right: -8px; border-left: 8px solid var(--bs-primary); border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+  .bg-secondary.message-bubble::before { left: -8px; border-right: 8px solid var(--bs-secondary); border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+  .message-time { font-size: 0.75rem; }
+</style>
+
+<script>
+  (function() {
+    'use strict';
+    const currentUserId = '<%= user.id %>';
+    const otherUserId = '<%= otherUser._id %>';
+    const chatMessages = document.querySelector('.chat-messages');
+    const messageForm = document.querySelector('form[action="/messages/send"]');
+    const messageInput = document.querySelector('input[name="content"]');
+    let isUserNearBottom = true;
+
+    function escapeHtml(value) { const div = document.createElement('div'); div.textContent = value || ''; return div.innerHTML; }
+    function statusIcon(message) {
+      if (message.readAt || message.isRead) return '<i class="bi bi-check-all ms-1 text-info"></i>';
+      if (message.deliveredAt) return '<i class="bi bi-check-all ms-1"></i>';
+      return '<i class="bi bi-check ms-1"></i>';
+    }
+
+    function renderMessages(messages) {
+      const shouldStickToBottom = isUserNearBottom;
+      chatMessages.innerHTML = '';
+      if (!messages.length) {
+        chatMessages.innerHTML = '<div class="text-center py-5"><i class="bi bi-chat display-1 text-muted mb-3"></i><h3 class="text-white">No Messages Yet</h3><p class="text-white-75">Send a message to start the conversation.</p></div>';
+        return;
+      }
+
+      messages.forEach((message) => {
+        const outgoing = String(message.sender) === String(currentUserId);
+        const time = new Date(message.createdAt).toLocaleString('en-IN', { hour12: true });
+        const bubble = outgoing
+          ? `<div class="row mb-3"><div class="col-2"></div><div class="col-10"><div class="d-flex justify-content-end"><div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">${escapeHtml(message.content)}<div class="message-time text-end mt-1"><small class="opacity-75">${time} ${statusIcon(message)}</small></div></div></div></div></div>`
+          : `<div class="row mb-3"><div class="col-10"><div class="d-flex justify-content-start"><div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">${escapeHtml(message.content)}<div class="message-time mt-1"><small class="opacity-75">${time}</small></div></div></div></div><div class="col-2"></div></div>`;
+        chatMessages.insertAdjacentHTML('beforeend', bubble);
+      });
+
+      if (shouldStickToBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function fetchConversation() {
+      try {
+        const response = await fetch(`/messages/api/conversation/${otherUserId}`, { headers: { 'Accept': 'application/json' } });
+        const data = await response.json();
+        if (data.success && Array.isArray(data.messages)) renderMessages(data.messages);
+      } catch (error) { console.error('Failed to fetch conversation:', error); }
+    }
+
+    async function sendMessage(content) {
+      const response = await fetch('/messages/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ recipientId: otherUserId, content })
+      });
+      return response.ok;
+    }
+
+    if (chatMessages) {
+      chatMessages.addEventListener('scroll', () => {
+        const threshold = 80;
+        isUserNearBottom = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < threshold;
+      });
+    }
+
+    if (messageForm && messageInput) {
+      messageForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        messageInput.disabled = true;
+        const sent = await sendMessage(content);
+        messageInput.disabled = false;
+
+        if (sent) {
+          messageInput.value = '';
+          isUserNearBottom = true;
+          await fetchConversation();
+          messageInput.focus();
+        }
+      });
+    }
+
+    fetchConversation();
+    setInterval(fetchConversation, 3000);
+  })();
+</script>
+
+<%- include(footerPartial) %>

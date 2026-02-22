@@ -37,16 +37,16 @@
                 <div class="col-md-5">
                   <label for="role" class="form-label text-white">Filter by Role</label>
                   <select class="form-select bg-dark text-white" id="role" name="role" style="color: white !important; background-color: #2b2b2b !important;">
-                    <option value="">All Roles</option>
+                    <option value="">All</option>
                     <% roles.forEach(role => { %>
-                      <option value="<%= role._id %>" <%= selectedRole && selectedRole._id.toString() === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
+                      <option value="<%= role._id %>" <%= selectedRole && selectedRole.toString && selectedRole.toString() === role._id.toString() ? 'selected' : selectedRole === role._id.toString() ? 'selected' : '' %>><%= role.name %></option>
                     <% }); %>
                   </select>
                 </div>
                 <div class="col-md-5">
-                  <label for="state" class="form-label text-white">Filter by State</label>
+                  <label for="state" class="form-label text-white">Filter by Location</label>
                   <select class="form-select bg-dark text-white" id="state" name="state" style="color: white !important; background-color: #2b2b2b !important;">
-                    <option value="">All States</option>
+                    <option value="">All Locations</option>
                     <% states.forEach(state => { %>
                       <option value="<%= state %>" <%= selectedState === state ? 'selected' : '' %>><%= state %></option>
                     <% }); %>
@@ -70,7 +70,7 @@
                     <div class="glass-card-dark h-100">
                       <div class="card-body">
                         <div class="d-flex align-items-center mb-3">
-                          <img src="<%= user.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-3" width="50" height="50" alt="<%= user.name %>">
+                          <img src="<%= user.profileImage || '/images/default-profile.jpg' %>" class="rounded-circle me-3" width="50" height="50" alt="<%= user.name %>" style="object-fit: cover;">
                           <div>
                             <h5 class="card-title mb-0 text-white"><%= user.name %></h5>
                             <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
@@ -81,7 +81,13 @@
                           </div>
                         </div>
 
-                        <% if (userRoleMap[user._id.toString()]) { %>
+                        <!-- Artist Bio -->
+                        <% if (user.role === 'artist' && artistMap[user._id.toString()] && artistMap[user._id.toString()].bio) { %>
+                          <p class="text-white-75 small mb-2"><%= artistMap[user._id.toString()].bio.substring(0, 80) %>...</p>
+                        <% } %>
+
+                        <!-- Roles Display -->
+                        <% if (userRoleMap[user._id.toString()] && userRoleMap[user._id.toString()].length > 0) { %>
                           <div class="mb-3">
                             <h6 class="text-white-75 mb-2">Roles:</h6>
                             <div class="d-flex flex-wrap gap-1">
@@ -94,19 +100,26 @@
                           </div>
                         <% } %>
 
+                        <!-- Artist Location -->
                         <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
                           <div class="mb-3">
                             <h6 class="text-white-75 mb-2">Location:</h6>
-                            <p class="card-text text-white mb-0">
-                              <%= artistMap[user._id.toString()].city %>, <%= artistMap[user._id.toString()].state %>
+                            <p class="card-text text-white-50 mb-0 small">
+                              <i class="bi bi-geo-alt me-1"></i>
+                              <%= artistMap[user._id.toString()].city ? artistMap[user._id.toString()].city + ', ' : '' %><%= artistMap[user._id.toString()].state || 'N/A' %>
                             </p>
                           </div>
                         <% } %>
 
-                        <div class="d-grid mt-3">
-                          <a href="/messages/conversation/<%= user._id %>" class="btn btn-outline-light">
+                        <div class="d-grid gap-2 mt-auto">
+                          <a href="/messages/conversation/<%= user._id %>" class="btn btn-outline-light btn-sm">
                             <i class="bi bi-chat-text me-2"></i> Message
                           </a>
+                          <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                            <a href="/artists/<%= artistMap[user._id.toString()]._id %>" class="btn btn-outline-secondary btn-sm">
+                              <i class="bi bi-person me-1"></i> View Profile
+                            </a>
+                          <% } %>
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,108 @@
+<%- include('../partials/producer-header') %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <h5 class="text-white mb-2">Welcome to Producer Dashboard</h5>
+    <p class="text-white-50 mb-0">Browse and message artists available on the platform.</p>
+  </div>
+</div>
+
+<!-- Location Filter -->
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <form action="/producer-dashboard" method="GET" class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label for="location" class="form-label text-white">Filter by Location/State</label>
+        <select class="form-select bg-dark text-white border-secondary" id="location" name="location">
+          <option value="">All Locations</option>
+          <% locations.forEach(loc => { %>
+            <option value="<%= loc %>" <%= selectedLocation === loc ? 'selected' : '' %>><%= loc %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <button type="submit" class="btn btn-primary w-100">Filter Artists</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Artists Grid -->
+<div class="card bg-dark border-secondary">
+  <div class="card-header border-secondary">
+    <h5 class="mb-0 text-white">Artists on Rapira</h5>
+  </div>
+  <div class="card-body">
+    <% if (artists && artists.length > 0) { %>
+      <div class="row g-4">
+        <% artists.forEach(artist => { %>
+          <% const artistUser = artist.user ? artist.user : null; %>
+          <div class="col-md-6 col-lg-4">
+            <div class="glass-card-dark h-100">
+              <div class="card-body d-flex flex-column">
+                <!-- Artist Profile -->
+                <div class="d-flex align-items-center mb-3">
+                  <img src="<%= artistUser && artistUser.profileImage ? artistUser.profileImage : '/images/default-profile.svg' %>"
+                       width="50" height="50" class="rounded-circle me-3" alt="<%= artistUser ? artistUser.name : 'Artist' %>"
+                       style="object-fit: cover;">
+                  <div>
+                    <h5 class="card-title mb-0 text-white"><%= artistUser ? artistUser.name : 'Artist' %></h5>
+                    <small class="text-white-50"><%= artist.artistLevel || 'Artist' %></small>
+                  </div>
+                </div>
+
+                <!-- Artist Details -->
+                <div class="mb-3">
+                  <% if (artist.bio) { %>
+                    <p class="text-white-75 small mb-2"><%= artist.bio.substring(0, 100) %>...</p>
+                  <% } %>
+                  <% if (artist.state) { %>
+                    <p class="text-white-50 small mb-1"><i class="bi bi-geo-alt me-1"></i> <%= artist.state %></p>
+                  <% } %>
+                  <% if (artist.city) { %>
+                    <p class="text-white-50 small mb-1"><i class="bi bi-building me-1"></i> <%= artist.city %></p>
+                  <% } %>
+                </div>
+
+                <!-- Skills/Genre -->
+                <% if (artist.primarySoundGenre || artist.genres) { %>
+                  <div class="mb-3">
+                    <div class="d-flex flex-wrap gap-1">
+                      <% 
+                        const genres = artist.primarySoundGenre ? [artist.primarySoundGenre] : [];
+                        genres.forEach(genre => {
+                      %>
+                        <span class="badge bg-info text-dark"><%= genre %></span>
+                      <% }); %>
+                    </div>
+                  </div>
+                <% } %>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 mt-auto">
+                  <% if (artistUser) { %>
+                    <a href="/messages/conversation/<%= artistUser._id %>" class="btn btn-primary btn-sm">
+                      <i class="bi bi-chat-dots me-1"></i> Send Message
+                    </a>
+                  <% } %>
+                  <% if (artistUser) { %>
+                    <a href="/artists/<%= artistUser._id %>" class="btn btn-outline-light btn-sm">
+                      <i class="bi bi-person me-1"></i> View Profile
+                    </a>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-people text-white-50" style="font-size: 2rem;"></i>
+        <p class="text-white-50 mt-3 mb-0">No artists found in selected location.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/producer-footer') %>

@@ -1,0 +1,71 @@
+<%- contentFor('body') %>
+
+<div class="container py-5" style="max-width: 900px;">
+  <div class="card">
+    <div class="card-header">
+      <h4 class="mb-0">Apply as Producer</h4>
+    </div>
+    <div class="card-body">
+      <form action="/producer-applications/apply" method="POST" enctype="multipart/form-data">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Mobile Number *</label>
+            <input type="text" name="mobileNumber" class="form-control" maxlength="10" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Years of Experience *</label>
+            <input type="number" name="yearsOfExperience" class="form-control" min="0" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Instagram Link</label>
+            <input type="url" name="instagramLink" class="form-control" placeholder="https://instagram.com/yourprofile">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">YouTube Link</label>
+            <input type="url" name="youtubeLink" class="form-control" placeholder="https://youtube.com/@yourchannel">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">What you know (e.g. Beat, Mixing, Mastering) *</label>
+            <textarea name="skills" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Services you offer *</label>
+            <textarea name="services" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Location *</label>
+            <input type="text" name="location" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">ID Proof Type *</label>
+            <select name="idProofType" class="form-select" required>
+              <option value="">Select ID Proof</option>
+              <option value="Aadhaar Card">Aadhaar Card</option>
+              <option value="PAN Card">PAN Card</option>
+              <option value="Driving License">Driving License</option>
+              <option value="Passport">Passport</option>
+              <option value="Voter ID">Voter ID</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Upload ID Proof (JPG/PNG/PDF, max 5MB) *</label>
+            <input type="file" name="idProofFile" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="agree" name="agreedToTerms" required>
+              <label class="form-check-label" for="agree">
+                I agree to terms and conditions
+              </label>
+            </div>
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Submit Producer Application</button>
+            <a href="/users/profile" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

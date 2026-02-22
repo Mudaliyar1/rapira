@@ -1,0 +1,71 @@
+<%- contentFor('body') %>
+
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div>
+        <h4 class="text-white mb-1">Producer Application Details</h4>
+        <p class="text-white-50 mb-0">Submitted by <strong><%= application.user ? application.user.name : 'Unknown User' %></strong></p>
+      </div>
+      <span class="badge <%= application.status === 'approved' ? 'bg-success' : application.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>">
+        <%= application.status %>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="glass-card-dark border border-secondary h-100">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6"><strong class="text-white">Email:</strong> <span class="text-white-50"><%= application.user ? application.user.email : '-' %></span></div>
+          <div class="col-md-6"><strong class="text-white">Mobile:</strong> <span class="text-white-50"><%= application.mobileNumber %></span></div>
+          <div class="col-md-6"><strong class="text-white">Experience:</strong> <span class="text-white-50"><%= application.yearsOfExperience %> years</span></div>
+          <div class="col-md-6"><strong class="text-white">Location:</strong> <span class="text-white-50"><%= application.location %></span></div>
+          <div class="col-12"><strong class="text-white">Skills:</strong> <p class="text-white-50 mb-1"><%= application.skills %></p></div>
+          <div class="col-12"><strong class="text-white">Services:</strong> <p class="text-white-50 mb-1"><%= application.services %></p></div>
+          <div class="col-md-6"><strong class="text-white">Instagram:</strong> <span class="text-white-50"><%= application.instagramLink || '-' %></span></div>
+          <div class="col-md-6"><strong class="text-white">YouTube:</strong> <span class="text-white-50"><%= application.youtubeLink || '-' %></span></div>
+          <div class="col-md-6"><strong class="text-white">ID Proof Type:</strong> <span class="text-white-50"><%= application.idProofType %></span></div>
+          <div class="col-md-6"><strong class="text-white">Terms Accepted:</strong> <span class="text-white-50"><%= application.agreedToTerms ? 'Yes' : 'No' %></span></div>
+          <div class="col-12">
+            <a href="<%= application.idProofUrl %>" target="_blank" class="btn btn-outline-info btn-sm">View ID Proof</a>
+          </div>
+          <% if (application.adminNotes) { %>
+            <div class="col-12">
+              <strong class="text-white">Admin Notes:</strong>
+              <p class="text-white-50 mb-0"><%= application.adminNotes %></p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="glass-card-dark border border-secondary mb-3">
+      <div class="card-body">
+        <h6 class="text-white mb-3">Review Actions</h6>
+        <% if (application.status === 'pending') { %>
+          <form method="POST" action="/producer-applications/admin/<%= application._id %>/approve" class="mb-3">
+            <label class="form-label text-white">Approval Note (optional)</label>
+            <textarea name="adminNotes" class="form-control bg-dark text-white border-secondary mb-2" rows="3"></textarea>
+            <button type="submit" class="btn btn-success w-100">Approve Application</button>
+          </form>
+
+          <form method="POST" action="/producer-applications/admin/<%= application._id %>/reject">
+            <label class="form-label text-white">Rejection Reason *</label>
+            <textarea name="adminNotes" class="form-control bg-dark text-white border-secondary mb-2" rows="3" required></textarea>
+            <button type="submit" class="btn btn-danger w-100">Reject Application</button>
+          </form>
+        <% } else { %>
+          <p class="text-white-50 mb-0">This application is already reviewed.</p>
+        <% } %>
+      </div>
+    </div>
+    <a href="/producer-applications/admin" class="btn btn-outline-light w-100">Back to Applications</a>
+  </div>
+</div>
+
+<%- contentFor('title') %>Producer Application Details

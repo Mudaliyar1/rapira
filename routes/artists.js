@@ -295,6 +295,28 @@ router.get('/upload-content', isLoggedIn, isArtist, async (req, res) => {
   }
 });
 
+router.get('/messages', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    res.render('artists/messages', {
+      layout: false,
+      currentPath: '/artists/messages',
+      title: 'Producer Messages',
+      artist
+    });
+  } catch (error) {
+    console.error('Artist messages page error:', error);
+    req.flash('error', 'Failed to load messages page');
+    res.redirect('/artists/dashboard');
+  }
+});
+
 // Upload content process
 router.post('/upload-content', isLoggedIn, isArtist,
   contentUpload.fields([

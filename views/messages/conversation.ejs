@@ -186,134 +186,223 @@
 </style>
 
 <script>
-  // Robust chat scroll management
   (function() {
     'use strict';
 
-    let chatMessages;
-    let messageForm;
-    let messageInput;
-    let isUserAtBottom = true;
+    const currentUserId = '<%= user.id %>';
+    const otherUserId = '<%= otherUser._id %>';
+    const chatMessages = document.querySelector('.chat-messages');
+    const messageForm = document.querySelector('form[action="/messages/send"]');
+    const messageInput = document.querySelector('input[name="content"]');
+    let isUserNearBottom = true;
+    let selectedMessages = new Set();
 
-    // Function to force scroll to bottom with multiple fallbacks
-    function forceScrollToBottom() {
-      if (!chatMessages) return;
-
-      // Method 1: Direct scroll
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      // Method 2: Smooth scroll (fallback)
-      setTimeout(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 10);
-
-      // Method 3: Force with requestAnimationFrame
-      requestAnimationFrame(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
-
-      // Method 4: Final fallback
-      setTimeout(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 100);
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value || '';
+      return div.innerHTML;
     }
 
-    // Check if user is at bottom of chat
-    function checkIfAtBottom() {
-      if (!chatMessages) return true;
-      const threshold = 50; // pixels from bottom
-      return chatMessages.scrollTop >= (chatMessages.scrollHeight - chatMessages.clientHeight - threshold);
+    function statusIcon(message) {
+      if (message.readAt || message.isRead) return '<i class="bi bi-check-all ms-1 text-info"></i>';
+      if (message.deliveredAt) return '<i class="bi bi-check-all ms-1"></i>';
+      return '<i class="bi bi-check ms-1"></i>';
     }
 
-    // Initialize chat
-    function initializeChat() {
-      chatMessages = document.querySelector('.chat-messages');
-      messageForm = document.querySelector('form[action="/messages/send"]');
-      messageInput = document.querySelector('input[name="content"]');
+    async function deleteMessage(messageId, deleteFor = 'me') {
+      try {
+        const response = await fetch(`/messages/api/delete/${messageId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ deleteFor })
+        });
 
-      if (!chatMessages) {
-        console.warn('Chat messages container not found');
+        const data = await response.json();
+        if (data.success) {
+          await fetchConversation();
+        } else {
+          alert('Failed to delete message');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('Error deleting message');
+      }
+    }
+
+    async function editMessage(messageId, newContent) {
+      try {
+        const response = await fetch(`/messages/api/edit/${messageId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ content: newContent })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          await fetchConversation();
+        } else {
+          alert('Failed to edit message');
+        }
+      } catch (error) {
+        console.error('Edit error:', error);
+        alert('Error editing message');
+      }
+    }
+
+    function renderMessages(messages) {
+      const shouldStickToBottom = isUserNearBottom;
+      chatMessages.innerHTML = '';
+
+      if (!messages.length) {
+        chatMessages.innerHTML = `
+          <div class="text-center py-5">
+            <i class="bi bi-chat display-1 text-muted mb-3"></i>
+            <h3 class="text-white">No Messages Yet</h3>
+            <p class="text-white-75">Send a message to start the conversation.</p>
+          </div>
+        `;
         return;
       }
 
-      // Always scroll to bottom on page load
-      forceScrollToBottom();
+      messages.forEach((message) => {
+        const outgoing = String(message.sender) === String(currentUserId);
+        const time = new Date(message.createdAt).toLocaleString('en-IN', { hour12: true });
+        const isDeleted = message.isDeleted || !message.content;
+        const editedText = message.isEdited ? ' <small class="text-muted">(edited)</small>' : '';
+        
+        const messageContent = isDeleted 
+          ? '<em class="text-muted">This message was deleted</em>'
+          : escapeHtml(message.content) + editedText;
 
-      // Set up scroll listener
-      chatMessages.addEventListener('scroll', () => {
-        isUserAtBottom = checkIfAtBottom();
+        const actionButtons = outgoing && !isDeleted ? `
+          <div class="message-actions ms-2" style="position: absolute; top: 0; right: -40px; display: none;">
+            <a href="#" onclick="window.editMessageClick('${message._id}'); return false;" class="btn btn-sm btn-info text-white" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <div class="dropdown d-inline">
+              <a href="#" class="btn btn-sm btn-danger text-white dropdown-toggle" data-bs-toggle="dropdown" title="Delete">
+                <i class="bi bi-trash"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="window.deleteMessageClick('${message._id}', 'me'); return false;">Delete for me</a></li>
+                <li><a class="dropdown-item" href="#" onclick="window.deleteMessageClick('${message._id}', 'everyone'); return false;">Delete for everyone</a></li>
+              </ul>
+            </div>
+          </div>
+        ` : '';
+
+        const bubble = outgoing
+          ? `
+            <div class="row mb-3">
+              <div class="col-2"></div>
+              <div class="col-10">
+                <div class="d-flex justify-content-end">
+                  <div class="message-bubble bg-primary text-white rounded-3 p-3 position-relative" style="max-width: 85%;" onmouseover="this.querySelector('.message-actions').style.display='block'" onmouseout="this.querySelector('.message-actions').style.display='none'">
+                    ${messageContent}
+                    <div class="message-time text-end mt-1">
+                      <small class="opacity-75">${time} ${statusIcon(message)}</small>
+                    </div>
+                    ${actionButtons}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+          : `
+            <div class="row mb-3">
+              <div class="col-10">
+                <div class="d-flex justify-content-start">
+                  <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
+                    ${messageContent}
+                    <div class="message-time mt-1">
+                      <small class="opacity-75">${time}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-2"></div>
+            </div>
+          `;
+        chatMessages.insertAdjacentHTML('beforeend', bubble);
       });
 
-      // Handle form submission
-      if (messageForm) {
-        messageForm.addEventListener('submit', function(e) {
-          if (!messageInput || messageInput.value.trim() === '') {
-            e.preventDefault();
-            return false;
-          }
-
-          // Mark that we should scroll to bottom after page reload
-          localStorage.setItem('chatScrollToBottom', 'true');
-          localStorage.setItem('chatScrollTimestamp', Date.now().toString());
-        });
+      if (shouldStickToBottom) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
+    }
 
-      // Auto-focus message input
-      if (messageInput) {
-        messageInput.focus();
-
-        // Handle Enter key
-        messageInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (messageInput.value.trim() !== '') {
-              messageForm.submit();
-            }
-          }
-        });
+    window.deleteMessageClick = deleteMessage;
+    window.editMessageClick = async (messageId) => {
+      const newContent = prompt('Edit message:');
+      if (newContent && newContent.trim()) {
+        await editMessage(messageId, newContent);
       }
+    };
 
-      // Check if we need to scroll after form submission
-      const shouldScroll = localStorage.getItem('chatScrollToBottom');
-      const scrollTimestamp = localStorage.getItem('chatScrollTimestamp');
-
-      if (shouldScroll === 'true') {
-        // Only scroll if the timestamp is recent (within 5 seconds)
-        const now = Date.now();
-        const timestamp = parseInt(scrollTimestamp) || 0;
-
-        if (now - timestamp < 5000) {
-          // Clear the flags
-          localStorage.removeItem('chatScrollToBottom');
-          localStorage.removeItem('chatScrollTimestamp');
-
-          // Force scroll to bottom with multiple attempts
-          forceScrollToBottom();
-          setTimeout(forceScrollToBottom, 50);
-          setTimeout(forceScrollToBottom, 200);
-          setTimeout(forceScrollToBottom, 500);
+    async function fetchConversation() {
+      try {
+        const response = await fetch(`/messages/api/conversation/${otherUserId}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success && Array.isArray(data.messages)) {
+          renderMessages(data.messages);
         }
+      } catch (error) {
+        console.error('Failed to fetch conversation:', error);
       }
     }
 
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeChat);
-    } else {
-      initializeChat();
+    async function sendMessage(content) {
+      const response = await fetch('/messages/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          recipientId: otherUserId,
+          content
+        })
+      });
+
+      return response.ok;
     }
 
-    // Also initialize on window load as a fallback
-    window.addEventListener('load', () => {
-      setTimeout(forceScrollToBottom, 100);
-    });
+    function setupListeners() {
+      if (!chatMessages || !messageForm || !messageInput) return;
 
-    // Handle page visibility change (when user returns to tab)
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && isUserAtBottom) {
-        setTimeout(forceScrollToBottom, 100);
-      }
-    });
+      chatMessages.addEventListener('scroll', () => {
+        const threshold = 80;
+        isUserNearBottom = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < threshold;
+      });
 
+      messageForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        messageInput.disabled = true;
+        const sent = await sendMessage(content);
+        messageInput.disabled = false;
+
+        if (sent) {
+          messageInput.value = '';
+          isUserNearBottom = true;
+          await fetchConversation();
+          messageInput.focus();
+        }
+      });
+    }
+
+    setupListeners();
+    fetchConversation();
+    setInterval(fetchConversation, 3000);
   })();
 </script>

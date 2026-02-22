@@ -1,0 +1,19 @@
+<%- include('../partials/artist-header') %>
+
+<div class="card bg-dark border-secondary">
+  <div class="card-body text-center py-5">
+    <i class="bi bi-chat-left-text text-info" style="font-size: 3rem;"></i>
+    <h3 class="text-white mt-3">Producer Messages</h3>
+    <p class="text-white-50 mb-4">Receive and reply to producer messages from this section.</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="/messages" class="btn btn-primary">
+        <i class="bi bi-chat-dots me-1"></i> Open Inbox
+      </a>
+      <a href="/messages/find" class="btn btn-outline-info">
+        <i class="bi bi-people me-1"></i> Find Producers & Users
+      </a>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/artist-footer') %>

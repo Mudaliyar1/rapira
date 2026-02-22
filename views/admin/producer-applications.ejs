@@ -1,0 +1,69 @@
+<%- contentFor('body') %>
+
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <div class="d-flex gap-3">
+      <div><strong class="text-white"><%= stats.total %></strong><div class="text-white-50 small">Total</div></div>
+      <div><strong class="text-warning"><%= stats.pending %></strong><div class="text-white-50 small">Pending</div></div>
+      <div><strong class="text-success"><%= stats.approved %></strong><div class="text-white-50 small">Approved</div></div>
+      <div><strong class="text-danger"><%= stats.rejected %></strong><div class="text-white-50 small">Rejected</div></div>
+    </div>
+    <form method="GET" action="/producer-applications/admin" class="d-flex gap-2">
+      <select name="status" class="form-select bg-dark text-white border-secondary">
+        <option value="all" <%= selectedStatus === 'all' ? 'selected' : '' %>>All</option>
+        <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+        <option value="approved" <%= selectedStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+        <option value="rejected" <%= selectedStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+      </select>
+      <button class="btn btn-primary" type="submit">Filter</button>
+    </form>
+  </div>
+</div>
+
+<div class="glass-card-dark border border-secondary">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th class="text-white">User</th>
+          <th class="text-white">Mobile</th>
+          <th class="text-white">Experience</th>
+          <th class="text-white">Location</th>
+          <th class="text-white">Status</th>
+          <th class="text-white">Submitted</th>
+          <th class="text-white">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (applications && applications.length > 0) { %>
+          <% applications.forEach(application => { %>
+            <tr>
+              <td class="text-white">
+                <div><strong><%= application.user ? application.user.name : 'User not found' %></strong></div>
+                <small class="text-muted"><%= application.user ? application.user.email : '-' %></small>
+              </td>
+              <td class="text-white"><%= application.mobileNumber %></td>
+              <td class="text-white"><%= application.yearsOfExperience %> yrs</td>
+              <td class="text-white"><%= application.location %></td>
+              <td>
+                <span class="badge <%= application.status === 'approved' ? 'bg-success' : application.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>">
+                  <%= application.status %>
+                </span>
+              </td>
+              <td class="text-white"><%= toISTDateString(application.createdAt) %></td>
+              <td>
+                <a href="/producer-applications/admin/<%= application._id %>" class="btn btn-sm btn-outline-light">View</a>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="7" class="text-center text-white py-4">No producer applications found</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- contentFor('title') %>Producer Applications
