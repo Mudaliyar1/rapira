@@ -825,6 +825,43 @@ h5.card-title.text-white,
   overflow: hidden;
 }
 
+/* Responsive carousel height for tablets and mobile devices */
+@media (max-width: 1024px) {
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide {
+    height: 70vh;
+    min-height: 400px;
+  }
+  
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide .carousel-bg {
+    height: 70vh !important;
+    min-height: 400px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide {
+    height: 50vh;
+    min-height: 300px;
+  }
+  
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide .carousel-bg {
+    height: 50vh !important;
+    min-height: 300px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide {
+    height: 40vh;
+    min-height: 250px;
+  }
+  
+  .main-slider-section #mainCarousel .carousel-item.hero-image-slide .carousel-bg {
+    height: 40vh !important;
+    min-height: 250px !important;
+  }
+}
+
 .main-slider-section #mainCarousel .carousel-item.hero-image-slide .hero-svg {
   position: absolute;
   width: 100%;
