@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const User = require('../models/User');
 const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
@@ -13,9 +14,11 @@ const Page = require('../models/Page');
 const DeletedAccount = require('../models/DeletedAccount');
 const ArtistPost = require('../models/ArtistPost');
 const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
+const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const { deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
+const { sendAccountDeletionNotification } = require('../utils/brevoEmailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
 const bcrypt = require('bcryptjs');
 
@@ -780,7 +783,7 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 // Update user
 router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const { name, email, role, password } = req.body;
+    const { role } = req.body;
 
     // Find user
     const user = await User.findById(req.params.id);
@@ -789,10 +792,6 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
       req.flash('error', 'User not found');
       return res.redirect('/admin/users');
     }
-
-    // Update user fields
-    user.name = name;
-    user.email = email;
 
     // Only update role if it's different
     if (user.role !== role) {
@@ -803,7 +802,7 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
         if (!existingArtist) {
           const newArtist = new Artist({
             user: user._id,
-            stageName: name,
+            stageName: user.name,
             genre: 'Hip Hop'
           });
 
@@ -830,11 +829,6 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
       }
 
       user.role = role;
-    }
-
-    // Update password if provided
-    if (password && password.trim() !== '') {
-      user.password = password;
     }
 
     await user.save();
@@ -881,6 +875,27 @@ router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
     // Delete user's tickets
     await Ticket.deleteMany({ user: user._id });
     console.log(`Deleted all tickets for user ${user._id}`);
+
+    // Generate recovery token (valid for 30 days) 
+    const recoveryToken = crypto.randomBytes(32).toString('hex');
+    const recoveryTokenDoc = new AccountRecoveryToken({
+      user: user._id,
+      email: user.email,
+      token: recoveryToken,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+    });
+    
+    await recoveryTokenDoc.save();
+    console.log(`Created recovery token for deleted user: ${user._id}`);
+
+    // Send account deletion notification email with recovery option
+    try {
+      await sendAccountDeletionNotification(user, recoveryToken);
+      console.log(`Deletion notification email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error(`Failed to send deletion notification email: ${emailError.message}`);
+      // Don't fail the deletion process if email fails
+    }
 
     // Delete user
     await User.findByIdAndDelete(req.params.id);

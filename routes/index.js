@@ -218,6 +218,17 @@ router.get('/event-attending-policy', (req, res) => {
   });
 });
 
+// Temporary email policy
+router.get('/temp-email-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('temp-email-policy', {
+    currentUser,
+    path: '/temp-email-policy',
+    title: 'Temporary Email Policy - Rapira',
+    description: 'Rapira temporary email policy explains why disposable emails are not allowed and what types of email addresses are acceptable.'
+  });
+});
+
 // Account reactivation
 router.get('/account-reactivation', (req, res) => {
   const currentUser = req.session.user || null;

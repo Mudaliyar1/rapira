@@ -21,7 +21,7 @@
     <%- extraStyles %>
   <% } %>
 </head>
-<body>
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
   <div class="admin-layout venue-content">
     <!-- Sidebar -->
     <div class="admin-sidebar bg-dark text-white p-0" id="venueSidebar">
@@ -270,6 +270,9 @@
 
   <!-- Network Status Monitor -->
   <script src="/js/network-status.js"></script>
+  
+  <!-- Account Monitor (Real-time Deletion Detection) -->
+  <script src="/js/account-monitor.js"></script>
 
   <% if (typeof extraScripts !== 'undefined') { %>
     <%- extraScripts %>

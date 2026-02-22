@@ -23,7 +23,45 @@ module.exports = {
       sessionID: req.session ? req.session.id : 'none'
     });
 
-    req.flash('error', 'You must be logged in to access this page');
+    // Provide context-specific error messages
+    let errorMessage = 'You must be logged in to access this page';
+    
+    // Check if this is a like action
+    if (req.path.includes('/like')) {
+      if (req.path.includes('/posts/')) {
+        errorMessage = 'You must be logged in to like posts';
+      } else if (req.path.includes('/stories/')) {
+        errorMessage = 'You must be logged in to like stories';
+      } else if (req.path.includes('/content/')) {
+        errorMessage = 'You must be logged in to like content';
+      } else {
+        errorMessage = 'You must be logged in to like this';
+      }
+    }
+    // Check if this is a follow action
+    else if (req.path.includes('/follow') || req.path.includes('/unfollow')) {
+      errorMessage = 'You must be logged in to follow artists';
+    }
+    // Check if this is a booking/purchase action
+    else if (req.path.includes('/book') || req.path.includes('/purchase') || req.path.includes('/order')) {
+      errorMessage = 'You must be logged in to make a purchase';
+    }
+    // Check if this is a payment action
+    else if (req.path.includes('/payment')) {
+      errorMessage = 'You must be logged in to process payments';
+    }
+    // Check if this is a message/chat action
+    else if (req.path.includes('/message')) {
+      errorMessage = 'You must be logged in to send messages';
+    }
+
+    req.flash('error', errorMessage);
+    
+    // For AJAX requests, send JSON response instead of redirect
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+      return res.status(401).json({ success: false, message: errorMessage });
+    }
+    
     res.redirect('/auth/login');
   },
 

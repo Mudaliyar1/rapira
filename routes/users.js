@@ -38,6 +38,13 @@ router.get('/profile', isLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.session.user.id);
 
+    // If user doesn't exist (deleted), this will be caught by the global middleware
+    // but add a safety check here too
+    if (!user) {
+      req.flash('error', 'Your account no longer exists');
+      return res.redirect('/auth/login');
+    }
+
     // Check if user has an artist profile, regardless of role
     let artist = await Artist.findOne({ user: user._id });
 

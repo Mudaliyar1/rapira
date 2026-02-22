@@ -26,7 +26,7 @@
     <%- extraScripts %>
   <% } %>
 </head>
-<body>
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
   <!-- Flash Messages -->
   <%- include('../partials/messages') %>
 
@@ -62,5 +62,8 @@
   <!-- Custom JS -->
   <script src="/js/main.js"></script>
   <script src="/js/loading-spinner.js"></script>
+  
+  <!-- Account Monitor (Real-time Deletion Detection) -->
+  <script src="/js/account-monitor.js"></script>
 </body>
 </html>

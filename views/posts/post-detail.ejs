@@ -506,6 +506,16 @@
           
           console.log('[POST DETAIL] Response status:', res.status);
           
+          // Handle 401 Unauthorized (not logged in)
+          if (res.status === 401) {
+            const data = await res.json();
+            showToast(data.message || 'You must be logged in to like posts', 'info');
+            setTimeout(() => {
+              window.location.href = '/auth/login';
+            }, 1500);
+            return;
+          }
+          
           if (!res.ok) throw new Error('Network error');
           
           const data = await res.json();

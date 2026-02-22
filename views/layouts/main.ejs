@@ -108,7 +108,7 @@
     <%- extraScripts %>
   <% } %>
 </head>
-<body>
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
   <!-- Header -->
   <%- include('../partials/navbar') %>
 
@@ -232,5 +232,8 @@
 
   <!-- Network Status Monitor -->
   <script src="/js/network-status.js"></script>
+  
+  <!-- Account Monitor (Real-time Deletion Detection) -->
+  <script src="/js/account-monitor.js"></script>
 </body>
 </html>

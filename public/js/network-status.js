@@ -262,12 +262,11 @@
 
   // Initialize
   function init() {
-    // Delay initial check to allow page to fully load before checking connectivity
-    // This prevents false negatives from checking too early
-    setTimeout(() => {
-      console.log('Starting delayed initial connectivity check...');
-      evaluateStatus('initial');
-    }, 2000);
+    // Skip initial check to prevent loading screen after page load
+    // Assume user is online initially (since they loaded the page)
+    currentStatus = 'online';
+    initialCheckDone = true;
+    console.log('Network monitor initialized - assuming online');
 
     // Listen for online/offline events (these are automatic browser events)
     window.addEventListener('online', handleOnline);

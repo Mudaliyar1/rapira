@@ -539,6 +539,55 @@ const Role = require('./models/Role');
 const cartMiddleware = require('./middleware/cart');
 app.use(cartMiddleware);
 
+// Check if logged-in user still exists (account deleted check)
+app.use(async (req, res, next) => {
+  try {
+    const sessionUser = req.session && req.session.user ? req.session.user : null;
+    
+    // If user is logged in, verify the account still exists
+    if (sessionUser && sessionUser.id) {
+      const User = require('./models/User');
+      const userExists = await User.findById(sessionUser.id);
+      
+      // If user account was deleted
+      if (!userExists) {
+        console.log(`[ACCOUNT CHECK] User ${sessionUser.id} session found but account deleted`);
+        
+        // Store message before destroying session
+        const accountDeletedMessage = 'Your account has been deleted by the website administrator. If you believe this is an error, please contact support.';
+        
+        // Destroy session
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Session destruction error:', err);
+          }
+        });
+        
+        // Clear cookie
+        res.clearCookie('connect.sid');
+        
+        // Redirect to a special page showing the message
+        return res.render('error/account-deleted', {
+          currentUser: null,
+          isAdmin: false,
+          isArtist: false,
+          isSuperAdmin: false,
+          message: accountDeletedMessage,
+          path: req.path,
+          title: 'Account Deleted - Rapira',
+          success: [],
+          error: []
+        });
+      }
+    }
+    
+    next();
+  } catch (error) {
+    console.error('[ACCOUNT CHECK] Error checking user account:', error);
+    next(); // Continue even if check fails
+  }
+});
+
 // Global variables
 app.use(async (req, res, next) => {
   try {
@@ -554,6 +603,24 @@ app.use(async (req, res, next) => {
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
+    
+    // Clear "must be logged in" message for public pages
+    // This prevents the message from showing on public pages after being redirected from protected pages
+    const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password',
+                         '/about', '/contact', '/faq', '/artists', '/concerts', '/shop', '/pages', '/content', '/demo',
+                         '/privacy-policy', '/terms-of-service', '/refund-policy', '/subscription-policy',
+                         '/shopping-policy', '/event-attending-policy', '/temp-email-policy', '/account-reactivation',
+                         '/tickets/validate', '/find-my-artist', '/team-requirement'];
+    const isPublicPage = publicPaths.some(path => req.path === path || req.path.startsWith(path + '/'));
+    
+    if (isPublicPage && res.locals.error) {
+      if (Array.isArray(res.locals.error)) {
+        res.locals.error = res.locals.error.filter(msg => msg !== 'You must be logged in to access this page');
+      } else if (res.locals.error === 'You must be logged in to access this page') {
+        res.locals.error = [];
+      }
+    }
+    
     res.locals.path = req.path; // Add current path to all views
 
     // Make the getImageUrl function available to all views
@@ -713,6 +780,34 @@ app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'public/uploads')
 // Lightweight connectivity check for clients (used by offline detector)
 app.head('/ping', (req, res) => res.sendStatus(204));
 app.get('/ping', (req, res) => res.sendStatus(204));
+
+// Account status check - for real-time account deletion detection
+app.get('/api/account-status', async (req, res) => {
+  try {
+    // If no user session, return not logged in
+    if (!req.session || !req.session.user || !req.session.user.id) {
+      return res.json({ loggedIn: false });
+    }
+
+    const User = require('./models/User');
+    const userExists = await User.findById(req.session.user.id);
+
+    // If user no longer exists, account was deleted
+    if (!userExists) {
+      return res.json({ 
+        loggedIn: false, 
+        accountDeleted: true,
+        message: 'Your account has been deleted by the website administrator.'
+      });
+    }
+
+    // User exists and is logged in
+    return res.json({ loggedIn: true, accountDeleted: false });
+  } catch (error) {
+    console.error('[ACCOUNT STATUS CHECK] Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Use routes
 app.use('/', indexRoutes);
