@@ -260,11 +260,24 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+router.post('/admin/delete-all', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const result = await ProducerApplication.deleteMany({});
+    req.flash('success', `Deleted ${result.deletedCount} producer application record(s)`);
+    res.redirect('/producer-applications/admin');
+  } catch (error) {
+    console.error('Delete all producer applications error:', error);
+    req.flash('error', 'Failed to delete producer application history');
+    res.redirect('/producer-applications/admin');
+  }
+});
+
 router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const application = await ProducerApplication.findById(req.params.id)
-      .populate('user', 'name email profileImage')
-      .populate('reviewedBy', 'name email');
+      .populate('user', 'name email profileImage phone')
+      .populate('reviewedBy', 'name email')
+      .populate('idProofMedia');
 
     if (!application) {
       req.flash('error', 'Producer application not found');
@@ -357,6 +370,24 @@ router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Reject producer application error:', error);
     req.flash('error', 'Failed to reject producer application');
     res.redirect(`/producer-applications/admin/${req.params.id}`);
+  }
+});
+
+router.post('/admin/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const deletedApplication = await ProducerApplication.findByIdAndDelete(req.params.id);
+
+    if (!deletedApplication) {
+      req.flash('error', 'Producer application not found');
+      return res.redirect('/producer-applications/admin');
+    }
+
+    req.flash('success', 'Producer application record deleted successfully');
+    res.redirect('/producer-applications/admin');
+  } catch (error) {
+    console.error('Delete producer application error:', error);
+    req.flash('error', 'Failed to delete producer application record');
+    res.redirect('/producer-applications/admin');
   }
 });
 

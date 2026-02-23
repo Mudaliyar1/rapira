@@ -74,6 +74,17 @@
         </a>
       </li>
       <li class="nav-item mb-1">
+        <a href="/admin/producers" class="nav-link rounded <%= path === '/admin/producers' ? 'active bg-primary' : '' %>">
+          <i class="bi bi-mic me-1"></i> Producers
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/producers/unblock-requests" class="nav-link rounded <%= path.startsWith('/admin/producers/unblock-requests') ? 'active bg-primary' : '' %>">
+          <i class="bi bi-shield-check me-1"></i> Producer Unblock Requests
+          <span class="badge bg-danger rounded-pill float-end" id="producerUnblockBadge" style="font-size: 0.65rem; display: none;"></span>
+        </a>
+      </li>
+      <li class="nav-item mb-1">
         <a href="/admin/follower-analytics" class="nav-link rounded <%= path.startsWith('/admin/follower-analytics') ? 'active bg-primary' : '' %>">
           <i class="bi bi-people me-1"></i> Follower Analytics
         </a>

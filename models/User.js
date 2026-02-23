@@ -104,6 +104,33 @@ const UserSchema = new mongoose.Schema({
   lastPageUpdate: {
     type: Date,
     default: null
+  },
+  // Blocking status
+  isBlocked: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  blockReason: {
+    type: String,
+    default: ''
+  },
+  blockedAt: {
+    type: Date,
+    default: null
+  },
+  unblockReason: {
+    type: String,
+    default: ''
+  },
+  unblockedAt: {
+    type: Date,
+    default: null
+  },
+  unblockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 

@@ -1,0 +1,231 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Manage Producers</h2>
+      <p class="text-muted mb-0">View and manage all producers on the platform</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4 g-3">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
+        <div class="card-body text-white">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-white-75 mb-1">Total Producers</h6>
+              <h2 class="fw-bold mb-0"><%= stats.total %></h2>
+            </div>
+            <i class="bi bi-mic-fill" style="font-size: 2rem; opacity: 0.3;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-success">
+        <div class="card-body text-white">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-white-75 mb-1">Approved Apps</h6>
+              <h2 class="fw-bold mb-0"><%= stats.approved %></h2>
+            </div>
+            <i class="bi bi-check-circle" style="font-size: 2rem; opacity: 0.3;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-warning">
+        <div class="card-body text-white">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-white-75 mb-1">Pending Apps</h6>
+              <h2 class="fw-bold mb-0"><%= stats.pending %></h2>
+            </div>
+            <i class="bi bi-hourglass-split" style="font-size: 2rem; opacity: 0.3;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm bg-danger">
+        <div class="card-body text-white">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="text-white-75 mb-1">Rejected Apps</h6>
+              <h2 class="fw-bold mb-0"><%= stats.rejected %></h2>
+            </div>
+            <i class="bi bi-x-circle" style="font-size: 2rem; opacity: 0.3;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form action="/admin/producers" method="GET" class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label fw-bold">Search by Name or Email</label>
+          <input type="text" class="form-control" name="search" placeholder="Enter producer name or email..." value="<%= filters.search || '' %>">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Filter by Status</label>
+          <select class="form-select" name="status">
+            <option value="">All Statuses</option>
+            <option value="approved" <%= filters.status === 'approved' ? 'selected' : '' %>>Approved</option>
+            <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Sort By</label>
+          <select class="form-select" name="sortBy">
+            <option value="">Recent First</option>
+            <option value="name" <%= filters.sortBy === 'name' ? 'selected' : '' %>>Name (A-Z)</option>
+            <option value="email" <%= filters.sortBy === 'email' ? 'selected' : '' %>>Email</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="bi bi-search me-2"></i> Filter
+          </button>
+          <a href="/admin/producers" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Producers Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+      <h5 class="fw-bold mb-0">Producers List</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Profile</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>App Status</th>
+            <th>Role Added</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (producers && producers.length > 0) { %>
+            <% producers.forEach(producer => { %>
+              <% const app = appMap[producer._id.toString()]; %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="<%= producer.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(producer.name.charAt(0)) %>"
+                         alt="<%= producer.name %>"
+                         class="rounded-circle"
+                         width="40" height="40"
+                         style="object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0"><%= producer.name %></h6>
+                      <small class="text-muted"><%= producer.username || 'N/A' %></small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <small><%= producer.email %></small>
+                </td>
+                <td>
+                  <small><%= producer.phone || 'N/A' %></small>
+                </td>
+                <td>
+                  <small><%= producer.city || 'N/A' %></small>
+                </td>
+                <td>
+                  <% if (app) { %>
+                    <span class="badge <%= app.status === 'approved' ? 'bg-success' : app.status === 'pending' ? 'bg-warning' : 'bg-danger' %>">
+                      <%= app.status.charAt(0).toUpperCase() + app.status.slice(1) %>
+                    </span>
+                  <% } else { %>
+                    <span class="badge bg-secondary">No App</span>
+                  <% } %>
+                </td>
+                <td>
+                  <small class="text-muted">
+                    <%= new Date(app ? app.reviewedAt : '').toLocaleDateString('en-IN') || 'N/A' %>
+                  </small>
+                </td>
+                <td>
+                  <% if (producer.isBlocked) { %>
+                    <span class="badge bg-danger">Blocked</span>
+                  <% } else { %>
+                    <span class="badge bg-success">Active</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a href="/admin/producers/<%= producer._id %>" class="btn btn-outline-primary">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                <p class="text-muted mb-0">No producers found</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="card-footer bg-white border-top">
+        <nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            Showing <%= producers.length > 0 ? (currentPage - 1) * limit + 1 : 0 %> to <%= Math.min(currentPage * limit, producers.length + (currentPage - 1) * limit) %> of <%= stats.total %> producers
+          </small>
+          <ul class="pagination mb-0">
+            <% if (currentPage > 1) { %>
+              <li class="page-item">
+                <a class="page-link" href="/admin/producers?page=1<%= filters.search ? '&search=' + filters.search : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.sortBy ? '&sortBy=' + filters.sortBy : '' %>">First</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="/admin/producers?page=<%= currentPage - 1 %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.sortBy ? '&sortBy=' + filters.sortBy : '' %>">Prev</a>
+              </li>
+            <% } %>
+
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                <a class="page-link" href="/admin/producers?page=<%= i %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.sortBy ? '&sortBy=' + filters.sortBy : '' %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+              <li class="page-item">
+                <a class="page-link" href="/admin/producers?page=<%= currentPage + 1 %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.sortBy ? '&sortBy=' + filters.sortBy : '' %>">Next</a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="/admin/producers?page=<%= totalPages %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.status ? '&status=' + filters.status : '' %><%= filters.sortBy ? '&sortBy=' + filters.sortBy : '' %>">Last</a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      </div>
+    <% } %>
+  </div>
+</div>
+

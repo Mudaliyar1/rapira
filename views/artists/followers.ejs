@@ -53,27 +53,15 @@
           <h5 class="card-title fw-bold mb-0 text-white">
             <i class="bi bi-list-ul me-2"></i>Your Followers
           </h5>
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-light" onclick="loadFollowers()">
-              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-            </button>
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-funnel me-1"></i>Filter
-              </button>
-              <ul class="dropdown-menu dropdown-menu-dark">
-                <li><a class="dropdown-item" href="#" onclick="filterFollowers('all')">All Followers</a></li>
-                <li><a class="dropdown-item" href="#" onclick="filterFollowers('user')">Users Only</a></li>
-                <li><a class="dropdown-item" href="#" onclick="filterFollowers('artist')">Artists Only</a></li>
-              </ul>
-            </div>
-          </div>
+          <!-- No filter button -->
         </div>
         <div class="card-body">
+          <!-- No filter or sort controls -->
           <div id="followers-list" class="followers-container">
             <% if (followers && followers.length > 0) { %>
               <div class="row g-3">
                 <% followers.forEach(follower => { %>
+                  <% if (!follower.followerId) { return; } %>
                   <div class="col-md-6 col-lg-4 follower-item" data-role="<%= follower.roleOfFollower %>">
                     <div class="card bg-dark border-secondary h-100">
                       <div class="card-body d-flex align-items-center justify-content-between">
@@ -130,7 +118,12 @@
 
 <script>
   // Followers Management Functions
-  let currentFilter = 'all';
+  function toISTDateString(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d)) return '';
+    return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
   let allFollowers = [];
   
   // Load followers data from data attribute
@@ -144,18 +137,13 @@
     allFollowers = [];
   }
 
-  function filterFollowers(type) {
-    currentFilter = type;
-    displayFollowers();
-  }
+  // Remove filterFollowers function (not used)
 
   function displayFollowers() {
     const followersList = document.getElementById('followers-list');
-    let filteredFollowers = allFollowers;
+    let filteredFollowers = allFollowers.filter(f => f && f.followerId);
 
-    if (currentFilter !== 'all') {
-      filteredFollowers = allFollowers.filter(f => f.roleOfFollower === currentFilter);
-    }
+    // No sorting or filtering, just show all followers
 
     if (filteredFollowers.length > 0) {
       let html = '<div class="row g-3">';
@@ -166,7 +154,7 @@
                         follower.followerId.role === 'artist' ? 'Artist' : follower.followerId.role;
 
         html += `
-          <div class="col-md-6 col-lg-4 follower-item" data-role="${follower.roleOfFollower}">
+          <div class="col-md-6 col-lg-4 follower-item" data-role="${follower.followerId.role}">
             <div class="card bg-dark border-secondary h-100">
               <div class="card-body d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center flex-grow-1">
@@ -198,8 +186,8 @@
       followersList.innerHTML = `
         <div class="text-center py-5">
           <i class="bi bi-people display-1 text-muted mb-4"></i>
-          <h5 class="text-muted mb-2">No ${currentFilter === 'all' ? '' : currentFilter} followers found</h5>
-          <p class="text-muted">${currentFilter === 'all' ? 'Start sharing your content to gain followers!' : 'Try a different filter or check back later.'}</p>
+          <h5 class="text-muted mb-2">No followers found</h5>
+          <p class="text-muted">Try a different filter or check back later.</p>
         </div>
       `;
     }
@@ -284,4 +272,4 @@
   });
 </script>
 
-<%- include('../partials/footer') %>
+<%- include('../partials/artist-footer') %>

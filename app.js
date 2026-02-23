@@ -761,6 +761,7 @@ const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
 const postsRoutes = require('./routes/posts');
 const adminMediaRoutes = require('./routes/adminMedia');
+const adminProducersRoutes = require('./routes/adminProducers');
 const producerApplicationRoutes = require('./routes/producerApplications');
 const producerDashboardRoutes = require('./routes/producerDashboard');
 
@@ -913,6 +914,9 @@ app.use('/admin/venues', adminVenuesRoutes);
 
 // Mount admin media management routes
 app.use('/admin/media', adminMediaRoutes);
+
+// Mount admin producers routes
+app.use('/admin/producers', adminProducersRoutes);
 
 // Mount admin venue requests routes
 app.use('/admin/venue-requests', adminVenueRequestRoutes);

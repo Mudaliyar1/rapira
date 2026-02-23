@@ -1,0 +1,332 @@
+<%- contentFor('body') %>
+
+<script>
+  console.log('Producer details loaded:', {
+    name: '<%= producer.name %>',
+    id: '<%= producer._id %>',
+    isBlocked: <%= producer.isBlocked %>,
+    blockedStatus: '<%= producer.isBlocked ? "BLOCKED" : "ACTIVE" %>'
+  });
+</script>
+
+<div class="container-fluid">
+  <!-- Header with Back Button -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/admin/producers" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i> Back to Producers
+    </a>
+    <div>
+      <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+        <img src="<%= producer.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(producer.name.charAt(0)) %>"
+             alt="<%= producer.name %>"
+             class="rounded-circle"
+             width="50" height="50"
+             style="object-fit: cover;">
+        <span><%= producer.name %></span>
+      </h2>
+      <p class="text-muted mb-0">Producer Details and Management</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Info -->
+    <div class="col-lg-8">
+      <!-- Personal Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Personal Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Full Name</label>
+              <p class="form-control-plaintext fw-500"><%= producer.name %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Username</label>
+              <p class="form-control-plaintext fw-500"><%= producer.username || 'Not provided' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Email</label>
+              <p class="form-control-plaintext fw-500"><%= producer.email %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Phone</label>
+              <p class="form-control-plaintext fw-500"><%= producer.phone || 'Not provided' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">City</label>
+              <p class="form-control-plaintext fw-500"><%= producer.city || 'Not provided' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Age</label>
+              <p class="form-control-plaintext fw-500"><%= producer.age || 'Not provided' %></p>
+            </div>
+            <% if (producer.bio) { %>
+              <div class="col-12">
+                <label class="form-label text-muted fw-bold mb-2">Bio</label>
+                <p class="form-control-plaintext"><%= producer.bio %></p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application Details -->
+      <% if (application) { %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Application Details</h5>
+            <span class="badge <%= application.status === 'approved' ? 'bg-success' : application.status === 'pending' ? 'bg-warning' : 'bg-danger' %>">
+              <%= application.status.toUpperCase() %>
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="row g-4">
+              <!-- Submission Date & Time -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Submission Date</label>
+                <p class="form-control-plaintext fw-500">
+                  <%= new Date(application.createdAt).toLocaleDateString('en-IN') %>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Submission Time</label>
+                <p class="form-control-plaintext fw-500">
+                  <%= new Date(application.createdAt).toLocaleTimeString('en-IN') %>
+                </p>
+              </div>
+
+              <!-- Professional Information -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Years of Experience</label>
+                <p class="form-control-plaintext fw-500"><%= application.yearsOfExperience %> years</p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Location</label>
+                <p class="form-control-plaintext fw-500"><%= application.location %></p>
+              </div>
+
+              <!-- Skills & Services -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Skills</label>
+                <p class="form-control-plaintext fw-500"><%= application.skills %></p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Services</label>
+                <p class="form-control-plaintext fw-500"><%= application.services %></p>
+              </div>
+
+              <!-- Contact Information -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Mobile Number</label>
+                <p class="form-control-plaintext fw-500"><%= application.mobileNumber %></p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">ID Proof Type</label>
+                <p class="form-control-plaintext fw-500"><%= application.idProofType %></p>
+              </div>
+
+              <!-- Social Media Links -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Instagram Link</label>
+                <% if (application.instagramLink) { %>
+                  <p class="form-control-plaintext fw-500">
+                    <a href="<%= application.instagramLink %>" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-instagram me-2"></i><%= application.instagramLink %>
+                    </a>
+                  </p>
+                <% } else { %>
+                  <p class="form-control-plaintext text-muted">Not provided</p>
+                <% } %>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">YouTube Link</label>
+                <% if (application.youtubeLink) { %>
+                  <p class="form-control-plaintext fw-500">
+                    <a href="<%= application.youtubeLink %>" target="_blank" class="text-decoration-none">
+                      <i class="bi bi-youtube me-2"></i><%= application.youtubeLink %>
+                    </a>
+                  </p>
+                <% } else { %>
+                  <p class="form-control-plaintext text-muted">Not provided</p>
+                <% } %>
+              </div>
+
+              <!-- ID Proof -->
+              <div class="col-12">
+                <label class="form-label text-muted fw-bold mb-2">ID Proof Document</label>
+                <div class="card mt-2 border">
+                  <div class="card-body">
+                    <% 
+                      let mediaUrl = null;
+                      let urlSource = 'none';
+                      
+                      if (application.idProofMedia) {
+                        if (application.idProofMedia.secure_url) {
+                          mediaUrl = application.idProofMedia.secure_url;
+                          urlSource = 'Media.secure_url';
+                        } else if (application.idProofMedia.url) {
+                          mediaUrl = application.idProofMedia.url;
+                          urlSource = 'Media.url';
+                        }
+                      }
+                      
+                      if (!mediaUrl && application.idProofUrl) {
+                        mediaUrl = application.idProofUrl;
+                        urlSource = 'idProofUrl';
+                      }
+                    %>
+                    
+                    <div class="mb-3">
+                      <small class="text-muted d-block mb-2">
+                        Source: <%= urlSource %> | Type: <%= application.idProofType %>
+                      </small>
+                    </div>
+
+                    <% if (mediaUrl) { %>
+                      <div class="text-center mb-3">
+                        <img src="<%= mediaUrl %>" 
+                             alt="ID Proof - <%= application.idProofType %>"
+                             class="img-fluid rounded border"
+                             style="max-width: 100%; max-height: 500px; object-fit: contain;"
+                             loading="lazy">
+                      </div>
+                      <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" value="<%= mediaUrl %>" readonly>
+                        <a href="<%= mediaUrl %>" target="_blank" class="btn btn-outline-primary">
+                          <i class="bi bi-arrow-up-right me-1"></i> Open
+                        </a>
+                      </div>
+                    <% } else { %>
+                      <div class="alert alert-warning mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>No image available</strong>
+                        <p class="small mb-0 mt-2">
+                          idProofUrl: <%= application.idProofUrl || 'empty' %><br>
+                          idProofMedia: <%= application.idProofMedia ? 'exists' : 'empty' %>
+                        </p>
+                      </div>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Review Information -->
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Reviewed Date</label>
+                <p class="form-control-plaintext fw-500">
+                  <%= application.reviewedAt ? new Date(application.reviewedAt).toLocaleDateString('en-IN') : 'Pending review' %>
+                </p>
+              </div>
+              <% if (application.reviewedBy) { %>
+                <div class="col-md-6">
+                  <label class="form-label text-muted fw-bold mb-2">Reviewed By</label>
+                  <p class="form-control-plaintext fw-500"><%= application.reviewedBy.name %></p>
+                </div>
+              <% } %>
+
+              <!-- Admin Notes -->
+              <% if (application.adminNotes) { %>
+                <div class="col-12">
+                  <label class="form-label text-muted fw-bold mb-2">Admin Notes</label>
+                  <div class="alert alert-info mb-0">
+                    <p class="mb-0"><%= application.adminNotes %></p>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-lg-4">
+      <!-- Account Status -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Account Status</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label text-muted fw-bold mb-2">Status</label>
+            <p class="mb-0">
+              <% if (producer.isBlocked) { %>
+                <span class="badge bg-danger fs-6">Blocked</span>
+              <% } else { %>
+                <span class="badge bg-success fs-6">Active</span>
+              <% } %>
+            </p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted fw-bold mb-2">Role Added</label>
+            <p class="form-control-plaintext fw-500">
+              <%= new Date(stats.createdAt).toLocaleDateString('en-IN') %>
+            </p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted fw-bold mb-2">Account Created</label>
+            <p class="form-control-plaintext fw-500">
+              <%= new Date(producer.createdAt).toLocaleDateString('en-IN') %>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Statistics</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label text-muted fw-bold mb-0">Roles Assigned</label>
+              <h4 class="fw-bold text-primary mb-0"><%= stats.rolesAssigned %></h4>
+            </div>
+          </div>
+          <hr>
+          <div class="mb-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <label class="form-label text-muted fw-bold mb-0">Apps Reviewed</label>
+              <h4 class="fw-bold text-success mb-0"><%= stats.applicationsReviewed %></h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <% if (producer.isBlocked) { %>
+              <a href="/admin/producers/<%= producer._id %>/unblock" class="btn btn-success">
+                <i class="bi bi-unlock-fill me-2"></i> Unblock Producer
+              </a>
+            <% } else { %>
+              <a href="/admin/producers/<%= producer._id %>/block" class="btn btn-warning">
+                <i class="bi bi-lock-fill me-2"></i> Block Producer
+              </a>
+            <% } %>
+            <a href="/admin/producers/<%= producer._id %>/revoke" class="btn btn-outline-danger">
+              <i class="bi bi-trash me-2"></i> Revoke Producer Role
+            </a>
+            <a href="mailto:<%= producer.email %>" class="btn btn-outline-primary">
+              <i class="bi bi-envelope me-2"></i> Send Email
+            </a>
+          </div>
+
+          <div class="alert alert-info mt-3 mb-0 small">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Note:</strong> Use the actions above to manage this producer's access and privileges.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

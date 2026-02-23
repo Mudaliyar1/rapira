@@ -1,0 +1,188 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/admin/producers/unblock-requests" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i> Back to Requests
+    </a>
+    <div>
+      <h2 class="fw-bold mb-1">Unblock Request Details</h2>
+      <p class="text-muted mb-0">Review and manage producer unblock request</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <!-- Producer Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Producer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-3">
+                <img src="<%= request.producer.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(request.producer.name.charAt(0)) %>"
+                     alt="<%= request.producer.name %>"
+                     class="rounded-circle"
+                     width="80" height="80"
+                     style="object-fit: cover;">
+                <div>
+                  <h4 class="fw-bold mb-1"><%= request.producer.name %></h4>
+                  <p class="mb-1"><i class="bi bi-envelope me-2"></i><%= request.producer.email %></p>
+                  <p class="mb-0"><i class="bi bi-telephone me-2"></i><%= request.producer.phone || 'Not provided' %></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Username</label>
+              <p class="form-control-plaintext fw-500"><%= request.producer.username || 'Not provided' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">City/Location</label>
+              <p class="form-control-plaintext fw-500"><%= request.producer.city || 'Not provided' %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Current Status</label>
+              <p class="form-control-plaintext fw-500">
+                <% if (request.producer.isBlocked) { %>
+                  <span class="badge bg-danger">BLOCKED</span>
+                <% } else { %>
+                  <span class="badge bg-success">ACTIVE</span>
+                <% } %>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Account Created</label>
+              <p class="form-control-plaintext fw-500">
+                <%= new Date(request.producer.createdAt).toLocaleDateString('en-IN') %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Request Information -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0">Request Information</h5>
+          <span class="badge <%= request.status === 'approved' ? 'bg-success' : request.status === 'pending' ? 'bg-warning' : 'bg-danger' %>">
+            <%= request.status.toUpperCase() %>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Requested Date</label>
+              <p class="form-control-plaintext fw-500">
+                <%= new Date(request.createdAt).toLocaleDateString('en-IN') %>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Requested Time</label>
+              <p class="form-control-plaintext fw-500">
+                <%= new Date(request.createdAt).toLocaleTimeString('en-IN') %>
+              </p>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted fw-bold mb-2">Unblock Request Message</label>
+              <div class="alert border" style="background-color: #000 !important; color: #fff !important;">
+                <p class="mb-0"><%= request.message %></p>
+              </div>
+            </div>
+
+            <% if (request.reviewedAt) { %>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Reviewed Date</label>
+                <p class="form-control-plaintext fw-500">
+                  <%= new Date(request.reviewedAt).toLocaleDateString('en-IN') %>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label text-muted fw-bold mb-2">Reviewed By</label>
+                <p class="form-control-plaintext fw-500">
+                  <%= request.reviewedBy.name %>
+                </p>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-muted fw-bold mb-2">Admin Response</label>
+                <div class="alert border" style="background-color: #000 !important; color: #fff !important;">
+                  <p class="mb-0"><%= request.adminResponse %></p>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Status Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Request Status</h5>
+        </div>
+        <div class="card-body">
+          <div class="status-badge mb-3">
+            <% if (request.status === 'pending') { %>
+              <div class="alert mb-0" style="background-color: #000 !important; color: #fff !important;">
+                <i class="bi bi-hourglass-split me-2"></i>
+                <strong>Pending Review</strong>
+                <p class="small mb-0 mt-1">This request is awaiting admin review.</p>
+              </div>
+            <% } else if (request.status === 'approved') { %>
+              <div class="alert mb-0" style="background-color: #000 !important; color: #fff !important;">
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>Approved</strong>
+                <p class="small mb-0 mt-1">This unblock request has been approved. Producer is unblocked.</p>
+              </div>
+            <% } else { %>
+              <div class="alert mb-0" style="background-color: #000 !important; color: #fff !important;">
+                <i class="bi bi-x-circle me-2"></i>
+                <strong>Rejected</strong>
+                <p class="small mb-0 mt-1">This unblock request has been rejected.</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <% if (request.status === 'pending') { %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="fw-bold mb-0">Review Actions</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <a href="/admin/producers/unblock-requests/<%= request._id %>/approve" class="btn btn-success">
+                <i class="bi bi-check-circle me-2"></i> Approve
+              </a>
+              <a href="/admin/producers/unblock-requests/<%= request._id %>/reject" class="btn btn-danger">
+                <i class="bi bi-x-circle me-2"></i> Reject
+              </a>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Quick Links -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="fw-bold mb-0">Quick Links</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <a href="/admin/producers/<%= request.producer._id %>" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-person me-1"></i> View Producer Details
+            </a>
+            <a href="mailto:<%= request.producer.email %>" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-envelope me-1"></i> Send Email
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

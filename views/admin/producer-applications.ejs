@@ -8,7 +8,13 @@
       <div><strong class="text-success"><%= stats.approved %></strong><div class="text-white-50 small">Approved</div></div>
       <div><strong class="text-danger"><%= stats.rejected %></strong><div class="text-white-50 small">Rejected</div></div>
     </div>
-    <form method="GET" action="/producer-applications/admin" class="d-flex gap-2">
+    <div class="d-flex gap-2">
+      <form method="POST" action="/producer-applications/admin/delete-all" onsubmit="return confirm('Delete all producer application history? This action cannot be undone.');">
+        <button class="btn btn-danger" type="submit">
+          <i class="bi bi-trash me-1"></i>Delete All
+        </button>
+      </form>
+      <form method="GET" action="/producer-applications/admin" class="d-flex gap-2">
       <select name="status" class="form-select bg-dark text-white border-secondary">
         <option value="all" <%= selectedStatus === 'all' ? 'selected' : '' %>>All</option>
         <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Pending</option>
@@ -16,7 +22,8 @@
         <option value="rejected" <%= selectedStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
       </select>
       <button class="btn btn-primary" type="submit">Filter</button>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -52,7 +59,12 @@
               </td>
               <td class="text-white"><%= toISTDateString(application.createdAt) %></td>
               <td>
-                <a href="/producer-applications/admin/<%= application._id %>" class="btn btn-sm btn-outline-light">View</a>
+                <div class="d-flex flex-wrap gap-2">
+                  <a href="/producer-applications/admin/<%= application._id %>" class="btn btn-sm btn-outline-light">View</a>
+                  <form method="POST" action="/producer-applications/admin/<%= application._id %>/delete" onsubmit="return confirm('Delete this producer application record?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                </div>
               </td>
             </tr>
           <% }); %>

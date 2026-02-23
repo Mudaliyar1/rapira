@@ -1,0 +1,66 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-success text-white">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h3 class="mb-1">Approve Unblock Request</h3>
+              <p class="mb-0 small">Review and approve producer unblock request</p>
+            </div>
+            <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Producer Info -->
+          <div class="alert mb-4" style="background-color: #000 !important; color: #fff !important;">
+            <h6 class="fw-bold mb-2">Producer Information:</h6>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <strong>Name:</strong> <%= request.producer.name %>
+              </div>
+              <div class="col-md-6">
+                <strong>Email:</strong> <%= request.producer.email %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Request Message -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">Producer's Unblock Request Message:</label>
+            <div class="alert border" style="background-color: #000 !important; color: #fff !important;">
+              <p class="mb-0"><%= request.message %></p>
+            </div>
+          </div>
+
+          <!-- Approve Form -->
+          <form method="POST" action="/admin/producers/unblock-requests/<%= request._id %>/approve">
+            <div class="mb-4">
+              <label class="form-label fw-bold">Admin Response/Notes (Optional):</label>
+              <textarea name="adminResponse" class="form-control" rows="4" placeholder="Enter your approval message or notes to send to the producer..."></textarea>
+              <small class="text-muted">This message will be shown to the producer when they check their request status.</small>
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="confirmApprove" required>
+                <label class="form-check-label" for="confirmApprove">
+                  I confirm that I want to <strong>APPROVE</strong> this unblock request. The producer account will be unblocked.
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <a href="/admin/producers/unblock-requests/<%= request._id %>" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Cancel
+              </a>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle me-2"></i> Confirm Approval
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -39,6 +39,15 @@ const getDashboardMessagingContext = async (sessionUser) => {
 // Middleware to check if user can message a specific role
 const canMessageRole = async (req, res, next) => {
   try {
+    const User = require('../models/User');
+    
+    // Check if current user is blocked
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot send messages.');
+      return res.redirect('/messages');
+    }
+
     // Get the current user's artist profile if they are an artist
     let artist = null;
 
@@ -137,9 +146,33 @@ const canMessageRole = async (req, res, next) => {
   }
 };
 
+// Middleware to check if user is blocked
+const checkBlocked = async (req, res, next) => {
+  try {
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot access this feature.');
+      return res.redirect('/producer-dashboard/unblock-request');
+    }
+    next();
+  } catch (error) {
+    console.error('Error in checkBlocked middleware:', error);
+    next();
+  }
+};
+
 // Messages inbox
 router.get('/', isLoggedIn, async (req, res) => {
   try {
+    const User = require('../models/User');
+    
+    // Check if current user is blocked
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot access messages.');
+      return res.redirect('/producer-dashboard/unblock-request');
+    }
+
     await Message.updateMany(
       {
         receiver: req.session.user.id,
@@ -361,7 +394,7 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
 });
 
 // Send message
-router.post('/send', isLoggedIn, async (req, res) => {
+router.post('/send', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     const { recipientId, content } = req.body;
 
@@ -553,7 +586,7 @@ router.post('/api/send', isLoggedIn, canMessageRole, async (req, res) => {
   }
 });
 
-router.post('/api/mark-read/:userId', isLoggedIn, async (req, res) => {
+router.post('/api/mark-read/:userId', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     await Message.updateMany(
       {
@@ -572,7 +605,7 @@ router.post('/api/mark-read/:userId', isLoggedIn, async (req, res) => {
 });
 
 // Edit message
-router.put('/api/edit/:messageId', isLoggedIn, async (req, res) => {
+router.put('/api/edit/:messageId', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     const { content } = req.body;
 
@@ -614,7 +647,7 @@ router.put('/api/edit/:messageId', isLoggedIn, async (req, res) => {
 });
 
 // Delete message
-router.delete('/api/delete/:messageId', isLoggedIn, async (req, res) => {
+router.delete('/api/delete/:messageId', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     const { deleteFor } = req.body; // 'me' or 'everyone'
 
@@ -658,7 +691,7 @@ router.delete('/api/delete/:messageId', isLoggedIn, async (req, res) => {
 });
 
 // Bulk delete messages
-router.post('/api/bulk-delete', isLoggedIn, async (req, res) => {
+router.post('/api/bulk-delete', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     const { messageIds, deleteFor } = req.body; // deleteFor: 'me' or 'everyone'
 
@@ -709,7 +742,7 @@ router.post('/api/bulk-delete', isLoggedIn, async (req, res) => {
 });
 
 // Find users to message
-router.get('/find', isLoggedIn, async (req, res) => {
+router.get('/find', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     // Get filter parameters
     const { role, state } = req.query;

@@ -1340,19 +1340,63 @@ router.get('/followers', isLoggedIn, isArtist, async (req, res) => {
     if (type === 'user') query.roleOfFollower = 'user';
     else if (type === 'artist') query.roleOfFollower = 'artist';
 
-    const followers = await Follow.find(query)
-      .populate('followerId', 'name email profileImage role')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const followersRaw = await Follow.find(query)
+      .populate('followerId', 'name email profileImage role isBlocked')
+      .sort({ createdAt: -1 });
 
-    const totalFollowers = await Follow.countDocuments(query);
+    const validFollowers = followersRaw.filter(follow => follow.followerId && !follow.followerId.isBlocked);
+    const artistFollowerIds = validFollowers
+      .filter(follow => follow.followerId.role === 'artist')
+      .map(follow => follow.followerId._id);
+    const blockedArtistUsers = artistFollowerIds.length
+      ? await Artist.find({ user: { $in: artistFollowerIds }, isBlocked: true }).select('user')
+      : [];
+    const blockedArtistUserIds = new Set(blockedArtistUsers.map(item => item.user.toString()));
+    const activeFollowers = validFollowers.filter(follow => {
+      if (follow.followerId.role !== 'artist') return true;
+      return !blockedArtistUserIds.has(follow.followerId._id.toString());
+    });
 
-    // Get follower counts
+    const uniqueFollowers = new Map();
+    activeFollowers.forEach(follow => {
+      const followerId = follow.followerId._id.toString();
+      if (!uniqueFollowers.has(followerId)) {
+        uniqueFollowers.set(followerId, follow);
+      }
+    });
+
+    const uniqueFollows = Array.from(uniqueFollowers.values());
+    const totalFollowers = uniqueFollows.length;
+    const followers = uniqueFollows.slice((page - 1) * limit, page * limit);
+
+    // Get follower counts (exclude missing/blocked users)
+    const allFollowersRaw = await Follow.find({ followingId: req.session.user.id })
+      .populate('followerId', 'role isBlocked');
+    const validAllFollowers = allFollowersRaw.filter(follow => follow.followerId && !follow.followerId.isBlocked);
+    const allArtistFollowerIds = validAllFollowers
+      .filter(follow => follow.followerId.role === 'artist')
+      .map(follow => follow.followerId._id);
+    const blockedAllArtistUsers = allArtistFollowerIds.length
+      ? await Artist.find({ user: { $in: allArtistFollowerIds }, isBlocked: true }).select('user')
+      : [];
+    const blockedAllArtistUserIds = new Set(blockedAllArtistUsers.map(item => item.user.toString()));
+    const activeAllFollowers = validAllFollowers.filter(follow => {
+      if (follow.followerId.role !== 'artist') return true;
+      return !blockedAllArtistUserIds.has(follow.followerId._id.toString());
+    });
+    const uniqueAllFollowers = new Map();
+    activeAllFollowers.forEach(follow => {
+      const followerId = follow.followerId._id.toString();
+      if (!uniqueAllFollowers.has(followerId)) {
+        uniqueAllFollowers.set(followerId, follow);
+      }
+    });
+
+    const uniqueAllFollows = Array.from(uniqueAllFollowers.values());
     const followerCounts = {
-      totalFollowers: await Follow.countDocuments({ followingId: req.session.user.id }),
-      userFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'user' }),
-      artistFollowers: await Follow.countDocuments({ followingId: req.session.user.id, roleOfFollower: 'artist' })
+      totalFollowers: uniqueAllFollows.length,
+      userFollowers: uniqueAllFollows.filter(follow => follow.roleOfFollower === 'user').length,
+      artistFollowers: uniqueAllFollows.filter(follow => follow.roleOfFollower === 'artist').length
     };
 
     res.render('artists/followers', {
