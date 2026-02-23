@@ -109,9 +109,14 @@
               </div>
 
               <div class="d-grid gap-2">
-                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                <% const artistFee = (websiteSettings && websiteSettings.registrationFees && websiteSettings.registrationFees.artistRegistrationFee > 0) ? websiteSettings.registrationFees.artistRegistrationFee : 0; %>
+                <button type="submit" id="submitBtn" class="btn <%= artistFee > 0 ? 'btn-primary' : 'btn-success' %> btn-lg">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner" role="status" aria-hidden="true"></span>
-                  <span id="submitText">Submit Application</span>
+                  <% if (artistFee > 0) { %>
+                    <i class="bi bi-credit-card me-2"></i><span id="submitText">Pay ₹<%= artistFee %> & Submit Application</span>
+                  <% } else { %>
+                    <i class="bi bi-check-circle me-2"></i><span id="submitText">Submit Application (Free)</span>
+                  <% } %>
                 </button>
                 <a href="/artist-applications/select-level" class="btn btn-outline-light" id="backBtn">Go Back</a>
               </div>
@@ -213,7 +218,7 @@
         submitBtn.disabled = true;
         backBtn.classList.add('disabled');
         submitSpinner.classList.remove('d-none');
-        submitText.textContent = 'Submitting...';
+        submitText.textContent = 'Processing...';
 
         // Show loading overlay
         loadingOverlay.classList.remove('d-none');

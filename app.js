@@ -603,6 +603,8 @@ app.use(async (req, res, next) => {
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
+    res.locals.warning = req.flash ? req.flash('warning') : [];
+    res.locals.info = req.flash ? req.flash('info') : [];
 
     // Clear "must be logged in" message for public pages
     // This prevents the message from showing on public pages after being redirected from protected pages
@@ -695,6 +697,8 @@ app.use(async (req, res, next) => {
     res.locals.userRoles = [];
     res.locals.success = [];
     res.locals.error = [];
+    res.locals.warning = [];
+    res.locals.info = [];
     res.locals.path = req.path;
     res.locals.adminPagePermissions = {};
   }
@@ -765,6 +769,7 @@ const adminProducersRoutes = require('./routes/adminProducers');
 const producerApplicationRoutes = require('./routes/producerApplications');
 const producerDashboardRoutes = require('./routes/producerDashboard');
 const adminBeatPurchasesRoutes = require('./routes/admin-beat-purchases');
+const razorpayTestRoutes = require('./routes/razorpayTest');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -867,6 +872,9 @@ app.use('/admin/notifications', notificationRoutes);
 
 // Mount admin compose email routes
 app.use('/admin/compose-email', adminComposeEmailRoutes);
+
+// Razorpay test page
+app.use('/razorpay-test', razorpayTestRoutes);
 
 // Mount admin simple email routes
 // app.use('/admin/simple-email', adminSimpleEmailRoutes); // REMOVED: Not needed as we have compose and basic email pages

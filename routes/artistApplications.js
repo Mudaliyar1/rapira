@@ -11,6 +11,8 @@ const fs = require('fs');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { sendArtistApplicationEmail, sendArtistApprovalEmail, sendArtistRejectionEmail } = require('../utils/emailService');
 const { createArtistApplicationNotification } = require('../utils/notificationService');
+const WebsiteSettings = require('../models/WebsiteSettings');
+const { createOrder, verifyPayment } = require('../utils/paymentService');
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -220,7 +222,7 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
     // Create new application with proof photo uploaded to Cloudinary
     let proofPhotoUrl = null;
     let proofPhotoMedia = null;
-    
+
     if (req.file) {
       try {
         const { media } = await uploadFileToCloudinary(req.file, {
@@ -237,6 +239,10 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
       }
     }
 
+    // Get registration fee from settings
+    const settings = await WebsiteSettings.getSettings();
+    const fee = settings.registrationFees ? settings.registrationFees.artistRegistrationFee : 0;
+
     const newApplication = new ArtistApplication({
       user: req.session.user.id,
       artistLevel,
@@ -249,39 +255,147 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
       proofPhotoData: req.file ? req.file.buffer : null,
       proofPhotoContentType: req.file ? req.file.mimetype : null,
       proofPhotoMedia: proofPhotoMedia,
-      status: 'pending'
+      status: 'pending',
+      registrationFee: fee,
+      paymentStatus: fee > 0 ? 'pending' : 'n/a'
     });
 
     await newApplication.save();
 
-    // Send email notification to admin
-    try {
-      const user = await User.findById(req.session.user.id);
-
-      // Add phone number to user object for email template
-      user.phoneNumber = phoneNumber;
-
-      // Send email to all admin users
-      const emailResult = await sendArtistApplicationEmail(user, artistLevel);
-      console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
-
-      // Create notification for admin dashboard
-      const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
-      await createArtistApplicationNotification(populatedApplication);
-      console.log(`Notification created for artist application: ${newApplication._id}`);
-    } catch (emailError) {
-      console.error('Error sending artist application email or creating notification:', emailError);
-      // Continue with the process even if email fails
+    // If fee required, redirect to payment page
+    if (fee > 0) {
+      return res.redirect(`/artist-applications/payment/${newApplication._id}`);
     }
 
-    // Add a success flash message
-    req.flash('success', 'Your artist application has been submitted successfully. You will be notified once it is reviewed.');
+    // No fee — send notifications and go to status
+    try {
+      const user = await User.findById(req.session.user.id);
+      user.phoneNumber = phoneNumber;
+      const emailResult = await sendArtistApplicationEmail(user, artistLevel);
+      console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
+      const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
+      await createArtistApplicationNotification(populatedApplication);
+    } catch (emailError) {
+      console.error('Error sending notification:', emailError);
+    }
 
-    // Redirect to status page
+    req.flash('success', 'Your artist application has been submitted successfully. You will be notified once it is reviewed.');
     res.redirect('/artist-applications/status');
   } catch (error) {
     console.error('Error in submit artist application:', error);
     req.flash('error', 'An error occurred while submitting your application');
+    res.redirect('/artist-applications/select-level');
+  }
+});
+
+// Payment page for artist registration (standalone - no layout)
+router.get('/payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (!application || application.user.toString() !== req.session.user.id) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    if (application.paymentStatus === 'paid') {
+      req.flash('info', 'Payment already completed');
+      return res.redirect('/artist-applications/status');
+    }
+
+    const orderResult = await createOrder({
+      amount: application.registrationFee,
+      receipt: `art_reg_${application._id}`,
+      notes: {
+        applicationId: application._id.toString(),
+        type: 'artist_registration',
+        userId: req.session.user.id
+      }
+    });
+
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order. Please try again.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    application.razorpayOrderId = orderResult.data.id;
+    await application.save();
+
+    res.render('artist-applications/payment', {
+      layout: false,
+      application,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Error loading payment page:', error);
+    req.flash('error', 'Failed to load payment page');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Verify artist registration payment
+router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (!application) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (verification.success) {
+      application.paymentStatus = 'paid';
+      application.razorpayPaymentId = razorpay_payment_id;
+      await application.save();
+
+      // Send notifications after successful payment
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = application.phoneNumber;
+        await sendArtistApplicationEmail(user, application.artistLevel);
+        const populatedApp = await ArtistApplication.findById(application._id).populate('user');
+        await createArtistApplicationNotification(populatedApp);
+      } catch (e) { console.error('Post-payment notification error:', e); }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/artist-applications/status');
+    } else {
+      application.paymentStatus = 'failed';
+      await application.save();
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect(`/artist-applications/payment/${application._id}`);
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Cancel payment - delete unpaid application and go back to apply form
+router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (application && application.user.toString() === req.session.user.id && application.paymentStatus !== 'paid') {
+      await ArtistApplication.findByIdAndDelete(req.params.id);
+      console.log(`Deleted unpaid artist application: ${req.params.id}`);
+    }
+
+    req.flash('error', 'Payment was cancelled. Please fill the form and try again.');
+    res.redirect('/artist-applications/select-level');
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    req.flash('error', 'Something went wrong. Please try again.');
     res.redirect('/artist-applications/select-level');
   }
 });
@@ -350,9 +464,9 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
         const city = (app.city || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               city.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          city.includes(searchTerm);
       });
     }
 
@@ -438,9 +552,9 @@ router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
         const city = (app.city || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               city.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          city.includes(searchTerm);
       });
     }
 

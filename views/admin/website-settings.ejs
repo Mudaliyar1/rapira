@@ -69,6 +69,11 @@
           <i class="bi bi-music-note-beamed me-2"></i>Beat Commission
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="registration-fees-tab" data-bs-toggle="tab" data-bs-target="#registration-fees" type="button" role="tab">
+          <i class="bi bi-credit-card-2-front me-2"></i>Application Fees
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -1112,6 +1117,61 @@
           <div class="mt-4">
             <button type="submit" class="btn btn-primary">
               <i class="bi bi-save me-1"></i>Save Beat Commission Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Registration Fees Tab -->
+      <div class="tab-pane fade" id="registration-fees" role="tabpanel">
+        <form action="/admin/website-settings/registration-fees" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Registration Fee Settings</h5>
+              <p class="text-muted">Set the one-time registration fees for artists and producers. Set to 0 to disable fees.</p>
+
+              <div class="mb-4">
+                <label for="artistRegistrationFee" class="form-label text-white fw-bold">Artist Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="artistRegistrationFee" 
+                         name="artistRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.artistRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become an Artist. Set 0 for free.</small>
+              </div>
+
+              <div class="mb-4">
+                <label for="producerRegistrationFee" class="form-label text-white fw-bold">Producer Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="producerRegistrationFee" 
+                         name="producerRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.producerRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become a Producer. Set 0 for free.</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>How it works</h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">If fee > 0, user is redirected to a payment page after form submission.</li>
+                    <li class="mb-2">Razorpay opens automatically on the payment page.</li>
+                    <li class="mb-2">If fee = 0, application submits without payment.</li>
+                    <li class="mb-2">Payments go to your linked Razorpay account.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Fee Settings
             </button>
           </div>
         </form>

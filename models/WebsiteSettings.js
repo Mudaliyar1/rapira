@@ -278,6 +278,20 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Registration Fee Settings
+  registrationFees: {
+    artistRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    producerRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,

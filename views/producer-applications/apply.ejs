@@ -61,7 +61,14 @@
             </div>
           </div>
           <div class="col-12 d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Submit Producer Application</button>
+            <% const producerFee = (websiteSettings && websiteSettings.registrationFees && websiteSettings.registrationFees.producerRegistrationFee > 0) ? websiteSettings.registrationFees.producerRegistrationFee : 0; %>
+            <button type="submit" class="btn <%= producerFee > 0 ? 'btn-primary' : 'btn-success' %>">
+              <% if (producerFee > 0) { %>
+                <i class="bi bi-credit-card me-2"></i>Pay ₹<%= producerFee %> & Submit Application
+              <% } else { %>
+                <i class="bi bi-check-circle me-2"></i>Submit Application (Free)
+              <% } %>
+            </button>
             <a href="/users/profile" class="btn btn-outline-secondary">Cancel</a>
           </div>
         </div>

@@ -845,4 +845,31 @@ router.post('/producer-beat-commission', isLoggedIn, isAdmin, async (req, res) =
   }
 });
 
+// POST /admin/website-settings/registration-fees - Update registration fees
+router.post('/registration-fees', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { artistRegistrationFee, producerRegistrationFee } = req.body;
+    const settings = await WebsiteSettings.getSettings();
+
+    if (!settings.registrationFees) {
+      settings.registrationFees = {};
+    }
+
+    settings.registrationFees.artistRegistrationFee = parseFloat(artistRegistrationFee) || 0;
+    settings.registrationFees.producerRegistrationFee = parseFloat(producerRegistrationFee) || 0;
+
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    clearSettingsCache();
+
+    req.flash('success', 'Registration fees updated successfully!');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating registration fees:', error);
+    req.flash('error', 'Failed to update registration fees');
+    res.redirect('/admin/website-settings');
+  }
+});
+
 module.exports = router;

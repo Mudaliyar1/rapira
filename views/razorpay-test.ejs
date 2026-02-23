@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Razorpay Test Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+    }
+    .btn-primary {
+      background-color: #6366f1;
+      border-color: #6366f1;
+    }
+    .pulse-animation {
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center">
+        <div class="card border-secondary">
+          <div class="card-body py-5">
+            <h2 class="mb-3"><i class="bi bi-credit-card-2-front me-2"></i>Razorpay Test</h2>
+            <p class="text-muted mb-4">This is a test page to verify Razorpay opens correctly.</p>
+
+            <!-- Debug Info -->
+            <div class="alert alert-info text-start mb-4">
+              <h6><i class="bi bi-info-circle me-2"></i>Debug Info</h6>
+              <p class="mb-1"><strong>Key ID:</strong> <%= keyId %></p>
+              <p class="mb-1"><strong>Order ID:</strong> <%= order.id %></p>
+              <p class="mb-1"><strong>Amount:</strong> <%= order.amount %> paise (₹<%= order.amount / 100 %>)</p>
+              <p class="mb-0"><strong>Currency:</strong> <%= order.currency || 'INR' %></p>
+            </div>
+
+            <!-- Auto-open message -->
+            <div class="mb-4">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="text-muted">Razorpay should open automatically in 1 second...</p>
+            </div>
+
+            <!-- Manual open button -->
+            <div class="d-grid gap-2">
+              <button id="openBtn" class="btn btn-lg btn-primary pulse-animation">
+                <i class="bi bi-credit-card me-2"></i>Click here to open Razorpay
+              </button>
+            </div>
+
+            <!-- Status log -->
+            <div id="statusLog" class="alert alert-dark text-start mt-4 mb-0" style="font-family: monospace; font-size: 13px;">
+              <strong>Log:</strong><br>
+            </div>
+          </div>
+        </div>
+
+        <a href="/" class="btn btn-outline-secondary mt-3">← Back to Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    var log = document.getElementById('statusLog');
+
+    function addLog(msg) {
+      var time = new Date().toLocaleTimeString();
+      log.innerHTML += time + ' - ' + msg + '<br>';
+      console.log(msg);
+    }
+
+    addLog('Page loaded');
+    addLog('Razorpay SDK: ' + (typeof Razorpay !== 'undefined' ? 'LOADED ✅' : 'NOT FOUND ❌'));
+    addLog('Key: <%= keyId %>');
+    addLog('Order: <%= order.id %>');
+
+    function openRazorpay() {
+      addLog('Opening Razorpay...');
+
+      var options = {
+        key: '<%= keyId %>',
+        amount: '<%= order.amount %>',
+        currency: '<%= order.currency || "INR" %>',
+        name: 'Rapira Test',
+        description: 'Test Payment ₹1',
+        order_id: '<%= order.id %>',
+        handler: function(response) {
+          addLog('✅ PAYMENT SUCCESS!');
+          addLog('Payment ID: ' + response.razorpay_payment_id);
+          addLog('Order ID: ' + response.razorpay_order_id);
+          alert('Payment successful! Razorpay is working correctly.\n\nPayment ID: ' + response.razorpay_payment_id);
+        },
+        prefill: {
+          name: '<%= currentUser.name %>',
+          email: '<%= currentUser.email %>'
+        },
+        theme: {
+          color: '#6366f1'
+        },
+        modal: {
+          ondismiss: function() {
+            addLog('Payment modal dismissed by user');
+          }
+        }
+      };
+
+      try {
+        var rzp = new Razorpay(options);
+        addLog('Razorpay instance created ✅');
+        rzp.on('payment.failed', function(resp) {
+          addLog('❌ Payment failed: ' + resp.error.description);
+        });
+        rzp.open();
+        addLog('rzp.open() called ✅');
+      } catch (error) {
+        addLog('❌ ERROR: ' + error.message);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Manual button
+    document.getElementById('openBtn').addEventListener('click', function() {
+      addLog('Manual button clicked');
+      openRazorpay();
+    });
+
+    // Auto-open after 1 second (same as subscription payment-redirect.ejs)
+    addLog('Will auto-open in 1 second...');
+    setTimeout(function() {
+      addLog('Auto-opening now...');
+      openRazorpay();
+    }, 1000);
+  </script>
+</body>
+</html>

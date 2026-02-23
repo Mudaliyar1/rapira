@@ -11,7 +11,7 @@ const ProducerApplicationSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return /^\d{10}$/.test(value);
       },
       message: props => `${props.value} is not a valid mobile number`
@@ -61,7 +61,7 @@ const ProducerApplicationSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return value === true;
       },
       message: 'You must agree to terms and conditions'
@@ -72,6 +72,17 @@ const ProducerApplicationSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending',
     index: true
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed', 'n/a'],
+    default: 'n/a'
+  },
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
+  registrationFee: {
+    type: Number,
+    default: 0
   },
   adminNotes: {
     type: String,

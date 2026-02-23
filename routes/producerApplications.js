@@ -9,6 +9,8 @@ const UserRole = require('../models/UserRole');
 const { isLoggedIn, isAdmin } = require('../middleware/auth');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 const { sendEmail } = require('../utils/brevoEmailService');
+const WebsiteSettings = require('../models/WebsiteSettings');
+const { createOrder, verifyPayment } = require('../utils/paymentService');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -179,6 +181,9 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
       ownerId: req.session.user.id,
       folder: 'rapira/producer-applications/proofs'
     });
+    // Get registration fee from settings
+    const settings = await WebsiteSettings.getSettings();
+    const fee = settings.registrationFees ? settings.registrationFees.producerRegistrationFee : 0;
 
     const application = new ProducerApplication({
       user: req.session.user.id,
@@ -193,21 +198,141 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
       idProofUrl: media.secure_url,
       idProofMedia: media._id,
       agreedToTerms: true,
-      status: 'pending'
+      status: 'pending',
+      registrationFee: fee,
+      paymentStatus: fee > 0 ? 'pending' : 'n/a'
     });
 
     await application.save();
 
-    const user = await User.findById(req.session.user.id);
-    if (user) {
-      await notifyAdminsAboutProducerApplication(user);
+    // If fee required, redirect to payment page
+    if (fee > 0) {
+      return res.redirect(`/producer-applications/payment/${application._id}`);
     }
+
+    // No fee — notify and go to status
+    try {
+      const user = await User.findById(req.session.user.id);
+      if (user) {
+        await notifyAdminsAboutProducerApplication(user);
+      }
+    } catch (e) { console.error('Notification error:', e); }
 
     req.flash('success', 'Producer application submitted successfully. You will receive an email after review.');
     res.redirect('/producer-applications/status');
   } catch (error) {
     console.error('Producer apply submit error:', error);
     req.flash('error', 'Failed to submit producer application');
+    res.redirect('/producer-applications/apply');
+  }
+});
+
+// Payment page for producer registration (standalone - no layout)
+router.get('/payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ProducerApplication.findById(req.params.id);
+
+    if (!application || application.user.toString() !== req.session.user.id) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/producer-applications/status');
+    }
+
+    if (application.paymentStatus === 'paid') {
+      req.flash('info', 'Payment already completed');
+      return res.redirect('/producer-applications/status');
+    }
+
+    const orderResult = await createOrder({
+      amount: application.registrationFee,
+      receipt: `prod_reg_${application._id}`,
+      notes: {
+        applicationId: application._id.toString(),
+        type: 'producer_registration',
+        userId: req.session.user.id
+      }
+    });
+
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order. Please try again.');
+      return res.redirect('/producer-applications/status');
+    }
+
+    application.razorpayOrderId = orderResult.data.id;
+    await application.save();
+
+    res.render('producer-applications/payment', {
+      layout: false,
+      application,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Error loading payment page:', error);
+    req.flash('error', 'Failed to load payment page');
+    res.redirect('/producer-applications/status');
+  }
+});
+
+// Verify producer registration payment
+router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const application = await ProducerApplication.findById(req.params.id);
+
+    if (!application) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/producer-applications/status');
+    }
+
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (verification.success) {
+      application.paymentStatus = 'paid';
+      application.razorpayPaymentId = razorpay_payment_id;
+      await application.save();
+
+      try {
+        const user = await User.findById(req.session.user.id);
+        if (user) {
+          await notifyAdminsAboutProducerApplication(user);
+        }
+      } catch (e) { console.error('Post-payment notification error:', e); }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/producer-applications/status');
+    } else {
+      application.paymentStatus = 'failed';
+      await application.save();
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect(`/producer-applications/payment/${application._id}`);
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/producer-applications/status');
+  }
+});
+
+// Cancel payment - delete unpaid application and go back to apply form
+router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ProducerApplication.findById(req.params.id);
+
+    if (application && application.user.toString() === req.session.user.id && application.paymentStatus !== 'paid') {
+      await ProducerApplication.findByIdAndDelete(req.params.id);
+      console.log(`Deleted unpaid producer application: ${req.params.id}`);
+    }
+
+    req.flash('error', 'Payment was cancelled. Please fill the form and try again.');
+    res.redirect('/producer-applications/apply');
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    req.flash('error', 'Something went wrong. Please try again.');
     res.redirect('/producer-applications/apply');
   }
 });
