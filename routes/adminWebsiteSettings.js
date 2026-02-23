@@ -157,7 +157,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     const settings = await WebsiteSettings.getSettings();
     const menuConfiguration = await getMenuConfiguration();
     const allRoutes = await getAllRoutes();
-    
+
     // Helper function to format duration in human-readable format
     const formatDuration = (minutes) => {
       if (minutes < 60) {
@@ -502,29 +502,29 @@ router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
 
     settings.siteSettings.siteName = siteName || 'Rapira - Indian Rap Music Platform';
     settings.siteSettings.siteDescription = siteDescription || 'The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.';
-    
+
     // Handle maintenance mode
     if (maintenanceMode === 'on') {
       // Enable maintenance mode
       settings.siteSettings.maintenanceMode = true;
       settings.siteSettings.maintenanceReason = maintenanceReason || 'Scheduled maintenance in progress';
       settings.siteSettings.maintenanceStartTime = new Date();
-      
+
       // Validate maintenance duration (1 minute to 1 day)
       let duration = parseInt(maintenanceDuration) || 60;
       duration = Math.max(1, Math.min(1440, duration)); // Clamp between 1 minute and 1440 minutes (1 day)
       settings.siteSettings.maintenanceDuration = duration;
-      
+
       settings.siteSettings.maintenanceAutoStart = maintenanceAutoStart === 'on';
     } else {
       // Disable maintenance mode
       settings.siteSettings.maintenanceMode = false;
       settings.siteSettings.maintenanceStartTime = null;
     }
-    
+
     // Update button sounds setting
     settings.siteSettings.enableButtonSounds = enableButtonSounds === 'on';
-    
+
     // Update active theme setting
     settings.siteSettings.activeTheme = activeTheme || '';
 
@@ -621,7 +621,7 @@ router.post('/theme', isLoggedIn, isAdmin, async (req, res) => {
 router.delete('/logo', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
-    
+
     // Delete logo file if exists
     if (settings.headerSettings.logoUrl && settings.headerSettings.logoUrl.startsWith('/images/branding/')) {
       const logoPath = path.join(__dirname, '..', 'public', settings.headerSettings.logoUrl);
@@ -766,7 +766,7 @@ router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
     const { defaultCommissionPercentage, minimumVenueRate, requireAdminApproval, allowUserCommissionEdit } = req.body;
 
     const settings = await WebsiteSettings.getSettings();
-    
+
     // Initialize venueSettings if it doesn't exist
     if (!settings.venueSettings) {
       settings.venueSettings = {};
@@ -777,7 +777,7 @@ router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
     settings.venueSettings.minimumVenueRate = parseInt(minimumVenueRate) || 500;
     settings.venueSettings.requireAdminApproval = requireAdminApproval === 'on';
     settings.venueSettings.allowUserCommissionEdit = allowUserCommissionEdit === 'on';
-    
+
     settings.lastUpdatedBy = req.session.user.id;
     await settings.save();
 
@@ -796,7 +796,7 @@ router.post('/ticket-commission', isLoggedIn, isAdmin, async (req, res) => {
     const { ticketCommissionEnabled, ticketCommissionPercentage } = req.body;
 
     const settings = await WebsiteSettings.getSettings();
-    
+
     // Initialize ticketCommissionSettings if it doesn't exist
     if (!settings.ticketCommissionSettings) {
       settings.ticketCommissionSettings = {};
@@ -805,7 +805,7 @@ router.post('/ticket-commission', isLoggedIn, isAdmin, async (req, res) => {
     // Update ticket commission settings
     settings.ticketCommissionSettings.enabled = ticketCommissionEnabled === 'on';
     settings.ticketCommissionSettings.percentage = parseFloat(ticketCommissionPercentage) || 0;
-    
+
     settings.lastUpdatedBy = req.session.user.id;
     await settings.save();
 
@@ -814,6 +814,33 @@ router.post('/ticket-commission', isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating ticket commission settings:', error);
     req.flash('error', 'Failed to update ticket commission settings');
+    res.redirect('/admin/website-settings');
+  }
+});
+
+// POST /admin/website-settings/producer-beat-commission - Update producer beat commission settings
+router.post('/producer-beat-commission', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { producerBeatCommissionPercentage } = req.body;
+
+    const settings = await WebsiteSettings.getSettings();
+
+    // Initialize producerBeatCommissionSettings if it doesn't exist
+    if (!settings.producerBeatCommissionSettings) {
+      settings.producerBeatCommissionSettings = {};
+    }
+
+    // Update producer beat commission settings
+    settings.producerBeatCommissionSettings.percentage = parseFloat(producerBeatCommissionPercentage) || 0;
+
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+
+    req.flash('success', 'Producer beat commission settings updated successfully!');
+    res.redirect('/admin/website-settings');
+  } catch (error) {
+    console.error('Error updating producer beat commission settings:', error);
+    req.flash('error', 'Failed to update producer beat commission settings');
     res.redirect('/admin/website-settings');
   }
 });

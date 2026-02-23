@@ -7,32 +7,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const sidebar = document.getElementById('producerSidebar');
-      const sidebarToggle = document.getElementById('sidebarToggle');
-      const closeSidebar = document.getElementById('closeSidebar');
-      const overlay = document.querySelector('.sidebar-overlay');
-
-      if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-          sidebar.classList.toggle('collapsed');
-        });
-      }
-
-      if (closeSidebar) {
-        closeSidebar.addEventListener('click', function() {
-          sidebar.classList.remove('show');
-          overlay.style.display = 'none';
-        });
-      }
-
-      if (overlay) {
-        overlay.addEventListener('click', function() {
-          sidebar.classList.remove('show');
-          overlay.style.display = 'none';
-        });
-      }
-    });
+    // Sidebar handled by /js/main.js
   </script>
   <% if (typeof extraScripts !== 'undefined') { %>
     <%- extraScripts %>

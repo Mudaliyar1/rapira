@@ -8,6 +8,9 @@ const Concert = require('../models/Concert');
 const Follow = require('../models/Follow');
 const Media = require('../models/Media');
 const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
+const ProducerBeat = require('../models/ProducerBeat');
+const BeatPurchase = require('../models/BeatPurchase');
+const WebsiteSettings = require('../models/WebsiteSettings');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -198,7 +201,7 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     // Get artist's stories
     const ArtistStory = require('../models/ArtistStory');
     const now = new Date();
-    const stories = await ArtistStory.find({ 
+    const stories = await ArtistStory.find({
       artist: artist._id,
       expiresAt: { $gt: now }
     }).sort({ createdAt: -1 });
@@ -418,7 +421,7 @@ router.post('/upload-content', isLoggedIn, isArtist,
       req.flash('error', 'Failed to upload content');
       res.redirect('/artists/upload-content');
     }
-});
+  });
 
 // Edit content page
 router.get('/content/:id/edit', isLoggedIn, isArtist, async (req, res) => {
@@ -562,7 +565,7 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
       req.flash('error', 'Failed to update content');
       res.redirect(`/artists/content/${req.params.id}/edit`);
     }
-});
+  });
 
 // Content management page
 router.get('/manage-content', isLoggedIn, isArtist, async (req, res) => {
@@ -878,16 +881,16 @@ router.get('/manage-concerts', isLoggedIn, isArtist, async (req, res) => {
 router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
   try {
     const artist = await Artist.findOne({ user: req.session.user.id });
-    
+
     if (!artist) {
       req.flash('error', 'Artist profile not found');
       return res.redirect('/');
     }
 
     // Get concert details with venue and ticket information
-    const concert = await Concert.findOne({ 
-      _id: req.params.id, 
-      artist: artist._id 
+    const concert = await Concert.findOne({
+      _id: req.params.id,
+      artist: artist._id
     }).populate('venue');
 
     if (!concert) {
@@ -898,33 +901,33 @@ router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
     // Get tickets sold for this concert
     const Ticket = require('../models/Ticket');
     const tickets = await Ticket.find({ concert: concert._id });
-    
+
     // Calculate financial details
     let venueFinancials = null;
     if (concert.venueBooking && concert.venueBooking.totalVenueCost) {
       const totalCost = concert.venueBooking.totalVenueCost || 0;
       const commissionPercentage = concert.venueBooking.adminCommission?.percentage || 0;
       const storedCommission = concert.venueBooking.adminCommission?.advanceAmount;
-      
+
       // Get commission amount (from stored advance or calculate from percentage)
       const commissionAmount = Number.isFinite(storedCommission) && storedCommission > 0
         ? storedCommission
         : (concert.venueBooking?.isPaid && commissionPercentage > 0
-            ? (totalCost * commissionPercentage) / 100
-            : 0);
-      
+          ? (totalCost * commissionPercentage) / 100
+          : 0);
+
       // Get amount paid by artist (direct payment to venue)
       const artistPaidDirect = concert.venueBooking.amountPaidByArtist || 0;
-      
+
       // Total paid = commission already collected + direct payment
       const totalPaid = commissionAmount + artistPaidDirect;
-      
+
       // Total expected payment = venue cost + commission
       const totalExpectedPayment = totalCost + commissionAmount;
-      
+
       // Remaining balance = total expected payment - total paid
       const remainingBalance = Math.max(totalExpectedPayment - totalPaid, 0);
-      
+
       venueFinancials = {
         totalCost,
         commissionPercentage,
@@ -1418,6 +1421,384 @@ router.get('/followers', isLoggedIn, isArtist, async (req, res) => {
     console.error('Artist followers error:', error);
     req.flash('error', 'Failed to load followers');
     res.redirect('/artists/dashboard');
+  }
+});
+
+// ===== ARTIST BEAT MARKETPLACE ROUTES =====
+
+// GET - View all available producer beats for an artist
+router.get('/beats', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    // Get settings for commission info
+    const settings = await WebsiteSettings.getSettings();
+    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
+
+    const { producerId, searchQuery, statusFilter } = req.query;
+
+    // Build query filter
+    const query = { isActive: true, isBanned: false };
+    if (producerId) query.producer = producerId;
+    if (searchQuery) query.title = { $regex: searchQuery, $options: 'i' };
+
+    // Mark beats the artist has already purchased (ignoring deleted receipts so they can repurchase)
+    const purchases = await BeatPurchase.find({ artist: req.session.user.id, status: 'completed', isDeletedByArtist: { $ne: true } });
+    const purchasedBeatIds = purchases.filter(p => p.beat).map(p => p.beat.toString());
+
+    // Get all active, unbanned beats with filters
+    let beats = await ProducerBeat.find(query)
+      .populate('producer', 'name profileImage')
+      .sort({ createdAt: -1 });
+
+    // Identify unique producers for the filter dropdown
+    const allActiveBeats = await ProducerBeat.find({ isActive: true, isBanned: false }).populate('producer', 'name');
+    const uniqueProducersMap = new Map();
+    allActiveBeats.forEach(b => {
+      if (b.producer && !uniqueProducersMap.has(b.producer._id.toString())) {
+        uniqueProducersMap.set(b.producer._id.toString(), { id: b.producer._id, name: b.producer.name });
+      }
+    });
+    const producersList = Array.from(uniqueProducersMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Filter by purchase status
+    if (statusFilter === 'purchased') {
+      beats = beats.filter(b => purchasedBeatIds.includes(b._id.toString()));
+    } else if (statusFilter === 'available') {
+      beats = beats.filter(b => !purchasedBeatIds.includes(b._id.toString()));
+    } else if (statusFilter === 'free') {
+      beats = beats.filter(b => b.price === 0);
+    }
+
+    res.render('artists/beats', {
+      layout: false,
+      title: 'Producer Beats Marketplace',
+      currentPath: '/artists/beats',
+      artist,
+      beats,
+      purchasedBeatIds,
+      commissionPct,
+      producersList,
+      filters: { producerId, searchQuery, statusFilter },
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  } catch (error) {
+    console.error('Error fetching beats for artist:', error);
+    req.flash('error', 'Failed to load beats marketplace');
+    res.redirect('/artists/dashboard');
+  }
+});
+
+// GET - View specific beat details
+router.get('/beats/:id', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    const beat = await ProducerBeat.findById(req.params.id).populate('producer', 'name email profileImage');
+
+    if (!beat || !beat.isActive || beat.isBanned) {
+      req.flash('error', 'Beat not found or unavailable');
+      return res.redirect('/artists/beats');
+    }
+
+    const settings = await WebsiteSettings.getSettings();
+    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
+
+    const existingPurchase = await BeatPurchase.findOne({
+      beat: beat._id,
+      artist: req.session.user.id,
+      status: 'completed',
+      isDeletedByArtist: { $ne: true }
+    });
+
+    res.render('artists/beat-details', {
+      layout: false,
+      title: beat.title,
+      currentPath: '/artists/beats',
+      artist,
+      beat,
+      isPurchased: !!existingPurchase,
+      commissionPct,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  } catch (error) {
+    console.error('Error fetching beat details:', error);
+    req.flash('error', 'Failed to load beat details');
+    res.redirect('/artists/beats');
+  }
+});
+
+// POST - Create Razorpay order for a beat
+router.post('/beats/:id/purchase', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const beat = await ProducerBeat.findById(req.params.id);
+    if (!beat || !beat.isActive || beat.isBanned) {
+      return res.status(400).json({ success: false, message: 'Beat is not available for purchase' });
+    }
+
+    // Check if already purchased
+    const existingPurchase = await BeatPurchase.findOne({
+      beat: beat._id,
+      artist: req.session.user.id,
+      status: 'completed',
+      isDeletedByArtist: { $ne: true }
+    });
+
+    if (existingPurchase) {
+      return res.status(400).json({ success: false, message: 'You have already purchased this beat' });
+    }
+
+    const settings = await WebsiteSettings.getSettings();
+    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
+
+    // Calculate fees
+    const platformFee = beat.price * (commissionPct / 100);
+    const totalAmountPaid = beat.price + platformFee;
+
+    // Handle FREE beats directly to bypass Razorpay
+    if (totalAmountPaid === 0) {
+      const newFreePurchase = new BeatPurchase({
+        beat: beat._id,
+        artist: req.session.user.id,
+        producer: beat.producer,
+        amount: 0,
+        platformFee: 0,
+        totalAmountPaid: 0,
+        paymentMethod: 'free',
+        transactionId: 'FREE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5).toUpperCase(),
+        status: 'completed',
+        backupTitle: beat.title,
+        backupMediaType: beat.mediaType,
+        backupMediaUrl: beat.mediaUrl
+      });
+      await newFreePurchase.save();
+
+      beat.purchasesCount += 1;
+      await beat.save();
+
+      return res.json({ success: true, isFree: true, message: 'Free beat added to library successfully!' });
+    }
+
+    // Create Razorpay order for paid beats
+    const { createOrder } = require('../utils/paymentService');
+    const orderResult = await createOrder({
+      amount: totalAmountPaid,
+      receipt: `beat_${beat._id.toString().substring(0, 10)}`,
+      notes: {
+        type: 'beat_purchase',
+        beatId: beat._id.toString(),
+        artistId: req.session.user.id
+      }
+    });
+
+    if (!orderResult.success) {
+      return res.status(500).json({ success: false, message: orderResult.error || 'Failed to initialize payment' });
+    }
+
+    res.json({
+      success: true,
+      order: orderResult.data,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      amount: totalAmountPaid,
+      beatId: beat._id
+    });
+
+  } catch (error) {
+    console.error('Error initiating beat purchase:', error);
+    res.status(500).json({ success: false, message: 'Server error initiating purchase' });
+  }
+});
+
+// POST - Verify Razorpay payment for a beat
+router.post('/beats/verify-payment', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, beatId } = req.body;
+
+    if (!beatId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.json({ success: false, message: 'Missing payment details' });
+    }
+
+    const { verifyPayment } = require('../utils/paymentService');
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (!verification.success) {
+      return res.json({ success: false, message: 'Payment signature verification failed' });
+    }
+
+    const beat = await ProducerBeat.findById(beatId);
+    if (!beat) {
+      return res.json({ success: false, message: 'Beat not found' });
+    }
+
+    const settings = await WebsiteSettings.getSettings();
+    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
+    const platformFee = beat.price * (commissionPct / 100);
+    const totalAmountPaid = beat.price + platformFee;
+
+    const newPurchase = new BeatPurchase({
+      beat: beat._id,
+      artist: req.session.user.id,
+      producer: beat.producer,
+      amount: beat.price,
+      platformFee,
+      totalAmountPaid,
+      paymentMethod: 'razorpay',
+      transactionId: razorpay_payment_id,
+      status: 'completed',
+      backupTitle: beat.title,
+      backupMediaType: beat.mediaType,
+      backupMediaUrl: beat.mediaUrl
+    });
+
+    await newPurchase.save();
+
+    beat.purchasesCount += 1;
+    await beat.save();
+
+    res.json({ success: true, message: 'Beat purchased successfully!' });
+
+  } catch (error) {
+    console.error('Error verifying beat payment:', error);
+    res.json({ success: false, message: 'Server error processing payment verification' });
+  }
+});
+
+// POST - Increment View Count (optional via AJAX)
+router.post('/beats/:id/view', isLoggedIn, async (req, res) => {
+  try {
+    await ProducerBeat.findByIdAndUpdate(req.params.id, { $inc: { viewsCount: 1 } });
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false });
+  }
+});
+// GET - View artist's purchased beats and receipts
+router.get('/beat-purchases', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    const purchases = await BeatPurchase.find({ artist: req.session.user.id, status: 'completed', isDeletedByArtist: { $ne: true } })
+      .populate('producer', 'name email profileImage')
+      .populate('beat', 'title mediaUrl mediaType')
+      .sort({ createdAt: -1 });
+
+    res.render('artists/beat-purchases', {
+      layout: false,
+      title: 'My Receipts',
+      currentPath: '/artists/beat-purchases',
+      artist,
+      purchases,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  } catch (error) {
+    console.error('Error fetching beat purchases for artist:', error);
+    req.flash('error', 'Failed to load purchased beats');
+    res.redirect('/artists/dashboard');
+  }
+});
+
+// GET - Beat Library (Media & Management)
+router.get('/library', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/');
+    }
+
+    const purchases = await BeatPurchase.find({ artist: req.session.user.id, status: 'completed', isDeletedByArtist: { $ne: true } })
+      .populate('producer', 'name email profileImage')
+      .populate('beat', 'title mediaUrl mediaType')
+      .sort({ createdAt: -1 });
+
+    res.render('artists/library', {
+      layout: false,
+      title: 'Beat Library',
+      currentPath: '/artists/library',
+      artist,
+      purchases,
+      success: req.flash('success'),
+      error: req.flash('error')
+    });
+  } catch (error) {
+    console.error('Error fetching beat library:', error);
+    req.flash('error', 'Failed to load beat library');
+    res.redirect('/artists/dashboard');
+  }
+});
+
+// GET - View specific receipt for artist
+router.get('/beat-purchases/:id/receipt', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const userRole = req.session.user.role;
+    const isAdmin = userRole === 'admin' || userRole === 'superAdmin';
+
+    // Prepare query: admins can see any receipt by ID, artists only their own
+    const query = { _id: req.params.id };
+    if (!isAdmin) {
+      query.artist = req.session.user.id;
+    }
+
+    const purchase = await BeatPurchase.findOne(query)
+      .populate('artist', 'name email')
+      .populate('producer', 'name email')
+      .populate('beat', 'title mediaType');
+
+    if (!purchase) {
+      req.flash('error', 'Receipt not found');
+      return res.redirect(isAdmin ? '/admin/artist-beat-purchases' : '/artists/beat-purchases');
+    }
+
+    // Determine return URL: if admin, go back to the artist's detail page in admin panel
+    const backUrl = isAdmin
+      ? `/admin/artist-beat-purchases/artist/${purchase.artist._id}`
+      : '/artists/beat-purchases';
+
+    res.render('shared/receipt', {
+      layout: false,
+      purchase,
+      backUrl
+    });
+  } catch (error) {
+    console.error('Error fetching receipt:', error);
+    req.flash('error', 'Failed to load receipt');
+    const isAdmin = req.session.user && (req.session.user.role === 'admin' || req.session.user.role === 'superAdmin');
+    res.redirect(isAdmin ? '/admin/artist-beat-purchases' : '/artists/beat-purchases');
+  }
+});
+
+// POST - Delete artist receipt
+router.post('/beat-purchases/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const purchase = await BeatPurchase.findOne({ _id: req.params.id, artist: req.session.user.id });
+    if (!purchase) {
+      req.flash('error', 'Receipt not found');
+      return res.redirect('/artists/beat-purchases');
+    }
+
+    purchase.isDeletedByArtist = true;
+    await purchase.save();
+
+    req.flash('success', 'Receipt deleted from your dashboard');
+    res.redirect('/artists/beat-purchases');
+  } catch (error) {
+    console.error('Error deleting receipt:', error);
+    req.flash('error', 'Failed to delete receipt');
+    res.redirect('/artists/beat-purchases');
   }
 });
 

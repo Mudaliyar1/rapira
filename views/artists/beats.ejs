@@ -1,0 +1,195 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-lg-5 mb-3 mb-lg-0">
+        <h5 class="text-white mb-2">Beats Marketplace</h5>
+        <p class="text-white-50 mb-0">Browse and purchase exclusive beats uploaded by producers.</p>
+      </div>
+      <div class="col-lg-7">
+        <form action="/artists/beats" method="GET" class="d-flex gap-2 text-white">
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-white-50">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" name="searchQuery" class="form-control bg-dark border-secondary text-white" placeholder="Search beat title..." value="<%= filters.searchQuery || '' %>">
+          </div>
+          <select name="producerId" class="form-select bg-dark border-secondary text-white" style="width: auto; min-width: 150px;">
+            <option value="">All Producers</option>
+            <% producersList.forEach(prod => { %>
+              <option value="<%= prod.id %>" <%= filters.producerId === prod.id.toString() ? 'selected' : '' %>><%= prod.name %></option>
+            <% }); %>
+          </select>
+          <select name="statusFilter" class="form-select bg-dark border-secondary text-white" style="width: auto;">
+            <option value="" <%= !filters.statusFilter ? 'selected' : '' %>>All Beats</option>
+            <option value="available" <%= filters.statusFilter === 'available' ? 'selected' : '' %>>Available Only</option>
+            <option value="purchased" <%= filters.statusFilter === 'purchased' ? 'selected' : '' %>>Purchased Only</option>
+            <option value="free" <%= filters.statusFilter === 'free' ? 'selected' : '' %>>Free Beats Only</option>
+          </select>
+          <button type="submit" class="btn btn-outline-primary text-nowrap">Filter</button>
+          <% if (filters.searchQuery || filters.producerId || filters.statusFilter) { %>
+            <a href="/artists/beats" class="btn btn-outline-danger" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+          <% } %>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Beats Grid -->
+<div class="card bg-dark border-secondary">
+  <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+    <h5 class="mb-0 text-white">Available Beats</h5>
+  </div>
+  <div class="card-body">
+    <% if (beats && beats.length > 0) { %>
+      <div class="row g-4">
+        <% beats.forEach(beat => { %>
+          <% const isPurchased = purchasedBeatIds.includes(beat._id.toString()); %>
+          <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="glass-card-dark h-100 position-relative">
+              
+              <!-- Badge if purchased -->
+              <% if (isPurchased) { %>
+                <div class="position-absolute top-0 end-0 p-2">
+                  <span class="badge bg-success">Purchased</span>
+                </div>
+              <% } %>
+
+              <div class="card-body p-3 d-flex flex-column">
+                
+                <h5 class="card-title mb-2 text-truncate pe-5">
+                  <a href="/artists/beats/<%= beat._id %>" class="text-white text-decoration-none hover-primary">
+                    <%= beat.title %>
+                  </a>
+                </h5>
+                <div class="d-flex align-items-center mb-3 text-white-50 small">
+                  <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" width="24" height="24" class="rounded-circle me-2" alt="">
+                  <span>By <%= beat.producer.name %></span>
+                </div>
+                
+                <!-- Media Player -->
+                <div class="mb-3 position-relative" oncontextmenu="return false;">
+                  <% if (!isPurchased) { %>
+                    <div class="text-center text-white-50 mb-1 small"><i class="bi bi-eye-slash text-warning"></i> Downloads restricted until purchased</div>
+                  <% } %>
+
+                  <% if (beat.mediaType === 'video') { %>
+                    <video class="w-100 rounded" controls controlsList="nodownload noplaybackrate" style="max-height: 180px; object-fit: cover; background: #000;" <%= isPurchased ? '' : 'disablePictureInPicture disableRemotePlayback' %> onplay="recordView('<%= beat._id %>')">
+                      <source src="<%= beat.mediaUrl %>">
+                      Your browser does not support the video tag.
+                    </video>
+                  <% } else { %>
+                    <audio class="w-100" controls controlsList="nodownload noplaybackrate" onplay="recordView('<%= beat._id %>')">
+                      <source src="<%= beat.mediaUrl %>">
+                      Your browser does not support the audio element.
+                    </audio>
+                  <% } %>
+                </div>
+
+                <!-- Beat Info -->
+                <div class="d-flex justify-content-between mb-3 border-top border-secondary pt-3 mt-auto">
+                  <div>
+                    <span class="text-white-50 small d-block">Price</span>
+                    <strong class="text-white fs-5"><%= beat.price === 0 ? 'Free' : '₹' + beat.price %></strong>
+                  </div>
+                  <div class="text-end">
+                    <% if (beat.price === 0) { %>
+                      <span class="text-white-50 small d-block">Free Beats</span>
+                      <strong class="text-success"><i class="bi bi-gift"></i> No Fee</strong>
+                    <% } else { %>
+                      <span class="text-white-50 small d-block">Total (+<%= commissionPct %>% fee)</span>
+                      <strong class="text-info">₹<%= beat.price + (beat.price * commissionPct / 100) %></strong>
+                    <% } %>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                  <% if (isPurchased) { %>
+                    <a href="/artists/library" class="btn btn-success w-100">
+                      <i class="bi bi-music-player me-1"></i> In Library
+                    </a>
+                  <% } else { %>
+                    <a href="/artists/beats/<%= beat._id %>" class="btn btn-primary w-100">
+                      <i class="bi bi-eye me-1"></i> View & Purchase
+                    </a>
+                  <% } %>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-music-note-beamed text-white-50" style="font-size: 3rem;"></i>
+        <p class="text-white-50 mt-3 mb-0">No beats found matching your search criteria.</p>
+        <% if (filters.searchQuery || filters.producerId || filters.statusFilter) { %>
+          <a href="/artists/beats" class="btn btn-primary mt-3">Clear Filters</a>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  // 1. Prevent Right Click completely on this page
+  document.addEventListener('contextmenu', event => event.preventDefault());
+
+  // 2. Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (View Source)
+  document.onkeydown = function(e) {
+    if (
+      e.key === 'F12' || 
+      (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+      (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+      (e.ctrlKey && e.key === 'U') ||
+      (e.metaKey && e.altKey && e.key === 'i') || // Mac equivalents
+      (e.metaKey && e.altKey && e.key === 'j') ||
+      (e.metaKey && e.key === 'u')
+    ) {
+      e.preventDefault();
+      return false;
+    }
+  };
+
+  // 3. Prevent DevTools via debugger loop
+  setInterval(() => {
+    const before = new Date().getTime();
+    debugger;
+    const after = new Date().getTime();
+    if (after - before > 100) {
+      document.body.innerHTML = "<h2 class='text-center text-white mt-5 pt-5'><i class='bi bi-shield-lock'></i> Developer tools are disabled on this page to protect producer content.</h2>";
+    }
+  }, 1000);
+
+  const viewedBeats = new Set();
+  function recordView(beatId) {
+    if (viewedBeats.has(beatId)) return;
+    
+    viewedBeats.add(beatId);
+    fetch(`/artists/beats/${beatId}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(err => console.error(err));
+  }
+</script>
+
+<%- include('../partials/artist-footer') %>

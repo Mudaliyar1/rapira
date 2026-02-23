@@ -268,19 +268,29 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Producer Beat Commission Settings
+  producerBeatCommissionSettings: {
+    percentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 4
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }
-}, { 
+}, {
   timestamps: true,
   // Ensure only one settings document exists
   collection: 'websitesettings'
 });
 
 // Static method to get or create settings
-WebsiteSettingsSchema.statics.getSettings = async function() {
+WebsiteSettingsSchema.statics.getSettings = async function () {
   let settings = await this.findOne();
   if (!settings) {
     settings = await this.create({});
@@ -289,39 +299,39 @@ WebsiteSettingsSchema.statics.getSettings = async function() {
 };
 
 // Instance method to calculate maintenance end time
-WebsiteSettingsSchema.methods.getMaintenanceEndTime = function() {
+WebsiteSettingsSchema.methods.getMaintenanceEndTime = function () {
   if (!this.siteSettings.maintenanceMode || !this.siteSettings.maintenanceStartTime) {
     return null;
   }
-  
+
   const startTime = new Date(this.siteSettings.maintenanceStartTime);
   const durationInMinutes = this.siteSettings.maintenanceDuration || 60; // default to 60 minutes
-  
+
   // Add duration in minutes to start time
   const endTime = new Date(startTime.getTime() + (durationInMinutes * 60000));
   return endTime;
 };
 
 // Instance method to check if maintenance mode is expired
-WebsiteSettingsSchema.methods.isMaintenanceExpired = function() {
+WebsiteSettingsSchema.methods.isMaintenanceExpired = function () {
   const endTime = this.getMaintenanceEndTime();
   if (!endTime) {
     return false;
   }
-  
+
   return new Date() > endTime;
 };
 
 // Instance method to check if maintenance mode is active
-WebsiteSettingsSchema.methods.isMaintenanceActive = function() {
+WebsiteSettingsSchema.methods.isMaintenanceActive = function () {
   if (!this.siteSettings.maintenanceMode) {
     return false;
   }
-  
+
   if (this.isMaintenanceExpired()) {
     return false;
   }
-  
+
   return true;
 };
 

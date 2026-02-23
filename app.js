@@ -41,10 +41,10 @@ app.use(helmet({
       // By default, allow resources from the same origin
       // This is a fallback for any directive not explicitly set
       defaultSrc: ["'self'"],
-      
+
       // Style sources - Allow stylesheets from self and CDNs needed for Bootstrap, AOS, and Bootstrap Icons
       styleSrc: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap and dynamic styling)
         "https://fonts.googleapis.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -52,10 +52,10 @@ app.use(helmet({
         "https://cdnjs.cloudflare.com",  // Alternative CDN
         "https://checkout.razorpay.com"  // For Razorpay checkout styling
       ],
-      
+
       // Style element sources - Specifically for <style> elements and @import
       styleSrcElem: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap)
         "https://fonts.googleapis.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -63,10 +63,10 @@ app.use(helmet({
         "https://cdnjs.cloudflare.com",  // Alternative CDN
         "https://checkout.razorpay.com"  // For Razorpay checkout styling
       ],
-      
+
       // Script sources - Allow scripts from self and trusted CDNs
       scriptSrc: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline scripts (needed for EJS templates and event handlers)
         "'unsafe-eval'",    // Allow eval() for certain client-side templating (needed by some libraries)
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -79,13 +79,13 @@ app.use(helmet({
         "https://rzp.io",  // For shortened URLs
         "https://maps.googleapis.com"  // For Google Maps API
       ],
-      
+
       // Script attribute sources - Specifically for inline event handlers (onclick, onsubmit, etc.)
       scriptSrcAttr: [
         "'self'",
         "'unsafe-inline'"  // Allow inline event handlers (onclick, onsubmit, etc.)
       ],
-      
+
       // Allow connections to self and specific APIs
       connectSrc: [
         "'self'",
@@ -100,11 +100,11 @@ app.use(helmet({
         "https://maps.googleapis.com",  // For Google Maps API
         "https://maps.gstatic.com"   // For Google Maps static assets
       ],
-      
+
       // Allow images from self, data URIs, and CDNs
       imgSrc: [
-        "'self'", 
-        "data:", 
+        "'self'",
+        "data:",
         "https://res.cloudinary.com",  // For Cloudinary images
         "https://images.unsplash.com",  // For Unsplash images
         "https://cdn.jsdelivr.net",  // For images loaded from CDN
@@ -118,16 +118,16 @@ app.use(helmet({
         "https://maps.googleapis.com",  // For Google Maps images
         "https://maps.gstatic.com"   // For Google Maps static images
       ],
-      
+
       // Allow fonts from self and CDNs
       fontSrc: [
-        "'self'", 
+        "'self'",
         "https://fonts.gstatic.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap Icons fonts
         "https://unpkg.com",  // Bootstrap Icons fonts
         "https://cdnjs.cloudflare.com"  // Alternative CDN
       ],
-      
+
       // Allow frames from self and specific sources
       frameSrc: [
         "'self'",
@@ -141,17 +141,17 @@ app.use(helmet({
         "https://api.razorpay.com",  // For Razorpay API frames
         "https://rzp.io"  // For shortened URLs
       ],
-      
+
       // Allow media from self and Cloudinary
       mediaSrc: [
         "'self'",
         "https://res.cloudinary.com",  // For Cloudinary videos/audio
         "https://*.cloudinary.com"  // Wildcard for Cloudinary subdomains
       ],
-      
+
       // Object sources from self
       objectSrc: ["'none'"],
-      
+
       // Child sources (for iframes)
       childSrc: [
         "'self'",
@@ -159,7 +159,7 @@ app.use(helmet({
         "https://api.razorpay.com",
         "https://rzp.io"
       ],
-      
+
       // Upgrade insecure requests
       upgradeInsecureRequests: [],
     }
@@ -236,13 +236,13 @@ app.use('/api', apiLimiter);
 app.use((req, res, next) => {
   // Permissions Policy (newer spec replacing Feature Policy)
   res.setHeader('Permissions-Policy', "fullscreen=(self), geolocation=(), microphone=(), camera=(self), payment=(self)");
-  
+
   // Expect-CT - Require Certificate Transparency
   res.setHeader('Expect-CT', 'enforce, max-age=86400');
-  
+
   // X-DNS-Prefetch-Control - Disable DNS prefetching
   res.setHeader('X-DNS-Prefetch-Control', 'off');
-  
+
   next();
 });
 
@@ -280,24 +280,24 @@ const connectWithRetry = () => {
     autoIndex: true, // Build indexes
     directConnection: false // Use replica set discovery
   })
-  .then(() => {
-    console.log('MongoDB Connected Successfully');
-  })
-  .catch(err => {
-    console.error('MongoDB Connection Error:', err);
+    .then(() => {
+      console.log('MongoDB Connected Successfully');
+    })
+    .catch(err => {
+      console.error('MongoDB Connection Error:', err);
 
-    // Check for specific error types and provide more helpful messages
-    if (err.name === 'MongoServerSelectionError') {
-      if (err.message.includes('getaddrinfo ENOTFOUND')) {
-        console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
-      } else if (err.message.includes('connection timed out')) {
-        console.error('Connection timed out. Check your firewall settings or MongoDB Atlas network access list.');
+      // Check for specific error types and provide more helpful messages
+      if (err.name === 'MongoServerSelectionError') {
+        if (err.message.includes('getaddrinfo ENOTFOUND')) {
+          console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
+        } else if (err.message.includes('connection timed out')) {
+          console.error('Connection timed out. Check your firewall settings or MongoDB Atlas network access list.');
+        }
       }
-    }
 
-    console.log('Retrying connection in 5 seconds...');
-    setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
-  });
+      console.log('Retrying connection in 5 seconds...');
+      setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+    });
 };
 
 // Initial connection
@@ -357,9 +357,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     // Add headers for media files
     if (filePath.endsWith('.mp3') || filePath.endsWith('.mp4') ||
-        filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
-        filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
-        filePath.endsWith('.png') || filePath.endsWith('.gif')) {
+      filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
+      filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
+      filePath.endsWith('.png') || filePath.endsWith('.gif')) {
 
       // Add content type header if missing
       if (!res.getHeader('Content-Type')) {
@@ -543,29 +543,29 @@ app.use(cartMiddleware);
 app.use(async (req, res, next) => {
   try {
     const sessionUser = req.session && req.session.user ? req.session.user : null;
-    
+
     // If user is logged in, verify the account still exists
     if (sessionUser && sessionUser.id) {
       const User = require('./models/User');
       const userExists = await User.findById(sessionUser.id);
-      
+
       // If user account was deleted
       if (!userExists) {
         console.log(`[ACCOUNT CHECK] User ${sessionUser.id} session found but account deleted`);
-        
+
         // Store message before destroying session
         const accountDeletedMessage = 'Your account has been deleted by the website administrator. If you believe this is an error, please contact support.';
-        
+
         // Destroy session
         req.session.destroy((err) => {
           if (err) {
             console.error('Session destruction error:', err);
           }
         });
-        
+
         // Clear cookie
         res.clearCookie('connect.sid');
-        
+
         // Redirect to a special page showing the message
         return res.render('error/account-deleted', {
           currentUser: null,
@@ -580,7 +580,7 @@ app.use(async (req, res, next) => {
         });
       }
     }
-    
+
     next();
   } catch (error) {
     console.error('[ACCOUNT CHECK] Error checking user account:', error);
@@ -603,16 +603,16 @@ app.use(async (req, res, next) => {
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
-    
+
     // Clear "must be logged in" message for public pages
     // This prevents the message from showing on public pages after being redirected from protected pages
     const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password',
-                         '/about', '/contact', '/faq', '/artists', '/concerts', '/shop', '/pages', '/content', '/demo',
-                         '/privacy-policy', '/terms-of-service', '/refund-policy', '/subscription-policy',
-                         '/shopping-policy', '/event-attending-policy', '/temp-email-policy', '/account-reactivation',
-                         '/tickets/validate', '/find-my-artist', '/team-requirement'];
+      '/about', '/contact', '/faq', '/artists', '/concerts', '/shop', '/pages', '/content', '/demo',
+      '/privacy-policy', '/terms-of-service', '/refund-policy', '/subscription-policy',
+      '/shopping-policy', '/event-attending-policy', '/temp-email-policy', '/account-reactivation',
+      '/tickets/validate', '/find-my-artist', '/team-requirement'];
     const isPublicPage = publicPaths.some(path => req.path === path || req.path.startsWith(path + '/'));
-    
+
     if (isPublicPage && res.locals.error) {
       if (Array.isArray(res.locals.error)) {
         res.locals.error = res.locals.error.filter(msg => msg !== 'You must be logged in to access this page');
@@ -620,7 +620,7 @@ app.use(async (req, res, next) => {
         res.locals.error = [];
       }
     }
-    
+
     res.locals.path = req.path; // Add current path to all views
 
     // Make the getImageUrl function available to all views
@@ -764,6 +764,7 @@ const adminMediaRoutes = require('./routes/adminMedia');
 const adminProducersRoutes = require('./routes/adminProducers');
 const producerApplicationRoutes = require('./routes/producerApplications');
 const producerDashboardRoutes = require('./routes/producerDashboard');
+const adminBeatPurchasesRoutes = require('./routes/admin-beat-purchases');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -797,8 +798,8 @@ app.get('/api/account-status', async (req, res) => {
 
     // If user no longer exists, account was deleted
     if (!userExists) {
-      return res.json({ 
-        loggedIn: false, 
+      return res.json({
+        loggedIn: false,
         accountDeleted: true,
         message: 'Your account has been deleted by the website administrator.'
       });
@@ -927,6 +928,9 @@ app.use('/admin/venue-edit-requests', adminVenueEditRequestRoutes);
 // Mount admin concert edit requests routes
 app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
 
+// Mount admin beat purchases routes
+app.use('/admin/artist-beat-purchases', adminBeatPurchasesRoutes);
+
 // Mount follow routes
 app.use('/follows', followRoutes);
 
@@ -945,7 +949,7 @@ app.use('/admin*', async (req, res, next) => {
     // For super admins, create a proxy that returns true for any page
     if (req.session.user.role === 'superAdmin') {
       res.locals.adminPagePermissions = new Proxy({}, {
-        get: function(target, prop) {
+        get: function (target, prop) {
           return { hasPermission: true };
         }
       });
@@ -1052,7 +1056,7 @@ const server = app.listen(PORT, async () => {
     } catch (error) {
       console.error('Error initializing cron jobs:', error);
     }
-    
+
     // Start maintenance service
     try {
       maintenanceService.startPeriodicCheck();

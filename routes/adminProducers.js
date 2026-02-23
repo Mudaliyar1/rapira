@@ -37,7 +37,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 
     // Calculate stats
     let totalProducers = uniqueUserRoles.length;
-    
+
     // Get approved applications count
     const approvedApps = await ProducerApplication.countDocuments({ status: 'approved' });
     const pendingApps = await ProducerApplication.countDocuments({ status: 'pending' });
@@ -153,12 +153,12 @@ router.post('/:id/block', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const blockDate = new Date();
-    
+
     user.isBlocked = true;
     user.blockReason = blockReason || 'Violated platform policies';
     user.blockedAt = blockDate;
     user.blockedBy = req.session.user.id;
-    
+
     await user.save();
 
     req.flash('success', 'Producer blocked successfully');
@@ -220,13 +220,13 @@ router.post('/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const unblockDate = new Date();
-    
+
     user.isBlocked = false;
     user.blockReason = '';
     user.unblockReason = unblockReason || '';
     user.unblockedAt = unblockDate;
     user.unblockedBy = req.session.user.id;
-    
+
     await user.save();
 
     req.flash('success', 'Producer unblocked successfully');
@@ -440,7 +440,7 @@ router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, re
 router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const { adminResponse } = req.body;
-    
+
     if (!adminResponse || !adminResponse.trim()) {
       req.flash('error', 'Rejection reason is required');
       return res.redirect(`/admin/producers/unblock-requests/${req.params.id}/reject`);
@@ -483,6 +483,98 @@ router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res
     console.error('Error deleting unblock request record:', error);
     req.flash('error', 'Failed to delete producer unblock request record');
     res.redirect('/admin/producers/unblock-requests');
+  }
+});
+
+// ===== ADMIN PRODUCER BEATS MANAGEMENT =====
+
+// GET - View all producer beats
+router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const ProducerBeat = require('../models/ProducerBeat');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const totalBeats = await ProducerBeat.countDocuments();
+    const totalPages = Math.ceil(totalBeats / limit);
+
+    const beats = await ProducerBeat.find()
+      .populate('producer', 'name email profileImage')
+      .populate('bannedBy', 'name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.render('admin/producer-beats', {
+      layout: 'layouts/admin',
+      title: 'Manage Producer Beats',
+      currentPath: '/admin/producers/beats',
+      beats,
+      currentPage: page,
+      totalPages,
+      limit,
+      totalBeats
+    });
+  } catch (error) {
+    console.error('Error fetching producer beats for admin:', error);
+    req.flash('error', 'Failed to load producer beats');
+    res.redirect('/admin/producers');
+  }
+});
+
+// POST - Toggle ban on a beat
+router.post('/beats/:id/toggle-ban', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const ProducerBeat = require('../models/ProducerBeat');
+    const { banReason } = req.body;
+    const beat = await ProducerBeat.findById(req.params.id).populate('producer');
+
+    if (!beat) {
+      req.flash('error', 'Beat not found');
+      return res.redirect('/admin/producers/beats');
+    }
+
+    if (beat.isBanned) {
+      beat.isBanned = false;
+      beat.bannedBy = null;
+      beat.banReason = '';
+      req.flash('success', `Beat unbanned successfully!`);
+    } else {
+      beat.isBanned = true;
+      beat.bannedBy = req.session.user.id;
+      beat.banReason = banReason || 'Violated platform policies';
+      req.flash('success', `Beat banned successfully!`);
+    }
+
+    await beat.save();
+    res.redirect('/admin/producers/beats');
+  } catch (error) {
+    console.error('Error toggling beat ban status:', error);
+    req.flash('error', 'Failed to toggle ban status');
+    res.redirect('/admin/producers/beats');
+  }
+});
+
+// POST - Delete a beat (Admin)
+router.post('/beats/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const ProducerBeat = require('../models/ProducerBeat');
+    const beat = await ProducerBeat.findById(req.params.id);
+
+    if (!beat) {
+      req.flash('error', 'Beat not found');
+      return res.redirect('/admin/producers/beats');
+    }
+
+    await ProducerBeat.deleteOne({ _id: beat._id });
+
+    req.flash('success', 'Beat permanently deleted');
+    res.redirect('/admin/producers/beats');
+  } catch (error) {
+    console.error('Error deleting beat (admin):', error);
+    req.flash('error', 'Failed to delete beat');
+    res.redirect('/admin/producers/beats');
   }
 });
 

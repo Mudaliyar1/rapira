@@ -14,7 +14,7 @@ const MediaSchema = new mongoose.Schema({
   folder: { type: String },
   original_filename: { type: String },
   module: { type: String }, // artistContent, venueMedia, adminMedia, userProfile, etc.
-  ownerType: { type: String, enum: ['artist', 'venue', 'user', 'admin', 'system'], default: 'system' },
+  ownerType: { type: String, enum: ['artist', 'venue', 'user', 'admin', 'system', 'producer'], default: 'system' },
   ownerId: { type: mongoose.Schema.Types.ObjectId, refPath: 'ownerType' },
   createdAt: { type: Date, default: Date.now }
 });

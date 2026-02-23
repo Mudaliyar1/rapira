@@ -1,0 +1,193 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<nav aria-label="breadcrumb" class="mb-4">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/artists/beats" class="text-info">Marketplace</a></li>
+    <li class="breadcrumb-item active text-white" aria-current="page"><%= beat.title %></li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <!-- Left Side: Media Player -->
+  <div class="col-lg-8">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h3 class="text-white mb-4"><%= beat.title %></h3>
+        
+        <div class="media-container bg-black rounded overflow-hidden shadow mb-4" oncontextmenu="return false;">
+          <% if (beat.mediaType === 'video') { %>
+            <video class="w-100 d-block" controls controlsList="nodownload" style="max-height: 500px;">
+              <source src="<%= beat.mediaUrl %>">
+              Your browser does not support the video tag.
+            </video>
+          <% } else { %>
+            <div class="p-5 text-center">
+              <i class="bi bi-music-note-beamed text-primary mb-4 d-block" style="font-size: 5rem;"></i>
+              <audio class="w-100" controls controlsList="nodownload">
+                <source src="<%= beat.mediaUrl %>">
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="row g-4 text-white-50">
+          <div class="col-md-6">
+            <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>Beat Information</h6>
+            <p class="mb-2"><span class="text-white">Format:</span> <%= beat.mediaType.toUpperCase() %></p>
+            <p class="mb-2"><span class="text-white">Uploaded:</span> <%= toISTDateString(beat.createdAt) %></p>
+            <p class="mb-2"><span class="text-white">Stats:</span> <%= beat.viewsCount %> Views, <%= beat.purchasesCount %> Sales</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <h6 class="text-white mb-3"><i class="bi bi-person-badge me-2"></i>Producer</h6>
+            <div class="d-flex align-items-center justify-content-md-end">
+              <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" width="40" height="40" class="rounded-circle me-2" alt="">
+              <div class="text-start">
+                <p class="mb-0 text-white"><%= beat.producer.name %></p>
+                <small><%= beat.producer.email %></small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Purchase Card -->
+  <div class="col-lg-4">
+    <div class="card bg-dark border-secondary sticky-top" style="top: 1rem;">
+      <div class="card-body">
+        <h5 class="text-white mb-4">Pricing & License</h5>
+        
+        <div class="pricing-box p-3 rounded mb-4" style="background: rgba(255,255,255,0.05);">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-white-50">Base Price</span>
+            <span class="text-white fw-bold"><%= beat.price === 0 ? 'FREE' : '₹' + beat.price %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-3 border-bottom border-secondary pb-2">
+            <span class="text-white-50">Platform Fee (<%= commissionPct %>%)</span>
+            <span class="text-white text-info fw-bold"><%= beat.price === 0 ? '₹0' : '₹' + (beat.price * commissionPct / 100).toFixed(2) %></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-white fs-5 fw-bold">Total Amount</span>
+            <span class="text-success fs-3 fw-bold"><%= beat.price === 0 ? 'FREE' : '₹' + (beat.price + (beat.price * commissionPct / 100)).toFixed(2) %></span>
+          </div>
+        </div>
+
+        <ul class="list-unstyled text-white-50 mb-4 small">
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Exclusive License</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>HQ Media Download</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Commercial Rights Included</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Permanent Access in Library</li>
+        </ul>
+
+        <% if (isPurchased) { %>
+          <div class="alert alert-success d-flex align-items-center mb-3">
+            <i class="bi bi-patch-check-fill fs-4 me-2"></i>
+            <div>Owned in Library</div>
+          </div>
+          <a href="/artists/library" class="btn btn-primary w-100 mb-2">
+            <i class="bi bi-music-player me-2"></i> Go to Library
+          </a>
+          <a href="<%= beat.mediaUrl %>" download class="btn btn-success w-100">
+            <i class="bi bi-download me-2"></i> Download Again
+          </a>
+        <% } else { %>
+          <button type="button" class="btn btn-primary btn-lg w-100 py-3" onclick="purchaseBeat('<%= beat._id %>', <%= beat.price === 0 ? `'Free'` : (beat.price + (beat.price * commissionPct / 100)) %>)">
+            <i class="bi bi-cart-fill me-2"></i> <%= beat.price === 0 ? 'Get for Free' : 'Purchase Now' %>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  async function purchaseBeat(beatId, formattedAmount) {
+    let confirmMsg = `You are about to purchase this beat for ₹${formattedAmount}. Proceed to payment?`;
+    if (formattedAmount === 'Free') {
+      confirmMsg = `You are about to add this free beat to your library. Proceed?`;
+    }
+    
+    if(!confirm(confirmMsg)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/artists/beats/${beatId}/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        alert(data.message || 'Error initiating payment');
+        return;
+      }
+
+      if (data.isFree) {
+        alert('Free beat successfully added to your library!');
+        window.location.href = '/artists/library';
+        return;
+      }
+
+      const options = {
+        key: data.razorpayKeyId,
+        amount: data.amount,
+        currency: "INR",
+        name: "Rapira Producer Beat",
+        description: "Beat Purchase",
+        order_id: data.order.id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch('/artists/beats/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                beatId: beatId,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              window.location.href = '/artists/library';
+            } else {
+              alert(verifyData.message || 'Payment verification failed');
+            }
+          } catch(err) {
+            console.error('Verify error:', err);
+            alert('Error verifying payment.');
+          }
+        },
+        theme: { color: "#0d6efd" }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Purchase error", error);
+      alert('Error initiating purchase request');
+    }
+  }
+</script>
+
+<%- include('../partials/artist-footer') %>

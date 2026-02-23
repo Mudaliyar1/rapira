@@ -50,6 +50,16 @@
             </a>
           </li>
           <li class="nav-item mb-2">
+            <a href="/producer-dashboard/beats" class="nav-link text-white p-2 rounded <%= currentPath === '/producer-dashboard/beats' ? 'active bg-primary' : '' %>">
+              <i class="bi bi-music-note-list me-2"></i> Manage Beats
+            </a>
+          </li>
+          <li class="nav-item mb-2">
+            <a href="/producer-dashboard/beat-sales" class="nav-link text-white p-2 rounded <%= currentPath === '/producer-dashboard/beat-sales' ? 'active bg-primary' : '' %>">
+              <i class="bi bi-receipt me-2"></i> Beat Sales
+            </a>
+          </li>
+          <li class="nav-item mb-2">
             <a href="/messages/find" class="nav-link text-white p-2 rounded <%= currentPath === '/messages/find' ? 'active bg-primary' : '' %>">
               <i class="bi bi-people me-2"></i> Find Artists
             </a>
@@ -71,7 +81,7 @@
     <div class="admin-content">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center">
-          <button class="btn btn-primary d-none d-md-block me-3" id="sidebarToggle">
+          <button class="btn btn-primary me-3" id="sidebarToggle">
             <i class="bi bi-list"></i>
           </button>
           <h1 class="fw-bold mb-0"><%= typeof title !== 'undefined' ? title : 'Producer Dashboard' %></h1>

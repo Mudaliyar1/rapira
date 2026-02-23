@@ -1,0 +1,122 @@
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/artist-beat-purchases" class="text-info">Purchases</a></li>
+        <li class="breadcrumb-item active text-white" aria-current="page"><%= artistUser.name %></li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <img src="<%= artistUser.profileImage || '/images/default-profile.svg' %>" alt="" class="rounded-circle me-3" width="60" height="60" style="object-fit: cover; border: 3px solid #333;">
+        <div>
+            <h2 class="h3 mb-0 text-white"><%= artistUser.name %>'s Library</h2>
+            <p class="text-white-50 mb-0"><%= artistUser.email %></p>
+        </div>
+    </div>
+</div>
+
+<% if (success && success.length > 0) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= success %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<% } %>
+
+<!-- Filter Section -->
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <form action="/admin/artist-beat-purchases/artist/<%= artistUser._id %>" method="GET" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="startDate" class="form-label text-white-50 small fw-bold">Start Date</label>
+                <input type="date" class="form-control bg-dark text-white border-secondary" id="startDate" name="startDate" value="<%= filters.startDate || '' %>">
+            </div>
+            <div class="col-md-5">
+                <label for="endDate" class="form-label text-white-50 small fw-bold">End Date</label>
+                <input type="date" class="form-control bg-dark text-white border-secondary" id="endDate" name="endDate" value="<%= filters.endDate || '' %>">
+            </div>
+            <div class="col-md-2">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i>
+                    </button>
+                    <a href="/admin/artist-beat-purchases/artist/<%= artistUser._id %>" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Beat Details</th>
+                        <th>Producer</th>
+                        <th>Status</th>
+                        <th>Amount Paid</th>
+                        <th>Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (purchases && purchases.length > 0) { %>
+                        <% purchases.forEach(purchase => { %>
+                            <tr class="<%= purchase.isDeletedByArtist ? 'opacity-50' : '' %>">
+                                <td>
+                                    <div class="fw-bold text-white"><%= purchase.beat ? purchase.beat.title : (purchase.backupTitle || 'Unknown') %></div>
+                                    <small class="text-white-50"><%= purchase.transactionId %></small>
+                                </td>
+                                <td>
+                                    <div class="text-white"><%= purchase.producer.name %></div>
+                                    <small class="text-white-50"><%= purchase.producer.email %></small>
+                                </td>
+                                <td>
+                                    <% if (purchase.isDeletedByArtist) { %>
+                                        <span class="badge bg-danger">Hidden by Artist</span>
+                                    <% } else { %>
+                                        <span class="badge bg-success">In Library</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="text-white">₹<%= purchase.totalAmountPaid.toFixed(2) %></div>
+                                    <small class="text-white-50">(Fee: ₹<%= purchase.platformFee.toFixed(2) %>)</small>
+                                </td>
+                                <td class="text-white-50 small">
+                                    <%= new Date(purchase.createdAt).toLocaleDateString() %><br>
+                                    <%= new Date(purchase.createdAt).toLocaleTimeString() %>
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="/artists/beat-purchases/<%= purchase._id %>/receipt" target="_blank" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-receipt"></i> Invoice
+                                        </a>
+                                        <form action="/admin/artist-beat-purchases/delete/<%= purchase._id %>" method="POST" onsubmit="return confirm('WARNING: Deleting this record will permanently remove the beat from the artist\'s library. Continue?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-white-50">No purchase records found.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

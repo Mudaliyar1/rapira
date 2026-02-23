@@ -64,6 +64,11 @@
           <i class="bi bi-currency-rupee me-2"></i>Ticket Commission
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="producer-beat-commission-tab" data-bs-toggle="tab" data-bs-target="#producer-beat-commission" type="button" role="tab">
+          <i class="bi bi-music-note-beamed me-2"></i>Beat Commission
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -1059,6 +1064,54 @@
           <div class="mt-4">
             <button type="submit" class="btn btn-primary">
               <i class="bi bi-save me-1"></i>Save Ticket Commission Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Producer Beat Commission Tab -->
+      <div class="tab-pane fade" id="producer-beat-commission" role="tabpanel">
+        <form action="/admin/website-settings/producer-beat-commission" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Producer Beat Commission Settings</h5>
+
+              <div class="mb-4">
+                <label for="producerBeatCommissionPercentage" class="form-label text-white fw-bold">Commission Percentage</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="producerBeatCommissionPercentage" 
+                         name="producerBeatCommissionPercentage" 
+                         value="<%= settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">
+                  This commission percentage will be added to the beat price during checkout by artists.
+                  <br><strong>Example:</strong> A ₹100 beat with 4% commission = ₹100 beat price + ₹4 platform fee = ₹104 total for the artist to pay.
+                </small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Commission Information
+                  </h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Commission is calculated on top of the beat price</li>
+                    <li class="mb-2">Artists will pay the price + commission</li>
+                    <li class="mb-2">Producers will receive the base price in their wallet</li>
+                    <li class="mb-2"><strong class="text-info">Changes apply immediately to all beat purchases</strong></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Beat Commission Settings
             </button>
           </div>
         </form>
