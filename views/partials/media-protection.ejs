@@ -73,6 +73,34 @@
     color: white;
     backdrop-filter: blur(20px);
   }
+
+  /* Anti-Recording Interference Layer (Digital Static) */
+  .recording-deterrent-static {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2001;
+    pointer-events: none;
+    opacity: 0.03; /* Extremely subtle so humans don't see it */
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyIiBoZWlnaHQ9IjIiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiLz48L3N2Zz4=');
+    animation: digital-noise 0.05s infinite;
+  }
+
+  @keyframes digital-noise {
+    0% { transform: translate(0,0); }
+    10% { transform: translate(-1%,-1%); }
+    20% { transform: translate(1%,1%); }
+    30% { transform: translate(-2%,0); }
+    40% { transform: translate(2%,-1%); }
+    50% { transform: translate(-1%,2%); }
+    60% { transform: translate(1%,-2%); }
+    70% { transform: translate(0,1%); }
+    80% { transform: translate(-2%,1%); }
+    90% { transform: translate(1%,2%); }
+    100% { transform: translate(0,0); }
+  }
 </style>
 
 <div id="protection-status-overlay">
@@ -162,6 +190,11 @@
       const canvas = document.createElement('canvas');
       canvas.className = 'media-protection-canvas';
       container.appendChild(canvas);
+
+      // Mobile/Desktop Digital Noise Interference (Messes with Video Encoders)
+      const staticLayer = document.createElement('div');
+      staticLayer.className = 'recording-deterrent-static';
+      container.appendChild(staticLayer);
       
       const ctx = canvas.getContext('2d');
       let frame = 0;
@@ -209,6 +242,10 @@
   function setupHeuristics() {
     // Detect focus loss (often happens when triggering screen record apps/snip tools)
     window.addEventListener('blur', () => {
+      // EXEMPTION: If Razorpay is active, do NOT trigger security lockdown
+      if (document.querySelector('.razorpay-checkout-frame') || document.querySelector('iframe[src*="razorpay"]')) {
+        return;
+      }
       triggerSecurityBlur(true);
       pauseAllMedia();
     });
@@ -255,15 +292,43 @@
     document.addEventListener('click', resetIdle);
     resetIdle();
 
-    // Aggressive Focus Heartbeat (Check every 500ms)
+    // Aggressive Focus Heartbeat (Check every 300ms for mobile sensitivity)
     setInterval(() => {
       const isLibrary = window.location.pathname.includes('/library');
-      if (!document.hasFocus() && !isLibrary) {
+      if (isLibrary) return;
+
+      // document.hasFocus() is the best we have on mobile for Notification Shade detection
+      if (!document.hasFocus()) {
+         // EXEMPTION: If Razorpay is active
+         if (document.querySelector('.razorpay-checkout-frame') || document.querySelector('iframe[src*="razorpay"]')) {
+           return;
+         }
          triggerSecurityBlur(true);
       }
-    }, 500);
+    }, 300);
 
-    // DevTools Detection via dimension check (Enhanced)
+    // Mobile: Detect when user pulls down Notification Shade or Control Center
+    // On many mobile browsers, 'visibilitychange' or 'pagehide' triggers here
+    window.addEventListener('pagehide', () => {
+      triggerSecurityBlur(true);
+      pauseAllMedia();
+    });
+
+    // Mobile Touch Sync: Every touch re-verifies security state
+    document.addEventListener('touchstart', () => {
+      playInitialWarning(); // Ensure TTS can start on mobile
+      if (!document.hasFocus() && !window.location.pathname.includes('/library')) {
+        triggerSecurityBlur(true);
+      }
+    }, {passive: true});
+
+    // Detect orientation change (often used to frame recordings)
+    window.addEventListener('orientationchange', () => {
+      triggerSecurityBlur(true);
+      setTimeout(() => triggerSecurityBlur(false), 2000);
+    });
+
+    // DevTools Detection (Desktop focus)
     setInterval(() => {
       const threshold = 160;
       if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
