@@ -34,18 +34,26 @@
     visibility: hidden !important;
   }
 
-  /* Overlay manages the global message */
-  #protection-status-overlay {
-    backdrop-filter: blur(15px);
+  /* Extreme Lockdown: Blank out EVERY area except the overlay */
+  body.security-focus-alert .admin-layout,
+  body.security-focus-alert .container-fluid,
+  body.security-focus-alert .main-content {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  /* Idle blackout */
-  body.security-idle-black {
-    background: #000 !important;
-  }
-  body.security-idle-black .admin-layout {
+  /* Force hide all standard browser media controls during security alert */
+  body.security-focus-alert video::-webkit-media-controls,
+  body.security-focus-alert video::-webkit-media-controls-enclosure,
+  body.security-focus-alert audio::-webkit-media-controls-enclosure {
+    display: none !important;
     opacity: 0 !important;
-    pointer-events: none !important;
+  }
+
+  body.security-focus-alert {
+    background: #000 !important;
   }
 
   /* Anti-Screenshot Overlay */
@@ -63,6 +71,7 @@
     align-items: center;
     text-align: center;
     color: white;
+    backdrop-filter: blur(20px);
   }
 </style>
 
@@ -113,22 +122,11 @@
       }
     });
 
-    document.addEventListener('keydown', e => {
-      // KeyCodes: 123=F12, 44=PrintScreen
-      const forbidden = [123, 44];
-      if (forbidden.includes(e.keyCode) || e.key === "PrintScreen" || 
-         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
-         (e.ctrlKey && e.keyCode === 85) || // Ctrl+U (View Source)
-         (e.ctrlKey && e.keyCode === 83)) { // Ctrl+S (Save)
-        
-        if (e.key === "PrintScreen" || e.keyCode === 44) {
-          navigator.clipboard.writeText('Screenshots are prohibited on Rapira.');
-          triggerSecurityBlur(true);
-          setTimeout(() => triggerSecurityBlur(false), 5000);
-        }
-        
-        e.preventDefault();
-        return false;
+    // Aggressively prevent PrtScn and common shortcuts
+    document.addEventListener('keyup', e => {
+      if (e.key === 'PrintScreen' || e.keyCode === 44) {
+         navigator.clipboard.writeText('Access Denied');
+         triggerSecurityBlur(true);
       }
     });
 
@@ -136,6 +134,20 @@
     document.addEventListener('dragstart', e => {
       if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') e.preventDefault();
     });
+  }
+
+  /**
+   * DETECTION FOR BROWSER-BASED RECORDING (getDisplayMedia)
+   */
+  function monitorCapture() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+      // We attempt to see if the stream is already active (unlikely but good for some tools)
+      const originalGetDisplayMedia = navigator.mediaDevices.getDisplayMedia;
+      navigator.mediaDevices.getDisplayMedia = function() {
+        triggerSecurityBlur(true);
+        return originalGetDisplayMedia.apply(this, arguments);
+      };
+    }
   }
 
   /**
@@ -243,20 +255,19 @@
     document.addEventListener('click', resetIdle);
     resetIdle();
 
+    // Aggressive Focus Heartbeat (Check every 500ms)
+    setInterval(() => {
+      const isLibrary = window.location.pathname.includes('/library');
+      if (!document.hasFocus() && !isLibrary) {
+         triggerSecurityBlur(true);
+      }
+    }, 500);
+
     // DevTools Detection via dimension check (Enhanced)
     setInterval(() => {
       const threshold = 160;
-      const isRecordSized = (window.outerWidth === 1280 && window.outerHeight === 720) || (window.outerWidth === 1920 && window.outerHeight === 1080);
-      
       if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-        document.getElementById('protection-status-overlay').style.display = 'flex';
-        document.body.classList.add('security-focus-alert');
-      } else if (!document.body.classList.contains('forced-blur')) {
-        if (document.activeElement && document.hasFocus()) {
-           // Only release if we truly have focus
-           document.getElementById('protection-status-overlay').style.display = 'none';
-           document.body.classList.remove('security-focus-alert');
-        }
+        triggerSecurityBlur(true);
       }
     }, 1000);
   }
@@ -303,31 +314,43 @@
     const path = window.location.pathname;
     const isLibrary = path.includes('/library');
     
-    // If we suspect recording and it's NOT the library page, lockdown
     if (active && !isLibrary) {
        document.body.classList.add('security-focus-alert');
        document.getElementById('protection-status-overlay').style.display = 'flex';
        
-       // Specifically Mute all unpurchased media immediately
-       const players = document.querySelectorAll('video, audio');
+       // Target all unpurchased players
+       const players = document.querySelectorAll('.protected-media-container:not(.purchased-container) video, .protected-media-container:not(.purchased-container) audio');
        players.forEach(p => {
-         if (!p.hasAttribute('data-purchased')) {
-           p.muted = true;
-           p.pause();
-           p.style.display = 'none'; // Hide element
-         }
+         // 1. Kill Audio & Video Instantly
+         p.pause();
+         p.muted = true;
+         p.volume = 0;
+         
+         // 2. Hide Controls specifically
+         p.controls = false;
+         p.removeAttribute('controls');
+         
+         // 3. Destroy source to stop buffer/recording
+         p.src = "";
+         p.load();
+         
+         // 4. Final Blow: Hide and remove from visual tree
+         p.style.display = 'none';
+         p.style.opacity = '0';
+         p.remove(); 
        });
-    } else {
-       // Release lockdown
-       document.body.classList.remove('security-focus-alert');
-       document.getElementById('protection-status-overlay').style.display = 'none';
        
-       const players = document.querySelectorAll('video, audio');
-       players.forEach(p => {
-         if (!p.hasAttribute('data-purchased')) {
-            p.style.display = 'block';
-         }
+       // Force Blackout on the containers
+       document.querySelectorAll('.protected-media-container').forEach(c => {
+         c.style.background = "#000";
+         c.style.opacity = "0";
+         c.style.display = "none";
        });
+    } else if (!active) {
+       // Only reload if we were actually blurred
+       if (document.body.classList.contains('security-focus-alert')) {
+          location.reload(); // Hard reload to fetch media again
+       }
     }
   }
 
@@ -343,21 +366,15 @@
   setupLockdown();
   setupHeuristics();
   runAudioGuard();
+  monitorCapture();
   
-  // Aggressive check on startup: If window isn't focused or suspicious size, lock it instantly
+  // Aggressive check on startup
   window.addEventListener('load', () => {
     playInitialWarning();
     if (!document.hasFocus()) {
        triggerSecurityBlur(true);
     }
   });
-
-  // Re-check focus periodically
-  setInterval(() => {
-    if (!document.hasFocus() && !window.location.pathname.includes('/library')) {
-       triggerSecurityBlur(true);
-    }
-  }, 2000);
   
   // Periodically re-check for new media elements
   setInterval(injectWatermarks, 2000);
