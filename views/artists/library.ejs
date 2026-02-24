@@ -27,7 +27,7 @@
   <% if (purchases && purchases.length > 0) { %>
     <% purchases.forEach(purchase => { %>
       <div class="col-md-6 col-lg-4 col-xl-3">
-        <div class="glass-card-dark h-100 position-relative">
+        <div class="glass-card-dark h-100 position-relative protected-media-container purchased-container">
           <div class="card-body p-3 d-flex flex-column">
             <div class="d-flex justify-content-between align-items-start mb-3">
               <h5 class="card-title text-white mb-0 text-truncate pe-3">
@@ -39,8 +39,15 @@
             </div>
 
             <div class="d-flex align-items-center mb-4 text-white-50 small">
-              <img src="<%= purchase.producer.profileImage || '/images/default-profile.svg' %>" width="24" height="24" class="rounded-circle me-2" alt="">
-              <span>By <%= purchase.producer.name %></span>
+              <% if (purchase.producer) { %>
+                <img src="<%= purchase.producer.profileImage || '/images/default-profile.svg' %>" width="24" height="24" class="rounded-circle me-2" alt="">
+                <span>By <%= purchase.producer.name %></span>
+              <% } else { %>
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                  <i class="bi bi-person-slash"></i>
+                </div>
+                <span>By Unknown Producer</span>
+              <% } %>
             </div>
 
             <!-- Media Player -->
@@ -50,12 +57,12 @@
               
               <% if (mediaUrl) { %>
                 <% if (mediaType === 'video') { %>
-                  <video class="w-100 rounded" controls style="max-height: 180px; object-fit: cover; background: #000;">
+                  <video class="w-100 rounded" controls controlsList="nodownload noplaybackrate" style="max-height: 180px; object-fit: cover; background: #000;" data-purchased="true" data-allow-background="true">
                     <source src="<%= mediaUrl %>">
                     Your browser does not support the video tag.
                   </video>
                 <% } else { %>
-                  <audio class="w-100" controls>
+                  <audio class="w-100" controls controlsList="nodownload noplaybackrate" data-purchased="true" data-allow-background="true">
                     <source src="<%= mediaUrl %>">
                     Your browser does not support the audio element.
                   </audio>
@@ -130,4 +137,5 @@
   <% }); %>
 <% } %>
 
+<%- include('../partials/media-protection') %>
 <%- include('../partials/artist-footer') %>

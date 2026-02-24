@@ -20,6 +20,28 @@
   </div>
 <% } %>
 
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <form action="/admin/producers/beats" method="GET" class="row g-3">
+      <div class="col-md-8">
+        <label for="search" class="form-label text-white-50">Filter by Producer Name or Email</label>
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-white-50">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" class="form-control bg-dark border-secondary text-white" id="search" name="search" value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" placeholder="Enter name or email...">
+        </div>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100 me-2">Search</button>
+        <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+          <a href="/admin/producers/beats" class="btn btn-outline-secondary w-100">Clear</a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="card bg-dark border-secondary">
   <div class="card-body">
     <div class="table-responsive">
@@ -41,11 +63,21 @@
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
-                    <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" alt="" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
-                    <div>
-                      <div class="text-white"><%= beat.producer.name %></div>
-                      <small class="text-white-50"><%= beat.producer.email %></small>
-                    </div>
+                    <% if (beat.producer) { %>
+                      <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" alt="" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                      <div>
+                        <div class="text-white"><%= beat.producer.name %></div>
+                        <small class="text-white-50"><%= beat.producer.email %></small>
+                      </div>
+                    <% } else { %>
+                      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="bi bi-person-slash"></i>
+                      </div>
+                      <div>
+                        <div class="text-white">Unknown Producer</div>
+                        <small class="text-danger">Profile Deleted</small>
+                      </div>
+                    <% } %>
                   </div>
                 </td>
                 <td>
@@ -70,6 +102,9 @@
                 </td>
                 <td>
                   <div class="d-flex gap-2">
+                    <a href="/admin/producers/beats/<%= beat._id %>/sales" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i> View Sales
+                    </a>
                     <form action="/admin/producers/beats/<%= beat._id %>/toggle-ban" method="POST" class="d-inline">
                       <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Are you sure you want to <%= beat.isBanned ? 'unban' : 'ban' %> this beat?');">
                         <i class="bi bi-<%= beat.isBanned ? 'shield-check' : 'slash-circle' %>"></i>

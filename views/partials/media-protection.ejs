@@ -1,0 +1,366 @@
+<!-- Rapira Anti-Recording & Security Suite -->
+<style>
+  /* Base protection styles */
+  .protected-media-container {
+    position: relative !important;
+    overflow: hidden !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    background: #000;
+  }
+
+  /* Watermark Canvas */
+  .media-protection-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none !important;
+    z-index: 2000;
+  }
+
+  /* Selective blur for security events - Only affects UNPURCHASED media */
+  body.security-focus-alert .protected-media-container:not(.purchased-container) {
+    filter: blur(100px) brightness(0) !important;
+    transition: filter 0.3s ease-in-out;
+    pointer-events: none !important;
+  }
+
+  /* Aggressive: Hide the media entirely during a security alert */
+  body.security-focus-alert .protected-media-container:not(.purchased-container) video,
+  body.security-focus-alert .protected-media-container:not(.purchased-container) audio {
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* Overlay manages the global message */
+  #protection-status-overlay {
+    backdrop-filter: blur(15px);
+  }
+
+  /* Idle blackout */
+  body.security-idle-black {
+    background: #000 !important;
+  }
+  body.security-idle-black .admin-layout {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Anti-Screenshot Overlay */
+  #protection-status-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 999999;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+  }
+</style>
+
+<div id="protection-status-overlay">
+  <i class="bi bi-shield-lock-fill mb-4" style="font-size: 5rem; color: #ffc107;"></i>
+  <h2 class="h3">Security Violation Detected</h2>
+  <p class="text-white-50">Screen recording, screenshots, or developer tools are prohibited inside the Marketplace.</p>
+  <p class="small mt-3">Please close any recording apps or DevTools to resume.</p>
+</div>
+
+<script>
+(function() {
+  const securityConfig = {
+    userName: "<%= artist.user ? artist.user.name : 'Authorized Artist' %>",
+    userEmail: "<%= artist.user ? artist.user.email : 'Protected Account' %>",
+    userId: "<%= artist.user ? artist.user._id : 'N/A' %>",
+    watermarkInterval: 8000
+  };
+
+  let initialWarningPlayed = false;
+
+  function playInitialWarning() {
+    if (initialWarningPlayed) return;
+    const path = window.location.pathname;
+    // Only play on the marketplace/beat detail pages
+    if ((path.includes('/beats') || path.includes('/artist/beats')) && !path.includes('/library')) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Clear any queued speech
+        const warn = new SpeechSynthesisUtterance("Screen capture is prohibited on Rapira Marketplace.");
+        warn.volume = 0.5;
+        warn.pitch = 1;
+        window.speechSynthesis.speak(warn);
+        initialWarningPlayed = true;
+      }
+    }
+  }
+
+  /**
+   * 1. FRONTEND LOCKDOWN
+   * Disables right-click and common inspection/recording shortcuts
+   */
+  function setupLockdown() {
+    // Disable right-click globally on these routes
+    document.addEventListener('contextmenu', e => {
+      if (e.target.closest('.protected-media-container') || e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      // KeyCodes: 123=F12, 44=PrintScreen
+      const forbidden = [123, 44];
+      if (forbidden.includes(e.keyCode) || e.key === "PrintScreen" || 
+         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
+         (e.ctrlKey && e.keyCode === 85) || // Ctrl+U (View Source)
+         (e.ctrlKey && e.keyCode === 83)) { // Ctrl+S (Save)
+        
+        if (e.key === "PrintScreen" || e.keyCode === 44) {
+          navigator.clipboard.writeText('Screenshots are prohibited on Rapira.');
+          triggerSecurityBlur(true);
+          setTimeout(() => triggerSecurityBlur(false), 5000);
+        }
+        
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // Disable drag/drop of media
+    document.addEventListener('dragstart', e => {
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') e.preventDefault();
+    });
+  }
+
+  /**
+   * 2. DYNAMIC WATERMARKING
+   * Injects a jumping identity watermark that is hard to remove from recordings
+   */
+  function injectWatermarks() {
+    const containers = document.querySelectorAll('.protected-media-container');
+    containers.forEach(container => {
+      if (container.querySelector('.media-protection-canvas')) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'media-protection-canvas';
+      container.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      let frame = 0;
+      let x = 10, y = 20;
+      let opacity = 0.1;
+
+      function render() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = container.getBoundingClientRect();
+        
+        if (canvas.width !== Math.floor(rect.width * dpr) || canvas.height !== Math.floor(rect.height * dpr)) {
+           canvas.width = Math.floor(rect.width * dpr);
+           canvas.height = Math.floor(rect.height * dpr);
+           ctx.scale(dpr, dpr);
+        }
+
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        
+        frame++;
+        if (frame % 300 === 0 || frame === 1) { // Shift every ~5 seconds
+          x = 20 + Math.random() * (rect.width - 250);
+          y = 30 + Math.random() * (rect.height - 60);
+          opacity = 0.05 + Math.random() * 0.1;
+        }
+
+        ctx.font = '600 11px "Poppins", sans-serif';
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = "rgba(0,0,0,1)";
+        
+        const timestamp = new Date().toLocaleTimeString();
+        ctx.fillText(`${securityConfig.userName} (${securityConfig.userEmail}) | RAPIRA ID: ${securityConfig.userId}`, x, y);
+        ctx.fillText(`Protected Preview Content | ${timestamp}`, x, y + 15);
+        
+        requestAnimationFrame(render);
+      }
+      render();
+    });
+  }
+
+  /**
+   * 3. ANTI-RECORDING EVENTS (Netflix Style)
+   * Blurs/Mutes content when focus is lost or suspicious activity happens
+   */
+  function setupHeuristics() {
+    // Detect focus loss (often happens when triggering screen record apps/snip tools)
+    window.addEventListener('blur', () => {
+      triggerSecurityBlur(true);
+      pauseAllMedia();
+    });
+
+    window.addEventListener('focus', () => {
+      triggerSecurityBlur(false);
+    });
+
+    // Aggressive Mouse-Out Detection
+    // This stops people from recording the window while working on another screen/monitor
+    document.addEventListener('mouseleave', () => {
+      triggerSecurityBlur(true);
+      pauseAllMedia();
+    });
+
+    document.addEventListener('mouseenter', () => {
+      triggerSecurityBlur(false);
+    });
+
+    // Detect tab switching
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        pauseAllMedia();
+        triggerSecurityBlur(true);
+      }
+    });
+
+    // Safety Idle: Black out if no interaction for a bit (prevents set-and-forget recordings)
+    let idleTimer;
+    function resetIdle() {
+      const isLibrary = window.location.pathname.includes('/library');
+      if (isLibrary) return; // NO idle blackout in library
+
+      clearTimeout(idleTimer);
+      if (document.body.classList.contains('security-idle-black')) {
+          document.body.classList.remove('security-idle-black');
+      }
+      idleTimer = setTimeout(() => {
+         document.body.classList.add('security-idle-black');
+         pauseAllMedia();
+      }, 45000); 
+    }
+    document.addEventListener('mousemove', resetIdle);
+    document.addEventListener('click', resetIdle);
+    resetIdle();
+
+    // DevTools Detection via dimension check (Enhanced)
+    setInterval(() => {
+      const threshold = 160;
+      const isRecordSized = (window.outerWidth === 1280 && window.outerHeight === 720) || (window.outerWidth === 1920 && window.outerHeight === 1080);
+      
+      if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+        document.getElementById('protection-status-overlay').style.display = 'flex';
+        document.body.classList.add('security-focus-alert');
+      } else if (!document.body.classList.contains('forced-blur')) {
+        if (document.activeElement && document.hasFocus()) {
+           // Only release if we truly have focus
+           document.getElementById('protection-status-overlay').style.display = 'none';
+           document.body.classList.remove('security-focus-alert');
+        }
+      }
+    }, 1000);
+  }
+
+  /**
+   * 4. AUDIO WATERMARKING (TTS)
+   * speaks a watermark over the audio to ruin unauthorized capture
+   */
+  function runAudioGuard() {
+    if ('speechSynthesis' in window) {
+      setInterval(() => {
+        if (window.speechSynthesis.speaking) return;
+        
+        const players = document.querySelectorAll('video, audio');
+        let unpurchasedPlaying = false;
+        
+        players.forEach(p => {
+          if (!p.paused && !p.hasAttribute('data-purchased')) {
+            unpurchasedPlaying = true;
+          }
+        });
+
+        if (unpurchasedPlaying) {
+          const msg = new SpeechSynthesisUtterance("Protected preview on Rapira dot com. License required for use.");
+          msg.volume = 0.4;
+          msg.pitch = 0.8;
+          msg.rate = 0.9;
+          window.speechSynthesis.speak(msg);
+        }
+      }, 35000); // Every 35 seconds
+    }
+  }
+
+  function pauseAllMedia() {
+    const players = document.querySelectorAll('video, audio');
+    players.forEach(p => {
+       if (!p.paused && !p.hasAttribute('data-allow-background')) {
+         p.pause();
+       }
+    });
+  }
+
+  function triggerSecurityBlur(active) {
+    const path = window.location.pathname;
+    const isLibrary = path.includes('/library');
+    
+    // If we suspect recording and it's NOT the library page, lockdown
+    if (active && !isLibrary) {
+       document.body.classList.add('security-focus-alert');
+       document.getElementById('protection-status-overlay').style.display = 'flex';
+       
+       // Specifically Mute all unpurchased media immediately
+       const players = document.querySelectorAll('video, audio');
+       players.forEach(p => {
+         if (!p.hasAttribute('data-purchased')) {
+           p.muted = true;
+           p.pause();
+           p.style.display = 'none'; // Hide element
+         }
+       });
+    } else {
+       // Release lockdown
+       document.body.classList.remove('security-focus-alert');
+       document.getElementById('protection-status-overlay').style.display = 'none';
+       
+       const players = document.querySelectorAll('video, audio');
+       players.forEach(p => {
+         if (!p.hasAttribute('data-purchased')) {
+            p.style.display = 'block';
+         }
+       });
+    }
+  }
+
+  // Extra Layer: Detect when capture devices are added/started
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', () => {
+      triggerSecurityBlur(true);
+      setTimeout(() => triggerSecurityBlur(false), 4000);
+    });
+  }
+
+  // Initialize all security loops
+  setupLockdown();
+  setupHeuristics();
+  runAudioGuard();
+  
+  // Aggressive check on startup: If window isn't focused or suspicious size, lock it instantly
+  window.addEventListener('load', () => {
+    playInitialWarning();
+    if (!document.hasFocus()) {
+       triggerSecurityBlur(true);
+    }
+  });
+
+  // Re-check focus periodically
+  setInterval(() => {
+    if (!document.hasFocus() && !window.location.pathname.includes('/library')) {
+       triggerSecurityBlur(true);
+    }
+  }, 2000);
+  
+  // Periodically re-check for new media elements
+  setInterval(injectWatermarks, 2000);
+
+})();
+</script>

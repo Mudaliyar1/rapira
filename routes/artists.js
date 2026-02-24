@@ -11,6 +11,8 @@ const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const ProducerBeat = require('../models/ProducerBeat');
 const BeatPurchase = require('../models/BeatPurchase');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const UserRole = require('../models/UserRole');
+const Role = require('../models/Role');
 const { isLoggedIn, isArtist } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -1429,7 +1431,7 @@ router.get('/followers', isLoggedIn, isArtist, async (req, res) => {
 // GET - View all available producer beats for an artist
 router.get('/beats', isLoggedIn, isArtist, async (req, res) => {
   try {
-    const artist = await Artist.findOne({ user: req.session.user.id });
+    const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
     if (!artist) {
       req.flash('error', 'Artist profile not found');
       return res.redirect('/');
@@ -1451,14 +1453,33 @@ router.get('/beats', isLoggedIn, isArtist, async (req, res) => {
     const purchasedBeatIds = purchases.filter(p => p.beat).map(p => p.beat.toString());
 
     // Get all active, unbanned beats with filters
-    let beats = await ProducerBeat.find(query)
+    const allBeats = await ProducerBeat.find(query)
       .populate('producer', 'name profileImage')
       .sort({ createdAt: -1 });
 
-    // Identify unique producers for the filter dropdown
-    const allActiveBeats = await ProducerBeat.find({ isActive: true, isBanned: false }).populate('producer', 'name');
+    // Identify current producers (users who have the producer role)
+    const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const currentProducerRoles = await UserRole.find({ role: producerRole._id }).select('user');
+    const activeProducerIds = currentProducerRoles.map(ur => ur.user.toString());
+
+    // Filter beats: Keep if producer is active OR if the artist already purchased it
+    const beats = allBeats.filter(b => {
+      // If producer is missing (deleted user), only keep if purchased
+      if (!b.producer) {
+        return purchasedBeatIds.includes(b._id.toString());
+      }
+
+      const producerId = b.producer._id.toString();
+      const isPurchased = purchasedBeatIds.includes(b._id.toString());
+      const isProducerActive = activeProducerIds.includes(producerId);
+
+      // Keep if producer still has the role OR artist bought it already
+      return isProducerActive || isPurchased;
+    });
+
+    // Identify unique producers for the filter dropdown (only from the filtered list)
     const uniqueProducersMap = new Map();
-    allActiveBeats.forEach(b => {
+    beats.forEach(b => {
       if (b.producer && !uniqueProducersMap.has(b.producer._id.toString())) {
         uniqueProducersMap.set(b.producer._id.toString(), { id: b.producer._id, name: b.producer.name });
       }
@@ -1497,7 +1518,7 @@ router.get('/beats', isLoggedIn, isArtist, async (req, res) => {
 // GET - View specific beat details
 router.get('/beats/:id', isLoggedIn, isArtist, async (req, res) => {
   try {
-    const artist = await Artist.findOne({ user: req.session.user.id });
+    const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
     const beat = await ProducerBeat.findById(req.params.id).populate('producer', 'name email profileImage');
 
     if (!beat || !beat.isActive || beat.isBanned) {
@@ -1505,15 +1526,30 @@ router.get('/beats/:id', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/artists/beats');
     }
 
-    const settings = await WebsiteSettings.getSettings();
-    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
-
+    // Check for existing purchase first
     const existingPurchase = await BeatPurchase.findOne({
       beat: beat._id,
       artist: req.session.user.id,
       status: 'completed',
       isDeletedByArtist: { $ne: true }
     });
+
+    // Check if producer is still active (has producer role)
+    let isProducerActive = false;
+    if (beat.producer) {
+      const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+      const hasRole = await UserRole.findOne({ user: beat.producer._id, role: producerRole._id });
+      isProducerActive = !!hasRole;
+    }
+
+    // If producer is gone/inactive AND artist hasn't purchased it, deny access
+    if (!isProducerActive && !existingPurchase) {
+      req.flash('error', 'This beat is no longer available as the producer is inactive.');
+      return res.redirect('/artists/beats');
+    }
+
+    const settings = await WebsiteSettings.getSettings();
+    const commissionPct = settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4;
 
     res.render('artists/beat-details', {
       layout: false,
@@ -1551,6 +1587,18 @@ router.post('/beats/:id/purchase', isLoggedIn, isArtist, async (req, res) => {
 
     if (existingPurchase) {
       return res.status(400).json({ success: false, message: 'You have already purchased this beat' });
+    }
+
+    // Verify producer account and role still exist
+    if (!beat.producer) {
+      return res.status(400).json({ success: false, message: 'The producer for this beat no longer exists.' });
+    }
+
+    const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const hasRole = await UserRole.findOne({ user: beat.producer, role: producerRole._id });
+
+    if (!hasRole) {
+      return res.status(400).json({ success: false, message: 'This producer is no longer active on the platform.' });
     }
 
     const settings = await WebsiteSettings.getSettings();
@@ -1714,7 +1762,7 @@ router.get('/beat-purchases', isLoggedIn, isArtist, async (req, res) => {
 // GET - Beat Library (Media & Management)
 router.get('/library', isLoggedIn, isArtist, async (req, res) => {
   try {
-    const artist = await Artist.findOne({ user: req.session.user.id });
+    const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
     if (!artist) {
       req.flash('error', 'Artist profile not found');
       return res.redirect('/');

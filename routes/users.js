@@ -167,7 +167,7 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
 
     // Find user
     const user = await User.findById(req.session.user.id);
-    
+
     // Track changes for activity log
     const changes = {};
     const oldValues = {
@@ -184,17 +184,17 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
       await ActivityLogger.logNameChange(user._id, user.name, name, req);
       changes.name = { old: user.name, new: name };
     }
-    
+
     if (city && city !== user.city) {
       await ActivityLogger.logCityChange(user._id, user.city, city, req);
       changes.city = { old: user.city, new: city };
     }
-    
+
     if (bio !== user.bio) {
       await ActivityLogger.logBioChange(user._id, user.bio, bio, req);
       changes.bio = { old: user.bio?.substring(0, 50), new: bio?.substring(0, 50) };
     }
-    
+
     user.name = name;
     user.bio = bio || '';
     user.city = city || '';
@@ -216,7 +216,7 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
         size: req.file.size,
         mimetype: req.file.mimetype
       });
-      
+
       try {
         if (user.profileMedia) {
           console.log('🗑️ Deleting previous profile media:', user.profileMedia);
@@ -240,10 +240,10 @@ router.post('/update-profile', isLoggedIn, upload.single('profileImage'), async 
         user.profileMedia = media._id;
         user.profileImage = media.secure_url;
         req.session.user.profileImage = user.profileImage;
-        
+
         // Log profile image change
         await ActivityLogger.logProfileImageChange(user._id, oldValues.profileImage, media.secure_url, req);
-        
+
         console.log('💾 Session updated with new profile image');
       } catch (err) {
         console.error('❌ Cloud upload failed (profile):', err);
@@ -438,7 +438,7 @@ router.post('/change-password', isLoggedIn, async (req, res) => {
     // Update password
     user.password = newPassword;
     await user.save();
-    
+
     // Log password change
     await ActivityLogger.logPasswordChange(user._id, req);
 
@@ -577,6 +577,11 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
       }
     }
 
+    // Deactivate all producer beats if they had any
+    const ProducerBeat = require('../models/ProducerBeat');
+    await ProducerBeat.updateMany({ producer: user._id }, { isActive: false });
+    console.log(`Deactivated all associated producer beats for deleted user ${userId}`);
+
     // Delete user
     await User.findByIdAndDelete(userId);
     console.log(`User deleted their account: ${userId}`);
@@ -592,10 +597,10 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
       token: recoveryToken,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
-    
+
     await recoveryTokenDoc.save();
     console.log(`Created recovery token for user: ${user._id}`);
-    
+
     // Send account deletion notification with recovery link
     try {
       const emailResult = await sendAccountDeletionNotification(user, recoveryToken);
@@ -630,21 +635,21 @@ router.get('/recover-account', async (req, res) => {
 router.get('/recover-account/:token', async (req, res) => {
   try {
     const { token } = req.params;
-    
+
     // Find the recovery token
     const recoveryTokenDoc = await AccountRecoveryToken.findOne({
       token,
       expiresAt: { $gt: new Date() },
       used: false
     });
-    
+
     if (!recoveryTokenDoc) {
       return res.render('users/recover-account', {
         error: 'Invalid or expired recovery token. Please contact support if you need assistance.',
         showForm: false
       });
     }
-    
+
     // Show the recovery form
     res.render('users/recover-account', {
       email: recoveryTokenDoc.email,
@@ -668,7 +673,7 @@ router.post('/recover-account/:token', async (req, res) => {
   try {
     const { token } = req.params;
     const { password, confirmPassword } = req.body;
-    
+
     // Validate password match
     if (password !== confirmPassword) {
       return res.render('users/recover-account', {
@@ -678,7 +683,7 @@ router.post('/recover-account/:token', async (req, res) => {
         showForm: true
       });
     }
-    
+
     // Validate password length
     if (password.length < 6) {
       return res.render('users/recover-account', {
@@ -688,21 +693,21 @@ router.post('/recover-account/:token', async (req, res) => {
         showForm: true
       });
     }
-    
+
     // Find the recovery token
     const recoveryTokenDoc = await AccountRecoveryToken.findOne({
       token,
       expiresAt: { $gt: new Date() },
       used: false
     });
-    
+
     if (!recoveryTokenDoc) {
       return res.render('users/recover-account', {
         error: 'Invalid or expired recovery token. Please contact support if you need assistance.',
         showForm: false
       });
     }
-    
+
     // Check if user has been permanently deleted
     const deletedAccount = await DeletedAccount.findOne({ email: recoveryTokenDoc.email });
     if (!deletedAccount) {
@@ -712,11 +717,11 @@ router.post('/recover-account/:token', async (req, res) => {
         success: null
       });
     }
-    
+
     // Check if a user with this email already exists
     const existingUser = await User.findOne({ email: recoveryTokenDoc.email });
     let user;
-    
+
     if (existingUser) {
       // If user already exists, update their password and log them in
       existingUser.password = password;
@@ -737,7 +742,7 @@ router.post('/recover-account/:token', async (req, res) => {
         walletBalance: deletedAccount.walletBalance,
         isEmailVerified: true
       });
-      
+
       try {
         await user.save();
         console.log(`New user created for recovery: ${user._id} with email: ${user.email}`);
@@ -764,11 +769,11 @@ router.post('/recover-account/:token', async (req, res) => {
       }
     }
     console.log(`Account recovered for user: ${user._id} with email: ${user.email}`);
-    
+
     // Mark the recovery token as used
     recoveryTokenDoc.used = true;
     await recoveryTokenDoc.save();
-    
+
     // If the user was an artist, restore their artist profile
     if (deletedAccount.artistData) {
       const Artist = require('../models/Artist');
@@ -781,11 +786,11 @@ router.post('/recover-account/:token', async (req, res) => {
         followers: deletedAccount.artistData.followers,
         city: deletedAccount.city
       });
-      
+
       await artist.save();
       console.log(`Artist profile restored for user: ${user._id}`);
     }
-    
+
     // Log the user in
     req.session.user = {
       id: user._id,
@@ -794,10 +799,10 @@ router.post('/recover-account/:token', async (req, res) => {
       role: user.role,
       profileImage: user.profileImage
     };
-    
+
     // Delete the deleted account record since the account is recovered
     await DeletedAccount.deleteOne({ _id: deletedAccount._id });
-    
+
     // Redirect to login with success message
     req.flash('success', 'Account recovered successfully! You are now logged in.');
     res.redirect('/auth/login');
@@ -825,10 +830,10 @@ router.get('/account-reactivation', async (req, res) => {
 router.post('/account-reactivation', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     // Check if the email exists in Deleted Accounts collection
     const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
-    
+
     if (!deletedAccount) {
       return res.render('users/account-reactivation', {
         error: 'This account is not available for reactivation',
@@ -837,11 +842,11 @@ router.post('/account-reactivation', async (req, res) => {
         email: email
       });
     }
-    
+
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
     const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
-    
+
     // Save OTP in AccountRecoveryToken collection
     const recoveryToken = new AccountRecoveryToken({
       user: deletedAccount.userId,
@@ -850,9 +855,9 @@ router.post('/account-reactivation', async (req, res) => {
       expiresAt: otpExpiry,
       used: false
     });
-    
+
     await recoveryToken.save();
-    
+
     // Send OTP to user's email
     const emailResult = await sendEmail({
       to: email,
@@ -910,7 +915,7 @@ The Rapira Team
 This is an automated email. Please do not reply to this message.
 © ${new Date().getFullYear()} Rapira. All rights reserved.`
     });
-    
+
     res.render('users/account-reactivation', {
       success: 'OTP sent to your email. Please check your inbox and enter the OTP below.',
       error: null,
@@ -932,7 +937,7 @@ This is an automated email. Please do not reply to this message.
 router.post('/account-reactivation/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
-    
+
     // Find the OTP token
     const recoveryToken = await AccountRecoveryToken.findOne({
       email: email.toLowerCase(),
@@ -940,7 +945,7 @@ router.post('/account-reactivation/verify-otp', async (req, res) => {
       expiresAt: { $gt: new Date() },
       used: false
     });
-    
+
     if (!recoveryToken) {
       return res.render('users/account-reactivation', {
         error: 'Invalid or expired OTP. Please try again.',
@@ -949,11 +954,11 @@ router.post('/account-reactivation/verify-otp', async (req, res) => {
         email: email
       });
     }
-    
+
     // Mark the OTP token as used
     recoveryToken.used = true;
     await recoveryToken.save();
-    
+
     // Check if the deleted account still exists
     const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
     if (!deletedAccount) {
@@ -964,7 +969,7 @@ router.post('/account-reactivation/verify-otp', async (req, res) => {
         email: email
       });
     }
-    
+
     // OTP is valid, now show password form
     res.render('users/account-reactivation', {
       success: 'OTP verified successfully. Please set a new password to complete reactivation.',
@@ -987,7 +992,7 @@ router.post('/account-reactivation/verify-otp', async (req, res) => {
 router.post('/account-reactivation/set-password', async (req, res) => {
   try {
     const { email, password, confirmPassword } = req.body;
-    
+
     // Validate password match
     if (password !== confirmPassword) {
       return res.render('users/account-reactivation', {
@@ -997,7 +1002,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         email: email
       });
     }
-    
+
     // Validate password length
     if (password.length < 6) {
       return res.render('users/account-reactivation', {
@@ -1007,7 +1012,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         email: email
       });
     }
-    
+
     // Check if the user is trying to reactivate an account by checking if there's a valid recovery token
     // Find any unused recovery tokens for this email that haven't expired
     const recoveryToken = await AccountRecoveryToken.findOne({
@@ -1015,7 +1020,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
       expiresAt: { $gt: new Date() },
       used: false
     });
-    
+
     if (!recoveryToken) {
       return res.render('users/account-reactivation', {
         error: 'Invalid or expired session. Please restart the reactivation process.',
@@ -1024,7 +1029,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         email: email
       });
     }
-    
+
     // Check if the deleted account still exists
     const deletedAccount = await DeletedAccount.findOne({ email: email.toLowerCase() });
     if (!deletedAccount) {
@@ -1035,11 +1040,11 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         email: email
       });
     }
-    
+
     // Check if a user with this email already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     let user;
-    
+
     if (existingUser) {
       // If user already exists, update their password and log them in
       existingUser.password = password;
@@ -1060,7 +1065,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         walletBalance: deletedAccount.walletBalance,
         isEmailVerified: true
       });
-      
+
       try {
         await user.save();
         console.log(`New user created for reactivation: ${user._id} with email: ${user.email}`);
@@ -1087,13 +1092,13 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         }
       }
     }
-    
+
     console.log(`Account reactivated for user: ${user._id} with email: ${user.email}`);
-    
+
     // If the user was an artist, restore their artist profile
     if (deletedAccount.artistData) {
       const Artist = require('../models/Artist');
-      
+
       // Check if required artist fields exist before creating the artist profile
       if (deletedAccount.artistData.stageName && deletedAccount.artistData.genre) {
         const artist = new Artist({
@@ -1105,7 +1110,7 @@ router.post('/account-reactivation/set-password', async (req, res) => {
           followers: deletedAccount.artistData.followers,
           city: deletedAccount.city
         });
-        
+
         await artist.save();
         console.log(`Artist profile restored for user: ${user._id}`);
       } else {
@@ -1114,11 +1119,11 @@ router.post('/account-reactivation/set-password', async (req, res) => {
         // or notify the user to update their artist profile after login
       }
     }
-    
+
     // Mark the recovery token as used
     recoveryToken.used = true;
     await recoveryToken.save();
-    
+
     // Log the user in
     req.session.user = {
       id: user._id,
@@ -1127,10 +1132,10 @@ router.post('/account-reactivation/set-password', async (req, res) => {
       role: user.role,
       profileImage: user.profileImage
     };
-    
+
     // Delete the deleted account record since the account is reactivated
     await DeletedAccount.deleteOne({ _id: deletedAccount._id });
-    
+
     // Redirect to home page with success message
     req.flash('success', 'Account reactivated successfully! You are now logged in.');
     res.redirect('/');

@@ -496,15 +496,32 @@ router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    const totalBeats = await ProducerBeat.countDocuments();
+    let query = { isActive: true };
+    const searchFilter = req.query.search;
+
+    if (searchFilter) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: searchFilter, $options: 'i' } },
+          { email: { $regex: searchFilter, $options: 'i' } }
+        ]
+      });
+      const userIds = users.map(u => u._id);
+      query.producer = { $in: userIds };
+    }
+
+    const totalBeats = await ProducerBeat.countDocuments(query);
     const totalPages = Math.ceil(totalBeats / limit);
 
-    const beats = await ProducerBeat.find()
-      .populate('producer', 'name email profileImage')
+    let beats = await ProducerBeat.find(query)
+      .populate('producer', 'name email profileImage city')
       .populate('bannedBy', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
+    // Filter out beats from deleted producers
+    beats = beats.filter(b => b.producer != null);
 
     res.render('admin/producer-beats', {
       layout: 'layouts/admin',
@@ -514,7 +531,8 @@ router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
       currentPage: page,
       totalPages,
       limit,
-      totalBeats
+      totalBeats,
+      searchQuery: searchFilter || ''
     });
   } catch (error) {
     console.error('Error fetching producer beats for admin:', error);
@@ -523,7 +541,56 @@ router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-// POST - Toggle ban on a beat
+// GET - View Sales for a specific beat
+router.get('/beats/:id/sales', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const ProducerBeat = require('../models/ProducerBeat');
+    const BeatPurchase = require('../models/BeatPurchase');
+    const { search } = req.query;
+
+    const beat = await ProducerBeat.findById(req.params.id)
+      .populate('producer', 'name email profileImage');
+
+    if (!beat) {
+      req.flash('error', 'Beat not found');
+      return res.redirect('/admin/producers/beats');
+    }
+
+    // Default query gets all completed purchases for this beat
+    let purchasesQuery = { beat: beat._id, status: 'completed' };
+
+    // Find sales matching the artist criteria (email, name, city)
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { city: { $regex: search, $options: 'i' } }
+        ]
+      });
+      const userIds = users.map(u => u._id);
+      purchasesQuery.artist = { $in: userIds };
+    }
+
+    const purchases = await BeatPurchase.find(purchasesQuery)
+      .populate('artist', 'name email city profileImage')
+      .sort({ createdAt: -1 });
+
+    res.render('admin/producer-beat-sales', {
+      layout: 'layouts/admin',
+      title: 'Beat Sales Details',
+      currentPath: '/admin/producers/beats',
+      beat,
+      purchases,
+      searchQuery: search || ''
+    });
+
+  } catch (error) {
+    console.error('Error fetching beat sales:', error);
+    req.flash('error', 'Failed to load beat sales');
+    res.redirect('/admin/producers/beats');
+  }
+});
 router.post('/beats/:id/toggle-ban', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const ProducerBeat = require('../models/ProducerBeat');
@@ -678,6 +745,11 @@ router.post('/:id/revoke', isLoggedIn, isAdmin, async (req, res) => {
     const deleted = await UserRole.findOneAndDelete({ user: user._id, role: producerRole._id });
 
     if (deleted) {
+      // Deactivate all beats uploaded by this producer
+      const ProducerBeat = require('../models/ProducerBeat');
+      await ProducerBeat.updateMany({ producer: user._id }, { isActive: false });
+      console.log(`Deactivated all beats for user ${user._id} after producer role was revoked`);
+
       req.flash('success', `Producer role revoked from ${user.name}`);
       if (req.xhr || (req.headers.accept || '').includes('application/json')) {
         return res.json({ success: true });

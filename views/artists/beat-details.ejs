@@ -29,16 +29,18 @@
       <div class="card-body">
         <h3 class="text-white mb-4"><%= beat.title %></h3>
         
-        <div class="media-container bg-black rounded overflow-hidden shadow mb-4" oncontextmenu="return false;">
+        <div class="media-container bg-black rounded overflow-hidden shadow mb-4 protected-media-container <%= isPurchased ? 'purchased-container' : '' %>" oncontextmenu="return false;">
           <% if (beat.mediaType === 'video') { %>
-            <video class="w-100 d-block" controls controlsList="nodownload" style="max-height: 500px;">
+            <video class="w-100 d-block" controls controlsList="nodownload noplaybackrate" style="max-height: 500px;" 
+              <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : 'disablePictureInPicture disableRemotePlayback' %>>
               <source src="<%= beat.mediaUrl %>">
               Your browser does not support the video tag.
             </video>
           <% } else { %>
             <div class="p-5 text-center">
               <i class="bi bi-music-note-beamed text-primary mb-4 d-block" style="font-size: 5rem;"></i>
-              <audio class="w-100" controls controlsList="nodownload">
+              <audio class="w-100" controls controlsList="nodownload noplaybackrate"
+                <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : '' %>>
                 <source src="<%= beat.mediaUrl %>">
                 Your browser does not support the audio element.
               </audio>
@@ -56,11 +58,21 @@
           <div class="col-md-6 text-md-end">
             <h6 class="text-white mb-3"><i class="bi bi-person-badge me-2"></i>Producer</h6>
             <div class="d-flex align-items-center justify-content-md-end">
-              <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" width="40" height="40" class="rounded-circle me-2" alt="">
-              <div class="text-start">
-                <p class="mb-0 text-white"><%= beat.producer.name %></p>
-                <small><%= beat.producer.email %></small>
-              </div>
+              <% if (beat.producer) { %>
+                <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" width="40" height="40" class="rounded-circle me-2" alt="">
+                <div class="text-start">
+                  <p class="mb-0 text-white"><%= beat.producer.name %></p>
+                  <small><%= beat.producer.email %></small>
+                </div>
+              <% } else { %>
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px; font-size: 20px;">
+                  <i class="bi bi-person-slash"></i>
+                </div>
+                <div class="text-start">
+                  <p class="mb-0 text-white">Unknown Producer</p>
+                  <small class="text-muted fst-italic">Profile Deleted</small>
+                </div>
+              <% } %>
             </div>
           </div>
         </div>
@@ -190,4 +202,5 @@
   }
 </script>
 
+<%- include('../partials/media-protection') %>
 <%- include('../partials/artist-footer') %>

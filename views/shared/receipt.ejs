@@ -47,13 +47,23 @@
       <div class="row mb-4">
         <div class="col-6">
           <h6 class="text-white-50 text-uppercase mb-2 small">Producer (Seller)</h6>
-          <strong class="d-block text-white"><%= purchase.producer.name %></strong>
-          <span class="text-white-50 small"><%= purchase.producer.email %></span>
+          <% if (purchase.producer) { %>
+            <strong class="d-block text-white"><%= purchase.producer.name %></strong>
+            <span class="text-white-50 small"><%= purchase.producer.email %></span>
+          <% } else { %>
+            <strong class="d-block text-white">Unknown Producer</strong>
+            <span class="text-white-50 small">Profile Deleted</span>
+          <% } %>
         </div>
         <div class="col-6 text-end">
           <h6 class="text-white-50 text-uppercase mb-2 small">Artist (Buyer)</h6>
-          <strong class="d-block text-white"><%= purchase.artist.name %></strong>
-          <span class="text-white-50 small"><%= purchase.artist.email %></span>
+          <% if (purchase.artist) { %>
+            <strong class="d-block text-white"><%= purchase.artist.name %></strong>
+            <span class="text-white-50 small"><%= purchase.artist.email %></span>
+          <% } else { %>
+            <strong class="d-block text-white">Unknown Artist</strong>
+            <span class="text-white-50 small">Profile Deleted</span>
+          <% } %>
         </div>
       </div>
 

@@ -78,8 +78,13 @@
                                     <small class="text-white-50"><%= purchase.transactionId %></small>
                                 </td>
                                 <td>
-                                    <div class="text-white"><%= purchase.producer.name %></div>
-                                    <small class="text-white-50"><%= purchase.producer.email %></small>
+                                    <% if (purchase.producer) { %>
+                                        <div class="text-white"><%= purchase.producer.name %></div>
+                                        <small class="text-white-50"><%= purchase.producer.email %></small>
+                                    <% } else { %>
+                                        <div class="text-muted fst-italic">Unknown Producer</div>
+                                        <small class="text-white-50">Profile Deleted</small>
+                                    <% } %>
                                 </td>
                                 <td>
                                     <% if (purchase.isDeletedByArtist) { %>

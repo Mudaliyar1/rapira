@@ -46,8 +46,15 @@
                 <td class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;"><%= new Date(purchase.createdAt).toLocaleDateString() %> <%= new Date(purchase.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></td>
                 <td class="border-secondary" style="background-color: #000000 !important; color: #ffffff !important;">
                   <div class="d-flex align-items-center text-white" style="color: #ffffff !important;">
-                    <img src="<%= purchase.producer.profileImage || '/images/default-profile.svg' %>" width="32" height="32" class="rounded-circle me-2" alt="">
-                    <span><%= purchase.producer.name %></span>
+                    <% if (purchase.producer) { %>
+                      <img src="<%= purchase.producer.profileImage || '/images/default-profile.svg' %>" width="32" height="32" class="rounded-circle me-2" alt="">
+                      <span><%= purchase.producer.name %></span>
+                    <% } else { %>
+                      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="bi bi-person-slash"></i>
+                      </div>
+                      <span class="text-muted fst-italic">Unknown Producer</span>
+                    <% } %>
                   </div>
                 </td>
                 <td class="border-secondary fw-bold text-white" style="background-color: #000000 !important; color: #ffffff !important;"><%= purchase.beat ? purchase.beat.title : (purchase.backupTitle || 'Deleted Beat') %></td>
