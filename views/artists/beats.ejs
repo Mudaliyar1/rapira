@@ -1,5 +1,56 @@
 <%- include('../partials/artist-header') %>
 
+<style>
+  .glass-card-dark {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    border-radius: 16px !important;
+  }
+  
+  .glass-card-dark:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 15px rgba(99, 102, 241, 0.3) !important;
+    border-color: rgba(99, 102, 241, 0.5) !important;
+  }
+
+  .marketplace-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e293b 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .marketplace-hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+
+  .protected-media-container video, .protected-media-container audio {
+    border-radius: 12px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4) !important;
+  }
+</style>
+
 <!-- Flash Messages -->
 <% if (success && success.length > 0) { %>
   <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,13 +66,12 @@
   </div>
 <% } %>
 
-<div class="card bg-dark border-secondary mb-4">
-  <div class="card-body">
-    <div class="row align-items-center">
-      <div class="col-lg-5 mb-3 mb-lg-0">
-        <h5 class="text-white mb-2">Beats Marketplace</h5>
-        <p class="text-white-50 mb-0">Browse and purchase exclusive beats uploaded by producers.</p>
-      </div>
+<div class="marketplace-hero p-4 p-lg-5 mb-4 shadow-lg">
+  <div class="row align-items-center position-relative" style="z-index: 1;">
+    <div class="col-lg-5 mb-4 mb-lg-0">
+      <h1 class="display-6 fw-bold text-white mb-2">Beats Marketplace</h1>
+      <p class="lead text-white-50 mb-0">Discover and own exclusive instrumentals from India's top producers.</p>
+    </div>
       <div class="col-lg-7">
         <form action="/artists/beats" method="GET" class="d-flex gap-2 text-white">
           <div class="input-group">
@@ -50,7 +100,6 @@
       </div>
     </div>
   </div>
-</div>
 
 <!-- Beats Grid -->
 <div class="card bg-dark border-secondary">
@@ -101,14 +150,14 @@
                     <video class="w-100 rounded" controls controlsList="nodownload noplaybackrate" style="max-height: 180px; object-fit: cover; background: #000;" 
                       <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : 'disablePictureInPicture disableRemotePlayback' %> 
                       onplay="recordView('<%= beat._id %>')">
-                      <source src="<%= beat.mediaUrl %>">
+                      <source src="/artists/beats/stream/<%= beat._id %>">
                       Your browser does not support the video tag.
                     </video>
                   <% } else { %>
                     <audio class="w-100" controls controlsList="nodownload noplaybackrate" 
                       <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : '' %>
                       onplay="recordView('<%= beat._id %>')">
-                      <source src="<%= beat.mediaUrl %>">
+                      <source src="/artists/beats/stream/<%= beat._id %>">
                       Your browser does not support the audio element.
                     </audio>
                   <% } %>

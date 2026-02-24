@@ -1,36 +1,60 @@
 <%- contentFor('body') %>
 
 <div class="container-fluid py-4">
+  <!-- Venue Status Banner -->
+  <% if (!venue.isActive) { %>
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="alert alert-danger d-flex align-items-center justify-content-between mb-0 shadow-sm" role="alert">
+          <div>
+            <i class="bi bi-exclamation-octagon-fill me-2 fs-5"></i>
+            <strong>Venue Disabled</strong> — This venue is currently not visible to artists. No new bookings can be made.
+          </div>
+          <form action="/venue-dashboard/<%= venue._id %>/toggle-status" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="bi bi-check-circle me-1"></i>Enable Venue
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Header Section -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-          <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-2">
-              <li class="breadcrumb-item">
-                <a href="/users/venues" class="text-decoration-none">My Venues</a>
-              </li>
-              <li class="breadcrumb-item">
-                <a href="/venue-dashboard" class="text-decoration-none">Dashboards</a>
-              </li>
-              <li class="breadcrumb-item active" aria-current="page"><%= venue.name %></li>
-            </ol>
-          </nav>
           <h2 class="text-dark mb-1">
-            <i class="bi bi-kanban me-2"></i><%= venue.name %> Dashboard
+            <i class="bi bi-kanban me-2"></i><%= venue.name %>
+            <% if (venue.isActive) { %>
+              <span class="badge bg-success fs-6 ms-2">Active</span>
+            <% } else { %>
+              <span class="badge bg-danger fs-6 ms-2">Disabled</span>
+            <% } %>
           </h2>
           <p class="text-muted mb-0">
             <i class="bi bi-geo-alt me-1"></i><%= venue.address %>, <%= venue.city %>, <%= venue.state %>
           </p>
         </div>
-        <div class="d-flex gap-2">
-          <a href="/users/venues/<%= venue._id %>/revenue-analytics" class="btn btn-info">
-            <i class="bi bi-graph-up me-1"></i>Revenue Analytics
-          </a>
+        <div class="d-flex gap-2 flex-wrap">
           <a href="/venue-dashboard/<%= venue._id %>/add-external-booking" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i>Add External Booking
+            <i class="bi bi-plus-circle me-1"></i>Add Booking
           </a>
+          <% if (venue.isActive) { %>
+            <form action="/venue-dashboard/<%= venue._id %>/toggle-status" method="POST" class="d-inline" 
+                  onsubmit="return confirm('Are you sure you want to disable this venue? Artists will not be able to book it.');">
+              <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-pause-circle me-1"></i>Disable Venue
+              </button>
+            </form>
+          <% } else { %>
+            <form action="/venue-dashboard/<%= venue._id %>/toggle-status" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle me-1"></i>Enable Venue
+              </button>
+            </form>
+          <% } %>
         </div>
       </div>
     </div>
@@ -74,44 +98,6 @@
     </div>
   </div>
 
-  <!-- Quick Actions Card -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div class="card-body text-white">
-          <h5 class="card-title mb-3">
-            <i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions
-          </h5>
-          <div class="row g-3">
-            <div class="col-lg-3 col-md-6 col-sm-6">
-              <a href="/venue-dashboard/<%= venue._id %>/add-external-booking" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
-                <i class="bi bi-plus-circle fs-1 mb-2"></i>
-                <span class="fw-semibold">Add Booking</span>
-              </a>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6">
-              <a href="/users/venues/<%= venue._id %>/bookings" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
-                <i class="bi bi-calendar-event fs-1 mb-2"></i>
-                <span class="fw-semibold">Bookings</span>
-              </a>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6">
-              <a href="/users/venues/<%= venue._id %>/revenue-analytics" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
-                <i class="bi bi-graph-up-arrow fs-1 mb-2"></i>
-                <span class="fw-semibold">Revenue</span>
-              </a>
-            </div>
-            <div class="col-lg-3 col-md-6 col-sm-6">
-              <a href="/venue-dashboard/<%= venue._id %>/external-bookings" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
-                <i class="bi bi-calendar-check fs-1 mb-2"></i>
-                <span class="fw-semibold">External Bookings</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Month Navigation -->
   <div class="row mb-3">

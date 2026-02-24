@@ -58,12 +58,12 @@
               <% if (mediaUrl) { %>
                 <% if (mediaType === 'video') { %>
                   <video class="w-100 rounded" controls controlsList="nodownload noplaybackrate" style="max-height: 180px; object-fit: cover; background: #000;" data-purchased="true" data-allow-background="true">
-                    <source src="<%= mediaUrl %>">
+                    <source src="/artists/beats/stream/<%= purchase.beat ? purchase.beat._id : purchase._id %>">
                     Your browser does not support the video tag.
                   </video>
                 <% } else { %>
                   <audio class="w-100" controls controlsList="nodownload noplaybackrate" data-purchased="true" data-allow-background="true">
-                    <source src="<%= mediaUrl %>">
+                    <source src="/artists/beats/stream/<%= purchase.beat ? purchase.beat._id : purchase._id %>">
                     Your browser does not support the audio element.
                   </audio>
                 <% } %>
@@ -78,7 +78,7 @@
             <div class="mt-auto d-flex flex-column gap-2">
               <div class="d-flex gap-2">
                 <% if (mediaUrl) { %>
-                  <a href="<%= mediaUrl %>" download target="_blank" class="btn btn-success flex-grow-1">
+                  <a href="/artists/beats/download/<%= purchase.beat ? purchase.beat._id : purchase._id %>" class="btn btn-success flex-grow-1">
                     <i class="bi bi-download me-1"></i> Download
                   </a>
                 <% } %>

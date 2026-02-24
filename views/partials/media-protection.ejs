@@ -125,10 +125,11 @@
     if (initialWarningPlayed) return;
     const path = window.location.pathname;
     // Only play on the marketplace/beat detail pages
-    if ((path.includes('/beats') || path.includes('/artist/beats')) && !path.includes('/library')) {
+    const hasUnpurchasedMedia = !!document.querySelector('.protected-media-container:not(.purchased-container)');
+    if ((path.includes('/beats') || path.includes('/artist/beats')) && !path.includes('/library') && hasUnpurchasedMedia) {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Clear any queued speech
-        const warn = new SpeechSynthesisUtterance("Screen capture is prohibited on Rapira Marketplace.");
+        window.speechSynthesis.cancel(); 
+        const warn = new SpeechSynthesisUtterance("Screen capture is prohibited for unpurchased beats.");
         warn.volume = 0.5;
         warn.pitch = 1;
         window.speechSynthesis.speak(warn);
@@ -277,7 +278,8 @@
     let idleTimer;
     function resetIdle() {
       const isLibrary = window.location.pathname.includes('/library');
-      if (isLibrary) return; // NO idle blackout in library
+      const hasUnpurchasedMedia = !!document.querySelector('.protected-media-container:not(.purchased-container)');
+      if (isLibrary || !hasUnpurchasedMedia) return; // NO idle blackout if no unpurchased media
 
       clearTimeout(idleTimer);
       if (document.body.classList.contains('security-idle-black')) {
@@ -379,13 +381,18 @@
     const path = window.location.pathname;
     const isLibrary = path.includes('/library');
     
-    if (active && !isLibrary) {
+    // Check if there is any media on this page that actually needs protection
+    // Purchased beats should not trigger the aggressive lockdown
+    const unpurchasedMedia = document.querySelectorAll('.protected-media-container:not(.purchased-container)');
+    const hasUnpurchasedMedia = unpurchasedMedia.length > 0;
+
+    if (active && !isLibrary && hasUnpurchasedMedia) {
        document.body.classList.add('security-focus-alert');
        document.getElementById('protection-status-overlay').style.display = 'flex';
        
-       // Target all unpurchased players
-       const players = document.querySelectorAll('.protected-media-container:not(.purchased-container) video, .protected-media-container:not(.purchased-container) audio');
-       players.forEach(p => {
+       // Target all unpurchased players only
+       const unpurchasedPlayers = document.querySelectorAll('.protected-media-container:not(.purchased-container) video, .protected-media-container:not(.purchased-container) audio');
+       unpurchasedPlayers.forEach(p => {
          // 1. Kill Audio & Video Instantly
          p.pause();
          p.muted = true;
@@ -405,8 +412,8 @@
          p.remove(); 
        });
        
-       // Force Blackout on the containers
-       document.querySelectorAll('.protected-media-container').forEach(c => {
+       // Force Blackout on the unpurchased containers only
+       unpurchasedMedia.forEach(c => {
          c.style.background = "#000";
          c.style.opacity = "0";
          c.style.display = "none";
@@ -414,7 +421,7 @@
     } else if (!active) {
        // Only reload if we were actually blurred
        if (document.body.classList.contains('security-focus-alert')) {
-          location.reload(); // Hard reload to fetch media again
+          location.reload(); 
        }
     }
   }

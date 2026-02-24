@@ -1,5 +1,61 @@
 <%- include('../partials/artist-header') %>
 
+<style>
+  .beat-details-container {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .player-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .premium-badge {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+  }
+
+  .price-card {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .btn-buy {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    padding: 0.8rem 2rem !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .btn-buy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .protected-media-container video, .protected-media-container audio {
+    width: 100% !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+  }
+</style>
+
 <!-- Flash Messages -->
 <% if (success && success.length > 0) { %>
   <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,25 +71,34 @@
   </div>
 <% } %>
 
-<nav aria-label="breadcrumb" class="mb-4">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/artists/beats" class="text-info">Marketplace</a></li>
-    <li class="breadcrumb-item active text-white" aria-current="page"><%= beat.title %></li>
-  </ol>
-</nav>
+<div class="beat-details-container p-4 p-lg-5 shadow-2xl mb-5">
+  <div class="row g-5">
+    <!-- Left Column: Media Player & Description -->
+    <div class="col-lg-7">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/artists/beats" class="btn btn-outline-light btn-sm rounded-circle">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="text-white mb-0 fw-bold"><%= beat.title %></h2>
+        <% if (beat.price === 0) { %>
+          <span class="premium-badge bg-info text-white">Free Beat</span>
+        <% } else { %>
+          <span class="premium-badge">Exclusive</span>
+        <% } %>
+      </div>
 
-<div class="row g-4">
-  <!-- Left Side: Media Player -->
-  <div class="col-lg-8">
-    <div class="card bg-dark border-secondary h-100">
-      <div class="card-body">
-        <h3 class="text-white mb-4"><%= beat.title %></h3>
-        
-        <div class="media-container bg-black rounded overflow-hidden shadow mb-4 protected-media-container <%= isPurchased ? 'purchased-container' : '' %>" oncontextmenu="return false;">
+      <div class="player-section mb-4">
+        <div class="protected-media-container <%= isPurchased ? 'purchased-container' : '' %>" oncontextmenu="return false;">
+          <% if (!isPurchased) { %>
+            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning d-flex align-items-center mb-3">
+              <i class="bi bi-shield-lock-fill me-2 fs-5"></i>
+              <span class="small font-monospace">PREVIEW MODE: Restricted metadata & audio quality. Complete purchase to unlock HQ file.</span>
+            </div>
+          <% } %>
           <% if (beat.mediaType === 'video') { %>
             <video class="w-100 d-block" controls controlsList="nodownload noplaybackrate" style="max-height: 500px;" 
               <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : 'disablePictureInPicture disableRemotePlayback' %>>
-              <source src="<%= beat.mediaUrl %>">
+              <source src="/artists/beats/stream/<%= beat._id %>">
               Your browser does not support the video tag.
             </video>
           <% } else { %>
@@ -41,7 +106,7 @@
               <i class="bi bi-music-note-beamed text-primary mb-4 d-block" style="font-size: 5rem;"></i>
               <audio class="w-100" controls controlsList="nodownload noplaybackrate"
                 <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : '' %>>
-                <source src="<%= beat.mediaUrl %>">
+                <source src="/artists/beats/stream/<%= beat._id %>">
                 Your browser does not support the audio element.
               </audio>
             </div>
@@ -78,7 +143,6 @@
         </div>
       </div>
     </div>
-  </div>
 
   <!-- Right Side: Purchase Card -->
   <div class="col-lg-4">
@@ -116,16 +180,17 @@
           <a href="/artists/library" class="btn btn-primary w-100 mb-2">
             <i class="bi bi-music-player me-2"></i> Go to Library
           </a>
-          <a href="<%= beat.mediaUrl %>" download class="btn btn-success w-100">
+          <a href="/artists/beats/download/<%= beat._id %>" class="btn btn-success w-100">
             <i class="bi bi-download me-2"></i> Download Again
           </a>
         <% } else { %>
-          <button type="button" class="btn btn-primary btn-lg w-100 py-3" onclick="purchaseBeat('<%= beat._id %>', <%= beat.price === 0 ? `'Free'` : (beat.price + (beat.price * commissionPct / 100)) %>)">
+          <button type="button" class="btn btn-buy btn-lg w-100 py-3" onclick="purchaseBeat('<%= beat._id %>', <%= beat.price === 0 ? `'Free'` : (beat.price + (beat.price * commissionPct / 100)) %>)">
             <i class="bi bi-cart-fill me-2"></i> <%= beat.price === 0 ? 'Get for Free' : 'Purchase Now' %>
           </button>
         <% } %>
       </div>
     </div>
+  </div>
   </div>
 </div>
 

@@ -271,8 +271,9 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
     try {
       const user = await User.findById(req.session.user.id);
       user.phoneNumber = phoneNumber;
-      const emailResult = await sendArtistApplicationEmail(user, artistLevel);
-      console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
+      // Admin email notification disabled as requested
+      // const emailResult = await sendArtistApplicationEmail(user, artistLevel);
+      // console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
       const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
       await createArtistApplicationNotification(populatedApplication);
     } catch (emailError) {
@@ -361,7 +362,8 @@ router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
       try {
         const user = await User.findById(req.session.user.id);
         user.phoneNumber = application.phoneNumber;
-        await sendArtistApplicationEmail(user, application.artistLevel);
+        // Admin email notification disabled as requested
+        // await sendArtistApplicationEmail(user, application.artistLevel);
         const populatedApp = await ArtistApplication.findById(application._id).populate('user');
         await createArtistApplicationNotification(populatedApp);
       } catch (e) { console.error('Post-payment notification error:', e); }

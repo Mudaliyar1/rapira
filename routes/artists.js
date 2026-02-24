@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Artist = require('../models/Artist');
@@ -1566,6 +1567,173 @@ router.get('/beats/:id', isLoggedIn, isArtist, async (req, res) => {
     console.error('Error fetching beat details:', error);
     req.flash('error', 'Failed to load beat details');
     res.redirect('/artists/beats');
+  }
+});
+
+// GET - Stream beat (protected)
+router.get('/beats/stream/:id', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const isAdminUser = req.session.user.role === 'admin' || req.session.user.role === 'superAdmin';
+
+    let beat = await ProducerBeat.findById(req.params.id);
+    let streamUrl;
+    let isAuthorized = false;
+
+    if (beat) {
+      if (beat.isBanned && !isAdminUser) {
+        return res.status(403).send('Beat is banned');
+      }
+
+      const isProducer = beat.producer && beat.producer.toString() === userId;
+      const existingPurchase = await BeatPurchase.findOne({
+        beat: beat._id,
+        artist: userId,
+        status: 'completed',
+        isDeletedByArtist: { $ne: true }
+      });
+
+      isAuthorized = isProducer || isAdminUser || !!existingPurchase;
+      streamUrl = beat.mediaUrl;
+    } else {
+      // Check if it's a purchase record ID (for deleted beats in library)
+      const purchase = await BeatPurchase.findById(req.params.id);
+      if (!purchase) {
+        return res.status(404).send('Media not found');
+      }
+
+      // Check ownership
+      if (purchase.artist.toString() !== userId && !isAdminUser) {
+        return res.status(403).send('Unauthorized access to library item');
+      }
+
+      streamUrl = purchase.backupMediaUrl;
+      isAuthorized = true; // Ownership verified above
+    }
+
+    if (!streamUrl) {
+      return res.status(404).send('Media URL missing');
+    }
+
+    // Apply preview restriction if not authorized
+    if (!isAuthorized) {
+      if (streamUrl.includes('res.cloudinary.com')) {
+        // Truncate to first 30 seconds for preview
+        streamUrl = streamUrl.replace('/upload/', '/upload/so_0,du_30/');
+      }
+    }
+
+    // Proxy the request to Cloudinary to hide the direct URL and check permissions
+    const range = req.headers.range;
+    const axiosConfig = {
+      responseType: 'stream',
+      headers: {
+        'User-Agent': req.headers['user-agent']
+      }
+    };
+
+    if (range) {
+      axiosConfig.headers.Range = range;
+    }
+
+    const response = await axios.get(streamUrl, axiosConfig);
+
+    // Set appropriate status (especially 206 for partial content)
+    res.status(response.status);
+
+    // Forward relevant headers
+    const forwardedHeaders = [
+      'content-type',
+      'content-length',
+      'content-range',
+      'accept-ranges',
+      'cache-control',
+      'last-modified',
+      'etag'
+    ];
+
+    forwardedHeaders.forEach(header => {
+      if (response.headers[header]) {
+        res.setHeader(header, response.headers[header]);
+      }
+    });
+
+    // Ensure it's not downloaded automatically in browser
+    res.setHeader('Content-Disposition', 'inline');
+
+    // Pipe the data
+    response.data.pipe(res);
+  } catch (error) {
+    if (error.response && error.response.status === 416) {
+      return res.sendStatus(416);
+    }
+    console.error('Beat stream error:', error.message);
+    res.status(500).send('Error streaming media');
+  }
+});
+
+// GET - Download beat (authorized only)
+router.get('/beats/download/:id', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const isAdminUser = req.session.user.role === 'admin' || req.session.user.role === 'superAdmin';
+
+    let beat = await ProducerBeat.findById(req.params.id);
+    let downloadUrl;
+    let title = 'beat';
+    let mediaType = 'audio';
+
+    if (beat) {
+      const isProducer = beat.producer && beat.producer.toString() === userId;
+      const existingPurchase = await BeatPurchase.findOne({
+        beat: beat._id,
+        artist: userId,
+        status: 'completed',
+        isDeletedByArtist: { $ne: true }
+      });
+
+      if (!isProducer && !isAdminUser && !existingPurchase) {
+        req.flash('error', 'You must purchase this beat to download it');
+        return res.redirect(`/artists/beats/${beat._id}`);
+      }
+
+      downloadUrl = beat.mediaUrl;
+      title = beat.title;
+      mediaType = beat.mediaType;
+    } else {
+      // Check if it's a purchase record ID
+      const purchase = await BeatPurchase.findById(req.params.id);
+      if (!purchase) {
+        return res.status(404).send('Download not found');
+      }
+
+      if (purchase.artist.toString() !== userId && !isAdminUser) {
+        return res.status(403).send('Unauthorized');
+      }
+
+      downloadUrl = purchase.backupMediaUrl;
+      title = purchase.backupTitle || 'beat';
+      mediaType = purchase.backupMediaType || 'audio';
+    }
+
+    if (!downloadUrl) return res.status(404).send('File URL missing');
+
+    const response = await axios.get(downloadUrl, { responseType: 'stream' });
+
+    // Determine file extension
+    let extension = 'mp3';
+    if (mediaType === 'video') extension = 'mp4';
+    else if (downloadUrl.split('?')[0].endsWith('.wav')) extension = 'wav';
+
+    const fileName = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${extension}`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', response.headers['content-type'] || (mediaType === 'video' ? 'video/mp4' : 'audio/mpeg'));
+
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Beat download error:', error.message);
+    res.status(500).send('Error downloading media');
   }
 });
 

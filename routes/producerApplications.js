@@ -74,6 +74,8 @@ async function sendProducerStatusEmail(user, status, adminNotes = '') {
 }
 
 async function notifyAdminsAboutProducerApplication(user) {
+  // Admin notifications disabled as requested
+  /*
   try {
     const admins = await User.find({ role: 'admin' }).select('email name');
     if (!admins.length) return;
@@ -97,6 +99,7 @@ async function notifyAdminsAboutProducerApplication(user) {
   } catch (error) {
     console.error('Failed to notify admins for producer application:', error.message);
   }
+  */
 }
 
 router.get('/apply', isLoggedIn, async (req, res) => {
