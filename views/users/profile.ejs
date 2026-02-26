@@ -202,7 +202,7 @@
           <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
             <div class="d-flex align-items-center mb-3">
               <div class="badge bg-success me-2">Active</div>
-              <div class="fw-bold"><%= activeSubscription.plan.name %> Plan</div>
+              <div class="fw-bold"><%= activeSubscription.plan ? activeSubscription.plan.name : 'Unknown' %> Plan</div>
             </div>
 
             <%
@@ -217,7 +217,7 @@
               </span>
             </p>
 
-            <% if (activeSubscription.plan.discountPercentage > 0) { %>
+            <% if (activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) { %>
               <p class="mb-2 text-success">
                 <i class="bi bi-tag-fill me-1"></i>
                 <strong><%= activeSubscription.plan.discountPercentage %>% discount</strong> on all ticket purchases
