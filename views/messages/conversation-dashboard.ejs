@@ -62,6 +62,36 @@
   .bg-primary.message-bubble::before { right: -8px; border-left: 8px solid var(--bs-primary); border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
   .bg-secondary.message-bubble::before { left: -8px; border-right: 8px solid var(--bs-secondary); border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
   .message-time { font-size: 0.75rem; }
+  .advisory-bubble {
+    border: 2px solid !important;
+    border-style: double !important;
+    background: rgba(220, 53, 69, 0.05) !important;
+    color: #ffb8b8 !important;
+    font-style: italic;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.1);
+    animation: rapira-pulse 3s infinite ease-in-out;
+  }
+
+  .rapira-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 8px;
+    font-style: normal;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  @keyframes rapira-pulse {
+    0% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
+    50% { border-color: rgba(220, 53, 69, 1); box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
+    100% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
+  }
 </style>
 
 <script>
@@ -92,9 +122,16 @@
       messages.forEach((message) => {
         const outgoing = String(message.sender) === String(currentUserId);
         const time = new Date(message.createdAt).toLocaleString('en-IN', { hour12: true });
+        const isAdvisory = message.content && (message.content.includes('[SYSTEM_ADVISORY:') || message.content.includes('🛡️ [RAPIRA Shield:'));
+        
+        let messageText = isAdvisory 
+          ? `<div class="mb-1"><span class="rapira-badge"><i class="bi bi-shield-lock-fill me-1"></i>RAPIRA</span></div><div class="small">${escapeHtml(message.content.replace('🛡️ [RAPIRA Shield:', '').replace('[SYSTEM_ADVISORY:', '').replace(']', ''))}</div>` 
+          : escapeHtml(message.content);
+        const bubbleClass = isAdvisory ? 'advisory-bubble bg-transparent' : (outgoing ? 'bg-primary text-white' : 'bg-secondary text-white');
+
         const bubble = outgoing
-          ? `<div class="row mb-3"><div class="col-2"></div><div class="col-10"><div class="d-flex justify-content-end"><div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">${escapeHtml(message.content)}<div class="message-time text-end mt-1"><small class="opacity-75">${time} ${statusIcon(message)}</small></div></div></div></div></div>`
-          : `<div class="row mb-3"><div class="col-10"><div class="d-flex justify-content-start"><div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">${escapeHtml(message.content)}<div class="message-time mt-1"><small class="opacity-75">${time}</small></div></div></div></div><div class="col-2"></div></div>`;
+          ? `<div class="row mb-3"><div class="col-2"></div><div class="col-10"><div class="d-flex justify-content-end"><div class="message-bubble ${bubbleClass} rounded-3 p-3" style="max-width: 85%;">${messageText}<div class="message-time text-end mt-1"><small class="opacity-75">${time} ${!isAdvisory ? statusIcon(message) : ''}</small></div></div></div></div></div>`
+          : `<div class="row mb-3"><div class="col-10"><div class="d-flex justify-content-start"><div class="message-bubble ${bubbleClass} rounded-3 p-3" style="max-width: 85%;">${messageText}<div class="message-time mt-1"><small class="opacity-75">${time}</small></div></div></div></div><div class="col-2"></div></div>`;
         chatMessages.insertAdjacentHTML('beforeend', bubble);
       });
 

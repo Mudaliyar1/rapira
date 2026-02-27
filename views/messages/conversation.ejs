@@ -59,39 +59,53 @@
             <div class="chat-messages p-3 scrollarea" style="flex: 1; overflow-y: auto; max-height: 400px;">
               <% if (messages && messages.length > 0) { %>
                 <% messages.forEach(message => { %>
-                  <%
-                    // Ensure both IDs are strings for comparison
-                    const isCurrentUser = message.sender.toString() === user.id.toString();
-                  %>
                   <div class="row mb-3">
                     <% if (isCurrentUser) { %>
                       <!-- Outgoing message - align right -->
                       <div class="col-2"></div>
                       <div class="col-10">
                         <div class="d-flex justify-content-end">
-                          <div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">
-                            <%= message.content %>
-                            <div class="message-time text-end mt-1">
-                              <small class="opacity-75">
-                                <%= toISTLocaleString(message.createdAt) %>
-                                <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
-                              </small>
+                          <% if (message.content && message.content.startsWith('⚠️ [SYSTEM_ADVISORY:')) { %>
+                            <div class="advisory-bubble rounded-3 p-3 border border-danger bg-danger bg-opacity-10 text-white small" style="max-width: 85%;">
+                              <i class="bi bi-shield-lock-fill me-2 text-danger"></i><%= message.content %>
+                              <div class="message-time text-end mt-1">
+                                <small class="text-white-50"><%= toISTLocaleString(message.createdAt) %></small>
+                              </div>
                             </div>
-                          </div>
+                          <% } else { %>
+                            <div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">
+                              <%= message.content %>
+                              <div class="message-time text-end mt-1">
+                                <small class="opacity-75">
+                                  <%= toISTLocaleString(message.createdAt) %>
+                                  <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
+                                </small>
+                              </div>
+                            </div>
+                          <% } %>
                         </div>
                       </div>
                     <% } else { %>
                       <!-- Incoming message - align left -->
                       <div class="col-10">
                         <div class="d-flex justify-content-start">
-                          <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
-                            <%= message.content %>
-                            <div class="message-time mt-1">
-                              <small class="opacity-75">
-                                <%= toISTLocaleString(message.createdAt) %>
-                              </small>
+                          <% if (message.content && message.content.startsWith('⚠️ [SYSTEM_ADVISORY:')) { %>
+                            <div class="advisory-bubble rounded-3 p-3 border border-danger bg-danger bg-opacity-10 text-white small" style="max-width: 85%;">
+                              <i class="bi bi-shield-lock-fill me-2 text-danger"></i><%= message.content %>
+                              <div class="message-time mt-1">
+                                <small class="text-white-50"><%= toISTLocaleString(message.createdAt) %></small>
+                              </div>
                             </div>
-                          </div>
+                          <% } else { %>
+                            <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
+                              <%= message.content %>
+                              <div class="message-time mt-1">
+                                <small class="opacity-75">
+                                  <%= toISTLocaleString(message.createdAt) %>
+                                </small>
+                              </div>
+                            </div>
+                          <% } %>
                         </div>
                       </div>
                       <div class="col-2"></div>
@@ -164,6 +178,37 @@
 
   .message-time {
     font-size: 0.75rem;
+  }
+
+  .advisory-bubble {
+    border: 2px solid !important;
+    border-style: double !important;
+    background: rgba(220, 53, 69, 0.05) !important;
+    color: #ffb8b8 !important;
+    font-style: italic;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.1);
+    animation: rapira-pulse 3s infinite ease-in-out;
+  }
+
+  .rapira-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 8px;
+    font-style: normal;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  @keyframes rapira-pulse {
+    0% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
+    50% { border-color: rgba(220, 53, 69, 1); box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
+    100% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
   }
   
   .scrollarea {
@@ -274,13 +319,21 @@
         const outgoing = String(message.sender) === String(currentUserId);
         const time = new Date(message.createdAt).toLocaleString('en-IN', { hour12: true });
         const isDeleted = message.isDeleted || !message.content;
+        const isAdvisory = message.content && (message.content.includes('[SYSTEM_ADVISORY:') || message.content.includes('🛡️ [RAPIRA Shield:'));
         const editedText = message.isEdited ? ' <small class="text-muted">(edited)</small>' : '';
         
-        const messageContent = isDeleted 
-          ? '<em class="text-muted">This message was deleted</em>'
-          : escapeHtml(message.content) + editedText;
+        let messageText = '';
+        if (isDeleted) {
+          messageText = '<em class="text-muted">This message was deleted</em>';
+        } else if (isAdvisory) {
+          messageText = `<div class="mb-1"><span class="rapira-badge"><i class="bi bi-shield-lock-fill me-1"></i>RAPIRA</span></div><div class="small">${escapeHtml(message.content.replace('🛡️ [RAPIRA Shield:', '').replace('[SYSTEM_ADVISORY:', '').replace(']', ''))}</div>`;
+        } else {
+          messageText = escapeHtml(message.content) + editedText;
+        }
 
-        const actionButtons = outgoing && !isDeleted ? `
+        const bubbleClass = isAdvisory ? 'advisory-bubble bg-transparent' : (outgoing ? 'bg-primary text-white' : 'bg-secondary text-white');
+        
+        const actionButtons = outgoing && !isDeleted && !isAdvisory ? `
           <div class="message-actions ms-2" style="position: absolute; top: 0; right: -40px; display: none;">
             <a href="#" onclick="window.editMessageClick('${message._id}'); return false;" class="btn btn-sm btn-info text-white" title="Edit">
               <i class="bi bi-pencil"></i>
@@ -303,10 +356,10 @@
               <div class="col-2"></div>
               <div class="col-10">
                 <div class="d-flex justify-content-end">
-                  <div class="message-bubble bg-primary text-white rounded-3 p-3 position-relative" style="max-width: 85%;" onmouseover="this.querySelector('.message-actions').style.display='block'" onmouseout="this.querySelector('.message-actions').style.display='none'">
-                    ${messageContent}
+                  <div class="message-bubble ${bubbleClass} rounded-3 p-3 position-relative" style="max-width: 85%;" onmouseover="this.querySelector('.message-actions')?.style.setProperty('display','block')" onmouseout="this.querySelector('.message-actions')?.style.setProperty('display','none')">
+                    ${messageText}
                     <div class="message-time text-end mt-1">
-                      <small class="opacity-75">${time} ${statusIcon(message)}</small>
+                      <small class="opacity-75">${time} ${!isAdvisory ? statusIcon(message) : ''}</small>
                     </div>
                     ${actionButtons}
                   </div>
@@ -318,8 +371,8 @@
             <div class="row mb-3">
               <div class="col-10">
                 <div class="d-flex justify-content-start">
-                  <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
-                    ${messageContent}
+                  <div class="message-bubble ${bubbleClass} rounded-3 p-3" style="max-width: 85%;">
+                    ${messageText}
                     <div class="message-time mt-1">
                       <small class="opacity-75">${time}</small>
                     </div>

@@ -488,11 +488,95 @@ router.post('/send', isLoggedIn, checkBlocked, async (req, res) => {
       return res.redirect('/messages');
     }
 
+    // Aggressive Universal Contact Detection (Precision Refined)
+    const multilingualNumberWords = [
+      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'teen', 'char', 'panch', 'saat', 'aath', 'nau', 'das', 'shunya',
+      'uno', 'tres', 'quatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'
+    ];
+    // Pattern for numbers written in words (Strict boundaries)
+    const writtenNumberPattern = new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'i');
+
+    // Social Social Pattern (Strict boundaries for common word parts)
+    const socialPattern = /\b(instagram|whatsapp|telegram|facebook|snapchat|insta|wtsapp|tele|viber|signal|discord|skype|fb\.com|twitt|linktr)\b|wame|tme|ig@|wa\.me/i;
+    const intentPattern = /\b(call|whatsapp|message|contact|msg me|text me|ping|dm|reach|dial|num|number|save|write|moj)\b/i;
+
+    const piiPattern = /\b(credit card|debit card|bank account|cvv|otp|aadhaar|pan card|passport number|routing number|ifsc)\b/i;
+    const nativeVulgarsRaw = "madarchod|bhenchod|behenchod|chutiya|bhosadike|bhosdi|randi|harami|gaandu|gandu|lodu|chinal|kamina|bhadwa|randa|chodu|lund|laura|muthiya|chut|kaminey|haraami|saala";
+    const badWordsPattern = new RegExp(`\\b(fuck|shit|bitch|cunt|asshole|slut|whore|nigga|nigger|bastard|mc|bc|${nativeVulgarsRaw})\\b`, 'i');
+
+    let violationType = null;
+    const normalizedText = content.toLowerCase();
+
+    // 1. Check for Socials/Contact (Now with strict boundaries)
+    if (socialPattern.test(normalizedText)) violationType = 'Personal Contact Details';
+    // 2. Check for PII/Financial
+    if (!violationType && piiPattern.test(normalizedText)) violationType = 'Financial or ID Information';
+    // 3. Check for direct profanity
+    if (!violationType && badWordsPattern.test(normalizedText)) violationType = 'Vulgarity/Abusive Language';
+
+    // 4. Check for intentional sharing via words (Enhanced accuracy)
+    if (!violationType && writtenNumberPattern.test(normalizedText) && intentPattern.test(normalizedText)) {
+      const matchWords = normalizedText.match(new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'gi')) || [];
+      if (matchWords.length >= 2 || /number|num|call|whatsapp|save/i.test(normalizedText)) {
+        violationType = 'Personal Contact Details';
+      }
+    }
+
+    // 5. Check for Technical/Encoded Bypasses (Morse, Binary, Code)
+    if (!violationType) {
+      const morsePattern = /^[.\- ]{20,}$|(?:\.\.\.\.\.|\-\-\-\-\-)/; // Very strict (20 symbols or 5 dots/dashes in row)
+      const binaryPattern = /\b[01]{16,}\b/; // Require 16 bits to avoid small numbers/dates
+      const programmingPattern = /\b(function|const|ifdef|elif|endif|namespace|public\s+class|struct|async|await|console\.log|print\(|echo\s+|<\?php)\b|[{};]{4,}|<\/?[a-z][^>]*>/i;
+
+      if (morsePattern.test(content) && content.length > 10) violationType = 'Encoded or Technical Content';
+      else if (binaryPattern.test(content)) violationType = 'Encoded or Technical Content';
+      else if (programmingPattern.test(content)) violationType = 'Programming Syntax or Scripting';
+    }
+
+    // Aggregate recent history for deeper checks
+    const timeframe = new Date(Date.now() - 10 * 60 * 1000);
+    const recentMessages = await Message.find({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      createdAt: { $gte: timeframe }
+    }).limit(10).select('content');
+
+    const recentActualContent = recentMessages.filter(m => m.content && !m.content.includes('[SYSTEM_ADVISORY:') && !m.content.includes('RAPIRA Shield:')).map(m => m.content).join(' ');
+    const cleanNumbers = (text) => text.replace(/\b\d{4}-\d{2}-\d{2}\b/g, '').replace(/\b\d{2}\/\d{2}\/\d{2,4}\b/g, '').replace(/\b\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm))?\b/gi, '').replace(/\b202\d\b/g, '');
+
+    const currentDigits = cleanNumbers(content).replace(/\D/g, '').length;
+    const previousDigits = cleanNumbers(recentActualContent).replace(/\D/g, '').length;
+
+    if (!violationType && (previousDigits + currentDigits >= 10)) violationType = 'Personal Contact Details';
+
+    // 6. Smarter Deep Scanner
+    const isSuspiciousFragment = content.length <= 5 || (recentMessages.length > 0 && recentActualContent.length / (recentMessages.length || 1) < 6);
+    if (!violationType && isSuspiciousFragment) {
+      // Keep a space between messages so words aren't formed across message splits accidentally
+      const ghostCombinedSquished = (recentActualContent + ' ' + content).toLowerCase().replace(/[^a-z0-9 ]/g, '');
+      const nativeVulgars = nativeVulgarsRaw.split('|');
+      for (const v of nativeVulgars) {
+        if (ghostCombinedSquished.includes(v)) {
+          // Flag only if the bad word is a significant part of the message (60%)
+          if (v.length > (ghostCombinedSquished.length * 0.6) || ghostCombinedSquished === v) {
+            violationType = 'Vulgarity/Abusive Language';
+            break;
+          }
+        }
+      }
+    }
+
+    let finalContent = content;
+    if (violationType) {
+      finalContent = `🛡️ [RAPIRA Shield: This message was redacted because it contains ${violationType}. Security is monitored 24/7.]`;
+    }
+
     // Create new message
     const newMessage = new Message({
       sender: req.session.user.id,
       receiver: recipientId,
-      content,
+      content: finalContent,
       deliveredAt: null,
       readAt: null
     });
@@ -570,10 +654,96 @@ router.post('/api/send', isLoggedIn, canMessageRole, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Recipient not found' });
     }
 
+    // Aggressive Universal Contact Detection (Precision Refined)
+    const multilingualNumberWords = [
+      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'teen', 'char', 'panch', 'saat', 'aath', 'nau', 'das', 'shunya',
+      'uno', 'tres', 'quatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'
+    ];
+    const writtenNumberPattern = new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'i');
+    const socialPattern = /\b(instagram|whatsapp|telegram|facebook|snapchat|insta|wtsapp|tele|viber|signal|discord|skype|fb\.com|twitt|linktr)\b|wame|tme|ig@|wa\.me/i;
+    const intentPattern = /\b(call|whatsapp|message|contact|msg me|text me|ping|dm|reach|dial|num|number|save|write|moj)\b/i;
+
+    const piiPattern = /\b(credit card|debit card|bank account|cvv|otp|aadhaar|pan card|passport number|routing number|ifsc)\b/i;
+    const nativeVulgarsRaw = "madarchod|bhenchod|behenchod|chutiya|bhosadike|bhosdi|randi|harami|gaandu|gandu|lodu|chinal|kamina|bhadwa|randa|chodu|lund|laura|muthiya|chut|kaminey|haraami|saala";
+    const badWordsPattern = new RegExp(`\\b(fuck|shit|bitch|cunt|asshole|slut|whore|nigga|nigger|bastard|mc|bc|${nativeVulgarsRaw})\\b`, 'i');
+
+    let violationType = null;
+    const normalizedText = content.toLowerCase();
+
+    // 1. Check for Socials/Contact (Precision boundaries)
+    if (socialPattern.test(normalizedText)) violationType = 'Personal Contact Details';
+    // 2. Check for PII/Financial
+    if (!violationType && piiPattern.test(normalizedText)) violationType = 'Financial or ID Information';
+    // 3. Check for direct profanity
+    if (!violationType && badWordsPattern.test(normalizedText)) violationType = 'Vulgarity/Abusive Language';
+
+    // Aggregate recent history for deeper checks
+    const timeframe = new Date(Date.now() - 10 * 60 * 1000);
+    const recentMessages = await Message.find({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      createdAt: { $gte: timeframe }
+    }).limit(10).select('content');
+
+    const recentActualContent = recentMessages.filter(m => m.content && !m.content.includes('[SYSTEM_ADVISORY:') && !m.content.includes('RAPIRA')).map(m => m.content).join(' ');
+
+    // Function to clean up dates, times, and common non-phone numbers
+    const cleanNumbers = (text) => {
+      return text
+        .replace(/\b\d{4}-\d{2}-\d{2}\b/g, '') // YYYY-MM-DD
+        .replace(/\b\d{2}\/\d{2}\/\d{2,4}\b/g, '') // DD/MM/YYYY
+        .replace(/\b\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm))?\b/gi, '') // Time
+        .replace(/\b202\d\b/g, ''); // Current decade years
+    };
+    const currentDigits = cleanNumbers(content).replace(/\D/g, '').length;
+    const previousDigits = cleanNumbers(recentActualContent).replace(/\D/g, '').length;
+
+    if (!violationType && (previousDigits + currentDigits >= 10)) violationType = 'Personal Contact Details';
+
+    // 5. Check for intentional sharing via words (Enhanced accuracy)
+    if (!violationType && writtenNumberPattern.test(normalizedText)) {
+      const matchWords = normalizedText.match(new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'gi')) || [];
+      if (matchWords.length >= 2 || /number|num|call|whatsapp|save/i.test(normalizedText)) {
+        violationType = 'Personal Contact Details';
+      }
+    }
+
+    // 5-B. Check for Technical/Encoded Bypasses (Morse, Binary, Code)
+    if (!violationType) {
+      const morsePattern = /^[.\- ]{20,}$|(?:\.\.\.\.\.|\-\-\-\-\-)/;
+      const binaryPattern = /\b[01]{16,}\b/;
+      const programmingPattern = /\b(function|const|ifdef|elif|endif|namespace|public\s+class|struct|async|await|console\.log|print\(|echo\s+|<\?php)\b|[{};]{4,}|<\/?[a-z][^>]*>/i;
+
+      if (morsePattern.test(content) && content.length > 10) violationType = 'Encoded or Technical Content';
+      else if (binaryPattern.test(content)) violationType = 'Encoded or Technical Content';
+      else if (programmingPattern.test(content)) violationType = 'Programming Syntax or Scripting';
+    }
+
+    // 6. Smarter Deep Scanner
+    const isSuspiciousFragment = content.length <= 5 || (recentMessages.length > 0 && recentActualContent.length / (recentMessages.length || 1) < 6);
+    if (!violationType && isSuspiciousFragment) {
+      const ghostCombinedSquished = (recentActualContent + ' ' + content).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const nativeVulgars = nativeVulgarsRaw.split('|');
+      for (const v of nativeVulgars) {
+        if (ghostCombinedSquished.includes(v)) {
+          if (v.length > (ghostCombinedSquished.length * 0.6) || ghostCombinedSquished === v) {
+            violationType = 'Vulgarity/Abusive Language';
+            break;
+          }
+        }
+      }
+    }
+
+    let finalContent = content.trim();
+    if (violationType) {
+      finalContent = `🛡️ [RAPIRA Shield: This message was redacted because it contains ${violationType}. Security is monitored 24/7.]`;
+    }
+
     const newMessage = new Message({
       sender: req.session.user.id,
       receiver: recipientId,
-      content: content.trim(),
+      content: finalContent,
       deliveredAt: null,
       readAt: null
     });
