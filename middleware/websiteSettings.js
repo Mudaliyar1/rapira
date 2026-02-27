@@ -22,7 +22,7 @@ const loadWebsiteSettings = async (req, res, next) => {
 
     // Make settings available to all views
     res.locals.websiteSettings = settingsCache;
-    
+
     // Also make individual settings easily accessible
     res.locals.siteSettings = settingsCache.siteSettings;
     res.locals.headerSettings = settingsCache.headerSettings;
@@ -37,14 +37,14 @@ const loadWebsiteSettings = async (req, res, next) => {
         settingsCache.siteSettings.maintenanceMode = false;
         settingsCache.siteSettings.maintenanceStartTime = null;
         await settingsCache.save();
-        
+
         // Refresh the cache
         await refreshSettingsCache();
-        
+
         // Continue with normal flow since maintenance is now disabled
         return next();
       }
-      
+
       // Allow admins and superAdmins to access during maintenance
       if (!req.session.user || (req.session.user.role !== 'admin' && req.session.user.role !== 'superAdmin')) {
         // Allow access to maintenance login endpoint
@@ -125,16 +125,27 @@ const loadWebsiteSettings = async (req, res, next) => {
       adminSettings: {
         showDummyData: false,
         dummyDataCount: 10
+      },
+      footerSettings: {
+        showTermsOfService: true,
+        showPrivacyPolicy: true,
+        showRefundPolicy: true,
+        showSubscriptionPolicy: true,
+        showShoppingPolicy: true,
+        showEventAttendingPolicy: true,
+        showTempEmailPolicy: true,
+        showAccountReactivation: true,
+        showFAQ: true
       }
     };
-    
+
     // Make individual settings available with defaults
     res.locals.siteSettings = res.locals.websiteSettings.siteSettings;
     res.locals.headerSettings = res.locals.websiteSettings.headerSettings;
     res.locals.menuSettings = res.locals.websiteSettings.menuSettings;
     res.locals.themeSettings = res.locals.websiteSettings.themeSettings;
     res.locals.heroCarouselSettings = res.locals.websiteSettings.heroCarouselSettings;
-    
+
     next();
   }
 };

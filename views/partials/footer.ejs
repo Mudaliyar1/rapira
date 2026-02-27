@@ -13,35 +13,67 @@
 
     <div class="row">
       <div class="col-6 col-md-3 mb-3">
-        <a href="/" class="text-decoration-none text-white-50 small d-block mb-2">Home</a>
-        <a href="/concerts" class="text-decoration-none text-white-50 small d-block mb-2">Concerts</a>
-        <a href="/artists" class="text-decoration-none text-white-50 small d-block mb-2">Artists</a>
-        <a href="/about" class="text-decoration-none text-white-50 small d-block mb-2">About Us</a>
-        <a href="/contact" class="text-decoration-none text-white-50 small d-block mb-2">Contact</a>
+        <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.home !== false)) { %>
+          <a href="/" class="text-decoration-none text-white-50 small d-block mb-2">Home</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.concerts !== false)) { %>
+          <a href="/concerts" class="text-decoration-none text-white-50 small d-block mb-2">Concerts</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.artists !== false)) { %>
+          <a href="/artists" class="text-decoration-none text-white-50 small d-block mb-2">Artists</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.about !== false)) { %>
+          <a href="/about" class="text-decoration-none text-white-50 small d-block mb-2">About Us</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.contact !== false)) { %>
+          <a href="/contact" class="text-decoration-none text-white-50 small d-block mb-2">Contact</a>
+        <% } %>
       </div>
 
       <div class="col-6 col-md-3 mb-3">
-        <a href="/demo" class="text-decoration-none text-white-50 small d-block mb-2">Demo Home</a>
-        <a href="/demo/artist" class="text-decoration-none text-white-50 small d-block mb-2">Artist Demo</a>
-        <a href="/demo/concert" class="text-decoration-none text-white-50 small d-block mb-2">Concert Demo</a>
-        <a href="/demo/ticket" class="text-decoration-none text-white-50 small d-block mb-2">Ticket Demo</a>
-        <a href="/demo/content" class="text-decoration-none text-white-50 small d-block mb-2">Content Demo</a>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.demo !== false)) { %>
+          <a href="/demo" class="text-decoration-none text-white-50 small d-block mb-2">Demo Home</a>
+          <a href="/demo/artist" class="text-decoration-none text-white-50 small d-block mb-2">Artist Demo</a>
+          <a href="/demo/concert" class="text-decoration-none text-white-50 small d-block mb-2">Concert Demo</a>
+          <a href="/demo/ticket" class="text-decoration-none text-white-50 small d-block mb-2">Ticket Demo</a>
+          <a href="/demo/content" class="text-decoration-none text-white-50 small d-block mb-2">Content Demo</a>
+        <% } %>
       </div>
 
       <div class="col-6 col-md-3 mb-3">
-        <a href="/demo/subscription" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Demo</a>
-        <a href="/terms-of-service" class="text-decoration-none text-white-50 small d-block mb-2">Terms of Service</a>
-        <a href="/privacy-policy" class="text-decoration-none text-white-50 small d-block mb-2">Privacy Policy</a>
-        <a href="/refund-policy" class="text-decoration-none text-white-50 small d-block mb-2">Refund Policy</a>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.demo !== false)) { %>
+          <a href="/demo/subscription" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Demo</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.termsOfService !== false)) { %>
+          <a href="/terms-of-service" class="text-decoration-none text-white-50 small d-block mb-2">Terms of Service</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.privacyPolicy !== false)) { %>
+          <a href="/privacy-policy" class="text-decoration-none text-white-50 small d-block mb-2">Privacy Policy</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.refundPolicy !== false)) { %>
+          <a href="/refund-policy" class="text-decoration-none text-white-50 small d-block mb-2">Refund Policy</a>
+        <% } %>
       </div>
 
       <div class="col-6 col-md-3 mb-3">
-        <a href="/subscription-policy" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Policy</a>
-        <a href="/shopping-policy" class="text-decoration-none text-white-50 small d-block mb-2">Shopping Policy</a>
-        <a href="/event-attending-policy" class="text-decoration-none text-white-50 small d-block mb-2">Event Attending Policy</a>
-        <a href="/temp-email-policy" class="text-decoration-none text-white-50 small d-block mb-2">Temp Email Policy</a>
-        <a href="/account-reactivation" class="text-decoration-none text-white-50 small d-block mb-2">Account Reactivation</a>
-        <a href="/faq" class="text-decoration-none text-white-50 small d-block mb-2">FAQ</a>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.subscriptionPolicy !== false)) { %>
+          <a href="/subscription-policy" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Policy</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.shoppingPolicy !== false)) { %>
+          <a href="/shopping-policy" class="text-decoration-none text-white-50 small d-block mb-2">Shopping Policy</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.eventAttendingPolicy !== false)) { %>
+          <a href="/event-attending-policy" class="text-decoration-none text-white-50 small d-block mb-2">Event Attending Policy</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.tempEmailPolicy !== false)) { %>
+          <a href="/temp-email-policy" class="text-decoration-none text-white-50 small d-block mb-2">Temp Email Policy</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.accountReactivation !== false)) { %>
+          <a href="/account-reactivation" class="text-decoration-none text-white-50 small d-block mb-2">Account Reactivation</a>
+        <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.faq !== false)) { %>
+          <a href="/faq" class="text-decoration-none text-white-50 small d-block mb-2">FAQ</a>
+        <% } %>
       </div>
     </div>
 
