@@ -395,6 +395,36 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_distributor_applicat
     }
 });
 
+// GET - Admin: View Active Distributors List
+router.get('/admin/list', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
+    try {
+        const Role = require('../models/Role');
+        const UserRole = require('../models/UserRole');
+        const User = require('../models/User');
+
+        const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
+        if (!distributorRole) {
+            return res.render('admin/distributors', {
+                layout: 'admin',
+                distributors: []
+            });
+        }
+
+        const distributorUserRoles = await UserRole.find({ role: distributorRole._id }).populate('user');
+        const distributors = distributorUserRoles.map(ur => ur.user).filter(Boolean);
+
+        res.render('admin/distributors', {
+            layout: 'admin',
+            distributors,
+            title: 'Active Distributors'
+        });
+    } catch (error) {
+        console.error('Error fetching distributors list:', error);
+        req.flash('error', 'Failed to load distributors');
+        res.redirect('/admin');
+    }
+});
+
 // GET - Admin: View Distributor Application Details
 router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
@@ -478,36 +508,6 @@ router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_distribu
         console.error('Reject distributor error:', error);
         req.flash('error', 'Failed to reject application');
         res.redirect('/distributor-applications/admin');
-    }
-});
-
-// GET - Admin: View Active Distributors List
-router.get('/admin/list', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
-    try {
-        const Role = require('../models/Role');
-        const UserRole = require('../models/UserRole');
-        const User = require('../models/User');
-
-        const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
-        if (!distributorRole) {
-            return res.render('admin/distributors', {
-                layout: 'layouts/adminLayout',
-                distributors: []
-            });
-        }
-
-        const distributorUserRoles = await UserRole.find({ role: distributorRole._id }).populate('user');
-        const distributors = distributorUserRoles.map(ur => ur.user).filter(Boolean);
-
-        res.render('admin/distributors', {
-            layout: 'layouts/adminLayout',
-            distributors,
-            title: 'Active Distributors'
-        });
-    } catch (error) {
-        console.error('Error fetching distributors list:', error);
-        req.flash('error', 'Failed to load distributors');
-        res.redirect('/admin');
     }
 });
 
