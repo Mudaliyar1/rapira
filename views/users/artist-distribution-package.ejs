@@ -1,0 +1,192 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/artist-distribution/distributors" class="text-primary text-decoration-none">Distributors</a></li>
+          <li class="breadcrumb-item active text-white-50" aria-current="page">Package Details</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Package Details Card -->
+    <div class="col-lg-5">
+      <div class="card bg-dark border-secondary shadow-lg h-100">
+        <div class="card-header border-secondary p-4 text-center">
+            <h4 class="fw-bold text-white mb-2"><%= cartPackage.name %></h4>
+            <div class="text-white-50 small mb-3">Distributor: <%= cartPackage.distributor.name %></div>
+            <h2 class="text-primary display-6 fw-bold mb-0">₹<%= cartPackage.price %></h2>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-white-50"><%= cartPackage.description || 'No description provided.' %></p>
+            
+            <h6 class="text-white fw-bold mb-2">Target Platforms:</h6>
+            <div class="d-flex flex-wrap gap-1 mb-4">
+              <% cartPackage.platforms.forEach(plat => { %>
+                <span class="badge bg-secondary text-white border border-secondary"><%= plat %></span>
+              <% }); %>
+            </div>
+
+            <h6 class="text-white fw-bold mb-2">File Upload Limits:</h6>
+            <ul class="list-unstyled text-white-50 small mb-4">
+                <li class="mb-1"><i class="bi bi-info-circle me-2 text-primary"></i>Allowed Content: <strong class="text-white"><%= cartPackage.packageType === 'audio' ? 'Audio Only' : (cartPackage.packageType === 'video' ? 'Video Only' : 'Audio & Video') %></strong></li>
+                <% if (cartPackage.packageType !== 'video') { %>
+                  <li class="mb-1"><i class="bi bi-music-note-beamed me-2 text-primary"></i>Max Audio Files: <strong class="text-white"><%= cartPackage.maxAudioFiles || 0 %></strong></li>
+                <% } %>
+                <% if (cartPackage.packageType !== 'audio') { %>
+                  <li class="mb-1"><i class="bi bi-play-btn me-2 text-primary"></i>Max Video Files: <strong class="text-white"><%= cartPackage.maxVideoFiles || 0 %></strong></li>
+                <% } %>
+            </ul>
+
+            <h6 class="text-white fw-bold mb-2">Package Features:</h6>
+            <ul class="list-unstyled text-white-50 small">
+              <% cartPackage.features.forEach(feat => { %>
+                <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i><%= feat %></li>
+              <% }); %>
+            </ul>
+        </div>
+        <div class="card-footer border-secondary p-4 bg-transparent">
+            <div class="d-flex justify-content-between text-white-50 small mb-1">
+                <span>Base Price:</span>
+                <span>₹<%= cartPackage.price.toFixed(2) %></span>
+            </div>
+            <% if (cartPackage.price > 0) { %>
+            <div class="d-flex justify-content-between text-white-50 small mb-3">
+                <span>Platform Fee (<%= commissionPerc %>%):</span>
+                <span>₹<%= ((cartPackage.price * commissionPerc) / 100).toFixed(2) %></span>
+            </div>
+            <% } %>
+            <div class="d-flex justify-content-between text-white fw-bold fs-5 pt-3 border-top border-secondary">
+                <span>Total Payable:</span>
+                <% if (cartPackage.price > 0) { %>
+                  <span class="text-success">₹<%= (cartPackage.price + ((cartPackage.price * commissionPerc) / 100)).toFixed(2) %></span>
+                <% } else { %>
+                  <span class="text-success text-uppercase fw-bolder">FREE</span>
+                <% } %>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Form Card -->
+    <div class="col-lg-7">
+      <div class="card bg-dark border-secondary shadow-lg h-100">
+        <div class="card-header border-secondary p-4">
+          <h5 class="fw-bold text-white mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Submit Your Content</h5>
+        </div>
+        <div class="card-body p-4">
+          <% if (success && success.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <%= success %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+          <% if (error && error.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <%= error %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+          
+          <form action="/artist-distribution/request/<%= cartPackage._id %>" method="POST" enctype="multipart/form-data" id="distributionForm">
+            <div class="mb-4">
+              <label class="form-label text-white fw-bold">Release Title *</label>
+              <input type="text" name="contentTitle" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Midnight Vibes EP" required>
+            </div>
+
+            <% if (cartPackage.packageType !== 'video' && cartPackage.maxAudioFiles > 0) { %>
+            <div class="mb-4 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
+              <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-music-note-beamed me-2 text-info"></i>Audio Files</span>
+                <span class="badge bg-secondary">Max <%= cartPackage.maxAudioFiles %></span>
+              </label>
+              <input type="file" name="audioFiles" class="form-control bg-dark border-secondary text-white" accept="audio/*" multiple id="audioInput">
+              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP3, WAV, FLAC.</div>
+              <div id="audioError" class="text-danger small mt-1 d-none">You selected more audio files than the package allows!</div>
+            </div>
+            <% } %>
+
+            <% if (cartPackage.packageType !== 'audio' && cartPackage.maxVideoFiles > 0) { %>
+            <div class="mb-4 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
+              <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-play-btn me-2 text-danger"></i>Video Files</span>
+                <span class="badge bg-secondary">Max <%= cartPackage.maxVideoFiles %></span>
+              </label>
+              <input type="file" name="videoFiles" class="form-control bg-dark border-secondary text-white" accept="video/*" multiple id="videoInput">
+              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP4, MOV, AVI.</div>
+              <div id="videoError" class="text-danger small mt-1 d-none">You selected more video files than the package allows!</div>
+            </div>
+            <% } %>
+
+            <div class="mb-5 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
+              <label class="form-label text-white fw-bold"><i class="bi bi-image me-2 text-warning"></i>Cover Art / Poster (Optional)</label>
+              <input type="file" name="posterImage" class="form-control bg-dark border-secondary text-white" accept="image/*">
+              <div class="form-text text-white-50 small mt-2">Recommended: 3000x3000px JPG/PNG. Represents your release globally.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold" id="submitBtn">
+              <i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? 'Confirm Upload & Proceed to Payment' : 'Confirm Free Upload' %>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const maxAudios = parseInt('<%= cartPackage.maxAudioFiles || 0 %>');
+  const maxVideos = parseInt('<%= cartPackage.maxVideoFiles || 0 %>');
+  
+  const form = document.getElementById('distributionForm');
+  const audioInput = document.getElementById('audioInput');
+  const videoInput = document.getElementById('videoInput');
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (audioInput) {
+      audioInput.addEventListener('change', function() {
+          const count = this.files.length;
+          const error = document.getElementById('audioError');
+          if (count > maxAudios) {
+              error.classList.remove('d-none');
+              this.value = ''; // Reset
+          } else {
+              error.classList.add('d-none');
+          }
+      });
+  }
+
+  if (videoInput) {
+      videoInput.addEventListener('change', function() {
+          const count = this.files.length;
+          const error = document.getElementById('videoError');
+          if (count > maxVideos) {
+              error.classList.remove('d-none');
+              this.value = ''; // Reset
+          } else {
+              error.classList.add('d-none');
+          }
+      });
+  }
+  
+  form.addEventListener('submit', function(e) {
+      // Validate at least one file is selected
+      let hasAudio = audioInput && audioInput.files.length > 0;
+      let hasVideo = videoInput && videoInput.files.length > 0;
+      
+      if (!hasAudio && !hasVideo) {
+          e.preventDefault();
+          alert('You must upload at least one music or video file to use this package.');
+          return false;
+      }
+      
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading Files... Please stay on this page.';
+  });
+</script>
+
+<%- include('../partials/artist-footer') %>

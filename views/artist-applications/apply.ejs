@@ -98,8 +98,8 @@
 
               <div class="mb-4">
                 <label for="proofPhoto" class="form-label text-white">Proof Photo Upload</label>
-                <input type="file" class="form-control" id="proofPhoto" name="proofPhoto" accept="image/jpeg,image/png,image/jpg,application/pdf" required>
-                <div class="form-text">Upload a photo of your ID proof or any document that verifies your identity. Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)</div>
+                <input type="file" class="form-control" id="proofPhoto" name="proofPhoto" accept="image/jpeg,image/png,image/jpg" required>
+                <div class="form-text">Upload a photo of your ID proof or any document that verifies your identity. Accepted formats: JPG, JPEG, PNG (Max size: 5MB)</div>
                 <div class="invalid-feedback" id="fileError"></div>
               </div>
 
@@ -180,11 +180,11 @@
 
         // Check file type
         const fileType = file.type;
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 
         if (!validTypes.includes(fileType)) {
           fileInput.classList.add('is-invalid');
-          fileError.textContent = 'Invalid file type. Please upload a JPG, JPEG, PNG, or PDF file.';
+          fileError.textContent = 'Invalid file type. Please upload a JPG, JPEG, or PNG file.';
           this.value = ''; // Clear the file input
           return;
         }

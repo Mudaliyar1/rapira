@@ -79,23 +79,28 @@
                 <i class="bi bi-music-note-beamed me-1"></i> Become an Artist
               </a>
             <% } %>
+
+            <a href="/users/job-portal" class="btn btn-info text-white">
+              <i class="bi bi-briefcase me-1"></i> Job Portal
+            </a>
+
             <% if (pendingApplication) { %>
               <a href="/artist-applications/status" class="btn btn-info text-white">
-                <i class="bi bi-hourglass-split me-1"></i> View Application Status
+                <i class="bi bi-hourglass-split me-1"></i> View Artist status
               </a>
             <% } %>
             <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
               <a href="/producer-dashboard" class="btn btn-dark">
                 <i class="bi bi-mic-fill me-1"></i> Producer Dashboard
               </a>
-            <% } else { %>
-              <a href="/producer-applications/apply" class="btn btn-dark">
-                <i class="bi bi-mic me-1"></i> Apply as Producer
-              </a>
-              <a href="/producer-applications/status" class="btn btn-outline-dark">
-                <i class="bi bi-hourglass-split me-1"></i> Producer Application Status
+            <% } %>
+
+            <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'distributor')) { %>
+              <a href="/distributor-dashboard" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
+                <i class="bi bi-broadcast me-1"></i> Distributor Dashboard
               </a>
             <% } %>
+
             <a href="/users/confirm-delete-account" class="btn btn-danger mt-3">
               <i class="bi bi-trash me-1"></i> Delete Account
             </a>

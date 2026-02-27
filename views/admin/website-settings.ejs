@@ -1153,6 +1153,32 @@
                 </div>
                 <small class="text-muted">Fee charged when a user applies to become a Producer. Set 0 for free.</small>
               </div>
+
+              <div class="mb-4">
+                <label for="distributorRegistrationFee" class="form-label text-white fw-bold">Distributor Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="distributorRegistrationFee" 
+                         name="distributorRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.distributorRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become a Distributor. Set 0 for free.</small>
+              </div>
+
+              <hr class="border-secondary my-4">
+              <h5 class="text-white mb-3">Distribution Commissions</h5>
+              <div class="mb-4">
+                <label for="distributorCommission" class="form-label text-white fw-bold">Platform Commission on Distribution (%)</label>
+                <div class="input-group">
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="distributorCommission" 
+                         name="distributorCommission" 
+                         value="<%= settings.distributorCommissionSettings ? settings.distributorCommissionSettings.percentage : 0 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text bg-dark text-white border-secondary">%</span>
+                </div>
+                <small class="text-muted">Percentage commission the platform takes on artist distribution payments. Set 0 for no commission.</small>
+              </div>
             </div>
             <div class="col-md-4">
               <div class="glass-card-dark h-100">

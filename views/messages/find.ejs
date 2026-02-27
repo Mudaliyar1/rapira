@@ -100,13 +100,17 @@
                           </div>
                         <% } %>
 
-                        <!-- Artist Location -->
-                        <% if (user.role === 'artist' && artistMap[user._id.toString()]) { %>
+                        <!-- Location -->
+                        <% 
+                          let displayCity = user.role === 'artist' && artistMap[user._id.toString()] ? artistMap[user._id.toString()].city : '';
+                          let displayState = user.role === 'artist' && artistMap[user._id.toString()] ? artistMap[user._id.toString()].state : (typeof producerLocations !== 'undefined' && producerLocations[user._id.toString()] ? producerLocations[user._id.toString()].state : '');
+                        %>
+                        <% if (displayState || displayCity) { %>
                           <div class="mb-3">
                             <h6 class="text-white-75 mb-2">Location:</h6>
                             <p class="card-text text-white-50 mb-0 small">
                               <i class="bi bi-geo-alt me-1"></i>
-                              <%= artistMap[user._id.toString()].city ? artistMap[user._id.toString()].city + ', ' : '' %><%= artistMap[user._id.toString()].state || 'N/A' %>
+                              <%= displayCity ? displayCity + ', ' : '' %><%= displayState || 'N/A' %>
                             </p>
                           </div>
                         <% } %>
@@ -130,6 +134,7 @@
                   <i class="bi bi-search display-1 text-muted mb-3"></i>
                   <h3 class="text-white">No Users Found</h3>
                   <p class="text-white-75 mb-4">Try adjusting your filters or check back later.</p>
+                  <a href="/messages/find<%= typeof dashboardType !== 'undefined' && dashboardType ? '?dashboard=' + dashboardType : '' %>" class="btn btn-outline-light"><i class="bi bi-x-circle me-1"></i> Clear Filters</a>
                 </div>
               <% } %>
             </div>

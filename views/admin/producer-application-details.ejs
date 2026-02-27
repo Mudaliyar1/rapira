@@ -59,7 +59,36 @@
         </div>
       </div>
 
-      <!-- Skills & Services -->
+      <!-- Payment Information -->
+      <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+        <div class="card-header border-bottom d-flex justify-content-between align-items-center" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Payment Information</h5>
+          <span class="badge <%= application.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning text-dark' %>">
+            <%= application.paymentStatus.toUpperCase() %>
+          </span>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <div class="row g-3">
+            <% if (application.registrationFee > 0) { %>
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Fee Amount</label>
+                <p class="form-control-plaintext fw-bold" style="color: #fff !important;">₹<%= application.registrationFee %></p>
+              </div>
+            <% } %>
+            <% if (application.razorpayPaymentId) { %>
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Razorpay Payment ID</label>
+                <p class="form-control-plaintext font-monospace small" style="color: #fff !important;"><%= application.razorpayPaymentId %></p>
+              </div>
+            <% } %>
+            <% if (!application.registrationFee && !application.razorpayPaymentId) { %>
+                <div class="col-12">
+                    <p class="text-white-50 mb-0 italic">No payment details recorded for this application.</p>
+                </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
       <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
         <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
           <h5 class="fw-bold mb-0" style="color: #fff !important;">Professional Details</h5>

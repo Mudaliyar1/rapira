@@ -278,6 +278,16 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Distributor Service Commission Settings
+  distributorCommissionSettings: {
+    percentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 5
+    }
+  },
+
   // Registration Fee Settings
   registrationFees: {
     artistRegistrationFee: {
@@ -286,6 +296,11 @@ const WebsiteSettingsSchema = new mongoose.Schema({
       default: 0
     },
     producerRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    distributorRegistrationFee: {
       type: Number,
       min: 0,
       default: 0

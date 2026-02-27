@@ -1,0 +1,148 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-0 fw-bold text-white"><i class="bi bi-music-note-list me-2"></i>Distribution Logs & Receipts</h4>
+            <p class="text-white-50 mb-0 small">Manage internal records of system-wide music distribution transactions.</p>
+          </div>
+          <span class="badge bg-primary px-3 py-2 rounded-pill"><%= requests.length %> Total Records</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary shadow-sm mb-4">
+    <div class="card-body">
+      <form action="/admin/distribution-requests" method="GET" class="row g-3 align-items-end">
+        <div class="col-md-2">
+          <label class="form-label text-white-50 small mb-1">Search Artist</label>
+          <input type="text" name="artistSearch" class="form-control bg-dark text-white border-secondary" placeholder="Name or Email" value="<%= typeof filters !== 'undefined' ? filters.artistSearch : '' %>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label text-white-50 small mb-1">Search Distributor</label>
+          <input type="text" name="distributorSearch" class="form-control bg-dark text-white border-secondary" placeholder="Name or Email" value="<%= typeof filters !== 'undefined' ? filters.distributorSearch : '' %>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label text-white-50 small mb-1">Search Bill No.</label>
+          <input type="text" name="billSearch" class="form-control bg-dark text-white border-secondary" placeholder="RAPIRA-XXXX" value="<%= typeof filters !== 'undefined' ? filters.billSearch : '' %>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label text-white-50 small mb-1">Status</label>
+          <select name="status" class="form-select bg-dark text-white border-secondary">
+            <option value="all" <%= typeof filters !== 'undefined' && filters.status === 'all' ? 'selected' : '' %>>All</option>
+            <option value="pending" <%= typeof filters !== 'undefined' && filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="in-progress" <%= typeof filters !== 'undefined' && filters.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+            <option value="completed" <%= typeof filters !== 'undefined' && filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+            <option value="rejected" <%= typeof filters !== 'undefined' && filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label text-white-50 small mb-1">Payment</label>
+          <select name="paymentStatus" class="form-select bg-dark text-white border-secondary">
+            <option value="all" <%= typeof filters !== 'undefined' && filters.paymentStatus === 'all' ? 'selected' : '' %>>All</option>
+            <option value="paid" <%= typeof filters !== 'undefined' && filters.paymentStatus === 'paid' ? 'selected' : '' %>>Paid</option>
+            <option value="pending" <%= typeof filters !== 'undefined' && filters.paymentStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="failed" <%= typeof filters !== 'undefined' && filters.paymentStatus === 'failed' ? 'selected' : '' %>>Failed</option>
+            <option value="free" <%= typeof filters !== 'undefined' && filters.paymentStatus === 'free' ? 'selected' : '' %>>Free</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+          <a href="/admin/distribution-requests" class="btn btn-outline-secondary">Clear</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card bg-dark border-secondary shadow-lg">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0">
+          <thead>
+            <tr class="border-secondary text-white-50 small">
+              <th class="ps-4">Date & Bill No.</th>
+              <th>Artist</th>
+              <th>Distributor</th>
+              <th>Content Title</th>
+              <th>Payment & Txn</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (requests && requests.length > 0) { %>
+              <% requests.forEach(request => { %>
+                <tr class="border-secondary align-middle">
+                  <td class="ps-4 text-white-50">
+                    <span class="badge bg-dark border border-secondary text-white-50 mb-2"><i class="bi bi-hash text-primary"></i> <%= request.receiptNumber || 'N/A' %></span><br>
+                    <%= new Date(request.createdAt).toLocaleDateString() %><br>
+                    <small><%= new Date(request.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></small>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="<%= (request.artist && request.artist.profileImage && request.artist.profileImage !== '/images/default-profile.svg') ? request.artist.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(request.artist ? request.artist.name.charAt(0).toUpperCase() : 'A') + '&background=random&color=fff&bold=true') %>" 
+                           class="rounded-circle me-2 object-fit-cover" width="32" height="32" alt="">
+                      <div>
+                        <span class="text-white d-block"><%= request.artist ? request.artist.name : 'Unknown Artist' %></span>
+                        <small class="text-white-50"><%= request.artist ? request.artist.email : 'No email' %></small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="<%= (request.distributor && request.distributor.profileImage && request.distributor.profileImage !== '/images/default-profile.svg') ? request.distributor.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(request.distributor ? request.distributor.name.charAt(0).toUpperCase() : 'D') + '&background=random&color=fff&bold=true') %>" 
+                           class="rounded-circle me-2 object-fit-cover" width="32" height="32" alt="">
+                      <span class="text-white"><%= request.distributor ? request.distributor.name : 'Unknown Distributor' %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="fw-bold text-white"><%= request.contentTitle %></div>
+                    <span class="badge bg-secondary text-white bg-opacity-25 border border-secondary" style="font-size: 0.65rem;">
+                      <%= request.contentType.toUpperCase() %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="fw-bold text-success"><%= request.totalPaid > 0 ? '₹' + Number(request.totalPaid).toFixed(2) : 'FREE' %></div>
+                    <span class="badge <%= request.paymentStatus === 'paid' || request.paymentStatus === 'free' ? 'bg-success' : request.paymentStatus === 'failed' ? 'bg-danger' : 'bg-warning text-dark' %> p-1" style="font-size: 0.65rem;">
+                      <%= request.paymentStatus === 'paid' ? 'Paid' : (request.paymentStatus === 'free' ? 'FREE' : request.paymentStatus.toUpperCase()) %>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge rounded-pill <%= 
+                      request.status === 'completed' ? 'bg-success' : 
+                      request.status === 'pending' ? 'bg-warning text-dark' : 
+                      request.status === 'in-progress' ? 'bg-info text-dark' : 'bg-danger' %>">
+                      <%= request.status.toUpperCase() %>
+                    </span>
+                  </td>
+                  <td class="text-end pe-4">
+                    <% if (request.paymentStatus === 'paid' || request.paymentStatus === 'free') { %>
+                      <a href="/admin/distribution-requests/receipt/<%= request._id %>" class="btn btn-sm btn-outline-info rounded-pill px-3 me-1">
+                        <i class="bi bi-receipt"></i> Receipt
+                      </a>
+                    <% } %>
+                    <form action="/admin/distribution-requests/<%= request._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Remove log from Admin table permanently? This does not affect Artist or Distributor logs.');">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="text-center py-5">
+                  <i class="bi bi-music-player fs-1 text-muted d-block mb-3"></i>
+                  <h5 class="text-white">No active distribution logs</h5>
+                  <p class="text-white-50 mb-0">No records found or all records have been cleared from admin view.</p>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

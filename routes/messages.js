@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
+const ProducerApplication = require('../models/ProducerApplication');
 const { isLoggedIn } = require('../middleware/auth');
 const mongoose = require('mongoose');
 
@@ -40,7 +41,7 @@ const getDashboardMessagingContext = async (sessionUser) => {
 const canMessageRole = async (req, res, next) => {
   try {
     const User = require('../models/User');
-    
+
     // Check if current user is blocked
     const currentUser = await User.findById(req.session.user.id);
     if (currentUser && currentUser.isBlocked) {
@@ -165,7 +166,7 @@ const checkBlocked = async (req, res, next) => {
 router.get('/', isLoggedIn, async (req, res) => {
   try {
     const User = require('../models/User');
-    
+
     // Check if current user is blocked
     const currentUser = await User.findById(req.session.user.id);
     if (currentUser && currentUser.isBlocked) {
@@ -761,105 +762,84 @@ router.get('/find', isLoggedIn, checkBlocked, async (req, res) => {
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    // Get all roles for filter dropdown
-    const roles = await Role.find().sort({ name: 1 });
+    // Get all roles for filter dropdown (Only Producers and Artists)
+    const roles = await Role.find({ name: { $regex: /^(producer|artist)$/i } }).sort({ name: 1 });
+
+    // Ensure Artist is in the roles list for the filter
+    const hasArtistRole = roles.some(r => r.name.toLowerCase() === 'artist');
+    if (!hasArtistRole) {
+      roles.push({ _id: 'artist', name: 'Artist' });
+    }
 
     // Build users list based on current user type
     let usersToShow = [];
     let artistMap = {};
 
-    if (currentUserArtist) {
-      // Current user is ARTIST - show all producers and users with producer role
-      // Get all users with Producer role
-      const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
-      let producerUsers = [];
+    // Current user is ARTIST or PRODUCER - show all producers and other artists
+    const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    let producerUsers = [];
 
-      if (producerRole) {
-        const userRoles = await UserRole.find({ role: producerRole._id }).populate('user');
-        producerUsers = userRoles
-          .filter(ur => ur.user && ur.user._id.toString() !== req.session.user.id)
-          .map(ur => ur.user);
-      }
-
-      usersToShow = producerUsers;
-
-      // Optionally: If you want to also show other users with any role
-      if (!role) {
-        const otherRoleUsers = await UserRole.find()
-          .populate('user')
-          .populate('role');
-
-      const userMap = {};
-      // Add producer users first
-      producerUsers.forEach(u => {
-        if (u && u._id) {
-          userMap[u._id.toString()] = u;
-        }
-      });
-
-      // Add other role users (won't override if already exists)
-      otherRoleUsers.forEach(ur => {
-        if (ur.user && ur.role && ur.user._id.toString() !== req.session.user.id) {
-          if (!userMap[ur.user._id.toString()]) {
-            userMap[ur.user._id.toString()] = ur.user;
-          }
-        }
-      });
-
-      usersToShow = Object.values(userMap);
-      }
-    } else if (hasRoles) {
-      // Current user is PRODUCER or has roles - show all artists regardless of role assignment
-      const allArtists = await Artist.find().populate('user');
-      usersToShow = allArtists
-        .filter(a => a.user && a.user._id.toString() !== req.session.user.id)
-        .map(a => a.user);
-
-      // Create artist map
-      allArtists.forEach(artist => {
-        if (artist.user) {
-          artistMap[artist.user._id.toString()] = artist;
-        }
-      });
-    } else {
-      // Regular user - show users with any role
-      const userRoles = await UserRole.find()
-        .populate('user')
-        .populate('role');
-
-      const userRoleMap = {};
-      userRoles.forEach(ur => {
-        if (ur.user && ur.role && ur.user._id.toString() !== req.session.user.id) {
-          if (!userRoleMap[ur.user._id]) {
-            userRoleMap[ur.user._id] = ur.user;
-          }
-        }
-      });
-
-      usersToShow = Object.values(userRoleMap);
+    if (producerRole) {
+      const userRoles = await UserRole.find({ role: producerRole._id }).populate('user');
+      producerUsers = userRoles
+        .filter(ur => ur.user && ur.user._id.toString() !== req.session.user.id)
+        .map(ur => ur.user);
     }
 
+    const allArtists = await Artist.find().populate('user');
+    const otherArtistUsers = allArtists
+      .filter(a => a.user && a.user._id.toString() !== req.session.user.id)
+      .map(a => a.user);
+
+    // Create artist map
+    allArtists.forEach(artist => {
+      if (artist.user && artist.user._id) {
+        artistMap[artist.user._id.toString()] = artist;
+      }
+    });
+
+    // Filter out duplicates based on _id
+    const combinedUsers = [...producerUsers, ...otherArtistUsers];
+    const uniqueUsersMap = new Map();
+    combinedUsers.forEach(u => {
+      if (u && u._id && !uniqueUsersMap.has(u._id.toString())) {
+        uniqueUsersMap.set(u._id.toString(), u);
+      }
+    });
+
+    usersToShow = Array.from(uniqueUsersMap.values());
+
     // Apply role filter if specified
-    if (role) {
+    if (role === 'artist') {
+      usersToShow = usersToShow.filter(u => u.role === 'artist');
+    } else if (role) {
       const selectedRole = await Role.findById(role);
       if (selectedRole) {
-        const userRoles = await UserRole.find({ role: selectedRole._id }).populate('user');
-        const roleUserIds = userRoles.map(ur => ur.user._id.toString());
+        const userRolesFiltered = await UserRole.find({ role: selectedRole._id }).populate('user');
+        const roleUserIds = userRolesFiltered
+          .filter(ur => ur.user && ur.user._id)
+          .map(ur => ur.user._id.toString());
         usersToShow = usersToShow.filter(u => roleUserIds.includes(u._id.toString()));
       }
     }
 
     // Apply state/location filter if specified
+    const producerApps = await ProducerApplication.find({ status: 'approved', location: { $exists: true, $ne: '' } });
+    const producerLocations = {};
+    producerApps.forEach(app => {
+      producerLocations[app.user.toString()] = { state: app.location };
+    });
+
     if (state) {
       usersToShow = usersToShow.filter(u => {
-        if (currentUserArtist) {
-          // For artists, match producer's state if available
-          return u.state === state;
-        } else {
-          // For producers, match artist's state
-          const artist = artistMap[u._id.toString()];
-          return artist && artist.state === state;
-        }
+        const uId = u._id.toString();
+        const artist = artistMap[uId];
+        const producerApp = producerLocations[uId];
+
+        if (artist && artist.state === state) return true;
+        if (producerApp && producerApp.state === state) return true;
+
+        return false;
       });
     }
 
@@ -879,17 +859,22 @@ router.get('/find', isLoggedIn, checkBlocked, async (req, res) => {
       }
     });
 
+    // Final filter: Only show Producers and Artists
+    const producerRoleQuery = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const prodRoleId = producerRoleQuery ? producerRoleQuery._id.toString() : null;
+
+    usersToShow = usersToShow.filter(u => {
+      if (u.role === 'artist') return true;
+      if (!prodRoleId) return false;
+
+      const uRoles = userRoleMap[u._id.toString()];
+      return uRoles && uRoles.some(r => r._id.toString() === prodRoleId);
+    });
+
     // Get list of states
-    let states = [];
-    if (currentUserArtist) {
-      // For artists, show producer states
-      const allUsers = await User.find().select('state').distinct('state');
-      states = [...new Set(allUsers)].filter(Boolean).sort();
-    } else {
-      // For producers, show artist states
-      const allArtists = await Artist.find().select('state').distinct('state');
-      states = [...new Set(allArtists)].filter(Boolean).sort();
-    }
+    const allArtistsWithStates = await Artist.find().select('state').distinct('state');
+    const allProducersWithLocations = await ProducerApplication.find({ status: 'approved' }).select('location').distinct('location');
+    states = [...new Set([...allArtistsWithStates, ...allProducersWithLocations])].filter(Boolean).sort();
 
     const dashboardContext = await getDashboardMessagingContext(req.session.user);
     const viewName = dashboardContext ? 'messages/find-dashboard' : 'messages/find';
@@ -899,6 +884,7 @@ router.get('/find', isLoggedIn, checkBlocked, async (req, res) => {
       title: 'Find Users',
       users: usersToShow,
       artistMap,
+      producerLocations,
       userRoleMap,
       roles,
       states,

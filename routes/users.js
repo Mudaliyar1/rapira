@@ -15,6 +15,9 @@ const DeletedAccount = require('../models/DeletedAccount');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const crypto = require('crypto');
 const ActivityLogger = require('../utils/activityLogger');
+const Role = require('../models/Role');
+const UserRole = require('../models/UserRole');
+const ProducerApplication = require('../models/ProducerApplication');
 
 // Configure multer for profile image uploads (memory → Cloudinary)
 const upload = multer({
@@ -138,6 +141,62 @@ router.get('/profile', isLoggedIn, async (req, res) => {
     console.error('Profile error:', error);
     req.flash('error', 'Failed to load profile');
     res.redirect('/');
+  }
+});
+
+// Job Portal page - Hub for roles and registrations
+router.get('/job-portal', isLoggedIn, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.user.id);
+
+    // Initial check for Producer role
+    const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const hasProducerRole = producerRole
+      ? await UserRole.exists({ user: user._id, role: producerRole._id })
+      : false;
+
+    // Check for pending Producer application
+    const pendingProducerApplication = await ProducerApplication.findOne({
+      user: user._id,
+      status: 'pending'
+    });
+
+    // We can also check for Artist application status
+    const pendingArtistApplication = await ArtistApplication.findOne({
+      user: user._id,
+      status: 'pending'
+    });
+
+    // Initial check for Distributor role
+    const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
+    const hasDistributorRole = distributorRole
+      ? await UserRole.exists({ user: user._id, role: distributorRole._id })
+      : false;
+
+    // Check for pending Distributor application
+    const DistributorApplication = require('../models/DistributorApplication');
+    const pendingDistributorApplication = await DistributorApplication.findOne({
+      user: user._id,
+      status: 'pending'
+    });
+    // Check for Artist status
+    const isArtist = user.role === 'artist';
+
+    res.render('users/job-portal', {
+      user,
+      isArtist,
+      hasProducerRole,
+      hasDistributorRole,
+      pendingArtistApplication,
+      pendingProducerApplication,
+      pendingDistributorApplication,
+      title: 'Job Portal',
+      currentPath: '/users/job-portal'
+    });
+  } catch (error) {
+    console.error('Job Portal error:', error);
+    req.flash('error', 'Failed to load Job Portal');
+    res.redirect('/users/profile');
   }
 });
 

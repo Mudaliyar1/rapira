@@ -83,12 +83,12 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       status: 'approved',
       date: { $gte: new Date() }
     })
-    .sort({ date: 1 })
-    .limit(5)
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name' }
-    });
+      .sort({ date: 1 })
+      .limit(5)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name' }
+      });
 
     // Calculate revenue
     const tickets = await Ticket.find({ paymentStatus: 'completed' });
@@ -400,7 +400,7 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     // Get user's cart items (pending purchases)
     const cart = await Cart.findOne({ user: user._id })
       .populate('items.product');
-      
+
     // Get user's activity history (last 100 entries)
     let activityHistory = await ActivityLogger.getUserHistory(user._id, 100);
 
@@ -461,7 +461,7 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     const activityHistoryDisplay = activityHistory.slice(0, Math.min(filterLimit, activityTotal));
     const hasMore = activityTotal > activityHistoryDisplay.length;
     const nextLimit = Math.min(filterLimit + 3, activityTotal || filterLimit + 3);
-    
+
     // Get password-related activities
     const passwordChanges = activityHistory.filter(a => a.activityType === 'password_change');
     const lastPasswordChange = passwordChanges.length > 0 ? passwordChanges[0].createdAt : user.createdAt;
@@ -773,9 +773,15 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
       ? await UserRole.exists({ user: user._id, role: producerRole._id })
       : false;
 
+    let distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
+    const hasDistributorRole = distributorRole
+      ? await UserRole.exists({ user: user._id, role: distributorRole._id })
+      : false;
+
     res.render('admin/edit-user', {
       user,
       hasProducerRole,
+      hasDistributorRole,
       layout: 'admin',
       currentPath: '/admin/users'
     });
@@ -789,7 +795,7 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 // Update user
 router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const { role, makeProducer } = req.body;
+    const { role, makeProducer, makeDistributor } = req.body;
 
     // Find user
     const user = await User.findById(req.params.id);
@@ -860,6 +866,29 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
       }
     }
 
+    let distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
+    if (!distributorRole && makeDistributor === 'on') {
+      distributorRole = new Role({
+        name: 'Distributor',
+        description: 'Music and Video content distributor',
+        icon: 'bi-box-seam',
+        createdBy: req.session.user.id
+      });
+      await distributorRole.save();
+    }
+
+    if (distributorRole) {
+      if (makeDistributor === 'on') {
+        await UserRole.findOneAndUpdate(
+          { user: user._id, role: distributorRole._id },
+          { user: user._id, role: distributorRole._id },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else {
+        await UserRole.findOneAndDelete({ user: user._id, role: distributorRole._id });
+      }
+    }
+
     await user.save();
 
     req.flash('success', 'User updated successfully');
@@ -913,7 +942,7 @@ router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
       token: recoveryToken,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
-    
+
     await recoveryTokenDoc.save();
     console.log(`Created recovery token for deleted user: ${user._id}`);
 
@@ -995,9 +1024,9 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
         const artistName = (concert.artist && concert.artist.user ? concert.artist.user.name : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               venueName.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               artistName.includes(searchTerm);
+          venueName.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          artistName.includes(searchTerm);
       });
     }
 
@@ -1123,9 +1152,9 @@ router.get('/concerts/export', isLoggedIn, isAdmin, async (req, res) => {
         const artistName = (concert.artist && concert.artist.user ? concert.artist.user.name : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               venue.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               artistName.includes(searchTerm);
+          venue.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          artistName.includes(searchTerm);
       });
     }
 
@@ -1192,17 +1221,17 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     // Get payment IDs from tickets if concert doesn't have them
     let paymentIds = [];
     let orderIds = [];
-    
+
     if (!concert.paymentId || !concert.orderId) {
-      const tickets = await Ticket.find({ 
-        concert: concert._id, 
+      const tickets = await Ticket.find({
+        concert: concert._id,
         paymentStatus: 'completed',
         $or: [
           { paymentId: { $exists: true, $ne: '' } },
           { orderId: { $exists: true, $ne: '' } }
         ]
       }).select('paymentId orderId');
-      
+
       paymentIds = [...new Set(tickets.map(t => t.paymentId).filter(id => id))];
       orderIds = [...new Set(tickets.map(t => t.orderId).filter(id => id))];
     }
@@ -1214,8 +1243,8 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
     const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
       ? storedCommission
       : (concert.venueBooking?.isPaid && commissionPercentage > 0
-          ? (totalCost * commissionPercentage) / 100
-          : 0);
+        ? (totalCost * commissionPercentage) / 100
+        : 0);
     const artistPaidDirect = concert.venueBooking?.amountPaidByArtist || 0;
     const totalArtistPaid = commissionPaid + artistPaidDirect;
     // Calculate total expected payment (venue cost + commission)
@@ -1309,10 +1338,10 @@ router.get('/concerts/pending', isLoggedIn, isAdmin, async (req, res) => {
         const artistEmail = (concert.artist && concert.artist.user ? concert.artist.user.email : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               venue.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               artistName.includes(searchTerm) ||
-               artistEmail.includes(searchTerm);
+          venue.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          artistName.includes(searchTerm) ||
+          artistEmail.includes(searchTerm);
       });
     }
 
@@ -1712,9 +1741,9 @@ router.get('/artists', isLoggedIn, isAdmin, async (req, res) => {
         const genre = (artist.genre || '').toLowerCase();
 
         return stageName.includes(searchTerm) ||
-               userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               genre.includes(searchTerm);
+          userName.includes(searchTerm) ||
+          userEmail.includes(searchTerm) ||
+          genre.includes(searchTerm);
       });
     }
 
@@ -1814,9 +1843,9 @@ router.get('/artists/export', isLoggedIn, isAdmin, async (req, res) => {
         const genre = (artist.genre || '').toLowerCase();
 
         return stageName.includes(searchTerm) ||
-               userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               genre.includes(searchTerm);
+          userName.includes(searchTerm) ||
+          userEmail.includes(searchTerm) ||
+          genre.includes(searchTerm);
       });
     }
 
@@ -1998,19 +2027,19 @@ router.post('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const blockDate = new Date();
-    
+
     artist.isBlocked = true;
     artist.blockReason = blockReason || 'Violated platform policies';
     artist.blockedAt = blockDate;
     artist.blockedBy = req.session.user.id;
-    
+
     // Add to block history
     artist.blockHistory.push({
       blockedAt: blockDate,
       blockedBy: req.session.user.id,
       blockReason: blockReason || 'Violated platform policies'
     });
-    
+
     await artist.save();
 
     req.flash('success', 'Artist blocked successfully');
@@ -2033,12 +2062,12 @@ router.post('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const unblockDate = new Date();
-    
+
     artist.isBlocked = false;
     artist.blockReason = '';
     artist.blockedAt = undefined;
     artist.blockedBy = undefined;
-    
+
     // Update the latest block history entry with unblock info
     if (artist.blockHistory && artist.blockHistory.length > 0) {
       const latestBlock = artist.blockHistory[artist.blockHistory.length - 1];
@@ -2047,14 +2076,14 @@ router.post('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
         latestBlock.unblockedBy = req.session.user.id;
       }
     }
-    
+
     await artist.save();
 
     // Mark any pending unblock requests as approved
     await ArtistUnblockRequest.updateMany(
       { artist: artist._id, status: 'pending' },
-      { 
-        status: 'approved', 
+      {
+        status: 'approved',
         reviewedBy: req.session.user.id,
         reviewedAt: new Date()
       }
@@ -2331,9 +2360,9 @@ router.get('/tickets', isLoggedIn, isAdmin, async (req, res) => {
         const ticketNumber = (ticket.ticketNumber || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               concertTitle.includes(searchTerm) ||
-               ticketNumber.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          concertTitle.includes(searchTerm) ||
+          ticketNumber.includes(searchTerm);
       });
     }
 
@@ -2443,9 +2472,9 @@ router.get('/tickets/export', isLoggedIn, isAdmin, async (req, res) => {
         const ticketNumber = (ticket.ticketNumber || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               concertTitle.includes(searchTerm) ||
-               ticketNumber.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          concertTitle.includes(searchTerm) ||
+          ticketNumber.includes(searchTerm);
       });
     }
 
@@ -2649,9 +2678,9 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
         const metaDescription = (page.metaDescription || '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               slug.includes(searchTerm) ||
-               content.includes(searchTerm) ||
-               metaDescription.includes(searchTerm);
+          slug.includes(searchTerm) ||
+          content.includes(searchTerm) ||
+          metaDescription.includes(searchTerm);
       });
     }
 
@@ -2753,9 +2782,9 @@ router.get('/pages/export', isLoggedIn, isAdmin, async (req, res) => {
         const metaDescription = (page.metaDescription || '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               slug.includes(searchTerm) ||
-               content.includes(searchTerm) ||
-               metaDescription.includes(searchTerm);
+          slug.includes(searchTerm) ||
+          content.includes(searchTerm) ||
+          metaDescription.includes(searchTerm);
       });
     }
 
@@ -3183,7 +3212,7 @@ router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const Follow = require('../models/Follow');
     const Artist = require('../models/Artist');
-    
+
     // Get all artists with their follower counts
     const artistsWithFollowers = await Artist.aggregate([
       {
@@ -3230,7 +3259,7 @@ router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
       .populate('followingId', 'name email')
       .sort({ createdAt: -1 })
       .limit(20);
-    
+
     // Filter out follows with missing follower or following data
     const recentFollows = recentFollowsRaw
       .filter(follow => follow.followerId && follow.followingId)
@@ -3240,7 +3269,7 @@ router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
     const allFollowsForCount = await Follow.find()
       .populate('followerId', '_id')
       .populate('followingId', '_id');
-    
+
     const validFollows = allFollowsForCount.filter(f => f.followerId && f.followingId);
     const totalFollows = validFollows.length;
     const userFollowers = validFollows.filter(f => f.roleOfFollower === 'user').length;
@@ -3288,7 +3317,7 @@ router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, re
   try {
     const Follow = require('../models/Follow');
     const Artist = require('../models/Artist');
-    
+
     const artist = await Artist.findById(req.params.id).populate('user');
     if (!artist) {
       req.flash('error', 'Artist not found');
@@ -3302,13 +3331,13 @@ router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, re
 
     // Get follower statistics
     const totalFollowers = await Follow.countDocuments({ followingId: artist.user._id });
-    const userFollowers = await Follow.countDocuments({ 
-      followingId: artist.user._id, 
-      roleOfFollower: 'user' 
+    const userFollowers = await Follow.countDocuments({
+      followingId: artist.user._id,
+      roleOfFollower: 'user'
     });
-    const artistFollowers = await Follow.countDocuments({ 
-      followingId: artist.user._id, 
-      roleOfFollower: 'artist' 
+    const artistFollowers = await Follow.countDocuments({
+      followingId: artist.user._id,
+      roleOfFollower: 'artist'
     });
 
     // Get follower locations
@@ -3548,10 +3577,10 @@ router.get(['/posts/:id', '/artist-posts/:id'], isLoggedIn, isAdmin, async (req,
     const normalizedMedia = typeof media === 'string'
       ? { url: media, mediaType: 'image' }
       : {
-          url: media.url,
-          mediaType: media.mediaType || media.type || 'image',
-          publicId: media.publicId
-        };
+        url: media.url,
+        mediaType: media.mediaType || media.type || 'image',
+        publicId: media.publicId
+      };
 
     res.render('admin/artist-posts-detail', {
       layout: 'admin',
@@ -3580,34 +3609,34 @@ function getArtistName(post) {
 }
 
 // Action pages
-router.get(['/artist-posts/:id/approve','/posts/:id/approve-page'], isLoggedIn, isAdmin, async (req, res) => {
-  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+router.get(['/artist-posts/:id/approve', '/posts/:id/approve-page'], isLoggedIn, isAdmin, async (req, res) => {
+  const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-approve', { layout:'admin', currentPath:'/admin/posts', title:'Approve Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-approve', { layout: 'admin', currentPath: '/admin/posts', title: 'Approve Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/reject'], isLoggedIn, isAdmin, async (req, res) => {
-  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-reject', { layout:'admin', currentPath:'/admin/posts', title:'Reject Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-reject', { layout: 'admin', currentPath: '/admin/posts', title: 'Reject Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/restrict'], isLoggedIn, isAdmin, async (req, res) => {
-  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-restrict', { layout:'admin', currentPath:'/admin/posts', title:'Restrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-restrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Restrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/unrestrict'], isLoggedIn, isAdmin, async (req, res) => {
-  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-unrestrict', { layout:'admin', currentPath:'/admin/posts', title:'Unrestrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-unrestrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Unrestrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/delete'], isLoggedIn, isAdmin, async (req, res) => {
-  const post = await ArtistPost.findById(req.params.id).populate('artist','stageName user');
+  const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-delete', { layout:'admin', currentPath:'/admin/posts', title:'Delete Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-delete', { layout: 'admin', currentPath: '/admin/posts', title: 'Delete Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 // Action POST handlers (no JS needed)
@@ -3750,7 +3779,7 @@ router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
       venue: {
         name: 'Venue Booking Commission',
         total: concerts.reduce((sum, concert) => {
-          const commission = concert.venueBooking?.adminCommission?.advanceAmount || 
+          const commission = concert.venueBooking?.adminCommission?.advanceAmount ||
             (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0;
           return sum + commission;
         }, 0),
@@ -3767,7 +3796,7 @@ router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
 
     // Calculate totals
     const totalRevenue = Object.values(revenueSources).reduce((sum, source) => sum + source.total, 0);
-    
+
     // Get user-specific revenue if user filter is applied
     let userRevenue = null;
     if (userFilter) {
@@ -3787,29 +3816,29 @@ router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
     if (concertNameFilter) {
       concertFilter.title = { $regex: concertNameFilter, $options: 'i' };
     }
-    
+
     // Add concert status filter (past/upcoming)
     if (concertStatus === 'past') {
       concertFilter.date = { $lt: new Date() };
     } else if (concertStatus === 'upcoming') {
       concertFilter.date = { $gte: new Date() };
     }
-    
+
     // Add city filter
     if (cityFilter) {
       concertFilter.city = { $regex: cityFilter, $options: 'i' };
     }
-    
+
     // Add state filter
     if (stateFilter) {
       concertFilter.state = { $regex: stateFilter, $options: 'i' };
     }
-    
+
     const filteredConcerts = await Concert.countDocuments(concertFilter);
-    
+
     // For tickets, we use ticketFilter which already includes all ticket-specific filters
     const filteredTickets = await Ticket.countDocuments(ticketFilter);
-    
+
     // For users, we need to apply user-specific filters
     let userStatsFilter = { ...filter };
     if (userFilter) {  // userFilter comes from the destructuring at the top
@@ -3819,13 +3848,13 @@ router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
       ];
     }
     const filteredUsers = await User.countDocuments(userStatsFilter);
-    
+
     // Get filtered user details if user filter is applied
     let filteredUserDetails = [];
     if (userFilter) {
       filteredUserDetails = await User.find(userStatsFilter).limit(10); // Limit to first 10 for display
     }
-    
+
     // Get filtered concert details if any concert filter is applied
     let filteredConcertDetails = [];
     if (concertNameFilter || concertStatus || cityFilter || stateFilter) {
@@ -3964,19 +3993,19 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
     if (concertNameFilter) {
       concertFilterObj.title = { $regex: concertNameFilter, $options: 'i' };
     }
-    
+
     // Add concert status filter (past/upcoming)
     if (concertStatus === 'past') {
       concertFilterObj.date = { $lt: new Date() };
     } else if (concertStatus === 'upcoming') {
       concertFilterObj.date = { $gte: new Date() };
     }
-    
+
     // Add city filter
     if (cityFilter) {
       concertFilterObj.city = { $regex: cityFilter, $options: 'i' };
     }
-    
+
     // Add state filter
     if (stateFilter) {
       concertFilterObj.state = { $regex: stateFilter, $options: 'i' };
@@ -4025,7 +4054,7 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
       venue: {
         name: 'Venue Booking Commission',
         total: concerts.reduce((sum, concert) => {
-          const commission = concert.venueBooking?.adminCommission?.advanceAmount || 
+          const commission = concert.venueBooking?.adminCommission?.advanceAmount ||
             (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0;
           return sum + commission;
         }, 0),
@@ -4042,7 +4071,7 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
 
     // Calculate totals
     const totalRevenue = Object.values(revenueSources).reduce((sum, source) => sum + source.total, 0);
-    
+
     // Get user-specific revenue if user filter is applied
     let userRevenue = null;
     if (userFilter) {
@@ -4058,10 +4087,10 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
 
     // Get filtered statistics
     const filteredConcerts = await Concert.countDocuments(concertFilterObj);
-    
+
     // For tickets, we use ticketFilter which already includes all ticket-specific filters
     const filteredTickets = await Ticket.countDocuments(ticketFilter);
-    
+
     // For users, we need to apply user-specific filters
     let userStatsFilter = { ...filter };
     if (userFilter) {  // userFilter comes from the destructuring at the top
@@ -4071,13 +4100,13 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
       ];
     }
     const filteredUsers = await User.countDocuments(userStatsFilter);
-    
+
     // Get filtered user details if user filter is applied
     let filteredUserDetails = [];
     if (userFilter) {
       filteredUserDetails = await User.find(userStatsFilter).limit(10); // Limit to first 10 for display
     }
-    
+
     // Get filtered concert details if any concert filter is applied
     let filteredConcertDetails = [];
     if (concertNameFilter || concertStatus !== 'all' || cityFilter || stateFilter) {
@@ -4092,7 +4121,7 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
 
     // Get the password from query parameters
     const { password } = req.query;
-    
+
     // Generate HTML content
     const htmlContent = `
       <!DOCTYPE html>
@@ -4302,8 +4331,8 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
                     <td>${concert.title || 'N/A'}</td>
                     <td>${concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'N/A')}</td>
                     <td>${concert.venue ? concert.venue.name : 'N/A'}</td>
-                    <td>₹${(concert.venueBooking?.adminCommission?.advanceAmount || 
-                      (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>₹${(concert.venueBooking?.adminCommission?.advanceAmount ||
+        (concert.venueBooking?.totalVenueCost * (concert.venueBooking?.adminCommission?.percentage || 0)) / 100 || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -4366,7 +4395,7 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
     // Send HTML as download
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `revenue_analysis_report_${timestamp}.html`;
-    
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(htmlContent);
@@ -4382,10 +4411,10 @@ router.get('/revenue-analysis/password-entry', isLoggedIn, isAdmin, async (req, 
   try {
     // Get all filter parameters to pass to the password entry page
     const {
-      startDate, endDate, revenueSource, userFilter, amountMin, amountMax, 
+      startDate, endDate, revenueSource, userFilter, amountMin, amountMax,
       paymentStatus, concertFilter, concertStatus, cityFilter, stateFilter
     } = req.query;
-    
+
     res.render('admin/revenue-analysis-password', {
       layout: 'admin',
       currentPath: '/admin/revenue-analysis',
@@ -4415,15 +4444,15 @@ router.get('/revenue-analysis/password-entry', isLoggedIn, isAdmin, async (req, 
 router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async (req, res) => {
   try {
     const { password } = req.body;
-    
+
     if (!password || password.trim() === '') {
       req.flash('error', 'Password cannot be empty');
       // Get the filter parameters from the form
       const {
-        startDate, endDate, revenueSource, userFilter, amountMin, amountMax, 
+        startDate, endDate, revenueSource, userFilter, amountMin, amountMax,
         paymentStatus, concertFilter, concertStatus, cityFilter, stateFilter
       } = req.body;
-      
+
       return res.render('admin/revenue-analysis-password', {
         layout: 'admin',
         currentPath: '/admin/revenue-analysis',
@@ -4443,7 +4472,7 @@ router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async
         }
       });
     }
-    
+
     // Build query string with all filters and password
     const exportParams = [];
     if (req.body.startDate) exportParams.push(`startDate=${encodeURIComponent(req.body.startDate)}`);
@@ -4458,15 +4487,126 @@ router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async
     if (req.body.cityFilter) exportParams.push(`cityFilter=${encodeURIComponent(req.body.cityFilter)}`);
     if (req.body.stateFilter) exportParams.push(`stateFilter=${encodeURIComponent(req.body.stateFilter)}`);
     exportParams.push(`password=${encodeURIComponent(password)}`);
-    
+
     const exportQueryString = exportParams.join('&');
-    
+
     // Redirect to the HTML export route with all parameters
     res.redirect(`/admin/revenue-analysis/export-html?${exportQueryString}`);
   } catch (error) {
     console.error('Export with password error:', error);
     req.flash('error', 'Failed to export with password');
     res.redirect('/admin/revenue-analysis');
+  }
+});
+
+// Admin view distribution records
+router.get('/distribution-requests', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { status, paymentStatus, artistSearch, distributorSearch } = req.query;
+    let query = { deletedByAdmin: { $ne: true } };
+
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    if (paymentStatus && paymentStatus !== 'all') {
+      query.paymentStatus = paymentStatus;
+    }
+
+    if (req.query.billSearch) {
+      query.receiptNumber = { $regex: new RegExp(req.query.billSearch.trim(), 'i') };
+    }
+
+    const DistributionRequest = require('../models/DistributionRequest');
+    let requests = await DistributionRequest.find(query)
+      .populate('artist', 'name email profileImage')
+      .populate('package', 'name price')
+      .populate('distributor', 'name email')
+      .sort({ createdAt: -1 });
+
+    if (artistSearch) {
+      const searchLower = artistSearch.toLowerCase();
+      requests = requests.filter(req => {
+        const nameMatch = req.artist && req.artist.name && req.artist.name.toLowerCase().includes(searchLower);
+        const emailMatch = req.artist && req.artist.email && req.artist.email.toLowerCase().includes(searchLower);
+        return nameMatch || emailMatch;
+      });
+    }
+
+    if (distributorSearch) {
+      const searchLower = distributorSearch.toLowerCase();
+      requests = requests.filter(req => {
+        const nameMatch = req.distributor && req.distributor.name && req.distributor.name.toLowerCase().includes(searchLower);
+        const emailMatch = req.distributor && req.distributor.email && req.distributor.email.toLowerCase().includes(searchLower);
+        return nameMatch || emailMatch;
+      });
+    }
+
+    res.render('admin/distribution-requests', {
+      layout: 'admin',
+      title: 'Distribution Requests',
+      currentPath: '/admin/distribution-requests',
+      requests,
+      filters: {
+        status: status || 'all',
+        paymentStatus: paymentStatus || 'all',
+        artistSearch: artistSearch || '',
+        distributorSearch: distributorSearch || '',
+        billSearch: req.query.billSearch || ''
+      }
+    });
+  } catch (error) {
+    console.error('Error loading distribution requests:', error);
+    req.flash('error', 'Failed to load distribution requests');
+    res.redirect('/admin');
+  }
+});
+
+router.get('/distribution-requests/receipt/:id', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const DistributionRequest = require('../models/DistributionRequest');
+    const request = await DistributionRequest.findOne({ _id: req.params.id })
+      .populate('distributor', 'name email profileImage')
+      .populate('package')
+      .populate('artist', 'name email');
+
+    if (!request) {
+      req.flash('error', 'Receipt not found');
+      return res.redirect('/admin/distribution-requests');
+    }
+
+    res.render('users/distribution-receipt', {
+      layout: false,
+      request,
+      currentUser: req.session.user,
+      backLink: '/admin/distribution-requests'
+    });
+  } catch (error) {
+    console.error('Receipt error:', error);
+    req.flash('error', 'Failed to load receipt');
+    res.redirect('/admin/distribution-requests');
+  }
+});
+
+router.post('/distribution-requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const DistributionRequest = require('../models/DistributionRequest');
+    const request = await DistributionRequest.findById(req.params.id);
+
+    if (!request) {
+      req.flash('error', 'Request not found');
+      return res.redirect('/admin/distribution-requests');
+    }
+
+    request.deletedByAdmin = true;
+    await request.save();
+
+    req.flash('success', 'Distribution record removed from admin dashboard');
+    res.redirect('/admin/distribution-requests');
+  } catch (error) {
+    console.error('Error deleting distribution request:', error);
+    req.flash('error', 'Failed to delete record');
+    res.redirect('/admin/distribution-requests');
   }
 });
 

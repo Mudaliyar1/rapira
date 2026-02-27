@@ -1,0 +1,212 @@
+<div class="container-fluid py-4" style="background-color: #121212 !important; min-height: 100vh;">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-secondary" style="background-color: #000000 !important; border: 1px solid #333 !important;">
+        <div class="card-body p-4 text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <a href="/distributor-applications/admin" class="btn btn-outline-light btn-sm rounded-circle me-3">
+                <i class="bi bi-arrow-left"></i>
+              </a>
+              <div>
+                <h4 class="mb-0 fw-bold text-white">Distributor Details</h4>
+                <p class="text-white-50 mb-0 small">Reviewing application for <%= application.companyName %></p>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <span class="badge rounded-pill p-2 px-3 <%= application.status === 'approved' ? 'bg-success' : application.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>">
+                <%= application.status.toUpperCase() %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- User Info -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4 h-100" style="background-color: #000000 !important; border: 1px solid #333 !important; color: white !important;">
+        <div class="card-header py-3" style="background-color: #000000 !important; border-bottom: 1px solid #333 !important;">
+          <h6 class="mb-0 fw-bold text-white"><i class="bi bi-person-circle me-2"></i>User Information</h6>
+        </div>
+        <div class="card-body text-center p-4">
+          <img src="<%= (application.user.profileImage && application.user.profileImage !== '/images/default-profile.svg') ? application.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(application.user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
+               class="rounded-circle mb-3 border border-3 shadow-sm" width="100" height="100" style="border-color: #444 !important;">
+          <h5 class="fw-bold mb-1 text-white"><%= application.user.name %></h5>
+          <p class="text-white-50 small mb-3"><%= application.user.email %></p>
+          <hr style="background-color: #444 !important; opacity: 1 !important;">
+          <div class="text-start">
+            <div class="mb-3">
+              <small class="text-white-50 d-block">Phone</small>
+              <span class="fw-bold text-white"><%= application.mobileNumber %></span>
+            </div>
+            <div class="mb-3">
+              <small class="text-white-50 d-block">Location</small>
+              <span class="fw-bold text-white"><%= application.location %></span>
+            </div>
+            <% if (application.website) { %>
+              <div class="mb-3">
+                <small class="text-white-50 d-block">Website</small>
+                <a href="<%= application.website %>" target="_blank" class="text-decoration-none fw-bold text-primary"><%= application.website %></a>
+              </div>
+            <% } %>
+            <% if (application.instagramLink) { %>
+              <div class="mb-3">
+                <small class="text-white-50 d-block">Instagram</small>
+                <a href="<%= application.instagramLink %>" target="_blank" class="text-decoration-none fw-bold text-primary"><%= application.instagramLink %></a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application content -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-4" style="background-color: #000000 !important; border: 1px solid #333 !important; color: white !important;">
+        <div class="card-header py-3" style="background-color: #000000 !important; border-bottom: 1px solid #333 !important;">
+          <h6 class="mb-0 fw-bold text-white"><i class="bi bi-broadcast me-2"></i>Distribution Details</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-4">
+            <h6 class="text-primary fw-bold small text-uppercase">Experience</h6>
+            <p class="mb-0 text-white"><%= application.experience %></p>
+          </div>
+
+          <div class="mb-4">
+            <h6 class="text-primary fw-bold small text-uppercase mb-3">Target Platforms</h6>
+            <div class="d-flex flex-wrap gap-2">
+              <% application.platforms.forEach(plat => { %>
+                <span class="badge bg-dark text-white border border-secondary p-2 px-3 fw-normal">
+                  <i class="bi bi-music-note-beamed me-1"></i><%= plat %>
+                </span>
+              <% }); %>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <h6 class="text-primary fw-bold small text-uppercase">Payment Info</h6>
+              <div class="p-3 bg-dark rounded border border-secondary" style="background-color: #1a1a1a !important;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-white-50 small">Status</span>
+                  <span class="badge <%= application.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning text-dark' %>">
+                    <%= application.paymentStatus.toUpperCase() %>
+                  </span>
+                </div>
+                <% if (application.registrationFee > 0) { %>
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-white-50 small">Fee Amount</span>
+                    <span class="fw-bold text-white">₹<%= application.registrationFee %></span>
+                  </div>
+                <% } %>
+                <% if (application.razorpayPaymentId) { %>
+                  <div class="d-flex justify-content-between mt-2 pt-2 border-top border-secondary">
+                    <span class="text-white-50 small">Payment ID</span>
+                    <span class="text-white small fw-bold font-monospace"><%= application.razorpayPaymentId %></span>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <h6 class="text-primary fw-bold small text-uppercase">ID Verification</h6>
+              <div class="p-3 bg-dark rounded border border-secondary" style="background-color: #1a1a1a !important;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="text-white-50 d-block small">Type</span>
+                    <span class="fw-bold text-white"><%= application.idProofType %></span>
+                  </div>
+                  <a href="<%= application.idProofUrl %>" target="_blank" class="btn btn-sm btn-dark border-secondary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Open Original
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Viewer -->
+          <div class="mb-4">
+            <h6 class="text-primary fw-bold small text-uppercase mb-3">Document Preview</h6>
+            <div class="border rounded overflow-hidden" style="min-height: 400px; position: relative; background-color: #1a1a1a !important; border-color: #333 !important;">
+              <% if (application.idProofUrl.toLowerCase().endsWith('.pdf')) { %>
+                <iframe src="<%= application.idProofUrl %>#toolbar=0" width="100%" height="500px" style="border: none;"></iframe>
+              <% } else { %>
+                <img src="<%= application.idProofUrl %>" class="img-fluid w-100" style="max-height: 800px; object-fit: contain;">
+              <% } %>
+            </div>
+            <p class="text-white-50 small mt-2"><i class="bi bi-info-circle me-1"></i>If the document doesn't load, use "Open Original" button above.</p>
+          </div>
+
+          <% if (application.status === 'pending') { %>
+            <hr style="background-color: #444 !important; opacity: 1 !important;">
+            <div class="p-4 rounded border border-secondary" style="background-color: #1a1a1a !important;">
+              <h6 class="fw-bold mb-3 text-white">Process This Application</h6>
+              
+              <div class="mb-3">
+                <label class="form-label small fw-bold text-white-50">Admin Notes (Required for Rejection)</label>
+                <textarea id="adminNotesText" class="form-control bg-dark text-white border-secondary" rows="3" placeholder="Explain the decision or provide onboarding instructions..."></textarea>
+              </div>
+
+              <div class="d-flex gap-2">
+                <!-- Approve Form -->
+                <form action="/distributor-applications/admin/<%= application._id %>/approve" method="POST" onsubmit="return handleApprove(this)">
+                  <input type="hidden" name="adminNotes" class="notes-hidden">
+                  <button type="submit" class="btn btn-success px-4 rounded-pill">
+                    <i class="bi bi-check-circle me-1"></i>Approve
+                  </button>
+                </form>
+
+                <!-- Reject Form -->
+                <form action="/distributor-applications/admin/<%= application._id %>/reject" method="POST" onsubmit="return handleReject(this)">
+                  <input type="hidden" name="adminNotes" class="notes-hidden">
+                  <button type="submit" class="btn btn-danger px-4 rounded-pill">
+                    <i class="bi bi-x-circle me-1"></i>Reject
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% } else { %>
+             <hr style="background-color: #444 !important; opacity: 1 !important;">
+             <div class="p-4 rounded border <%= application.status === 'approved' ? 'border-success bg-success bg-opacity-10' : 'border-danger bg-danger bg-opacity-10' %>">
+                <h6 class="fw-bold <%= application.status === 'approved' ? 'text-success' : 'text-danger' %> mb-2">
+                  <i class="bi <%= application.status === 'approved' ? 'bi-check-circle' : 'bi-x-circle' %> me-2"></i>Processed by Admin
+                </h6>
+                <div class="small">
+                  <div class="text-white-50 mb-1">Reviewed by: <span class="text-white fw-bold"><%= application.reviewedBy ? application.reviewedBy.name : 'System' %></span></div>
+                  <div class="text-white-50 mb-2">Date: <span class="text-white fw-bold"><%= application.reviewedAt ? new Date(application.reviewedAt).toLocaleString() : 'N/A' %></span></div>
+                  <% if (application.adminNotes) { %>
+                    <div class="bg-black p-3 rounded border border-secondary small text-white">
+                      <strong class="d-block mb-1 text-primary">Reviewer's Notes:</strong>
+                      <%= application.adminNotes %>
+                    </div>
+                  <% } %>
+                </div>
+             </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleApprove(form) {
+    const notes = document.getElementById('adminNotesText').value;
+    form.querySelector('.notes-hidden').value = notes;
+    return confirm('Are you sure you want to APPROVE this distributor application?');
+  }
+
+  function handleReject(form) {
+    const notes = document.getElementById('adminNotesText').value;
+    
+    if (!notes || notes.trim() === '') {
+      alert('Please provide a reason for rejection in the notes field.');
+      return false;
+    }
+    
+    form.querySelector('.notes-hidden').value = notes;
+    return confirm('Are you sure you want to REJECT this distributor application?');
+  }
+</script>

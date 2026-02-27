@@ -12,7 +12,8 @@ const STATIC_ROUTES = {
     concerts: { path: '/concerts', name: 'Concerts', icon: 'bi-music-note-beamed' },
     daily_concerts: { path: '/daily-concerts', name: 'Daily Concerts', icon: 'bi-calendar-event' },
     artists: { path: '/artists', name: 'Artists', icon: 'bi-people' },
-    learning: { path: '/learning', name: 'Learning', icon: 'bi-book' }
+    learning: { path: '/learning', name: 'Learning', icon: 'bi-book' },
+    job_portal: { path: '/users/job-portal', name: 'Job Portal', icon: 'bi-briefcase' }
   },
 
   // Services Menu
@@ -152,7 +153,8 @@ function getNavbarMenuSettings(menuSettings) {
         concerts: items.concerts || false,
         dailyConcerts: items.daily_concerts || false, // Map daily_concerts -> dailyConcerts
         artists: items.artists || false,
-        learning: items.learning || false
+        learning: items.learning || false,
+        jobPortal: items.job_portal || false // Map job_portal -> jobPortal
       };
     }
 

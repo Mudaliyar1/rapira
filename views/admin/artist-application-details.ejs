@@ -77,6 +77,18 @@
                   <% } %>
                 </td>
               </tr>
+              <% if (application.registrationFee > 0) { %>
+                <tr>
+                  <th class="text-white">Registration Fee</th>
+                  <td class="text-white">₹<%= application.registrationFee %></td>
+                </tr>
+              <% } %>
+              <% if (application.razorpayPaymentId) { %>
+                <tr>
+                  <th class="text-white">Payment ID</th>
+                  <td class="text-white fw-bold font-monospace small"><%= application.razorpayPaymentId %></td>
+                </tr>
+              <% } %>
               <% if (application.adminComments) { %>
                 <tr>
                   <th class="text-white">Admin Comments</th>

@@ -1,0 +1,46 @@
+<%- include('../partials/distributor-header') %>
+
+<div class="d-flex align-items-center mb-5">
+  <a href="/distributor-dashboard" class="btn btn-outline-light rounded-circle me-3"><i class="bi bi-arrow-left"></i></a>
+  <img src="<%= (artist.user.profileImage && artist.user.profileImage !== '/images/default-profile.svg') ? artist.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(artist.user.name.charAt(0).toUpperCase()) + '&background=random&color=fff&bold=true') %>" 
+       class="rounded-circle me-3 border border-secondary" width="80" height="80" style="object-fit: cover;">
+  <div>
+    <h2 class="fw-bold mb-0 text-white"><%= artist.user.name %></h2>
+    <p class="text-white-50 mb-0"><%= artist.genre %> • <%= artist.state %></p>
+  </div>
+  <div class="ms-auto">
+    <a href="mailto:<%= artist.user.email %>" class="btn btn-primary px-4 rounded-pill">Inquire via Email</a>
+  </div>
+</div>
+
+<h4 class="fw-bold mb-4 text-white">Artist Media</h4>
+<div class="row g-4">
+  <% if (posts && posts.length > 0) { %>
+    <% posts.forEach(post => { %>
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="glass-card-dark h-100 p-0 overflow-hidden position-relative" style="aspect-ratio: 1;">
+          <% if (post.mediaType === 'image') { %>
+            <img src="<%= post.mediaUrl %>" class="w-100 h-100" style="object-fit: cover;">
+          <% } else if (post.mediaType === 'video') { %>
+            <video src="<%= post.mediaUrl %>" class="w-100 h-100" style="object-fit: cover;"></video>
+            <div class="position-absolute top-50 start-50 translate-middle"><i class="bi bi-play-circle-fill text-white opacity-75 fs-1"></i></div>
+          <% } else { %>
+            <div class="h-100 d-flex align-items-center justify-content-center bg-dark">
+              <i class="bi bi-music-note-beamed fs-1 text-primary"></i>
+            </div>
+          <% } %>
+          <div class="position-absolute bottom-0 start-0 end-0 p-2" style="background: linear-gradient(transparent, rgba(0,0,0,0.8));">
+            <div class="small fw-bold text-white text-truncate"><%= post.caption || 'Music Post' %></div>
+            <div class="text-white-50" style="font-size: 0.7rem;"><%= new Date(post.createdAt).toLocaleDateString() %></div>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="col-12 text-center py-5">
+      <p class="text-white-50">This artist hasn't posted any media yet.</p>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/distributor-footer') %>

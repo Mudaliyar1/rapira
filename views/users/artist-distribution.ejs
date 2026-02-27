@@ -1,0 +1,139 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-5 animate__animated animate__fadeIn">
+    <div class="col-12">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-cloud-arrow-up text-primary fs-1 me-3"></i>
+          <div>
+            <h1 class="h2 fw-bold mb-0 text-white">Music Distribution Hub</h1>
+            <p class="text-muted mb-0">Get your music on Spotify, Apple Music, and 150+ other platforms.</p>
+          </div>
+        </div>
+        <button class="btn btn-outline-primary rounded-pill px-4" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+          <i class="bi bi-funnel me-1"></i> Filter Distributors
+        </button>
+      </div>
+      <hr class="border-secondary opacity-25">
+    </div>
+  </div>
+
+  <!-- Advanced Filters -->
+  <div class="collapse mb-4 <%= (filters.platform || filters.state || filters.city || filters.search) ? 'show' : '' %>" id="filterCollapse">
+    <div class="card bg-dark border-secondary shadow-sm p-4 glass-card">
+      <form action="/artist-distribution/distributors" method="GET" id="filterForm">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">Search</label>
+            <input type="text" name="search" class="form-control bg-dark border-secondary text-white" placeholder="Name or Email" value="<%= filters.search %>">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">Platform</label>
+            <select name="platform" class="form-select bg-dark border-secondary text-white">
+              <option value="">All Platforms</option>
+              <% uniquePlatforms.forEach(plat => { %>
+                <option value="<%= plat %>" <%= filters.platform === plat ? 'selected' : '' %>><%= plat %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">State</label>
+            <select name="state" class="form-select bg-dark border-secondary text-white">
+              <option value="">All States</option>
+              <% uniqueStates.forEach(s => { %>
+                <option value="<%= s %>" <%= filters.state === s ? 'selected' : '' %>><%= s %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">City</label>
+            <select name="city" class="form-select bg-dark border-secondary text-white">
+              <option value="">All Cities</option>
+              <% uniqueCities.forEach(c => { %>
+                <option value="<%= c %>" <%= filters.city === c ? 'selected' : '' %>><%= c %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end gap-2">
+             <button type="submit" class="btn btn-primary w-100 fw-bold">Apply</button>
+             <a href="/artist-distribution/distributors" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Distributors List -->
+  <div class="row mb-4">
+     <div class="col-12">
+        <h4 class="fw-bold mb-4 text-white">
+          <i class="bi bi-people me-2"></i>Available Distributors
+          <% if (distributorProfiles.length > 0) { %>
+            <span class="badge bg-primary ms-2 small" style="font-size: 0.8rem;"><%= distributorProfiles.length %> Match</span>
+          <% } %>
+        </h4>
+     </div>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <% if (distributorProfiles && distributorProfiles.length > 0) { %>
+      <% distributorProfiles.forEach(profile => { %>
+        <div class="col animate__animated animate__fadeInUp">
+          <div class="card h-100 bg-dark border-secondary shadow-lg distributor-card overflow-hidden glass-card">
+            <div class="card-header border-secondary p-4 d-flex align-items-center bg-transparent">
+              <img src="<%= (profile.user.profileImage && profile.user.profileImage !== '/images/default-profile.svg') ? profile.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>" 
+                   class="rounded-circle me-3 border border-3 border-primary" width="60" height="60" style="object-fit: cover;">
+              <div class="overflow-hidden">
+                <h5 class="mb-0 text-white fw-bold text-truncate"><%= profile.companyName || profile.user.name %></h5>
+                <p class="text-primary small mb-0"><i class="bi bi-patch-check-fill me-1"></i>Verified</p>
+                <div class="text-white-50" style="font-size: 0.7rem;"><i class="bi bi-geo-alt me-1"></i><%= profile.location %></div>
+              </div>
+            </div>
+            <div class="card-body p-4 bg-transparent border-top border-secondary border-opacity-25">
+              <h6 class="fw-bold mb-3 text-white-50 small text-uppercase letter-spacing-1">Available Packages:</h6>
+              <% if (profile.packages && profile.packages.length > 0) { %>
+                <div class="d-grid gap-3">
+                  <% profile.packages.forEach(pkg => { %>
+                    <div class="package-item border border-secondary border-opacity-50 rounded-4 p-3 hover-shadow transition-all bg-dark bg-opacity-50">
+                      <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-white fs-6"><%= pkg.name %></span>
+                        <span class="text-primary fw-bold">₹<%= pkg.price %></span>
+                      </div>
+                      <div class="text-muted small mb-3 text-truncate-2" style="font-size: 0.8rem; line-height: 1.4;"><%= pkg.description %></div>
+                      <div class="d-flex flex-wrap gap-1 mb-3">
+                        <% pkg.platforms.forEach(plat => { %>
+                          <span class="badge bg-dark bg-opacity-75 text-white-50 border border-secondary p-1" style="font-size: 0.6rem;"><%= plat %></span>
+                        <% }); %>
+                      </div>
+                      <a href="/artist-distribution/package/<%= pkg._id %>" class="btn btn-purple-force btn-sm w-100 rounded-pill py-2 fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Select Package
+                      </a>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="text-center py-4 text-muted bg-dark bg-opacity-25 rounded-4 border border-secondary border-dashed">
+                  <i class="bi bi-slash-circle mb-2 d-block opacity-50"></i>
+                  <small class="fst-italic">No active packages currently.</small>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="col-12 text-center py-5 w-100">
+        <div class="bg-dark bg-opacity-50 rounded-5 p-5 border border-secondary border-dashed">
+          <i class="bi bi-broadcast fs-1 text-muted opacity-25 mb-3 d-block"></i>
+          <h5 class="text-white opacity-50">No distributors found</h5>
+          <p class="text-muted mb-4">No distributors matches your current filter criteria.</p>
+          <a href="/artist-distribution/distributors" class="btn btn-primary rounded-pill px-4">Clear All Filters</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+
+<%- include('../partials/artist-footer') %>

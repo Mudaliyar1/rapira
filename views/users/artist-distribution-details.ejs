@@ -1,0 +1,210 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm glass-card">
+        <div class="card-body d-flex justify-content-between align-items-center p-4">
+          <div class="d-flex align-items-center">
+            <a href="/artist-distribution/history" class="btn btn-outline-light btn-sm rounded-circle me-3">
+              <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+              <h4 class="mb-0 fw-bold text-white">Request Details</h4>
+              <p class="text-white-50 mb-0 small"><i class="bi bi-hash text-primary"></i> <%= request.receiptNumber %></p>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <% if (request.paymentStatus === 'paid' || request.paymentStatus === 'free') { %>
+              <a href="/artist-distribution/receipt/<%= request._id %>" class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download Receipt
+              </a>
+            <% } %>
+            <span class="badge rounded-pill p-2 px-3 <%= 
+              request.status === 'completed' ? 'bg-success' : 
+              request.status === 'pending' ? 'bg-warning text-dark' : 
+              request.status === 'in-progress' ? 'bg-info text-dark' : 'bg-danger' %>">
+              <%= request.status.toUpperCase() %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Left Column: Media & Submission -->
+    <div class="col-lg-7">
+      <div class="card bg-dark border-secondary shadow-sm mb-4 glass-card h-100">
+        <div class="card-header border-secondary py-3">
+          <h6 class="mb-0 fw-bold text-white"><i class="bi bi-music-note-beamed me-2 text-primary"></i>Content Information</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="text-center mb-5">
+            <% if (request.posterUrl) { %>
+              <div class="position-relative d-inline-block">
+                <img src="<%= request.posterUrl %>" alt="Cover Art" class="rounded-4 border border-secondary shadow-lg" style="width: 200px; height: 200px; object-fit: cover;">
+                <div class="position-absolute bottom-0 end-0 p-2">
+                  <span class="badge bg-primary rounded-circle"><i class="bi bi-image"></i></span>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="bg-secondary bg-opacity-10 rounded-4 border border-secondary border-dashed d-inline-flex flex-column align-items-center justify-content-center" style="width: 200px; height: 200px;">
+                <i class="bi bi-image text-white-50 fs-1 mb-2"></i>
+                <small class="text-white-50">No Cover Art</small>
+              </div>
+            <% } %>
+            <h4 class="mt-4 fw-bold text-white"><%= request.contentTitle %></h4>
+            <div class="badge bg-dark border border-secondary text-primary px-3 py-2 text-uppercase letter-spacing-1">
+              <%= request.contentType %> Distribution
+            </div>
+          </div>
+
+          <div class="p-4 rounded-4 bg-black bg-opacity-25 border border-secondary mb-4">
+            <h6 class="text-primary fw-bold small text-uppercase mb-3">Release Files</h6>
+            <% if (request.files && request.files.length > 0) { %>
+              <div class="d-flex flex-column gap-3">
+                <% request.files.forEach((file, index) => { %>
+                  <div class="d-flex align-items-center justify-content-between p-3 bg-dark rounded-3 border border-secondary">
+                    <div class="d-flex align-items-center">
+                      <div class="icon-box me-3 <%= file.fileType === 'audio' ? 'text-info' : 'text-danger' %>">
+                        <i class="bi <%= file.fileType === 'audio' ? 'bi-music-note-beamed' : 'bi-play-btn' %> fs-5"></i>
+                      </div>
+                      <div>
+                         <span class="text-white d-block fw-bold small text-truncate" style="max-width: 200px;"><%= file.originalName || `File ${index + 1}` %></span>
+                         <small class="text-white-50 text-uppercase"><%= file.fileType %></small>
+                      </div>
+                    </div>
+                    <a href="<%= file.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                      <i class="bi bi-download me-1"></i> Preview
+                    </a>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else if (request.fileUrl) { %>
+              <div class="d-flex align-items-center justify-content-between p-3 bg-dark rounded-3 border border-secondary">
+                <div class="d-flex align-items-center">
+                  <div class="icon-box me-3 <%= request.contentType === 'audio' ? 'text-info' : 'text-danger' %>">
+                    <i class="bi <%= request.contentType === 'audio' ? 'bi-music-note-beamed' : 'bi-play-btn' %> fs-5"></i>
+                  </div>
+                  <div>
+                     <span class="text-white d-block fw-bold small">Master <%= request.contentType.toUpperCase() %></span>
+                     <small class="text-white-50">Ready for distribution</small>
+                  </div>
+                </div>
+                <a href="<%= request.fileUrl %>" target="_blank" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                  <i class="bi bi-download me-1"></i> Preview File
+                </a>
+              </div>
+            <% } %>
+          </div>
+
+          <% if (request.adminNotes) { %>
+            <div class="p-4 rounded-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
+              <h6 class="text-primary fw-bold small text-uppercase mb-2">Distributor's Response</h6>
+              <p class="text-white mb-0 italic" style="font-size: 0.95rem;">"<%= request.adminNotes %>"</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Distributor & Payment -->
+    <div class="col-lg-5">
+      <!-- Distributor Card -->
+      <div class="card bg-dark border-secondary shadow-sm mb-4 glass-card">
+        <div class="card-header border-secondary py-3">
+          <h6 class="mb-0 fw-bold text-white"><i class="bi bi-person-badge me-2 text-primary"></i>Distributor Details</h6>
+        </div>
+        <div class="card-body p-4 text-center">
+          <img src="<%= (request.distributor.profileImage && request.distributor.profileImage !== '/images/default-profile.svg') ? request.distributor.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(request.distributor.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
+               class="rounded-circle mb-3 border border-3 border-secondary" width="80" height="80" style="object-fit: cover;">
+          <h5 class="fw-bold text-white mb-1"><%= request.distributor.name %></h5>
+          <p class="text-white-50 small mb-0"><%= request.distributor.email %></p>
+          <hr class="border-secondary opacity-25 my-4">
+          <div class="text-start">
+            <div class="mb-3">
+              <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Selected Package</small>
+              <span class="text-white fw-bold"><%= request.package.name %></span>
+            </div>
+            <div>
+              <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Platforms</small>
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                <% request.package.platforms.forEach(plat => { %>
+                  <span class="badge bg-dark border border-secondary text-white-50" style="font-size: 0.6rem;"><%= plat %></span>
+                <% }); %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="card bg-dark border-secondary shadow-sm mb-4 glass-card">
+        <div class="card-header border-secondary py-3">
+          <h6 class="mb-0 fw-bold text-white"><i class="bi bi-credit-card me-2 text-primary"></i>Transaction Summary</h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+            <span class="text-white-50">Payment Status</span>
+            <span class="badge <%= request.paymentStatus === 'paid' || request.paymentStatus === 'free' ? 'bg-success' : 'bg-warning text-dark' %> px-3 rounded-pill">
+                <%= request.paymentStatus.toUpperCase() %>
+            </span>
+          </div>
+          
+          <% if (request.razorpayPaymentId) { %>
+            <div class="mb-4">
+              <small class="text-white-50 d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">Razorpay Payment ID</small>
+              <div class="p-2 bg-black bg-opacity-50 rounded border border-secondary font-monospace text-primary small">
+                <%= request.razorpayPaymentId %>
+              </div>
+            </div>
+          <% } %>
+
+          <div class="row g-2 mb-3">
+             <div class="col-8 text-white-50">Base Fee</div>
+             <div class="col-4 text-end text-white"><%= request.price > 0 ? '₹' + Number(request.price).toFixed(2) : 'FREE' %></div>
+             
+             <% if (request.price > 0) { %>
+             <div class="col-8 text-white-50">Platform Fee</div>
+             <div class="col-4 text-end text-white"><%= request.commissionAmount > 0 ? '₹' + Number(request.commissionAmount).toFixed(2) : 'FREE' %></div>
+             <% } %>
+          </div>
+          
+          <div class="d-flex justify-content-between p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 mt-3">
+            <span class="fw-bold text-white">Total Paid</span>
+            <span class="fw-bold text-primary fs-5"><%= request.totalPaid > 0 ? '₹' + Number(request.totalPaid).toFixed(2) : 'FREE' %></span>
+          </div>
+
+          <div class="mt-4">
+            <small class="text-white-50 d-block text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">Submission Date</small>
+            <span class="text-white small"><%= new Date(request.createdAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' }) %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .glass-card {
+    background: rgba(18, 18, 18, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  .icon-box {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .border-dashed { border-style: dashed !important; }
+  .letter-spacing-1 { letter-spacing: 1px; }
+  .italic { font-style: italic; }
+</style>
+
+<%- include('../partials/artist-footer') %>

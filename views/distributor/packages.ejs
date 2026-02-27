@@ -1,0 +1,216 @@
+<%- include('../partials/distributor-header', { extraStyles: '<style>.package-card { transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }.package-card:hover { transform: translateY(-5px); box-shadow: 0 1rem 3rem rgba(111, 66, 193, 0.1) !important; }</style>' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-5">
+  <div>
+    <h2 class="fw-bold mb-1 text-white">Distribution Packages</h2>
+    <p class="text-white-50 mb-0">Define and manage your service offerings for artists.</p>
+  </div>
+  <button class="btn btn-primary px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#addPackageModal">
+    <i class="bi bi-plus-lg me-2"></i> Create Package
+  </button>
+</div>
+
+<!-- Alert Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="row g-4">
+  <% if (packages && packages.length > 0) { %>
+    <% packages.forEach(pkg => { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="glass-card-dark h-100 package-card">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between mb-3">
+              <span class="badge rounded-pill <%= pkg.isActive ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-danger bg-opacity-10 text-danger border border-danger' %>">
+                <%= pkg.isActive ? 'Active' : 'Inactive' %>
+              </span>
+              <button class="btn btn-link text-white p-0" onclick='editPackage(<%- JSON.stringify(pkg).replace(/'/g, "&#39;") %>)'>
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </div>
+            <h4 class="fw-bold mb-2 text-white"><%= pkg.name %></h4>
+            <h3 class="fw-bold text-primary mb-3">₹<%= pkg.price %></h3>
+            <p class="text-white-50 small mb-4"><%= pkg.description || 'No description available.' %></p>
+            
+            <h6 class="fw-bold small mb-2 text-uppercase text-muted">File Limits</h6>
+            <div class="mb-4">
+               <span class="badge bg-secondary text-white border border-secondary small mb-1">
+                 <%= pkg.packageType === 'audio' ? 'Audio Only' : (pkg.packageType === 'video' ? 'Video Only' : 'Audio & Video') %>
+               </span>
+               <div class="small text-white-50">
+                 <% if (pkg.packageType !== 'video') { %> Max Audio: <%= pkg.maxAudioFiles %>  | <% } %>
+                 <% if (pkg.packageType !== 'audio') { %> Max Video: <%= pkg.maxVideoFiles %> <% } %>
+               </div>
+            </div>
+            
+            <h6 class="fw-bold small mb-2 text-uppercase text-muted">Platforms</h6>
+            <div class="d-flex flex-wrap gap-1 mb-4">
+              <% pkg.platforms.forEach(plat => { %>
+                <span class="badge bg-dark text-white border border-secondary small"><%= plat %></span>
+              <% }); %>
+            </div>
+
+            <h6 class="fw-bold small mb-2 text-uppercase text-muted">Features</h6>
+            <ul class="list-unstyled mb-0">
+              <% pkg.features.forEach(feat => { %>
+                <li class="small mb-1 text-white-50"><i class="bi bi-check2 text-success me-2"></i><%= feat %></li>
+              <% }); %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="col-12 text-center py-5">
+      <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+      <p class="text-white-50">You haven't created any packages yet.</p>
+    </div>
+  <% } %>
+</div>
+
+<!-- Add Modal -->
+<div class="modal fade" id="addPackageModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content glass-card-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold text-white">Create New Package</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/distributor-dashboard/packages" method="POST">
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label text-white">Package Name *</label>
+              <input type="text" name="name" class="form-control" placeholder="e.g., Worldwide Distribution Plus" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label text-white">Price * (₹)</label>
+              <input type="number" name="price" class="form-control" min="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-white">Media Type</label>
+              <select name="packageType" class="form-select bg-dark text-white border-secondary">
+                 <option value="mixed">Audio & Video</option>
+                 <option value="audio">Audio Only</option>
+                 <option value="video">Video Only</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-white" title="Max allowed">Audios</label>
+              <input type="number" name="maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="0" value="1">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-white" title="Max allowed">Videos</label>
+              <input type="number" name="maxVideoFiles" class="form-control bg-dark text-white border-secondary" min="0" value="1">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Select Platforms *</label>
+              <div class="row row-cols-3 g-2 mt-1">
+                <% const platforms = ['Spotify', 'Apple Music', 'JioSaavn', 'Gaana', 'YouTube Music', 'Amazon Music', 'Tidal', 'Deezer', 'Boomplay']; %>
+                <% platforms.forEach(plat => { %>
+                  <div class="col">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="platforms" value="<%= plat %>" id="add_plat_<%= plat %>">
+                        <label class="form-check-label text-white-50" for="add_plat_<%= plat %>"><%= plat %></label>
+                      </div>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Features (Comma separated)</label>
+              <textarea name="features" class="form-control" rows="2" placeholder="Item 1, Item 2"></textarea>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Description</label>
+              <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Create Package</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editPackageModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content glass-card-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold text-white">Edit Package</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editForm" method="POST">
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label text-white">Package Name *</label>
+              <input type="text" name="name" id="edit_name" class="form-control" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label text-white">Price * (₹)</label>
+              <input type="number" name="price" id="edit_price" class="form-control" min="0" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-white">Media Type</label>
+              <select name="packageType" id="edit_packageType" class="form-select bg-dark text-white border-secondary">
+                 <option value="mixed">Audio & Video</option>
+                 <option value="audio">Audio Only</option>
+                 <option value="video">Video Only</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-white">Audios</label>
+              <input type="number" name="maxAudioFiles" id="edit_maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="0">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label text-white">Videos</label>
+              <input type="number" name="maxVideoFiles" id="edit_maxVideoFiles" class="form-control bg-dark text-white border-secondary" min="0">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Select Platforms *</label>
+              <div class="row row-cols-3 g-2 mt-1">
+                <% platforms.forEach(plat => { %>
+                  <div class="col">
+                      <div class="form-check">
+                        <input class="form-check-input edit-plat" type="checkbox" name="platforms" value="<%= plat %>" id="edit_plat_<%= plat %>">
+                        <label class="form-check-label text-white-50" for="edit_plat_<%= plat %>"><%= plat %></label>
+                      </div>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Features (Comma separated)</label>
+              <textarea name="features" id="edit_features" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-white">Description</label>
+              <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="col-md-12">
+              <div class="form-check form-switch">
+                 <input class="form-check-input" type="checkbox" name="isActive" id="edit_active">
+                 <label class="form-check-label text-white" for="edit_active">Package Active</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Update Package</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/distributor-footer', { extraScripts: '<script>function editPackage(pkg) { const form = document.getElementById("editForm"); form.action = "/distributor-dashboard/packages/" + pkg._id + "/edit"; document.getElementById("edit_name").value = pkg.name; document.getElementById("edit_price").value = pkg.price; document.getElementById("edit_features").value = pkg.features.join(", "); document.getElementById("edit_description").value = pkg.description || ""; document.getElementById("edit_packageType").value = pkg.packageType || "mixed"; document.getElementById("edit_maxAudioFiles").value = pkg.maxAudioFiles || 0; document.getElementById("edit_maxVideoFiles").value = pkg.maxVideoFiles || 0; document.getElementById("edit_active").checked = pkg.isActive; const checkboxes = document.querySelectorAll(".edit-plat"); checkboxes.forEach(cb => { cb.checked = pkg.platforms.includes(cb.value); }); new bootstrap.Modal(document.getElementById("editPackageModal")).show(); }</script>' }) %>

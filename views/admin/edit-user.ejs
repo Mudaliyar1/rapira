@@ -54,10 +54,16 @@
           </div>
         </div>
         <div class="col-12">
-          <div class="form-check">
+          <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" id="makeProducer" name="makeProducer" <%= hasProducerRole ? 'checked' : '' %>>
             <label class="form-check-label text-white" for="makeProducer">
               Give direct Producer role access (without application)
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="makeDistributor" name="makeDistributor" <%= typeof hasDistributorRole !== 'undefined' && hasDistributorRole ? 'checked' : '' %>>
+            <label class="form-check-label text-white" for="makeDistributor">
+              Give direct Distributor role access (without registration)
             </label>
           </div>
         </div>
