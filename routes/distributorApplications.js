@@ -398,25 +398,94 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_distributor_applicat
 // GET - Admin: View Active Distributors List
 router.get('/admin/list', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
+        const { search = '', city = '', state = '' } = req.query;
         const Role = require('../models/Role');
         const UserRole = require('../models/UserRole');
         const User = require('../models/User');
+        const DistributorApplication = require('../models/DistributorApplication');
 
         const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
         if (!distributorRole) {
             return res.render('admin/distributors', {
                 layout: 'admin',
-                distributors: []
+                distributors: [],
+                filters: { search, city, state },
+                uniqueCities: [],
+                uniqueStates: [],
+                title: 'Active Distributors'
             });
         }
 
-        const distributorUserRoles = await UserRole.find({ role: distributorRole._id }).populate('user');
-        const distributors = distributorUserRoles.map(ur => ur.user).filter(Boolean);
+        // Find all users with distributor role
+        let query = { role: distributorRole._id };
+        const distributorUserRoles = await UserRole.find(query).populate('user');
+
+        // Filter out null users and apply search if provided
+        let distributors = await Promise.all(distributorUserRoles.map(async (ur) => {
+            if (!ur.user) return null;
+
+            // Get their approved application for more details
+            const application = await DistributorApplication.findOne({
+                user: ur.user._id,
+                status: 'approved'
+            }).sort({ updatedAt: -1 });
+
+            return {
+                ...ur.user.toObject(),
+                application: application || null,
+                detailsUrl: `/distributor-applications/admin/user/${ur.user._id}`
+            };
+        }));
+
+        distributors = distributors.filter(Boolean);
+
+        // Get unique cities and states for filters
+        const allApprovedApps = await DistributorApplication.find({ status: 'approved' }, 'location');
+        const uniqueCities = [...new Set(allApprovedApps.map(app => {
+            const parts = app.location.split(', ');
+            return parts[0];
+        }).filter(Boolean))].sort();
+
+        const uniqueStates = [...new Set(allApprovedApps.map(app => {
+            const parts = app.location.split(', ');
+            return parts.length > 1 ? parts[1] : null;
+        }).filter(Boolean))].sort();
+
+        // Apply filters
+        if (search) {
+            const searchLower = search.toLowerCase();
+            distributors = distributors.filter(d =>
+                d.name.toLowerCase().includes(searchLower) ||
+                d.email.toLowerCase().includes(searchLower) ||
+                (d.application && d.application.companyName && d.application.companyName.toLowerCase().includes(searchLower)) ||
+                (!d.application && "individual".includes(searchLower))
+            );
+        }
+
+        if (city) {
+            const cityLower = city.toLowerCase();
+            distributors = distributors.filter(d =>
+                (d.city && d.city.toLowerCase() === cityLower) ||
+                (d.application && d.application.location && d.application.location.toLowerCase().includes(cityLower))
+            );
+        }
+
+        if (state) {
+            const stateLower = state.toLowerCase();
+            distributors = distributors.filter(d =>
+                (d.state && d.state.toLowerCase() === stateLower) ||
+                (d.application && d.application.location && d.application.location.toLowerCase().endsWith(stateLower))
+            );
+        }
 
         res.render('admin/distributors', {
             layout: 'admin',
             distributors,
-            title: 'Active Distributors'
+            title: 'Active Distributors',
+            filters: { search, city, state },
+            uniqueCities,
+            uniqueStates,
+            currentPath: '/distributor-applications/admin/list'
         });
     } catch (error) {
         console.error('Error fetching distributors list:', error);
@@ -425,7 +494,82 @@ router.get('/admin/list', isLoggedIn, hasAdminPermission('manage_distributor_app
     }
 });
 
-// GET - Admin: View Distributor Application Details
+// POST - Admin: Revoke Distributor Role
+router.post('/admin/revoke/:id', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
+    try {
+        const Role = require('../models/Role');
+        const UserRole = require('../models/UserRole');
+
+        const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
+        if (!distributorRole) {
+            req.flash('error', 'Distributor role not found');
+            return res.redirect('/distributor-applications/admin/list');
+        }
+
+        await UserRole.findOneAndDelete({
+            user: req.params.id,
+            role: distributorRole._id
+        });
+
+        // Optionally update the application status back to pending or something?
+        // For now just removing role is enough to "delete" them from active list
+
+        req.flash('success', 'Distributor role revoked successfully');
+        res.redirect('/distributor-applications/admin/list');
+    } catch (error) {
+        console.error('Revoke distributor error:', error);
+        req.flash('error', 'Failed to revoke distributor role');
+        res.redirect('/distributor-applications/admin/list');
+    }
+});
+
+// GET - Admin: View Distributor Details by User ID (Handles Manual Additions)
+router.get('/admin/user/:userId', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
+    try {
+        const User = require('../models/User');
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            req.flash('error', 'User not found');
+            return res.redirect('/distributor-applications/admin/list');
+        }
+
+        let application = await DistributorApplication.findOne({ user: user._id }).sort({ createdAt: -1 })
+            .populate('user', 'name email profileImage')
+            .populate('reviewedBy', 'name email');
+
+        if (!application) {
+            // Create a virtual application object for manual distributors
+            application = {
+                user: user,
+                companyName: 'Individual / Manual Entry',
+                mobileNumber: 'Not Provided',
+                location: user.city || 'India',
+                experience: 'This distributor was manually added by an Administrator.',
+                platforms: ['All Standard Platforms'],
+                status: 'approved',
+                paymentStatus: 'n/a',
+                registrationFee: 0,
+                idProofUrl: user.profileImage || '/images/default-profile.svg',
+                idProofType: 'Not Required (Admin Verified)',
+                isManual: true,
+                createdAt: user.createdAt
+            };
+        }
+
+        res.render('admin/distributor-application-details', {
+            layout: 'admin',
+            title: 'Distributor Details',
+            currentPath: '/distributor-applications/admin/list',
+            application
+        });
+    } catch (error) {
+        console.error('Error viewing distributor user details:', error);
+        req.flash('error', 'Failed to load distributor details');
+        res.redirect('/distributor-applications/admin/list');
+    }
+});
+
+// GET - Admin: View Distributor Application Details (By App ID)
 router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const application = await DistributorApplication.findById(req.params.id)
