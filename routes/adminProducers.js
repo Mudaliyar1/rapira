@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const User = require('../models/User');
 const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
@@ -8,7 +8,7 @@ const ProducerApplication = require('../models/ProducerApplication');
 const ProducerUnblockRequest = require('../models/ProducerUnblockRequest');
 
 // GET - List all producers with filters
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const { status, search, sortBy } = req.query;
 
@@ -115,7 +115,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 // ===== BLOCK/UNBLOCK PAGES (must be before /:id routes) =====
 
 // GET - Block producer page
-router.get('/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/block', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -142,7 +142,7 @@ router.get('/:id/block', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Block producer
-router.post('/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/block', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const { blockReason } = req.body;
     const user = await User.findById(req.params.id);
@@ -171,7 +171,7 @@ router.post('/:id/block', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - Unblock producer page
-router.get('/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/unblock', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -204,7 +204,7 @@ router.get('/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Unblock producer
-router.post('/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/unblock', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const { unblockReason } = req.body;
     const user = await User.findById(req.params.id);
@@ -241,7 +241,7 @@ router.post('/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
 // ===== UNBLOCK REQUEST ROUTES (must be before /:id routes) =====
 
 // GET - Unblock requests list
-router.get('/unblock-requests', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const { status, search, sortBy } = req.query;
     const page = parseInt(req.query.page) || 1;
@@ -302,7 +302,7 @@ router.get('/unblock-requests', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/unblock-requests/delete-all', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/delete-all', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const result = await ProducerUnblockRequest.deleteMany({});
     req.flash('success', `Deleted ${result.deletedCount} producer unblock request record(s)`);
@@ -315,7 +315,7 @@ router.post('/unblock-requests/delete-all', isLoggedIn, isAdmin, async (req, res
 });
 
 // GET - Unblock request details
-router.get('/unblock-requests/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests/:id', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const request = await ProducerUnblockRequest.findById(req.params.id)
       .populate('producer')
@@ -340,7 +340,7 @@ router.get('/unblock-requests/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - Approve unblock request page
-router.get('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests/:id/approve', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const request = await ProducerUnblockRequest.findById(req.params.id)
       .populate('producer')
@@ -370,7 +370,7 @@ router.get('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, res
 });
 
 // GET - Reject unblock request page
-router.get('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests/:id/reject', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const request = await ProducerUnblockRequest.findById(req.params.id)
       .populate('producer')
@@ -400,7 +400,7 @@ router.get('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res)
 });
 
 // POST - Approve unblock request
-router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/approve', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const { adminResponse } = req.body;
     const request = await ProducerUnblockRequest.findById(req.params.id);
@@ -437,7 +437,7 @@ router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, re
 });
 
 // POST - Reject unblock request
-router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/reject', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const { adminResponse } = req.body;
 
@@ -468,7 +468,7 @@ router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res
   }
 });
 
-router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/delete', isLoggedIn, hasAdminPermission('manage_producer_unblock'), async (req, res) => {
   try {
     const deletedRequest = await ProducerUnblockRequest.findByIdAndDelete(req.params.id);
 
@@ -489,7 +489,7 @@ router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res
 // ===== ADMIN PRODUCER BEATS MANAGEMENT =====
 
 // GET - View all producer beats
-router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/beats', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
   try {
     const ProducerBeat = require('../models/ProducerBeat');
     const page = parseInt(req.query.page) || 1;
@@ -542,7 +542,7 @@ router.get('/beats', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - View Sales for a specific beat
-router.get('/beats/:id/sales', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/beats/:id/sales', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
   try {
     const ProducerBeat = require('../models/ProducerBeat');
     const BeatPurchase = require('../models/BeatPurchase');
@@ -591,7 +591,7 @@ router.get('/beats/:id/sales', isLoggedIn, isAdmin, async (req, res) => {
     res.redirect('/admin/producers/beats');
   }
 });
-router.post('/beats/:id/toggle-ban', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/beats/:id/toggle-ban', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
   try {
     const ProducerBeat = require('../models/ProducerBeat');
     const { banReason } = req.body;
@@ -624,7 +624,7 @@ router.post('/beats/:id/toggle-ban', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Delete a beat (Admin)
-router.post('/beats/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/beats/:id/delete', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
   try {
     const ProducerBeat = require('../models/ProducerBeat');
     const beat = await ProducerBeat.findById(req.params.id);
@@ -648,7 +648,7 @@ router.post('/beats/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 // ===== PRODUCER ROLE REVOKE ROUTES (must be before /:id routes) =====
 
 // GET - Confirm revoke producer role
-router.get('/:id/revoke', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/revoke', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -684,7 +684,7 @@ router.get('/:id/revoke', isLoggedIn, isAdmin, async (req, res) => {
 // ===== PRODUCER DETAIL ROUTES =====
 
 // GET - Producer details
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -730,7 +730,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Revoke producer role
-router.post('/:id/revoke', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/revoke', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -773,7 +773,7 @@ router.post('/:id/revoke', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Block/Unblock producer
-router.post('/:id/toggle-block', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/toggle-block', isLoggedIn, hasAdminPermission('manage_producers'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {

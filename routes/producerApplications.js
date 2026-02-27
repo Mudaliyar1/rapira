@@ -6,7 +6,7 @@ const ProducerApplication = require('../models/ProducerApplication');
 const User = require('../models/User');
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 const { sendEmail } = require('../utils/brevoEmailService');
 const WebsiteSettings = require('../models/WebsiteSettings');
@@ -356,7 +356,7 @@ router.get('/status', isLoggedIn, async (req, res) => {
   }
 });
 
-router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const { status = 'all' } = req.query;
     const filter = status === 'all' ? {} : { status };
@@ -388,7 +388,7 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/delete-all', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/delete-all', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const result = await ProducerApplication.deleteMany({});
     req.flash('success', `Deleted ${result.deletedCount} producer application record(s)`);
@@ -400,7 +400,7 @@ router.post('/admin/delete-all', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const application = await ProducerApplication.findById(req.params.id)
       .populate('user', 'name email profileImage phone')
@@ -425,7 +425,7 @@ router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
     const application = await ProducerApplication.findById(req.params.id).populate('user');
@@ -464,7 +464,7 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
     const application = await ProducerApplication.findById(req.params.id).populate('user');
@@ -501,7 +501,7 @@ router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/delete', isLoggedIn, hasAdminPermission('manage_producer_applications'), async (req, res) => {
   try {
     const deletedApplication = await ProducerApplication.findByIdAndDelete(req.params.id);
 

@@ -16,14 +16,14 @@ const ArtistPost = require('../models/ArtistPost');
 const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const { deleteMedia } = require('../utils/mediaService');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
 const { sendAccountDeletionNotification } = require('../utils/brevoEmailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
 const bcrypt = require('bcryptjs');
 
 // Permission denied page
-router.get('/permission-denied', isLoggedIn, isAdmin, (req, res) => {
+router.get('/permission-denied', isLoggedIn, (req, res) => {
   res.render('admin/permission-denied', {
     layout: 'admin',
     currentPath: '/admin',
@@ -32,7 +32,7 @@ router.get('/permission-denied', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Test email route
-router.get('/test-email', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/test-email', isLoggedIn, hasAdminPermission('manage_admins'), async (req, res) => {
   try {
     const email = req.query.email || req.session.user.email;
 
@@ -61,6 +61,64 @@ router.get('/test-email', isLoggedIn, isAdmin, async (req, res) => {
 // Admin dashboard
 router.get('/', isLoggedIn, isAdmin, async (req, res) => {
   try {
+    const user = req.session.user;
+    const isSuperAdmin = user.role === 'superAdmin' || user.isSuperAdmin;
+    const perms = user.adminPermissions || [];
+
+    // If not Super Admin and doesn't have dashboard permission, redirect to first available feature
+    if (!isSuperAdmin && !perms.includes('manage_dashboard')) {
+      const PERMISSION_TO_PATH = {
+        'manage_users_list': '/admin/users',
+        'manage_live_users': '/admin/live-users',
+        'manage_artists': '/admin/artists',
+        'manage_artist_beat_purchases': '/admin/artist-beat-purchases',
+        'manage_unblock_requests': '/admin/unblock-requests',
+        'manage_artist_applications': '/artist-applications/admin',
+        'manage_producer_applications': '/producer-applications/admin',
+        'manage_distributor_applications': '/distributor-applications/admin',
+        'manage_distributor_list': '/distributor-applications/admin/list',
+        'manage_producers': '/admin/producers',
+        'manage_producer_beats': '/admin/producers/beats',
+        'manage_producer_unblock': '/admin/producers/unblock-requests',
+        'manage_follower_analytics': '/admin/follower-analytics',
+        'manage_artist_upgrades': '/admin/artist-upgrade-requests',
+        'manage_roles': '/roles',
+        'manage_user_roles': '/roles/user-roles',
+        'manage_deleted_accounts': '/admin/deleted-accounts',
+        'manage_concerts_list': '/admin/concerts',
+        'manage_venues': '/admin/venues',
+        'manage_venue_requests': '/admin/venue-requests',
+        'manage_venue_edit_requests': '/admin/venue-edit-requests',
+        'manage_venue_bookings': '/admin/venue-bookings',
+        'manage_concerts_pending': '/admin/concerts/pending',
+        'manage_concert_edit_requests': '/admin/concert-edit-requests',
+        'manage_tickets': '/admin/tickets',
+        'manage_free_ticket_issue': '/admin/tickets/free-issue',
+        'manage_refund_requests': '/admin/refund-requests',
+        'manage_daily_concerts': '/admin/daily-concerts',
+        'manage_content_feature': '/admin/content',
+        'manage_artist_posts': '/admin/posts',
+        'manage_pages': '/admin/pages',
+        'manage_about_us': '/admin/about-us',
+        'manage_learning_modules': '/learning/admin',
+        'manage_notifications': '/admin/notifications',
+        'manage_website_settings': '/admin/website-settings',
+        'manage_storage_management': '/admin/storage-management',
+        'manage_revenue_analysis': '/admin/revenue-analysis',
+        'manage_admins': '/admin/super/manage-admins'
+      };
+
+      // Find the first permission that has a path
+      const firstAvailablePerm = perms.find(p => PERMISSION_TO_PATH[p]);
+
+      if (firstAvailablePerm) {
+        return res.redirect(PERMISSION_TO_PATH[firstAvailablePerm]);
+      } else {
+        req.flash('error', 'You do not have access to any admin features.');
+        return res.redirect('/');
+      }
+    }
+
     // Get counts for dashboard
     const userCount = await User.countDocuments();
     const artistCount = await Artist.countDocuments();
@@ -105,6 +163,16 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       { $limit: 5 }
     ]);
 
+    // Get distribution stats
+    const DistributionRequest = require('../models/DistributionRequest');
+    const distEarnings = await DistributionRequest.find({ paymentStatus: 'paid' });
+    const totalDistRevenue = distEarnings.reduce((sum, req) => sum + (req.totalPaid || 0), 0);
+    const distStats = {
+      paid: await DistributionRequest.countDocuments({ paymentStatus: 'paid' }),
+      free: await DistributionRequest.countDocuments({ paymentStatus: 'free' }),
+      pending: await DistributionRequest.countDocuments({ status: 'pending' })
+    };
+
     res.render('admin/dashboard-fixed', {
       layout: 'admin',
       currentPath: '/admin',
@@ -124,6 +192,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         free: freeConcerts
       },
       popularCities: cities,
+      distStats,
+      totalDistRevenue,
       user: req.session.user // Pass the user object to the template
     });
   } catch (error) {
@@ -134,7 +204,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Live Users by Page - dashboard view
-router.get('/live-users', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/live-users', isLoggedIn, hasAdminPermission('manage_live_users'), async (req, res) => {
   try {
     const initialPage = req.query.page || '';
     const threshold = new Date(Date.now() - 10 * 1000); // last 10 seconds
@@ -184,7 +254,7 @@ router.get('/live-users', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Live Users by Page - JSON data for polling
-router.get('/live-users/data', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/live-users/data', isLoggedIn, hasAdminPermission('manage_live_users'), async (req, res) => {
   try {
     const threshold = new Date(Date.now() - 10 * 1000);
     const users = await User.find({
@@ -223,7 +293,7 @@ router.get('/live-users/data', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage users
-router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const dummyDataHelper = require('../utils/dummyDataHelper');
 
@@ -367,7 +437,7 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View user details page
-router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/:id/details', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const Ticket = require('../models/Ticket');
     const UserSubscription = require('../models/UserSubscription');
@@ -565,7 +635,7 @@ router.get('/users/:id/details', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin force password reset
-router.post('/users/:id/reset-password', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/:id/reset-password', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const { newPassword, confirmPassword, notifyUser } = req.body;
     const ActivityLogger = require('../utils/activityLogger');
@@ -635,7 +705,7 @@ router.post('/users/:id/reset-password', isLoggedIn, isAdmin, async (req, res) =
 });
 
 // Export users to CSV
-router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/export', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     // Get search parameters (same as main users route)
     const { search, role, status, sortBy, sortOrder } = req.query;
@@ -703,7 +773,7 @@ router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Add user page
-router.get('/users/add', isLoggedIn, isAdmin, (req, res) => {
+router.get('/users/add', isLoggedIn, hasAdminPermission('manage_users_list'), (req, res) => {
   res.render('admin/add-user-new', {
     layout: 'admin',
     currentPath: '/admin/users'
@@ -711,7 +781,7 @@ router.get('/users/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Add user process
-router.post('/users/add', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/add', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -759,13 +829,19 @@ router.post('/users/add', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Edit user page
-router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/:id/edit', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
     if (!user) {
       req.flash('error', 'User not found');
       return res.redirect('/admin/users');
+    }
+
+    // Protection: Administrator accounts must be managed through the dedicated Admin Management panel
+    if (user.role === 'admin' || user.role === 'superAdmin') {
+      req.flash('info', 'Administrator accounts must be managed through the Admin Management panel.');
+      return res.redirect('/admin/super/manage-admins');
     }
 
     let producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
@@ -792,17 +868,49 @@ router.get('/users/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// GET Delete Confirmation Page
+router.get('/users/:id/delete-confirm', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
+  try {
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) {
+      req.flash('error', 'User not found');
+      return res.redirect('/admin/users');
+    }
+
+    // Protection: Cannot delete admins here
+    if (targetUser.role === 'admin' || targetUser.role === 'superAdmin') {
+      req.flash('error', 'Administrator accounts cannot be deleted from the general user list.');
+      return res.redirect('/admin/super/manage-admins');
+    }
+
+    res.render('admin/confirm-delete-user', {
+      layout: 'admin',
+      currentPath: '/admin/users',
+      title: 'Confirm Delete User',
+      targetUser
+    });
+  } catch (error) {
+    console.error('Delete confirm error:', error);
+    res.redirect('/admin/users');
+  }
+});
+
 // Update user
-router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/:id/update', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
     const { role, makeProducer, makeDistributor } = req.body;
 
-    // Find user
     const user = await User.findById(req.params.id);
 
     if (!user) {
       req.flash('error', 'User not found');
       return res.redirect('/admin/users');
+    }
+
+    // Protection: Admins cannot be modified via this route
+    if (user.role === 'admin' || user.role === 'superAdmin') {
+      req.flash('error', 'Administrator protection enabled. Use Admin Management panel.');
+      return res.redirect('/admin/super/manage-admins');
     }
 
     // Only update role if it's different
@@ -901,14 +1009,35 @@ router.post('/users/:id/update', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete user
-router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/:id/delete', isLoggedIn, hasAdminPermission('manage_users_list'), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
+    const targetUser = await User.findById(userId);
 
-    if (!user) {
+    if (!targetUser) {
       req.flash('error', 'User not found');
       return res.redirect('/admin/users');
     }
+
+    // Safety: Prevent deleting self
+    if (userId === req.session.user.id) {
+      req.flash('error', 'You cannot delete your own account.');
+      return res.redirect('/admin/users');
+    }
+
+    // Protection: Cannot delete admins or superAdmins from here
+    if (targetUser.role === 'admin' || targetUser.role === 'superAdmin') {
+      req.flash('error', 'Administrators can only be deleted via the Admin Management panel.');
+      return res.redirect('/admin/super/manage-admins');
+    }
+
+    // Safety: Standard admins cannot delete super admins (even if they bypass the UI)
+    if (req.session.user.role !== 'superAdmin' && targetUser.role === 'superAdmin') {
+      req.flash('error', 'Only Super Admins can manage Super Admin accounts.');
+      return res.redirect('/admin/users');
+    }
+
+    const user = targetUser;
 
     // Check if user is an artist
     if (user.role === 'artist') {
@@ -969,7 +1098,7 @@ router.post('/users/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage concerts
-router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const dummyDataHelper = require('../utils/dummyDataHelper');
 
@@ -1102,7 +1231,7 @@ router.get('/concerts', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export concerts to CSV
-router.get('/concerts/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts/export', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     // Get search parameters (same as main concerts route)
     const { search, status, dateRange, venue, sortBy, sortOrder } = req.query;
@@ -1201,7 +1330,7 @@ router.get('/concerts/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Concert details
-router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts/:id/details', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const concert = await Concert.findById(req.params.id)
       .populate({
@@ -1289,7 +1418,7 @@ router.get('/concerts/:id/details', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Pending concerts
-router.get('/concerts/pending', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts/pending', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     // Get search parameters
     const { search, dateRange, sortBy, sortOrder } = req.query;
@@ -1382,7 +1511,7 @@ router.get('/concerts/pending', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Approve concert
-router.post('/concerts/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/concerts/:id/approve', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const concert = await Concert.findById(req.params.id)
       .populate({
@@ -1479,7 +1608,7 @@ router.post('/concerts/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Reject concert
-router.post('/concerts/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/concerts/:id/reject', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const { reason } = req.body;
 
@@ -1582,7 +1711,7 @@ router.post('/concerts/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Cancel concert
-router.post('/concerts/:id/cancel', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/concerts/:id/cancel', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const { reason } = req.body;
 
@@ -1618,7 +1747,27 @@ router.post('/concerts/:id/cancel', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete concert
-router.post('/concerts/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/concerts/:id/delete-confirm', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
+  try {
+    const concert = await Concert.findById(req.params.id);
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/admin/concerts');
+    }
+
+    res.render('admin/confirm-delete-concert', {
+      layout: 'admin',
+      currentPath: '/admin/concerts',
+      title: 'Confirm Delete Concert',
+      concert
+    });
+  } catch (error) {
+    console.error('Delete concert confirm error:', error);
+    res.redirect('/admin/concerts');
+  }
+});
+
+router.post('/concerts/:id/delete', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
   try {
     const concert = await Concert.findById(req.params.id);
 
@@ -1650,7 +1799,7 @@ router.post('/concerts/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage artists
-router.get('/artists', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     // First, clean up any orphaned artist records (artists without valid users)
     const orphanedArtists = await Artist.find().populate('user');
@@ -1792,7 +1941,7 @@ router.get('/artists', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export artists to CSV
-router.get('/artists/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/artists/export', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     // Get search parameters (same as main artists route)
     const { search, genre, status, featured, level, sortBy, sortOrder } = req.query;
@@ -1885,7 +2034,7 @@ router.get('/artists/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Verify artist
-router.post('/artists/:id/verify', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artists/:id/verify', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id);
 
@@ -1908,7 +2057,7 @@ router.post('/artists/:id/verify', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Feature artist
-router.post('/artists/:id/feature', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artists/:id/feature', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id);
 
@@ -1931,7 +2080,7 @@ router.post('/artists/:id/feature', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete artist
-router.post('/artists/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artists/:id/delete', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id);
 
@@ -1962,7 +2111,7 @@ router.post('/artists/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Block artist (POST) confirmation page
-router.get('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/artists/:id/block', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id)
       .populate('user', 'name email profileImage');
@@ -1986,7 +2135,7 @@ router.get('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Unblock artist confirmation page
-router.get('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/artists/:id/unblock', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id)
       .populate('user', 'name email profileImage')
@@ -2016,7 +2165,7 @@ router.get('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Block artist
-router.post('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artists/:id/block', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const { blockReason } = req.body;
     const artist = await Artist.findById(req.params.id);
@@ -2052,7 +2201,7 @@ router.post('/artists/:id/block', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Unblock artist
-router.post('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artists/:id/unblock', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     const artist = await Artist.findById(req.params.id);
 
@@ -2099,7 +2248,7 @@ router.post('/artists/:id/unblock', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Manage unblock requests
-router.get('/unblock-requests', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const { status, email, name, location, sort } = req.query;
 
@@ -2167,7 +2316,7 @@ router.get('/unblock-requests', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View single unblock request details
-router.get('/unblock-requests/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unblock-requests/:id', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const request = await ArtistUnblockRequest.findById(req.params.id)
       .populate({
@@ -2195,7 +2344,7 @@ router.get('/unblock-requests/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Approve unblock request
-router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/approve', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const request = await ArtistUnblockRequest.findById(req.params.id).populate('artist');
 
@@ -2231,7 +2380,7 @@ router.post('/unblock-requests/:id/approve', isLoggedIn, isAdmin, async (req, re
 });
 
 // Reject unblock request
-router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/reject', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const request = await ArtistUnblockRequest.findById(req.params.id);
 
@@ -2256,7 +2405,7 @@ router.post('/unblock-requests/:id/reject', isLoggedIn, isAdmin, async (req, res
 });
 
 // Delete single unblock request (history entry)
-router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/:id/delete', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const request = await ArtistUnblockRequest.findById(req.params.id);
 
@@ -2276,7 +2425,7 @@ router.post('/unblock-requests/:id/delete', isLoggedIn, isAdmin, async (req, res
 });
 
 // Delete approved/rejected unblock request history
-router.post('/unblock-requests/delete-history', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/unblock-requests/delete-history', isLoggedIn, hasAdminPermission('manage_unblock_requests'), async (req, res) => {
   try {
     const result = await ArtistUnblockRequest.deleteMany({
       status: { $in: ['approved', 'rejected'] }
@@ -2293,7 +2442,7 @@ router.post('/unblock-requests/delete-history', isLoggedIn, isAdmin, async (req,
 });
 
 // Manage tickets
-router.get('/tickets', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/tickets', isLoggedIn, hasAdminPermission('manage_tickets'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, dateRange, priceRange, sortBy, sortOrder } = req.query;
@@ -2408,7 +2557,7 @@ router.get('/tickets', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export tickets to CSV
-router.get('/tickets/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/tickets/export', isLoggedIn, hasAdminPermission('manage_tickets'), async (req, res) => {
   try {
     // Get search parameters (same as main tickets route)
     const { search, status, dateRange, priceRange, sortBy, sortOrder } = req.query;
@@ -2513,7 +2662,7 @@ router.get('/tickets/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View ticket details
-router.get('/tickets/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/tickets/:id', isLoggedIn, hasAdminPermission('manage_tickets'), async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
       .populate('user', 'name email profileImage createdAt role')
@@ -2551,7 +2700,7 @@ router.get('/tickets/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete ticket
-router.post('/tickets/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/tickets/:id/delete', isLoggedIn, hasAdminPermission('manage_tickets'), async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
 
@@ -2580,7 +2729,7 @@ router.post('/tickets/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Bulk delete tickets
-router.post('/tickets/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/tickets/bulk-delete', isLoggedIn, hasAdminPermission('manage_tickets'), async (req, res) => {
   try {
     const { ticketIds } = req.body;
 
@@ -2616,7 +2765,7 @@ router.post('/tickets/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
 // Content management routes moved to admin-content.js
 
 // Manage pages
-router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/pages', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     const dummyDataHelper = require('../utils/dummyDataHelper');
 
@@ -2725,7 +2874,7 @@ router.get('/pages', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export pages to CSV
-router.get('/pages/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/pages/export', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, published, showInNavigation, dateRange, sortBy, sortOrder } = req.query;
@@ -2820,7 +2969,7 @@ router.get('/pages/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Add page form
-router.get('/pages/add', isLoggedIn, isAdmin, (req, res) => {
+router.get('/pages/add', isLoggedIn, hasAdminPermission('manage_pages'), (req, res) => {
   res.render('admin/add-page', {
     layout: 'admin',
     currentPath: '/admin/pages',
@@ -2829,7 +2978,7 @@ router.get('/pages/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Add page process
-router.post('/pages/add', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/pages/add', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     const { title, slug, content, metaDescription, published, showInNavigation } = req.body;
 
@@ -2870,7 +3019,7 @@ router.post('/pages/add', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Edit page form
-router.get('/pages/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/pages/:id/edit', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     const page = await Page.findById(req.params.id);
 
@@ -2893,7 +3042,7 @@ router.get('/pages/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Update page
-router.post('/pages/:id/update', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/pages/:id/update', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     const { title, slug, content, metaDescription, published, showInNavigation } = req.body;
 
@@ -2935,7 +3084,7 @@ router.post('/pages/:id/update', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete page
-router.post('/pages/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/pages/:id/delete', isLoggedIn, hasAdminPermission('manage_pages'), async (req, res) => {
   try {
     const page = await Page.findById(req.params.id);
 
@@ -2957,7 +3106,7 @@ router.post('/pages/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Project Documentation Page
-router.get('/documentation', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/documentation', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     res.render('admin/documentation', {
       layout: 'admin',
@@ -3002,7 +3151,7 @@ router.get('/setup', async (req, res) => {
 });
 
 // Test email route
-router.get('/test-email', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/test-email', isLoggedIn, hasAdminPermission('manage_admins'), async (req, res) => {
   try {
     const { email } = req.query;
 
@@ -3030,7 +3179,7 @@ router.get('/test-email', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Direct email test route
-router.post('/send-direct-email', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/send-direct-email', isLoggedIn, hasAdminPermission('manage_admins'), async (req, res) => {
   try {
     const { to, subject, html } = req.body;
 
@@ -3066,7 +3215,7 @@ const venueBookingsRouter = require('./adminVenueBookings');
 router.use('/venue-bookings', venueBookingsRouter);
 
 // Storage Management
-router.get('/storage-management', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/storage-management', isLoggedIn, hasAdminPermission('manage_storage_management'), async (req, res) => {
   try {
     // Get all collection stats
     const stats = await getAllCollectionStats();
@@ -3085,7 +3234,7 @@ router.get('/storage-management', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View collection data
-router.get('/storage-management/view/:collection', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/storage-management/view/:collection', isLoggedIn, hasAdminPermission('manage_storage_management'), async (req, res) => {
   try {
     const collectionName = req.params.collection;
     const page = parseInt(req.query.page) || 1;
@@ -3136,7 +3285,7 @@ router.get('/storage-management/view/:collection', isLoggedIn, isAdmin, async (r
 });
 
 // Confirm delete collection data
-router.get('/storage-management/confirm-delete/:collection', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/storage-management/confirm-delete/:collection', isLoggedIn, hasAdminPermission('manage_storage_management'), async (req, res) => {
   try {
     const collectionName = req.params.collection;
     const previousPage = req.headers.referer || null;
@@ -3174,7 +3323,7 @@ router.get('/storage-management/confirm-delete/:collection', isLoggedIn, isAdmin
 });
 
 // Delete collection data
-router.post('/storage-management/delete/:collection', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/storage-management/delete/:collection', isLoggedIn, hasAdminPermission('manage_storage_management'), async (req, res) => {
   try {
     const collectionName = req.params.collection;
     const confirmed = req.body.confirmed === 'true';
@@ -3208,7 +3357,7 @@ router.post('/storage-management/delete/:collection', isLoggedIn, isAdmin, async
 });
 
 // Follower Analytics Routes
-router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/follower-analytics', isLoggedIn, hasAdminPermission('manage_follower_analytics'), async (req, res) => {
   try {
     const Follow = require('../models/Follow');
     const Artist = require('../models/Artist');
@@ -3313,7 +3462,7 @@ router.get('/follower-analytics', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Artist follower detail view
-router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/follower-analytics/artist/:id', isLoggedIn, hasAdminPermission('manage_follower_analytics'), async (req, res) => {
   try {
     const Follow = require('../models/Follow');
     const Artist = require('../models/Artist');
@@ -3381,7 +3530,7 @@ router.get('/follower-analytics/artist/:id', isLoggedIn, isAdmin, async (req, re
 });
 
 // Deleted accounts page
-router.get('/deleted-accounts', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/deleted-accounts', isLoggedIn, hasAdminPermission('manage_deleted_accounts'), async (req, res) => {
   try {
     // Get pagination
     const page = parseInt(req.query.page) || 1;
@@ -3421,7 +3570,7 @@ router.get('/deleted-accounts', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Deleted account details
-router.get('/deleted-accounts/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/deleted-accounts/:id', isLoggedIn, hasAdminPermission('manage_deleted_accounts'), async (req, res) => {
   try {
     const deletedAccount = await DeletedAccount.findById(req.params.id);
 
@@ -3444,7 +3593,7 @@ router.get('/deleted-accounts/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Restore deleted account (admin can restore)
-router.post('/deleted-accounts/:id/restore', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/deleted-accounts/:id/restore', isLoggedIn, hasAdminPermission('manage_deleted_accounts'), async (req, res) => {
   try {
     const deletedAccount = await DeletedAccount.findById(req.params.id);
 
@@ -3500,7 +3649,7 @@ router.post('/deleted-accounts/:id/restore', isLoggedIn, isAdmin, async (req, re
 });
 
 // Permanently delete (hard delete)
-router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, hasAdminPermission('manage_deleted_accounts'), async (req, res) => {
   try {
     const deletedAccount = await DeletedAccount.findByIdAndDelete(req.params.id);
 
@@ -3520,7 +3669,7 @@ router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, isAdmin, async
 
 // Manage Artist Posts page (server-rendered table + detail page)
 // New compact list page (also keep alternate path)
-router.get(['/posts', '/artist-posts'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/posts', '/artist-posts'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     const posts = await ArtistPost.find()
       .populate('artist', 'stageName user')
@@ -3562,7 +3711,7 @@ router.get(['/posts', '/artist-posts'], isLoggedIn, isAdmin, async (req, res) =>
 });
 
 // Detail page (support both routes)
-router.get(['/posts/:id', '/artist-posts/:id'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/posts/:id', '/artist-posts/:id'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     const post = await ArtistPost.findById(req.params.id)
       .populate('artist', 'stageName user')
@@ -3609,38 +3758,38 @@ function getArtistName(post) {
 }
 
 // Action pages
-router.get(['/artist-posts/:id/approve', '/posts/:id/approve-page'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/artist-posts/:id/approve', '/posts/:id/approve-page'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
   res.render('admin/artist-posts-approve', { layout: 'admin', currentPath: '/admin/posts', title: 'Approve Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
-router.get(['/artist-posts/:id/reject'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/artist-posts/:id/reject'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
   res.render('admin/artist-posts-reject', { layout: 'admin', currentPath: '/admin/posts', title: 'Reject Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
-router.get(['/artist-posts/:id/restrict'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/artist-posts/:id/restrict'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
   res.render('admin/artist-posts-restrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Restrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
-router.get(['/artist-posts/:id/unrestrict'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/artist-posts/:id/unrestrict'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
   res.render('admin/artist-posts-unrestrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Unrestrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
-router.get(['/artist-posts/:id/delete'], isLoggedIn, isAdmin, async (req, res) => {
+router.get(['/artist-posts/:id/delete'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
   res.render('admin/artist-posts-delete', { layout: 'admin', currentPath: '/admin/posts', title: 'Delete Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 // Action POST handlers (no JS needed)
-router.post('/artist-posts/:id/approve-do', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artist-posts/:id/approve-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     await ArtistPost.findByIdAndUpdate(req.params.id, {
       isApproved: true,
@@ -3655,7 +3804,7 @@ router.post('/artist-posts/:id/approve-do', isLoggedIn, isAdmin, async (req, res
   res.redirect('/admin/posts');
 });
 
-router.post('/artist-posts/:id/reject-do', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artist-posts/:id/reject-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     const { rejectionReason } = req.body;
     await ArtistPost.findByIdAndUpdate(req.params.id, {
@@ -3671,7 +3820,7 @@ router.post('/artist-posts/:id/reject-do', isLoggedIn, isAdmin, async (req, res)
   res.redirect('/admin/posts');
 });
 
-router.post('/artist-posts/:id/restrict-do', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artist-posts/:id/restrict-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     const { reason } = req.body;
     await ArtistPost.findByIdAndUpdate(req.params.id, {
@@ -3686,7 +3835,7 @@ router.post('/artist-posts/:id/restrict-do', isLoggedIn, isAdmin, async (req, re
   res.redirect('/admin/posts');
 });
 
-router.post('/artist-posts/:id/unrestrict-do', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artist-posts/:id/unrestrict-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     await ArtistPost.findByIdAndUpdate(req.params.id, {
       isActive: true,
@@ -3700,7 +3849,7 @@ router.post('/artist-posts/:id/unrestrict-do', isLoggedIn, isAdmin, async (req, 
   res.redirect('/admin/posts');
 });
 
-router.post('/artist-posts/:id/delete-do', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/artist-posts/:id/delete-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     const post = await ArtistPost.findById(req.params.id);
     if (post && post.media && post.media.publicId) {
@@ -3716,7 +3865,7 @@ router.post('/artist-posts/:id/delete-do', isLoggedIn, isAdmin, async (req, res)
 });
 
 // Revenue Analysis Routes
-router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/revenue-analysis', isLoggedIn, hasAdminPermission('manage_revenue_analysis'), async (req, res) => {
   try {
     // Get search parameters
     const { startDate, endDate, revenueSource, userFilter, amountMin, amountMax, paymentStatus, concertFilter: concertNameFilter, concertStatus, cityFilter, stateFilter } = req.query;
@@ -3906,7 +4055,7 @@ router.get('/revenue-analysis', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export revenue data to CSV
-router.get('/revenue-analysis/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/revenue-analysis/export', isLoggedIn, hasAdminPermission('manage_revenue_analysis'), async (req, res) => {
   try {
     const { startDate, endDate, revenueSource } = req.query;
 
@@ -3964,7 +4113,7 @@ router.get('/revenue-analysis/export', isLoggedIn, isAdmin, async (req, res) => 
 });
 
 // Export revenue data to HTML
-router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/revenue-analysis/export-html', isLoggedIn, hasAdminPermission('manage_revenue_analysis'), async (req, res) => {
   try {
     // Get search parameters (same as main revenue analysis route)
     const { startDate, endDate, revenueSource, userFilter, amountMin, amountMax, paymentStatus, concertFilter: concertNameFilter, concertStatus, cityFilter, stateFilter } = req.query;
@@ -4407,7 +4556,7 @@ router.get('/revenue-analysis/export-html', isLoggedIn, isAdmin, async (req, res
 });
 
 // Password entry page for HTML export
-router.get('/revenue-analysis/password-entry', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/revenue-analysis/password-entry', isLoggedIn, hasAdminPermission('manage_revenue_analysis'), async (req, res) => {
   try {
     // Get all filter parameters to pass to the password entry page
     const {
@@ -4441,7 +4590,7 @@ router.get('/revenue-analysis/password-entry', isLoggedIn, isAdmin, async (req, 
 });
 
 // Handle password submission for HTML export
-router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/revenue-analysis/export-with-password', isLoggedIn, hasAdminPermission('manage_revenue_analysis'), async (req, res) => {
   try {
     const { password } = req.body;
 
@@ -4500,7 +4649,7 @@ router.post('/revenue-analysis/export-with-password', isLoggedIn, isAdmin, async
 });
 
 // Admin view distribution records
-router.get('/distribution-requests', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/distribution-requests', isLoggedIn, hasAdminPermission('manage_distribution_receipts'), async (req, res) => {
   try {
     const { status, paymentStatus, artistSearch, distributorSearch } = req.query;
     let query = { deletedByAdmin: { $ne: true } };
@@ -4562,7 +4711,7 @@ router.get('/distribution-requests', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-router.get('/distribution-requests/receipt/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/distribution-requests/receipt/:id', isLoggedIn, hasAdminPermission('manage_distribution_receipts'), async (req, res) => {
   try {
     const DistributionRequest = require('../models/DistributionRequest');
     const request = await DistributionRequest.findOne({ _id: req.params.id })
@@ -4588,7 +4737,7 @@ router.get('/distribution-requests/receipt/:id', isLoggedIn, isAdmin, async (req
   }
 });
 
-router.post('/distribution-requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/distribution-requests/:id/delete', isLoggedIn, hasAdminPermission('manage_distribution_receipts'), async (req, res) => {
   try {
     const DistributionRequest = require('../models/DistributionRequest');
     const request = await DistributionRequest.findById(req.params.id);

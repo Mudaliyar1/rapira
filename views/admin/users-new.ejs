@@ -207,9 +207,9 @@
                     <a href="/users/<%= user._id %>" target="_blank" class="btn btn-sm btn-outline-secondary">
                       <i class="bi bi-eye"></i> View
                     </a>
-                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= user._id %>">
+                    <a href="/admin/users/<%= user._id %>/delete-confirm" class="btn btn-sm btn-outline-danger">
                       <i class="bi bi-trash"></i> Delete
-                    </button>
+                    </a>
                   </div>
                 </td>
               </tr>
@@ -225,31 +225,7 @@
   </div>
 </div>
 
-<!-- Delete Modals -->
-<% if (users && users.length > 0) { %>
-  <% users.forEach(user => { %>
-    <div class="modal fade" id="deleteModal<%= user._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= user._id %>" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-white" id="deleteModalLabel<%= user._id %>">Confirm Delete</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p class="text-white">Are you sure you want to delete the user <strong><%= user.name %></strong>?</p>
-            <p class="text-danger mb-0">This action cannot be undone. All associated data will be permanently deleted.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <form action="/admin/users/<%= user._id %>/delete" method="POST">
-              <button type="submit" class="btn btn-danger">Delete User</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  <% }); %>
-<% } %>
+<!-- Delete Modals Removed - Using Dedicated Confirmation Pages -->
 
 <%- contentFor('headerButtons') %>
 <a href="/admin/users/add" class="btn btn-primary">

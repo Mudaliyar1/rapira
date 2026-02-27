@@ -3,10 +3,10 @@ const router = express.Router();
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
 const User = require('../models/User');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // Admin: List all roles
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     // Get search parameters
     const { search, sortBy, sortOrder } = req.query;
@@ -32,8 +32,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const createdBy = (role.createdBy ? role.createdBy.name : '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               createdBy.includes(searchTerm);
+          description.includes(searchTerm) ||
+          createdBy.includes(searchTerm);
       });
     }
 
@@ -71,7 +71,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export roles to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     // Get search parameters (same as main roles route)
     const { search, sortBy, sortOrder } = req.query;
@@ -97,8 +97,8 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const createdBy = (role.createdBy ? role.createdBy.name : '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               createdBy.includes(searchTerm);
+          description.includes(searchTerm) ||
+          createdBy.includes(searchTerm);
       });
     }
 
@@ -140,7 +140,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Add role form
-router.get('/add', isLoggedIn, isAdmin, (req, res) => {
+router.get('/add', isLoggedIn, hasAdminPermission('manage_roles'), (req, res) => {
   res.render('admin/add-role', {
     layout: 'admin',
     title: 'Add Role',
@@ -149,7 +149,7 @@ router.get('/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Admin: Add role process
-router.post('/add', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/add', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const { name, description, icon } = req.body;
 
@@ -187,7 +187,7 @@ router.post('/add', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Edit role form
-router.get('/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/edit/:id', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
 
@@ -210,7 +210,7 @@ router.get('/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Edit role process
-router.post('/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/edit/:id', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const { name, description, icon } = req.body;
 
@@ -254,7 +254,7 @@ router.post('/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Confirm delete role
-router.get('/confirm-delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/confirm-delete/:id', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
 
@@ -294,7 +294,7 @@ router.get('/confirm-delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Delete role
-router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/delete/:id', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
 
@@ -326,7 +326,7 @@ router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Manage user roles
-router.get('/user-roles', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/user-roles', isLoggedIn, hasAdminPermission('manage_user_roles'), async (req, res) => {
   try {
     // Get search parameters
     const { search, userRole, assignedRole, hasRoles, sortBy, sortOrder } = req.query;
@@ -457,7 +457,7 @@ router.get('/user-roles', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export user roles to CSV
-router.get('/user-roles/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/user-roles/export', isLoggedIn, hasAdminPermission('manage_user_roles'), async (req, res) => {
   try {
     // Get search parameters (same as main user-roles route)
     const { search, userRole, assignedRole, hasRoles, sortBy, sortOrder } = req.query;
@@ -563,7 +563,7 @@ router.get('/user-roles/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Assign role to user form
-router.get('/assign-to-user/:userId', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/assign-to-user/:userId', isLoggedIn, hasAdminPermission('manage_user_roles'), async (req, res) => {
   try {
     const userId = req.params.userId;
 
@@ -604,7 +604,7 @@ router.get('/assign-to-user/:userId', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Assign role to user process
-router.post('/assign', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/assign', isLoggedIn, hasAdminPermission('manage_user_roles'), async (req, res) => {
   try {
     const { userId, roleId } = req.body;
 
@@ -649,7 +649,7 @@ router.post('/assign', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Remove role from user
-router.post('/remove', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/remove', isLoggedIn, hasAdminPermission('manage_user_roles'), async (req, res) => {
   try {
     const { userId, roleId } = req.body;
 

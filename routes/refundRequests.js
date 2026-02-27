@@ -5,7 +5,7 @@ const Ticket = require('../models/Ticket');
 const Concert = require('../models/Concert');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const {
   sendRefundApprovalEmail,
   sendRefundRejectionEmail
@@ -234,7 +234,7 @@ router.post('/submit', isLoggedIn, async (req, res) => {
 // Admin routes
 
 // List all refund requests
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_refund_requests'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, dateRange, amountRange, sortBy, sortOrder } = req.query;
@@ -300,10 +300,10 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const reason = (request.reason || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               concertTitle.includes(searchTerm) ||
-               ticketNumber.includes(searchTerm) ||
-               reason.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          concertTitle.includes(searchTerm) ||
+          ticketNumber.includes(searchTerm) ||
+          reason.includes(searchTerm);
       });
     }
 
@@ -348,7 +348,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export refund requests to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_refund_requests'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, status, dateRange, amountRange, sortBy, sortOrder } = req.query;
@@ -412,10 +412,10 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const reason = (request.reason || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               concertTitle.includes(searchTerm) ||
-               ticketNumber.includes(searchTerm) ||
-               reason.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          concertTitle.includes(searchTerm) ||
+          ticketNumber.includes(searchTerm) ||
+          reason.includes(searchTerm);
       });
     }
 
@@ -457,7 +457,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View refund request details
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_refund_requests'), async (req, res) => {
   try {
     const refundRequest = await RefundRequest.findById(req.params.id)
       .populate('ticket', 'ticketNumber concert user attendees quantity totalAmount originalAmount discountApplied discountPercentage discountType paymentId orderId paymentStatus purchaseDate')
@@ -489,7 +489,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Process refund request (approve or reject)
-router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/process', isLoggedIn, hasAdminPermission('manage_refund_requests'), async (req, res) => {
   try {
     const { action, adminNotes, transactionId } = req.body;
 
@@ -574,10 +574,10 @@ router.post('/:id/process', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/refund-requests/:id/delete - Delete individual refund request
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_refund_requests'), async (req, res) => {
   try {
     const refundRequest = await RefundRequest.findById(req.params.id);
-    
+
     if (!refundRequest) {
       req.flash('error', 'Refund request not found');
       return res.redirect('/admin/refund-requests');
@@ -585,7 +585,7 @@ router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 
     // Delete the refund request
     await RefundRequest.findByIdAndDelete(req.params.id);
-    
+
     req.flash('success', 'Refund request deleted successfully');
     res.redirect('/admin/refund-requests');
 

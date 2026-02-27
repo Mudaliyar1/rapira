@@ -4,23 +4,23 @@ const Concert = require('../models/Concert');
 const ConcertEditRequest = require('../models/ConcertEditRequest');
 const Artist = require('../models/Artist');
 const Venue = require('../models/Venue');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // List all concert edit requests
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const { status = 'all', sort = 'newest' } = req.query;
-    
+
     // Build filter
     const filter = {};
     if (status !== 'all') {
       filter.status = status;
     }
-    
+
     // Build sort
     let sortOption = { requestedAt: -1 }; // Default: newest first
     if (sort === 'oldest') sortOption = { requestedAt: 1 };
-    
+
     const editRequests = await ConcertEditRequest.find(filter)
       .populate({
         path: 'concert',
@@ -38,7 +38,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       })
       .populate('adminResponse.respondedBy')
       .sort(sortOption);
-    
+
     // Get counts for dashboard stats
     const stats = await ConcertEditRequest.aggregate([
       {
@@ -48,18 +48,18 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         }
       }
     ]);
-    
+
     const statusCounts = {
       pending: 0,
       approved: 0,
       rejected: 0,
       total: editRequests.length
     };
-    
+
     stats.forEach(stat => {
       statusCounts[stat._id] = stat.count;
     });
-    
+
     res.render('admin/concert-edit-requests/index', {
       title: 'Concert Edit Requests Management',
       editRequests,
@@ -69,7 +69,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       user: req.session.user,
       layout: 'admin'
     });
-    
+
   } catch (error) {
     console.error('Error fetching concert edit requests:', error);
     req.flash('error', 'Failed to load concert edit requests');
@@ -78,7 +78,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View specific edit request details
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const editRequest = await ConcertEditRequest.findById(req.params.id)
       .populate({
@@ -100,18 +100,18 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
         path: 'requestedChanges.venue',
         model: 'Venue'
       });
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     // Get venue details if venue is being changed
     let requestedVenue = null;
     if (editRequest.requestedChanges.venue) {
       requestedVenue = await Venue.findById(editRequest.requestedChanges.venue);
     }
-    
+
     res.render('admin/concert-edit-requests/detail', {
       title: 'Concert Edit Request Details',
       editRequest,
@@ -119,7 +119,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
       user: req.session.user,
       layout: 'admin'
     });
-    
+
   } catch (error) {
     console.error('Error fetching edit request details:', error);
     req.flash('error', 'Failed to load edit request details');
@@ -128,7 +128,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Show approve edit request page
-router.get('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/approve', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const editRequest = await ConcertEditRequest.findById(req.params.id)
       .populate({
@@ -178,7 +178,7 @@ router.get('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Show reject edit request page  
-router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/reject', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const editRequest = await ConcertEditRequest.findById(req.params.id)
       .populate({
@@ -228,30 +228,30 @@ router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Approve edit request
-router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const { adminMessage } = req.body;
-    
+
     const editRequest = await ConcertEditRequest.findById(req.params.id)
       .populate('concert');
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     if (editRequest.status !== 'pending') {
       req.flash('error', 'This request has already been processed');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     // Apply the requested changes to the concert
     const concert = await Concert.findById(editRequest.concert._id);
     if (!concert) {
       req.flash('error', 'Concert not found');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     // Update concert with requested changes
     const changes = editRequest.requestedChanges;
     if (changes.title) concert.title = changes.title;
@@ -265,9 +265,9 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     if (changes.price !== undefined) concert.price = changes.price;
     if (changes.maxTickets !== undefined) concert.maxTickets = changes.maxTickets;
     if (changes.posterImage) concert.posterImage = changes.posterImage;
-    
+
     await concert.save();
-    
+
     // Update edit request status
     editRequest.status = 'approved';
     editRequest.adminResponse = {
@@ -275,12 +275,12 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
       respondedBy: req.session.user.id,
       respondedAt: new Date()
     };
-    
+
     await editRequest.save();
-    
+
     req.flash('success', 'Edit request approved and concert updated successfully');
     res.redirect('/admin/concert-edit-requests');
-    
+
   } catch (error) {
     console.error('Error approving edit request:', error);
     req.flash('error', 'Failed to approve edit request');
@@ -289,22 +289,22 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Reject edit request
-router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const { adminMessage } = req.body;
-    
+
     const editRequest = await ConcertEditRequest.findById(req.params.id);
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     if (editRequest.status !== 'pending') {
       req.flash('error', 'This request has already been processed');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     // Update edit request status
     editRequest.status = 'rejected';
     editRequest.adminResponse = {
@@ -312,12 +312,12 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
       respondedBy: req.session.user.id,
       respondedAt: new Date()
     };
-    
+
     await editRequest.save();
-    
+
     req.flash('success', 'Edit request rejected successfully');
     res.redirect('/admin/concert-edit-requests');
-    
+
   } catch (error) {
     console.error('Error rejecting edit request:', error);
     req.flash('error', 'Failed to reject edit request');
@@ -326,25 +326,25 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete edit request (only for processed requests)
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_concert_edit_requests'), async (req, res) => {
   try {
     const editRequest = await ConcertEditRequest.findById(req.params.id);
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     if (editRequest.status === 'pending') {
       req.flash('error', 'Cannot delete pending edit requests. Please approve or reject first.');
       return res.redirect('/admin/concert-edit-requests');
     }
-    
+
     await ConcertEditRequest.findByIdAndDelete(req.params.id);
-    
+
     req.flash('success', 'Edit request deleted successfully');
     res.redirect('/admin/concert-edit-requests');
-    
+
   } catch (error) {
     console.error('Error deleting edit request:', error);
     req.flash('error', 'Failed to delete edit request');

@@ -25,7 +25,7 @@ module.exports = {
 
     // Provide context-specific error messages
     let errorMessage = 'You must be logged in to access this page';
-    
+
     // Check if this is a like action
     if (req.path.includes('/like')) {
       if (req.path.includes('/posts/')) {
@@ -63,12 +63,12 @@ module.exports = {
     }
 
     req.flash('error', errorMessage);
-    
+
     // For AJAX requests, send JSON response instead of redirect
     if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
       return res.status(401).json({ success: false, message: errorMessage });
     }
-    
+
     res.redirect('/auth/login');
   },
 
@@ -85,14 +85,14 @@ module.exports = {
   clearLoginError: (req, res, next) => {
     // Get current flash messages
     const flash = req.session.flash || {};
-    
+
     // If there's an error message that matches the login required message, clear it
     if (flash.error && Array.isArray(flash.error)) {
       flash.error = flash.error.filter(msg => msg !== 'You must be logged in to access this page');
     } else if (flash.error === 'You must be logged in to access this page') {
       delete flash.error;
     }
-    
+
     req.session.flash = flash;
     next();
   },
@@ -108,11 +108,28 @@ module.exports = {
 
   // Check if user is a super admin
   isSuperAdmin: (req, res, next) => {
-    if (req.session.user && req.session.user.role === 'superAdmin') {
+    if (req.session.user && (req.session.user.role === 'superAdmin' || (req.session.user.role === 'admin' && req.session.user.isSuperAdmin))) {
       return next();
     }
     req.flash('error', 'You must be a super admin to access this page');
     res.redirect('/admin');
+  },
+
+  // Check if admin has specific permission
+  hasAdminPermission: (permission) => {
+    return (req, res, next) => {
+      const user = req.session.user;
+      if (user && (user.role === 'admin' || user.role === 'superAdmin')) {
+        if (user.role === 'superAdmin' || user.isSuperAdmin) {
+          return next();
+        }
+        if (user.adminPermissions && user.adminPermissions.includes(permission)) {
+          return next();
+        }
+      }
+      req.flash('error', 'You do not have permission to access that section.');
+      res.redirect('/admin');
+    };
   },
 
   // Check if user is not logged in (for login/register pages)

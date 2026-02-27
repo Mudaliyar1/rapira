@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ArtistApplication = require('../models/ArtistApplication');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -421,7 +421,7 @@ router.get('/status', isLoggedIn, async (req, res) => {
 });
 
 // Admin: List all applications
-router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
@@ -512,7 +512,7 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export artist applications to CSV
-router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/export', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     // Get search parameters (same as main admin route)
     const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
@@ -595,7 +595,7 @@ router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: View application details
-router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user', 'name email profileImage');
@@ -619,7 +619,7 @@ router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Serve proof photo/PDF directly (admin only)
-router.get('/proof/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/proof/:id', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id);
     if (!application) {
@@ -646,7 +646,7 @@ router.get('/proof/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Approve application
-router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user');
@@ -736,7 +736,7 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Reject application
-router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user');
@@ -783,7 +783,7 @@ router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Confirm delete application
-router.get('/admin/:id/confirm-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id/confirm-delete', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user', 'name email profileImage');

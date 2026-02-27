@@ -3,10 +3,10 @@ const router = express.Router();
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 const UserSubscription = require('../models/UserSubscription');
 const User = require('../models/User');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // Admin: Subscription Plans Management
-router.get('/plans', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/plans', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     // Get search parameters
     const { search, isActive, durationUnit, priceRange, dateRange, sortBy, sortOrder } = req.query;
@@ -77,7 +77,7 @@ router.get('/plans', isLoggedIn, isAdmin, async (req, res) => {
         const benefits = (plan.benefits || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               benefits.includes(searchTerm);
+          benefits.includes(searchTerm);
       });
     }
 
@@ -115,7 +115,7 @@ router.get('/plans', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export subscription plans to CSV
-router.get('/plans/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/plans/export', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, isActive, durationUnit, priceRange, dateRange, sortBy, sortOrder } = req.query;
@@ -182,7 +182,7 @@ router.get('/plans/export', isLoggedIn, isAdmin, async (req, res) => {
         const benefits = (plan.benefits || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               benefits.includes(searchTerm);
+          benefits.includes(searchTerm);
       });
     }
 
@@ -219,7 +219,7 @@ router.get('/plans/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Add Subscription Plan Form
-router.get('/plans/add', isLoggedIn, isAdmin, (req, res) => {
+router.get('/plans/add', isLoggedIn, hasAdminPermission('manage_sub_plans'), (req, res) => {
   res.render('admin/subscriptions/plan-form', {
     layout: 'admin',
     currentPath: '/admin/subscriptions/plans',
@@ -229,7 +229,7 @@ router.get('/plans/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // Admin: Edit Subscription Plan Form
-router.get('/plans/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/plans/edit/:id', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     const plan = await SubscriptionPlan.findById(req.params.id);
 
@@ -252,7 +252,7 @@ router.get('/plans/edit/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Create Subscription Plan
-router.post('/plans', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/plans', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     const { name, price, duration, durationUnit, benefits, discountPercentage, isActive } = req.body;
 
@@ -286,7 +286,7 @@ router.post('/plans', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Update Subscription Plan
-router.post('/plans/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/plans/:id', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     const { name, price, duration, durationUnit, benefits, discountPercentage, isActive } = req.body;
 
@@ -317,7 +317,7 @@ router.post('/plans/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Delete Subscription Plan Confirmation Page
-router.get('/plans/delete/:id/confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/plans/delete/:id/confirm', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     const plan = await SubscriptionPlan.findById(req.params.id);
 
@@ -355,7 +355,7 @@ router.get('/plans/delete/:id/confirm', isLoggedIn, isAdmin, async (req, res) =>
 });
 
 // Admin: Delete Subscription Plan
-router.post('/plans/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/plans/delete/:id', isLoggedIn, hasAdminPermission('manage_sub_plans'), async (req, res) => {
   try {
     // Check if plan is being used by any active subscriptions
     const activeSubscriptions = await UserSubscription.countDocuments({
@@ -381,7 +381,7 @@ router.post('/plans/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: View User Subscriptions
-router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, planId, dateRange, sortBy, sortOrder } = req.query;
@@ -444,9 +444,9 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
         const notes = (subscription.notes || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               planName.includes(searchTerm) ||
-               notes.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          planName.includes(searchTerm) ||
+          notes.includes(searchTerm);
       });
     }
 
@@ -491,7 +491,7 @@ router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export user subscriptions to CSV
-router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/export', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, status, planId, dateRange, sortBy, sortOrder } = req.query;
@@ -551,9 +551,9 @@ router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
         const notes = (subscription.notes || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               planName.includes(searchTerm) ||
-               notes.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          planName.includes(searchTerm) ||
+          notes.includes(searchTerm);
       });
     }
 
@@ -593,7 +593,7 @@ router.get('/users/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: View subscription details
-router.get('/users/view/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/view/:id', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     const subscription = await UserSubscription.findById(req.params.id)
       .populate('user', 'name email profileImage')
@@ -618,7 +618,7 @@ router.get('/users/view/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Deactivate subscription
-router.post('/users/deactivate/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/deactivate/:id', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     const subscription = await UserSubscription.findById(req.params.id);
 
@@ -643,7 +643,7 @@ router.post('/users/deactivate/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Reactivate subscription
-router.post('/users/reactivate/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/users/reactivate/:id', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     const subscription = await UserSubscription.findById(req.params.id)
       .populate('plan');
@@ -660,7 +660,7 @@ router.post('/users/reactivate/:id', isLoggedIn, isAdmin, async (req, res) => {
     const now = new Date();
     let expiryDate;
 
-    switch(subscription.plan.durationUnit) {
+    switch (subscription.plan.durationUnit) {
       case 'seconds':
         expiryDate = new Date(now.getTime() + subscription.plan.duration * 1000);
         break;
@@ -691,7 +691,7 @@ router.post('/users/reactivate/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Assign subscription to user form
-router.get('/assign', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/assign', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     // Get all users
     const users = await User.find({ role: { $in: ['user', 'artist'] } }).sort({ name: 1 });
@@ -714,7 +714,7 @@ router.get('/assign', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Process assign subscription to user
-router.post('/assign', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/assign', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     const { userId, planId, notes } = req.body;
 
@@ -742,7 +742,7 @@ router.post('/assign', isLoggedIn, isAdmin, async (req, res) => {
     const now = new Date();
     let expiryDate;
 
-    switch(plan.durationUnit) {
+    switch (plan.durationUnit) {
       case 'seconds':
         expiryDate = new Date(now.getTime() + plan.duration * 1000);
         break;
@@ -783,7 +783,7 @@ router.post('/assign', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Delete User Subscription Confirmation Page
-router.get('/users/delete/:id/confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users/delete/:id/confirm', isLoggedIn, hasAdminPermission('manage_sub_users'), async (req, res) => {
   try {
     const subscription = await UserSubscription.findById(req.params.id)
       .populate('user', 'name email')

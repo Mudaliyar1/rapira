@@ -18,8 +18,20 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'artist', 'admin'],
+    enum: ['user', 'artist', 'admin', 'superAdmin'],
     default: 'user'
+  },
+  isSuperAdmin: {
+    type: Boolean,
+    default: false
+  },
+  adminPermissions: {
+    type: [String],
+    default: []
+  },
+  adminTitle: {
+    type: String,
+    default: ''
   },
   profileImage: {
     type: String,
@@ -135,7 +147,7 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 // Hash password before saving
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -149,12 +161,12 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to get profile image (default to avatar if not uploaded)
-UserSchema.methods.getDisplayProfileImage = function() {
+UserSchema.methods.getDisplayProfileImage = function () {
   if (this.profileImage) {
     return this.profileImage;
   }
@@ -162,7 +174,7 @@ UserSchema.methods.getDisplayProfileImage = function() {
 };
 
 // Virtual method to get profile image (default to avatar if not uploaded)
-UserSchema.virtual('displayProfileImage').get(function() {
+UserSchema.virtual('displayProfileImage').get(function () {
   if (this.profileImage) {
     return this.profileImage;
   }

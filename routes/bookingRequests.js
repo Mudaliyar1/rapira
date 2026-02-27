@@ -3,10 +3,10 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const ArtistBookingRequest = require('../models/ArtistBookingRequest');
 const DailyConcert = require('../models/DailyConcert');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // GET /admin/find-my-artist/booking-requests - List all booking requests
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_booking_requests'), async (req, res) => {
   try {
     // Get filter parameters
     const { status, type, city, state } = req.query;
@@ -71,7 +71,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/find-my-artist/booking-requests/:id - View a specific booking request
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_booking_requests'), async (req, res) => {
   try {
     const request = await ArtistBookingRequest.findById(req.params.id)
       .populate([
@@ -107,7 +107,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/booking-requests/:id/approve - Approve a booking request
-router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_booking_requests'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
 
@@ -185,7 +185,7 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/booking-requests/:id/reject - Reject a booking request
-router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_booking_requests'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
 
@@ -228,7 +228,7 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/booking-requests/:id/delete - Delete a booking request
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_booking_requests'), async (req, res) => {
   try {
     await ArtistBookingRequest.findByIdAndDelete(req.params.id);
 

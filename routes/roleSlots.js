@@ -3,10 +3,10 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const ArtistRoleSlot = require('../models/ArtistRoleSlot');
 const ArtistBookingRequest = require('../models/ArtistBookingRequest');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // GET /admin/find-my-artist/role-slots - Manage role slots
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     // Get search parameters
     const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -71,9 +71,9 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const state = (slot.state || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm);
+          description.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm);
       });
     }
 
@@ -119,7 +119,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export role slots to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -180,9 +180,9 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const state = (slot.state || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm);
+          description.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm);
       });
     }
 
@@ -217,7 +217,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/find-my-artist/role-slots/new - Show form to create a new role slot
-router.get('/new', isLoggedIn, isAdmin, (req, res) => {
+router.get('/new', isLoggedIn, hasAdminPermission('manage_roles'), (req, res) => {
   res.render('admin/find-my-artist/role-slot-form', {
     layout: 'admin',
     title: 'Add New Role Slot',
@@ -227,7 +227,7 @@ router.get('/new', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // POST /admin/find-my-artist/role-slots - Create a new role slot
-router.post('/', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const { name, description, city, state, isActive } = req.body;
 
@@ -264,7 +264,7 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/find-my-artist/role-slots/:id/edit - Show form to edit a role slot
-router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/edit', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const roleSlot = await ArtistRoleSlot.findById(req.params.id);
 
@@ -287,7 +287,7 @@ router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/role-slots/:id - Update a role slot
-router.post('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const { name, description, city, state, isActive } = req.body;
 
@@ -316,7 +316,7 @@ router.post('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/role-slots/:id/delete - Delete a role slot
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     // Check if there are any pending booking requests for this role
     const pendingRequests = await ArtistBookingRequest.countDocuments({
@@ -341,7 +341,7 @@ router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/role-slots/update-order - Update display order
-router.post('/update-order', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/update-order', isLoggedIn, hasAdminPermission('manage_roles'), async (req, res) => {
   try {
     const { orders } = req.body;
 

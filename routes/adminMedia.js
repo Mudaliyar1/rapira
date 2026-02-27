@@ -11,7 +11,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { deleteMedia } = require('../utils/mediaService');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 const path = require('path');
@@ -19,7 +19,7 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 
 // All routes require admin authentication
-router.use(isLoggedIn, isAdmin);
+router.use(isLoggedIn, hasAdminPermission('manage_media_management'));
 
 // GET /admin/media - List all media with pagination and filters
 router.get('/', async (req, res) => {
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
     });
 
     let filter = {};
-    
+
     // Basic filters
     if (module && module !== 'all') filter.module = module;
     if (ownerType && ownerType !== 'all') filter.ownerType = ownerType;
@@ -52,12 +52,12 @@ router.get('/', async (req, res) => {
     if (ownerSearch && ownerSearch.trim()) {
       const User = require('../models/User');
       const Artist = require('../models/Artist');
-      
+
       try {
         // Trim whitespace from search term
         const trimmedSearch = ownerSearch.trim();
         console.log('🔍 Searching for owner:', trimmedSearch);
-        
+
         // Search for users by email or username
         const users = await User.find({
           $or: [
@@ -65,34 +65,34 @@ router.get('/', async (req, res) => {
             { username: { $regex: trimmedSearch, $options: 'i' } }
           ]
         }).select('_id email username').lean();
-        
+
         console.log(`   Found ${users.length} users:`, users.map(u => `${u.email}/${u.username}`));
-        
+
         // Get user IDs
         const userIds = users.map(u => u._id);
-        
+
         // Search for artists by stageName OR by their linked user ID
         const artistFilter = {
           $or: [
             { stageName: { $regex: trimmedSearch, $options: 'i' } }
           ]
         };
-        
+
         // If we found users, also include artists that are linked to those users
         if (userIds.length > 0) {
           artistFilter.$or.push({ user: { $in: userIds } });
         }
-        
+
         const artists = await Artist.find(artistFilter).select('_id user stageName').populate('user', 'email').lean();
-        
+
         console.log(`   Found ${artists.length} artists:`, artists.map(a => `${a.stageName} (${a.user?.email || 'no email'})`));
-        
+
         // Combine all owner IDs
         const ownerIds = [
           ...userIds,
           ...artists.map(a => a._id)
         ];
-        
+
         if (ownerIds.length > 0) {
           filter.ownerId = { $in: ownerIds };
           console.log(`   ✅ Filter set for ${ownerIds.length} owners (${userIds.length} users, ${artists.length} artists)`);
@@ -107,7 +107,7 @@ router.get('/', async (req, res) => {
         console.error('Error searching for owner:', err);
       }
     }
-    
+
     // Handle filename/public_id search
     if (search && search.trim()) {
       filter.$or = [
@@ -117,27 +117,27 @@ router.get('/', async (req, res) => {
     }
 
     const sortOptions = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
-    
+
     // Debug filter
     console.log('🔎 Final filter:', JSON.stringify(filter, null, 2));
-    
+
     const mediaList = await Media.find(filter)
       .sort(sortOptions)
       .skip(skip)
       .limit(limit)
       .lean();
-    
+
     console.log(`📌 Query found ${mediaList.length} media items`);
 
     // Populate owner details
     const User = require('../models/User');
     const Artist = require('../models/Artist');
     const Venue = require('../models/Venue');
-    
+
     const enrichedMediaList = await Promise.all(
       mediaList.map(async (media) => {
         let ownerDetails = null;
-        
+
         if (media.ownerId && media.ownerType) {
           try {
             if (media.ownerType === 'user') {
@@ -151,7 +151,7 @@ router.get('/', async (req, res) => {
             console.error('Error populating owner:', err);
           }
         }
-        
+
         return { ...media, ownerDetails };
       })
     );

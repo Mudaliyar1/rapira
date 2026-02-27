@@ -8,7 +8,7 @@ const TeamUpdate = require('../models/TeamUpdate');
 const TeamComment = require('../models/TeamComment');
 const User = require('../models/User');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
 // Enable method override for PUT and DELETE requests
@@ -35,12 +35,12 @@ const upload = multer({
 });
 
 // GET /admin/team-updates - List all team updates
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    
+
     const {
       type = 'all',
       category = 'all',
@@ -52,11 +52,11 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 
     // Build filter query
     let filter = {};
-    
+
     if (type !== 'all') filter.type = type;
     if (category !== 'all') filter.category = category;
     if (priority !== 'all') filter.priority = priority;
-    
+
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -122,11 +122,11 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-updates/create - Show create form
-router.get('/create', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/create', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     // Get all admin users for meeting attendees
-    const adminUsers = await User.find({ 
-      role: { $in: ['admin', 'superAdmin'] } 
+    const adminUsers = await User.find({
+      role: { $in: ['admin', 'superAdmin'] }
     }).select('name email').sort({ name: 1 });
 
     res.render('admin/team-updates/create', {
@@ -143,7 +143,7 @@ router.get('/create', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-updates - Create new team update
-router.post('/', isLoggedIn, isAdmin, upload.array('attachments', 5), async (req, res) => {
+router.post('/', isLoggedIn, hasAdminPermission('manage_team_updates'), upload.array('attachments', 5), async (req, res) => {
   try {
     const {
       title,
@@ -232,7 +232,7 @@ router.post('/', isLoggedIn, isAdmin, upload.array('attachments', 5), async (req
 });
 
 // GET /admin/team-updates/:id - View single update
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id)
       .populate('createdBy', 'name email profileImage role')
@@ -269,7 +269,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-updates/:id/react - Add reaction to update
-router.post('/:id/react', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/react', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const { reactionType } = req.body;
     const update = await TeamUpdate.findById(req.params.id);
@@ -288,7 +288,7 @@ router.post('/:id/react', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-updates/:id/comments - Add comment to update
-router.post('/:id/comments', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/comments', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const { content, parentComment } = req.body;
 
@@ -311,7 +311,7 @@ router.post('/:id/comments', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // PUT /admin/team-updates/:id/action-items/:actionId - Update action item status
-router.put('/:id/action-items/:actionId', isLoggedIn, isAdmin, async (req, res) => {
+router.put('/:id/action-items/:actionId', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -336,7 +336,7 @@ router.put('/:id/action-items/:actionId', isLoggedIn, isAdmin, async (req, res) 
 });
 
 // GET /admin/team-updates/:id/edit - Show edit form
-router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/edit', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id)
       .populate('createdBy', 'name email')
@@ -368,7 +368,7 @@ router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // PUT /admin/team-updates/:id - Update team update
-router.put('/:id', isLoggedIn, isAdmin, upload.array('attachments', 5), async (req, res) => {
+router.put('/:id', isLoggedIn, hasAdminPermission('manage_team_updates'), upload.array('attachments', 5), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id);
 
@@ -440,7 +440,7 @@ router.put('/:id', isLoggedIn, isAdmin, upload.array('attachments', 5), async (r
           }
         }
       }
-      
+
       existingAttachments = existingAttachments.filter(attachment =>
         !removeAttachments.includes(attachment._id.toString())
       );
@@ -488,7 +488,7 @@ router.put('/:id', isLoggedIn, isAdmin, upload.array('attachments', 5), async (r
 });
 
 // DELETE /admin/team-updates/:id - Delete team update
-router.delete('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/:id', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id);
 
@@ -523,7 +523,7 @@ router.delete('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-updates/:id/delete - Show delete confirmation
-router.get('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/delete', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id)
       .populate('createdBy', 'name email');
@@ -547,7 +547,7 @@ router.get('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-updates/:id/toggle-pin - Toggle pin status
-router.post('/:id/toggle-pin', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/toggle-pin', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const update = await TeamUpdate.findById(req.params.id);
 
@@ -571,7 +571,7 @@ router.post('/:id/toggle-pin', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // DELETE /admin/team-updates/:id/comments/:commentId - Delete comment
-router.delete('/:id/comments/:commentId', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/:id/comments/:commentId', isLoggedIn, hasAdminPermission('manage_team_updates'), async (req, res) => {
   try {
     const comment = await TeamComment.findById(req.params.commentId);
 

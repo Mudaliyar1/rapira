@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const TeamRequirementRole = require('../models/TeamRequirementRole');
 const TeamBookingRequest = require('../models/TeamBookingRequest');
 const Notification = require('../models/Notification');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { sendTeamBookingRequestEmail } = require('../utils/emailService');
 const { createTeamBookingNotification } = require('../utils/notificationService');
 
@@ -315,7 +315,7 @@ router.get('/filter', async (req, res) => {
 // Admin routes
 
 // GET /admin/team-requirement/roles - List all roles
-router.get('/roles', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/roles', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     // Get search parameters
     const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -381,10 +381,10 @@ router.get('/roles', isLoggedIn, isAdmin, async (req, res) => {
         const phoneNumber = (role.phoneNumber || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               phoneNumber.includes(searchTerm);
+          description.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          phoneNumber.includes(searchTerm);
       });
     }
 
@@ -430,7 +430,7 @@ router.get('/roles', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export team roles to CSV
-router.get('/roles/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/roles/export', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, isActive, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -492,10 +492,10 @@ router.get('/roles/export', isLoggedIn, isAdmin, async (req, res) => {
         const phoneNumber = (role.phoneNumber || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               phoneNumber.includes(searchTerm);
+          description.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          phoneNumber.includes(searchTerm);
       });
     }
 
@@ -531,7 +531,7 @@ router.get('/roles/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/roles/new - Show form to create a new role
-router.get('/roles/new', isLoggedIn, isAdmin, (req, res) => {
+router.get('/roles/new', isLoggedIn, hasAdminPermission('manage_team_roles'), (req, res) => {
   res.render('admin/team-requirement/role-form', {
     layout: 'admin',
     title: 'Add New Team Requirement Role',
@@ -541,7 +541,7 @@ router.get('/roles/new', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // POST /admin/team-requirement/roles - Create a new role
-router.post('/roles', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/roles', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     const { name, description, city, state, phoneNumber, isActive } = req.body;
 
@@ -580,7 +580,7 @@ router.post('/roles', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/roles/:id/edit - Show form to edit a role
-router.get('/roles/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/roles/:id/edit', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     const role = await TeamRequirementRole.findById(req.params.id);
 
@@ -603,7 +603,7 @@ router.get('/roles/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-requirement/roles/:id - Update a role
-router.post('/roles/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/roles/:id', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     const { name, description, city, state, phoneNumber, isActive } = req.body;
 
@@ -644,7 +644,7 @@ router.post('/roles/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/roles/:id/delete-confirm - Show confirmation page for deleting a role
-router.get('/roles/:id/delete-confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/roles/:id/delete-confirm', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     console.log('Delete confirmation route accessed with ID:', req.params.id);
     console.log('Full URL:', req.originalUrl);
@@ -687,7 +687,7 @@ router.get('/roles/:id/delete-confirm', isLoggedIn, isAdmin, async (req, res) =>
 });
 
 // POST /admin/team-requirement/roles/:id/delete - Delete a role
-router.post('/roles/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/roles/:id/delete', isLoggedIn, hasAdminPermission('manage_team_roles'), async (req, res) => {
   try {
     // Check if there are any pending booking requests for this role
     const pendingRequests = await TeamBookingRequest.countDocuments({
@@ -712,7 +712,7 @@ router.post('/roles/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/requests - List all booking requests
-router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/requests', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, role, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -795,12 +795,12 @@ router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
         const message = (request.message || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               email.includes(searchTerm) ||
-               phone.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               roleName.includes(searchTerm) ||
-               message.includes(searchTerm);
+          email.includes(searchTerm) ||
+          phone.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          roleName.includes(searchTerm) ||
+          message.includes(searchTerm);
       });
     }
 
@@ -867,7 +867,7 @@ router.get('/requests', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export team booking requests to CSV
-router.get('/requests/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/requests/export', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, status, role, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -945,12 +945,12 @@ router.get('/requests/export', isLoggedIn, isAdmin, async (req, res) => {
         const message = (request.message || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               email.includes(searchTerm) ||
-               phone.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               roleName.includes(searchTerm) ||
-               message.includes(searchTerm);
+          email.includes(searchTerm) ||
+          phone.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          roleName.includes(searchTerm) ||
+          message.includes(searchTerm);
       });
     }
 
@@ -991,7 +991,7 @@ router.get('/requests/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/requests/:id - View a specific booking request
-router.get('/requests/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/requests/:id', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     const request = await TeamBookingRequest.findById(req.params.id)
       .populate('role')
@@ -1026,7 +1026,7 @@ router.get('/requests/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-requirement/requests/:id/approve - Approve a booking request
-router.post('/requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/requests/:id/approve', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
 
@@ -1082,7 +1082,7 @@ router.post('/requests/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-requirement/requests/:id/reject - Reject a booking request
-router.post('/requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/requests/:id/reject', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     const { adminNotes } = req.body;
 
@@ -1143,7 +1143,7 @@ router.post('/requests/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/team-requirement/requests/:id/delete-confirm - Show confirmation page for deleting a request
-router.get('/requests/:id/delete-confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/requests/:id/delete-confirm', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     const request = await TeamBookingRequest.findById(req.params.id)
       .populate('role');
@@ -1169,7 +1169,7 @@ router.get('/requests/:id/delete-confirm', isLoggedIn, isAdmin, async (req, res)
 });
 
 // POST /admin/team-requirement/requests/:id/delete - Delete a booking request
-router.post('/requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/requests/:id/delete', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     const request = await TeamBookingRequest.findById(req.params.id);
 
@@ -1196,7 +1196,7 @@ router.post('/requests/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/team-requirement/requests/bulk-delete-confirm - Show confirmation page for bulk deletion
-router.post('/requests/bulk-delete-confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/requests/bulk-delete-confirm', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     console.log('Bulk delete confirmation request received:', req.body);
     const { requestIds } = req.body;
@@ -1250,7 +1250,7 @@ router.post('/requests/bulk-delete-confirm', isLoggedIn, isAdmin, async (req, re
 });
 
 // POST /admin/team-requirement/requests/bulk-delete - Delete multiple booking requests
-router.post('/requests/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/requests/bulk-delete', isLoggedIn, hasAdminPermission('manage_team_bookings'), async (req, res) => {
   try {
     console.log('Bulk delete request received:', req.body);
     const { requestIds } = req.body;

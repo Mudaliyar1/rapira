@@ -148,7 +148,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     user.currentPage = 'Home'; // Reset to home on fresh login
     user.lastPageUpdate = new Date();
     await user.save();
-    
+
     // Log successful login
     await ActivityLogger.logLogin(user._id, req, true);
 
@@ -158,6 +158,8 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString()
     };
@@ -249,6 +251,8 @@ router.post('/maintenance-login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString(),
       maintenanceLogin: true // Flag to indicate this was a maintenance login
@@ -445,7 +449,7 @@ router.get('/logout', async (req, res) => {
   // Mark user as offline in database
   if (userId) {
     try {
-      await User.findByIdAndUpdate(userId, { 
+      await User.findByIdAndUpdate(userId, {
         isOnline: false,
         currentPage: null,
         lastPageUpdate: new Date()

@@ -579,6 +579,11 @@ app.use(async (req, res, next) => {
           error: []
         });
       }
+
+      // Sync user session data to keep privileges fast and fresh
+      req.session.user.isSuperAdmin = userExists.isSuperAdmin;
+      req.session.user.adminPermissions = userExists.adminPermissions;
+      req.session.user.adminTitle = userExists.adminTitle;
     }
 
     next();
@@ -598,7 +603,7 @@ app.use(async (req, res, next) => {
     res.locals.currentUser = user;
     res.locals.isAdmin = user && user.role === 'admin';
     res.locals.isArtist = user && user.role === 'artist';
-    res.locals.isSuperAdmin = user && user.role === 'superAdmin';
+    res.locals.isSuperAdmin = user && user.isSuperAdmin === true;
     res.locals.hasRoles = false;
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
@@ -836,6 +841,8 @@ app.use('/', ticketValidationRoutes);
 app.use('/tickets', ticketRoutes);
 // Mount admin ticket routes BEFORE admin routes to avoid conflicts
 app.use('/admin/tickets', adminTicketsRoutes);
+// Mount super admin routes BEFORE admin routes
+app.use('/admin/super', require('./routes/adminSuper'));
 app.use('/admin', adminRoutes);
 app.use('/admin/merchandise', adminMerchandiseRoutes);
 app.use('/payments', paymentRoutes);

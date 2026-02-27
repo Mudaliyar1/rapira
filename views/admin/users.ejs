@@ -43,9 +43,13 @@
                       </td>
                       <td class="text-white"><%= user.email %></td>
                       <td>
-                        <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
-                          <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
-                        </span>
+                        <% if (user.role === 'admin' && user.isSuperAdmin) { %>
+                          <span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>Super Admin</span>
+                        <% } else { %>
+                          <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
+                            <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
+                          </span>
+                        <% } %>
                       </td>
                       <td class="text-white"><%= toISTDateString(user.createdAt) %></td>
                       <td>

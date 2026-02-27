@@ -542,6 +542,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const adminSidebar = document.getElementById('adminSidebar');
   const artistSidebar = document.getElementById('artistSidebar');
   const producerSidebar = document.getElementById('producerSidebar');
+  const distributorSidebar = document.getElementById('distributorSidebar');
   const adminContent = document.querySelector('.admin-content');
   const closeSidebar = document.getElementById('closeSidebar');
 
@@ -549,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const savedSidebarState = localStorage.getItem('sidebarState') || 'open';
   const savedArtistSidebarState = localStorage.getItem('artistSidebarState') || 'open';
   const savedProducerSidebarState = localStorage.getItem('producerSidebarState') || 'open';
+  const savedDistributorSidebarState = localStorage.getItem('distributorSidebarState') || 'open';
 
   // Apply the saved sidebar state on page load for admin
   if (savedSidebarState === 'closed' && adminSidebar && adminContent) {
@@ -565,6 +567,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // Apply the saved sidebar state on page load for producer
   if (savedProducerSidebarState === 'closed' && producerSidebar && adminContent) {
     producerSidebar.classList.add('collapsed');
+    adminContent.classList.add('expanded');
+  }
+
+  // Apply the saved sidebar state on page load for distributor
+  if (savedDistributorSidebarState === 'closed' && distributorSidebar && adminContent) {
+    distributorSidebar.classList.add('collapsed');
     adminContent.classList.add('expanded');
   }
 
@@ -733,6 +741,61 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
   }
 
+  // Function to toggle distributor sidebar
+  function toggleDistributorSidebar() {
+    if (!distributorSidebar) return;
+
+    if (window.innerWidth < 992) {
+      // Mobile behavior - use show/hide with overlay
+      distributorSidebar.classList.toggle('show');
+
+      // Create and manage overlay for mobile
+      if (distributorSidebar.classList.contains('show')) {
+        // Create overlay if it doesn't exist
+        if (!document.querySelector('.sidebar-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'sidebar-overlay';
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100%';
+          overlay.style.height = '100%';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          overlay.style.zIndex = '999';
+          overlay.style.display = 'none';
+          document.body.appendChild(overlay);
+
+          // Add click event to close sidebar when overlay is clicked
+          overlay.addEventListener('click', function () {
+            distributorSidebar.classList.remove('show');
+            this.style.display = 'none';
+          });
+        }
+        document.querySelector('.sidebar-overlay').style.display = 'block';
+      } else {
+        if (document.querySelector('.sidebar-overlay')) {
+          document.querySelector('.sidebar-overlay').style.display = 'none';
+        }
+      }
+    } else {
+      // Desktop behavior - use collapsed/expanded
+      distributorSidebar.classList.toggle('collapsed');
+      if (adminContent) adminContent.classList.toggle('expanded');
+
+      // Save sidebar state to localStorage
+      if (distributorSidebar.classList.contains('collapsed')) {
+        localStorage.setItem('distributorSidebarState', 'closed');
+      } else {
+        localStorage.setItem('distributorSidebarState', 'open');
+      }
+    }
+
+    // Force a small delay to ensure the transition completes properly
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 300);
+  }
+
   // Add click event to all admin toggle buttons
   if (adminToggleButtons.length > 0) {
     adminToggleButtons.forEach(button => {
@@ -752,6 +815,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('sidebarToggle').addEventListener('click', toggleProducerSidebar);
   }
 
+  // Add click event to distributor sidebar toggle
+  if (distributorSidebar && document.getElementById('sidebarToggle')) {
+    document.getElementById('sidebarToggle').addEventListener('click', toggleDistributorSidebar);
+  }
+
   // Close sidebar button
   if (closeSidebar) {
     closeSidebar.addEventListener('click', function () {
@@ -759,6 +827,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const isAdminSidebar = !!adminSidebar;
       const isArtistSidebar = !!artistSidebar;
       const isProducerSidebar = !!producerSidebar;
+      const isDistributorSidebar = !!distributorSidebar;
 
       if (window.innerWidth < 992) {
         // Mobile behavior
@@ -770,6 +839,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (isProducerSidebar) {
           producerSidebar.classList.remove('show');
+        }
+        if (isDistributorSidebar) {
+          distributorSidebar.classList.remove('show');
         }
         if (document.querySelector('.sidebar-overlay')) {
           document.querySelector('.sidebar-overlay').style.display = 'none';
@@ -790,6 +862,11 @@ document.addEventListener('DOMContentLoaded', function () {
           producerSidebar.classList.add('collapsed');
           if (adminContent) adminContent.classList.add('expanded');
           localStorage.setItem('producerSidebarState', 'closed');
+        }
+        if (isDistributorSidebar) {
+          distributorSidebar.classList.add('collapsed');
+          if (adminContent) adminContent.classList.add('expanded');
+          localStorage.setItem('distributorSidebarState', 'closed');
         }
       }
     });
@@ -834,6 +911,18 @@ document.addEventListener('DOMContentLoaded', function () {
       !e.target.closest('.admin-toggle') &&
       !e.target.closest('.mobile-toggle')) {
       artistSidebar.classList.remove('show');
+      if (document.querySelector('.sidebar-overlay')) {
+        document.querySelector('.sidebar-overlay').style.display = 'none';
+      }
+    }
+
+    // For distributor sidebar
+    if (distributorSidebar &&
+      window.innerWidth < 992 &&
+      distributorSidebar.classList.contains('show') &&
+      !distributorSidebar.contains(e.target) &&
+      !e.target.closest('#sidebarToggle')) {
+      distributorSidebar.classList.remove('show');
       if (document.querySelector('.sidebar-overlay')) {
         document.querySelector('.sidebar-overlay').style.display = 'none';
       }

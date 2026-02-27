@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { sendBulkEmail } = require('../utils/emailService');
 
 // GET /admin/basic-email - Show basic email composition form
-router.get('/', isLoggedIn, isAdmin, (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_basic_email'), (req, res) => {
   try {
     res.render('admin/basic-email', {
       layout: 'admin',
@@ -19,7 +19,7 @@ router.get('/', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // POST /admin/basic-email - Send email to entered addresses
-router.post('/', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/', isLoggedIn, hasAdminPermission('manage_basic_email'), async (req, res) => {
   try {
     const { subject, content, email } = req.body;
 
@@ -31,20 +31,20 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
 
     // Process email addresses
     let emailAddresses = [];
-    
+
     // If email is a string (single email), convert to array
     if (typeof email === 'string' && email.trim() !== '') {
       emailAddresses = [email];
-    } 
+    }
     // If email is an array (multiple emails), use as is
     else if (Array.isArray(email)) {
       emailAddresses = email.filter(addr => addr && addr.trim() !== '');
     }
-    
+
     // Validate email format and create user objects
     const validEmails = [];
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    
+
     for (const addr of emailAddresses) {
       if (emailRegex.test(addr.trim())) {
         validEmails.push({
@@ -53,7 +53,7 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
         });
       }
     }
-    
+
     if (validEmails.length === 0) {
       req.flash('error', 'Please enter at least one valid email address');
       return res.redirect('/admin/basic-email');

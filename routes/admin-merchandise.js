@@ -4,7 +4,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const Media = require('../models/Media');
 const ProductReview = require('../models/ProductReview');
-const { isAdmin } = require('../middleware/auth');
+const { isAdmin, hasAdminPermission } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -20,7 +20,7 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -30,12 +30,12 @@ const upload = multer({
 });
 
 // Products management dashboard
-router.get('/products', isAdmin, async (req, res) => {
+router.get('/products', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 20;
     const skip = (page - 1) * limit;
-    
+
     // Build filter
     let filter = {};
     if (req.query.category && req.query.category !== 'all') {
@@ -47,21 +47,21 @@ router.get('/products', isAdmin, async (req, res) => {
     if (req.query.search) {
       filter.$text = { $search: req.query.search };
     }
-    
+
     // Sort options
     let sort = { createdAt: -1 };
     if (req.query.sort === 'name') sort = { name: 1 };
     if (req.query.sort === 'price') sort = { price: 1 };
     if (req.query.sort === 'stock') sort = { totalStock: -1 };
     if (req.query.sort === 'sales') sort = { totalSales: -1 };
-    
+
     const products = await Product.find(filter)
       .populate('createdBy', 'name')
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean();
-    
+
     const totalProducts = await Product.countDocuments(filter);
     const totalPages = Math.ceil(totalProducts / limit);
 
@@ -79,7 +79,7 @@ router.get('/products', isAdmin, async (req, res) => {
       currentPath: req.originalUrl.split('?')[0], // Use originalUrl and remove query params
       layout: 'layouts/admin'
     });
-    
+
   } catch (error) {
     console.error('Admin products error:', error);
     req.flash('error', 'Error loading products');
@@ -88,7 +88,7 @@ router.get('/products', isAdmin, async (req, res) => {
 });
 
 // Add product page
-router.get('/products/add', isAdmin, async (req, res) => {
+router.get('/products/add', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     res.render('admin/merchandise/add-product', {
       title: 'Add Product',
@@ -103,7 +103,7 @@ router.get('/products/add', isAdmin, async (req, res) => {
 });
 
 // Create product
-router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res) => {
+router.post('/products/add', hasAdminPermission('manage_merch_products'), upload.array('images', 5), async (req, res) => {
   try {
     console.log('🚀 CREATE PRODUCT ROUTE HIT!');
     console.log('📝 Add Product Request Body:', req.body);
@@ -122,7 +122,7 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
       sizes,
       dimensions
     } = req.body;
-    
+
     // Validate required fields
     console.log('🔍 Validating required fields...');
     console.log('Name:', name);
@@ -149,14 +149,14 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
       return res.redirect('/admin/merchandise/products/add');
     }
     console.log('✅ Payment methods validation passed');
-    
+
     // Process uploaded images
     console.log('🔍 Processing uploaded images...');
     // Process uploaded images → Cloudinary
     console.log('Files array:', req.files);
     const images = [];
     const mediaRefs = [];
-    
+
     if (req.files && req.files.length > 0) {
       try {
         for (const file of req.files) {
@@ -183,7 +183,7 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
       return res.redirect('/admin/merchandise/products/add');
     }
     console.log('✅ Images validation passed');
-    
+
     // Process sizes
     console.log('🔍 Processing sizes...');
     console.log('Sizes received:', sizes);
@@ -223,7 +223,7 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
       }
     }
     console.log('Processed sizes:', productSizes);
-    
+
     // Process payment methods
     const processedPaymentMethods = Array.isArray(paymentMethods) ? paymentMethods : [paymentMethods];
 
@@ -265,7 +265,7 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
     req.flash('success', 'Product added successfully');
     console.log('🔄 Redirecting to products page...');
     res.redirect('/admin/merchandise/products');
-    
+
   } catch (error) {
     console.error('❌ Add product error:', error);
     console.error('Error stack:', error.stack);
@@ -276,7 +276,7 @@ router.post('/products/add', isAdmin, upload.array('images', 5), async (req, res
 });
 
 // Edit product page
-router.get('/products/edit/:id', isAdmin, async (req, res) => {
+router.get('/products/edit/:id', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).lean();
 
@@ -300,17 +300,17 @@ router.get('/products/edit/:id', isAdmin, async (req, res) => {
 });
 
 // Update product
-router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (req, res) => {
+router.post('/products/edit/:id', hasAdminPermission('manage_merch_products'), upload.array('newImages', 5), async (req, res) => {
   try {
     console.log('📝 Edit Product Request Body:', Object.keys(req.body));
     console.log('📁 Files received:', req.files ? req.files.length : 0);
     const product = await Product.findById(req.params.id);
-    
+
     if (!product) {
       req.flash('error', 'Product not found');
       return res.redirect('/admin/merchandise/products');
     }
-    
+
     const {
       name,
       description,
@@ -365,7 +365,7 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
     } else {
       product.paymentMethods = ['online']; // Default to online if none selected
     }
-    
+
     // Update sizes
     if (sizes && Array.isArray(sizes)) {
       // Filter out empty items and process each size
@@ -399,7 +399,7 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
         }
       }
     }
-    
+
     // Handle images - ROBUST METHOD
     console.log('🖼️ Processing images...');
     console.log('Existing images from form:', existingImages);
@@ -457,12 +457,12 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
 
     product.images = updatedImages;
     console.log('✅ Final product images set to:', product.images);
-    
+
     await product.save();
 
     req.flash('success', 'Product updated successfully');
     res.redirect('/admin/merchandise/products');
-    
+
   } catch (error) {
     console.error('Update product error:', error);
     req.flash('error', 'Error updating product');
@@ -471,7 +471,7 @@ router.post('/products/edit/:id', isAdmin, upload.array('newImages', 5), async (
 });
 
 // Delete product confirmation page
-router.get('/products/:id/delete', isAdmin, async (req, res) => {
+router.get('/products/:id/delete', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).lean();
 
@@ -512,7 +512,7 @@ router.get('/products/:id/delete', isAdmin, async (req, res) => {
 });
 
 // Delete product
-router.delete('/products/:id', isAdmin, async (req, res) => {
+router.delete('/products/:id', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     console.log('🗑️ Delete product route hit for ID:', req.params.id);
 
@@ -561,7 +561,7 @@ router.delete('/products/:id', isAdmin, async (req, res) => {
       success: true,
       message: 'Product deleted successfully'
     });
-    
+
   } catch (error) {
     console.error('❌ Delete product error:', error);
     res.status(500).json({
@@ -572,7 +572,7 @@ router.delete('/products/:id', isAdmin, async (req, res) => {
 });
 
 // Bulk delete products
-router.post('/products/bulk-delete', isAdmin, async (req, res) => {
+router.post('/products/bulk-delete', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const { productIds } = req.body;
 
@@ -650,7 +650,7 @@ router.post('/products/bulk-delete', isAdmin, async (req, res) => {
 });
 
 // Toggle product status
-router.post('/products/:id/toggle', isAdmin, async (req, res) => {
+router.post('/products/:id/toggle', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const { isActive } = req.body;
     const product = await Product.findById(req.params.id);
@@ -681,7 +681,7 @@ router.post('/products/:id/toggle', isAdmin, async (req, res) => {
 });
 
 // Bulk update product status
-router.post('/products/bulk-update-status', isAdmin, async (req, res) => {
+router.post('/products/bulk-update-status', hasAdminPermission('manage_merch_products'), async (req, res) => {
   try {
     const { productIds, isActive } = req.body;
 
@@ -712,7 +712,7 @@ router.post('/products/bulk-update-status', isAdmin, async (req, res) => {
 });
 
 // Orders management
-router.get('/orders', isAdmin, async (req, res) => {
+router.get('/orders', hasAdminPermission('manage_merch_orders'), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = 20;
@@ -775,7 +775,7 @@ router.get('/orders', isAdmin, async (req, res) => {
 });
 
 // Order details
-router.get('/orders/:id', isAdmin, async (req, res) => {
+router.get('/orders/:id', hasAdminPermission('manage_merch_orders'), async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email phone')
@@ -802,7 +802,7 @@ router.get('/orders/:id', isAdmin, async (req, res) => {
 });
 
 // Update order status (Form submission)
-router.post('/orders/:id/status', isAdmin, async (req, res) => {
+router.post('/orders/:id/status', hasAdminPermission('manage_merch_orders'), async (req, res) => {
   try {
     console.log('=== STATUS UPDATE REQUEST ===');
     console.log('Order ID:', req.params.id);
@@ -894,7 +894,7 @@ router.post('/orders/:id/status', isAdmin, async (req, res) => {
 });
 
 // Debug route to check order status
-router.get('/orders/:id/debug', isAdmin, async (req, res) => {
+router.get('/orders/:id/debug', hasAdminPermission('manage_merch_orders'), async (req, res) => {
   try {
     console.log('🔍 DEBUG REQUEST for order:', req.params.id);
 

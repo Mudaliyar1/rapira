@@ -18,17 +18,42 @@
       </div>
       <div>
         <h6 class="mb-0 small"><%= currentUser.name %></h6>
-        <small class="text-muted" style="font-size: 0.7rem;">Administrator</small>
+        <% if (currentUser.adminTitle) { %>
+          <small class="text-info d-block" style="font-size: 0.6rem; font-weight: 700; text-transform: uppercase; margin-top: 1px;">
+            <i class="bi bi-person-badge me-1"></i><%= currentUser.adminTitle %>
+          </small>
+        <% } %>
+        <small class="<%= currentUser.adminTitle ? 'text-white-50' : 'text-info' %> d-block" style="font-size: 0.58rem; font-weight: 600; text-transform: uppercase;">
+          <%= (currentUser.role === 'superAdmin' || currentUser.isSuperAdmin ? 'Super Admin' : 'Administrator') %>
+        </small>
       </div>
     </div>
     <ul class="nav flex-column">
+      <% const perms = (currentUser && currentUser.adminPermissions) ? currentUser.adminPermissions : []; %>
+      <% if (isSuperAdmin || perms.includes('manage_dashboard')) { %>
       <!-- Dashboard -->
       <li class="nav-item mb-1">
         <a href="/admin" class="nav-link rounded <%= path === '/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-speedometer2 me-1"></i> Dashboard
         </a>
       </li>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.includes('manage_admins')) { %>
+      <!-- Super Admin Section -->
+      <li class="nav-item mt-3 mb-2">
+        <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
+          <span class="text-warning text-uppercase small"><i class="bi bi-shield-lock-fill me-1"></i> Admin Management</span>
+        </div>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/admin/super/manage-admins" class="nav-link rounded <%= path === '/admin/super/manage-admins' ? 'active bg-warning text-dark' : 'text-warning' %>">
+          <i class="bi bi-person-badge-fill me-1"></i> Administrator List
+        </a>
+      </li>
+      <% } %>
+
+      <% if (isSuperAdmin || perms.includes('manage_notifications')) { %>
       <!-- Notification Management -->
       <li class="nav-item mb-1">
         <a href="/admin/notifications" class="nav-link rounded <%= path === '/admin/notifications' ? 'active bg-primary' : '' %>">
@@ -36,314 +61,423 @@
           <span class="badge bg-danger rounded-pill float-end" id="notificationBadge" style="font-size: 0.65rem;"></span>
         </a>
       </li>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => p.startsWith('manage_users_') || ['manage_live_users', 'manage_artists', 'manage_artist_beat_purchases', 'manage_unblock_requests', 'manage_artist_applications', 'manage_producer_applications', 'manage_distributor_applications', 'manage_distributor_list', 'manage_producers', 'manage_producer_beats', 'manage_producer_unblock', 'manage_follower_analytics', 'manage_artist_upgrades', 'manage_roles', 'manage_user_roles', 'manage_deleted_accounts'].includes(p))) { %>
       <!-- User Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">User Management</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_users_list')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/users" class="nav-link rounded <%= path === '/admin/users' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people me-1"></i> Users
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_live_users')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/live-users" class="nav-link rounded <%= path === '/admin/live-users' ? 'active bg-primary' : '' %>">
           <i class="bi bi-activity me-1"></i> Live Users by Page
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artists')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/artists" class="nav-link rounded <%= path === '/admin/artists' ? 'active bg-primary' : '' %>">
           <i class="bi bi-music-note-beamed me-1"></i> Artists
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artist_beat_purchases')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/artist-beat-purchases" class="nav-link rounded <%= path.startsWith('/admin/artist-beat-purchases') ? 'active bg-primary' : '' %>">
           <i class="bi bi-cash-stack me-1"></i> Artist Beat Purchases
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_unblock_requests')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/unblock-requests" class="nav-link rounded <%= path === '/admin/unblock-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-unlock-fill me-1"></i> Unblock Requests
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artist_applications')) { %>
       <li class="nav-item mb-1">
         <a href="/artist-applications/admin" class="nav-link rounded <%= path === '/artist-applications/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-person-badge me-1"></i> Artist Applications
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_producer_applications')) { %>
       <li class="nav-item mb-1">
         <a href="/producer-applications/admin" class="nav-link rounded <%= path === '/producer-applications/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-mic-fill me-1"></i> Producer Applications
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_distributor_applications')) { %>
       <li class="nav-item mb-1">
         <a href="/distributor-applications/admin" class="nav-link rounded <%= path === '/distributor-applications/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-broadcast me-1"></i> Distributor Applications
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_distributor_list')) { %>
       <li class="nav-item mb-1">
         <a href="/distributor-applications/admin/list" class="nav-link rounded <%= path === '/distributor-applications/admin/list' ? 'active bg-primary' : '' %>">
           <i class="bi bi-list-stars me-1"></i> Distributor List
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_producers')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/producers" class="nav-link rounded <%= path === '/admin/producers' ? 'active bg-primary' : '' %>">
           <i class="bi bi-mic me-1"></i> Producers
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_producer_beats')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/producers/beats" class="nav-link rounded <%= path === '/admin/producers/beats' ? 'active bg-primary' : '' %>">
           <i class="bi bi-music-note-list me-1"></i> Producer Beats
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_producer_unblock')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/producers/unblock-requests" class="nav-link rounded <%= path.startsWith('/admin/producers/unblock-requests') ? 'active bg-primary' : '' %>">
           <i class="bi bi-shield-check me-1"></i> Producer Unblock Requests
           <span class="badge bg-danger rounded-pill float-end" id="producerUnblockBadge" style="font-size: 0.65rem; display: none;"></span>
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_follower_analytics')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/follower-analytics" class="nav-link rounded <%= path.startsWith('/admin/follower-analytics') ? 'active bg-primary' : '' %>">
           <i class="bi bi-people me-1"></i> Follower Analytics
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artist_upgrades')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/artist-upgrade-requests" class="nav-link rounded <%= path === '/admin/artist-upgrade-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-arrow-up-circle me-1"></i> Artist Upgrades
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_roles')) { %>
       <li class="nav-item mb-1">
         <a href="/roles" class="nav-link rounded <%= path === '/roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-tags me-1"></i> Roles
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_user_roles')) { %>
       <li class="nav-item mb-1">
         <a href="/roles/user-roles" class="nav-link rounded <%= path === '/roles/user-roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people-fill me-1"></i> User Roles
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_deleted_accounts')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/deleted-accounts" class="nav-link rounded <%= path === '/admin/deleted-accounts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-archive me-1"></i> Deleted Accounts
         </a>
       </li>
+      <% } %>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_concerts_list', 'manage_venues', 'manage_venue_requests', 'manage_venue_edit_requests', 'manage_venue_bookings', 'manage_concerts_pending', 'manage_concert_edit_requests', 'manage_tickets', 'manage_free_ticket_issue', 'manage_refund_requests', 'manage_daily_concerts'].includes(p))) { %>
       <!-- Concert Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Concert Management</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_concerts_list')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/concerts" class="nav-link rounded <%= path === '/admin/concerts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-event me-1"></i> Concerts
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_venues')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/venues" class="nav-link rounded <%= path === '/admin/venues' ? 'active bg-primary' : '' %>">
           <i class="bi bi-building me-1"></i> Venues
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_venue_requests')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/venue-requests" class="nav-link rounded <%= path.startsWith('/admin/venue-requests') ? 'active bg-primary' : '' %>">
           <i class="bi bi-building-plus me-1"></i> Venue Requests
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_venue_edit_requests')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/venue-edit-requests" class="nav-link rounded <%= path.startsWith('/admin/venue-edit-requests') ? 'active bg-primary' : '' %>">
           <i class="bi bi-building-gear me-1"></i> Venue Edit Requests
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_venue_bookings')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/venue-bookings" class="nav-link rounded <%= path.startsWith('/admin/venue-bookings') ? 'active bg-primary' : '' %>">
           <i class="bi bi-geo-alt-fill me-1"></i> Venue Bookings
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_concerts_pending')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/concerts/pending" class="nav-link rounded <%= path === '/admin/concerts/pending' ? 'active bg-primary' : '' %>">
           <i class="bi bi-hourglass-split me-1"></i> Pending
           <span class="badge bg-danger rounded-pill float-end" id="pendingCount" style="font-size: 0.65rem;"></span>
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_concert_edit_requests')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/concert-edit-requests" class="nav-link rounded <%= path.startsWith('/admin/concert-edit-requests') ? 'active bg-primary' : '' %>">
           <i class="bi bi-pencil-square me-1"></i> Edit Requests
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_tickets')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/tickets" class="nav-link rounded <%= path === '/admin/tickets' ? 'active bg-primary' : '' %>">
           <i class="bi bi-ticket-perforated me-1"></i> Tickets
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_free_ticket_issue')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/tickets/free-issue" class="nav-link rounded <%= path === '/admin/tickets/free-issue' ? 'active bg-primary' : '' %>">
           <i class="bi bi-ticket-detailed me-1"></i> Free Ticket Issue
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_refund_requests')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/refund-requests" class="nav-link rounded <%= path === '/admin/refund-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-arrow-counterclockwise me-1"></i> Refund Requests
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_daily_concerts')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/daily-concerts" class="nav-link rounded <%= path === '/admin/daily-concerts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-week me-1"></i> Daily Concerts
         </a>
       </li>
+      <% } %>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_content_feature', 'manage_artist_posts', 'manage_pages', 'manage_about_us', 'manage_learning_modules'].includes(p))) { %>
       <!-- Content Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Content Management</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_content_feature')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/content" class="nav-link rounded <%= path === '/admin/content' ? 'active bg-primary' : '' %>">
           <i class="bi bi-file-earmark-music me-1"></i> Content
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artist_posts')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/posts" class="nav-link rounded <%= path === '/admin/posts' ? 'active bg-primary' : '' %>">
           <i class="bi bi-images me-1"></i> Artist Posts
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_pages')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/pages" class="nav-link rounded <%= path === '/admin/pages' ? 'active bg-primary' : '' %>">
           <i class="bi bi-file-earmark-text me-1"></i> Pages
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_about_us')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/about" class="nav-link rounded <%= path === '/admin/about' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people me-1"></i> About Us
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_learning_modules')) { %>
       <li class="nav-item mb-1">
         <a href="/learning/admin" class="nav-link rounded <%= path === '/learning/admin' ? 'active bg-primary' : '' %>">
           <i class="bi bi-journal-text me-1"></i> Learning Modules
         </a>
       </li>
+      <% } %>
 
+      <% } %>
+
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_ticket_validation', 'manage_team_roles', 'manage_team_bookings', 'manage_featured_artists', 'manage_role_slots', 'manage_artist_bookings'].includes(p))) { %>
       <!-- Booking Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Booking Management</span>
         </div>
       </li>
-      <li class="nav-item mb-1">
-        <a href="/admin/tickets" class="nav-link rounded <%= path === '/admin/tickets' ? 'active bg-primary' : '' %>">
-          <i class="bi bi-ticket-perforated me-1"></i> Tickets
-        </a>
-      </li>
+      <% if (isSuperAdmin || perms.includes('manage_ticket_validation')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/ticket-validation" class="nav-link rounded <%= path === '/admin/ticket-validation' ? 'active bg-primary' : '' %>">
           <i class="bi bi-shield-check me-1"></i> Ticket Validation
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_team_roles')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/team-requirement/roles" class="nav-link rounded <%= path === '/admin/team-requirement/roles' ? 'active bg-primary' : '' %>">
           <i class="bi bi-briefcase me-1"></i> Team Roles
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_team_bookings')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/team-requirement/requests" class="nav-link rounded <%= path === '/admin/team-requirement/requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-check me-1"></i> Team Bookings
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_featured_artists')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/featured-artists" class="nav-link rounded <%= path === '/admin/find-my-artist/featured-artists' ? 'active bg-primary' : '' %>">
           <i class="bi bi-star me-1"></i> Featured Artists
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_role_slots')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/role-slots" class="nav-link rounded <%= path === '/admin/find-my-artist/role-slots' ? 'active bg-primary' : '' %>">
           <i class="bi bi-briefcase me-1"></i> Role Slots
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_artist_bookings')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/find-my-artist/booking-requests" class="nav-link rounded <%= path === '/admin/find-my-artist/booking-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-calendar-check me-1"></i> Artist Bookings
         </a>
       </li>
+      <% } %>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_merch_products', 'manage_merch_orders', 'manage_reviews'].includes(p))) { %>
       <!-- Merchandise Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Merchandise</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_merch_products')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/merchandise/products" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/admin/merchandise/products')) ? 'active bg-primary' : '' %>">
           <i class="bi bi-box-seam me-1"></i> Products
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_merch_orders')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/merchandise/orders" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/admin/merchandise/orders')) ? 'active bg-primary' : '' %>">
           <i class="bi bi-bag-check me-1"></i> Orders
         </a>
       </li>
-
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_reviews')) { %>
       <li class="nav-item mb-1">
         <a href="/reviews/admin" class="nav-link rounded <%= (typeof path !== 'undefined' && path.startsWith('/reviews/admin')) ? 'active bg-primary' : '' %>">
           <i class="bi bi-star me-1"></i> Reviews
         </a>
       </li>
+      <% } %>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_sub_plans', 'manage_sub_users'].includes(p))) { %>
       <!-- Subscription Management Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Subscription Management</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_sub_plans')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/subscriptions/plans" class="nav-link rounded <%= path === '/admin/subscriptions/plans' ? 'active bg-primary' : '' %>">
           <i class="bi bi-tags me-1"></i> Subscription Plans
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_sub_users')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/subscriptions/users" class="nav-link rounded <%= path === '/admin/subscriptions/users' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people-fill me-1"></i> User Subscriptions
         </a>
       </li>
+      <% } %>
 
+      <% } %>
+
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_website_updates', 'manage_contact_messages', 'manage_compose_email', 'manage_basic_email', 'manage_email_status', 'manage_team_updates'].includes(p))) { %>
       <!-- Communication Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">Communication</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_website_updates')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/website-updates" class="nav-link rounded <%= path === '/admin/website-updates' ? 'active bg-primary' : '' %>">
           <i class="bi bi-megaphone me-1"></i> Website Updates
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_contact_messages')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/contact-messages" class="nav-link rounded <%= path === '/admin/contact-messages' ? 'active bg-primary' : '' %>">
           <i class="bi bi-envelope me-1"></i> Contact Messages
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_compose_email')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/compose-email" class="nav-link rounded <%= path === '/admin/compose-email' ? 'active bg-primary' : '' %>">
           <i class="bi bi-envelope-plus me-1"></i> Compose Email
         </a>
       </li>
-      
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_basic_email')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/basic-email" class="nav-link rounded <%= path === '/admin/basic-email' ? 'active bg-primary' : '' %>">
           <i class="bi bi-envelope-open me-1"></i> Basic Email
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_email_status')) { %>
       <li class="nav-item mb-1">
         <a href="/email-status" class="nav-link rounded <%= path === '/email-status' ? 'active bg-primary' : '' %>">
           <i class="bi bi-envelope-check me-1"></i> Email Status
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_team_updates')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/team-updates" class="nav-link rounded <%= path.startsWith('/admin/team-updates') ? 'active bg-primary' : '' %>">
           <i class="bi bi-megaphone me-1"></i> Team Updates
         </a>
       </li>
+      <% } %>
       <% if (hasRoles) { %>
       <li class="nav-item mb-1">
         <a href="/messages" class="nav-link rounded <%= path === '/messages' ? 'active bg-primary' : '' %>">
@@ -356,43 +490,58 @@
         </a>
       </li>
       <% } %>
+      <% } %>
 
+      <% if ((typeof isSuperAdmin !== 'undefined' && isSuperAdmin) || perms.some(p => ['manage_revenue_analysis', 'manage_distribution_receipts', 'manage_media_management', 'manage_website_settings', 'manage_storage_management', 'manage_session_management'].includes(p))) { %>
       <!-- System Section -->
       <li class="nav-item mt-3 mb-2">
         <div class="sidebar-heading d-flex justify-content-between align-items-center px-2">
           <span class="text-muted text-uppercase small">System</span>
         </div>
       </li>
+      <% if (isSuperAdmin || perms.includes('manage_revenue_analysis')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/revenue-analysis" class="nav-link rounded <%= path === '/admin/revenue-analysis' ? 'active bg-primary' : '' %>">
           <i class="bi bi-currency-rupee me-1"></i> Revenue Analysis
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_distribution_receipts')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/distribution-requests" class="nav-link rounded <%= path === '/admin/distribution-requests' ? 'active bg-primary' : '' %>">
           <i class="bi bi-music-note-list me-1"></i> Distribution Receipts
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_media_management')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/media" class="nav-link rounded <%= path === '/admin/media' ? 'active bg-primary' : '' %>">
           <i class="bi bi-folder me-1"></i> Media Management
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_website_settings')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/website-settings" class="nav-link rounded <%= path === '/admin/website-settings' ? 'active bg-primary' : '' %>">
           <i class="bi bi-palette me-1"></i> Website Settings
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_storage_management')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/storage-management" class="nav-link rounded <%= path === '/admin/storage-management' ? 'active bg-primary' : '' %>">
           <i class="bi bi-hdd-stack me-1"></i> Storage Management
         </a>
       </li>
+      <% } %>
+      <% if (isSuperAdmin || perms.includes('manage_session_management')) { %>
       <li class="nav-item mb-1">
         <a href="/admin/sessions" class="nav-link rounded <%= path === '/admin/sessions' ? 'active bg-primary' : '' %>">
           <i class="bi bi-people-fill me-1"></i> Session Management
         </a>
       </li>
+      <% } %>
+      <% } %>
 
 
       <!-- Documentation Section -->

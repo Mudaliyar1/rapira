@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const Content = require('../models/Content');
 const Artist = require('../models/Artist');
 const Media = require('../models/Media');
@@ -73,7 +73,7 @@ const upload = multer({
 ]);
 
 // Add content form
-router.get('/add', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/add', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     // Get all artists for the dropdown
     const artists = await Artist.find()
@@ -94,8 +94,8 @@ router.get('/add', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Add content process
-router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
-  upload(req, res, function(err) {
+router.post('/add', isLoggedIn, hasAdminPermission('manage_content_feature'), (req, res, next) => {
+  upload(req, res, function (err) {
     if (err) {
       console.error('Upload error:', err);
       req.flash('error', err.message || 'File upload failed');
@@ -192,7 +192,7 @@ router.post('/add', isLoggedIn, isAdmin, (req, res, next) => {
 });
 
 // Manage content
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     // Get search parameters
     const { search, type, featured, artist, dateRange, sortBy, sortOrder } = req.query;
@@ -263,10 +263,10 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const tags = (item.tags || []).join(' ').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               tags.includes(searchTerm);
+          description.includes(searchTerm) ||
+          artistName.includes(searchTerm) ||
+          stageName.includes(searchTerm) ||
+          tags.includes(searchTerm);
       });
     }
 
@@ -314,7 +314,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export content to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, type, featured, artist, dateRange, sortBy, sortOrder } = req.query;
@@ -381,10 +381,10 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const tags = (item.tags || []).join(' ').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               tags.includes(searchTerm);
+          description.includes(searchTerm) ||
+          artistName.includes(searchTerm) ||
+          stageName.includes(searchTerm) ||
+          tags.includes(searchTerm);
       });
     }
 
@@ -422,7 +422,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View content details
-router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/details', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     const content = await Content.findById(req.params.id)
       .populate({
@@ -449,7 +449,7 @@ router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Edit content form
-router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/edit', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     const content = await Content.findById(req.params.id)
       .populate({
@@ -502,8 +502,8 @@ const handleMulterErrors = (req, res, next) => {
 };
 
 // Update content
-router.post('/:id/update', isLoggedIn, isAdmin, (req, res, next) => {
-  upload(req, res, function(err) {
+router.post('/:id/update', isLoggedIn, hasAdminPermission('manage_content_feature'), (req, res, next) => {
+  upload(req, res, function (err) {
     if (err) {
       console.error('Upload error:', err);
       req.flash('error', err.message || 'File upload failed');
@@ -634,7 +634,7 @@ router.post('/:id/update', isLoggedIn, isAdmin, (req, res, next) => {
 });
 
 // Feature content
-router.post('/:id/feature', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/feature', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
 
@@ -664,7 +664,7 @@ router.post('/:id/feature', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete content confirmation page
-router.get('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/delete', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     const content = await Content.findById(req.params.id)
       .populate({
@@ -691,7 +691,7 @@ router.get('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete content
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_content_feature'), async (req, res) => {
   try {
     const content = await Content.findById(req.params.id);
 

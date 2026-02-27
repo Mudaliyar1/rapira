@@ -5,7 +5,7 @@ const path = require('path');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const Media = require('../models/Media');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { getMenuConfiguration, getAllRoutes } = require('../utils/routeDiscovery');
 const { clearSettingsCache } = require('../middleware/websiteSettings');
 
@@ -152,7 +152,7 @@ router.get('/test', async (req, res) => {
 });
 
 // GET - Website Settings Page
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const menuConfiguration = await getMenuConfiguration();
@@ -250,7 +250,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Update Home Hero Carousel Settings
-router.post('/carousel', isLoggedIn, isAdmin, upload.any(), async (req, res) => {
+router.post('/carousel', isLoggedIn, hasAdminPermission('manage_website_settings'), upload.any(), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
 
@@ -370,7 +370,7 @@ router.post('/carousel', isLoggedIn, isAdmin, upload.any(), async (req, res) => 
 });
 
 // POST - Update Header Settings
-router.post('/header', isLoggedIn, isAdmin, upload.single('logo'), async (req, res) => {
+router.post('/header', isLoggedIn, hasAdminPermission('manage_website_settings'), upload.single('logo'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const { brandType, brandText, logoHeight, showBrandText } = req.body;
@@ -421,7 +421,7 @@ router.post('/header', isLoggedIn, isAdmin, upload.single('logo'), async (req, r
 });
 
 // POST - Update Menu Settings
-router.post('/menu', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/menu', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const formData = req.body;
@@ -495,7 +495,7 @@ router.post('/menu', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Update Site Settings
-router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/site', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const { siteName, siteDescription, maintenanceMode, maintenanceReason, maintenanceDuration, maintenanceAutoStart, enableButtonSounds, activeTheme } = req.body;
@@ -544,7 +544,7 @@ router.post('/site', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Update Theme Settings (Seasonal Themes)
-router.post('/theme-seasonal', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/theme-seasonal', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const { activeTheme } = req.body;
@@ -568,7 +568,7 @@ router.post('/theme-seasonal', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Reset Theme Settings to Default
-router.post('/theme/reset', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/theme/reset', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
 
@@ -593,7 +593,7 @@ router.post('/theme/reset', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Update Theme Settings
-router.post('/theme', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/theme', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const { primaryColor, secondaryColor, accentColor } = req.body;
@@ -618,7 +618,7 @@ router.post('/theme', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // DELETE - Remove Logo
-router.delete('/logo', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/logo', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
 
@@ -642,7 +642,7 @@ router.delete('/logo', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Update Admin Settings
-router.post('/admin', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const { showDummyData, dummyDataCount } = req.body;
@@ -678,7 +678,7 @@ router.post('/admin', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Preview Dummy Data
-router.post('/preview-dummy-data', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/preview-dummy-data', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const { count } = req.body;
     const DummyDataGenerator = require('../utils/dummyDataGenerator');
@@ -708,7 +708,7 @@ router.post('/preview-dummy-data', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Debug route to check menu settings
-router.get('/debug-menu', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/debug-menu', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const settings = await WebsiteSettings.getSettings();
     const allRoutes = await getAllRoutes();
@@ -731,7 +731,7 @@ router.get('/debug-menu', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Test route to manually set a menu item
-router.post('/test-menu-item', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/test-menu-item', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const { key, enabled, category } = req.body;
     const settings = await WebsiteSettings.getSettings();
@@ -761,7 +761,7 @@ router.post('/test-menu-item', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/website-settings/venue - Update venue settings
-router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/venue', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const { defaultCommissionPercentage, minimumVenueRate, requireAdminApproval, allowUserCommissionEdit } = req.body;
 
@@ -791,7 +791,7 @@ router.post('/venue', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/website-settings/ticket-commission - Update ticket commission settings
-router.post('/ticket-commission', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/ticket-commission', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
   try {
     const { ticketCommissionEnabled, ticketCommissionPercentage } = req.body;
 

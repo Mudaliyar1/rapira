@@ -3,11 +3,11 @@ const router = express.Router();
 const Ticket = require('../models/Ticket');
 const Concert = require('../models/Concert');
 const User = require('../models/User');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { sendTicketEmail } = require('../utils/brevoEmailService');
 
 // Get all concerts for the admin ticket purchase form
-router.get('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/free-issue', isLoggedIn, hasAdminPermission('manage_free_ticket_issue'), async (req, res) => {
   try {
     // Get all approved concerts
     const concerts = await Concert.find({ status: 'approved' })
@@ -20,7 +20,7 @@ router.get('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
     // Add ticket availability information to each concert
     const concertsWithAvailability = concerts.map(concert => {
       const concertObj = concert.toObject();
-      
+
       // Calculate ticket availability
       if (concert.maxTickets > 0) {
         const remainingTickets = concert.maxTickets - concert.ticketsSold;
@@ -28,8 +28,8 @@ router.get('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
         concertObj.isSoldOut = remainingTickets === 0;
         concertObj.isLowAvailability = remainingTickets > 0 && remainingTickets <= 5;
         concertObj.displayText = `${remainingTickets} remaining`;
-        concertObj.statusClass = remainingTickets === 0 ? 'text-danger' : 
-                               remainingTickets <= 5 ? 'text-warning' : 'text-success';
+        concertObj.statusClass = remainingTickets === 0 ? 'text-danger' :
+          remainingTickets <= 5 ? 'text-warning' : 'text-success';
       } else {
         concertObj.ticketsRemaining = -1; // Indicates unlimited
         concertObj.isSoldOut = false;
@@ -37,7 +37,7 @@ router.get('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
         concertObj.displayText = 'Unlimited tickets';
         concertObj.statusClass = 'text-success';
       }
-      
+
       return concertObj;
     });
 
@@ -55,10 +55,10 @@ router.get('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Handle admin free ticket purchase
-router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/free-issue', isLoggedIn, hasAdminPermission('manage_free_ticket_issue'), async (req, res) => {
   try {
     console.log('Free ticket purchase request received:', req.body);
-    
+
     const { concertId, userId, quantity, attendees, ages } = req.body;
 
     // Validate input
@@ -67,7 +67,7 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
       req.flash('error', 'All fields are required');
       return res.redirect('/admin/tickets/free-issue');
     }
-    
+
     console.log('Processing free ticket request with data:', { concertId, userId, quantity, attendees, ages });
 
     // Find concert
@@ -112,44 +112,44 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
     // The attendees data from the form is not required for validation
     // We'll create a generic attendee list based on the quantity
     let attendeesList = [];
-    
+
     // If specific attendee data was provided, use it; otherwise create generic entries
     if (attendees && ages) {
       console.log('Processing attendees data:', { attendees, ages });
-      
+
       // Handle the case where we have separate attendees and ages arrays
-      if ((Array.isArray(attendees) && Array.isArray(ages)) || 
-          (typeof attendees === 'string' && typeof ages === 'string')) {
-        
+      if ((Array.isArray(attendees) && Array.isArray(ages)) ||
+        (typeof attendees === 'string' && typeof ages === 'string')) {
+
         // Convert to arrays if they're strings
         const attendeesArray = Array.isArray(attendees) ? attendees : [attendees];
         const agesArray = Array.isArray(ages) ? ages : [ages];
-        
+
         console.log('Attendees array:', attendeesArray);
         console.log('Ages array:', agesArray);
-        
+
         // Make sure we have the same number of attendees and ages
         if (attendeesArray.length !== agesArray.length) {
-          console.log('Mismatch between attendees and ages count:', { 
-            attendeesCount: attendeesArray.length, 
-            agesCount: agesArray.length 
+          console.log('Mismatch between attendees and ages count:', {
+            attendeesCount: attendeesArray.length,
+            agesCount: agesArray.length
           });
           req.flash('error', 'Mismatch between number of attendees and ages');
           return res.redirect('/admin/tickets/free-issue');
         }
-        
+
         // Combine attendees and ages
         for (let i = 0; i < attendeesArray.length; i++) {
           const name = attendeesArray[i];
           const age = agesArray[i];
-          
+
           console.log('Processing attendee:', { name, age });
-          
+
           if (name && name.trim() !== '' && age && !isNaN(parseInt(age))) {
             attendeesList.push({ name: name.trim(), age: parseInt(age) });
           }
         }
-      } 
+      }
       // Handle the legacy format where attendees contains "name|age" format
       else if (typeof attendees === 'string' && !ages) {
         console.log('Processing legacy string format attendees');
@@ -162,7 +162,7 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
             attendeesList.push({ name: name.trim(), age: parseInt(age) });
           }
         }
-      } 
+      }
       // Handle the legacy format where attendees is an array of "name|age" strings
       else if (Array.isArray(attendees) && !ages) {
         console.log('Processing legacy array format attendees');
@@ -172,14 +172,14 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
             attendeesList.push({ name: name.trim(), age: parseInt(age) });
           }
         }
-      } 
+      }
       else {
         console.log('Invalid attendee data format:', { attendeesType: typeof attendees, agesType: typeof ages, attendees, ages });
         req.flash('error', 'Invalid attendee data format');
         return res.redirect('/admin/tickets/free-issue');
       }
     }
-    
+
     // If we don't have enough attendees for the requested quantity, create generic ones
     if (attendeesList.length < requestedQuantity) {
       // Add generic attendee entries to match the requested quantity
@@ -190,9 +190,9 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
         });
       }
     }
-    
+
     console.log('Final attendees list:', attendeesList);
-    
+
     // Validate that we have the correct number of attendees
     if (attendeesList.length !== requestedQuantity) {
       console.log('Attendee count mismatch:', { attendeesListLength: attendeesList.length, requestedQuantity });
@@ -211,7 +211,7 @@ router.post('/free-issue', isLoggedIn, isAdmin, async (req, res) => {
       paymentStatus: 'completed',
       orderId: 'ADMIN_FREE_ORDER'
     });
-    
+
     const newTicket = new Ticket({
       concert: concertId,
       user: user._id, // Use user ID, not email

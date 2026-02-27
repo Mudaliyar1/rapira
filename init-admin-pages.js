@@ -26,10 +26,10 @@ async function initializeAdminPages() {
         icon: 'bi-speedometer2',
         category: 'dashboard',
         displayOrder: 1,
-        alwaysAccessible: true, // All admins can access the dashboard
+        alwaysAccessible: false, // Dashboard access can now be restricted
         superAdminOnly: false
       },
-      
+
       // User Management
       {
         name: 'Users',
@@ -97,7 +97,7 @@ async function initializeAdminPages() {
         alwaysAccessible: false,
         superAdminOnly: false
       },
-      
+
       // Concert Management
       {
         name: 'Concerts',
@@ -143,7 +143,7 @@ async function initializeAdminPages() {
         alwaysAccessible: false,
         superAdminOnly: false
       },
-      
+
       // Content Management
       {
         name: 'Content',
@@ -178,7 +178,7 @@ async function initializeAdminPages() {
         alwaysAccessible: false,
         superAdminOnly: false
       },
-      
+
       // System
       {
         name: 'Revenue Analysis',
@@ -236,16 +236,16 @@ async function initializeAdminPages() {
         superAdminOnly: false
       }
     ];
-    
+
     // Count existing pages
     const existingCount = await AdminPage.countDocuments();
     console.log(`Found ${existingCount} existing admin pages`);
-    
+
     // If pages already exist, ask for confirmation before proceeding
     if (existingCount > 0) {
       const args = process.argv.slice(2);
       const forceUpdate = args.includes('--force');
-      
+
       if (!forceUpdate) {
         console.log('Admin pages already exist. Run with --force to overwrite.');
         await mongoose.disconnect();
@@ -256,11 +256,11 @@ async function initializeAdminPages() {
         console.log('Deleted existing admin pages');
       }
     }
-    
+
     // Insert new pages
     await AdminPage.insertMany(adminPages);
     console.log(`Successfully initialized ${adminPages.length} admin pages`);
-    
+
     // Disconnect from MongoDB
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');

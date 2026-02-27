@@ -6,7 +6,7 @@ const DistributorApplication = require('../models/DistributorApplication');
 const User = require('../models/User');
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 const { sendEmail } = require('../utils/brevoEmailService');
 const WebsiteSettings = require('../models/WebsiteSettings');
@@ -307,7 +307,7 @@ router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
 });
 
 // Admin routes
-router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const { status = 'all', search = '', city = '', state = '', date = '' } = req.query;
         let query = {};
@@ -396,7 +396,7 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - Admin: View Distributor Application Details
-router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const application = await DistributorApplication.findById(req.params.id)
             .populate('user', 'name email profileImage')
@@ -420,7 +420,7 @@ router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
     }
 });
 
-router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const { adminNotes } = req.body;
         const application = await DistributorApplication.findById(req.params.id).populate('user');
@@ -454,7 +454,7 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     }
 });
 
-router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const { adminNotes } = req.body;
         const application = await DistributorApplication.findById(req.params.id).populate('user');
@@ -482,7 +482,7 @@ router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - Admin: View Active Distributors List
-router.get('/admin/list', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/list', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
     try {
         const Role = require('../models/Role');
         const UserRole = require('../models/UserRole');

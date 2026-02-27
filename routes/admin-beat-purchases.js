@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const BeatPurchase = require('../models/BeatPurchase');
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ProducerBeat = require('../models/ProducerBeat');
 
 // GET - List artists who have purchased beats
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
     try {
         const { email, startDate, endDate } = req.query;
 
@@ -69,7 +69,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET - View all beats purchased by a specific artist
-router.get('/artist/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/artist/:id', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         const artistUser = await User.findById(req.params.id);
@@ -113,7 +113,7 @@ router.get('/artist/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST - Delete a beat purchase record
-router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/delete/:id', isLoggedIn, hasAdminPermission('manage_producer_beats'), async (req, res) => {
     try {
         const purchase = await BeatPurchase.findById(req.params.id);
         if (!purchase) {
