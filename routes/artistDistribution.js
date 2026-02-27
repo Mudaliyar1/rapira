@@ -27,91 +27,93 @@ router.get('/distributors', isLoggedIn, isArtist, async (req, res) => {
         }
 
         const distributorRole = await Role.findOne({ name: { $regex: '^distributor$', $options: 'i' } });
-
         if (!distributorRole) {
-            return res.render('users/artist-distribution', {
-                layout: false,
-                title: 'Music Distribution Hub',
-                distributorProfiles: [],
-                uniquePlatforms: [],
-                uniqueStates: [],
-                uniqueCities: [],
-                currentUser: req.session.user,
-                artist,
-                currentPath: '/artist-distribution/distributors',
-                filters: req.query
-            });
+            return res.render('users/artist-distribution', { layout: false, title: 'Music Distribution Hub', distributorProfiles: [], uniquePlatforms: [], uniqueStates: [], uniqueCities: [], currentUser: req.session.user, artist, currentPath: '/artist-distribution/distributors', filters: req.query });
         }
 
-        // Use DistributorApplication to filter distributors
-        let distQuery = { status: 'approved' };
+        // Find all users with the distributor role
+        const distributorUserRoles = await UserRole.find({ role: distributorRole._id }).populate('user');
+        const validDistributorUsers = distributorUserRoles.map(ur => ur.user).filter(u => u && u._id);
+        const validUserIds = validDistributorUsers.map(u => u._id);
 
-        if (state) {
-            distQuery.location = { $regex: new RegExp(', ' + state + '$', 'i') };
+        // Get apps for metadata (even if not 'approved', assuming if they have role they are legit)
+        const apps = await DistributorApplication.find({ user: { $in: validUserIds } }).populate('user', 'name profileImage email');
+        const appMap = new Map();
+        apps.forEach(app => appMap.set(app.user._id.toString(), app));
+
+        const activePackages = await DistributionPackage.find({ distributor: { $in: validUserIds }, isActive: true }).populate('distributor');
+
+        const distributorProfiles = [];
+        const uniquePlatforms = new Set();
+        const uniqueStates = new Set();
+        const uniqueCities = new Set();
+
+        for (const pkg of activePackages) {
+            let user = validDistributorUsers.find(u => u._id.toString() === (pkg.distributor._id ? pkg.distributor._id.toString() : pkg.distributor.toString()));
+            if (!user && pkg.distributor && pkg.distributor._id) user = pkg.distributor;
+            if (!user) continue;
+
+            let app = appMap.get(user._id.toString());
+
+            let packagePlatforms = pkg.platforms && pkg.platforms.length > 0 ? pkg.platforms : (app ? app.platforms : ['Spotify', 'Apple Music', 'YouTube Music']);
+            let location = app ? app.location : 'Global';
+            let companyName = app ? app.companyName : user.name;
+
+            // Populate unique filters from ALL active packages
+            packagePlatforms.forEach(p => uniquePlatforms.add(p));
+            if (location !== 'Global') {
+                const parts = location.split(', ');
+                if (parts.length > 1) uniqueStates.add(parts[1]);
+                uniqueCities.add(parts[0]);
+            }
+
+            // Apply search filters
+            let match = true;
+            if (search) {
+                const searchLower = search.toLowerCase();
+                const nameMatch = user.name && user.name.toLowerCase().includes(searchLower);
+                const emailMatch = user.email && user.email.toLowerCase().includes(searchLower);
+                const compMatch = companyName && companyName.toLowerCase().includes(searchLower);
+                const pkgMatch = pkg.name && pkg.name.toLowerCase().includes(searchLower);
+                if (!nameMatch && !emailMatch && !compMatch && !pkgMatch) match = false;
+            }
+
+            if (state) {
+                if (location === 'Global') match = false;
+                else {
+                    const appState = location.split(', ').pop();
+                    if (appState.toLowerCase() !== state.toLowerCase()) match = false;
+                }
+            }
+            if (city) {
+                if (location === 'Global') match = false;
+                else {
+                    const appCity = location.split(', ')[0];
+                    if (appCity.toLowerCase() !== city.toLowerCase()) match = false;
+                }
+            }
+            if (platform) {
+                if (!packagePlatforms.includes(platform)) match = false;
+            }
+
+            if (match) {
+                distributorProfiles.push({
+                    user: user,
+                    packages: [pkg], // Only put THIS package in the array so it formats as a single package card
+                    location: location,
+                    platforms: packagePlatforms,
+                    companyName: companyName
+                });
+            }
         }
-        if (city) {
-            distQuery.location = { $regex: new RegExp('^' + city + ',', 'i') };
-        }
-        if (platform) {
-            distQuery.platforms = platform;
-        }
-        if (search) {
-            distQuery.$or = [
-                { companyName: { $regex: search, $options: 'i' } }
-            ];
-        }
-
-        const approvedApps = await DistributorApplication.find(distQuery).populate('user', 'name profileImage email');
-
-        // Filter by user search if provided and company name didn't match (or just search across both)
-        if (search) {
-            const userSearchMatches = await require('../models/User').find({
-                $or: [
-                    { name: { $regex: search, $options: 'i' } },
-                    { email: { $regex: search, $options: 'i' } }
-                ]
-            }).select('_id');
-            const matchedUserIds = userSearchMatches.map(u => u._id);
-
-            // Re-query with user matches included
-            const appsWithUserMatch = await DistributorApplication.find({
-                ...distQuery,
-                $or: [
-                    { companyName: { $regex: search, $options: 'i' } },
-                    { user: { $in: matchedUserIds } }
-                ]
-            }).populate('user', 'name profileImage email');
-
-            approvedApps.splice(0, approvedApps.length, ...appsWithUserMatch);
-        }
-
-        const distributorProfiles = await Promise.all(approvedApps.map(async (app) => {
-            const activePackages = await DistributionPackage.find({ distributor: app.user._id, isActive: true });
-            return {
-                user: app.user,
-                packages: activePackages,
-                location: app.location,
-                platforms: app.platforms,
-                companyName: app.companyName
-            };
-        }));
-
-        // Get unique metadata for filters from ALL approved distributors
-        const allApproved = await DistributorApplication.find({ status: 'approved' });
-        const uniquePlatforms = [...new Set(allApproved.flatMap(a => a.platforms))].sort();
-        const uniqueStates = [...new Set(allApproved.map(a => {
-            const parts = a.location.split(', ');
-            return parts.length > 1 ? parts[1] : null;
-        }).filter(Boolean))].sort();
-        const uniqueCities = [...new Set(allApproved.map(a => a.location.split(', ')[0]))].sort();
 
         res.render('users/artist-distribution', {
             layout: false,
             title: 'Music Distribution Hub',
             distributorProfiles,
-            uniquePlatforms,
-            uniqueStates,
-            uniqueCities,
+            uniquePlatforms: Array.from(uniquePlatforms).sort(),
+            uniqueStates: Array.from(uniqueStates).sort(),
+            uniqueCities: Array.from(uniqueCities).sort(),
             currentUser: req.session.user,
             artist,
             currentPath: '/artist-distribution/distributors',
@@ -251,35 +253,33 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
             return res.redirect('/artist-distribution/distributors');
         }
 
-        const { contentTitle } = req.body;
-        if (!contentTitle) {
-            req.flash('error', 'Title is required');
+        const {
+            contentTitle,
+            primaryArtist,
+            featuredArtists,
+            genre,
+            language,
+            releaseDate,
+            explicitContent,
+            recordLabel,
+            copyrightYear,
+            copyrightOwner
+        } = req.body;
+
+        if (!contentTitle || !primaryArtist || !genre || !releaseDate) {
+            req.flash('error', 'Please fill in all required fields (Title, Primary Artist, Genre, Release Date)');
             return res.redirect(`/artist-distribution/package/${pkg._id}`);
         }
 
         const audioFiles = req.files.audioFiles || [];
-        const videoFiles = req.files.videoFiles || [];
 
-        if (audioFiles.length === 0 && videoFiles.length === 0) {
-            req.flash('error', 'Please upload at least one music or video file');
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
-        }
-
-        if (pkg.packageType === 'audio' && videoFiles.length > 0) {
-            req.flash('error', 'This package only accepts Audio files.');
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
-        }
-        if (pkg.packageType === 'video' && audioFiles.length > 0) {
-            req.flash('error', 'This package only accepts Video files.');
+        if (audioFiles.length === 0) {
+            req.flash('error', 'Please upload at least one music file');
             return res.redirect(`/artist-distribution/package/${pkg._id}`);
         }
 
         if (pkg.maxAudioFiles > 0 && audioFiles.length > pkg.maxAudioFiles) {
             req.flash('error', `Maximum ${pkg.maxAudioFiles} audio files allowed.`);
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
-        }
-        if (pkg.maxVideoFiles > 0 && videoFiles.length > pkg.maxVideoFiles) {
-            req.flash('error', `Maximum ${pkg.maxVideoFiles} video files allowed.`);
             return res.redirect(`/artist-distribution/package/${pkg._id}`);
         }
 
@@ -301,21 +301,7 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
             });
         }
 
-        // Upload Video Files
-        for (const file of videoFiles) {
-            const upRes = await uploadFileToCloudinary(file, {
-                module: 'distribution',
-                ownerType: 'artist',
-                ownerId: req.session.user.id,
-                folder: 'rapira/distribution/files/video'
-            });
-            totalUploadedFiles.push({
-                fileUrl: upRes.media.secure_url,
-                fileMedia: upRes.media._id,
-                fileType: 'video',
-                originalName: file.originalname
-            });
-        }
+
 
         // Upload poster if exists
         let posterRes = null;
@@ -342,7 +328,16 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
             distributor: pkg.distributor._id,
             package: pkg._id,
             contentTitle,
-            contentType: 'mixed',
+            primaryArtist,
+            featuredArtists,
+            genre,
+            language,
+            releaseDate: new Date(releaseDate),
+            explicitContent: explicitContent === 'on',
+            recordLabel,
+            copyrightYear: parseInt(copyrightYear) || new Date().getFullYear(),
+            copyrightOwner,
+            contentType: 'audio',
             files: totalUploadedFiles,
             posterUrl: posterRes ? posterRes.media.secure_url : '',
             posterMedia: posterRes ? posterRes.media._id : null,

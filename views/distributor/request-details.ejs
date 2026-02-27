@@ -49,7 +49,10 @@
         <div class="text-center mb-5">
           <% if (request.posterUrl) { %>
             <div class="position-relative d-inline-block">
-              <img src="<%= request.posterUrl %>" alt="Cover Art" class="rounded-4 border border-secondary shadow-lg" style="width: 200px; height: 200px; object-fit: cover;">
+              <img src="<%= request.posterUrl %>" alt="Cover Art" class="rounded-4 border border-secondary shadow-lg d-block mb-3" style="width: 200px; height: 200px; object-fit: cover;">
+              <a href="<%= request.posterUrl %>" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-4 mx-auto d-inline-block">
+                <i class="bi bi-arrows-fullscreen me-2"></i> View Full Cover Art
+              </a>
             </div>
           <% } else { %>
             <div class="bg-secondary bg-opacity-10 rounded-4 border border-secondary border-dashed d-inline-flex flex-column align-items-center justify-content-center" style="width: 200px; height: 200px;">
@@ -58,8 +61,50 @@
             </div>
           <% } %>
           <h4 class="mt-4 fw-bold text-white"><%= request.contentTitle %></h4>
-          <div class="badge bg-dark border border-secondary text-primary px-3 py-2 text-uppercase letter-spacing-1">
+          <div class="badge bg-dark border border-secondary text-primary px-3 py-2 text-uppercase letter-spacing-1 mb-4">
             <%= request.contentType %> Distribution
+          </div>
+          
+          <div class="text-start bg-black bg-opacity-25 border border-secondary rounded-4 p-4">
+            <h6 class="text-primary fw-bold small text-uppercase mb-3 border-bottom border-secondary pb-2">Release Metadata</h6>
+            <div class="row g-3">
+              <div class="col-sm-12">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Release Title</small>
+                <span class="text-white fw-bold"><%= request.contentTitle %></span>
+              </div>
+              <div class="col-sm-6">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Primary Artist(s)</small>
+                <span class="text-white"><%= request.primaryArtist || 'N/A' %></span>
+              </div>
+              <div class="col-sm-6">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Featured Artist(s)</small>
+                <span class="text-white"><%= request.featuredArtists || 'None' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Genre</small>
+                <span class="text-white"><%= request.genre || 'N/A' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Language</small>
+                <span class="text-white"><%= request.language || 'N/A' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Explicit</small>
+                <span class="badge <%= request.explicitContent ? 'bg-danger text-white' : 'bg-success text-white' %>" style="font-size: 0.65rem;"><%= request.explicitContent ? 'Yes' : 'No' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Release Date</small>
+                <span class="text-white"><%= request.releaseDate ? new Date(request.releaseDate).toLocaleDateString() : 'N/A' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Record Label</small>
+                <span class="text-white"><%= request.recordLabel || 'Independent' %></span>
+              </div>
+              <div class="col-sm-4">
+                <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Copyright</small>
+                <span class="text-white">© <%= request.copyrightYear %> <%= request.copyrightOwner || request.primaryArtist %></span>
+              </div>
+            </div>
           </div>
         </div>
 

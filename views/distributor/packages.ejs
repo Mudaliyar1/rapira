@@ -39,11 +39,10 @@
             <h6 class="fw-bold small mb-2 text-uppercase text-muted">File Limits</h6>
             <div class="mb-4">
                <span class="badge bg-secondary text-white border border-secondary small mb-1">
-                 <%= pkg.packageType === 'audio' ? 'Audio Only' : (pkg.packageType === 'video' ? 'Video Only' : 'Audio & Video') %>
+                 Audio Only
                </span>
                <div class="small text-white-50">
-                 <% if (pkg.packageType !== 'video') { %> Max Audio: <%= pkg.maxAudioFiles %>  | <% } %>
-                 <% if (pkg.packageType !== 'audio') { %> Max Video: <%= pkg.maxVideoFiles %> <% } %>
+                 Max Audio: <%= pkg.maxAudioFiles %>
                </div>
             </div>
             
@@ -91,21 +90,11 @@
               <label class="form-label text-white">Price * (₹)</label>
               <input type="number" name="price" class="form-control" min="0" required>
             </div>
-            <div class="col-md-3">
-              <label class="form-label text-white">Media Type</label>
-              <select name="packageType" class="form-select bg-dark text-white border-secondary">
-                 <option value="mixed">Audio & Video</option>
-                 <option value="audio">Audio Only</option>
-                 <option value="video">Video Only</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label text-white" title="Max allowed">Audios</label>
-              <input type="number" name="maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="0" value="1">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label text-white" title="Max allowed">Videos</label>
-              <input type="number" name="maxVideoFiles" class="form-control bg-dark text-white border-secondary" min="0" value="1">
+            <input type="hidden" name="packageType" value="audio">
+            <input type="hidden" name="maxVideoFiles" value="0">
+            <div class="col-md-7">
+              <label class="form-label text-white" title="Max allowed">Max Audio Files</label>
+              <input type="number" name="maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="1" value="1">
             </div>
             <div class="col-md-12">
               <label class="form-label text-white">Select Platforms *</label>
@@ -159,21 +148,11 @@
               <label class="form-label text-white">Price * (₹)</label>
               <input type="number" name="price" id="edit_price" class="form-control" min="0" required>
             </div>
-            <div class="col-md-3">
-              <label class="form-label text-white">Media Type</label>
-              <select name="packageType" id="edit_packageType" class="form-select bg-dark text-white border-secondary">
-                 <option value="mixed">Audio & Video</option>
-                 <option value="audio">Audio Only</option>
-                 <option value="video">Video Only</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label text-white">Audios</label>
-              <input type="number" name="maxAudioFiles" id="edit_maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="0">
-            </div>
-            <div class="col-md-2">
-              <label class="form-label text-white">Videos</label>
-              <input type="number" name="maxVideoFiles" id="edit_maxVideoFiles" class="form-control bg-dark text-white border-secondary" min="0">
+            <input type="hidden" name="packageType" id="edit_packageType" value="audio">
+            <input type="hidden" name="maxVideoFiles" id="edit_maxVideoFiles" value="0">
+            <div class="col-md-7">
+              <label class="form-label text-white">Max Audio Files</label>
+              <input type="number" name="maxAudioFiles" id="edit_maxAudioFiles" class="form-control bg-dark text-white border-secondary" min="1">
             </div>
             <div class="col-md-12">
               <label class="form-label text-white">Select Platforms *</label>

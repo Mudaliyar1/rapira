@@ -33,13 +33,8 @@
 
             <h6 class="text-white fw-bold mb-2">File Upload Limits:</h6>
             <ul class="list-unstyled text-white-50 small mb-4">
-                <li class="mb-1"><i class="bi bi-info-circle me-2 text-primary"></i>Allowed Content: <strong class="text-white"><%= cartPackage.packageType === 'audio' ? 'Audio Only' : (cartPackage.packageType === 'video' ? 'Video Only' : 'Audio & Video') %></strong></li>
-                <% if (cartPackage.packageType !== 'video') { %>
-                  <li class="mb-1"><i class="bi bi-music-note-beamed me-2 text-primary"></i>Max Audio Files: <strong class="text-white"><%= cartPackage.maxAudioFiles || 0 %></strong></li>
-                <% } %>
-                <% if (cartPackage.packageType !== 'audio') { %>
-                  <li class="mb-1"><i class="bi bi-play-btn me-2 text-primary"></i>Max Video Files: <strong class="text-white"><%= cartPackage.maxVideoFiles || 0 %></strong></li>
-                <% } %>
+                <li class="mb-1"><i class="bi bi-info-circle me-2 text-primary"></i>Allowed Content: <strong class="text-white">Audio Only</strong></li>
+                <li class="mb-1"><i class="bi bi-music-note-beamed me-2 text-primary"></i>Max Audio Files: <strong class="text-white"><%= cartPackage.maxAudioFiles || 0 %></strong></li>
             </ul>
 
             <h6 class="text-white fw-bold mb-2">Package Features:</h6>
@@ -93,34 +88,71 @@
           <% } %>
           
           <form action="/artist-distribution/request/<%= cartPackage._id %>" method="POST" enctype="multipart/form-data" id="distributionForm">
-            <div class="mb-4">
-              <label class="form-label text-white fw-bold">Release Title *</label>
-              <input type="text" name="contentTitle" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Midnight Vibes EP" required>
+            <div class="row g-3 mb-4">
+              <div class="col-md-12">
+                <label class="form-label text-white fw-bold">Release Title *</label>
+                <input type="text" name="contentTitle" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Midnight Vibes EP" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Primary Artist(s) *</label>
+                <input type="text" name="primaryArtist" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Jane Doe" required>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Featured Artist(s) (Optional)</label>
+                <input type="text" name="featuredArtists" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., John Smith, DJ Khaled">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Genre *</label>
+                <input type="text" name="genre" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Hip Hop / Rap" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Language</label>
+                <input type="text" name="language" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., English, Hindi" value="English">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Release Date *</label>
+                <input type="date" name="releaseDate" class="form-control bg-dark border-secondary text-white py-2" required>
+              </div>
+              
+              <div class="col-md-6 d-flex align-items-center">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" name="explicitContent" id="explicitContentCheck">
+                  <label class="form-check-label text-white fw-bold" for="explicitContentCheck">Explicit Content (Contains profanity)</label>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Record Label (Optional)</label>
+                <input type="text" name="recordLabel" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Independent">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Copyright Year</label>
+                <input type="number" name="copyrightYear" class="form-control bg-dark border-secondary text-white py-2" value="<%= new Date().getFullYear() %>">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Copyright Owner</label>
+                <input type="text" name="copyrightOwner" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Jane Doe">
+              </div>
             </div>
 
-            <% if (cartPackage.packageType !== 'video' && cartPackage.maxAudioFiles > 0) { %>
             <div class="mb-4 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
               <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-music-note-beamed me-2 text-info"></i>Audio Files</span>
                 <span class="badge bg-secondary">Max <%= cartPackage.maxAudioFiles %></span>
               </label>
-              <input type="file" name="audioFiles" class="form-control bg-dark border-secondary text-white" accept="audio/*" multiple id="audioInput">
-              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP3, WAV, FLAC.</div>
+              <input type="file" name="audioFiles" class="form-control bg-dark border-secondary text-white" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg,.aac,.wma,.aiff,.alac,.mpeg,.mp4a,.3gp,.mid,.midi,.x-vlc-plugin" multiple id="audioInput">
+              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP3, WAV, FLAC, M4A, OGG, AAC, WMA, AIFF, ALAC, MPEG, MP4A, 3GP, MID. Virtually any audio format is supported.</div>
               <div id="audioError" class="text-danger small mt-1 d-none">You selected more audio files than the package allows!</div>
             </div>
-            <% } %>
 
-            <% if (cartPackage.packageType !== 'audio' && cartPackage.maxVideoFiles > 0) { %>
-            <div class="mb-4 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
-              <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-play-btn me-2 text-danger"></i>Video Files</span>
-                <span class="badge bg-secondary">Max <%= cartPackage.maxVideoFiles %></span>
-              </label>
-              <input type="file" name="videoFiles" class="form-control bg-dark border-secondary text-white" accept="video/*" multiple id="videoInput">
-              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP4, MOV, AVI.</div>
-              <div id="videoError" class="text-danger small mt-1 d-none">You selected more video files than the package allows!</div>
-            </div>
-            <% } %>
+
 
             <div class="mb-5 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
               <label class="form-label text-white fw-bold"><i class="bi bi-image me-2 text-warning"></i>Cover Art / Poster (Optional)</label>
@@ -160,27 +192,15 @@
       });
   }
 
-  if (videoInput) {
-      videoInput.addEventListener('change', function() {
-          const count = this.files.length;
-          const error = document.getElementById('videoError');
-          if (count > maxVideos) {
-              error.classList.remove('d-none');
-              this.value = ''; // Reset
-          } else {
-              error.classList.add('d-none');
-          }
-      });
-  }
+
   
   form.addEventListener('submit', function(e) {
       // Validate at least one file is selected
       let hasAudio = audioInput && audioInput.files.length > 0;
-      let hasVideo = videoInput && videoInput.files.length > 0;
       
-      if (!hasAudio && !hasVideo) {
+      if (!hasAudio) {
           e.preventDefault();
-          alert('You must upload at least one music or video file to use this package.');
+          alert('You must upload at least one music file to use this package.');
           return false;
       }
       

@@ -24,6 +24,21 @@ const DistributionRequestSchema = new mongoose.Schema({
         type: String, // e.g., My New Hit Song
         required: true
     },
+    primaryArtist: String,
+    featuredArtists: String,
+    genre: String,
+    releaseDate: Date,
+    language: {
+        type: String,
+        default: 'English'
+    },
+    explicitContent: {
+        type: Boolean,
+        default: false
+    },
+    recordLabel: String,
+    copyrightYear: Number,
+    copyrightOwner: String,
     contentType: {
         type: String,
         enum: ['audio', 'video', 'mixed'],

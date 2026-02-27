@@ -83,13 +83,12 @@
               <td class="text-center py-4 text-muted">1</td>
               <td class="ps-3 py-4">
                  <strong class="text-dark d-block mb-1 fs-6"><%= request.contentTitle %></strong>
-                 <span class="text-muted small d-block">Package: <%= request.package.name %> (<%= request.package.packageType ? request.package.packageType.toUpperCase() : 'LEGACY' %>)</span>
+                 <span class="text-muted small d-block">Package: <%= request.package.name %></span>
                  <span class="text-muted small d-block">Distributor: <%= request.distributor.name %></span>
               </td>
               <td class="text-center py-4 text-muted small">
                    <% if (request.package.packageType) { %>
-                     <% if (request.package.packageType !== 'video') { %> Max Audio: <strong><%= request.package.maxAudioFiles || 0 %></strong><br><% } %>
-                     <% if (request.package.packageType !== 'audio') { %> Max Video: <strong><%= request.package.maxVideoFiles || 0 %></strong><% } %>
+                     Max Audio: <strong><%= request.package.maxAudioFiles || 0 %></strong>
                    <% } else { %>
                      1 File (Legacy)
                    <% } %>
@@ -123,7 +122,51 @@
       </div>
     </div>
 
-    <div class="footer-note">
+    <% if (request.primaryArtist) { %>
+    <!-- html2pdf__page-break class forces a new page when saving to PDF -->
+    <div class="html2pdf__page-break" style="page-break-before: always; height: 0;"></div>
+    <div class="mt-4" style="padding-top: 20px;">
+      <h6 class="fw-bold mb-3 text-uppercase" style="letter-spacing: 1px; color: #555;">Release Metadata</h6>
+      <div class="border rounded-3 p-4 bg-light">
+        <div class="row g-3">
+          <div class="col-sm-12">
+            <div class="label mb-1">Release Title</div>
+            <div class="value mb-0" style="font-weight: 700; color: #111;"><%= request.contentTitle %></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="label mb-1">Primary Artist(s)</div>
+            <div class="value mb-0" style="font-weight: 500;"><%= request.primaryArtist %></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="label mb-1">Release Date</div>
+            <div class="value mb-0" style="font-weight: 500;"><%= request.releaseDate ? new Date(request.releaseDate).toLocaleDateString('en-GB') : 'N/A' %></div>
+          </div>
+          <div class="col-sm-4">
+            <div class="label mb-1">Genre</div>
+            <div class="value mb-0" style="font-weight: 500;"><%= request.genre || 'N/A' %></div>
+          </div>
+          <div class="col-sm-4">
+            <div class="label mb-1">Language</div>
+            <div class="value mb-0" style="font-weight: 500;"><%= request.language || 'English' %></div>
+          </div>
+          <div class="col-sm-4">
+            <div class="label mb-1">Explicit</div>
+            <div class="value mb-0 <%= request.explicitContent ? 'text-danger' : 'text-success' %>" style="font-weight: 500;"><%= request.explicitContent ? 'Yes' : 'No' %></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="label mb-1">Record Label</div>
+            <div class="value mb-0" style="font-weight: 500;"><%= request.recordLabel || 'Independent' %></div>
+          </div>
+          <div class="col-sm-6">
+            <div class="label mb-1">Copyright</div>
+            <div class="value mb-0" style="font-weight: 500;">© <%= request.copyrightYear %> <%= request.copyrightOwner || request.primaryArtist %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="footer-note" style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 2rem; color: #999; font-size: 0.85rem; text-align: center;">
       <p>This is a computer-generated receipt and does not require a signature.</p>
       <p>Thank you for choosing Rapira for your music distribution needs. Your music is currently in the processing phase with the selected distributor.</p>
       <div class="small mt-1 text-muted">Payment status: <%= request.paymentStatus === 'free' ? 'FREE (No Charge)' : 'PAID via Razorpay Secure Gateway' %></div>
