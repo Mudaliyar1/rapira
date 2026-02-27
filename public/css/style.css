@@ -2043,8 +2043,8 @@ footer .social-icons a:hover {
 }
 
 .admin-sidebar.show {
-  transform: translateX(0);
-  visibility: visible;
+  transform: translateX(0) !important;
+  visibility: visible !important;
   box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
 }
 
