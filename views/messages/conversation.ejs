@@ -228,6 +228,35 @@
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
   }
+
+  .typing-indicator {
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: fit-content;
+    margin: 10px 0 20px 0;
+    display: none;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background-color: #fff;
+    display: block;
+    border-radius: 50%;
+    margin-right: 5px;
+    opacity: 0.4;
+    animation: typing-dots 1s infinite ease-in-out;
+  }
+  .typing-indicator span:nth-of-type(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-of-type(2) { animation-delay: 0.2s; margin-right: 5px; }
+  .typing-indicator span:nth-of-type(3) { animation-delay: 0.4s; margin-right: 0; }
+  
+  @keyframes typing-dots {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
 </style>
 
 <script>
@@ -240,6 +269,7 @@
     const messageForm = document.querySelector('form[action="/messages/send"]');
     const messageInput = document.querySelector('input[name="content"]');
     let isUserNearBottom = true;
+    let lastTypingSent = 0;
     let selectedMessages = new Set();
 
     function escapeHtml(value) {
@@ -300,7 +330,7 @@
       }
     }
 
-    function renderMessages(messages) {
+    function renderMessages(messages, isTyping) {
       const shouldStickToBottom = isUserNearBottom;
       chatMessages.innerHTML = '';
 
@@ -385,6 +415,21 @@
         chatMessages.insertAdjacentHTML('beforeend', bubble);
       });
 
+      // Add typing indicator at the end
+      if (isTyping) {
+        chatMessages.insertAdjacentHTML('beforeend', `
+          <div class="row mb-3 typing-row">
+            <div class="col-10">
+              <div class="d-flex justify-content-start">
+                <div class="typing-indicator d-flex">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+
       if (shouldStickToBottom) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
@@ -405,7 +450,7 @@
         });
         const data = await response.json();
         if (data.success && Array.isArray(data.messages)) {
-          renderMessages(data.messages);
+          renderMessages(data.messages, data.isTyping);
         }
       } catch (error) {
         console.error('Failed to fetch conversation:', error);
@@ -428,12 +473,34 @@
       return response.ok;
     }
 
+    async function sendTypingStatus(isTyping) {
+      const now = Date.now();
+      if (isTyping && now - lastTypingSent < 3000) return; // Debounce typing pings
+      if (isTyping) lastTypingSent = now;
+
+      try {
+        await fetch(`/messages/api/typing/${otherUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isTyping })
+        });
+      } catch (error) {
+        console.error('Typing status error:', error);
+      }
+    }
+
     function setupListeners() {
       if (!chatMessages || !messageForm || !messageInput) return;
 
       chatMessages.addEventListener('scroll', () => {
         const threshold = 80;
         isUserNearBottom = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < threshold;
+      });
+
+      messageInput.addEventListener('input', () => {
+        if (messageInput.value.trim().length > 0) {
+          sendTypingStatus(true);
+        }
       });
 
       messageForm.addEventListener('submit', async (event) => {
@@ -448,6 +515,7 @@
         if (sent) {
           messageInput.value = '';
           isUserNearBottom = true;
+          sendTypingStatus(false);
           await fetchConversation();
           messageInput.focus();
         }

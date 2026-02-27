@@ -92,6 +92,34 @@
     50% { border-color: rgba(220, 53, 69, 1); box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
     100% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
   }
+
+  .typing-indicator {
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: fit-content;
+    margin: 5px 0 15px 0;
+    display: flex;
+    align-items: center;
+  }
+  .typing-indicator span {
+    height: 6px;
+    width: 6px;
+    background-color: #fff;
+    display: block;
+    border-radius: 50%;
+    margin-right: 4px;
+    opacity: 0.4;
+    animation: typing-dots 1s infinite ease-in-out;
+  }
+  .typing-indicator span:nth-of-type(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-of-type(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-of-type(3) { animation-delay: 0.4s; margin-right: 0; }
+  
+  @keyframes typing-dots {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
 </style>
 
 <script>
@@ -103,6 +131,7 @@
     const messageForm = document.querySelector('form[action="/messages/send"]');
     const messageInput = document.querySelector('input[name="content"]');
     let isUserNearBottom = true;
+    let lastTypingSent = 0;
 
     function escapeHtml(value) { const div = document.createElement('div'); div.textContent = value || ''; return div.innerHTML; }
     function statusIcon(message) {
@@ -111,7 +140,7 @@
       return '<i class="bi bi-check ms-1"></i>';
     }
 
-    function renderMessages(messages) {
+    function renderMessages(messages, isTyping) {
       const shouldStickToBottom = isUserNearBottom;
       chatMessages.innerHTML = '';
       if (!messages.length) {
@@ -135,6 +164,21 @@
         chatMessages.insertAdjacentHTML('beforeend', bubble);
       });
 
+      // Add typing indicator
+      if (isTyping) {
+        chatMessages.insertAdjacentHTML('beforeend', `
+          <div class="row mb-3 typing-row">
+            <div class="col-10">
+              <div class="d-flex justify-content-start">
+                <div class="typing-indicator">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `);
+      }
+
       if (shouldStickToBottom) chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
@@ -142,7 +186,7 @@
       try {
         const response = await fetch(`/messages/api/conversation/${otherUserId}`, { headers: { 'Accept': 'application/json' } });
         const data = await response.json();
-        if (data.success && Array.isArray(data.messages)) renderMessages(data.messages);
+        if (data.success && Array.isArray(data.messages)) renderMessages(data.messages, data.isTyping);
       } catch (error) { console.error('Failed to fetch conversation:', error); }
     }
 
@@ -155,6 +199,19 @@
       return response.ok;
     }
 
+    async function sendTypingStatus(isTyping) {
+      const now = Date.now();
+      if (isTyping && now - lastTypingSent < 3000) return;
+      if (isTyping) lastTypingSent = now;
+      try {
+        await fetch(`/messages/api/typing/${otherUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isTyping })
+        });
+      } catch (e) {}
+    }
+
     if (chatMessages) {
       chatMessages.addEventListener('scroll', () => {
         const threshold = 80;
@@ -163,6 +220,10 @@
     }
 
     if (messageForm && messageInput) {
+      messageInput.addEventListener('input', () => {
+        if (messageInput.value.trim().length > 0) sendTypingStatus(true);
+      });
+
       messageForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const content = messageInput.value.trim();
@@ -175,6 +236,7 @@
         if (sent) {
           messageInput.value = '';
           isUserNearBottom = true;
+          sendTypingStatus(false);
           await fetchConversation();
           messageInput.focus();
         }

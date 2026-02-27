@@ -620,6 +620,16 @@ router.get('/api/conversation/:userId', isLoggedIn, canMessageRole, async (req, 
       ]
     }).sort({ createdAt: 1 }).lean();
 
+    // Check if other user is typing
+    const otherUser = await User.findById(otherUserId).select('typingTo lastTypingAt');
+    let isTyping = false;
+    if (otherUser && otherUser.typingTo && otherUser.typingTo.toString() === req.session.user.id) {
+      const now = new Date();
+      if (otherUser.lastTypingAt && (now - otherUser.lastTypingAt) < 6000) {
+        isTyping = true;
+      }
+    }
+
     // Filter out deleted messages based on user
     messages = messages.map(msg => {
       const deletedFor = msg.deletedFor || [];
@@ -634,10 +644,33 @@ router.get('/api/conversation/:userId', isLoggedIn, canMessageRole, async (req, 
       return msg;
     });
 
-    res.json({ success: true, messages });
+    res.json({ success: true, messages, isTyping });
   } catch (error) {
     console.error('Conversation API error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch conversation' });
+  }
+});
+
+// Update typing status
+router.post('/api/typing/:recipientId', isLoggedIn, async (req, res) => {
+  try {
+    const { isTyping } = req.body;
+    const myId = req.session.user.id;
+    const recipientId = req.params.recipientId;
+
+    if (isTyping) {
+      await User.findByIdAndUpdate(myId, {
+        typingTo: recipientId,
+        lastTypingAt: new Date()
+      });
+    } else {
+      await User.findByIdAndUpdate(myId, {
+        typingTo: null
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
   }
 });
 
