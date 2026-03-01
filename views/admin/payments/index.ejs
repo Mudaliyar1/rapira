@@ -1,0 +1,217 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+    <!-- Revenue Overview Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card-dark border border-secondary p-3 text-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-currency-rupee text-primary fs-4"></i>
+                </div>
+                <h4 class="text-white mb-1">₹<%= stats.totalRevenue.toLocaleString() %></h4>
+                <p class="text-muted small mb-0">Total Revenue Collected</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card-dark border border-secondary p-3 text-center">
+                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-graph-up-arrow text-success fs-4"></i>
+                </div>
+                <h4 class="text-white mb-1">₹<%= stats.platformFees.toLocaleString() %></h4>
+                <p class="text-muted small mb-0">Platform Earnings</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card-dark border border-secondary p-3 text-center">
+                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-hourglass-split text-warning fs-4"></i>
+                </div>
+                <h4 class="text-white mb-1">₹<%= stats.pendingPayouts.toLocaleString() %></h4>
+                <p class="text-muted small mb-0">Pending Payouts</p>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card-dark border border-secondary p-3 text-center">
+                <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-credit-card text-info fs-4"></i>
+                </div>
+                <h4 class="text-white mb-1"><%= transactions.length %></h4>
+                <p class="text-muted small mb-0">Total Transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="glass-card-dark border border-secondary mb-4">
+        <div class="card-body">
+            <form method="GET" action="/admin/payments" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label text-white-50 small">Search</label>
+                    <input type="text" name="search" class="form-control bg-dark border-secondary text-white" placeholder="Payment ID, Order ID..." value="<%= filters.search || '' %>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-white-50 small">Type</label>
+                    <select name="type" class="form-select bg-dark border-secondary text-white">
+                        <option value="all">All Types</option>
+                        <option value="ticket" <%= filters.type === 'ticket' ? 'selected' : '' %>>Concert Tickets</option>
+                        <option value="product" <%= filters.type === 'product' ? 'selected' : '' %>>Shop Orders</option>
+                        <option value="beat" <%= filters.type === 'beat' ? 'selected' : '' %>>Beat Purchases</option>
+                        <option value="subscription" <%= filters.type === 'subscription' ? 'selected' : '' %>>Subscription</option>
+                        <option value="registration" <%= filters.type === 'registration' ? 'selected' : '' %>>Registration Fees</option>
+                        <option value="distribution" <%= filters.type === 'distribution' ? 'selected' : '' %>>Music Distribution</option>
+                        <option value="venue_commission" <%= filters.type === 'venue_commission' ? 'selected' : '' %>>Venue Commission</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-white-50 small">Payout Status</label>
+                    <select name="payoutStatus" class="form-select bg-dark border-secondary text-white">
+                        <option value="all">All Payouts</option>
+                        <option value="pending" <%= filters.payoutStatus === 'pending' ? 'selected' : '' %>>Pending Payout</option>
+                        <option value="paid" <%= filters.payoutStatus === 'paid' ? 'selected' : '' %>>Paid</option>
+                        <option value="not_applicable" <%= filters.payoutStatus === 'not_applicable' ? 'selected' : '' %>>N/A</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-white-50 small">From</label>
+                    <input type="date" name="startDate" class="form-control bg-dark border-secondary text-white" value="<%= filters.startDate || '' %>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-white-50 small">To</label>
+                    <input type="date" name="endDate" class="form-control bg-dark border-secondary text-white" value="<%= filters.endDate || '' %>">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="glass-card-dark border border-secondary overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead class="bg-dark text-white-50 small">
+                    <tr>
+                        <th class="ps-4">DATE</th>
+                        <th>TRANSACTION</th>
+                        <th>USER</th>
+                        <th>AMOUNT</th>
+                        <th>PAYEE (ARTIST/PRODUCER/DISTRIBUTOR)</th>
+                        <th>STATUS</th>
+                        <th>PAYOUT</th>
+                        <th class="pe-4 text-end">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions && transactions.length > 0) { %>
+                        <% transactions.forEach(tx => { %>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="small"><%= tx.createdAt.toLocaleDateString() %></div>
+                                    <div class="text-muted smaller"><%= tx.createdAt.toLocaleTimeString() %></div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold"><%= tx.type.replace('_', ' ').split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') %></div>
+                                    <div class="text-muted smaller"><%= tx.paymentId %></div>
+                                </td>
+                                <td>
+                                    <% if (tx.user) { %>
+                                        <div class="small"><%= tx.user.name %></div>
+                                        <div class="text-muted smaller"><%= tx.user.email %></div>
+                                    <% } else { %>
+                                        <span class="text-muted">Deleted User</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div class="text-success fw-bold">₹<%= tx.amount %></div>
+                                    <% if (tx.platformFee > 0) { %>
+                                        <div class="text-muted smaller">Fee: ₹<%= tx.platformFee %></div>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (tx.payee) { %>
+                                        <div class="small text-info"><%= tx.payee.name %></div>
+                                        <div class="text-muted smaller">Due: ₹<%= tx.netAmount %></div>
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill bg-<%= tx.status === 'success' ? 'success' : tx.status === 'refunded' ? 'warning' : 'danger' %> bg-opacity-10 text-<%= tx.status === 'success' ? 'success' : tx.status === 'refunded' ? 'warning' : 'danger' %>">
+                                        <%= tx.status.toUpperCase() %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% if (tx.payoutStatus === 'pending') { %>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">PENDING PAYOUT</span>
+                                    <% } else if (tx.payoutStatus === 'paid') { %>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">PAID</span>
+                                    <% } else { %>
+                                        <span class="text-muted smaller">N/A</span>
+                                    <% } %>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-link text-white-50 p-0" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow border-secondary">
+                                            <li><a class="dropdown-item" href="/admin/payments/view/<%= tx._id %>"><i class="bi bi-info-circle me-2"></i>View Details</a></li>
+                                            <% if (tx.payoutStatus === 'pending') { %>
+                                                <li>
+                                                    <form action="/admin/payments/<%= tx._id %>/payout-status" method="POST">
+                                                        <input type="hidden" name="payoutStatus" value="paid">
+                                                        <button type="submit" class="dropdown-item text-success">
+                                                            <i class="bi bi-check-circle me-2"></i>Mark as Paid
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            <% } else if (tx.payoutStatus === 'paid') { %>
+                                                <li>
+                                                    <form action="/admin/payments/<%= tx._id %>/payout-status" method="POST">
+                                                        <input type="hidden" name="payoutStatus" value="pending">
+                                                        <button type="submit" class="dropdown-item text-warning">
+                                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset to Pending
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            <% } %>
+                                            <li><hr class="dropdown-divider border-secondary"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-receipt me-2"></i>Issue Refund</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="bi bi-cash-stack display-1 text-muted opacity-25 mb-4 d-block"></i>
+                                <h5 class="text-muted">No transactions found</h5>
+                                <p class="text-muted small">Try adjusting your filters or search term</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('scripts') %>
+<style>
+    .smaller { font-size: 0.75rem; }
+    .table-dark { --bs-table-bg: #111; }
+    .glass-card-dark {
+        background: rgba(30, 30, 40, 0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+    }
+    .badge {
+        padding: 0.5em 1em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+</style>

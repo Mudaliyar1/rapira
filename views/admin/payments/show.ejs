@@ -1,0 +1,173 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <a href="/admin/payments" class="btn btn-dark border-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Payments
+            </a>
+        </div>
+
+        <!-- Transaction Summary Card -->
+        <div class="col-lg-8">
+            <div class="glass-card-dark border border-secondary mb-4">
+                <div class="card-header border-bottom border-secondary p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="text-white mb-0">Transaction Information</h5>
+                        <span class="badge rounded-pill bg-<%= tx.status === 'success' ? 'success' : 'danger' %> bg-opacity-10 text-<%= tx.status === 'success' ? 'success' : 'danger' %> px-3 py-2">
+                             <%= tx.status.toUpperCase() %>
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="text-white-50 small d-block mb-1 text-uppercase ls-1">Payment ID</label>
+                            <h6 class="text-white font-monospace"><%= tx.paymentId %></h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-white-50 small d-block mb-1 text-uppercase ls-1">Order ID</label>
+                            <h6 class="text-white font-monospace"><%= tx.orderId %></h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-white-50 small d-block mb-1 text-uppercase ls-1">Transaction Type</label>
+                            <h6 class="text-white">
+                                <i class="bi bi-<%= tx.type === 'ticket' ? 'ticket-perforated' : tx.type === 'beat' ? 'music-note-beamed' : tx.type === 'distribution' ? 'broadcast' : tx.type === 'product' ? 'bag' : tx.type === 'venue_commission' ? 'building' : 'gear' %> me-2 text-primary"></i>
+                                <%= tx.type.replace('_', ' ').split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ') %>
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-white-50 small d-block mb-1 text-uppercase ls-1">Date & Time</label>
+                            <h6 class="text-white"><%= tx.createdAt.toLocaleString() %></h6>
+                        </div>
+                        <div class="col-12">
+                            <label class="text-white-50 small d-block mb-1 text-uppercase ls-1">Description</label>
+                            <p class="text-white fs-5 mb-0"><%= tx.description || 'No description provided' %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Breakdown -->
+            <div class="glass-card-dark border border-secondary p-0 mb-4 overflow-hidden">
+                <div class="card-header border-bottom border-secondary p-4 bg-dark bg-opacity-25">
+                    <h5 class="text-white mb-0">Financial Summary</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-borderless mb-0">
+                            <tbody>
+                                <tr class="border-bottom border-secondary border-opacity-25">
+                                    <td class="ps-4 py-3">Gross Amount</td>
+                                    <td class="pe-4 py-3 text-end text-white fw-bold">₹<%= tx.amount.toLocaleString() %></td>
+                                </tr>
+                                <tr class="border-bottom border-secondary border-opacity-25">
+                                    <td class="ps-4 py-3">Platform Fee</td>
+                                    <td class="pe-4 py-3 text-end text-danger">- ₹<%= tx.platformFee.toLocaleString() %></td>
+                                </tr>
+                                <tr class="bg-primary bg-opacity-10 text-primary">
+                                    <td class="ps-4 py-4 fs-5">Net Amount (Due to Payee)</td>
+                                    <td class="pe-4 py-4 text-end fs-5 fw-bold text-success">₹<%= tx.netAmount.toLocaleString() %></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions/Details -->
+        <div class="col-lg-4">
+            <!-- Payout Management Card -->
+            <div class="glass-card-dark border border-secondary mb-4">
+                <div class="card-body p-4 text-center">
+                    <label class="text-white-50 small d-block mb-3 text-uppercase ls-1">Payout Status</label>
+                    <div class="mb-4">
+                        <% if (tx.payoutStatus === 'pending') { %>
+                            <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill bg-warning bg-opacity-10 text-warning border border-warning fs-5">
+                                <i class="bi bi-hourglass-split me-2"></i>PENDING PAYOUT
+                            </div>
+                        <% } else if (tx.payoutStatus === 'paid') { %>
+                            <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill bg-success bg-opacity-10 text-success border border-success fs-5">
+                                <i class="bi bi-check-circle me-2"></i>PAID
+                            </div>
+                        <% } else { %>
+                            <div class="d-inline-flex align-items-center px-4 py-2 rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary fs-5">
+                                NOT APPLICABLE
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <% if (tx.payoutStatus !== 'not_applicable') { %>
+                        <form action="/admin/payments/<%= tx._id %>/payout-status" method="POST">
+                            <input type="hidden" name="payoutStatus" value="<%= tx.payoutStatus === 'pending' ? 'paid' : 'pending' %>">
+                            <button type="submit" class="btn btn-<%= tx.payoutStatus === 'pending' ? 'success' : 'warning' %> w-100 py-3 fw-bold">
+                                <i class="bi bi-<%= tx.payoutStatus === 'pending' ? 'check-circle' : 'arrow-counterclockwise' %> me-2"></i>
+                                Mark as <%= tx.payoutStatus === 'pending' ? 'Paid' : 'Pending' %>
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Customer Details -->
+            <div class="glass-card-dark border border-secondary mb-4">
+                <div class="card-header border-bottom border-secondary p-4">
+                    <h6 class="text-white mb-0">Customer</h6>
+                </div>
+                <div class="card-body p-4">
+                    <% if (tx.user) { %>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                <i class="bi bi-person text-primary fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-white mb-0"><%= tx.user.name %></h6>
+                                <p class="text-white-50 small mb-0"><%= tx.user.email %></p>
+                            </div>
+                        </div>
+                        <a href="/admin/users/details/<%= tx.user._id %>" class="btn btn-outline-primary btn-sm w-100 mt-2">View Profile</a>
+                    <% } else { %>
+                        <p class="text-muted mb-0">User details not available</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Recipient Details -->
+            <div class="glass-card-dark border border-secondary mb-4">
+                <div class="card-header border-bottom border-secondary p-4">
+                    <h6 class="text-white mb-0">Payee (Artist / Producer / Distributor)</h6>
+                </div>
+                <div class="card-body p-4">
+                    <% if (tx.payee) { %>
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                <i class="bi bi-mic text-info fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-white mb-0"><%= tx.payee.name %></h6>
+                                <p class="text-white-50 small mb-0"><%= tx.payee.email %></p>
+                            </div>
+                        </div>
+                        <div class="alert alert-info bg-opacity-10 border-info text-info small mb-0">
+                            <i class="bi bi-info-circle me-2"></i>This recipient is due to receive ₹<%= tx.netAmount.toLocaleString() %>.
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted mb-0">No specific payee associated (Platform revenue)</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('scripts') %>
+<style>
+    .glass-card-dark {
+        background: rgba(30, 30, 40, 0.4);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+    }
+    .ls-1 { letter-spacing: 1px; }
+    .table-dark { --bs-table-bg: transparent; }
+</style>

@@ -9,6 +9,7 @@ const Role = require('../models/Role');
 const Artist = require('../models/Artist');
 const DistributorApplication = require('../models/DistributorApplication');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
+const Transaction = require('../models/Transaction');
 const multer = require('multer');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 
@@ -426,6 +427,24 @@ router.post('/verify-payment/:id', isLoggedIn, isArtist, async (req, res) => {
             request.razorpayPaymentId = razorpay_payment_id;
             request.razorpaySignature = razorpay_signature;
             await request.save();
+
+            // Create Transaction record for the admin dashboard
+            const newTx = new Transaction({
+                user: req.session.user.id,
+                type: 'distribution',
+                amount: request.totalPaid,
+                platformFee: request.commissionAmount || 0,
+                netAmount: request.totalPaid - (request.commissionAmount || 0),
+                payee: request.distributor, // User who is the distributor
+                paymentId: razorpay_payment_id,
+                orderId: razorpay_order_id,
+                status: 'success',
+                payoutStatus: request.totalPaid > 0 ? 'pending' : 'not_applicable',
+                sourceModel: 'DistributionRequest',
+                sourceId: request._id,
+                description: `Distribution: ${request.contentTitle} (${request.contentType})`
+            });
+            await newTx.save();
 
             req.flash('success', 'Payment successful! Your distribution request is now with the distributor.');
             return res.redirect('/artist-distribution/distributors');

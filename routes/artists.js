@@ -1880,6 +1880,21 @@ router.post('/beats/verify-payment', isLoggedIn, isArtist, async (req, res) => {
     beat.purchasesCount += 1;
     await beat.save();
 
+    // Log the transaction for admin payments page
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: req.session.user.id,
+      type: 'beat',
+      amount: newPurchase.totalAmountPaid,
+      platformFee: newPurchase.platformFee,
+      payee: newPurchase.producer,
+      paymentId: newPurchase.transactionId,
+      orderId: razorpay_order_id,
+      sourceModel: 'BeatPurchase',
+      sourceId: newPurchase._id,
+      description: `Beat purchase: ${newPurchase.backupTitle || 'Beat'}`
+    });
+
     res.json({ success: true, message: 'Beat purchased successfully!' });
 
   } catch (error) {

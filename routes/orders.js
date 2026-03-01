@@ -24,21 +24,21 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       newAddress,
       isBuyNow
     } = req.body;
-    
+
     // Verify payment with Razorpay
     const isValidPayment = verifyPayment({
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
       signature: razorpay_signature
     });
-    
+
     if (!isValidPayment) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Payment verification failed' 
+      return res.status(400).json({
+        success: false,
+        message: 'Payment verification failed'
       });
     }
-    
+
     // Get cart or buy now data
     let cart;
     if (isBuyNow) {
@@ -60,21 +60,21 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
         });
       }
     }
-    
+
     // Get shipping address
     let shippingAddress;
     if (addressId) {
       const address = await UserAddress.findById(addressId);
       if (!address || address.user.toString() !== req.session.user.id) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Invalid address' 
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid address'
         });
       }
       shippingAddress = address.toShippingAddress();
     } else if (newAddress) {
       shippingAddress = newAddress;
-      
+
       // Save new address if user wants to
       if (newAddress.saveAddress) {
         const userAddress = new UserAddress({
@@ -92,16 +92,16 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
         await userAddress.save();
       }
     } else {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Shipping address is required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Shipping address is required'
       });
     }
-    
+
     // Add user email to shipping address
     const user = await User.findById(req.session.user.id);
     shippingAddress.email = user.email;
-    
+
     // Create order items
     let orderItems;
     if (isBuyNow) {
@@ -125,27 +125,55 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
         totalPrice: item.price * item.quantity
       }));
     }
-    
+
     // Create order
     const order = new Order({
       user: req.session.user.id,
       items: orderItems,
       shippingAddress,
-      subtotal: cart.totalAmount,
+      subtotal: cart.totalAmount || 0,
       discountAmount: 0,
       couponCode: null,
-      totalAmount: cart.finalAmount,
+      totalAmount: cart.finalAmount || cart.totalAmount,
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,
       paymentStatus: 'completed',
       orderStatus: 'confirmed'
     });
-    
+
     // Calculate estimated delivery
     order.calculateEstimatedDelivery();
-    
+
     await order.save();
-    
+
+    // Identify payee for the transaction (creator of the first product in the order)
+    let payeeId = null;
+    try {
+      if (orderItems.length > 0) {
+        const firstProduct = await Product.findById(orderItems[0].product);
+        if (firstProduct) {
+          payeeId = firstProduct.createdBy;
+        }
+      }
+    } catch (payeeErr) {
+      console.error('Error identifying payee for order:', payeeErr);
+    }
+
+    // Log the transaction for admin payments page
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: order.user,
+      type: 'product',
+      amount: order.totalAmount,
+      platformFee: order.platformFee || 0, // Ensure platform fee is passed if available
+      payee: payeeId, // The seller/artist gets the payout
+      paymentId: order.paymentId,
+      orderId: order.orderId,
+      sourceModel: 'Order',
+      sourceId: order._id,
+      description: `Shop order: ${order.orderNumber}`
+    });
+
     // Update product stock and sales
     for (const item of cart.items) {
       let product;
@@ -170,7 +198,7 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       cart.clearCart();
       await cart.save();
     }
-    
+
     // Send order confirmation email
     try {
       await sendOrderConfirmationEmail(user.email, {
@@ -185,19 +213,19 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       console.error('Order confirmation email error:', emailError);
       // Don't fail the order creation if email fails
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Order placed successfully',
       orderNumber: order.orderNumber,
       orderId: order._id
     });
-    
+
   } catch (error) {
     console.error('Payment verification error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error processing payment' 
+    res.status(500).json({
+      success: false,
+      message: 'Error processing payment'
     });
   }
 });
@@ -213,13 +241,13 @@ router.get('/confirmation/:orderNumber', isLoggedIn, async (req, res) => {
       req.flash('error', 'Order not found');
       return res.redirect('/orders/my-orders');
     }
-    
+
     res.render('shop/order-confirmation', {
       title: 'Order Confirmation - RAPIRA',
       order,
       layout: 'layouts/main'
     });
-    
+
   } catch (error) {
     console.error('Order confirmation error:', error);
     req.flash('error', 'Error loading order confirmation');
@@ -233,17 +261,17 @@ router.get('/my-orders', isLoggedIn, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
-    
+
     const orders = await Order.find({ user: req.session.user.id })
       .populate('items.product', 'name images')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
-    
+
     const totalOrders = await Order.countDocuments({ user: req.session.user.id });
     const totalPages = Math.ceil(totalOrders / limit);
-    
+
     res.render('shop/my-orders', {
       title: 'My Orders - RAPIRA',
       orders,
@@ -251,7 +279,7 @@ router.get('/my-orders', isLoggedIn, async (req, res) => {
       totalPages,
       layout: 'layouts/main'
     });
-    
+
   } catch (error) {
     console.error('My orders error:', error);
     req.flash('error', 'Error loading orders');
@@ -356,28 +384,28 @@ router.get('/invoice/:orderId/download-html', isLoggedIn, async (req, res) => {
 router.post('/cancel/:orderId', isLoggedIn, async (req, res) => {
   try {
     const { reason } = req.body;
-    
+
     const order = await Order.findById(req.params.orderId);
-    
+
     if (!order || order.user.toString() !== req.session.user.id) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Order not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
       });
     }
-    
+
     if (!order.canBeCancelled) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Order cannot be cancelled at this stage' 
+      return res.status(400).json({
+        success: false,
+        message: 'Order cannot be cancelled at this stage'
       });
     }
-    
+
     // Update order status
     order.updateStatus('cancelled', reason);
     order.cancellationReason = reason;
     await order.save();
-    
+
     // Restore product stock
     for (const item of order.items) {
       const product = await Product.findById(item.product);
@@ -391,17 +419,17 @@ router.post('/cancel/:orderId', isLoggedIn, async (req, res) => {
         }
       }
     }
-    
-    res.json({ 
-      success: true, 
-      message: 'Order cancelled successfully' 
+
+    res.json({
+      success: true,
+      message: 'Order cancelled successfully'
     });
-    
+
   } catch (error) {
     console.error('Cancel order error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error cancelling order' 
+    res.status(500).json({
+      success: false,
+      message: 'Error cancelling order'
     });
   }
 });

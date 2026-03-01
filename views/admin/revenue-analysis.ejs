@@ -54,7 +54,7 @@
       </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl col-md-4">
       <div class="card revenue-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between">
@@ -70,7 +70,7 @@
       </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl col-md-4">
       <div class="card revenue-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between">
@@ -86,7 +86,7 @@
       </div>
     </div>
     
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl col-md-4">
       <div class="card revenue-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between">
@@ -96,6 +96,22 @@
             </div>
             <div class="revenue-icon bg-warning">
               <i class="bi bi-star text-white"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl col-md-6">
+      <div class="card revenue-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="card-text text-muted mb-1">Distribution Fees</p>
+              <h3 class="text-dark mb-0">₹<%= (revenueSources.distribution.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+            </div>
+            <div class="revenue-icon bg-secondary">
+              <i class="bi bi-broadcast text-white"></i>
             </div>
           </div>
         </div>
@@ -126,6 +142,7 @@
               <option value="ticket" <%= filters.revenueSource === 'ticket' ? 'selected' : '' %>>Ticket Commission</option>
               <option value="venue" <%= filters.revenueSource === 'venue' ? 'selected' : '' %>>Venue Commission</option>
               <option value="subscription" <%= filters.revenueSource === 'subscription' ? 'selected' : '' %>>Subscription</option>
+              <option value="distribution" <%= filters.revenueSource === 'distribution' ? 'selected' : '' %>>Distribution Fees</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -460,7 +477,7 @@
 
           <!-- Venue Commission Table -->
           <h6 class="mb-3"><i class="bi bi-music-note-beamed text-info me-2"></i> Venue Booking Commission</h6>
-          <div class="table-responsive">
+          <div class="table-responsive mb-4">
             <table class="table table-hover">
               <thead>
                 <tr>
@@ -491,6 +508,43 @@
                 <% } else { %>
                   <tr>
                     <td colspan="7" class="text-center text-muted">No venue commission revenue data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Distribution Fee Table -->
+          <h6 class="mb-3"><i class="bi bi-broadcast text-secondary me-2"></i> Distribution Fees Revenue</h6>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Content Title</th>
+                  <th>Artist</th>
+                  <th>Distributor</th>
+                  <th>Date</th>
+                  <th>Gross Amount</th>
+                  <th>Platform Fee</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (revenueSources.distribution.items.length > 0) { %>
+                  <% revenueSources.distribution.items.forEach(tx => { %>
+                    <tr>
+                      <td><%= tx.description || 'N/A' %></td>
+                      <td><%= tx.user ? tx.user.name : 'Unknown' %></td>
+                      <td><%= tx.payee ? tx.payee.name : 'Unknown' %></td>
+                      <td><%= tx.createdAt ? toISTDateString(tx.createdAt) : 'N/A' %></td>
+                      <td>₹<%= (tx.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td>₹<%= (tx.platformFee || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                      <td><span class="badge bg-<%= tx.status === 'success' ? 'success' : tx.status === 'refunded' ? 'warning' : 'danger' %>"><%= tx.status || 'N/A' %></span></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="text-center text-muted">No distribution fee revenue data found</td>
                   </tr>
                 <% } %>
               </tbody>

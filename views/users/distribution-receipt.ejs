@@ -46,13 +46,13 @@
     <div class="row">
       <div class="col-4">
         <div class="label mb-1">Billed To (Artist)</div>
-        <div class="value mb-1"><%= request.artist.name %></div>
-        <div class="text-muted small mb-3"><%= request.artist.email %></div>
+        <div class="value mb-1"><%= request.artist ? request.artist.name : 'Unknown Artist' %></div>
+        <div class="text-muted small mb-3"><%= request.artist ? request.artist.email : 'N/A' %></div>
       </div>
       <div class="col-4">
         <div class="label mb-1">Billed By (Distributor)</div>
-        <div class="value mb-1"><%= request.distributor.name %></div>
-        <div class="text-muted small mb-3"><%= request.distributor.email %></div>
+        <div class="value mb-1"><%= request.distributor ? request.distributor.name : 'Unknown Distributor' %></div>
+        <div class="text-muted small mb-3"><%= request.distributor ? request.distributor.email : 'N/A' %></div>
       </div>
       <div class="col-4 text-end">
         <div class="label mb-1">Date of Payment</div>
@@ -83,14 +83,14 @@
               <td class="text-center py-4 text-muted">1</td>
               <td class="ps-3 py-4">
                  <strong class="text-dark d-block mb-1 fs-6"><%= request.contentTitle %></strong>
-                 <span class="text-muted small d-block">Package: <%= request.package.name %></span>
-                 <span class="text-muted small d-block">Distributor: <%= request.distributor.name %></span>
+                 <span class="text-muted small d-block">Package: <%= request.package ? request.package.name : 'N/A' %></span>
+                 <span class="text-muted small d-block">Distributor: <%= request.distributor ? request.distributor.name : 'Unknown' %></span>
               </td>
               <td class="text-center py-4 text-muted small">
-                   <% if (request.package.packageType) { %>
+                   <% if (request.package && request.package.packageType) { %>
                      Max Audio: <strong><%= request.package.maxAudioFiles || 0 %></strong>
                    <% } else { %>
-                     1 File (Legacy)
+                     N/A
                    <% } %>
               </td>
               <td class="text-center py-4 fw-bold text-dark">

@@ -354,9 +354,22 @@ router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
     });
 
     if (verification.success) {
-      application.paymentStatus = 'paid';
       application.razorpayPaymentId = razorpay_payment_id;
       await application.save();
+
+      // Log the transaction for admin payments page
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: application.user,
+        type: 'registration',
+        amount: application.registrationFee,
+        platformFee: 0,
+        paymentId: application.razorpayPaymentId,
+        orderId: application.razorpayOrderId,
+        sourceModel: 'ArtistApplication',
+        sourceId: application._id,
+        description: `Artist registration fee: ${application.artistLevel} level`
+      });
 
       // Send notifications after successful payment
       try {

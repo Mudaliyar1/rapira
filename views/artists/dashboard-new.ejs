@@ -131,23 +131,99 @@
 <div class="card mb-5" id="post-story">
   <div class="card-body" style="background-color: #333;">
     <h5 class="card-title fw-bold mb-4" style="color: white !important;">Post a Story</h5>
-    <form action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
+    <form id="storyUploadForm" action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
       <div class="col-md-6">
-        <label class="form-label" style="color: #fff;">Media (image or short video)</label>
-        <input type="file" name="media" accept="image/*,video/*" class="form-control" required />
+        <label class="form-label" style="color: #fff;">Media (image, video, or audio)</label>
+        <input type="file" name="media" accept="image/*,video/*,audio/*" class="form-control" required />
       </div>
       <div class="col-md-6">
         <label class="form-label" style="color: #fff;">Caption (optional)</label>
         <input type="text" name="caption" maxlength="120" class="form-control" placeholder="Say something..." />
       </div>
       <div class="col-12">
-        <button type="submit" class="btn btn-primary">Post Story</button>
-        <span class="text-muted ms-2" style="color:#ccc !important;">Max 20 stories per 24 hours; up to 20MB.</span>
+        <div id="uploadProgressContainer" class="progress mb-3 d-none" style="height: 25px; border-radius: 12px; background-color: #444;">
+          <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <div id="uploadStatus" class="small mb-3 d-none" style="color: #ccc;"></div>
+        <button type="submit" id="storySubmitBtn" class="btn btn-primary d-flex align-items-center gap-2">
+           <i class="bi bi-cloud-upload"></i> Post Story
+        </button>
+        <span class="text-muted ms-2" style="color:#ccc !important;">Max 20 stories per 24 hours; up to 100MB.</span>
       </div>
     </form>
   </div>
-  
 </div>
+
+<script>
+document.getElementById('storyUploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const form = this;
+  const formData = new FormData(form);
+  const btn = document.getElementById('storySubmitBtn');
+  const progressBar = document.getElementById('uploadProgressBar');
+  const container = document.getElementById('uploadProgressContainer');
+  const status = document.getElementById('uploadStatus');
+  
+  // Disable button
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+  
+  // Show progress bar
+  container.classList.remove('d-none');
+  status.classList.remove('d-none');
+  status.textContent = 'Preparing upload...';
+  
+  const xhr = new XMLHttpRequest();
+  
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percentComplete = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = percentComplete + '%';
+      progressBar.setAttribute('aria-valuenow', percentComplete);
+      progressBar.textContent = percentComplete + '%';
+      
+      if (percentComplete < 100) {
+        status.textContent = `Uploading: ${percentComplete}% (${(e.loaded / (1024 * 1024)).toFixed(2)} MB / ${(e.total / (1024 * 1024)).toFixed(2)} MB)`;
+      } else {
+        status.textContent = 'Upload complete! Processing media on server... (may take a moment)';
+        progressBar.classList.add('bg-success');
+      }
+    }
+  });
+
+  xhr.addEventListener('load', function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      status.style.color = '#28a745';
+      status.textContent = 'Story posted successfully! Reloading...';
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      let errorMsg = 'Upload failed. Please try again.';
+      try {
+        const resp = JSON.parse(xhr.responseText);
+        errorMsg = resp.error || errorMsg;
+      } catch (err) {}
+      status.style.color = '#dc3545';
+      status.textContent = 'Error: ' + errorMsg;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+      progressBar.classList.remove('bg-success');
+      progressBar.classList.add('bg-danger');
+    }
+  });
+
+  xhr.addEventListener('error', function() {
+    status.style.color = '#dc3545';
+    status.textContent = 'A network error occurred.';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+  });
+
+  xhr.open('POST', form.action, true);
+  xhr.setRequestHeader('Accept', 'application/json'); // Tell server we want JSON
+  xhr.send(formData);
+});
+</script>
 
 <!-- My Stories -->
 <% if (stories && stories.length > 0) { %>
@@ -161,11 +237,17 @@
           <div class="position-relative">
             <% if (story.mediaType === 'image') { %>
               <img src="<%= story.mediaUrl %>" class="card-img-top" style="height: 200px; object-fit: cover;" alt="Story">
-            <% } else { %>
+            <% } else if (story.mediaType === 'video') { %>
               <video src="<%= story.mediaUrl %>" class="card-img-top" style="height: 200px; object-fit: cover;" muted></video>
+            <% } else { %>
+              <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                <i class="bi bi-music-note-beamed fs-1 text-white"></i>
+              </div>
             <% } %>
             <div class="position-absolute top-0 end-0 p-2">
-              <span class="badge bg-dark"><%= story.mediaType === 'image' ? 'Photo' : 'Video' %></span>
+              <span class="badge bg-dark">
+                <%= story.mediaType === 'image' ? 'Photo' : (story.mediaType === 'video' ? 'Video' : 'Audio') %>
+              </span>
             </div>
           </div>
           <div class="card-body">
@@ -183,9 +265,14 @@
                 <i class="bi bi-clock"></i> <%= Math.round((new Date(story.expiresAt) - new Date()) / (1000 * 60 * 60)) %>h left
               </small>
             </div>
-            <button class="btn btn-danger btn-sm w-100" onclick="deleteStory('<%= story._id %>')">
-              <i class="bi bi-trash"></i> Delete Story
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm flex-grow-1" onclick="viewStoryDetails('<%= story._id %>')">
+                <i class="bi bi-info-circle"></i> Details
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="deleteStory('<%= story._id %>')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -209,6 +296,26 @@
         <div class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Story Details Modal -->
+<div class="modal fade" id="storyDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Story Resource Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="storyDetailsContent">
+          <!-- Loading state -->
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
           </div>
         </div>
       </div>
@@ -390,6 +497,124 @@ function viewStoryLikes(storyId) {
       `;
     });
 }
+function viewStoryDetails(storyId) {
+  const modal = new bootstrap.Modal(document.getElementById('storyDetailsModal'));
+  modal.show();
+  
+  const container = document.getElementById('storyDetailsContent');
+  container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+  
+  fetch(`/artists/stories/${storyId}/details`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) throw new Error(data.message);
+      const story = data.story;
+      
+      let mediaHtml = '';
+      if (story.mediaType === 'image') {
+        mediaHtml = `<img src="${story.mediaUrl}" class="img-fluid rounded shadow w-100" style="max-height: 400px; object-fit: contain;">`;
+      } else if (story.mediaType === 'video') {
+        mediaHtml = `<video src="${story.mediaUrl}" class="w-100 rounded shadow" style="max-height: 400px; background: #000;" controls></video>`;
+      } else {
+        mediaHtml = `
+          <div class="p-5 rounded shadow d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #2a2a3c, #5a293c);">
+            <i class="bi bi-music-note-beamed text-primary mb-3" style="font-size: 4rem;"></i>
+            <audio src="${story.mediaUrl}" controls class="w-100"></audio>
+          </div>`;
+      }
+      
+      container.innerHTML = `
+        <div class="row g-4">
+          <div class="col-md-7">
+            <div class="media-preview mb-3">
+              ${mediaHtml}
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card bg-secondary text-white border-0 h-100">
+              <div class="card-body">
+                <h6 class="text-uppercase small fw-bold mb-3 text-primary">Edit Caption</h6>
+                <form id="editStoryForm" onsubmit="updateStory(event, '${story._id}')">
+                  <div class="mb-3">
+                    <textarea name="caption" class="form-control bg-dark text-white border-secondary" rows="4">${story.caption || ''}</textarea>
+                    <small class="text-muted mt-1 d-block">Max 120 characters</small>
+                  </div>
+                  <button type="submit" id="updateStoryBtn" class="btn btn-primary w-100">
+                    Save Changes
+                  </button>
+                </form>
+                
+                <hr class="border-secondary my-4">
+                
+                <div class="story-info">
+                  <p class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Type:</span>
+                    <span class="badge bg-dark">${story.mediaType.toUpperCase()}</span>
+                  </p>
+                  <p class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Views:</span>
+                    <span>${story.viewsCount || 0}</span>
+                  </p>
+                  <p class="mb-0 d-flex justify-content-between">
+                    <span class="text-muted">Likes:</span>
+                    <span>${story.likesCount || 0}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .catch(err => {
+      container.innerHTML = `<div class="alert alert-danger">${err.message || 'Error loading details'}</div>`;
+    });
+}
+
+function updateStory(e, storyId) {
+  e.preventDefault();
+  const btn = document.getElementById('updateStoryBtn');
+  const caption = e.target.caption.value;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+  
+  fetch(`/artists/stories/${storyId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caption })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert('Caption updated!');
+      window.location.reload();
+    } else {
+      alert(data.message || 'Update failed');
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Network error');
+    btn.disabled = false;
+    btn.textContent = 'Save Changes';
+  });
+}
+
+// Stop playback when detail modal is closed
+document.getElementById('storyDetailsModal').addEventListener('hidden.bs.modal', function () {
+  const container = document.getElementById('storyDetailsContent');
+  const mediaElements = container.querySelectorAll('video, audio');
+  mediaElements.forEach(media => {
+    media.pause();
+    media.src = "";
+    media.load();
+    media.remove();
+  });
+  container.innerHTML = '';
+});
 </script>
 
 <!-- Upcoming Concerts -->

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const VenueRequest = require('../models/VenueRequest');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const { isLoggedIn } = require('../middleware/auth');
@@ -200,9 +201,19 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
   }
 });
 
+// GET /users/venue-requests/register - Redirect legacy/incorrect links to create
+router.get('/register', isLoggedIn, (req, res) => {
+  res.redirect('/users/venue-requests/create');
+});
+
 // GET /users/venue-requests/:id - View specific venue request details
 router.get('/:id', isLoggedIn, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/users/venue-requests');
+    }
+
     const venueRequest = await VenueRequest.findOne({
       _id: req.params.id,
       user: req.session.user.id // Ensure user can only view their own requests

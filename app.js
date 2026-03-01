@@ -841,6 +841,8 @@ app.use('/', ticketValidationRoutes);
 app.use('/tickets', ticketRoutes);
 // Mount admin ticket routes BEFORE admin routes to avoid conflicts
 app.use('/admin/tickets', adminTicketsRoutes);
+// Mount admin payments routes
+app.use('/admin/payments', require('./routes/adminPayments'));
 // Mount super admin routes BEFORE admin routes
 app.use('/admin/super', require('./routes/adminSuper'));
 app.use('/admin', adminRoutes);

@@ -299,6 +299,20 @@ router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
       application.razorpayPaymentId = razorpay_payment_id;
       await application.save();
 
+      // Log the transaction for admin payments page
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: application.user,
+        type: 'registration',
+        amount: application.registrationFee,
+        platformFee: 0,
+        paymentId: application.razorpayPaymentId,
+        orderId: application.razorpayOrderId,
+        sourceModel: 'ProducerApplication',
+        sourceId: application._id,
+        description: `Producer registration fee`
+      });
+
       try {
         const user = await User.findById(req.session.user.id);
         if (user) {

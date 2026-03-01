@@ -13,6 +13,7 @@ const Content = require('../models/Content');
 const Page = require('../models/Page');
 const DeletedAccount = require('../models/DeletedAccount');
 const ArtistPost = require('../models/ArtistPost');
+const Transaction = require('../models/Transaction');
 const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const { deleteMedia } = require('../utils/mediaService');
@@ -104,6 +105,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         'manage_notifications': '/admin/notifications',
         'manage_website_settings': '/admin/website-settings',
         'manage_storage_management': '/admin/storage-management',
+        'manage_payments': '/admin/payments',
         'manage_revenue_analysis': '/admin/revenue-analysis',
         'manage_admins': '/admin/super/manage-admins'
       };
@@ -3940,6 +3942,15 @@ router.get('/revenue-analysis', isLoggedIn, hasAdminPermission('manage_revenue_a
         total: subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0),
         count: subscriptions.length,
         items: subscriptions
+      },
+      distribution: {
+        name: 'Distribution Fee Revenue',
+        total: await Transaction.aggregate([
+          { $match: { type: 'distribution', status: 'success', ...filter } },
+          { $group: { _id: null, total: { $sum: '$platformFee' } } }
+        ]).then(res => res[0]?.total || 0),
+        count: await Transaction.countDocuments({ type: 'distribution', status: 'success', ...filter }),
+        items: await Transaction.find({ type: 'distribution', status: 'success', ...filter }).populate('user', 'name email').populate('payee', 'name email')
       }
     };
 

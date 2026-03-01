@@ -77,7 +77,7 @@ router.post('/create-order/:id', isLoggedIn, async (req, res) => {
 
     // Calculate expiry date based on duration unit
     let expiryDate = new Date();
-    switch(plan.durationUnit) {
+    switch (plan.durationUnit) {
       case 'seconds':
         expiryDate = new Date(Date.now() + plan.duration * 1000);
         break;
@@ -243,6 +243,21 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     console.log('Subscription updated with payment details:', {
       subscriptionId: subscription._id,
       paymentId: subscription.paymentId
+    });
+
+    // Log the transaction for admin payments page
+    const { logTransaction } = require('../utils/transactionLogger');
+    const planForLog = await SubscriptionPlan.findById(subscription.plan);
+    await logTransaction({
+      user: subscription.user,
+      type: 'subscription',
+      amount: subscription.amount,
+      platformFee: 0,
+      paymentId: subscription.paymentId,
+      orderId: subscription.orderId,
+      sourceModel: 'UserSubscription',
+      sourceId: subscription._id,
+      description: `Subscription plan: ${planForLog ? planForLog.name : 'Unknown'}`
     });
 
     // Get plan details for email

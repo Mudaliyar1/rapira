@@ -272,6 +272,20 @@ router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
             application.razorpaySignature = razorpay_signature;
             await application.save();
 
+            // Log the transaction for admin payments page
+            const { logTransaction } = require('../utils/transactionLogger');
+            await logTransaction({
+                user: application.user,
+                type: 'registration',
+                amount: application.registrationFee,
+                platformFee: 0,
+                paymentId: application.razorpayPaymentId,
+                orderId: application.razorpayOrderId,
+                sourceModel: 'DistributorApplication',
+                sourceId: application._id,
+                description: `Distributor registration fee`
+            });
+
             req.flash('success', 'Payment successful! Your application is now under review.');
             return res.redirect('/distributor-applications/status');
         } else {

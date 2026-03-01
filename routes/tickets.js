@@ -231,13 +231,13 @@ router.post('/create-order', isLoggedIn, async (req, res) => {
 
       console.log(`Applied subscription discount: ${discountPercentage}% - Original: ${originalAmount}, Discounted: ${totalAmount}`);
     }
-    
+
     // Get website settings for ticket commission
     const WebsiteSettings = require('../models/WebsiteSettings');
     const settings = await WebsiteSettings.getSettings();
     const ticketCommissionEnabled = settings.ticketCommissionSettings?.enabled || false;
     const ticketCommissionPercentage = settings.ticketCommissionSettings?.percentage || 0;
-    
+
     // Apply commission if enabled
     if (ticketCommissionEnabled) {
       const commissionAmount = (totalAmount * ticketCommissionPercentage) / 100;
@@ -427,14 +427,30 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       status: ticket.paymentStatus
     });
 
-    // Update concert ticket count
-    const concert = await Concert.findById(ticket.concert);
+    // Get concert and artist to identify payee
+    const concert = await Concert.findById(ticket.concert).populate('artist');
     if (!concert) {
       console.error('Concert not found for ticket:', ticket.concert);
       req.flash('error', 'Concert information not found');
       return res.redirect('/concerts');
     }
 
+    // Log the transaction for admin payments page
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: ticket.user,
+      type: 'ticket',
+      amount: ticket.totalAmount,
+      platformFee: ticket.commissionAmount || 0,
+      payee: concert.artist ? concert.artist.user : null, // The artist gets the payment
+      paymentId: ticket.paymentId,
+      orderId: ticket.orderId,
+      sourceModel: 'Ticket',
+      sourceId: ticket._id,
+      description: `Concert ticket purchase: ${ticket.quantity} ticket(s) for ${concert.title}`
+    });
+
+    // Update concert ticket count
     concert.ticketsSold += ticket.quantity;
     await concert.save();
     console.log('Concert ticket count updated:', {
@@ -496,13 +512,13 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     // Manually populate concert and venue to ensure all data is loaded
     const Concert = require('../models/Concert');
     const Venue = require('../models/Venue');
-    
+
     const concert = await Concert.findById(ticket.concert).populate('venue');
     if (!concert) {
       req.flash('error', 'Concert not found');
       return res.redirect('/users/profile');
     }
-    
+
     // Replace the ticket's concert with the fully populated concert
     ticket.concert = concert;
 
@@ -546,7 +562,7 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     // Check if there's a refund request for this ticket
     const RefundRequest = require('../models/RefundRequest');
     const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
-    
+
     // Check if concert date has passed
     const isPastConcert = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
 
@@ -718,7 +734,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 
     // Regular page request
     console.log('Rendering tickets/index view');
-    
+
     // Add isPastConcert property to each ticket
     const ticketsWithPastStatus = tickets.map(ticket => {
       const isPast = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
@@ -727,7 +743,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         isPastConcert: isPast
       };
     });
-    
+
     res.render('tickets/index', { tickets: ticketsWithPastStatus });
   } catch (error) {
     console.error('List tickets error:', error);

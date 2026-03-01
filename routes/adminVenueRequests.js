@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const VenueRequest = require('../models/VenueRequest');
 const Venue = require('../models/Venue');
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
@@ -91,6 +92,10 @@ router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res
 // GET /admin/venue-requests/:id - View specific venue request details
 router.get('/:id', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const venueRequest = await VenueRequest.findById(req.params.id)
       .populate('user', 'name email phone')
       .populate('reviewedBy', 'name email')
@@ -146,6 +151,10 @@ router.get('/:id/approve', isLoggedIn, hasAdminPermission('manage_venues'), asyn
 // POST /admin/venue-requests/:id/approve - Approve venue request
 router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const { adminNotes, autoActivate } = req.body;
 
     const venueRequest = await VenueRequest.findById(req.params.id)
@@ -237,6 +246,10 @@ router.get('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), async
 // POST /admin/venue-requests/:id/reject - Reject venue request
 router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const { rejectionReason, adminNotes } = req.body;
 
     const venueRequest = await VenueRequest.findById(req.params.id);
@@ -277,6 +290,10 @@ router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), asyn
 // POST /admin/venue-requests/:id/delete - Delete venue request
 router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const venueRequest = await VenueRequest.findById(req.params.id);
 
     if (!venueRequest) {

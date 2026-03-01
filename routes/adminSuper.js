@@ -70,6 +70,7 @@ const PERMISSION_GROUPS = {
     ],
     'System': [
         { id: 'manage_revenue_analysis', name: 'Revenue Analysis' },
+        { id: 'manage_payments', name: 'Payment Management' },
         { id: 'manage_distribution_receipts', name: 'Distribution Receipts' },
         { id: 'manage_media_management', name: 'Media Management' },
         { id: 'manage_website_settings', name: 'Website Settings' },

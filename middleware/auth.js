@@ -55,7 +55,17 @@ module.exports = {
       errorMessage = 'You must be logged in to send messages';
     }
 
-    if (!req.xhr && req.method === 'GET' && req.accepts('html')) {
+    const isApiOrFeed = req.path.startsWith('/api/') ||
+      req.path.includes('/feed') ||
+      req.path.includes('/check-') ||
+      req.path.endsWith('/like') ||
+      req.path.endsWith('/view');
+
+    if (!req.xhr &&
+      req.method === 'GET' &&
+      req.accepts('html') &&
+      !isApiOrFeed &&
+      req.headers.accept?.indexOf('application/json') === -1) {
       const returnTo = req.originalUrl || '';
       if (returnTo && !returnTo.startsWith('/auth') && !req.session.returnTo) {
         req.session.returnTo = returnTo;
@@ -64,8 +74,8 @@ module.exports = {
 
     req.flash('error', errorMessage);
 
-    // For AJAX requests, send JSON response instead of redirect
-    if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+    // For AJAX requests or API-like paths, send JSON response instead of redirect
+    if (req.xhr || req.headers.accept?.indexOf('json') > -1 || isApiOrFeed) {
       return res.status(401).json({ success: false, message: errorMessage });
     }
 
