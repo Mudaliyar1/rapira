@@ -40,7 +40,7 @@ const upload = multer({
 // Configure multer for content uploads (memory → Cloudinary)
 const contentUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.fieldname === 'contentFile') {
       const filetypes = /mp3|wav|mp4|mov|pdf|doc|docx/;

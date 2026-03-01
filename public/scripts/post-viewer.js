@@ -153,36 +153,35 @@ async function viewPost(postId) {
     mediaContainer.innerHTML = '';
 
     if (currentPost.media.mediaType === 'video') {
-      // Create video container
+      // Create video container that fits the video
       const videoContainer = document.createElement('div');
-      videoContainer.style.cssText = 'position: relative; background: black; border-radius: 8px 8px 0 0; overflow: hidden;';
+      videoContainer.style.cssText = 'position: relative; background: black; width: 100%; max-height: 500px; display: flex; align-items: center; justify-content: center; overflow: hidden;';
 
-      // Video element (without controls)
+      // Video element
       const video = document.createElement('video');
       video.src = currentPost.media.url;
       video.autoplay = true;
-      video.style.cssText = 'width: 100%; height: auto; display: block;';
+      video.style.cssText = 'max-width: 100%; max-height: 500px; height: auto; display: block;';
       videoContainer.appendChild(video);
 
-      // Custom controls container - BELOW VIDEO (not overlay)
+      // Custom controls container - OVERLAY ON VIDEO
       const controlsContainer = document.createElement('div');
-      controlsContainer.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1);';
+      controlsContainer.style.cssText = 'position: absolute; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 12px 15px; background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 100%); z-index: 100; opacity: 1;';
 
       // Play/Pause button
       const playBtn = document.createElement('button');
-      playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
-      playBtn.style.cssText = 'background: white; border: none; color: #333; cursor: pointer; padding: 8px 12px; border-radius: 4px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;';
+      playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 1.2rem;"></i>';
+      playBtn.style.cssText = 'background: white; border: none; color: #333; cursor: pointer; padding: 6px 10px; border-radius: 6px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s;';
+      playBtn.onmouseover = () => playBtn.style.transform = 'scale(1.1)';
+      playBtn.onmouseout = () => playBtn.style.transform = 'scale(1)';
 
-      let isPlaying = false;
-      playBtn.addEventListener('click', function () {
-        if (isPlaying) {
-          video.pause();
-          playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
-          isPlaying = false;
-        } else {
+      let isPlaying = true;
+      playBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (video.paused) {
           video.play();
-          playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 1.2rem;"></i>';
-          isPlaying = true;
+        } else {
+          video.pause();
         }
       });
 
@@ -200,10 +199,10 @@ async function viewPost(postId) {
 
       // Progress bar
       const progressBar = document.createElement('div');
-      progressBar.style.cssText = 'flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; cursor: pointer; position: relative;';
+      progressBar.style.cssText = 'flex: 1; height: 6px; background: rgba(255,255,255,0.25); border-radius: 3px; cursor: pointer; position: relative;';
 
       const progress = document.createElement('div');
-      progress.style.cssText = 'height: 100%; background: #ff006e; border-radius: 2px; width: 0%;';
+      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 3px; width: 0%;';
       progressBar.appendChild(progress);
 
       // Update progress bar
@@ -214,29 +213,10 @@ async function viewPost(postId) {
 
       // Click on progress bar to seek
       progressBar.addEventListener('click', function (e) {
+        e.stopPropagation();
         const rect = progressBar.getBoundingClientRect();
         const percent = (e.clientX - rect.left) / rect.width;
         video.currentTime = percent * video.duration;
-      });
-
-      // Draggable progress bar
-      let isDragging = false;
-      progressBar.addEventListener('mousedown', function () {
-        isDragging = true;
-      });
-
-      document.addEventListener('mousemove', function (e) {
-        if (isDragging && progressBar) {
-          const rect = progressBar.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right) {
-            const percent = (e.clientX - rect.left) / rect.width;
-            video.currentTime = percent * video.duration;
-          }
-        }
-      });
-
-      document.addEventListener('mouseup', function () {
-        isDragging = false;
       });
 
       controlsContainer.appendChild(progressBar);
@@ -244,15 +224,10 @@ async function viewPost(postId) {
       // Time display
       const timeDisplay = document.createElement('span');
       timeDisplay.textContent = '0:00 / 0:00';
-      timeDisplay.style.cssText = 'color: white; font-size: 0.85rem; font-weight: bold; min-width: 60px; flex-shrink: 0;';
+      timeDisplay.style.cssText = 'color: white; font-size: 0.8rem; font-weight: 700; min-width: 90px; text-align: center; flex-shrink: 0; text-shadow: 0 1px 3px rgba(0,0,0,0.8);';
 
-      video.addEventListener('loadedmetadata', function () {
-        updateTimeDisplay();
-      });
-
-      video.addEventListener('timeupdate', function () {
-        updateTimeDisplay();
-      });
+      video.addEventListener('loadedmetadata', updateTimeDisplay);
+      video.addEventListener('timeupdate', updateTimeDisplay);
 
       function updateTimeDisplay() {
         const current = formatTime(video.currentTime);
@@ -269,71 +244,41 @@ async function viewPost(postId) {
 
       controlsContainer.appendChild(timeDisplay);
 
-      // Volume control - ON THE RIGHT SIDE OF PROGRESS BAR
+      // Volume control
       const volumeIcon = document.createElement('i');
-      volumeIcon.className = 'bi bi-volume-up';
-      volumeIcon.style.cssText = 'color: white; font-size: 0.9rem; flex-shrink: 0;';
+      volumeIcon.className = 'bi bi-volume-up-fill';
+      volumeIcon.style.cssText = 'color: white; font-size: 1.1rem; flex-shrink: 0; cursor: pointer;';
 
       const volumeSlider = document.createElement('input');
       volumeSlider.type = 'range';
       volumeSlider.min = '0';
       volumeSlider.max = '100';
-      volumeSlider.value = '100';
+      volumeSlider.value = (video.volume * 100).toString();
       volumeSlider.className = 'video-volume-slider';
-      volumeSlider.style.cssText = 'cursor: pointer; height: 6px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.25); border-radius: 3px; outline: none; width: 80px; flex-shrink: 0;';
+      volumeSlider.style.cssText = 'cursor: pointer; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; width: 50px; flex-shrink: 0;';
 
-      volumeSlider.addEventListener('input', function () {
+      volumeSlider.addEventListener('input', function (e) {
+        e.stopPropagation();
         video.volume = this.value / 100;
-        // Update the background gradient to show fill
-        const percent = (this.value / 100) * 100;
-        this.style.background = `linear-gradient(to right, white 0%, white ${percent}%, rgba(255,255,255,0.25) ${percent}%, rgba(255,255,255,0.25) 100%)`;
+        volumeIcon.className = video.volume === 0 ? 'bi bi-volume-mute-fill' : video.volume < 0.5 ? 'bi bi-volume-down-fill' : 'bi bi-volume-up-fill';
       });
-
-      // Set initial fill
-      volumeSlider.style.background = 'linear-gradient(to right, white 0%, white 100%, rgba(255,255,255,0.25) 100%, rgba(255,255,255,0.25) 100%)';
-
-      // Add slider thumb styling if not already added
-      if (!document.head.querySelector('style[data-volume-video-slider]')) {
-        const style = document.createElement('style');
-        style.setAttribute('data-volume-video-slider', 'true');
-        style.textContent = `
-          .video-volume-slider {
-            -webkit-appearance: none;
-            appearance: none;
-          }
-          .video-volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            box-shadow: 0 0 2px rgba(0,0,0,0.5);
-          }
-          .video-volume-slider::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 2px rgba(0,0,0,0.5);
-          }
-        `;
-        document.head.appendChild(style);
-      }
 
       controlsContainer.appendChild(volumeIcon);
       controlsContainer.appendChild(volumeSlider);
 
-      // Create wrapper with video and controls stacked vertically
-      const videoWrapper = document.createElement('div');
-      videoWrapper.style.cssText = 'display: flex; flex-direction: column; border-radius: 8px; overflow: hidden;';
-      videoWrapper.appendChild(videoContainer);
-      videoWrapper.appendChild(controlsContainer);
+      // Click video to toggle play
+      videoContainer.addEventListener('click', (e) => {
+        if (e.target === video || e.target === videoContainer) {
+          if (video.paused) video.play(); else video.pause();
+        }
+      });
 
-      mediaContainer.appendChild(videoWrapper);
+      // Keep controls visible (no auto-hide based on request)
+      controlsContainer.style.opacity = '1';
+
+      videoContainer.appendChild(controlsContainer);
+      mediaContainer.appendChild(videoContainer);
+      console.log('[POST VIEWER] Video loaded with overlay controls');
     } else if (currentPost.media.mediaType === 'audio') {
       // Create audio player container (Spotify-like minimal design)
       const audioContainer = document.createElement('div');

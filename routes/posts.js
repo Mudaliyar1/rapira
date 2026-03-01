@@ -9,13 +9,17 @@ const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService')
 
 const upload = multer({
 	storage: multer.memoryStorage(),
-	limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+	limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 	fileFilter: (req, file, cb) => {
-		const allowed = /jpeg|jpg|png|gif|mp4|webm|ogg|mov|avi|mp3|wav|m4a|aac|flac/;
-		const extname = allowed.test(path.extname(file.originalname).toLowerCase());
-		const mimetype = /image|video|audio/.test(file.mimetype);
-		if (extname && mimetype) return cb(null, true);
-		cb(new Error('Only image/video/audio files allowed'));
+		// Allow any mimetype that starts with image, video, or audio
+		const isImage = file.mimetype.startsWith('image/');
+		const isVideo = file.mimetype.startsWith('video/');
+		const isAudio = file.mimetype.startsWith('audio/');
+
+		if (isImage || isVideo || isAudio) {
+			return cb(null, true);
+		}
+		cb(new Error('Invalid file type. Only image, video, and audio files are allowed.'));
 	}
 });
 
@@ -27,7 +31,7 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 		console.log('[POST /posts] Starting upload...');
 		console.log('[POST /posts] User role:', req.session.user.role);
 		console.log('[POST /posts] File:', req.file ? { name: req.file.originalname, type: req.file.mimetype, size: req.file.size } : 'NO FILE');
-		
+
 		if (req.session.user.role !== 'artist') {
 			return res.status(403).json({ success: false, message: 'Only artists can create posts' });
 		}
@@ -44,14 +48,14 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 		const isImage = req.file.mimetype.startsWith('image/');
 		const isVideo = req.file.mimetype.startsWith('video/');
 		const isAudio = req.file.mimetype.startsWith('audio/');
-		
+
 		if (!isImage && !isVideo && !isAudio) {
 			return res.status(400).json({ success: false, message: 'Only image/video/audio files allowed' });
 		}
 
 		let folder = 'rapira/artist-posts/images';
 		let mediaType = 'image';
-		
+
 		if (isVideo) {
 			folder = 'rapira/artist-posts/videos';
 			mediaType = 'video';
@@ -59,8 +63,8 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 			folder = 'rapira/artist-posts/audio';
 			mediaType = 'audio';
 		}
-		
-		const uploadRes = await uploadFileToCloudinary(req.file, { 
+
+		const uploadRes = await uploadFileToCloudinary(req.file, {
 			folder,
 			module: 'artistPost',
 			ownerType: 'artist',
@@ -259,7 +263,7 @@ router.post('/posts/:id/like', isLoggedIn, async (req, res) => {
 	try {
 		console.log('[POST LIKE] Request received for post ID:', req.params.id);
 		console.log('[POST LIKE] User ID:', req.session.user?.id);
-		
+
 		const post = await ArtistPost.findById(req.params.id);
 		if (!post || !post.isActive) {
 			console.log('[POST LIKE] Post not found or inactive');
@@ -385,7 +389,7 @@ router.get('/posts/:id/json', async (req, res) => {
 router.get('/posts/:id/likes', async (req, res) => {
 	try {
 		console.log('[POST LIKES] Request for post ID:', req.params.id);
-		
+
 		const post = await ArtistPost.findById(req.params.id)
 			.populate('likes', 'name profileImage');
 
@@ -395,7 +399,7 @@ router.get('/posts/:id/likes', async (req, res) => {
 		}
 
 		console.log('[POST LIKES] Found post with', post.likes.length, 'likes');
-		
+
 		// Format likes data
 		const formattedLikes = post.likes.map(user => ({
 			name: user.name || 'Anonymous User',
