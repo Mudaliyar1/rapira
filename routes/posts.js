@@ -25,12 +25,19 @@ const upload = multer({
 
 // === ARTIST ROUTES ===
 
-// Create post
-router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
+// Create post with error handling wrapper for multer
+router.post('/posts', isLoggedIn, (req, res, next) => {
+	upload.single('media')(req, res, (err) => {
+		if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+			return res.status(400).json({ success: false, message: 'file exceed limit please under 100mb' });
+		} else if (err) {
+			return res.status(400).json({ success: false, message: err.message });
+		}
+		next();
+	});
+}, async (req, res) => {
 	try {
 		console.log('[POST /posts] Starting upload...');
-		console.log('[POST /posts] User role:', req.session.user.role);
-		console.log('[POST /posts] File:', req.file ? { name: req.file.originalname, type: req.file.mimetype, size: req.file.size } : 'NO FILE');
 
 		if (req.session.user.role !== 'artist') {
 			return res.status(403).json({ success: false, message: 'Only artists can create posts' });
@@ -70,7 +77,7 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 			ownerType: 'artist',
 			ownerId: artist._id
 		});
-		console.log('[POST /posts] Cloudinary upload result:', uploadRes.media ? 'SUCCESS' : 'FAILED');
+
 		if (!uploadRes.media || !uploadRes.result) {
 			return res.status(500).json({ success: false, message: 'Upload to Cloudinary failed' });
 		}
@@ -89,14 +96,10 @@ router.post('/posts', isLoggedIn, upload.single('media'), async (req, res) => {
 			hashtags: hashtags.map(tag => tag.substring(1).toLowerCase())
 		});
 
-		console.log('[POST /posts] About to save post:', JSON.stringify(post, null, 2));
 		await post.save();
-		console.log('[POST /posts] Post saved to DB:', post._id);
-		console.log('[POST /posts] Response being sent:', { success: true, message: 'Post created! Awaiting admin approval.' });
 		res.json({ success: true, post, message: 'Post created! Awaiting admin approval.' });
 	} catch (err) {
 		console.error('[POST /posts] ERROR:', err.message);
-		console.error('[POST /posts] Stack:', err.stack);
 		res.status(500).json({ success: false, message: err.message || 'Failed to create post' });
 	}
 });

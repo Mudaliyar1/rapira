@@ -26,6 +26,17 @@
           <!-- Preview will appear here -->
         </div>
 
+        <!-- Progress Bar (Preparation & Upload) -->
+        <div id="uploadProgressContainer" class="mb-3" style="display: none;">
+          <div class="d-flex justify-content-between mb-1">
+            <small id="progressStatus" class="text-primary fw-bold">Analyzing media...</small>
+            <small id="progressPercent" class="text-muted">0%</small>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+
         <div class="mb-3">
           <label for="caption" class="form-label">Caption (Add #hashtags)</label>
           <textarea class="form-control" id="caption" name="caption" rows="3" placeholder="Write something..." maxlength="2200"></textarea>
@@ -52,6 +63,28 @@
           <i class="bi bi-images display-4 mb-3 d-block"></i>
           <p>No posts yet. Create your first post!</p>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Limit Exceeded Modal (Lateral Popup) -->
+<div class="modal fade" id="limitModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger border-2 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-danger text-white border-0 py-3">
+        <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-octagon-fill me-2"></i> ERROR: SIZE EXCEEDED</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-5">
+        <div class="mb-4">
+           <i class="bi bi-cloud-slash text-danger display-1 opacity-75"></i>
+        </div>
+        <h4 class="fw-black text-dark mb-2">file exceed limit</h4>
+        <p class="text-muted fs-5 mb-0">Please chose file under 100mb for high-quality playback.</p>
+      </div>
+      <div class="modal-footer justify-content-center border-0 pb-5">
+        <button type="button" class="btn btn-danger btn-lg px-5 rounded-pill fw-bold shadow" data-bs-dismiss="modal">I UNDERSTAND</button>
       </div>
     </div>
   </div>
@@ -352,28 +385,68 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Media preview
+// Media preview and selection handling
 document.getElementById('media').addEventListener('change', function(e) {
   const file = this.files[0];
   const preview = document.getElementById('mediaPreview');
+  const progContainer = document.getElementById('uploadProgressContainer');
+  const progBar = document.getElementById('uploadProgressBar');
+  const progStatus = document.getElementById('progressStatus');
+  const progPercent = document.getElementById('progressPercent');
 
   if (file) {
+    // Check 100MB limit immediately
+    const MAX_SIZE = 100 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      // Show Lateral Popup (Modal)
+      const limitModalEl = document.getElementById('limitModal');
+      const modal = new bootstrap.Modal(limitModalEl);
+      modal.show();
+      
+      showAlert('file exceed limit please under 100mb', 'danger');
+      this.value = '';
+      preview.style.display = 'none';
+      progContainer.style.display = 'none';
+      return;
+    }
+
+    // Success alert for choosing correct file
+    showAlert('choose file under 100mb', 'success');
+
+    // Show and start "Preparation" animation
+    progContainer.style.display = 'block';
+    progBar.style.width = '0%';
+    progPercent.textContent = '0%';
+    progStatus.textContent = 'Analysing media...';
+    progBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
+
+    let preparationProgress = 0;
+    const interval = setInterval(() => {
+      preparationProgress += 5;
+      progBar.style.width = preparationProgress + '%';
+      progPercent.textContent = preparationProgress + '%';
+      
+      if (preparationProgress >= 100) {
+        clearInterval(interval);
+        progStatus.textContent = 'Ready to post!';
+        progBar.className = 'progress-bar bg-success';
+        showAlert('Media ready for upload!', 'info');
+      }
+    }, 50);
+
     const reader = new FileReader();
     reader.onload = function(event) {
       if (file.type.startsWith('image/')) {
-        preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; border-radius: 8px;">`;
+        preview.innerHTML = `<img src="${event.target.result}" style="max-width: 100%; border-radius: 8px; max-height: 250px; object-fit: contain;">`;
       } else if (file.type.startsWith('video/')) {
-        preview.innerHTML = `<video controls style="width: 100%; border-radius: 8px;">
+        preview.innerHTML = `<video muted controls style="max-width: 100%; border-radius: 8px; max-height: 250px;">
           <source src="${event.target.result}">
         </video>`;
       } else if (file.type.startsWith('audio/')) {
         preview.innerHTML = `
-          <div class="text-center p-4 bg-dark rounded">
-            <i class="bi bi-music-note-beamed fs-1 text-primary mb-3"></i>
-            <div class="mb-3"><strong>${file.name}</strong></div>
-            <audio controls style="width: 100%;">
-              <source src="${event.target.result}">
-            </audio>
+          <div class="text-center p-3 bg-dark rounded border border-primary">
+            <i class="bi bi-music-note-beamed fs-2 text-primary"></i>
+            <div class="small mt-2"><strong>${file.name}</strong></div>
           </div>
         `;
       }
@@ -382,6 +455,7 @@ document.getElementById('media').addEventListener('change', function(e) {
     reader.readAsDataURL(file);
   } else {
     preview.style.display = 'none';
+    progContainer.style.display = 'none';
   }
 });
 
@@ -403,6 +477,13 @@ document.getElementById('postForm').addEventListener('submit', async function(e)
   const fileInput = document.getElementById('media');
   if (!fileInput.files.length) {
     showAlert('Please select an image or video', 'danger');
+    return;
+  }
+
+  // Check 100MB limit
+  const MAX_SIZE = 100 * 1024 * 1024;
+  if (fileInput.files[0].size > MAX_SIZE) {
+    showAlert('file exceed limit please under 100mb', 'danger');
     return;
   }
 
