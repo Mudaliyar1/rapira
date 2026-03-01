@@ -66,8 +66,19 @@
                   <h4 class="fw-bold mb-2 text-white ticket-title">Concert Unavailable</h4>
                   <p class="text-white-50 mb-3 concert-date-info">
                     <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
-                    This concert has been removed
+                    <% if (ticket.attended) { %>
+                      This concert has been removed or deleted.
+                    <% } else { %>
+                      This concert has been removed or deleted. Please ask for a refund.
+                    <% } %>
                   </p>
+                  <% if (!ticket.attended && (!refundRequest || refundRequest.status === 'rejected')) { %>
+                    <div class="mt-3">
+                      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning btn-sm">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Ask for Refund
+                      </a>
+                    </div>
+                  <% } %>
                 <% } else { %>
                   <h4 class="fw-bold mb-2 text-white ticket-title"><%= concert.title %></h4>
                   <p class="text-white-50 mb-0 concert-date-info">
@@ -376,9 +387,11 @@
 
                 <!-- Simple, always visible refund button -->
                 <div class="d-grid gap-3 d-md-flex justify-content-md-center">
-                  <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i> Refund
-                  </a>
+                  <% if (!ticket.attended) { %>
+                    <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning">
+                      <i class="bi bi-arrow-counterclockwise me-2"></i> Refund
+                    </a>
+                  <% } %>
                   <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
                     <i class="bi bi-download me-2"></i> Download
                   </a>
@@ -442,10 +455,11 @@
 <!-- Fixed Action Buttons -->
 <div id="fixedActionContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
   <div class="d-flex flex-column" style="gap: 10px;">
-    <!-- Always show refund button -->
-    <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-      <i class="bi bi-arrow-counterclockwise me-1"></i> Refund
-    </a>
+    <% if (!ticket.attended) { %>
+      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Refund
+      </a>
+    <% } %>
     <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
       <i class="bi bi-download me-1"></i> Download
     </a>

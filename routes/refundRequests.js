@@ -86,31 +86,41 @@ router.get('/request/:ticketId', isLoggedIn, async (req, res) => {
       return res.redirect(`/tickets/${ticket._id}`);
     }
 
+    // Check if ticket is scanned (attended)
+    if (ticket.attended) {
+      req.flash('error', 'Scanned tickets are not eligible for refund');
+      return res.redirect(`/tickets/${ticket._id}`);
+    }
+
     // Check if a refund request already exists for this ticket
     const existingRequest = await RefundRequest.findOne({ ticket: ticket._id });
     if (existingRequest) {
-      // If the request was rejected, allow the user to reapply
       if (existingRequest.status === 'rejected') {
         console.log('Previous refund request was rejected, allowing reapplication');
       } else {
-        // For pending or approved requests, don't allow reapplication
         req.flash('info', 'A refund request for this ticket already exists');
         return res.redirect(`/tickets/${ticket._id}`);
       }
     }
 
-    // Check if the concert date has passed
-    const concertDate = new Date(ticket.concert.date);
-    const currentDate = new Date();
-    const isAfterConcert = currentDate > concertDate;
-
-    if (isAfterConcert) {
-      req.flash('error', 'Refunds cannot be requested after the concert date has passed');
-      return res.redirect(`/tickets/${ticket._id}`);
+    // Check if the concert date has passed (if concert exists)
+    if (ticket.concert) {
+      const concertDate = new Date(ticket.concert.date);
+      const currentDate = new Date();
+      if (currentDate > concertDate) {
+        req.flash('error', 'Refunds cannot be requested after the concert date has passed');
+        return res.redirect(`/tickets/${ticket._id}`);
+      }
+    } else {
+      console.log('Allowing refund for deleted concert');
     }
 
     console.log('Rendering refund request form for ticket:', ticket.ticketNumber);
-    res.render('refund-requests/request-form-new', { ticket });
+    res.render('refund-requests/request-form-new', {
+      ticket,
+      concert: ticket.concert,
+      isDeletedConcert: !ticket.concert
+    });
   } catch (error) {
     console.error('Refund request form error:', error);
     req.flash('error', 'Failed to load refund request form');
@@ -138,6 +148,12 @@ router.post('/submit', isLoggedIn, async (req, res) => {
       return res.redirect('/users/profile');
     }
 
+    // Check if ticket is scanned (attended)
+    if (ticket.attended) {
+      req.flash('error', 'Scanned tickets are not eligible for refund');
+      return res.redirect(`/tickets/${ticket._id}`);
+    }
+
     // Check if user owns the ticket
     if (ticket.user._id.toString() !== req.session.user.id) {
       req.flash('error', 'You do not have permission to request a refund for this ticket');
@@ -153,31 +169,24 @@ router.post('/submit', isLoggedIn, async (req, res) => {
     // Check if a refund request already exists
     const existingRequest = await RefundRequest.findOne({ ticket: ticket._id });
     if (existingRequest) {
-      // If the request was rejected, allow the user to reapply by updating the existing request
       if (existingRequest.status === 'rejected') {
         console.log('Updating previously rejected refund request');
 
-        // Update the existing request with new information
         existingRequest.reason = reason;
-        existingRequest.status = 'pending'; // Reset status to pending
-        existingRequest.adminNotes = ''; // Clear previous admin notes
+        existingRequest.status = 'pending';
+        existingRequest.adminNotes = '';
         existingRequest.reviewedBy = null;
         existingRequest.reviewedAt = null;
-        existingRequest.bankDetails = {
-          accountName,
-          accountNumber,
-          ifscCode,
-          bankName
-        };
+        existingRequest.bankDetails = { accountName, accountNumber, ifscCode, bankName };
 
         await existingRequest.save();
 
-        // Create notification for admin about the reapplication
+        const concertTitle = ticket.concert ? ticket.concert.title : 'Deleted Concert';
         const notification = new Notification({
           module: 'Refund Request',
           requestId: existingRequest._id,
           modelRef: 'RefundRequest',
-          description: `Reapplication for refund request for ticket #${ticket.ticketNumber} - ${ticket.concert.title}`,
+          description: `Reapplication for refund request for ticket #${ticket.ticketNumber} - ${concertTitle}`,
           link: `/admin/refund-requests/${existingRequest._id}`,
           status: 'Pending'
         });
@@ -187,7 +196,6 @@ router.post('/submit', isLoggedIn, async (req, res) => {
         req.flash('success', 'Refund request resubmitted successfully. You will be notified once it is processed.');
         return res.redirect(`/tickets/${ticket._id}`);
       } else {
-        // For pending or approved requests, don't allow reapplication
         req.flash('info', 'A refund request for this ticket already exists');
         return res.redirect(`/tickets/${ticket._id}`);
       }
@@ -197,25 +205,20 @@ router.post('/submit', isLoggedIn, async (req, res) => {
     const refundRequest = new RefundRequest({
       ticket: ticket._id,
       user: req.session.user.id,
-      concert: ticket.concert._id,
+      concert: ticket.concert ? ticket.concert._id : null,
       reason,
       amount: ticket.totalAmount,
-      bankDetails: {
-        accountName,
-        accountNumber,
-        ifscCode,
-        bankName
-      }
+      bankDetails: { accountName, accountNumber, ifscCode, bankName }
     });
 
     await refundRequest.save();
 
-    // Create notification for admin
+    const concertTitle = ticket.concert ? ticket.concert.title : 'Deleted Concert';
     const notification = new Notification({
       module: 'Refund Request',
       requestId: refundRequest._id,
       modelRef: 'RefundRequest',
-      description: `New refund request for ticket #${ticket.ticketNumber} - ${ticket.concert.title}`,
+      description: `New refund request for ticket #${ticket.ticketNumber} - ${concertTitle}`,
       link: `/admin/refund-requests/${refundRequest._id}`,
       status: 'Pending'
     });
@@ -507,10 +510,10 @@ router.post('/:id/process', isLoggedIn, hasAdminPermission('manage_refund_reques
     // Get user, ticket, and concert details for email
     const user = await User.findById(refundRequest.user);
     const ticket = await Ticket.findById(refundRequest.ticket);
-    const concert = await Concert.findById(refundRequest.concert);
+    const concert = refundRequest.concert ? await Concert.findById(refundRequest.concert) : null;
 
-    if (!user || !ticket || !concert) {
-      req.flash('error', 'Could not find all required information');
+    if (!user || !ticket) {
+      req.flash('error', 'Could not find required user or ticket information');
       return res.redirect(`/admin/refund-requests/${req.params.id}`);
     }
 

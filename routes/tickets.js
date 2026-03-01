@@ -513,13 +513,15 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     const Concert = require('../models/Concert');
     const Venue = require('../models/Venue');
 
-    const concert = await Concert.findById(ticket.concert).populate('venue');
+    let concert = await Concert.findById(ticket.concert).populate('venue');
+    let isDeletedConcert = false;
+
     if (!concert) {
-      req.flash('error', 'Concert not found');
-      return res.redirect('/users/profile');
+      isDeletedConcert = true;
+      // We'll still allow viewing the ticket even if concert is deleted
     }
 
-    // Replace the ticket's concert with the fully populated concert
+    // Replace the ticket's concert with the fully populated concert (could be null)
     ticket.concert = concert;
 
     // Check if user owns the ticket or is admin
@@ -534,41 +536,31 @@ router.get('/:id', isLoggedIn, async (req, res) => {
       return res.redirect('/users/profile');
     }
 
-    // Check if concert exists and handle deleted concerts
-    let isDeletedConcert = false;
-
-    if (ticket.concert) {
-      // Concert is already populated with venue from our manual population above
-      // Just populate artist details if needed
-      if (!ticket.concert.artist || !ticket.concert.artist.user) {
-        const Concert = require('../models/Concert');
-        const concertWithArtist = await Concert.findById(ticket.concert._id)
+    if (concert) {
+      // Populate artist details if not already present
+      if (!concert.artist || !concert.artist.user) {
+        const concertWithArtist = await Concert.findById(concert._id)
           .populate({
             path: 'artist',
-            populate: { path: 'user', select: 'name' }
+            populate: { path: 'user', select: 'name profileImage' }
           });
         if (concertWithArtist) {
-          ticket.concert.artist = concertWithArtist.artist;
+          concert.artist = concertWithArtist.artist;
         }
       }
-
-      if (!ticket.concert) {
-        isDeletedConcert = true;
-      }
-    } else {
-      isDeletedConcert = true;
     }
 
     // Check if there's a refund request for this ticket
     const RefundRequest = require('../models/RefundRequest');
     const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
 
-    // Check if concert date has passed
-    const isPastConcert = ticket.concert && isConcertPassed(ticket.concert.date, ticket.concert.time);
+    // Check if concert date has passed (safely)
+    const { isConcertPassed } = require('../utils/dateFormatter');
+    const isPastConcert = concert ? isConcertPassed(concert.date, concert.time) : false;
 
     res.render('tickets/show', {
       ticket,
-      concert: ticket.concert,
+      concert,
       isDeletedConcert,
       refundRequest,
       isPastConcert

@@ -99,14 +99,14 @@ const sendEmail = async (options) => {
       const payload = {
         to: Array.isArray(to)
           ? to.map(email => ({
-              email: typeof email === 'object' && email.email ? email.email : email,
-              name: name || (typeof email === 'string' ? email.split('@')[0] :
-                    typeof email === 'object' && email.name ? email.name : 'User')
-            }))
+            email: typeof email === 'object' && email.email ? email.email : email,
+            name: name || (typeof email === 'string' ? email.split('@')[0] :
+              typeof email === 'object' && email.name ? email.name : 'User')
+          }))
           : [{
-              email: to,
-              name: name || (typeof to === 'string' ? to.split('@')[0] : 'User')
-            }],
+            email: to,
+            name: name || (typeof to === 'string' ? to.split('@')[0] : 'User')
+          }],
         templateId: parseInt(templateId),
         params: params || {},
         sender: {
@@ -163,8 +163,8 @@ const sendEmail = async (options) => {
 
       // Check if this is an IP authorization error
       const isIPAuthError = error.response.data &&
-                          error.response.data.message &&
-                          error.response.data.message.includes('unrecognised IP address');
+        error.response.data.message &&
+        error.response.data.message.includes('unrecognised IP address');
 
       if (isIPAuthError) {
         console.error('IP AUTHORIZATION ERROR: Your current IP address is not authorized in Brevo.');
@@ -806,8 +806,8 @@ const sendDirectEmail = async (options) => {
       console.warn('Text content not provided, generating plain text version from HTML');
       // Create a simple text version by removing HTML tags
       textContent = html.replace(/<[^>]*>/g, ' ')
-                       .replace(/\s+/g, ' ')
-                       .trim();
+        .replace(/\s+/g, ' ')
+        .trim();
     }
 
     // Log recipient information for debugging
@@ -1561,6 +1561,8 @@ const sendRefundApprovalEmail = async (user, refundRequest, ticket, concert) => 
       }).format(amount);
     };
 
+    const concertTitle = concert ? concert.title : 'Deleted Concert';
+
     // Prepare HTML content for the email
     const htmlContent = `
       <html>
@@ -1575,7 +1577,7 @@ const sendRefundApprovalEmail = async (user, refundRequest, ticket, concert) => 
 
               <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">Refund Details:</h3>
-                <p><strong>Concert:</strong> ${concert.title}</p>
+                <p><strong>Concert:</strong> ${concertTitle}</p>
                 <p><strong>Ticket Number:</strong> ${ticket.ticketNumber}</p>
                 <p><strong>Refund Amount:</strong> ${formatCurrency(refundRequest.amount)}</p>
                 <p><strong>Refund Date:</strong> ${formatDate(refundRequest.refundedAt)}</p>
@@ -1601,8 +1603,8 @@ const sendRefundApprovalEmail = async (user, refundRequest, ticket, concert) => 
       </html>
     `;
 
-    const subject = `Your Refund Request for ${concert.title} Has Been Approved`;
-    const textContent = `Good news! Your refund request for ticket #${ticket.ticketNumber} for the concert "${concert.title}" has been approved. The refund amount of ${formatCurrency(refundRequest.amount)} has been processed to your bank account. Please allow 3-5 business days for the amount to be credited.`;
+    const subject = `Your Refund Request for ${concertTitle} Has Been Approved`;
+    const textContent = `Good news! Your refund request for ticket #${ticket.ticketNumber} for the concert "${concertTitle}" has been approved. The refund amount of ${formatCurrency(refundRequest.amount)} has been processed to your bank account. Please allow 3-5 business days for the amount to be credited.`;
 
     // Use Brevo API directly - use the correct API URL
     try {
@@ -1685,6 +1687,8 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
       }).format(amount);
     };
 
+    const concertTitle = concert ? concert.title : 'Deleted Concert';
+
     // Prepare HTML content for the email
     const htmlContent = `
       <html>
@@ -1695,11 +1699,11 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
             </div>
             <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none;">
               <p>Hello ${user.name || 'User'},</p>
-              <p>We have reviewed your refund request for the concert "${concert.title}" and we regret to inform you that we are unable to approve it at this time.</p>
+              <p>We have reviewed your refund request for the concert "${concertTitle}" and we regret to inform you that we are unable to approve it at this time.</p>
 
               <div style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">Request Details:</h3>
-                <p><strong>Concert:</strong> ${concert.title}</p>
+                <p><strong>Concert:</strong> ${concertTitle}</p>
                 <p><strong>Ticket Number:</strong> ${ticket.ticketNumber}</p>
                 <p><strong>Requested Amount:</strong> ${formatCurrency(refundRequest.amount)}</p>
                 <p><strong>Request Date:</strong> ${formatDate(refundRequest.createdAt)}</p>
@@ -1723,8 +1727,8 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
       </html>
     `;
 
-    const subject = `Update on Your Refund Request for ${concert.title}`;
-    const textContent = `We have reviewed your refund request for ticket #${ticket.ticketNumber} for the concert "${concert.title}" and we regret to inform you that we are unable to approve it at this time. ${refundRequest.adminNotes ? `Reason: ${refundRequest.adminNotes}` : ''}`;
+    const subject = `Update on Your Refund Request for ${concertTitle}`;
+    const textContent = `We have reviewed your refund request for ticket #${ticket.ticketNumber} for the concert "${concertTitle}" and we regret to inform you that we are unable to approve it at this time. ${refundRequest.adminNotes ? `Reason: ${refundRequest.adminNotes}` : ''}`;
 
     // Use Brevo API directly with the correct API URL
     try {
@@ -1789,14 +1793,14 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
 const sendBulkEmail = async (recipients, subject, htmlContent, textContent = null) => {
   try {
     console.log('Attempting to send bulk email to', recipients.length, 'recipients');
-    
+
     // If no text content is provided, generate it from HTML
     if (!textContent) {
       textContent = htmlContent.replace(/<[^>]*>/g, ' ')
-                       .replace(/\s+/g, ' ')
-                       .trim();
+        .replace(/\s+/g, ' ')
+        .trim();
     }
-    
+
     // Prepare the request payload for multiple recipients
     const payload = {
       sender: {
@@ -1819,10 +1823,10 @@ const sendBulkEmail = async (recipients, subject, htmlContent, textContent = nul
       htmlContent: htmlContent,
       textContent: textContent
     };
-    
+
     // Log the email being sent
     console.log('Sending bulk email to:', recipients.map(r => r.email).join(', '));
-    
+
     // Send the email
     const response = await axios.post(BREVO_API_URL, payload, {
       headers: {
@@ -1831,13 +1835,13 @@ const sendBulkEmail = async (recipients, subject, htmlContent, textContent = nul
         'content-type': 'application/json'
       }
     });
-    
+
     console.log('Bulk email sent successfully. Response:', response.status, response.statusText);
     return { success: true, data: response.data, method: 'api', recipientCount: recipients.length };
-    
+
   } catch (error) {
     console.error('Error in sendBulkEmail:', error);
-    
+
     if (error.response) {
       console.error('Error response data:', error.response.data);
       console.error('Error response status:', error.response.status);
@@ -1846,7 +1850,7 @@ const sendBulkEmail = async (recipients, subject, htmlContent, textContent = nul
     } else {
       console.error('Error message:', error.message);
     }
-    
+
     return { success: false, error: error.message, details: error.response?.data };
   }
 };
