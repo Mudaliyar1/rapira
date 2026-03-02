@@ -194,15 +194,15 @@ class LoadingSpinnerManager {
    */
   isDownloadLink(href) {
     if (!href) return false;
-    
+
     const lowerHref = href.toLowerCase();
-    
+
     // Check for specific download-related paths (more specific)
     if (lowerHref.includes('/download')) return true;
     if (lowerHref.includes('/export')) return true;
     if (lowerHref.includes('action=download')) return true;
     if (lowerHref.includes('download=')) return true;
-    
+
     // Common file extensions
     const fileExtensions = [
       '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
@@ -211,7 +211,7 @@ class LoadingSpinnerManager {
       '.mp3', '.mp4', '.wav', '.flv', '.avi', '.mov',
       '.txt', '.csv', '.json', '.xml'
     ];
-    
+
     return fileExtensions.some(ext => lowerHref.includes(ext));
   }
 
@@ -361,7 +361,7 @@ class LoadingSpinnerManager {
     // Animate percentage from 0 to 100
     const percentageEl = bar.querySelector('.page-loader-bar-percentage');
     const fillEl = bar.querySelector('.page-loader-bar-fill');
-    
+
     let progress = 0;
     const duration = 1500; // 1.5 seconds
     const steps = 60; // 60 frames
@@ -484,19 +484,26 @@ class AjaxLoadingHandler {
     const loaderManager = this.loaderManager;
 
     window.fetch = function (...args) {
-      // Show loader for non-GET requests
-      const method = (args[1] && args[1].method) || 'GET';
-      if (method !== 'GET') {
+      const options = args[1] || {};
+      const skipLoader = options.skipLoader || false;
+      const method = options.method || 'GET';
+
+      // Show loader for non-GET requests unless skipLoader is true
+      if (!skipLoader && method !== 'GET') {
         loaderManager.show('Processing...');
       }
 
       return originalFetch.apply(window, args)
         .then((response) => {
-          loaderManager.hide();
+          if (!skipLoader) {
+            loaderManager.hide();
+          }
           return response;
         })
         .catch((error) => {
-          loaderManager.hide();
+          if (!skipLoader) {
+            loaderManager.hide();
+          }
           throw error;
         });
     };
@@ -546,7 +553,7 @@ window.addEventListener('popstate', function (event) {
   if (window.loaderManager) {
     window.loaderManager.show('Navigating...');
   }
-  
+
   // Reload the page
   window.location.reload();
 });
@@ -554,7 +561,7 @@ window.addEventListener('popstate', function (event) {
 /**
  * Detect browser navigation and force reload
  */
-(function() {
+(function () {
   // Store the current page in performance navigation
   if (performance.navigation.type === 2) {
     // Page accessed from back/forward button

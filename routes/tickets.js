@@ -403,6 +403,9 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     // Check verification result
     if (!verificationResult.success) {
       console.error('Payment verification failed:', verificationResult);
+      if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1)) {
+        return res.status(400).json({ success: false, message: 'Payment verification failed' });
+      }
       req.flash('error', 'Payment verification failed');
       return res.redirect(`/concerts`);
     }
@@ -412,6 +415,9 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
 
     if (!ticket) {
       console.error('Ticket not found:', ticket_id);
+      if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1)) {
+        return res.status(404).json({ success: false, message: 'Ticket not found' });
+      }
       req.flash('error', 'Ticket not found');
       return res.redirect('/concerts');
     }
@@ -431,6 +437,9 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     const concert = await Concert.findById(ticket.concert).populate('artist');
     if (!concert) {
       console.error('Concert not found for ticket:', ticket.concert);
+      if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1)) {
+        return res.status(404).json({ success: false, message: 'Concert information not found' });
+      }
       req.flash('error', 'Concert information not found');
       return res.redirect('/concerts');
     }
@@ -483,9 +492,16 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
     // Set success message
     req.flash('success', 'Payment successful! Ticket booked. A confirmation email has been sent to your email address.');
 
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1)) {
+      return res.json({ success: true, ticketId: ticket._id });
+    }
+
     res.redirect(`/tickets/${ticket._id}`);
   } catch (error) {
     console.error('Verify payment error:', error);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('application/json') > -1)) {
+      return res.status(500).json({ success: false, message: error.message || 'Unknown error' });
+    }
     req.flash('error', 'Payment verification failed: ' + (error.message || 'Unknown error'));
     res.redirect('/concerts');
   }

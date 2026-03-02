@@ -1226,29 +1226,52 @@ document.addEventListener('DOMContentLoaded', function () {
           name: 'Rapira',
           description: 'Concert Ticket Purchase',
           order_id: data.order.id,
-          handler: function (response) {
-            // Create hidden form for payment verification
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/tickets/verify-payment';
-
-            const fields = {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              ticket_id: data.ticket
-            };
-
-            for (const key in fields) {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = key;
-              input.value = fields[key];
-              form.appendChild(input);
+          handler: async function (response) {
+            // Use the existing global loader for verification status
+            if (window.loaderManager) {
+              window.loaderManager.show('Verifying Payment...');
             }
 
-            document.body.appendChild(form);
-            form.submit();
+            try {
+              // Prepare verification data
+              const fields = {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                ticket_id: data.ticket
+              };
+
+              // Call server via AJAX for verification
+              // skipLoader: true prevents the global interceptor from hiding the loader automatically
+              const verifyResponse = await fetch('/tickets/verify-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(fields),
+                skipLoader: true
+              });
+
+              if (verifyResponse.ok) {
+                if (window.loaderManager) {
+                  window.loaderManager.setText('Payment Verified! Redirecting...');
+                  // Set isDownloading to prevent loader from flickering on page unload
+                  window.loaderManager.isDownloading = true;
+                }
+
+                // Direct redirect to ticket page
+                window.location.href = `/tickets/${data.ticket}`;
+              } else {
+                throw new Error('Verification failed. Please contact support.');
+              }
+            } catch (err) {
+              console.error('Verification Error:', err);
+              overlay.classList.remove('show');
+              alert('Payment verification failed. If your money was deducted, please contact support with Order ID: ' + response.razorpay_order_id);
+              window.location.href = '/users/profile';
+            }
           },
           prefill: {
             name: document.getElementById('userName').value,
