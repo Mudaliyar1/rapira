@@ -555,7 +555,6 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     const refundRequest = await RefundRequest.findOne({ ticket: ticket._id });
 
     // Check if concert date has passed (safely)
-    const { isConcertPassed } = require('../utils/dateFormatter');
     const isPastConcert = concert ? isConcertPassed(concert.date, concert.time) : false;
 
     res.render('tickets/show', {
