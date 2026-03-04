@@ -15,18 +15,23 @@ const fs = require('fs');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
 // Configure multer for file uploads (memory → Cloudinary)
+// 100MB limit to allow admin to upload large video/audio/image learning modules
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit for richer content
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif|pdf|mp4|webm/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const allowedExts = /jpeg|jpg|png|gif|webp|pdf|mp4|webm|mov|avi|mkv|mp3|wav|ogg|m4a|aac/;
+    const extname = allowedExts.test(path.extname(file.originalname).toLowerCase());
+    // Also check by mimetype category for broader compatibility
+    const isImage = file.mimetype.startsWith('image/');
+    const isVideo = file.mimetype.startsWith('video/');
+    const isAudio = file.mimetype.startsWith('audio/');
+    const isPdf = file.mimetype === 'application/pdf';
 
-    if (extname && mimetype) {
+    if (extname || isImage || isVideo || isAudio || isPdf) {
       return cb(null, true);
     } else {
-      cb(new Error('Only image, PDF, and video files are allowed'));
+      cb(new Error('Only image, PDF, video, and audio files are allowed'));
     }
   }
 });
@@ -299,9 +304,9 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
         const createdBy = (module.createdBy ? module.createdBy.name : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               content.includes(searchTerm) ||
-               createdBy.includes(searchTerm);
+          description.includes(searchTerm) ||
+          content.includes(searchTerm) ||
+          createdBy.includes(searchTerm);
       });
     }
 
@@ -410,9 +415,9 @@ router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
         const createdBy = (module.createdBy ? module.createdBy.name : '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               content.includes(searchTerm) ||
-               createdBy.includes(searchTerm);
+          description.includes(searchTerm) ||
+          content.includes(searchTerm) ||
+          createdBy.includes(searchTerm);
       });
     }
 
@@ -499,7 +504,7 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check video URL
     if (videoUrl && videoUrl.trim()) {
       contentItems.push({
@@ -529,7 +534,7 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check PDF URL
     if (pdfUrl && pdfUrl.trim()) {
       contentItems.push({
@@ -559,7 +564,7 @@ router.post('/admin/add', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check image URL
     if (imageUrl && imageUrl.trim()) {
       contentItems.push({
@@ -718,7 +723,7 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check video URL
     if (videoUrl && videoUrl.trim()) {
       contentItems.push({
@@ -748,7 +753,7 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check PDF URL
     if (pdfUrl && pdfUrl.trim()) {
       contentItems.push({
@@ -778,7 +783,7 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
         }
       }
     }
-    
+
     // Check image URL
     if (imageUrl && imageUrl.trim()) {
       contentItems.push({
@@ -826,13 +831,13 @@ router.post('/admin/edit/:id', isLoggedIn, isAdmin, upload.fields([
           module.contentItems.splice(index, 1);
         }
       });
-      
+
       // Validate we still have content
       if (module.contentItems.length === 0) {
         req.flash('error', 'Cannot delete all content items. Module must have at least one content item.');
         return res.redirect(`/learning/admin/edit/${req.params.id}`);
       }
-      
+
       // Update primary content if needed
       module.contentType = module.contentItems[0].type;
       module.content = module.contentItems[0].content;
@@ -1080,7 +1085,7 @@ router.get('/admin/progress', isLoggedIn, isAdmin, async (req, res) => {
     if (invalidProgress.length > 0) {
       console.log(`Found ${invalidProgress.length} invalid progress records:`);
       invalidProgress.forEach((p, i) => {
-        console.log(`Record ${i+1}: User: ${p.user ? p.user._id : 'null'}, Module: ${p.module ? p.module._id : 'null'}`);
+        console.log(`Record ${i + 1}: User: ${p.user ? p.user._id : 'null'}, Module: ${p.module ? p.module._id : 'null'}`);
       });
 
       // Clean up invalid records

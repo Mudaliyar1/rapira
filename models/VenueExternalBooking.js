@@ -26,7 +26,7 @@ const VenueExternalBookingSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
       },
       message: 'Start time must be in HH:MM format'
@@ -74,7 +74,7 @@ VenueExternalBookingSchema.index({ createdBy: 1, venue: 1 });
 VenueExternalBookingSchema.index({ date: 1, status: 1 });
 
 // Virtual for end time calculation
-VenueExternalBookingSchema.virtual('endTime').get(function() {
+VenueExternalBookingSchema.virtual('endTime').get(function () {
   const [hours, minutes] = this.startTime.split(':').map(Number);
   const endDate = new Date();
   endDate.setHours(hours + this.durationHours, minutes, 0, 0);
@@ -82,42 +82,48 @@ VenueExternalBookingSchema.virtual('endTime').get(function() {
 });
 
 // Virtual for full date display
-VenueExternalBookingSchema.virtual('displayDate').get(function() {
+VenueExternalBookingSchema.virtual('displayDate').get(function () {
   return this.date.toLocaleDateString('en-IN');
 });
 
 // Virtual for time range display
-VenueExternalBookingSchema.virtual('timeRange').get(function() {
+VenueExternalBookingSchema.virtual('timeRange').get(function () {
   return `${this.startTime} - ${this.endTime}`;
 });
 
 // Static method to check conflicts with existing bookings
-VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date, startTime, durationHours, excludeId = null) {
+VenueExternalBookingSchema.statics.checkConflicts = async function (venueId, date, startTime, durationHours, excludeId = null, excludeConcertId = null) {
   const Concert = require('./Concert');
-  
+
   // Parse the input
   const bookingDate = new Date(date);
   const [startHours, startMinutes] = startTime.split(':').map(Number);
-  
+
   // Create start and end times for the requested booking
   const requestedStart = new Date(bookingDate);
   requestedStart.setHours(startHours, startMinutes, 0, 0);
-  
+
   const requestedEnd = new Date(requestedStart);
   requestedEnd.setTime(requestedStart.getTime() + (durationHours * 60 * 60 * 1000));
 
   const MINIMUM_GAP_HOURS = 12;
   const conflicts = [];
 
-  // Check against website bookings (concerts)
-  const existingConcerts = await Concert.find({
+  // Build concert query, excluding the current concert if provided
+  const concertQuery = {
     venue: venueId,
     date: {
-      $gte: new Date(bookingDate.getTime() - 24 * 60 * 60 * 1000), // Previous day
-      $lte: new Date(bookingDate.getTime() + 24 * 60 * 60 * 1000)  // Next day
+      $gte: new Date(bookingDate.getTime() - 24 * 60 * 60 * 1000),
+      $lte: new Date(bookingDate.getTime() + 24 * 60 * 60 * 1000)
     },
     status: { $in: ['pending', 'approved'] }
-  }).populate({
+  };
+  if (excludeConcertId) {
+    concertQuery._id = { $ne: excludeConcertId };
+  }
+
+  // Check against website bookings (concerts)
+  const existingConcerts = await Concert.find(concertQuery).populate({
     path: 'artist',
     populate: { path: 'user', select: 'name' }
   });
@@ -131,11 +137,11 @@ VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date
     },
     status: 'active'
   };
-  
+
   if (excludeId) {
     query._id = { $ne: excludeId };
   }
-  
+
   const existingExternalBookings = await this.find(query);
 
   // Helper function to get concert times
@@ -143,10 +149,10 @@ VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date
     const start = new Date(concertDate);
     const [hours, minutes] = time.split(':').map(Number);
     start.setHours(hours, minutes, 0, 0);
-    
+
     const end = new Date(start);
     end.setTime(start.getTime() + (duration * 60 * 60 * 1000));
-    
+
     return { start, end };
   };
 
@@ -154,8 +160,8 @@ VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date
   existingConcerts.forEach(concert => {
     if (concert.time && concert.venueBooking && concert.venueBooking.bookingHours) {
       const { start: existingStart, end: existingEnd } = getConcertTimes(
-        concert.date, 
-        concert.time, 
+        concert.date,
+        concert.time,
         concert.venueBooking.bookingHours
       );
 
@@ -208,8 +214,8 @@ VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date
   // Check external bookings
   existingExternalBookings.forEach(booking => {
     const { start: existingStart, end: existingEnd } = getConcertTimes(
-      booking.date, 
-      booking.startTime, 
+      booking.date,
+      booking.startTime,
       booking.durationHours
     );
 
@@ -267,7 +273,7 @@ VenueExternalBookingSchema.statics.checkConflicts = async function(venueId, date
 };
 
 // Update timestamp on save
-VenueExternalBookingSchema.pre('save', function(next) {
+VenueExternalBookingSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });

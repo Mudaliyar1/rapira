@@ -264,7 +264,12 @@ router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_concert_edit_
     }
     if (changes.price !== undefined) concert.price = changes.price;
     if (changes.maxTickets !== undefined) concert.maxTickets = changes.maxTickets;
-    if (changes.posterImage) concert.posterImage = changes.posterImage;
+    if (changes.posterImage) {
+      concert.posterImage = changes.posterImage;
+      if (changes.posterMedia) {
+        concert.posterMedia = changes.posterMedia;
+      }
+    }
 
     await concert.save();
 
