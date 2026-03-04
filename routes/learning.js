@@ -77,6 +77,8 @@ router.get('/', isLoggedIn, async (req, res) => {
     });
 
     res.render('learning/index', {
+      layout: req.session.user.role === 'artist' ? false : 'layouts/main',
+      currentPath: '/learning',
       title: 'Learning Modules',
       modules,
       completedModules,
@@ -144,6 +146,8 @@ router.get('/module/:id', isLoggedIn, async (req, res) => {
     }
 
     res.render('learning/module', {
+      layout: req.session.user.role === 'artist' ? false : 'layouts/main',
+      currentPath: '/learning',
       title: module.title,
       module,
       progress,

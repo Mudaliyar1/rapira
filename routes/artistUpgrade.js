@@ -31,8 +31,11 @@ router.get('/artist-upgrade/pending', isLoggedIn, isArtist, async (req, res) => 
     }
 
     res.render('artists/pending-upgrade-request', {
+      layout: false,
+      currentPath: '/learning',
       title: 'Pending Upgrade Request',
-      request
+      request,
+      artist
     });
   } catch (error) {
     console.error('Error in view pending upgrade request:', error);
@@ -86,6 +89,8 @@ router.get('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) => 
     }));
 
     res.render('artists/upgrade-request', {
+      layout: false,
+      currentPath: '/learning',
       title: 'Request Artist Level Upgrade',
       artist,
       completedModules
