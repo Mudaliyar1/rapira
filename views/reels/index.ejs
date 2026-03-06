@@ -361,6 +361,73 @@
       50% { transform: scale(1.1); }
       75% { transform: scale(1.25); }
     }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .reel-wrapper {
+        border-left: none;
+        border-right: none;
+      }
+
+      .reel-actions {
+        bottom: 90px;
+        right: 12px;
+        gap: 16px;
+      }
+
+      .action-btn i {
+        font-size: 1.6rem;
+      }
+
+      .action-btn span {
+        font-size: 0.7rem;
+      }
+
+      .reel-info {
+        padding: 15px;
+        padding-bottom: 30px;
+        padding-right: 65px;
+      }
+
+      .artist-profile {
+        margin-bottom: 6px;
+      }
+
+      .artist-profile img {
+        width: 32px;
+        height: 32px;
+      }
+
+      .artist-profile span {
+        font-size: 0.9rem;
+      }
+
+      .reel-caption {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 2; /* Still 2 for mobile to avoid covering too much screen */
+      }
+
+      .reels-back {
+        top: 15px;
+        left: 15px;
+        width: 35px;
+        height: 35px;
+      }
+      
+      .comment-modal .modal-content {
+        height: 80vh; /* Taller on mobile for better visibility */
+      }
+    }
+
+    @media (max-height: 600px) {
+      .reel-actions {
+        bottom: 70px;
+        gap: 12px;
+      }
+      .reel-info {
+        padding-bottom: 20px;
+      }
+    }
   </style>
 </head>
 <body>
