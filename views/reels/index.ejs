@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reels - RAPIRA</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent body scrolling */
+      background: #000;
+    }
+    
+    /* Reels Container to handle snap scrolling */
+    .reels-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+
+    .reels-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .reel-wrapper {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      border-left: 1px solid #222;
+      border-right: 1px solid #222;
+    }
+
+    .reel-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .reel-media {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .reel-audio-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+    }
+    
+    .reel-audio-placeholder i {
+      font-size: 5rem;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Back Button */
+    .reels-back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Right Side Buttons */
+    .reel-actions {
+      position: absolute;
+      bottom: 100px;
+      right: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      z-index: 10;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+      transition: transform 0.2s;
+    }
+    
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .action-btn i {
+      font-size: 1.8rem;
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+    
+    .action-btn span {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .action-btn.liked i {
+      color: #ff1744;
+    }
+
+    /* Bottom Info overlay */
+    .reel-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px;
+      padding-bottom: 30px;
+      padding-right: 70px; /* Leave space for actions */
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      color: white;
+      z-index: 5;
+    }
+
+    .artist-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      text-decoration: none;
+      color: white;
+    }
+    
+    .artist-profile img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid white;
+      object-fit: cover;
+    }
+    
+    .artist-profile span {
+      font-weight: bold;
+      font-size: 1rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .reel-caption {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      max-height: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      color: rgba(255,255,255,0.7);
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+
+    .is-paused .play-overlay {
+      opacity: 1;
+    }
+
+    /* Instagram Style Comment Modal (Bottom Sheet) */
+    .comment-modal .modal-dialog {
+      margin: 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-width: 500px; /* Same as reel width */
+      margin: 0 auto;
+      transform: translateY(100%);
+      transition: transform 0.3s ease-out;
+    }
+
+    .comment-modal.show .modal-dialog {
+      transform: translateY(0);
+    }
+
+    .comment-modal .modal-content {
+      border-radius: 20px 20px 0 0;
+      background: #1c1c1c;
+      color: white;
+      border: none;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comment-modal .modal-header {
+      border-bottom: 1px solid #333;
+      padding: 10px 15px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .comment-modal .modal-header::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      width: 40px;
+      height: 4px;
+      background: #444;
+      border-radius: 2px;
+    }
+
+    .comment-modal .modal-body {
+      overflow-y: auto;
+      padding: 15px;
+      flex-grow: 1;
+    }
+
+    .comment-modal .modal-footer {
+      border-top: 1px solid #333;
+      padding: 10px 15px;
+      background: #1c1c1c;
+    }
+
+    .comment-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .comment-item img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-user {
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-right: 5px;
+    }
+
+    .comment-text {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .comment-meta {
+      font-size: 0.75rem;
+      color: #aaa;
+      display: flex;
+      gap: 15px;
+    }
+
+    .reply-list {
+      margin-top: 10px;
+      margin-left: 44px;
+      border-left: 1px solid #333;
+      padding-left: 10px;
+    }
+
+    .comment-input-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .comment-input {
+      flex: 1;
+      background: #333;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px #555;
+    }
+
+    .post-comment-btn {
+      color: #0095f6;
+      font-weight: 600;
+      border: none;
+      background: none;
+      font-size: 0.85rem;
+    }
+
+    .post-comment-btn:disabled {
+      opacity: 0.5;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(1.1); }
+      75% { transform: scale(1.25); }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="reels-back">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+
+  <div class="container-fluid p-0">
+    <% if (reels && reels.length > 0) { %>
+      <div class="reels-container" id="reelsContainer">
+        <% reels.forEach((post, index) => { %>
+          <div class="reel-wrapper" data-index="<%= index %>">
+            <div class="reel-content" onclick="togglePlay(this)">
+              <% if (post.media.mediaType === 'video') { %>
+                <video 
+                  class="reel-media reel-video" 
+                  src="<%- post.media.url %>" 
+                  loop 
+                  playsinline 
+                  preload="<%= index < 3 ? 'auto' : 'none' %>"
+                  <%= index === 0 ? 'autoplay' : '' %>
+                ></video>
+              <% } else if (post.media.mediaType === 'audio') { %>
+                <div class="reel-audio-placeholder">
+                  <i class="bi bi-music-note-beamed"></i>
+                  <audio 
+                    class="reel-media reel-audio d-none" 
+                    src="<%- post.media.url %>" 
+                    loop 
+                    preload="<%= index < 3 ? 'auto' : 'none' %>"
+                    <%= index === 0 ? 'autoplay' : '' %>
+                  ></audio>
+                </div>
+              <% } %>
+              
+              <i class="bi bi-play-fill play-overlay"></i>
+            </div>
+
+            <!-- Actions -->
+            <div class="reel-actions">
+              <button class="action-btn <%= post.liked ? 'liked' : '' %>" onclick="toggleLike(this, '<%= post._id %>')">
+                <i class="bi <%= post.liked ? 'bi-heart-fill' : 'bi-heart' %>"></i>
+                <span class="likes-count"><%= post.likesCount %></span>
+              </button>
+              <button class="action-btn" onclick="openComments('<%= post._id %>')">
+                <i class="bi bi-chat-dots"></i>
+                <span><%= post.commentsCount %></span>
+              </button>
+              <button class="action-btn" onclick="shareReel('<%= post._id %>')">
+                <i class="bi bi-share"></i>
+                <span><%= post.shares %></span>
+              </button>
+            </div>
+
+            <!-- Bottom Info -->
+            <div class="reel-info">
+              <a href="/artists/<%= post.artist._id %>" class="artist-profile">
+                <img src="<%= post.artist.profileImage %>" alt="<%= post.artist.stageName %>">
+                <span>@<%= post.artist.stageName %></span>
+              </a>
+              <% if (post.caption) { %>
+                <p class="reel-caption"><%= post.caption %></p>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh; color: white;">
+        <i class="bi bi-camera-reels display-1 mb-4 text-muted"></i>
+        <h3>No Reels Available</h3>
+        <p class="text-muted">Check back later for new content!</p>
+        <a href="/" class="btn btn-primary mt-3">Go Home</a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Comment Modal (Bottom Sheet) -->
+  <div class="modal fade comment-modal" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title w-100 text-center mt-2">Comments</h6>
+          <button type="button" class="btn-close btn-close-white d-none" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="commentList">
+          <!-- Comments will be loaded here -->
+          <div class="text-center py-5" id="commentLoading">
+            <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="comment-input-container">
+            <img src="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.profileImage) ? currentUser.profileImage : '/images/default-profile.svg' %>" id="modalUserImg" style="width: 32px; height: 32px; border-radius: 50%;">
+            <input type="text" class="comment-input" id="modalCommentInput" placeholder="Add a comment...">
+            <button class="post-comment-btn" id="modalPostCommentBtn" disabled onclick="submitModalComment()">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('reelsContainer');
+      if (!container) return;
+
+      const reels = document.querySelectorAll('.reel-wrapper');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const wrapper = entry.target;
+          const media = wrapper.querySelector('video, audio');
+          
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            // Play media when in view
+            if (media) {
+              const playPromise = media.play();
+              if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                  console.log('Autoplay restricted', err);
+                  wrapper.classList.add('is-paused');
+                });
+              }
+              wrapper.classList.remove('is-paused');
+            }
+          } else {
+            // Pause media when out of view
+            if (media) {
+              media.pause();
+              wrapper.classList.add('is-paused');
+            }
+          }
+        });
+      }, {
+        root: container,
+        threshold: [0.6] 
+      });
+
+      reels.forEach(reel => observer.observe(reel));
+    });
+
+    // Toggle play/pause
+    window.togglePlay = function(contentDiv) {
+      const wrapper = contentDiv.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      
+      if (media) {
+        if (media.paused) {
+          media.play();
+          wrapper.classList.remove('is-paused');
+        } else {
+          media.pause();
+          wrapper.classList.add('is-paused');
+        }
+      }
+    };
+
+    window.toggleLike = async function(btn, postId) {
+      const icon = btn.querySelector('i');
+      const countSpan = btn.querySelector('.likes-count');
+      let count = parseInt(countSpan.textContent) || 0;
+      
+      const isLiked = btn.classList.contains('liked');
+      const newState = !isLiked;
+      
+      if (newState) {
+        btn.classList.add('liked');
+        icon.className = 'bi bi-heart-fill';
+        count++;
+      } else {
+        btn.classList.remove('liked');
+        icon.className = 'bi bi-heart';
+        count = Math.max(0, count - 1);
+      }
+      countSpan.textContent = count;
+      
+      icon.style.animation = 'heartBeat 0.5s ease';
+      setTimeout(() => icon.style.animation = '', 500);
+
+      try {
+        const res = await fetch(`/posts/${postId}/like`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    window.shareReel = async function(postId) {
+      const url = `${window.location.origin}/posts/view/${postId}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Rapira Reel', url: url });
+        } catch (err) {}
+      } else {
+        navigator.clipboard.writeText(url);
+        alert('Link copied!');
+      }
+    };
+
+    let activePostId = null;
+
+    window.openComments = async function(postId) {
+      activePostId = postId;
+      const modal = new bootstrap.Modal(document.getElementById('commentModal'));
+      modal.show();
+      
+      // Load comments
+      loadModalComments(postId);
+    };
+
+    async function loadModalComments(postId) {
+      const container = document.getElementById('commentList');
+      const loader = document.getElementById('commentLoading');
+      
+      container.innerHTML = '';
+      container.appendChild(loader);
+      loader.classList.remove('d-none');
+
+      try {
+        const res = await fetch(`/posts/${postId}/comments`);
+        const data = await res.json();
+        
+        loader.classList.add('d-none');
+        
+        if (data.success && data.comments && data.comments.length > 0) {
+          data.comments.forEach(c => {
+            const commentHtml = createCommentElement(c);
+            container.insertAdjacentHTML('beforeend', commentHtml);
+          });
+        } else {
+          container.innerHTML = '<div class="text-center py-5 text-muted">No comments yet.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div class="text-center py-5 text-danger">Failed to load comments.</div>';
+      }
+    }
+
+    function createCommentElement(c) {
+      const date = new Date(c.createdAt).toLocaleDateString();
+      let repliesHtml = '';
+      if (c.replies && c.replies.length > 0) {
+        repliesHtml = `
+          <div class="reply-list">
+            ${c.replies.map(r => `
+              <div class="comment-item">
+                <img src="${r.user && r.user.profileImage ? r.user.profileImage : '/images/default-profile.svg'}">
+                <div class="comment-content">
+                  <div class="comment-text">
+                    <span class="comment-user">${r.user ? r.user.name : 'Anonymous'}</span>
+                    ${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                  </div>
+                  <div class="comment-meta">
+                    <span>${new Date(r.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="comment-item" id="comment-${c._id}">
+          <img src="${c.user && c.user.profileImage ? c.user.profileImage : '/images/default-profile.svg'}">
+          <div class="comment-content">
+            <div class="comment-text">
+              <span class="comment-user">${c.user ? c.user.name : 'Anonymous'}</span>
+              ${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+            </div>
+            <div class="comment-meta">
+              <span>${date}</span>
+              <span style="cursor: pointer;" onclick="prepareReply('${c._id}', '${c.user ? c.user.name : 'User'}')">Reply</span>
+            </div>
+            ${repliesHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    // Input handling
+    const commInput = document.getElementById('modalCommentInput');
+    const postBtn = document.getElementById('modalPostCommentBtn');
+    
+    commInput.addEventListener('input', () => {
+      postBtn.disabled = !commInput.value.trim();
+    });
+
+    let replyToId = null;
+
+    window.prepareReply = function(commentId, userName) {
+      replyToId = commentId;
+      commInput.value = `@${userName} `;
+      commInput.focus();
+    };
+
+    window.submitModalComment = async function() {
+      if (!activePostId || !commInput.value.trim()) return;
+      
+      const text = commInput.value.trim();
+      postBtn.disabled = true;
+      
+      try {
+        let url = `/posts/${activePostId}/comments`;
+        let body = { text };
+        
+        if (replyToId && text.startsWith('@')) {
+          url = `/posts/${activePostId}/comments/${replyToId}/replies`;
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          commInput.value = '';
+          replyToId = null;
+          loadModalComments(activePostId); // Reload
+        } else {
+          alert(data.message || 'Failed to post comment');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error posting comment');
+      } finally {
+        postBtn.disabled = false;
+      }
+    };
+
+    window.goToPost = function(postId) {
+      window.location.href = `/posts/view/${postId}`;
+    };
+  </script>
+</body>
+</html>

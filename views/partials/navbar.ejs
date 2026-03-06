@@ -107,7 +107,7 @@
         <!-- Discover Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.discoverMenu && menuSettings.discoverMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path === '/about' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || path.startsWith('/learning') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path === '/about' || path === '/reels' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || path.startsWith('/learning') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
              href="#" id="discoverDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-compass me-1"></i> Discover
           </a>
@@ -120,6 +120,7 @@
             <% } %>
             <% if (menuSettings.discoverMenu.items.contentLibrary) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/content') ? 'active' : '' %>" href="/content"><i class="bi bi-collection me-2"></i>Content Library</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path === '/reels' ? 'active' : '' %>" href="/reels"><i class="bi bi-camera-reels me-2"></i>Reels</a></li>
             <% } %>
             <% if (menuSettings.discoverMenu.items.concerts) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/concerts') ? 'active' : '' %>" href="/concerts"><i class="bi bi-music-note-beamed me-2"></i>Concerts</a></li>

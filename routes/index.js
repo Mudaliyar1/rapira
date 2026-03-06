@@ -47,6 +47,45 @@ router.get('/', async (req, res) => {
       .limit(4)
       .lean();
 
+    // Get 6 random reels for homepage attraction
+    const homeReels = await ArtistPost.aggregate([
+      {
+        $match: {
+          isActive: true,
+          isApproved: true,
+          'media.mediaType': { $in: ['video', 'audio'] }
+        }
+      },
+      { $sample: { size: 6 } },
+      {
+        $lookup: {
+          from: 'artists',
+          localField: 'artist',
+          foreignField: '_id',
+          as: 'artistData'
+        }
+      },
+      { $unwind: '$artistData' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'artistData.user',
+          foreignField: '_id',
+          as: 'artistUser'
+        }
+      },
+      { $unwind: { path: '$artistUser', preserveNullAndEmptyArrays: true } }
+    ]);
+
+    const formattedReels = homeReels.map(reel => ({
+      _id: reel._id,
+      media: reel.media,
+      artist: {
+        stageName: reel.artistData.stageName,
+        profileImage: reel.artistUser ? reel.artistUser.profileImage : '/images/default-profile.svg'
+      }
+    }));
+
     // Get current user data
     const currentUser = req.session.user || null;
 
@@ -55,6 +94,7 @@ router.get('/', async (req, res) => {
       featuredArtists,
       latestContent,
       featuredProducts,
+      homeReels: formattedReels,
       user: currentUser
     });
   } catch (error) {

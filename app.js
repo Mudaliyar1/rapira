@@ -778,6 +778,7 @@ const distributorApplicationRoutes = require('./routes/distributorApplications')
 const artistDistributionRoutes = require('./routes/artistDistribution');
 const adminBeatPurchasesRoutes = require('./routes/admin-beat-purchases');
 const razorpayTestRoutes = require('./routes/razorpayTest');
+const reelsRoutes = require('./routes/reels');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -956,6 +957,9 @@ app.use('/admin/artist-beat-purchases', adminBeatPurchasesRoutes);
 
 // Mount follow routes
 app.use('/follows', followRoutes);
+
+// Mount reels route
+app.use('/reels', reelsRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');
