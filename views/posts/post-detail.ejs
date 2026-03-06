@@ -565,7 +565,8 @@
           
           const res = await fetch(endpoint, { 
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            skipLoader: true
           });
           
           console.log('[POST DETAIL] Response status:', res.status);
@@ -619,7 +620,8 @@
         try {
           const res = await fetch(`/posts/${postId}/share`, { 
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            skipLoader: true
           });
           
           if (res.ok) {
@@ -778,9 +780,13 @@
             const visibleComments = data.comments.slice(0, 3);
             const remainingComments = data.comments.slice(3);
 
+            const postAuthorUID = "<%= (typeof artist !== 'undefined' && artist && artist.user && artist.user._id) ? artist.user._id : (typeof artist !== 'undefined' && artist && artist.user ? artist.user : '') %>";
+
             let contentHtml = visibleComments.map(c => {
                const currentUID = document.body.getAttribute('data-user-id');
-               const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
+               const commentUserId = c.user && c.user._id ? c.user._id : c.user;
+               const isOwner = currentUID && currentUID === commentUserId;
+               const isCommentAuthor = postAuthorUID && commentUserId === postAuthorUID;
                
                let repliesHtml = '';
                if (c.replies && c.replies.length > 0) {
@@ -788,12 +794,15 @@
                  const remainingReplies = c.replies.slice(3);
 
                  repliesHtml = visibleReplies.map(r => {
-                   const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+                   const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                   const isReplyOwner = currentUID && currentUID === replyUserId;
+                   const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
                    return `
                         <div class="d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary">
                           <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
                           <div class="flex-grow-1">
                             <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                            ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                             <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
                             <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
                             
@@ -810,12 +819,15 @@
 
                  if (remainingReplies.length > 0) {
                    repliesHtml += remainingReplies.map(r => {
-                    const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+                    const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                    const isReplyOwner = currentUID && currentUID === replyUserId;
+                    const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
                     return `
                         <div class="hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none !important;">
                           <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
                           <div class="flex-grow-1">
                             <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                            ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                             <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
                             <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
                             
@@ -838,6 +850,7 @@
                   <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
                   <div class="flex-grow-1 w-100 pr-2">
                     <strong>${c.user ? c.user.name : 'Anonymous'}</strong> 
+                    ${isCommentAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                     ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
                     <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
                     <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
@@ -865,7 +878,9 @@
             if (remainingComments.length > 0) {
               contentHtml += remainingComments.map(c => {
                  const currentUID = document.body.getAttribute('data-user-id');
-                 const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
+                 const commentUserId = c.user && c.user._id ? c.user._id : c.user;
+                 const isOwner = currentUID && currentUID === commentUserId;
+                 const isCommentAuthor = postAuthorUID && commentUserId === postAuthorUID;
                  
                  let repliesHtml = '';
                  if (c.replies && c.replies.length > 0) {
@@ -873,12 +888,15 @@
                    const remainingReplies = c.replies.slice(3);
 
                    repliesHtml = visibleReplies.map(r => {
-                     const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+                     const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                     const isReplyOwner = currentUID && currentUID === replyUserId;
+                     const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
                      return `
                           <div class="d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary">
                             <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
                             <div class="flex-grow-1">
                               <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                              ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                               <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
                               <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
                               
@@ -895,12 +913,15 @@
 
                    if (remainingReplies.length > 0) {
                      repliesHtml += remainingReplies.map(r => {
-                      const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+                      const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                      const isReplyOwner = currentUID && currentUID === replyUserId;
+                      const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
                       return `
                           <div class="hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none !important;">
                             <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
                             <div class="flex-grow-1">
                               <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                              ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                               <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
                               <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
                               
@@ -923,6 +944,7 @@
                     <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
                     <div class="flex-grow-1 w-100 pr-2">
                       <strong>${c.user && c.user.name ? c.user.name : 'Anonymous'}</strong> 
+                      ${isCommentAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
                       ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
                       <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
                       <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
@@ -976,7 +998,8 @@
           const res = await fetch(`/posts/${postId}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text }),
+            skipLoader: true
           });
           const data = await res.json();
           if (data.success) {

@@ -549,7 +549,8 @@ async function togglePostLike() {
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
-      }
+      },
+      skipLoader: true
     });
 
     const data = await res.json();
@@ -585,7 +586,8 @@ async function sharePostModal() {
       headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
-      }
+      },
+      skipLoader: true
     });
 
     if (res.ok) {
@@ -945,7 +947,8 @@ window.submitReplyViewer = async function (commentId) {
     const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text }),
+      skipLoader: true
     });
     const data = await res.json();
     if (data.success) {
@@ -961,7 +964,7 @@ window.submitReplyViewer = async function (commentId) {
 window.deleteCommentViewer = async function (commentId) {
   if (!currentPost || !confirm("Delete your comment?")) return;
   try {
-    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}`, { method: 'DELETE' });
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}`, { method: 'DELETE', skipLoader: true });
     const data = await res.json();
     if (data.success) {
       await loadPostViewerComments();
@@ -982,7 +985,8 @@ window.editCommentViewer = async function (commentId) {
     const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: newText })
+      body: JSON.stringify({ text: newText }),
+      skipLoader: true
     });
     const data = await res.json();
     if (data.success) {
@@ -998,7 +1002,7 @@ window.editCommentViewer = async function (commentId) {
 window.deleteReplyViewer = async function (commentId, replyId) {
   if (!currentPost || !confirm("Delete your reply?")) return;
   try {
-    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies/${replyId}`, { method: 'DELETE' });
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies/${replyId}`, { method: 'DELETE', skipLoader: true });
     const data = await res.json();
     if (data.success) {
       await loadPostViewerComments();
@@ -1019,7 +1023,8 @@ window.editReplyViewer = async function (commentId, replyId) {
     const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies/${replyId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: newText })
+      body: JSON.stringify({ text: newText }),
+      skipLoader: true
     });
     const data = await res.json();
     if (data.success) {
@@ -1073,7 +1078,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const res = await fetch(`/posts/${currentPost._id}/comments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify({ text }),
+          skipLoader: true
         });
         const data = await res.json();
 
@@ -1118,7 +1124,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const res = await fetch(`/posts/${currentPost._id}/report`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reason })
+          body: JSON.stringify({ reason }),
+          skipLoader: true
         });
         const data = await res.json();
         if (data.success) {
