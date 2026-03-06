@@ -93,11 +93,12 @@ router.post('/posts', isLoggedIn, (req, res, next) => {
 				publicId: uploadRes.media.public_id || uploadRes.result.public_id
 			},
 			caption,
-			hashtags: hashtags.map(tag => tag.substring(1).toLowerCase())
+			hashtags: hashtags.map(tag => tag.substring(1).toLowerCase()),
+			isApproved: true // Auto-approve post
 		});
 
 		await post.save();
-		res.json({ success: true, post, message: 'Post created! Awaiting admin approval.' });
+		res.json({ success: true, post, message: 'Post created successfully and is now public!' });
 	} catch (err) {
 		console.error('[POST /posts] ERROR:', err.message);
 		res.status(500).json({ success: false, message: err.message || 'Failed to create post' });
@@ -158,8 +159,7 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 
 		const posts = await ArtistPost.find({
 			artist: artist._id,
-			isActive: true,
-			isApproved: true
+			isActive: true
 		})
 			.populate('likes', 'name profileImage')
 			.sort({ createdAt: -1 })
@@ -349,7 +349,7 @@ router.get('/posts/:id/json', async (req, res) => {
 			})
 			.populate('likes', 'name profileImage');
 
-		if (!post || !post.isApproved || !post.isActive) {
+		if (!post || !post.isActive) {
 			return res.status(404).json({ success: false, message: 'Post not available' });
 		}
 
@@ -535,7 +535,7 @@ router.get('/posts/view/:id', async (req, res) => {
 			return res.status(404).render('error/404', { message: 'Post not found' });
 		}
 
-		if (!post.isApproved || !post.isActive) {
+		if (!post.isActive) {
 			return res.status(404).render('error/404', { message: 'Post not available' });
 		}
 

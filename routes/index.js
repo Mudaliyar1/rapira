@@ -15,13 +15,13 @@ router.get('/', async (req, res) => {
       status: 'approved',
       date: { $gte: new Date() }
     })
-    .sort({ date: 1 })
-    .limit(3)
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name profileImage' }
-    })
-    .populate('venue', 'name address city');
+      .sort({ date: 1 })
+      .limit(3)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name profileImage' }
+      })
+      .populate('venue', 'name address city');
 
     // Get featured artists - limit to 4
     const featuredArtists = await Artist.find({ featuredArtist: true })
@@ -258,7 +258,7 @@ router.get('/content', async (req, res) => {
     const { mediaType = '', artist = '', sort = 'latest' } = req.query;
 
     // Build post filter object for artist posts
-    const postFilter = { isApproved: true, isActive: true };
+    const postFilter = { isActive: true };
 
     // Media type filter for artist posts (images/videos/audio)
     if (mediaType && ['image', 'video', 'audio'].includes(mediaType)) {
@@ -286,7 +286,7 @@ router.get('/content', async (req, res) => {
     }
 
     // Get all artists for filter dropdown (only those with posts)
-    const artistsWithPosts = await ArtistPost.find({ isApproved: true, isActive: true }).distinct('artist');
+    const artistsWithPosts = await ArtistPost.find({ isActive: true }).distinct('artist');
     const artists = await Artist.find({ _id: { $in: artistsWithPosts } })
       .populate('user', 'name')
       .sort({ 'user.name': 1 });
@@ -313,10 +313,10 @@ router.get('/content', async (req, res) => {
 
     // Get statistics
     const stats = {
-      total: await ArtistPost.countDocuments({ isApproved: true, isActive: true }),
-      images: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'image' }),
-      videos: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'video' }),
-      audio: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'audio' }),
+      total: await ArtistPost.countDocuments({ isActive: true }),
+      images: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'image' }),
+      videos: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'video' }),
+      audio: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'audio' }),
       filtered: totalPosts
     };
 

@@ -3748,7 +3748,37 @@ router.post('/deleted-accounts/:id/permanent-delete', isLoggedIn, hasAdminPermis
 // New compact list page (also keep alternate path)
 router.get(['/posts', '/artist-posts'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
-    const posts = await ArtistPost.find()
+    const { search, state, city, genre, status } = req.query;
+
+    let postQuery = {};
+
+    // Post Status Filter
+    if (status === 'active') postQuery.isActive = true;
+    else if (status === 'hidden') postQuery.isActive = false;
+
+    // Filter by Artist Fields (State, City, Genre, Name)
+    if (search || state || city || (genre && genre !== 'all')) {
+      let artistQuery = {};
+
+      if (state && state.trim()) {
+        artistQuery.state = { $regex: state.trim(), $options: 'i' };
+      }
+      if (city && city.trim()) {
+        artistQuery.city = { $regex: city.trim(), $options: 'i' };
+      }
+      if (genre && genre !== 'all') {
+        artistQuery.genre = { $regex: genre, $options: 'i' };
+      }
+      if (search && search.trim()) {
+        artistQuery.stageName = { $regex: search.trim(), $options: 'i' };
+      }
+
+      const matchingArtists = await Artist.find(artistQuery).select('_id');
+      const artistIds = matchingArtists.map(a => a._id);
+      postQuery.artist = { $in: artistIds };
+    }
+
+    const posts = await ArtistPost.find(postQuery)
       .populate('artist', 'stageName user')
       .populate('likes', 'name')
       .sort({ createdAt: -1 })
@@ -3769,11 +3799,31 @@ router.get(['/posts', '/artist-posts'], isLoggedIn, hasAdminPermission('manage_a
       return post;
     });
 
+    // Get unique data for filter dropdowns
+    const allGenres = await Artist.find().distinct('genre');
+    const genresList = allGenres.filter(g => g && g !== 'Not specified').sort();
+
+    const allStates = await Artist.find().distinct('state');
+    const statesList = allStates.filter(s => s && s.trim() !== '').sort();
+
+    const allCities = await Artist.find().distinct('city');
+    const citiesList = allCities.filter(c => c && c.trim() !== '').sort();
+
     res.render('admin/artist-posts-list', {
       layout: 'admin',
       currentPath: '/admin/posts',
       title: 'Manage Posts',
-      posts: normalizedPosts
+      posts: normalizedPosts,
+      genres: genresList,
+      states: statesList,
+      cities: citiesList,
+      searchParams: {
+        search: search || '',
+        state: state || '',
+        city: city || '',
+        genre: genre || 'all',
+        status: status || 'all'
+      }
     });
   } catch (error) {
     console.error('Admin posts page error:', error);
@@ -3782,7 +3832,11 @@ router.get(['/posts', '/artist-posts'], isLoggedIn, hasAdminPermission('manage_a
       layout: 'admin',
       currentPath: '/admin/posts',
       title: 'Manage Posts',
-      posts: []
+      posts: [],
+      genres: [],
+      states: [],
+      cities: [],
+      searchParams: { search: '', state: '', city: '', genre: 'all', status: 'all' }
     });
   }
 });
@@ -3850,13 +3904,13 @@ router.get(['/artist-posts/:id/reject'], isLoggedIn, hasAdminPermission('manage_
 router.get(['/artist-posts/:id/restrict'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-restrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Restrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-restrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Hide Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/unrestrict'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   const post = await ArtistPost.findById(req.params.id).populate('artist', 'stageName user');
   if (!post) return res.redirect('/admin/posts');
-  res.render('admin/artist-posts-unrestrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Unrestrict Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
+  res.render('admin/artist-posts-unrestrict', { layout: 'admin', currentPath: '/admin/posts', title: 'Unhide Post', post: post.toObject(), media: normalizeMedia(post), artistName: getArtistName(post) });
 });
 
 router.get(['/artist-posts/:id/delete'], isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
@@ -3902,12 +3956,12 @@ router.post('/artist-posts/:id/restrict-do', isLoggedIn, hasAdminPermission('man
     const { reason } = req.body;
     await ArtistPost.findByIdAndUpdate(req.params.id, {
       isActive: false,
-      rejectionReason: reason
+      rejectionReason: reason // Still save the given reason if we need it
     });
-    req.flash('success', 'Post restricted');
+    req.flash('success', 'Post hidden successfully');
   } catch (e) {
     console.error('Restrict-do error:', e);
-    req.flash('error', 'Failed to restrict post');
+    req.flash('error', 'Failed to hide post');
   }
   res.redirect('/admin/posts');
 });
@@ -3915,13 +3969,13 @@ router.post('/artist-posts/:id/restrict-do', isLoggedIn, hasAdminPermission('man
 router.post('/artist-posts/:id/unrestrict-do', isLoggedIn, hasAdminPermission('manage_artist_posts'), async (req, res) => {
   try {
     await ArtistPost.findByIdAndUpdate(req.params.id, {
-      isActive: true,
-      rejectionReason: undefined
+      $set: { isActive: true },
+      $unset: { rejectionReason: 1 }
     });
-    req.flash('success', 'Post unrestricted');
+    req.flash('success', 'Post unhidden successfully');
   } catch (e) {
     console.error('Unrestrict-do error:', e);
-    req.flash('error', 'Failed to unrestrict post');
+    req.flash('error', 'Failed to unhide post');
   }
   res.redirect('/admin/posts');
 });

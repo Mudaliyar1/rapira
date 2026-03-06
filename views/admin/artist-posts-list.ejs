@@ -3,9 +3,70 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h2 class="fw-bold mb-1">📸 Manage Artist Posts</h2>
-      <p class="text-muted mb-0">Review, approve, reject, restrict, or delete artist posts</p>
+      <p class="text-muted mb-0">Review, hide, or delete artist posts</p>
     </div>
-    <span class="badge bg-info fs-6">Total: <%= posts.length %></span>
+    <span class="badge bg-info fs-6">Total Posts: <%= posts.length %></span>
+  </div>
+
+  <!-- Search and Filter Section -->
+  <div class="card mb-4 border border-secondary" style="background: transparent !important;">
+    <div class="card-body" style="background: transparent !important;">
+      <form method="GET" action="/admin/posts" id="postSearchForm">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3 col-lg-3">
+            <label for="search" class="form-label small mb-1 fw-bold">Search</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text" style="background: transparent !important; color: white;"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" style="background: transparent !important; color: white;" id="search" name="search" placeholder="Artist name..." value="<%= searchParams.search %>">
+            </div>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2">
+            <label for="state" class="form-label small mb-1 fw-bold">State</label>
+            <select class="form-select form-select-sm" style="background: transparent !important; color: white;" id="state" name="state">
+              <option value="" style="color: black;" <%= !searchParams.state ? 'selected' : '' %>>All States</option>
+              <% if (typeof states !== 'undefined' && states.length > 0) { %>
+                <% states.forEach(s => { %>
+                  <option value="<%= s %>" style="color: black;" <%= searchParams.state === s ? 'selected' : '' %>><%= s %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2">
+            <label for="city" class="form-label small mb-1 fw-bold">City</label>
+            <select class="form-select form-select-sm" style="background: transparent !important; color: white;" id="city" name="city">
+              <option value="" style="color: black;" <%= !searchParams.city ? 'selected' : '' %>>All Cities</option>
+              <% if (typeof cities !== 'undefined' && cities.length > 0) { %>
+                <% cities.forEach(c => { %>
+                  <option value="<%= c %>" style="color: black;" <%= searchParams.city === c ? 'selected' : '' %>><%= c %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2">
+            <label for="genre" class="form-label small mb-1 fw-bold">Genre</label>
+            <select class="form-select form-select-sm" style="background: transparent !important; color: white;" id="genre" name="genre">
+              <option value="all" style="color: black;" <%= searchParams.genre === 'all' ? 'selected' : '' %>>All Genres</option>
+              <% if (typeof genres !== 'undefined' && genres.length > 0) { %>
+                <% genres.forEach(g => { %>
+                  <option value="<%= g %>" style="color: black;" <%= searchParams.genre === g ? 'selected' : '' %>><%= g %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2">
+            <label for="status" class="form-label small mb-1 fw-bold">Status</label>
+            <select class="form-select form-select-sm" style="background: transparent !important; color: white;" id="status" name="status">
+              <option value="all" style="color: black;" <%= searchParams.status === 'all' ? 'selected' : '' %>>All</option>
+              <option value="active" style="color: black;" <%= searchParams.status === 'active' ? 'selected' : '' %>>Active</option>
+              <option value="hidden" style="color: black;" <%= searchParams.status === 'hidden' ? 'selected' : '' %>>Hidden</option>
+            </select>
+          </div>
+          <div class="col-md-12 col-lg-1 mt-3 mt-lg-0 text-end">
+            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-filter"></i> Filter</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="card">
@@ -35,7 +96,7 @@
                 <td colspan="8" class="text-center py-4 text-muted">No posts found</td>
               </tr>
             <% } else { %>
-              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isApproved ? 'success' : 'warning text-dark'; const statusText = post.isApproved ? 'Approved' : 'Pending'; %>
+              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isActive ? 'success' : 'secondary'; const statusText = post.isActive ? 'Active' : 'Hidden'; %>
                 <tr>
                   <td style="width:100px;">
                     <div style="width:80px;height:80px;overflow:hidden;border-radius:8px;background:#0f0f0f;border:1px solid rgba(255,255,255,0.08);">
@@ -51,12 +112,6 @@
                   <td>
                     <div class="d-flex gap-2 flex-wrap">
                       <span class="badge bg-<%= statusBadge %>" style="font-size:.8rem;"><%= statusText %></span>
-                      <% if (!post.isActive) { %>
-                        <span class="badge bg-secondary" style="font-size:.8rem;">Inactive</span>
-                      <% } %>
-                      <% if (post.rejectionReason) { %>
-                        <span class="badge bg-danger" style="font-size:.8rem;">Rejected</span>
-                      <% } %>
                     </div>
                   </td>
                   <td><%= post.likesCount || 0 %></td>
@@ -69,20 +124,9 @@
                         <i class="bi bi-eye"></i>
                       </a>
                       <% if (!post.isActive) { %>
-                        <!-- Restricted: show unrestrict + delete -->
-                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/unrestrict" title="Unrestrict"><i class="bi bi-unlock"></i></a>
-                      <% } else if (post.rejectionReason) { %>
-                        <!-- Rejected: show approve + delete -->
-                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/approve" title="Approve"><i class="bi bi-check-circle"></i></a>
-                      <% } else if (post.isApproved) { %>
-                        <!-- Approved: show reject + restrict + delete -->
-                        <a class="btn btn-sm btn-outline-warning" href="/admin/artist-posts/<%= post._id %>/reject" title="Reject"><i class="bi bi-x-circle"></i></a>
-                        <a class="btn btn-sm btn-outline-secondary" href="/admin/artist-posts/<%= post._id %>/restrict" title="Restrict"><i class="bi bi-lock"></i></a>
+                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/unrestrict" title="Unhide"><i class="bi bi-eye"></i> Unhide</a>
                       <% } else { %>
-                        <!-- Pending: show approve + reject + restrict + delete -->
-                        <a class="btn btn-sm btn-outline-success" href="/admin/artist-posts/<%= post._id %>/approve" title="Approve"><i class="bi bi-check-circle"></i></a>
-                        <a class="btn btn-sm btn-outline-warning" href="/admin/artist-posts/<%= post._id %>/reject" title="Reject"><i class="bi bi-x-circle"></i></a>
-                        <a class="btn btn-sm btn-outline-secondary" href="/admin/artist-posts/<%= post._id %>/restrict" title="Restrict"><i class="bi bi-lock"></i></a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/admin/artist-posts/<%= post._id %>/restrict" title="Hide"><i class="bi bi-eye-slash"></i> Hide</a>
                       <% } %>
                       <a class="btn btn-sm btn-outline-danger" href="/admin/artist-posts/<%= post._id %>/delete" title="Delete"><i class="bi bi-trash"></i></a>
                     </div>
