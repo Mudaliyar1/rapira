@@ -7,21 +7,43 @@
   </div>
   <div class="card-body">
     <form method="GET" action="/admin/artists" id="artistSearchForm">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <label for="search" class="form-label text-white">Search Artists</label>
-          <div class="input-group">
+      <div class="row g-2 mb-3">
+        <div class="col-md-4 col-lg-3">
+          <label for="search" class="form-label text-white small mb-1">Search</label>
+          <div class="input-group input-group-sm">
             <span class="input-group-text bg-dark border-secondary text-white">
               <i class="bi bi-search"></i>
             </span>
             <input type="text" class="form-control bg-dark border-secondary text-white"
-                   id="search" name="search" placeholder="Search by name, email, or genre..."
+                   id="search" name="search" placeholder="Name, email, etc."
                    value="<%= searchParams.search %>">
           </div>
         </div>
-        <div class="col-md-2">
-          <label for="genre" class="form-label text-white">Genre</label>
-          <select class="form-select bg-dark border-secondary text-white" id="genre" name="genre">
+        <div class="col-6 col-md-4 col-lg-2">
+          <label for="state" class="form-label text-white small mb-1">State</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="state" name="state">
+            <option value="" <%= !searchParams.state ? 'selected' : '' %>>All States</option>
+            <% if (typeof states !== 'undefined' && states.length > 0) { %>
+              <% states.forEach(s => { %>
+                <option value="<%= s %>" <%= searchParams.state === s ? 'selected' : '' %>><%= s %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <label for="city" class="form-label text-white small mb-1">City</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="city" name="city">
+            <option value="" <%= !searchParams.city ? 'selected' : '' %>>All Cities</option>
+            <% if (typeof cities !== 'undefined' && cities.length > 0) { %>
+              <% cities.forEach(c => { %>
+                <option value="<%= c %>" <%= searchParams.city === c ? 'selected' : '' %>><%= c %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <label for="genre" class="form-label text-white small mb-1">Genre</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="genre" name="genre">
             <option value="all" <%= searchParams.genre === 'all' ? 'selected' : '' %>>All Genres</option>
             <% if (genres && genres.length > 0) { %>
               <% genres.forEach(g => { %>
@@ -30,41 +52,43 @@
             <% } %>
           </select>
         </div>
-        <div class="col-md-2">
-          <label for="status" class="form-label text-white">Status</label>
-          <select class="form-select bg-dark border-secondary text-white" id="status" name="status">
-            <option value="all" <%= searchParams.status === 'all' ? 'selected' : '' %>>All Status</option>
+        <div class="col-6 col-md-4 col-lg-1">
+          <label for="status" class="form-label text-white small mb-1">Status</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="status" name="status">
+            <option value="all" <%= searchParams.status === 'all' ? 'selected' : '' %>>All</option>
             <option value="verified" <%= searchParams.status === 'verified' ? 'selected' : '' %>>Verified</option>
             <option value="unverified" <%= searchParams.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
           </select>
         </div>
-        <div class="col-md-2">
-          <label for="featured" class="form-label text-white">Featured</label>
-          <select class="form-select bg-dark border-secondary text-white" id="featured" name="featured">
-            <option value="all" <%= searchParams.featured === 'all' ? 'selected' : '' %>>All Artists</option>
-            <option value="featured" <%= searchParams.featured === 'featured' ? 'selected' : '' %>>Featured</option>
-            <option value="not-featured" <%= searchParams.featured === 'not-featured' ? 'selected' : '' %>>Not Featured</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label for="level" class="form-label text-white">Level</label>
-          <select class="form-select bg-dark border-secondary text-white" id="level" name="level">
+        <div class="col-6 col-md-4 col-lg-2">
+          <label for="level" class="form-label text-white small mb-1">Level</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="level" name="level">
             <option value="all" <%= searchParams.level === 'all' ? 'selected' : '' %>>All Levels</option>
             <option value="Beginner" <%= searchParams.level === 'Beginner' ? 'selected' : '' %>>Beginner</option>
             <option value="Intermediate" <%= searchParams.level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
             <option value="Established" <%= searchParams.level === 'Established' ? 'selected' : '' %>>Established</option>
           </select>
         </div>
-        <div class="col-md-1">
-          <label for="sortBy" class="form-label text-white">Sort</label>
-          <select class="form-select bg-dark border-secondary text-white" id="sortBy" name="sortBy">
+      </div>
+      
+      <div class="row g-2 align-items-end mb-1">
+        <div class="col-md-2 col-lg-2">
+          <label for="featured" class="form-label text-white small mb-1">Featured</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="featured" name="featured">
+            <option value="all" <%= searchParams.featured === 'all' ? 'selected' : '' %>>All</option>
+            <option value="featured" <%= searchParams.featured === 'featured' ? 'selected' : '' %>>Featured</option>
+            <option value="not-featured" <%= searchParams.featured === 'not-featured' ? 'selected' : '' %>>Normal</option>
+          </select>
+        </div>
+        <div class="col-md-2 col-lg-2">
+          <label for="sortBy" class="form-label text-white small mb-1">Sort</label>
+          <select class="form-select form-select-sm bg-dark border-secondary text-white" id="sortBy" name="sortBy">
             <option value="createdAt" <%= searchParams.sortBy === 'createdAt' ? 'selected' : '' %>>Join Date</option>
             <option value="stageName" <%= searchParams.sortBy === 'stageName' ? 'selected' : '' %>>Name</option>
             <option value="genre" <%= searchParams.sortBy === 'genre' ? 'selected' : '' %>>Genre</option>
             <option value="verified" <%= searchParams.sortBy === 'verified' ? 'selected' : '' %>>Status</option>
           </select>
         </div>
-      </div>
       <div class="row mt-3">
         <div class="col-12">
           <div class="d-flex align-items-center gap-2">
@@ -239,7 +263,7 @@
                         <i class="bi bi-lock-fill"></i> Block
                       </a>
                     <% } %>
-                    <a href="/artists/<%= artist._id %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                    <a href="/admin/artists/<%= artist._id %>/view" class="btn btn-sm btn-outline-secondary me-1">
                       <i class="bi bi-eye"></i> View
                     </a>
                     <form action="/admin/artists/<%= artist._id %>/delete" method="POST" class="me-1" onsubmit="return confirm('Are you sure you want to delete this artist? This will remove all their concerts and content.')">

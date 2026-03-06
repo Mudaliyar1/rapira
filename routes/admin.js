@@ -1844,10 +1844,20 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
     }
 
     // Get search parameters
-    const { search, genre, status, featured, level, sortBy, sortOrder } = req.query;
+    const { search, genre, status, featured, level, state, city, sortBy, sortOrder } = req.query;
 
     // Build search query
     let query = {};
+
+    // State filter
+    if (state && state.trim()) {
+      query.state = { $regex: state.trim(), $options: 'i' };
+    }
+
+    // City filter
+    if (city && city.trim()) {
+      query.city = { $regex: city.trim(), $options: 'i' };
+    }
 
     // Genre filter
     if (genre && genre !== 'all') {
@@ -1906,9 +1916,15 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
     const intermediateArtists = await Artist.countDocuments({ artistLevel: 'Intermediate' });
     const establishedArtists = await Artist.countDocuments({ artistLevel: 'Established' });
 
-    // Get unique genres for filter dropdown
+    // Get unique genres, states, and cities for filter dropdowns
     const allArtists = await Artist.find().distinct('genre');
     const genres = allArtists.filter(g => g && g !== 'Not specified').sort();
+
+    const allStates = await Artist.find().distinct('state');
+    const statesList = allStates.filter(s => s && s.trim() !== '').sort();
+
+    const allCities = await Artist.find().distinct('city');
+    const citiesList = allCities.filter(c => c && c.trim() !== '').sort();
 
     res.render('admin/artists-new', {
       layout: 'admin',
@@ -1921,6 +1937,8 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
         status: status || 'all',
         featured: featured || 'all',
         level: level || 'all',
+        state: state || '',
+        city: city || '',
         sortBy: sortBy || 'createdAt',
         sortOrder: sortOrder || 'desc'
       },
@@ -1933,7 +1951,9 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
         established: establishedArtists,
         filtered: artists.length
       },
-      genres
+      genres,
+      states: statesList,
+      cities: citiesList
     });
   } catch (error) {
     console.error('Manage artists error:', error);
@@ -1946,10 +1966,20 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
 router.get('/artists/export', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
     // Get search parameters (same as main artists route)
-    const { search, genre, status, featured, level, sortBy, sortOrder } = req.query;
+    const { search, genre, status, featured, level, state, city, sortBy, sortOrder } = req.query;
 
     // Build search query
     let query = {};
+
+    // State filter
+    if (state && state.trim()) {
+      query.state = { $regex: state.trim(), $options: 'i' };
+    }
+
+    // City filter
+    if (city && city.trim()) {
+      query.city = { $regex: city.trim(), $options: 'i' };
+    }
 
     // Genre filter
     if (genre && genre !== 'all') {
@@ -2031,6 +2061,51 @@ router.get('/artists/export', isLoggedIn, hasAdminPermission('manage_artists'), 
   } catch (error) {
     console.error('Export artists error:', error);
     req.flash('error', 'Failed to export artists');
+    res.redirect('/admin/artists');
+  }
+});
+
+// View artist details
+router.get('/artists/:id/view', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
+  try {
+    const artist = await Artist.findById(req.params.id)
+      .populate('user', 'name email profileImage phone')
+      .populate('blockedBy', 'name');
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    // Get all concerts created by the artist
+    const Concert = require('../models/Concert');
+    const Ticket = require('../models/Ticket');
+    const concerts = await Concert.find({ artist: artist._id }).sort({ date: -1 });
+
+    // Calculate total revenue generated from their concerts
+    const concertIds = concerts.map(c => c._id);
+    const tickets = await Ticket.find({ concert: { $in: concertIds } });
+    const totalRevenue = tickets.reduce((sum, ticket) => sum + (ticket.totalAmount || 0), 0);
+
+    // Retrieve newest non-rejected original application
+    const ArtistApplication = require('../models/ArtistApplication');
+    const application = await ArtistApplication.findOne({
+      user: artist.user._id,
+      status: { $ne: 'rejected' }
+    }).sort({ createdAt: -1 });
+
+    res.render('admin/artist-details', {
+      layout: 'admin',
+      currentPath: '/admin/artists',
+      title: 'View Artist Details',
+      artist,
+      concerts,
+      totalRevenue,
+      application
+    });
+  } catch (error) {
+    console.error('View artist error:', error);
+    req.flash('error', 'Failed to load artist details');
     res.redirect('/admin/artists');
   }
 });
