@@ -11,7 +11,7 @@ const createArtistApplicationNotification = async (application) => {
     const module = 'Artist Application';
     const requestId = application._id;
     const modelRef = 'ArtistApplication';
-    const description = `New artist application from ${application.user.name || 'a user'}`;
+    const description = `New artist application from ${application.user?.name || 'a user'}`;
     const link = '/artist-applications/admin';
 
     return await createNotification(module, requestId, modelRef, description, link);
@@ -31,7 +31,7 @@ const createArtistUpgradeNotification = async (upgradeRequest) => {
     const module = 'Artist Upgrade';
     const requestId = upgradeRequest._id;
     const modelRef = 'ArtistUpgradeRequest';
-    const description = `Artist upgrade request from ${upgradeRequest.artist.stageName || 'an artist'} (${upgradeRequest.currentLevel} to ${upgradeRequest.requestedLevel})`;
+    const description = `Artist upgrade request from ${upgradeRequest.artist?.stageName || 'an artist'} (${upgradeRequest.currentLevel} to ${upgradeRequest.requestedLevel})`;
     const link = '/admin/artist-upgrade-requests';
 
     return await createNotification(module, requestId, modelRef, description, link);
@@ -51,7 +51,7 @@ const createTeamBookingNotification = async (bookingRequest) => {
     const module = 'Team Booking';
     const requestId = bookingRequest._id;
     const modelRef = 'TeamBookingRequest';
-    const description = `New team booking request from ${bookingRequest.name} for role: ${bookingRequest.role.name || 'Unknown Role'}`;
+    const description = `New team booking request from ${bookingRequest.name} for role: ${bookingRequest.role?.name || 'Unknown Role'}`;
     const link = '/admin/team-requirement/requests';
 
     return await createNotification(module, requestId, modelRef, description, link);
@@ -122,7 +122,7 @@ const createConcertNotification = async (concert) => {
     const module = 'Concert';
     const requestId = concert._id;
     const modelRef = 'Concert';
-    const description = `New concert request: ${concert.title} by ${concert.artist.stageName || 'an artist'} in ${concert.city}`;
+    const description = `New concert request: ${concert.title} by ${concert.artist?.stageName || 'an artist'} in ${concert.city}`;
     const link = '/admin/concerts/pending';
 
     return await createNotification(module, requestId, modelRef, description, link);
@@ -162,7 +162,7 @@ const createLearningModuleNotification = async (learningRequest) => {
     const module = 'Learning Module';
     const requestId = learningRequest._id;
     const modelRef = 'LearningModule';
-    const description = `New learning module application from ${learningRequest.user.name || 'a user'}`;
+    const description = `New learning module application from ${learningRequest.user?.name || 'a user'}`;
     const link = '/learning/admin';
 
     return await createNotification(module, requestId, modelRef, description, link);
