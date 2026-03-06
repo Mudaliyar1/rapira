@@ -46,11 +46,56 @@
         <div class="text-white">
           <h6 id="postCaption" class="mb-2"></h6>
           <div id="postHashtags" class="text-info small mb-3"></div>
-          <div class="d-flex gap-3 mb-3 text-muted">
+          <div class="d-flex flex-wrap gap-3 mb-3 text-muted">
             <span><i class="bi bi-heart-fill text-danger"></i> <span id="postLikes">0</span></span>
             <span><i class="bi bi-share"></i> <span id="postShares">0</span></span>
+            <span style="cursor:pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" onclick="openGalleryComments()"><i class="bi bi-chat-dots text-success"></i> <span id="postCommentsCount">0</span> Comments</span>
+            <span style="cursor:pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1" onclick="openGalleryReport()"><i class="bi bi-flag text-warning"></i> Report</span>
           </div>
           <div class="d-flex gap-2" id="postActions"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="galleryReportModal" tabindex="-1" style="z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white"><i class="bi bi-flag text-danger"></i> Report Post</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-white">Please tell us why you are reporting this post:</p>
+        <textarea id="galleryReportReason" class="form-control bg-dark text-white border-secondary" rows="4" placeholder="Reason..."></textarea>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="submitGalleryReportBtn">Submit Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Comments Modal -->
+<div class="modal fade" id="galleryCommentsModal" tabindex="-1" style="z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white"><i class="bi bi-chat-dots text-success"></i> Comments</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="max-height: 50vh; overflow-y: auto;">
+        <div id="galleryCommentsList" class="d-flex flex-column gap-3 text-white">
+          <!-- Comments go here -->
+        </div>
+      </div>
+      <div class="modal-footer border-secondary flex-column align-items-stretch">
+        <div class="d-flex gap-2">
+          <input type="text" id="galleryNewComment" class="form-control bg-dark text-white border-secondary" placeholder="Add a comment...">
+          <button class="btn btn-success" id="submitGalleryCommentBtn"><i class="bi bi-send"></i></button>
         </div>
       </div>
     </div>
@@ -208,6 +253,10 @@ async function loadPosts() {
                 <span>${post.shares || 0}</span>
               </div>
               <div class="post-overlay-item-gallery">
+                <i class="bi bi-chat-dots"></i>
+                <span>${(post.comments || []).length}</span>
+              </div>
+              <div class="post-overlay-item-gallery">
                 <i class="bi bi-eye"></i>
                 <span>${post.views || 0}</span>
               </div>
@@ -262,6 +311,7 @@ function viewPost(postId) {
   document.getElementById('postHashtags').innerHTML = post.hashtags.map(tag => `<span class="me-2">#${tag}</span>`).join('') || '';
   document.getElementById('postLikes').textContent = post.likesCount || 0;
   document.getElementById('postShares').textContent = post.shares || 0;
+  document.getElementById('postCommentsCount').textContent = (post.comments || []).length;
 
   // Update like button
   const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => l._id === currentUserId);
@@ -341,6 +391,133 @@ async function sharePost() {
     console.error('Share error:', err);
   }
 }
+
+// Comments
+async function loadGalleryComments() {
+  if (!currentPostId) return;
+  try {
+    const res = await fetch(`/posts/${currentPostId}/comments`);
+    const data = await res.json();
+    const list = document.getElementById('galleryCommentsList');
+    if (data.success && data.comments.length > 0) {
+      document.getElementById('postCommentsCount').textContent = data.comments.length;
+      
+      // Update local cache so grid icon stays fresh
+      const cached = postsCache.find(p => p._id === currentPostId);
+      if (cached) cached.comments = data.comments;
+
+      list.innerHTML = data.comments.map(c => `
+        <div class="d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}">
+          <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+          <div class="flex-grow-1">
+            <strong>${c.user ? escapeHtml(c.user.name) : 'Anonymous'}</strong> 
+            ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+            <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+            <p class="mb-0 mt-1" style="word-break: break-word;">${escapeHtml(c.text)}</p>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      list.innerHTML = '<div class="text-center text-muted">No comments yet. Be the first!</div>';
+      document.getElementById('postCommentsCount').textContent = '0';
+    }
+  } catch (err) {
+    console.error('Load comments error:', err);
+  }
+}
+
+function openGalleryComments() {
+  if (!currentPostId) return;
+  loadGalleryComments();
+  const m = new bootstrap.Modal(document.getElementById('galleryCommentsModal'));
+  m.show();
+}
+
+function openGalleryReport() {
+  if (!currentPostId) return;
+  const m = new bootstrap.Modal(document.getElementById('galleryReportModal'));
+  m.show();
+}
+
+document.getElementById('submitGalleryCommentBtn')?.addEventListener('click', async function() {
+  if (!currentPostId || !currentUserId) {
+    alert('Please log in to comment');
+    window.location.href = '/auth/login';
+    return;
+  }
+  const text = document.getElementById('galleryNewComment').value.trim();
+  if (!text) return;
+  
+  const btn = this;
+  btn.disabled = true;
+  
+  try {
+    const res = await fetch(`/posts/${currentPostId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('galleryNewComment').value = '';
+      loadGalleryComments();
+      alert('Comment posted!');
+    } else {
+      alert(data.message || 'Failed to post comment');
+    }
+  } catch (err) {
+    alert('Error posting comment');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('submitGalleryReportBtn')?.addEventListener('click', async function() {
+  if (!currentPostId || !currentUserId) {
+    alert('Please log in to report');
+    return;
+  }
+  const reason = document.getElementById('galleryReportReason').value.trim();
+  if (!reason) {
+    alert('Please enter a reason');
+    return;
+  }
+  
+  const btn = this;
+  btn.disabled = true;
+  btn.innerHTML = 'Submitting...';
+  
+  try {
+    const res = await fetch(`/posts/${currentPostId}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('Post reported. Thank you for your feedback.');
+      bootstrap.Modal.getInstance(document.getElementById('galleryReportModal')).hide();
+      document.getElementById('galleryReportReason').value = '';
+    } else {
+      alert(data.message || 'Failed to report');
+    }
+  } catch (err) {
+    alert('Error sending report');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Submit Report';
+  }
+});
+
+// Escape HTML utility for safe rendering
+const escapeHtml = (unsafe) => {
+  return (unsafe || '').toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 document.addEventListener('DOMContentLoaded', loadPosts);
 </script>

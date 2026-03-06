@@ -416,6 +416,291 @@ router.get('/posts/:id/likes', async (req, res) => {
 	}
 });
 
+// Get post reports (Admin/Artist only)
+router.get('/posts/:id/reports', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id)
+			.populate('reports.user', 'name profileImage');
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const isArtist = await Artist.exists({ _id: post.artist, user: req.session.user.id });
+		if (!isArtist && req.session.user.role !== 'admin') {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		res.json({ success: true, reports: post.reports });
+	} catch (err) {
+		console.error('[GET REPORTS] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Post a report on a post
+router.post('/posts/:id/report', isLoggedIn, async (req, res) => {
+	try {
+		const { reason } = req.body;
+		if (!reason) return res.status(400).json({ success: false, message: 'Reason is required' });
+
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		// Append the report
+		post.reports.push({
+			user: req.session.user.id,
+			reason: reason,
+			createdAt: new Date()
+		});
+
+		await post.save();
+		res.json({ success: true, message: 'Post reported successfully' });
+	} catch (err) {
+		console.error('[POST REPORT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Get post comments
+router.get('/posts/:id/comments', async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id)
+			.populate('comments.user', 'name profileImage')
+			.populate('comments.replies.user', 'name profileImage');
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		let comments = post.comments || [];
+
+		const isArtist = req.session.user ? await Artist.exists({ _id: post.artist, user: req.session.user.id }) : false;
+		const isAdmin = req.session.user && req.session.user.role === 'admin';
+
+		if (!isArtist && !isAdmin) {
+			comments = comments.filter(c => !c.isHidden || (req.session.user && c.user && c.user._id.toString() === req.session.user.id));
+		}
+
+		// Sort: pinned first, then by date descending
+		comments.sort((a, b) => {
+			if (a.isPinned && !b.isPinned) return -1;
+			if (!a.isPinned && b.isPinned) return 1;
+			return new Date(b.createdAt) - new Date(a.createdAt);
+		});
+
+		res.json({ success: true, comments });
+	} catch (err) {
+		console.error('[GET COMMENTS] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Add a comment to a post
+router.post('/posts/:id/comments', isLoggedIn, async (req, res) => {
+	try {
+		const { text } = req.body;
+		if (!text) return res.status(400).json({ success: false, message: 'Comment text is required' });
+
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		post.comments.push({
+			user: req.session.user.id,
+			text: text,
+			createdAt: new Date()
+		});
+
+		await post.save();
+
+		await post.populate('comments.user', 'name profileImage');
+		const newComment = post.comments[post.comments.length - 1];
+
+		res.json({ success: true, comment: newComment });
+	} catch (err) {
+		console.error('[POST COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Pin/Unpin a comment (Artist/Admin only)
+router.put('/posts/:id/comments/:commentId/pin', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const isArtist = await Artist.exists({ _id: post.artist, user: req.session.user.id });
+		if (!isArtist && req.session.user.role !== 'admin') {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		// Only one pinned comment allowed, unpin others if pinning
+		if (!comment.isPinned) {
+			post.comments.forEach(c => c.isPinned = false);
+		}
+
+		comment.isPinned = !comment.isPinned;
+		await post.save();
+
+		res.json({ success: true, isPinned: comment.isPinned });
+	} catch (err) {
+		console.error('[PIN COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Hide/Unhide a comment (Artist/Admin only)
+router.put('/posts/:id/comments/:commentId/hide', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const isArtist = await Artist.exists({ _id: post.artist, user: req.session.user.id });
+		if (!isArtist && req.session.user.role !== 'admin') {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		comment.isHidden = !comment.isHidden;
+		await post.save();
+
+		res.json({ success: true, isHidden: comment.isHidden });
+	} catch (err) {
+		console.error('[HIDE COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Delete a comment
+router.delete('/posts/:id/comments/:commentId', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		const isArtist = await Artist.exists({ _id: post.artist, user: req.session.user.id });
+		if (!isArtist && req.session.user.role !== 'admin' && comment.user.toString() !== req.session.user.id) {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		post.comments.pull(req.params.commentId);
+		await post.save();
+
+		res.json({ success: true, message: 'Comment deleted' });
+	} catch (err) {
+		console.error('[DELETE COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Edit a comment
+router.put('/posts/:id/comments/:commentId', isLoggedIn, async (req, res) => {
+	try {
+		const { text } = req.body;
+		if (!text) return res.status(400).json({ success: false, message: 'Text is required' });
+
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		if (comment.user.toString() !== req.session.user.id) {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		comment.text = text;
+		await post.save();
+
+		res.json({ success: true, message: 'Comment updated' });
+	} catch (err) {
+		console.error('[EDIT COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Reply to a comment
+router.post('/posts/:id/comments/:commentId/replies', isLoggedIn, async (req, res) => {
+	try {
+		const { text } = req.body;
+		if (!text) return res.status(400).json({ success: false, message: 'Text is required' });
+
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		comment.replies.push({
+			user: req.session.user.id,
+			text
+		});
+
+		await post.save();
+		res.json({ success: true, message: 'Reply added' });
+	} catch (err) {
+		console.error('[REPLY COMMENT] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Edit a reply
+router.put('/posts/:id/comments/:commentId/replies/:replyId', isLoggedIn, async (req, res) => {
+	try {
+		const { text } = req.body;
+		if (!text) return res.status(400).json({ success: false, message: 'Text is required' });
+
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		const reply = comment.replies.id(req.params.replyId);
+		if (!reply) return res.status(404).json({ success: false, message: 'Reply not found' });
+
+		if (reply.user.toString() !== req.session.user.id) {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		reply.text = text;
+		await post.save();
+
+		res.json({ success: true, message: 'Reply updated' });
+	} catch (err) {
+		console.error('[EDIT REPLY] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
+// Delete a reply
+router.delete('/posts/:id/comments/:commentId/replies/:replyId', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+		const comment = post.comments.id(req.params.commentId);
+		if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+		const reply = comment.replies.id(req.params.replyId);
+		if (!reply) return res.status(404).json({ success: false, message: 'Reply not found' });
+
+		const isArtist = await Artist.exists({ _id: post.artist, user: req.session.user.id });
+		if (!isArtist && req.session.user.role !== 'admin' && reply.user.toString() !== req.session.user.id) {
+			return res.status(403).json({ success: false, message: 'Not authorized' });
+		}
+
+		comment.replies.pull(req.params.replyId);
+		await post.save();
+
+		res.json({ success: true, message: 'Reply deleted' });
+	} catch (err) {
+		console.error('[DELETE REPLY] Error:', err);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+});
+
 // === ADMIN ROUTES ===
 
 // Get all posts for admin

@@ -26,8 +26,24 @@ const artistPostSchema = new mongoose.Schema({
   },
   comments: [
     {
-      user: mongoose.Schema.Types.ObjectId,
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       text: String,
+      createdAt: { type: Date, default: Date.now },
+      isHidden: { type: Boolean, default: false },
+      isPinned: { type: Boolean, default: false },
+      replies: [
+        {
+          user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+          text: String,
+          createdAt: { type: Date, default: Date.now }
+        }
+      ]
+    }
+  ],
+  reports: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      reason: String,
       createdAt: { type: Date, default: Date.now }
     }
   ],

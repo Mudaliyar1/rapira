@@ -108,7 +108,7 @@
     <%- extraScripts %>
   <% } %>
 </head>
-<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? (currentUser._id || currentUser.id) : '' %>">
   <!-- Header -->
   <%- include('../partials/navbar') %>
 

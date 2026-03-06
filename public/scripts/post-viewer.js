@@ -58,6 +58,10 @@ async function viewPost(postId) {
       if (hashtagsContainer) hashtagsContainer.innerHTML = '';
       if (likesElement) likesElement.textContent = '0';
       if (sharesElement) sharesElement.textContent = '0';
+      const commentsElement = document.getElementById('post-comments-count');
+      const reportsElement = document.getElementById('post-reports-count');
+      if (commentsElement) commentsElement.textContent = '0';
+      if (reportsElement) reportsElement.textContent = '0';
 
       // Update like button to default state
       updateLikeButton(false);
@@ -94,6 +98,8 @@ async function viewPost(postId) {
     document.getElementById('post-likes-count').textContent = currentPost.likesCount || 0;
     document.getElementById('post-shares-count').textContent = currentPost.shares || 0;
     document.getElementById('post-views-count').textContent = currentPost.views || 0;
+    document.getElementById('post-comments-count').textContent = (currentPost.comments || []).length;
+    document.getElementById('post-reports-count').textContent = (currentPost.reports || []).length;
 
     // Handle caption with Read More
     const caption = currentPost.caption || '';
@@ -496,6 +502,9 @@ async function viewPost(postId) {
     // Update like button state
     updateLikeButton(currentPost.liked);
 
+    // Load inline comments
+    loadPostViewerComments();
+
   } catch (err) {
     console.error('[POST VIEWER] Error loading post:', err);
     showToast('Failed to load post', 'error');
@@ -675,6 +684,361 @@ function showToast(message, type) {
   }, 2500);
 }
 
+// Utility to escape HTML
+const escapeHtmlViewer = (unsafe) => {
+  return (unsafe || '').toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+// Remove openComments action button since comments are now inline
+window.openPostViewerComments = function () {
+  const container = document.getElementById('post-inline-comments-section');
+  if (container) {
+    container.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+async function loadPostViewerComments() {
+  if (!currentPost) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments`);
+    const data = await res.json();
+    const list = document.getElementById('post-inline-comments-list');
+    if (!list) return;
+
+    if (data.success && data.comments.length > 0) {
+      document.getElementById('post-inline-comments-count').textContent = data.comments.length;
+      document.getElementById('post-comments-count').textContent = data.comments.length;
+
+      // Separate into comments to display and remaining
+      const visibleComments = data.comments.slice(0, 3);
+      const remainingComments = data.comments.slice(3);
+
+      let contentHtml = visibleComments.map(c => {
+        const currentUID = document.body.getAttribute('data-user-id');
+        const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
+
+        let repliesHtml = '';
+        if (c.replies && c.replies.length > 0) {
+          const visibleReplies = c.replies.slice(0, 3);
+          const remainingReplies = c.replies.slice(3);
+
+          repliesHtml = visibleReplies.map(r => {
+            const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+            return `
+                 <div class="reply-card d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: flex;">
+                   <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                   <div class="flex-grow-1">
+                     <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
+                     <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                     <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
+                     
+                     ${isReplyOwner ? `
+                         <div class="d-flex gap-2">
+                            <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                            <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                         </div>
+                     ` : ''}
+                   </div>
+                 </div>
+                 `;
+          }).join('');
+
+          // Append remaining hidden replies if they exist
+          if (remainingReplies.length > 0) {
+            repliesHtml += remainingReplies.map(r => {
+              const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+              return `
+                 <div class="reply-card hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none;">
+                   <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                   <div class="flex-grow-1">
+                     <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
+                     <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                     <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
+                     
+                     ${isReplyOwner ? `
+                         <div class="d-flex gap-2">
+                            <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                            <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                         </div>
+                     ` : ''}
+                   </div>
+                 </div>
+                 `;
+            }).join('');
+            repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
+          }
+        }
+
+        return `
+         <div class="comment-card d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}">
+           <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+           <div class="flex-grow-1 w-100 pr-2">
+             <strong>${c.user && c.user.name ? escapeHtmlViewer(c.user.name) : 'Anonymous'}</strong> 
+             ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+             <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+             <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${escapeHtmlViewer(c.text)}</p>
+             
+             <div class="d-flex gap-3 mb-2 align-items-center">
+               ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
+               ${isOwner ? `
+                  <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
+                  <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
+               ` : ''}
+             </div>
+ 
+             <!-- Reply Box (Hidden by default) -->
+             <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
+                <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
+                <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
+             </div>
+ 
+             <!-- Nested Replies -->
+             ${repliesHtml}
+           </div>
+         </div>
+       `;
+      }).join('');
+
+      // Mount all other comments underneath invisible by default
+      if (remainingComments.length > 0) {
+        contentHtml += remainingComments.map(c => {
+          const currentUID = document.body.getAttribute('data-user-id');
+          const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
+
+          let repliesHtml = '';
+          if (c.replies && c.replies.length > 0) {
+            const visibleReplies = c.replies.slice(0, 3);
+            const remainingReplies = c.replies.slice(3);
+
+            repliesHtml = visibleReplies.map(r => {
+              const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+              return `
+                    <div class="reply-card d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: flex;">
+                      <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                      <div class="flex-grow-1">
+                        <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
+                        <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                        <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
+                        
+                        ${isReplyOwner ? `
+                            <div class="d-flex gap-2">
+                               <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                               <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                            </div>
+                        ` : ''}
+                      </div>
+                    </div>
+                    `;
+            }).join('');
+
+            if (remainingReplies.length > 0) {
+              repliesHtml += remainingReplies.map(r => {
+                const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+                return `
+                    <div class="reply-card hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none;">
+                      <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                      <div class="flex-grow-1">
+                        <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
+                        <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                        <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
+                        
+                        ${isReplyOwner ? `
+                            <div class="d-flex gap-2">
+                               <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                               <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                            </div>
+                        ` : ''}
+                      </div>
+                    </div>
+                    `;
+              }).join('');
+              repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
+            }
+          }
+
+          return `
+            <div class="comment-card hidden-comment d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}" style="display: none !important;">
+              <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+              <div class="flex-grow-1 w-100 pr-2">
+                <strong>${c.user && c.user.name ? escapeHtmlViewer(c.user.name) : 'Anonymous'}</strong> 
+                ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+                <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+                <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${escapeHtmlViewer(c.text)}</p>
+                
+                <div class="d-flex gap-3 mb-2 align-items-center">
+                  ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
+                  ${isOwner ? `
+                     <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
+                     <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
+                  ` : ''}
+                </div>
+    
+                <!-- Reply Box (Hidden by default) -->
+                <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
+                   <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
+                   <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
+                </div>
+    
+                <!-- Nested Replies -->
+                ${repliesHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        contentHtml += `<div class="text-center mt-3"><button id="btn-show-comments" class="btn btn-outline-secondary btn-sm" onclick="showMoreComments()">View ${remainingComments.length} more comments...</button></div>`;
+      }
+
+      list.innerHTML = contentHtml;
+    } else {
+      list.innerHTML = '<div class="text-center text-muted py-3">No comments yet. Be the first!</div>';
+      if (document.getElementById('post-inline-comments-count')) document.getElementById('post-inline-comments-count').textContent = '0';
+      if (document.getElementById('post-comments-count')) document.getElementById('post-comments-count').textContent = '0';
+    }
+  } catch (err) {
+    console.error('Load comments error:', err);
+    if (document.getElementById('post-inline-comments-list')) {
+      document.getElementById('post-inline-comments-list').innerHTML = '<div class="text-center text-danger py-3">Failed to load comments</div>';
+    }
+  }
+}
+
+// Comments editing and replying logic
+// Show more logic bindings
+window.showMoreComments = function () {
+  document.querySelectorAll('.hidden-comment').forEach(el => {
+    el.style.setProperty("display", "flex", "important");
+  });
+  const btn = document.getElementById('btn-show-comments');
+  if (btn) btn.style.display = 'none';
+};
+
+window.showMoreReplies = function (commentId) {
+  document.querySelectorAll(`.hidden-reply-${commentId}`).forEach(el => {
+    el.style.setProperty("display", "flex", "important");
+  });
+  const btn = document.getElementById(`btn-show-replies-${commentId}`);
+  if (btn) btn.style.display = 'none';
+};
+
+window.toggleReplyBox = function (commentId) {
+  const box = document.getElementById(`reply-box-${commentId}`);
+  if (box) {
+    box.classList.toggle('d-none');
+    if (!box.classList.contains('d-none')) {
+      document.getElementById(`reply-input-${commentId}`).focus();
+    }
+  }
+};
+
+window.submitReplyViewer = async function (commentId) {
+  if (!currentPost) return;
+  const input = document.getElementById(`reply-input-${commentId}`);
+  const text = input.value.trim();
+  if (!text) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadPostViewerComments();
+    } else {
+      showToast(data.message || 'Failed to reply', 'error');
+    }
+  } catch (err) {
+    showToast('Error replying', 'error');
+  }
+};
+
+window.deleteCommentViewer = async function (commentId) {
+  if (!currentPost || !confirm("Delete your comment?")) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      await loadPostViewerComments();
+    } else {
+      showToast(data.message || 'Failed to delete', 'error');
+    }
+  } catch (err) {
+    showToast('Error deleting comment', 'error');
+  }
+};
+
+window.editCommentViewer = async function (commentId) {
+  if (!currentPost) return;
+  const currentText = document.getElementById(`comment-text-${commentId}`).innerText;
+  const newText = prompt("Edit your comment:", currentText);
+  if (!newText || newText === currentText) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: newText })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadPostViewerComments();
+    } else {
+      showToast(data.message || 'Failed to edit', 'error');
+    }
+  } catch (err) {
+    showToast('Error editing comment', 'error');
+  }
+};
+
+window.deleteReplyViewer = async function (commentId, replyId) {
+  if (!currentPost || !confirm("Delete your reply?")) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies/${replyId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      await loadPostViewerComments();
+    } else {
+      showToast(data.message || 'Failed to delete', 'error');
+    }
+  } catch (err) {
+    showToast('Error deleting reply', 'error');
+  }
+};
+
+window.editReplyViewer = async function (commentId, replyId) {
+  if (!currentPost) return;
+  const currentText = document.getElementById(`reply-text-${commentId}-${replyId}`).innerText;
+  const newText = prompt("Edit your reply:", currentText);
+  if (!newText || newText === currentText) return;
+  try {
+    const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies/${replyId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: newText })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await loadPostViewerComments();
+    } else {
+      showToast(data.message || 'Failed to edit', 'error');
+    }
+  } catch (err) {
+    showToast('Error editing reply', 'error');
+  }
+};
+
+// Open report modal
+window.openPostViewerReport = function () {
+  if (!currentPost) return;
+  const m = new bootstrap.Modal(document.getElementById('postViewerReportModal'));
+  m.show();
+};
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[POST VIEWER] Initializing...');
@@ -691,6 +1055,92 @@ document.addEventListener('DOMContentLoaded', function () {
   if (shareBtn) {
     shareBtn.addEventListener('click', sharePostModal);
     console.log('[POST VIEWER] Share button listener attached');
+  }
+
+  // Comments submit
+  const commentBtn = document.getElementById('submitPostViewerCommentBtn');
+  if (commentBtn) {
+    commentBtn.addEventListener('click', async function () {
+      if (!currentPost) return;
+
+      const text = document.getElementById('postViewerNewComment').value.trim();
+      if (!text) return;
+
+      const btn = this;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/posts/${currentPost._id}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('postViewerNewComment').value = '';
+          showToast('Comment posted', 'success');
+          loadPostViewerComments();
+        } else {
+
+          if (res.status === 401) {
+            showToast('You must be logged in to comment.', 'info');
+            setTimeout(() => window.location.href = '/auth/login', 1500);
+          } else {
+            showToast(data.message || 'Failed to post comment', 'error');
+          }
+        }
+      } catch (err) {
+        showToast('Error posting comment', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // Report submit
+  const reportBtn = document.getElementById('submitPostViewerReportBtn');
+  if (reportBtn) {
+    reportBtn.addEventListener('click', async function () {
+      if (!currentPost) return;
+
+      const reason = document.getElementById('postViewerReportReason').value.trim();
+      if (!reason) {
+        showToast('Please enter a reason', 'error');
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.innerHTML = 'Submitting...';
+
+      try {
+        const res = await fetch(`/posts/${currentPost._id}/report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Post reported. Thank you.', 'success');
+          const m = bootstrap.Modal.getInstance(document.getElementById('postViewerReportModal'));
+          if (m) m.hide();
+          document.getElementById('postViewerReportReason').value = '';
+        } else {
+          if (res.status === 401) {
+            showToast('You must be logged in to report.', 'info');
+            setTimeout(() => window.location.href = '/auth/login', 1500);
+          } else {
+            showToast(data.message || 'Failed to report', 'error');
+          }
+        }
+      } catch (err) {
+        showToast('Error sending report', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Submit Report';
+      }
+    });
   }
 
   // Stop media playback when modal closes
@@ -713,10 +1163,10 @@ document.addEventListener('DOMContentLoaded', function () {
       from { transform: translateX(0); opacity: 1; }
       to { transform: translateX(400px); opacity: 0; }
     }
-    #post-modal-like-btn:hover, #post-modal-share-btn:hover {
+    #post-modal-like-btn:hover, #post-modal-share-btn:hover, #post-modal-comments-btn:hover, #post-modal-report-btn:hover {
       transform: scale(1.15);
     }
-    #post-modal-like-btn:active, #post-modal-share-btn:active {
+    #post-modal-like-btn:active, #post-modal-share-btn:active, #post-modal-comments-btn:active, #post-modal-report-btn:active {
       transform: scale(0.95);
     }
     #post-artist-link:hover #post-artist-name {
