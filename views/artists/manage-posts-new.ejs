@@ -776,10 +776,12 @@ async function viewPostLikes(postId) {
     modal.classList.add('show');
     document.body.classList.add('modal-open');
     
-    // Focus search box
-    setTimeout(() => {
-      document.getElementById('likesSearch').focus();
-    }, 100);
+    // Clear search box and focus
+    const searchInput = document.getElementById('likesSearch');
+    if (searchInput) {
+      searchInput.value = '';
+      setTimeout(() => searchInput.focus(), 100);
+    }
   } catch (err) {
     console.error('View likes error:', err);
     showAlert('Failed to load likes: ' + err.message, 'danger');
@@ -826,6 +828,11 @@ function searchLikes() {
   
   displayFilteredLikes(filtered);
 }
+
+// Add event listener for likes search
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('likesSearch')?.addEventListener('input', searchLikes);
+});
 
 // Reports logic
 async function viewPostReports(postId) {
@@ -1163,3 +1170,5 @@ document.addEventListener('click', function(e) {
 // Load posts on page load
 document.addEventListener('DOMContentLoaded', loadMyPosts);
 </script>
+
+<%- include('../partials/artist-footer') %>
