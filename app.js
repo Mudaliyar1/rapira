@@ -581,6 +581,7 @@ app.use(async (req, res, next) => {
       }
 
       // Sync user session data to keep privileges fast and fresh
+      req.session.user.role = userExists.role;
       req.session.user.isSuperAdmin = userExists.isSuperAdmin;
       req.session.user.adminPermissions = userExists.adminPermissions;
       req.session.user.adminTitle = userExists.adminTitle;

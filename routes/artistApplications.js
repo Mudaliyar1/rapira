@@ -135,9 +135,14 @@ router.get('/apply/:level', isLoggedIn, async (req, res) => {
       return res.redirect('/artist-applications/status');
     }
 
+    // Retrieve saved form data (if redirected after file error)
+    const savedFormData = req.session.applyFormData || {};
+    delete req.session.applyFormData;
+
     res.render('artist-applications/apply', {
       title: 'Artist Application',
-      level
+      level,
+      savedFormData
     });
   } catch (error) {
     console.error('Error in artist application form:', error);
@@ -146,8 +151,30 @@ router.get('/apply/:level', isLoggedIn, async (req, res) => {
   }
 });
 
+// Submit artist application custom upload handler
+const handleApplyUpload = (req, res, next) => {
+  upload.single('proofPhoto')(req, res, function (err) {
+    const fallbackLevel = (req.body && req.body.artistLevel) || 'Beginner';
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        req.flash('error', 'The file you selected is too large. Maximum size allowed is 5MB.');
+      } else {
+        req.flash('error', err.message);
+      }
+      // Save form data to session so the form can be pre-filled after redirect
+      req.session.applyFormData = req.body;
+      return res.redirect(`/artist-applications/apply/${fallbackLevel}`);
+    } else if (err) {
+      req.flash('error', err.message);
+      req.session.applyFormData = req.body;
+      return res.redirect(`/artist-applications/apply/${fallbackLevel}`);
+    }
+    next();
+  });
+};
+
 // Submit artist application
-router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) => {
+router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
   try {
     const { artistLevel, aadharCard, city, state, age, phoneNumber } = req.body;
 
