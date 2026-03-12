@@ -184,6 +184,8 @@
     }
 
     /* Reel Volume Control */
+
+    /* Reel Volume Control */
     .reel-volume-ctrl {
       position: absolute;
       top: 50%;
@@ -234,7 +236,7 @@
     /* Right Side Buttons */
     .reel-actions {
       position: absolute;
-      bottom: 80px;
+      bottom: 110px;
       right: 15px;
       display: flex;
       flex-direction: column;
@@ -277,11 +279,11 @@
     /* Bottom Info overlay */
     .reel-info {
       position: absolute;
-      bottom: 0;
+      bottom: 25px;
       left: 0;
       width: 100%;
       padding: 20px;
-      padding-bottom: 25px;
+      padding-bottom: 5px;
       padding-right: 70px; /* Leave space for actions */
       background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
       color: white;
@@ -580,7 +582,7 @@
       }
 
       .reel-actions {
-        bottom: 120px;
+        bottom: 140px;
         right: 12px;
         gap: 20px;
       }
@@ -590,9 +592,9 @@
       }
 
       .reel-info {
-        bottom: 0;
+        bottom: 35px;
         padding: 15px;
-        padding-bottom: 25px;
+        padding-bottom: 0px;
         padding-right: 65px;
       }
 
@@ -613,11 +615,12 @@
     /* Extra small screens (e.g. iPhone SE) */
     @media (max-width: 380px) {
       .reel-actions {
-        bottom: 110px;
+        bottom: 130px;
         gap: 16px;
       }
       .reel-info {
-        padding-bottom: 20px;
+        bottom: 30px;
+        padding-bottom: 0;
       }
     }
 
@@ -905,56 +908,58 @@
         entries.forEach(entry => {
           const wrapper = entry.target;
           const media = wrapper.querySelector('video, audio');
-          
+          const index = parseInt(wrapper.getAttribute('data-index'));
+
           if (!media) return;
 
           // When a reel is strongly in view
           if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
-            // Reset media to start when re-entering focus
-            media.currentTime = 0;
+            if (media) {
+               // Reset media to start when re-entering focus
+               media.currentTime = 0;
 
-            // FORCE PAUSE EVERY OTHER MEDIA ON THE PAGE
-            document.querySelectorAll('.reel-media').forEach(otherMedia => {
-              if (otherMedia !== media) {
-                otherMedia.pause();
-                const otherWrapper = otherMedia.closest('.reel-wrapper');
-                if (otherWrapper) otherWrapper.classList.add('is-paused');
-              }
-            });
+               // FORCE PAUSE EVERY OTHER MEDIA ON THE PAGE
+               document.querySelectorAll('.reel-media').forEach(otherMedia => {
+                 if (otherMedia !== media) {
+                   otherMedia.pause();
+                   const otherWrapper = otherMedia.closest('.reel-wrapper');
+                   if (otherWrapper) otherWrapper.classList.add('is-paused');
+                 }
+               });
 
-            // Play the active one
-            const playPromise = media.play();
-            const index = parseInt(wrapper.getAttribute('data-index'));
-
-            if (playPromise !== undefined) {
-              playPromise.then(() => {
-                wrapper.classList.remove('is-paused');
-              }).catch(err => {
-                console.log('Autoplay blocked:', err);
-                
-                // For the FIRST reel, show the "Tap to Play" overlay if blocked
-                if (index === 0) {
-                  const overlay = wrapper.querySelector('.reel-autoplay-overlay');
-                  if (overlay) overlay.style.display = 'flex';
-                  wrapper.classList.add('is-paused');
-                } else {
-                  // For other reels, fall back to muted playback
-                  media.muted = true;
-                  media.play().then(() => {
-                    wrapper.classList.remove('is-paused');
-                  });
-                }
-              });
+               // Play the active one
+               const playPromise = media.play();
+               if (playPromise !== undefined) {
+                 playPromise.then(() => {
+                   wrapper.classList.remove('is-paused');
+                 }).catch(err => {
+                   console.log('Autoplay blocked:', err);
+                   // For the FIRST reel, show the "Tap to Play" overlay if blocked
+                   if (index === 0) {
+                     const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+                     if (overlay) overlay.style.display = 'flex';
+                     wrapper.classList.add('is-paused');
+                   } else {
+                     // For other reels, fall back to muted playback
+                     media.muted = true;
+                     media.play().then(() => {
+                       wrapper.classList.remove('is-paused');
+                     });
+                   }
+                 });
+               }
             }
           } 
           // When a reel is mostly out of view (less than 10%)
           else if (entry.intersectionRatio < 0.1) {
-            media.pause();
-            wrapper.classList.add('is-paused');
+            if (media) {
+               media.pause();
+               wrapper.classList.add('is-paused');
 
-            // Hide autoplay overlay if it was showing for the first reel
-            const overlay = wrapper.querySelector('.reel-autoplay-overlay');
-            if (overlay) overlay.style.display = 'none';
+               // Hide autoplay overlay if it was showing for the first reel
+               const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+               if (overlay) overlay.style.display = 'none';
+            }
 
             // AUTO-COLLAPSE CAPTION: Prevent bleed or layout issues when scrolling away
             const caption = wrapper.querySelector('.reel-caption');
