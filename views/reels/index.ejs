@@ -62,6 +62,41 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .speed-badge {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+      z-index: 1000;
+      pointer-events: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-badge i {
+      font-size: 1rem;
+      animation: speedFast 0.5s infinite linear;
+    }
+
+    @keyframes speedFast {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
     }
 
     .reel-media {
@@ -69,24 +104,6 @@
       height: 100%;
       object-fit: contain;
       background: #000;
-    }
-
-    .reel-progress-container {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.1);
-      z-index: 100;
-    }
-
-    .reel-progress-bar {
-      height: 100%;
-      background: #00d4ff;
-      width: 0%;
-      box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
-      transition: width 0.1s linear;
     }
     
     .reel-audio-placeholder {
@@ -588,7 +605,24 @@
       <div class="reels-container" id="reelsContainer">
         <% reels.forEach((post, index) => { %>
           <div class="reel-wrapper" data-index="<%= index %>">
-            <div class="reel-content" onclick="togglePlay(this)">
+            <div class="reel-content" 
+                 oncontextmenu="return false;"
+                 onmousedown="startFastForward(event, this)" 
+                 onmouseup="stopFastForward(this)" 
+                 onmouseleave="stopFastForward(this)"
+                 ontouchstart="startFastForward(event, this)"
+                 ontouchend="stopFastForward(this)"
+                 onclick="togglePlay(this)">
+              
+              <div class="speed-badge forward-badge">
+                <i class="bi bi-fast-forward-fill"></i>
+                2X SPEED
+              </div>
+              <div class="speed-badge backward-badge">
+                <i class="bi bi-rewind-fill"></i>
+                REWIND
+              </div>
+
               <% 
                 // Robust detection for Reels
                 const mediaUrl = (post.media.url || '').toLowerCase();
@@ -680,11 +714,6 @@
               <% } %>
               
               <i class="bi bi-play-fill play-overlay"></i>
-            </div>
-
-            <!-- Bottom Progress Bar -->
-            <div class="reel-progress-container">
-              <div class="reel-progress-bar" id="progress-<%= index %>"></div>
             </div>
 
             <!-- Actions -->
@@ -818,8 +847,6 @@
         entries.forEach(entry => {
           const wrapper = entry.target;
           const media = wrapper.querySelector('video, audio');
-          const index = wrapper.getAttribute('data-index');
-          const progressBar = document.getElementById(`progress-${index}`);
           
           if (!media) return;
 
@@ -827,7 +854,6 @@
           if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
             // Reset media to start when re-entering focus
             media.currentTime = 0;
-            if (progressBar) progressBar.style.width = '0%';
 
             // FORCE PAUSE EVERY OTHER MEDIA ON THE PAGE
             document.querySelectorAll('.reel-media').forEach(otherMedia => {
@@ -848,20 +874,11 @@
                 wrapper.classList.add('is-paused');
               });
             }
-
-            // Update progress bar
-            media.ontimeupdate = () => {
-              if (progressBar && media.duration) {
-                const percent = (media.currentTime / media.duration) * 100;
-                progressBar.style.width = percent + '%';
-              }
-            };
           } 
           // When a reel is mostly out of view (less than 10%)
           else if (entry.intersectionRatio < 0.1) {
             media.pause();
             wrapper.classList.add('is-paused');
-            media.ontimeupdate = null; // Save performance
           }
         });
       }, observerOptions);
@@ -877,7 +894,64 @@
     });
 
     // Toggle play/pause
+    let isFastForwarding = false;
+    let isRewinding = false;
+    let speedTimer = null;
+    let rewindInterval = null;
+
+    window.startFastForward = function(e, contentDiv) {
+      const wrapper = contentDiv.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      if (!media) return;
+
+      // Determine side
+      const rect = contentDiv.getBoundingClientRect();
+      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const isLeftSide = x < rect.width / 2;
+
+      speedTimer = setTimeout(() => {
+        if (isLeftSide) {
+          isRewinding = true;
+          contentDiv.querySelector('.backward-badge').style.display = 'flex';
+          media.pause(); // Pause normal playback during manual rewind
+          rewindInterval = setInterval(() => {
+            media.currentTime = Math.max(0, media.currentTime - 0.2); // Rewind 0.2s every 50ms (~4x speed)
+          }, 50);
+        } else {
+          isFastForwarding = true;
+          media.playbackRate = 2.0;
+          contentDiv.querySelector('.forward-badge').style.display = 'flex';
+        }
+      }, 400); // Trigger after 400ms hold
+    };
+
+    window.stopFastForward = function(contentDiv) {
+      clearTimeout(speedTimer);
+      clearInterval(rewindInterval);
+      
+      const wrapper = contentDiv.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      
+      if (isFastForwarding || isRewinding) {
+        if (media) {
+          media.playbackRate = 1.0;
+          if (isRewinding) media.play(); // Resume after rewinding
+        }
+        
+        contentDiv.querySelector('.forward-badge').style.display = 'none';
+        contentDiv.querySelector('.backward-badge').style.display = 'none';
+        
+        // Safety delay to prevent the 'tap' logic from triggering
+        setTimeout(() => {
+          isFastForwarding = false;
+          isRewinding = false;
+        }, 100);
+      }
+    };
+
     window.togglePlay = function(contentDiv) {
+      if (isFastForwarding || isRewinding) return; // Don't toggle if we were just scrubbing
+      
       const wrapper = contentDiv.closest('.reel-wrapper');
       const media = wrapper.querySelector('video, audio');
       

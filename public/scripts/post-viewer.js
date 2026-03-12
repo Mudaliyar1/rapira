@@ -232,9 +232,24 @@ async function viewPost(postId) {
       // Audio player (hidden)
       const audio = document.createElement('audio');
       audio.src = currentPost.media.url;
-      audio.autoplay = true;
       audio.style.cssText = 'display: none;';
       audioContainer.appendChild(audio);
+
+      // Autoplay handler with fallback
+      const attemptPlay = () => {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log('[POST VIEWER] Auto-play blocked by browser. User interaction required.');
+            // Add a visual "Click to Play" overlay if needed, 
+            // but the Play button in playerContainer already serves this purpose.
+            playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+          });
+        }
+      };
+
+      // Attempt play on load
+      attemptPlay();
 
       // Minimal player container (Spotify style)
       const playerContainer = document.createElement('div');
@@ -321,9 +336,32 @@ async function viewPost(postId) {
       // Video element
       const video = document.createElement('video');
       video.src = currentPost.media.url;
-      video.autoplay = true;
       video.style.cssText = 'max-width: 100%; max-height: 500px; height: auto; display: block;';
       videoContainer.appendChild(video);
+
+      // Autoplay handler with fallback for video
+      const attemptVideoPlay = () => {
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log('[POST VIEWER] Video auto-play blocked. Adding Unmute overlay.');
+            // Show a "Click to Play/Unmute" indicator
+            const unmuteOverlay = document.createElement('div');
+            unmuteOverlay.id = 'video-unmute-overlay';
+            unmuteOverlay.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 15px 25px; border-radius: 40px; cursor: pointer; z-index: 101; display: flex; align-items: center; gap: 10px; font-weight: 600; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2);';
+            unmuteOverlay.innerHTML = '<i class="bi bi-play-circle-fill" style="font-size: 1.5rem; color: #00d4ff;"></i> TAP TO PLAY';
+
+            unmuteOverlay.onclick = () => {
+              video.play();
+              unmuteOverlay.remove();
+            };
+            videoContainer.appendChild(unmuteOverlay);
+            playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 1.2rem;"></i>';
+          });
+        }
+      };
+
+      attemptVideoPlay();
 
       // Custom controls container - OVERLAY ON VIDEO
       const controlsContainer = document.createElement('div');
@@ -496,8 +534,17 @@ async function viewPost(postId) {
       // Audio player (hidden)
       const audio = document.createElement('audio');
       audio.src = currentPost.media.url;
-      audio.autoplay = true;
       audio.style.cssText = 'display: none;';
+      audioContainer.appendChild(audio);
+
+      // Attempt playback
+      const audioPlayPromise = audio.play();
+      if (audioPlayPromise !== undefined) {
+        audioPlayPromise.catch(() => {
+          console.log('[POST VIEWER] Audio playback blocked.');
+          // Button will show play icon automatically due to pause listener
+        });
+      }
       audioContainer.appendChild(audio);
 
       // Minimal player container (Spotify style)
