@@ -90,6 +90,30 @@
   </div>
 </div>
 
+<!-- Uploading Progress Modal (Lateral Popup) -->
+<div class="modal fade" id="uploadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-primary border-2 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-primary text-white border-0 py-3">
+        <h5 class="modal-title fw-bold"><i class="bi bi-cloud-upload-fill me-2"></i> UPLOADING POST</h5>
+      </div>
+      <div class="modal-body text-center p-5">
+        <div class="mb-4">
+           <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+             <span class="visually-hidden">Loading...</span>
+           </div>
+        </div>
+        <h4 class="fw-black text-dark mb-2" id="uploadStatusText">Sending to servers...</h4>
+        <div class="progress mb-3" style="height: 20px; border-radius: 10px;">
+          <div id="modalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+        </div>
+        <p class="text-danger fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-1"></i> PLEASE DO NOT CLOSE THIS WINDOW</p>
+        <p class="text-muted small">Your post is being processed and uploaded to the cloud.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Edit Post Modal -->
 <div class="modal fade" id="editPostModal" tabindex="-1">
   <div class="modal-dialog">
@@ -465,26 +489,9 @@ document.getElementById('media').addEventListener('change', function(e) {
     // Success alert for choosing correct file
     showAlert('choose file under 100mb', 'success');
 
-    // Show and start "Preparation" animation
-    progContainer.style.display = 'block';
-    progBar.style.width = '0%';
-    progPercent.textContent = '0%';
-    progStatus.textContent = 'Analysing media...';
-    progBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
-
-    let preparationProgress = 0;
-    const interval = setInterval(() => {
-      preparationProgress += 5;
-      progBar.style.width = preparationProgress + '%';
-      progPercent.textContent = preparationProgress + '%';
-      
-      if (preparationProgress >= 100) {
-        clearInterval(interval);
-        progStatus.textContent = 'Ready to post!';
-        progBar.className = 'progress-bar bg-success';
-        showAlert('Media ready for upload!', 'info');
-      }
-    }, 50);
+    // Show preview and small status
+    progContainer.style.display = 'none'; // Don't show redundant form progress
+    progStatus.textContent = 'Media selected';
 
     const reader = new FileReader();
     reader.onload = function(event) {
@@ -522,7 +529,7 @@ document.getElementById('editCaption').addEventListener('input', function() {
 });
 
 // Submit post
-document.getElementById('postForm').addEventListener('submit', async function(e) {
+document.getElementById('postForm').addEventListener('submit', function(e) {
   e.preventDefault();
 
   // Validate file
@@ -541,47 +548,84 @@ document.getElementById('postForm').addEventListener('submit', async function(e)
 
   const formData = new FormData(this);
   const btn = document.getElementById('submitBtn');
+  
+  // Show uploading modal
+  const uploadingModalEl = document.getElementById('uploadingModal');
+  const uploadingModal = new bootstrap.Modal(uploadingModalEl);
+  const modalProgressBar = document.getElementById('modalProgressBar');
+  const uploadStatusText = document.getElementById('uploadStatusText');
+  
+  uploadingModal.show();
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
 
-  try {
-    const res = await fetch('/posts', {
-      method: 'POST',
-      body: formData
-    });
+  // Warning for closing page
+  const stayOnPage = (e) => {
+    e.preventDefault();
+    e.returnValue = '';
+  };
+  window.addEventListener('beforeunload', stayOnPage);
 
-    const contentType = res.headers.get('content-type');
+  // Use XMLHttpRequest for real-time progress
+  const xhr = new XMLHttpRequest();
+  
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      modalProgressBar.style.width = percent + '%';
+      modalProgressBar.textContent = percent + '%';
+      
+      // Calculate human readable sizes
+      const loaded = (e.loaded / (1024 * 1024)).toFixed(2);
+      const total = (e.total / (1024 * 1024)).toFixed(2);
+      
+      if (percent < 100) {
+        uploadStatusText.innerHTML = `<span class="text-primary">${percent}%</span> Uploaded (${loaded}MB / ${total}MB)`;
+      } else {
+        uploadStatusText.textContent = 'Processing media on server... (Wait a moment)';
+        modalProgressBar.classList.remove('bg-success');
+        modalProgressBar.classList.add('bg-primary');
+      }
+    }
+  });
+
+  xhr.onload = function() {
+    window.removeEventListener('beforeunload', stayOnPage);
+    uploadingModal.hide();
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-upload"></i> Post';
+
     let data = {};
-
-    if (contentType && contentType.includes('application/json')) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      console.error('Non-JSON response:', text);
-      showAlert(`Server error (${res.status}): ${text.substring(0, 100)}`, 'danger');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-upload"></i> Post';
+    try {
+      data = JSON.parse(xhr.responseText);
+    } catch (err) {
+      console.error('Non-JSON response:', xhr.responseText);
+      showAlert('Server error occurred', 'danger');
       return;
     }
 
-    if (res.ok && data.success) {
+    if (xhr.status >= 200 && xhr.status < 300 && data.success) {
       showAlert('Post created successfully and is now live!', 'success');
       document.getElementById('postForm').reset();
       document.getElementById('mediaPreview').style.display = 'none';
       document.getElementById('charCount').textContent = '0';
+      document.getElementById('uploadProgressContainer').style.display = 'none';
       loadMyPosts();
     } else {
-      const errorMsg = data.message || `Failed to create post (Status: ${res.status})`;
-      showAlert(errorMsg, 'danger');
-      console.error('Upload error:', { status: res.status, data, response: res });
+      showAlert(data.message || 'Failed to create post', 'danger');
     }
-  } catch (err) {
-    showAlert(`Error: ${err.message}`, 'danger');
-    console.error('Upload error:', err);
-  } finally {
+  };
+
+  xhr.onerror = function() {
+    window.removeEventListener('beforeunload', stayOnPage);
+    uploadingModal.hide();
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-upload"></i> Post';
-  }
+    showAlert('Network error during upload', 'danger');
+  };
+
+  xhr.open('POST', '/posts');
+  xhr.send(formData);
 });
 
 // Load user's posts
