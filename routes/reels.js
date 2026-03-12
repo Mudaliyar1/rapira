@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
         ]);
 
         // Add liked state if user is logged in
-        const userId = req.user ? req.user._id.toString() : null;
+        const userId = req.session && req.session.user ? req.session.user.id.toString() : null;
         const formattedPosts = posts.map(post => {
             // Safely check for liked status
             const isLiked = userId && post.likes && post.likes.some(likeId => likeId.toString() === userId);

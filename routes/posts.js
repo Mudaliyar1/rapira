@@ -273,7 +273,7 @@ router.post('/posts/:id/like', isLoggedIn, async (req, res) => {
 			return res.status(404).json({ success: false, message: 'Post not found' });
 		}
 
-		const userId = req.session.user.id;
+		const userId = req.session.user.id.toString();
 		const alreadyLiked = post.likes.some(l => l.toString() === userId);
 		console.log('[POST LIKE] Already liked:', alreadyLiked);
 
@@ -357,8 +357,8 @@ router.get('/posts/:id/json', async (req, res) => {
 		post.views = (post.views || 0) + 1;
 		await post.save();
 
-		const userId = req.session?.user?.id;
-		const liked = userId ? post.likes.some(l => l._id?.toString() === userId) : false;
+		const userId = req.session?.user?.id?.toString();
+		const liked = userId ? post.likes.some(l => (l._id || l).toString() === userId) : false;
 
 		const formatted = {
 			_id: post._id,
@@ -824,10 +824,21 @@ router.get('/posts/view/:id', async (req, res) => {
 			return res.status(404).render('error/404', { message: 'Post not available' });
 		}
 
+		// Extract YouTube ID if it's a YouTube link
+		let youtubeId = null;
+		if (post.media && post.media.url) {
+			const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+			const match = post.media.url.match(youtubeRegex);
+			if (match && match[1]) {
+				youtubeId = match[1];
+			}
+		}
+
 		res.render('posts/post-detail', {
 			post: post.toObject(),
 			artist: post.artist || {},
-			user: req.session.user || null
+			user: req.session.user || null,
+			youtubeId
 		});
 	} catch (err) {
 		res.status(500).render('error/404', { message: 'Error loading post' });

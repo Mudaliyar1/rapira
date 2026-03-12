@@ -200,7 +200,7 @@
 let currentPostId = null;
 let postsCache = [];
 const artistId = '<%= artist._id %>';
-const currentUserId = '<%= (typeof currentUser !== "undefined" && currentUser && currentUser._id) ? currentUser._id : "" %>';
+const currentUserId = '<%= (typeof user !== "undefined" && user) ? (user.id || user._id || "") : "" %>';
 
 async function loadPosts() {
   try {
@@ -314,7 +314,10 @@ function viewPost(postId) {
   document.getElementById('postCommentsCount').textContent = (post.comments || []).length;
 
   // Update like button
-  const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => l._id === currentUserId);
+  const isLiked = currentUserId && Array.isArray(post.likes) && post.likes.some(l => {
+    const likeId = (l && typeof l === 'object') ? (l._id || l.id) : l;
+    return likeId && likeId.toString() === currentUserId.toString();
+  });
   
   if (currentUserId) {
     // User is logged in - show like and share buttons

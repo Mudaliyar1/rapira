@@ -343,7 +343,7 @@
     <div class="container">
       <!-- Back Button -->
       <a href="javascript:history.back()" class="back-btn">
-        <i class="bi bi-chevron-left"></i> Back to Profile
+        <i class="bi bi-chevron-left"></i> Back
       </a>
 
       <!-- Post Container -->
@@ -351,12 +351,23 @@
         <!-- Media Column -->
         <div class="col-12 col-lg-7" style="max-width: 100%; overflow: hidden;">
           <div class="post-container" style="max-width: 100%;">
-            <% if (post.media && post.media.mediaType === 'image') { %>
+            <% if (typeof youtubeId !== 'undefined' && youtubeId) { %>
+              <div class="ratio ratio-16x9">
+                <iframe src="https://www.youtube.com/embed/<%= youtubeId %>?autoplay=1&rel=0" frameborder="0" allowfullscreen></iframe>
+              </div>
+            <% } else if (post.media && post.media.mediaType === 'image') { %>
               <img src="<%= post.media.url %>" alt="post" class="post-media" style="max-width: 100%; width: 100%; height: auto; display: block;">
             <% } else if (post.media && post.media.mediaType === 'video') { %>
-              <video controls class="post-media" style="width: 100%; max-width: 100%; height: auto; display: block;">
+              <video controls class="post-media" style="width: 100%; max-width: 100%; height: auto; display: block;" autoplay>
                 <source src="<%= post.media.url %>">
               </video>
+            <% } else if (post.media && post.media.mediaType === 'audio') { %>
+              <div style="background: #222; padding: 40px; text-align: center; border-radius: 12px;">
+                <i class="bi bi-music-note-beamed" style="font-size: 5rem; color: #00d4ff; display: block; margin-bottom: 20px;"></i>
+                <audio controls style="width: 100%;">
+                  <source src="<%= post.media.url %>">
+                </audio>
+              </div>
             <% } %>
           </div>
         </div>
@@ -508,7 +519,7 @@
       console.log('[POST DETAIL] DOM loaded, initializing...');
       
       const postId = '<%= post._id %>';
-      const userId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+      const userId = '<%= (typeof user !== "undefined" && user) ? (user.id || user._id || "") : "" %>';
       let isLiked = false;
       let isProcessing = false;
       

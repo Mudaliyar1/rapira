@@ -294,74 +294,114 @@ router.get('/faq', (req, res) => {
 // Content library page
 router.get('/content', async (req, res) => {
   try {
-    // Get filter parameters with proper defaults
     const { mediaType = '', artist = '', sort = 'latest' } = req.query;
 
-    // Build post filter object for artist posts
-    const postFilter = { isActive: true };
+    // Helper: extract YouTube ID from a URL
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const extractYoutubeId = (url) => {
+      if (!url) return null;
+      const match = url.match(youtubeRegex);
+      return match ? match[1] : null;
+    };
 
-    // Media type filter for artist posts (images/videos/audio)
-    if (mediaType && ['image', 'video', 'audio'].includes(mediaType)) {
-      postFilter['media.mediaType'] = mediaType;
-    }
+    // --- Build Filters ---
+    const contentFilter = {};
+    const postFilter = { isActive: true, isApproved: true };
 
-    // Artist filter
-    if (artist && artist !== '') {
+    if (artist) {
+      contentFilter.artist = artist;
       postFilter.artist = artist;
     }
 
-    // Build sort object
-    let sortOption = { createdAt: -1 }; // Default: latest first
-    switch (sort) {
-      case 'oldest':
-        sortOption = { createdAt: 1 };
-        break;
-      case 'popular':
-        sortOption = { views: -1, createdAt: -1 };
-        break;
-      case 'latest':
-      default:
-        sortOption = { createdAt: -1 };
-        break;
-    }
-
-    // Get all artists for filter dropdown (only those with posts)
-    const artistsWithPosts = await ArtistPost.find({ isActive: true }).distinct('artist');
-    const artists = await Artist.find({ _id: { $in: artistsWithPosts } })
+    // --- Fetch Artists for Sidebar ---
+    const [artistsWithContent, artistsWithPosts] = await Promise.all([
+      Content.distinct('artist'),
+      ArtistPost.find({ isActive: true, isApproved: true }).distinct('artist')
+    ]);
+    const allArtistIds = [...new Set([...artistsWithContent, ...artistsWithPosts])];
+    const artists = await Artist.find({ _id: { $in: allArtistIds } })
       .populate('user', 'name')
       .sort({ 'user.name': 1 });
+    const validArtists = artists.filter(a => a.user);
 
-    // Filter out artists with no user
-    const validArtists = artists.filter(artist => artist.user);
+    // --- Query Both Collections ---
+    const [rawContent, rawPosts] = await Promise.all([
+      Content.find(contentFilter).populate({ path: 'artist', populate: { path: 'user', select: 'name' } }).lean(),
+      ArtistPost.find(postFilter).populate({ path: 'artist', populate: { path: 'user', select: 'name' } }).lean()
+    ]);
 
-    // Get artist posts with pagination
+    // --- Standardize Data Formats ---
+    let unifiedList = [
+      ...rawContent.map(item => {
+        const ytId = item.isYoutubeLink ? item.youtubeId : extractYoutubeId(item.fileUrl);
+        return {
+          _id: item._id,
+          title: item.title,
+          description: item.description,
+          artist: item.artist,
+          createdAt: item.createdAt,
+          views: item.views || 0,
+          likesCount: item.likes || 0,
+          media: {
+            url: item.fileUrl,
+            mediaType: item.type === 'song' ? 'audio' : 'video'
+          },
+          isYoutube: !!ytId || item.isYoutubeLink,
+          youtubeId: ytId || item.youtubeId,
+          youtubeThumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : (item.thumbnailUrl || null),
+          sourceModel: 'Content'
+        };
+      }),
+      ...rawPosts.map(post => {
+        const ytId = extractYoutubeId(post.media?.url);
+        return {
+          ...post,
+          title: post.title || post.caption || 'Artist Post',
+          likesCount: post.likesCount || (post.likes ? post.likes.length : 0),
+          isYoutube: !!ytId,
+          youtubeId: ytId,
+          youtubeThumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null,
+          sourceModel: 'ArtistPost'
+        };
+      })
+    ];
+
+    // --- Apply Media Type Filtering on Unified List ---
+    if (mediaType) {
+      unifiedList = unifiedList.filter(item => {
+        if (mediaType === 'youtube_video') return item.isYoutube && item.media.mediaType === 'video';
+        if (mediaType === 'youtube_audio') return item.isYoutube && item.media.mediaType === 'audio';
+        return item.media.mediaType === mediaType;
+      });
+    }
+
+    // --- Apply Sorting ---
+    unifiedList.sort((a, b) => {
+      if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+      if (sort === 'popular') return (b.views + b.likesCount) - (a.views + a.likesCount);
+      return new Date(b.createdAt) - new Date(a.createdAt); // latest
+    });
+
+    // --- Pagination ---
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
+    const paginatedList = unifiedList.slice(skip, skip + limit);
+    const totalPages = Math.ceil(unifiedList.length / limit);
 
-    // Count total posts for pagination
-    const totalPosts = await ArtistPost.countDocuments(postFilter);
-    const totalPages = Math.ceil(totalPosts / limit);
-
-    // Get posts
-    const posts = await ArtistPost.find(postFilter)
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: 'artist', populate: { path: 'user', select: 'name' } })
-      .lean();
-
-    // Get statistics
+    // --- Statistics ---
     const stats = {
-      total: await ArtistPost.countDocuments({ isActive: true }),
-      images: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'image' }),
-      videos: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'video' }),
-      audio: await ArtistPost.countDocuments({ isActive: true, 'media.mediaType': 'audio' }),
-      filtered: totalPosts
+      total: unifiedList.length,
+      images: unifiedList.filter(i => i.media.mediaType === 'image').length,
+      videos: unifiedList.filter(i => i.media.mediaType === 'video' && !i.isYoutube).length,
+      audio: unifiedList.filter(i => i.media.mediaType === 'audio' && !i.isYoutube).length,
+      youtubeVideos: unifiedList.filter(i => i.media.mediaType === 'video' && i.isYoutube).length,
+      youtubeAudios: unifiedList.filter(i => i.media.mediaType === 'audio' && i.isYoutube).length,
+      filtered: unifiedList.length
     };
 
     res.render('content-library', {
-      posts,
+      posts: paginatedList,
       artists: validArtists,
       currentFilters: {
         mediaType: mediaType || '',
@@ -382,6 +422,8 @@ router.get('/content', async (req, res) => {
     res.redirect('/');
   }
 });
+
+
 
 // Dynamic pages
 router.get('/page/:slug', async (req, res) => {

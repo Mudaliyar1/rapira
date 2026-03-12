@@ -565,7 +565,12 @@ async function togglePostLike() {
 
       showToast(data.liked ? '❤️ Liked!' : 'Unliked', 'success');
     } else {
-      showToast(data.message || 'Failed to like', 'error');
+      if (res.status === 401) {
+        showToast('Please log in to like posts', 'info');
+        setTimeout(() => window.location.href = '/auth/login', 1500);
+      } else {
+        showToast(data.message || 'Failed to like', 'error');
+      }
     }
   } catch (err) {
     console.error('[POST VIEWER] Like error:', err);
@@ -1047,6 +1052,10 @@ window.openPostViewerReport = function () {
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[POST VIEWER] Initializing...');
+
+  // Set current user ID from data attribute on body
+  currentUserId = document.body.dataset.userId || null;
+  console.log('[POST VIEWER] Current user ID:', currentUserId);
 
   // Attach event listeners
   const likeBtn = document.getElementById('post-modal-like-btn');
