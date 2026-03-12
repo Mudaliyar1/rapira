@@ -52,6 +52,7 @@
       background: #111;
       border-left: 1px solid #222;
       border-right: 1px solid #222;
+      overflow: hidden; /* Prevent expanded captions from bleeding out */
     }
 
     .reel-content {
@@ -233,7 +234,7 @@
     /* Right Side Buttons */
     .reel-actions {
       position: absolute;
-      bottom: 100px;
+      bottom: 80px;
       right: 15px;
       display: flex;
       flex-direction: column;
@@ -276,15 +277,29 @@
     /* Bottom Info overlay */
     .reel-info {
       position: absolute;
-      bottom: 20px; /* Elevated to be clearly visible */
+      bottom: 0;
       left: 0;
       width: 100%;
       padding: 20px;
-      padding-bottom: 20px;
+      padding-bottom: 25px;
       padding-right: 70px; /* Leave space for actions */
-      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
       color: white;
       z-index: 5;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+
+    /* Slim scrollbar for long captions */
+    .reel-info::-webkit-scrollbar {
+      width: 4px;
+    }
+    .reel-info::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+    .reel-info::-webkit-scrollbar-track {
+      background: transparent;
     }
 
     .artist-profile {
@@ -351,6 +366,37 @@
 
     .is-paused .play-overlay {
       opacity: 1;
+    }
+
+    /* Tap to Play Overlay (First Reel Only) - Perfect Centering */
+    .reel-autoplay-overlay {
+      position: absolute;
+      inset: 0; /* Cover entire reel content */
+      display: none; /* Hidden by default */
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+    }
+
+    .autoplay-btn {
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 50px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(0, 212, 255, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+      animation: pulse 2s infinite;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 0.95rem;
     }
 
     /* Instagram Style Comment Modal (Bottom Sheet) */
@@ -534,7 +580,7 @@
       }
 
       .reel-actions {
-        bottom: 160px; /* Even higher to stay clear of UI */
+        bottom: 120px;
         right: 12px;
         gap: 20px;
       }
@@ -544,9 +590,9 @@
       }
 
       .reel-info {
-        bottom: 20px;
+        bottom: 0;
         padding: 15px;
-        padding-bottom: 90px; /* Significantly higher space for caption/name */
+        padding-bottom: 25px;
         padding-right: 65px;
       }
 
@@ -567,22 +613,22 @@
     /* Extra small screens (e.g. iPhone SE) */
     @media (max-width: 380px) {
       .reel-actions {
-        bottom: 140px;
+        bottom: 110px;
         gap: 16px;
       }
       .reel-info {
-        padding-bottom: 75px;
+        padding-bottom: 20px;
       }
     }
 
     /* Very short screens */
     @media (max-height: 650px) {
       .reel-actions {
-        bottom: 110px;
+        bottom: 90px;
         gap: 12px;
       }
       .reel-info {
-        padding-bottom: 50px;
+        padding-bottom: 20px;
       }
     }
   </style>
@@ -622,6 +668,16 @@
                 <i class="bi bi-rewind-fill"></i>
                 REWIND
               </div>
+
+              <% if (index === 0) { %>
+                <!-- Tap to play overlay ONLY for the first reel to handle refresh interaction -->
+                <div class="reel-autoplay-overlay" onclick="event.stopPropagation(); window.startFirstReel(this);">
+                   <div class="autoplay-btn">
+                     <i class="bi bi-play-circle-fill" style="font-size: 1.8rem; color: #00d4ff;"></i>
+                     TAP TO PLAY
+                   </div>
+                </div>
+              <% } %>
 
               <% 
                 // Robust detection for Reels
@@ -768,10 +824,12 @@
           <h6 class="modal-title w-100 text-center mt-2">Comments</h6>
           <button type="button" class="btn-close btn-close-white d-none" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body" id="commentList">
-          <!-- Comments will be loaded here -->
-          <div class="text-center py-5" id="commentLoading">
+        <div class="modal-body position-relative">
+          <div id="commentLoading" class="text-center py-5 d-none">
             <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+          </div>
+          <div id="commentList">
+            <!-- Comments will be loaded here -->
           </div>
         </div>
         <div class="modal-footer">
@@ -866,12 +924,26 @@
 
             // Play the active one
             const playPromise = media.play();
+            const index = parseInt(wrapper.getAttribute('data-index'));
+
             if (playPromise !== undefined) {
               playPromise.then(() => {
                 wrapper.classList.remove('is-paused');
               }).catch(err => {
-                console.log('Play blocked:', err);
-                wrapper.classList.add('is-paused');
+                console.log('Autoplay blocked:', err);
+                
+                // For the FIRST reel, show the "Tap to Play" overlay if blocked
+                if (index === 0) {
+                  const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+                  if (overlay) overlay.style.display = 'flex';
+                  wrapper.classList.add('is-paused');
+                } else {
+                  // For other reels, fall back to muted playback
+                  media.muted = true;
+                  media.play().then(() => {
+                    wrapper.classList.remove('is-paused');
+                  });
+                }
               });
             }
           } 
@@ -879,11 +951,46 @@
           else if (entry.intersectionRatio < 0.1) {
             media.pause();
             wrapper.classList.add('is-paused');
+
+            // Hide autoplay overlay if it was showing for the first reel
+            const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+            if (overlay) overlay.style.display = 'none';
+
+            // AUTO-COLLAPSE CAPTION: Prevent bleed or layout issues when scrolling away
+            const caption = wrapper.querySelector('.reel-caption');
+            const moreBtn = wrapper.querySelector('.more-btn');
+            if (caption && moreBtn && !caption.classList.contains('is-truncated')) {
+              caption.classList.add('is-truncated');
+              moreBtn.textContent = '...more';
+            }
           }
         });
       }, observerOptions);
 
       reels.forEach(reel => observer.observe(reel));
+
+      // NEW: Solve 'Always Muted' issue after refresh
+      // Restore sound globally as soon as user interacts with the page
+      const unmuteAll = () => {
+        document.querySelectorAll('.reel-media').forEach(m => {
+          m.muted = false;
+          // If the media is already playing (likely muted by our fallback),
+          // we call play() again now that we have a user interaction.
+          // This "promotes" the silent playback to full audio playback.
+          if (!m.paused) {
+            m.play().catch(err => console.log('[REELS] Re-play failed:', err));
+          }
+        });
+        // We only need to do this once per page load
+        ['click', 'touchstart', 'scroll', 'mousedown'].forEach(evt => 
+          document.removeEventListener(evt, unmuteAll)
+        );
+        console.log('[REELS] Global audio restored and re-played via user interaction');
+      };
+
+      ['click', 'touchstart', 'scroll', 'mousedown'].forEach(evt => 
+        document.addEventListener(evt, unmuteAll, { once: true })
+      );
 
       // Global safety: Pause everything if user leaves the tab
       document.addEventListener('visibilitychange', () => {
@@ -955,8 +1062,10 @@
       const wrapper = contentDiv.closest('.reel-wrapper');
       const media = wrapper.querySelector('video, audio');
       
+      // If we play it once, ensure sound is on
       if (media) {
         if (media.paused) {
+          media.muted = false;
           media.play();
           wrapper.classList.remove('is-paused');
         } else {
@@ -964,6 +1073,18 @@
           wrapper.classList.add('is-paused');
         }
       }
+    };
+
+    window.startFirstReel = function(overlay) {
+        const wrapper = overlay.closest('.reel-wrapper');
+        const media = wrapper.querySelector('video, audio');
+        if (media) {
+            media.muted = false;
+            media.play().then(() => {
+                overlay.style.display = 'none';
+                wrapper.classList.remove('is-paused');
+            });
+        }
     };
 
     window.toggleLike = async function(btn, postId) {
@@ -1034,18 +1155,16 @@
       const container = document.getElementById('commentList');
       const loader = document.getElementById('commentLoading');
       
-      // Only show loader and clear if not a background refresh
       if (!isRefresh) {
         container.innerHTML = '';
-        container.appendChild(loader);
-        loader.classList.remove('d-none');
+        if (loader) loader.classList.remove('d-none');
       }
 
       try {
         const res = await fetch(`/posts/${postId}/comments`);
         const data = await res.json();
         
-        if (!isRefresh) loader.classList.add('d-none');
+        if (loader) loader.classList.add('d-none');
         
         if (data.success && data.comments && data.comments.length > 0) {
           const newHtml = data.comments.map(c => createCommentElement(c)).join('');
@@ -1057,6 +1176,7 @@
         }
       } catch (err) {
         console.error(err);
+        if (loader) loader.classList.add('d-none');
         if (!isRefresh) {
           container.innerHTML = '<div class="text-center py-5 text-danger">Failed to load comments.</div>';
         }
