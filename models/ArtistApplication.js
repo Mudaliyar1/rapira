@@ -76,4 +76,12 @@ const ArtistApplicationSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Indexes for fast admin queries - WITHOUT these, every query does a full collection scan
+ArtistApplicationSchema.index({ status: 1, createdAt: -1 });   // most common admin filter
+ArtistApplicationSchema.index({ user: 1 });                     // check user's application
+ArtistApplicationSchema.index({ artistLevel: 1 });              // level filter
+ArtistApplicationSchema.index({ state: 1 });                    // state filter
+ArtistApplicationSchema.index({ createdAt: -1 });               // default sort
+
 module.exports = mongoose.model('ArtistApplication', ArtistApplicationSchema);
+

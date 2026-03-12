@@ -465,6 +465,9 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'
   try {
     // Get search parameters
     const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
 
     // Build filter object
     const filter = {};
@@ -484,43 +487,56 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'
       filter.state = { $regex: state, $options: 'i' };
     }
 
+    // DB-level text search where possible
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      filter.$or = [
+        { state: { $regex: searchTerm, $options: 'i' } },
+        { city: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+
     // Build sort options
-    let sortOptions = { createdAt: -1 }; // Default sort
+    let sortOptions = { createdAt: -1 };
     if (sortBy) {
       const order = sortOrder === 'asc' ? 1 : -1;
       sortOptions = { [sortBy]: order };
     }
 
-    // Get applications with filters
-    let applications = await ArtistApplication.find(filter)
-      .sort(sortOptions)
-      .populate('user', 'name email');
+    // Run ALL queries in PARALLEL - massively faster than sequential awaits
+    const [applicationsRaw, totalFiltered, totalApplications, pendingApplications, approvedApplications, rejectedApplications, allStates] = await Promise.all([
+      ArtistApplication.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .select('-proofPhotoData -proofPhotoContentType')  // exclude heavy binary buffer fields
+        .populate('user', 'name email')
+        .lean(),
+      ArtistApplication.countDocuments(filter),
+      ArtistApplication.countDocuments(),
+      ArtistApplication.countDocuments({ status: 'pending' }),
+      ArtistApplication.countDocuments({ status: 'approved' }),
+      ArtistApplication.countDocuments({ status: 'rejected' }),
+      ArtistApplication.distinct('state')
+    ]);
 
-    // Apply text search on populated data
+    // Filter out empty states for dropdown
+    const states = allStates.filter(s => s && s.trim()).sort();
+
+    // Secondary in-memory filter for name/email search (not possible at DB level without text index)
+    let applications = applicationsRaw;
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
-      applications = applications.filter(app => {
+      applications = applicationsRaw.filter(app => {
         const userName = (app.user ? app.user.name : '').toLowerCase();
         const userEmail = (app.user ? app.user.email : '').toLowerCase();
-        const state = (app.state || '').toLowerCase();
-        const city = (app.city || '').toLowerCase();
-
-        return userName.includes(searchTerm) ||
-          userEmail.includes(searchTerm) ||
-          state.includes(searchTerm) ||
-          city.includes(searchTerm);
+        return userName.includes(searchTerm) || userEmail.includes(searchTerm) ||
+          (app.state || '').toLowerCase().includes(searchTerm) ||
+          (app.city || '').toLowerCase().includes(searchTerm);
       });
     }
 
-    // Get statistics
-    const totalApplications = await ArtistApplication.countDocuments();
-    const pendingApplications = await ArtistApplication.countDocuments({ status: 'pending' });
-    const approvedApplications = await ArtistApplication.countDocuments({ status: 'approved' });
-    const rejectedApplications = await ArtistApplication.countDocuments({ status: 'rejected' });
-
-    // Get unique states for filter dropdown
-    const allStates = await ArtistApplication.find().distinct('state');
-    const states = allStates.filter(s => s && s.trim()).sort();
+    const totalPages = Math.ceil(totalFiltered / limit);
 
     res.render('admin/artist-applications', {
       layout: 'admin',
@@ -540,9 +556,15 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'
         pending: pendingApplications,
         approved: approvedApplications,
         rejected: rejectedApplications,
-        filtered: applications.length
+        filtered: totalFiltered
       },
-      states
+      states,
+      pagination: {
+        page,
+        totalPages,
+        totalFiltered,
+        limit
+      }
     });
   } catch (error) {
     console.error('Error in admin applications list:', error);
@@ -550,6 +572,7 @@ router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'
     res.redirect('/admin');
   }
 });
+
 
 // Export artist applications to CSV
 router.get('/admin/export', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
