@@ -906,10 +906,22 @@
       };
 
       const observer = new IntersectionObserver((entries) => {
+        // Global safety check: Reset all media playback rates and hide all badges
+        document.querySelectorAll('.reel-media').forEach(m => {
+          m.playbackRate = 1.0;
+        });
+        document.querySelectorAll('.forward-badge, .backward-badge').forEach(badge => {
+          badge.style.display = 'none';
+        });
+
         entries.forEach(entry => {
           const wrapper = entry.target;
           const media = wrapper.querySelector('video, audio');
           const index = parseInt(wrapper.getAttribute('data-index'));
+
+          // Aggressively stop FF/RW on ANY interaction change for this specific reel
+          const contentDiv = wrapper.querySelector('.reel-content');
+          if (contentDiv) stopFastForward(contentDiv);
 
           if (!media) return;
 
@@ -927,6 +939,10 @@
                    if (otherWrapper) otherWrapper.classList.add('is-paused');
                  }
                });
+
+                // Safety: Reset any fast-forward or rewind states when playing a new reel
+                const contentDiv = wrapper.querySelector('.reel-content');
+                if (contentDiv) stopFastForward(contentDiv);
 
                // Play the active one
                const playPromise = media.play();
@@ -953,14 +969,18 @@
           } 
           // When a reel is mostly out of view (less than 10%)
           else if (entry.intersectionRatio < 0.1) {
-            if (media) {
-               media.pause();
-               wrapper.classList.add('is-paused');
+             if (media) {
+                media.pause();
+                wrapper.classList.add('is-paused');
+                
+                // CRITICAL: Stop any hunting/scrubbing when scrolled away
+                const contentDiv = wrapper.querySelector('.reel-content');
+                if (contentDiv) stopFastForward(contentDiv);
 
-               // Hide autoplay overlay if it was showing for the first reel
-               const overlay = wrapper.querySelector('.reel-autoplay-overlay');
-               if (overlay) overlay.style.display = 'none';
-            }
+                // Hide autoplay overlay if it was showing for the first reel
+                const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+                if (overlay) overlay.style.display = 'none';
+             }
 
             // AUTO-COLLAPSE CAPTION: Prevent bleed or layout issues when scrolling away
             const caption = wrapper.querySelector('.reel-caption');
@@ -1012,58 +1032,84 @@
     let speedTimer = null;
     let rewindInterval = null;
 
+     window.stopFastForward = function(contentDiv) {
+      // 1. Clear ALL timers & intervals immediately
+      clearTimeout(speedTimer);
+      clearInterval(rewindInterval);
+      speedTimer = null;
+      rewindInterval = null;
+      
+      // 3. Reset ALL global state flags
+      isFastForwarding = false;
+      isRewinding = false;
+      
+      // 4. Reset Media across the whole page to 1.0x speed for safety
+      document.querySelectorAll('.reel-media').forEach(m => {
+        m.playbackRate = 1.0;
+      });
+
+      // 5. Hide ALL badges across the whole document for safety
+      document.querySelectorAll('.forward-badge, .backward-badge').forEach(badge => {
+        badge.style.display = 'none';
+      });
+
+      // 6. Resume normal playback if needed
+      if (contentDiv) {
+        const wrapper = contentDiv.closest('.reel-wrapper');
+        if (wrapper) {
+          const media = wrapper.querySelector('video, audio');
+          if (media && !wrapper.classList.contains('is-paused') && media.paused && !media.ended) {
+            media.play().catch(() => {}); 
+          }
+        }
+      }
+    };
+
     window.startFastForward = function(e, contentDiv) {
+      // Safety: Clear previous interaction state before starting a new one
+      stopFastForward(null);
+
+      // Block multi-finger glitches
+      if (e.touches && e.touches.length > 1) return;
+
       const wrapper = contentDiv.closest('.reel-wrapper');
       const media = wrapper.querySelector('video, audio');
       if (!media) return;
 
       // Determine side
       const rect = contentDiv.getBoundingClientRect();
-      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+      const x = clientX - rect.left;
       const isLeftSide = x < rect.width / 2;
 
       speedTimer = setTimeout(() => {
         if (isLeftSide) {
           isRewinding = true;
           contentDiv.querySelector('.backward-badge').style.display = 'flex';
-          media.pause(); // Pause normal playback during manual rewind
+          media.pause(); 
           rewindInterval = setInterval(() => {
-            media.currentTime = Math.max(0, media.currentTime - 0.2); // Rewind 0.2s every 50ms (~4x speed)
+            if (media.currentTime <= 0.1) {
+              media.currentTime = 0;
+              stopFastForward(contentDiv);
+            } else {
+              media.currentTime -= 0.3; // Slightly faster rewind for better feel
+            }
           }, 50);
         } else {
           isFastForwarding = true;
-          media.playbackRate = 2.0;
+          media.playbackRate = 2.5; 
           contentDiv.querySelector('.forward-badge').style.display = 'flex';
         }
-      }, 400); // Trigger after 400ms hold
-    };
-
-    window.stopFastForward = function(contentDiv) {
-      clearTimeout(speedTimer);
-      clearInterval(rewindInterval);
-      
-      const wrapper = contentDiv.closest('.reel-wrapper');
-      const media = wrapper.querySelector('video, audio');
-      
-      if (isFastForwarding || isRewinding) {
-        if (media) {
-          media.playbackRate = 1.0;
-          if (isRewinding) media.play(); // Resume after rewinding
-        }
-        
-        contentDiv.querySelector('.forward-badge').style.display = 'none';
-        contentDiv.querySelector('.backward-badge').style.display = 'none';
-        
-        // Safety delay to prevent the 'tap' logic from triggering
-        setTimeout(() => {
-          isFastForwarding = false;
-          isRewinding = false;
-        }, 100);
-      }
+      }, 350); 
     };
 
     window.togglePlay = function(contentDiv) {
-      if (isFastForwarding || isRewinding) return; // Don't toggle if we were just scrubbing
+      // If we were scrubbing, the 'click' event should do nothing
+      if (isFastForwarding || isRewinding) {
+        // Force reset just in case a mouseup/touchend was missed
+        stopFastForward(contentDiv);
+        return; 
+      }
       
       const wrapper = contentDiv.closest('.reel-wrapper');
       const media = wrapper.querySelector('video, audio');
