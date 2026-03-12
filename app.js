@@ -101,7 +101,6 @@ app.use(helmet({
         "https://maps.gstatic.com"   // For Google Maps static assets
       ],
 
-      // Allow images from self, data URIs, and CDNs
       imgSrc: [
         "'self'",
         "data:",
@@ -116,7 +115,9 @@ app.use(helmet({
         "https://api.razorpay.com",  // For Razorpay API images
         "https://api.qrserver.com",  // For QR code generation
         "https://maps.googleapis.com",  // For Google Maps images
-        "https://maps.gstatic.com"   // For Google Maps static images
+        "https://maps.gstatic.com",  // For Google Maps static images
+        "https://img.youtube.com",  // For YouTube video thumbnails
+        "https://i.ytimg.com"  // For YouTube image CDN
       ],
 
       // Allow fonts from self and CDNs
@@ -139,7 +140,10 @@ app.use(helmet({
         "https://maps.gstatic.com",  // For Google Maps static assets
         "https://checkout.razorpay.com",  // For payment processing
         "https://api.razorpay.com",  // For Razorpay API frames
-        "https://rzp.io"  // For shortened URLs
+        "https://rzp.io",  // For shortened URLs
+        "https://www.youtube.com",  // For YouTube embedded videos
+        "https://youtube.com",  // For YouTube embedded videos
+        "https://www.youtube-nocookie.com"  // For YouTube privacy-enhanced mode
       ],
 
       // Allow media from self and Cloudinary
@@ -157,7 +161,10 @@ app.use(helmet({
         "'self'",
         "https://checkout.razorpay.com",
         "https://api.razorpay.com",
-        "https://rzp.io"
+        "https://rzp.io",
+        "https://www.youtube.com",  // For YouTube embedded videos
+        "https://youtube.com",
+        "https://www.youtube-nocookie.com"
       ],
 
       // Upgrade insecure requests
