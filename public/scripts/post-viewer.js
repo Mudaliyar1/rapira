@@ -158,7 +158,162 @@ async function viewPost(postId) {
     const mediaContainer = document.getElementById('post-media-container');
     mediaContainer.innerHTML = '';
 
-    if (currentPost.media.mediaType === 'video') {
+    // Robust audio detection: check mediaType OR file extension OR Cloudinary folder
+    const mediaUrl = (currentPost.media.url || '').toLowerCase();
+    const isAudioFile = mediaUrl.endsWith('.mp3') ||
+      mediaUrl.endsWith('.wav') ||
+      mediaUrl.endsWith('.ogg') ||
+      mediaUrl.endsWith('.m4a') ||
+      mediaUrl.endsWith('.aac') ||
+      mediaUrl.includes('/artist-posts/audio/');
+
+    const isAudio = currentPost.media.mediaType === 'audio' || isAudioFile;
+
+    console.log('[POST VIEWER] Media Detection:', {
+      type: currentPost.media.mediaType,
+      url: mediaUrl,
+      isAudioDetected: isAudio
+    });
+
+    if (isAudio) {
+      // AUDIO BLOCK - (Show animated visualizer)
+      // Create audio player container (Premium Rapira design)
+      const audioContainer = document.createElement('div');
+      audioContainer.className = 'audio-visualizer-modal';
+      audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
+
+      // Inline SVG Visualizer (Guaranteed to animate)
+      const svgHtml = `
+        <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
+          <rect x="10" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="20;80;20" dur="1s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;20;50" dur="1s" repeatCount="indefinite" />
+          </rect>
+          <rect x="35" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="30;100;30" dur="0.8s" repeatCount="indefinite" />
+            <animate attributeName="y" values="45;10;45" dur="0.8s" repeatCount="indefinite" />
+          </rect>
+          <rect x="60" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="25;90;25" dur="1.2s" repeatCount="indefinite" />
+            <animate attributeName="y" values="47.5;15;47.5" dur="1.2s" repeatCount="indefinite" />
+          </rect>
+          <rect x="85" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="40;110;40" dur="0.7s" repeatCount="indefinite" />
+            <animate attributeName="y" values="40;5;40" dur="0.7s" repeatCount="indefinite" />
+          </rect>
+          <rect x="110" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="20;70;20" dur="1.5s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;25;50" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+          <rect x="135" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="35;95;35" dur="0.9s" repeatCount="indefinite" />
+            <animate attributeName="y" values="42.5;12.5;42.5" dur="0.9s" repeatCount="indefinite" />
+          </rect>
+          <rect x="160" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="25;85;25" dur="1.1s" repeatCount="indefinite" />
+            <animate attributeName="y" values="47.5;17.5;47.5" dur="1.1s" repeatCount="indefinite" />
+          </rect>
+          <rect x="185" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="30;105;30" dur="0.75s" repeatCount="indefinite" />
+            <animate attributeName="y" values="45;7.5;45" dur="0.75s" repeatCount="indefinite" />
+          </rect>
+          <rect x="210" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="20;100;20" dur="1.3s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;10;50" dur="1.3s" repeatCount="indefinite" />
+          </rect>
+          <text x="50%" y="120" text-anchor="middle" fill="rgba(0, 212, 255, 0.4)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA AUDIO</text>
+        </svg>
+      `;
+
+      const vizContainer = document.createElement('div');
+      vizContainer.innerHTML = svgHtml;
+      audioContainer.appendChild(vizContainer);
+
+      // Audio player (hidden)
+      const audio = document.createElement('audio');
+      audio.src = currentPost.media.url;
+      audio.autoplay = true;
+      audio.style.cssText = 'display: none;';
+      audioContainer.appendChild(audio);
+
+      // Minimal player container (Spotify style)
+      const playerContainer = document.createElement('div');
+      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
+
+      // Play/Pause button - circular
+      const playBtn = document.createElement('button');
+      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+      playBtn.style.cssText = 'background: #00d4ff; border: none; color: #000; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 1.4rem; box-shadow: 0 0 15px rgba(0,212,255,0.4);';
+
+      playBtn.addEventListener('click', function () {
+        if (audio.paused) audio.play(); else audio.pause();
+      });
+
+      audio.addEventListener('play', () => playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>');
+      audio.addEventListener('pause', () => playBtn.innerHTML = '<i class="bi bi-play-fill"></i>');
+
+      playerContainer.appendChild(playBtn);
+
+      // Progress bar container
+      const progressWrapper = document.createElement('div');
+      progressWrapper.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
+
+      // Progress bar
+      const progressBar = document.createElement('div');
+      progressBar.style.cssText = 'height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative;';
+
+      const progress = document.createElement('div');
+      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 2px; width: 0%; box-shadow: 0 0 8px rgba(0,212,255,0.6); transition: width 0.1s linear;';
+      progressBar.appendChild(progress);
+
+      audio.addEventListener('timeupdate', () => {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + '%';
+      });
+
+      progressBar.addEventListener('click', (e) => {
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+      });
+
+      progressWrapper.appendChild(progressBar);
+
+      // Time display
+      const timeDisplay = document.createElement('div');
+      timeDisplay.style.cssText = 'display: flex; justify-content: space-between; color: rgba(255,255,255,0.5); font-size: 0.75rem; font-family: monospace;';
+
+      const currentTimeSpan = document.createElement('span');
+      currentTimeSpan.textContent = '0:00';
+      const durationSpan = document.createElement('span');
+      durationSpan.textContent = '0:00';
+
+      timeDisplay.appendChild(currentTimeSpan);
+      timeDisplay.appendChild(durationSpan);
+
+      const formatT = (s) => {
+        if (isNaN(s)) return '0:00';
+        const m = Math.floor(s / 60);
+        const sc = Math.floor(s % 60);
+        return m + ':' + (sc < 10 ? '0' : '') + sc;
+      };
+
+      audio.addEventListener('timeupdate', () => currentTimeSpan.textContent = formatT(audio.currentTime));
+      audio.addEventListener('loadedmetadata', () => durationSpan.textContent = formatT(audio.duration));
+
+      progressWrapper.appendChild(timeDisplay);
+      playerContainer.appendChild(progressWrapper);
+
+      const volIcon = document.createElement('i');
+      volIcon.className = 'bi bi-volume-up ms-2';
+      volIcon.style.cssText = 'color: #00d4ff; opacity: 0.8; cursor: pointer;';
+      playerContainer.appendChild(volIcon);
+
+      audioContainer.appendChild(playerContainer);
+      mediaContainer.appendChild(audioContainer);
+      console.log('[POST VIEWER] Audio visualizer loaded');
+
+    } else if (currentPost.media.mediaType === 'video') {
       // Create video container that fits the video
       const videoContainer = document.createElement('div');
       videoContainer.style.cssText = 'position: relative; background: black; width: 100%; max-height: 500px; display: flex; align-items: center; justify-content: center; overflow: hidden;';
@@ -286,21 +441,57 @@ async function viewPost(postId) {
       mediaContainer.appendChild(videoContainer);
       console.log('[POST VIEWER] Video loaded with overlay controls');
     } else if (currentPost.media.mediaType === 'audio') {
-      // Create audio player container (Spotify-like minimal design)
+      // Create audio player container (Premium Rapira design)
       const audioContainer = document.createElement('div');
-      audioContainer.style.cssText = 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 30px; border-radius: 12px; text-align: center; min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%;';
+      audioContainer.className = 'audio-visualizer-modal';
+      audioContainer.style.cssText = 'width: 100%; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
 
-      // Music icon
-      const icon = document.createElement('i');
-      icon.className = 'bi bi-music-note-beamed';
-      icon.style.cssText = 'font-size: 4rem; color: white; display: block;';
-      audioContainer.appendChild(icon);
+      // Inline SVG Visualizer (Guaranteed to animate)
+      const svgHtml = `
+        <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
+          <rect x="10" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="20;80;20" dur="1s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;20;50" dur="1s" repeatCount="indefinite" />
+          </rect>
+          <rect x="35" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="30;100;30" dur="0.8s" repeatCount="indefinite" />
+            <animate attributeName="y" values="45;10;45" dur="0.8s" repeatCount="indefinite" />
+          </rect>
+          <rect x="60" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="25;90;25" dur="1.2s" repeatCount="indefinite" />
+            <animate attributeName="y" values="47.5;15;47.5" dur="1.2s" repeatCount="indefinite" />
+          </rect>
+          <rect x="85" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="40;110;40" dur="0.7s" repeatCount="indefinite" />
+            <animate attributeName="y" values="40;5;40" dur="0.7s" repeatCount="indefinite" />
+          </rect>
+          <rect x="110" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="20;70;20" dur="1.5s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;25;50" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+          <rect x="135" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="35;95;35" dur="0.9s" repeatCount="indefinite" />
+            <animate attributeName="y" values="42.5;12.5;42.5" dur="0.9s" repeatCount="indefinite" />
+          </rect>
+          <rect x="160" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+            <animate attributeName="height" values="25;85;25" dur="1.1s" repeatCount="indefinite" />
+            <animate attributeName="y" values="47.5;17.5;47.5" dur="1.1s" repeatCount="indefinite" />
+          </rect>
+          <rect x="185" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="30;105;30" dur="0.75s" repeatCount="indefinite" />
+            <animate attributeName="y" values="45;7.5;45" dur="0.75s" repeatCount="indefinite" />
+          </rect>
+          <rect x="210" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+            <animate attributeName="height" values="20;100;20" dur="1.3s" repeatCount="indefinite" />
+            <animate attributeName="y" values="50;10;50" dur="1.3s" repeatCount="indefinite" />
+          </rect>
+          <text x="50%" y="120" text-anchor="middle" fill="rgba(0, 212, 255, 0.4)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA AUDIO</text>
+        </svg>
+      `;
 
-      // Label
-      const label = document.createElement('div');
-      label.textContent = 'Audio Post';
-      label.style.cssText = 'color: white; font-weight: 600; font-size: 1.3rem; letter-spacing: 0.5px;';
-      audioContainer.appendChild(label);
+      const vizContainer = document.createElement('div');
+      vizContainer.innerHTML = svgHtml;
+      audioContainer.appendChild(vizContainer);
 
       // Audio player (hidden)
       const audio = document.createElement('audio');
@@ -311,182 +502,108 @@ async function viewPost(postId) {
 
       // Minimal player container (Spotify style)
       const playerContainer = document.createElement('div');
-      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 12px; width: 100%; max-width: 380px;';
+      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
 
-      // Play/Pause button - minimal circular
+      // Play/Pause button - circular
       const playBtn = document.createElement('button');
-      playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
-      playBtn.style.cssText = 'background: white; border: none; color: #667eea; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 0.9rem;';
-      playBtn.onmouseover = () => {
-        playBtn.style.transform = 'scale(1.08)';
-        playBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-      };
-      playBtn.onmouseout = () => {
-        playBtn.style.transform = 'scale(1)';
-        playBtn.style.boxShadow = 'none';
-      };
+      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+      playBtn.style.cssText = 'background: #00d4ff; border: none; color: #000; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 1.4rem; box-shadow: 0 0 15px rgba(0,212,255,0.4);';
 
-      let isPlaying = false;
       playBtn.addEventListener('click', function () {
-        if (isPlaying) {
-          audio.pause();
-          playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
-          isPlaying = false;
-        } else {
-          audio.play();
-          playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 0.9rem;"></i>';
-          isPlaying = true;
-        }
+        if (audio.paused) audio.play(); else audio.pause();
       });
 
-      audio.addEventListener('ended', function () {
-        playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
-        isPlaying = false;
-      });
-
-      // Update button when autoplay starts playing
-      audio.addEventListener('play', function () {
-        playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 0.9rem;"></i>';
-        isPlaying = true;
-      });
-
-      // Update button when audio is paused
-      audio.addEventListener('pause', function () {
-        playBtn.innerHTML = '<i class="bi bi-play-fill" style="font-size: 0.9rem;"></i>';
-        isPlaying = false;
-      });
+      audio.addEventListener('play', () => playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>');
+      audio.addEventListener('pause', () => playBtn.innerHTML = '<i class="bi bi-play-fill"></i>');
 
       playerContainer.appendChild(playBtn);
 
       // Progress bar container
-      const progressContainer = document.createElement('div');
-      progressContainer.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
+      const progressWrapper = document.createElement('div');
+      progressWrapper.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
 
-      // Progress bar - thin and subtle
+      // Progress bar
       const progressBar = document.createElement('div');
-      progressBar.style.cssText = 'height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; cursor: pointer; position: relative; overflow: hidden;';
+      progressBar.style.cssText = 'height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative;';
 
       const progress = document.createElement('div');
-      progress.style.cssText = 'height: 100%; background: white; border-radius: 2px; width: 0%; transition: width 0.1s linear;';
+      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 2px; width: 0%; box-shadow: 0 0 8px rgba(0,212,255,0.6); transition: width 0.1s linear;';
       progressBar.appendChild(progress);
 
-      // Update progress bar
-      audio.addEventListener('timeupdate', function () {
+      audio.addEventListener('timeupdate', () => {
         const percent = (audio.currentTime / audio.duration) * 100;
         progress.style.width = percent + '%';
       });
 
-      // Click on progress bar to seek
-      progressBar.addEventListener('click', function (e) {
+      progressBar.addEventListener('click', (e) => {
         const rect = progressBar.getBoundingClientRect();
         const percent = (e.clientX - rect.left) / rect.width;
         audio.currentTime = percent * audio.duration;
       });
 
-      // Draggable progress bar for audio
-      let isAudioDragging = false;
-      progressBar.addEventListener('mousedown', function () {
-        isAudioDragging = true;
-      });
+      progressWrapper.appendChild(progressBar);
 
-      document.addEventListener('mousemove', function (e) {
-        if (isAudioDragging && progressBar) {
-          const rect = progressBar.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right) {
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-          }
-        }
-      });
-
-      document.addEventListener('mouseup', function () {
-        isAudioDragging = false;
-      });
-
-      progressContainer.appendChild(progressBar);
-
-      // Time display - minimal
+      // Time display
       const timeDisplay = document.createElement('div');
-      timeDisplay.textContent = '0:00 / 0:00';
-      timeDisplay.style.cssText = 'color: rgba(255,255,255,0.8); font-size: 0.75rem; font-weight: 500; text-align: center; letter-spacing: 0.3px;';
+      timeDisplay.style.cssText = 'display: flex; justify-content: space-between; color: rgba(255,255,255,0.5); font-size: 0.75rem; font-family: monospace;';
 
-      function formatTime(seconds) {
-        if (isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+      const currentTimeSpan = document.createElement('span');
+      currentTimeSpan.textContent = '0:00';
+      const durationSpan = document.createElement('span');
+      durationSpan.textContent = '0:00';
+
+      timeDisplay.appendChild(currentTimeSpan);
+      timeDisplay.appendChild(durationSpan);
+
+      function formatT(s) {
+        if (isNaN(s)) return '0:00';
+        const m = Math.floor(s / 60);
+        const sc = Math.floor(s % 60);
+        return m + ':' + (sc < 10 ? '0' : '') + sc;
       }
 
-      audio.addEventListener('loadedmetadata', function () {
-        updateTimeDisplay();
+      audio.addEventListener('timeupdate', () => {
+        currentTimeSpan.textContent = formatT(audio.currentTime);
+      });
+      audio.addEventListener('loadedmetadata', () => {
+        durationSpan.textContent = formatT(audio.duration);
       });
 
-      audio.addEventListener('timeupdate', function () {
-        updateTimeDisplay();
-      });
+      progressWrapper.appendChild(timeDisplay);
+      playerContainer.appendChild(progressWrapper);
 
-      function updateTimeDisplay() {
-        const current = formatTime(audio.currentTime);
-        const duration = formatTime(audio.duration);
-        timeDisplay.textContent = current + ' / ' + duration;
+      // Volume control
+      const volIcon = document.createElement('i');
+      volIcon.className = 'bi bi-volume-up ms-2';
+      volIcon.style.cssText = 'color: #00d4ff; opacity: 0.8; cursor: pointer; font-size: 1.1rem;';
+
+      const volSlider = document.createElement('input');
+      volSlider.type = 'range';
+      volSlider.min = '0';
+      volSlider.max = '100';
+      volSlider.value = '80'; // Default volume
+      audio.volume = 0.8;
+      volSlider.style.cssText = 'width: 70px; height: 4px; cursor: pointer; -webkit-appearance: none; background: rgba(0, 212, 255, 0.2); border-radius: 2px; outline: none; margin-left: 8px; flex-shrink: 0;';
+
+      // Inject slider thumb styles if not present
+      if (!document.getElementById('rapira-audio-thumb-style')) {
+        const styleTag = document.createElement('style');
+        styleTag.id = 'rapira-audio-thumb-style';
+        styleTag.textContent = `
+          input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,212,255,0.6); border: none; }
+          input[type=range]::-moz-range-thumb { height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0,212,255,0.6); }
+        `;
+        document.head.appendChild(styleTag);
       }
 
-      progressContainer.appendChild(timeDisplay);
-
-      // Volume control for audio
-      const volumeContainer = document.createElement('div');
-      volumeContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 12px;';
-
-      const volumeIcon = document.createElement('i');
-      volumeIcon.className = 'bi bi-volume-up';
-      volumeIcon.style.cssText = 'color: rgba(255,255,255,0.8); font-size: 0.85rem;';
-
-      const volumeSlider = document.createElement('input');
-      volumeSlider.type = 'range';
-      volumeSlider.min = '0';
-      volumeSlider.max = '100';
-      volumeSlider.value = '100';
-      volumeSlider.style.cssText = 'flex: 1; cursor: pointer; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none;';
-      volumeSlider.style.setProperty('-webkit-appearance', 'none');
-
-      // Style the slider thumb
-      const style = document.createElement('style');
-      style.textContent = `
-        input[type='range'] {
-          -webkit-appearance: none;
-          width: 100%;
-        }
-        input[type='range']::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: white;
-          cursor: pointer;
-        }
-        input[type='range']::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: white;
-          cursor: pointer;
-          border: none;
-        }
-      `;
-      if (!document.head.querySelector('style[data-volume-slider]')) {
-        style.setAttribute('data-volume-slider', 'true');
-        document.head.appendChild(style);
-      }
-
-      volumeSlider.addEventListener('input', function () {
-        audio.volume = this.value / 100;
+      volSlider.addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        audio.volume = val;
+        volIcon.className = val === 0 ? 'bi bi-volume-mute ms-2' : val < 0.5 ? 'bi bi-volume-down ms-2' : 'bi bi-volume-up ms-2';
       });
 
-      volumeContainer.appendChild(volumeIcon);
-      volumeContainer.appendChild(volumeSlider);
-      progressContainer.appendChild(volumeContainer);
-      playerContainer.appendChild(progressContainer);
+      playerContainer.appendChild(volIcon);
+      playerContainer.appendChild(volSlider);
 
       audioContainer.appendChild(playerContainer);
       mediaContainer.appendChild(audioContainer);

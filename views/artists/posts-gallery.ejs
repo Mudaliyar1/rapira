@@ -133,8 +133,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+    gap: 4px;
+    padding: 20px;
   }
+
+  .visualizer-bar {
+    width: 5px;
+    height: 15px;
+    background: #00d4ff;
+    border-radius: 3px;
+    animation: bar-pulse 1.2s infinite ease-in-out;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+  }
+
+  @keyframes bar-pulse {
+    0%, 100% { height: 10px; background: #00d4ff; }
+    50% { height: 40px; background: #7c4dff; }
+  }
+
+  .visualizer-bar:nth-child(1) { animation-delay: -1.1s; }
+  .visualizer-bar:nth-child(2) { animation-delay: -0.9s; }
+  .visualizer-bar:nth-child(3) { animation-delay: -0.7s; }
+  .visualizer-bar:nth-child(4) { animation-delay: -0.5s; }
+  .visualizer-bar:nth-child(5) { animation-delay: -0.3s; }
+  .visualizer-bar:nth-child(6) { animation-delay: -0.1s; }
 
   .post-overlay-gallery {
     position: absolute;
@@ -239,7 +262,12 @@ async function loadPosts() {
             : post.media.mediaType === 'video'
             ? `<video muted><source src="${post.media.url}"></video>`
             : `<div class="audio-gallery-card">
-                 <i class="bi bi-music-note-beamed" style="font-size: 3rem; color: white;"></i>
+                 <div class="visualizer-bar"></div>
+                 <div class="visualizer-bar"></div>
+                 <div class="visualizer-bar"></div>
+                 <div class="visualizer-bar"></div>
+                 <div class="visualizer-bar"></div>
+                 <div class="visualizer-bar"></div>
                </div>`
           }
           <div class="post-overlay-gallery">
@@ -296,10 +324,17 @@ function viewPost(postId) {
     mediaContainer.innerHTML = `<video controls style="width: 100%; border-radius: 8px;"><source src="${post.media.url}"></video>`;
   } else if (post.media.mediaType === 'audio') {
     mediaContainer.innerHTML = `
-      <div class="text-center p-4 bg-dark rounded">
-        <i class="bi bi-music-note-beamed fs-1 text-primary mb-3"></i>
-        <div class="mb-3 text-white"><strong>Audio Post</strong></div>
-        <audio controls style="width: 100%;">
+      <div class="text-center p-4 bg-dark rounded border border-secondary">
+        <div class="audio-gallery-card mb-3" style="height: 120px; border-radius: 8px;">
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+          <div class="visualizer-bar"></div>
+        </div>
+        <div class="mb-3 text-white"><strong>RAPIRA AUDIO POST</strong></div>
+        <audio controls style="width: 100%;" autoplay>
           <source src="${post.media.url}">
         </audio>
       </div>
