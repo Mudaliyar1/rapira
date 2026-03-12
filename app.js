@@ -8,8 +8,8 @@ console.log('DNS servers configured to use Google DNS (8.8.8.8, 8.8.4.4)');
 
 const express = require('express');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const cookieParser = require('cookie-parser');
+const mongooseSession = require('./middleware/mongoSession');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
@@ -398,114 +398,17 @@ const isProduction = process.env.NODE_ENV === 'production';
 console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
 console.log(`BASE_URL: ${process.env.BASE_URL}`);
 
-// Configure session options based on environment
-const sessionOptions = {
-  secret: process.env.SESSION_SECRET || 'rapira-secret-key',
-  resave: false,
-  saveUninitialized: true, // Ensure session is always created
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    ttl: 14 * 24 * 60 * 60, // 14 days
-    touchAfter: 24 * 3600, // Only update the session once per 24 hours unless data changes
-    autoRemove: 'native', // Use MongoDB's TTL collection feature
-    stringify: true, // Better compatibility
-    collectionName: 'sessions', // Use a specific collection name
-    autoReconnect: true, // Automatically reconnect to MongoDB if connection is lost
-    mongoOptions: {
-      serverSelectionTimeoutMS: 10000, // Timeout for server selection
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    }
-  }),
-  cookie: {
-    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
-    httpOnly: true
-  }
-};
+// Parse cookies (required for reading the session cookie)
+app.use(cookieParser(process.env.SESSION_SECRET || 'rapira-secret-key'));
 
-// Set environment-specific cookie options
-if (isProduction) {
-  console.log('Using PRODUCTION session settings for Render hosting');
-  // Production cookie settings optimized for Render
-  sessionOptions.cookie.secure = true; // Always true for HTTPS
-  sessionOptions.cookie.sameSite = 'lax'; // More compatible than 'none'
-
-  // Don't set domain for Render - let browser handle it automatically
-  // This prevents cross-domain cookie issues
-  console.log('Production: Not setting cookie domain (auto-detect)');
-
-  // Additional production settings for Render
-  sessionOptions.proxy = true; // Trust proxy headers
-  sessionOptions.cookie.httpOnly = true; // Security
-  sessionOptions.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours instead of 14 days
-
-} else {
-  console.log('Using DEVELOPMENT session settings');
-  // Development cookie settings
-  sessionOptions.cookie.secure = false; // HTTP for localhost
-  sessionOptions.cookie.sameSite = 'lax';
-
-  // Don't set domain for localhost
-  console.log('Development: Not setting cookie domain for localhost');
-}
-
-// If no domain is set yet, try to extract it from BASE_URL
-if (!sessionOptions.cookie.domain) {
-  const baseUrl = process.env.BASE_URL || '';
-  try {
-    // Extract domain from BASE_URL if it exists
-    if (baseUrl) {
-      const url = new URL(baseUrl);
-      // Only set domain for non-localhost domains
-      if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
-        console.log(`Setting cookie domain from BASE_URL to: ${url.hostname}`);
-        sessionOptions.cookie.domain = url.hostname;
-      }
-    }
-  } catch (e) {
-    console.error('Error parsing BASE_URL for cookie domain:', e);
-  }
-}
-
-// Log session configuration for debugging
-console.log('Session configuration:', {
-  mode: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-  cookie: {
-    secure: sessionOptions.cookie.secure,
-    sameSite: sessionOptions.cookie.sameSite,
-    domain: sessionOptions.cookie.domain || 'not set',
-    maxAge: sessionOptions.cookie.maxAge / (1000 * 60 * 60 * 24) + ' days',
-    httpOnly: sessionOptions.cookie.httpOnly
-  },
-  session: {
-    secret: sessionOptions.secret ? 'configured' : 'missing',
-    resave: sessionOptions.resave,
-    saveUninitialized: sessionOptions.saveUninitialized
-  },
-  mongoStore: {
-    url: process.env.MONGODB_URI ? 'configured' : 'missing',
-    ttl: sessionOptions.store.options.ttl / (60 * 60 * 24) + ' days',
-    collection: sessionOptions.store.options.collectionName
-  },
-  environment: {
-    baseUrl: process.env.BASE_URL || 'not set',
-    nodeEnv: process.env.NODE_ENV || 'not set',
-    prodCookieSecure: process.env.PROD_SESSION_COOKIE_SECURE || 'not set',
-    prodCookieSameSite: process.env.PROD_SESSION_COOKIE_SAMESITE || 'not set',
-    prodCookieDomain: process.env.PROD_SESSION_COOKIE_DOMAIN || 'not set',
-    devCookieSecure: process.env.DEV_SESSION_COOKIE_SECURE || 'not set',
-    devCookieSameSite: process.env.DEV_SESSION_COOKIE_SAMESITE || 'not set',
-    devCookieDomain: process.env.DEV_SESSION_COOKIE_DOMAIN || 'not set'
-  }
-});
-
-app.use(session(sessionOptions));
-
-// We've already cleared sessions using the clear-sessions.js script
-console.log('Using new session configuration. Previous sessions have been cleared.');
-
+// Pure Mongoose session — NO express-session, NO connect-mongo
+// Sessions stored directly in MongoDB 'sessions' collection via Mongoose model
+app.use(mongooseSession());
+console.log('Session: using pure Mongoose MongoDB session middleware');
 
 // Flash messages
 app.use(flash());
+
 
 // Import middleware
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
