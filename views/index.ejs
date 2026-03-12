@@ -364,7 +364,7 @@
     <div class="reels-scroll-container d-flex gap-3 overflow-auto pb-3" style="scrollbar-width: none; -ms-overflow-style: none;">
       <% if (typeof homeReels !== 'undefined' && homeReels && homeReels.length > 0) { %>
         <% homeReels.forEach((reel, index) => { %>
-          <div class="home-reel-card flex-shrink-0" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>" onclick="window.location.href='/reels'">
+          <div class="home-reel-card flex-shrink-0" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>" onclick="window.location.href='/reels?id=<%= reel._id %>'">
             <div class="reel-thumb-wrapper overflow-hidden rounded-4 position-relative" style="width: 180px; height: 320px; cursor: pointer;">
               <% if (reel.media.mediaType === 'video') { %>
                 <video src="<%= reel.media.url %>" class="w-100 h-100 object-fit-cover" muted loop onmouseover="this.play()" onmouseout="this.pause(); this.currentTime = 0;"></video>

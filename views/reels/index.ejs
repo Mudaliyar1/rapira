@@ -654,7 +654,7 @@
     <% if (reels && reels.length > 0) { %>
       <div class="reels-container" id="reelsContainer">
         <% reels.forEach((post, index) => { %>
-          <div class="reel-wrapper" data-index="<%= index %>">
+          <div class="reel-wrapper" id="reel-<%= post._id %>" data-index="<%= index %>">
             <div class="reel-content" 
                  oncontextmenu="return false;"
                  onmousedown="startFastForward(event, this)" 
@@ -899,6 +899,19 @@
       if (!container) return;
 
       const reels = document.querySelectorAll('.reel-wrapper');
+      
+      // Auto-scroll to specific reel if ID is in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('id');
+      if (targetId) {
+        const targetReel = document.getElementById(`reel-${targetId}`);
+        if (targetReel) {
+          // Use setTimeout to ensure container is ready
+          setTimeout(() => {
+            targetReel.scrollIntoView({ behavior: 'auto', block: 'center' });
+          }, 100);
+        }
+      }
       
       const observerOptions = {
         root: container,
