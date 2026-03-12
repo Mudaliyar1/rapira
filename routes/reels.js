@@ -5,10 +5,9 @@ const ArtistPost = require('../models/ArtistPost');
 // Get Reels Page
 router.get('/', async (req, res) => {
     try {
-        // Fetch posts that are video or audio and approved
-        // Shuffle happens on client side for infinite scrolling logic, but we can do a large random sample here if we want
-        // But usually we just fetch latest or a random sample of 20
-        const posts = await ArtistPost.aggregate([
+        const targetPostId = req.query.id; // Optional ?id=ID link
+
+        let posts = await ArtistPost.aggregate([
             {
                 $match: {
                     isActive: true,
@@ -38,6 +37,32 @@ router.get('/', async (req, res) => {
             { $unwind: { path: '$artistUser', preserveNullAndEmptyArrays: true } }
         ]);
 
+        // If specific ID is requested, fetch it and put at the top if not already there
+        if (targetPostId) {
+            const hasTarget = posts.some(p => p._id.toString() === targetPostId);
+            if (!hasTarget) {
+                const targetPost = await ArtistPost.findById(targetPostId).populate({
+                    path: 'artist',
+                    populate: { path: 'user' }
+                });
+                if (targetPost && targetPost.isActive) {
+                    // Manual format for the unshift
+                    const tp = targetPost.toObject();
+                    const manualFormatted = {
+                        ...tp,
+                        artistData: tp.artist,
+                        artistUser: tp.artist.user
+                    };
+                    posts.unshift(manualFormatted);
+                }
+            } else {
+                // Move existing target to index 0
+                const idx = posts.findIndex(p => p._id.toString() === targetPostId);
+                const [tp] = posts.splice(idx, 1);
+                posts.unshift(tp);
+            }
+        }
+
         // Add liked state if user is logged in
         const userId = req.session && req.session.user ? req.session.user.id.toString() : null;
         const formattedPosts = posts.map(post => {
@@ -65,6 +90,7 @@ router.get('/', async (req, res) => {
             title: 'Reels - RAPIRA',
             path: '/reels',
             reels: formattedPosts,
+            targetPostId: targetPostId || null,
             layout: false
         });
     } catch (err) {
