@@ -909,6 +909,84 @@ router.get('/admin/export', isLoggedIn, hasAdminPermission('manage_artist_applic
   }
 });
 
+// Admin: Bulk delete application history records
+router.post('/admin/delete-selected', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
+  try {
+    let { applicationIds } = req.body;
+
+    if (Array.isArray(applicationIds)) {
+      applicationIds = applicationIds
+        .flatMap(id => String(id || '').split(','))
+        .map(id => id.trim())
+        .filter(Boolean);
+    } else if (typeof applicationIds === 'string') {
+      applicationIds = applicationIds
+        .split(',')
+        .map(id => id.trim())
+        .filter(Boolean);
+    } else {
+      applicationIds = [];
+    }
+
+    applicationIds = [...new Set(applicationIds)]
+      .filter(id => /^[a-fA-F0-9]{24}$/.test(id));
+
+    if (!applicationIds.length) {
+      req.flash('error', 'Please select at least one valid artist application record to delete.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    const applications = await ArtistApplication.find({ _id: { $in: applicationIds } })
+      .select('_id proofPhoto');
+
+    if (!applications.length) {
+      req.flash('error', 'No valid artist application records were found for deletion.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    for (const application of applications) {
+      if (!application.proofPhoto) {
+        continue;
+      }
+
+      const isCloudUrl =
+        application.proofPhoto.startsWith('http://') ||
+        application.proofPhoto.startsWith('https://');
+
+      if (isCloudUrl) {
+        continue;
+      }
+
+      const proofPhotoPath = path.join(__dirname, '../public', application.proofPhoto);
+      if (!fs.existsSync(proofPhotoPath)) {
+        continue;
+      }
+
+      try {
+        fs.unlinkSync(proofPhotoPath);
+      } catch (unlinkError) {
+        console.error(`Failed to delete proof photo for application ${application._id}:`, unlinkError);
+      }
+    }
+
+    const { deletedCount = 0 } = await ArtistApplication.deleteMany({
+      _id: { $in: applications.map(app => app._id) }
+    });
+
+    if (!deletedCount) {
+      req.flash('error', 'No artist application records were deleted.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    req.flash('success', `${deletedCount} artist application record(s) deleted successfully`);
+    return res.redirect('/artist-applications/admin');
+  } catch (error) {
+    console.error('Error in bulk delete artist applications:', error);
+    req.flash('error', 'An error occurred while deleting selected artist applications');
+    return res.redirect('/artist-applications/admin');
+  }
+});
+
 // Admin: View application details
 router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {

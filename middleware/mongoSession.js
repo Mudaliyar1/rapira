@@ -24,6 +24,10 @@ function getCookieOptions(isProduction) {
     };
 }
 
+function canMutateHeaders(res) {
+    return !res.headersSent && !res.writableEnded;
+}
+
 module.exports = function mongooseSession() {
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -91,7 +95,9 @@ module.exports = function mongooseSession() {
                     { _id: sessionId, data, expiresAt },
                     { upsert: true, new: true }
                 );
-                res.cookie(COOKIE_NAME, sessionId, getCookieOptions(isProduction));
+                if (canMutateHeaders(res)) {
+                    res.cookie(COOKIE_NAME, sessionId, getCookieOptions(isProduction));
+                }
                 if (cb) cb(null);
             } catch (err) {
                 console.error('[mongooseSession] Error saving session:', err.message);
@@ -103,7 +109,9 @@ module.exports = function mongooseSession() {
         req.session.destroy = async function (cb) {
             try {
                 await Session.deleteOne({ _id: sessionId });
-                res.clearCookie(COOKIE_NAME);
+                if (canMutateHeaders(res)) {
+                    res.clearCookie(COOKIE_NAME);
+                }
                 req.session = {};
                 if (cb) cb(null);
             } catch (err) {
@@ -139,7 +147,9 @@ module.exports = function mongooseSession() {
                         { _id: sessionId, data, expiresAt },
                         { upsert: true, new: true }
                     );
-                    res.cookie(COOKIE_NAME, sessionId, getCookieOptions(isProduction));
+                    if (canMutateHeaders(res)) {
+                        res.cookie(COOKIE_NAME, sessionId, getCookieOptions(isProduction));
+                    }
                 }
             } catch (err) {
                 console.error('[mongooseSession] Error auto-saving session:', err.message);

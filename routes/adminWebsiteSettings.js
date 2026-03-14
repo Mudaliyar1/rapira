@@ -8,6 +8,8 @@ const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService')
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { getMenuConfiguration, getAllRoutes } = require('../utils/routeDiscovery');
 const { clearSettingsCache } = require('../middleware/websiteSettings');
+const { clearEmailLinksCache } = require('../utils/emailService');
+const { clearBrevoEmailLinksCache } = require('../utils/brevoEmailService');
 
 const getDefaultHeroCarouselSlides = () => {
   const currentYear = new Date().getFullYear();
@@ -875,6 +877,48 @@ router.post('/registration-fees', isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating registration fees:', error);
     req.flash('error', 'Failed to update registration fees');
+    res.redirect('/admin/website-settings');
+  }
+});
+
+// POST /admin/website-settings/email-links - Update email button link overrides
+router.post('/email-links', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
+  try {
+    const {
+      baseDomain, loginUrl, accountReactivationUrl, artistDashboardUrl, artistApplicationReviewUrl,
+      concertViewUrl, ticketViewUrl, subscriptionViewUrl, refundViewUrl,
+      learningUrl, teamReviewUrl, termsUrl, privacyUrl
+    } = req.body;
+
+    const settings = await WebsiteSettings.getSettings();
+    if (!settings.emailLinks) settings.emailLinks = {};
+
+    const trimOrEmpty = v => (v || '').trim();
+    settings.emailLinks.baseDomain               = trimOrEmpty(baseDomain);
+    settings.emailLinks.loginUrl                  = trimOrEmpty(loginUrl);
+    settings.emailLinks.accountReactivationUrl    = trimOrEmpty(accountReactivationUrl);
+    settings.emailLinks.artistDashboardUrl        = trimOrEmpty(artistDashboardUrl);
+    settings.emailLinks.artistApplicationReviewUrl = trimOrEmpty(artistApplicationReviewUrl);
+    settings.emailLinks.concertViewUrl            = trimOrEmpty(concertViewUrl);
+    settings.emailLinks.ticketViewUrl             = trimOrEmpty(ticketViewUrl);
+    settings.emailLinks.subscriptionViewUrl       = trimOrEmpty(subscriptionViewUrl);
+    settings.emailLinks.refundViewUrl             = trimOrEmpty(refundViewUrl);
+    settings.emailLinks.learningUrl               = trimOrEmpty(learningUrl);
+    settings.emailLinks.teamReviewUrl             = trimOrEmpty(teamReviewUrl);
+    settings.emailLinks.termsUrl                  = trimOrEmpty(termsUrl);
+    settings.emailLinks.privacyUrl                = trimOrEmpty(privacyUrl);
+
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+    clearSettingsCache();
+    clearEmailLinksCache();
+    clearBrevoEmailLinksCache();
+
+    req.flash('success', 'Email link overrides saved successfully!');
+    res.redirect('/admin/website-settings#email-links');
+  } catch (error) {
+    console.error('Error updating email links:', error);
+    req.flash('error', 'Failed to save email link overrides');
     res.redirect('/admin/website-settings');
   }
 });

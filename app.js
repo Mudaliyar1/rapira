@@ -466,15 +466,15 @@ app.use(async (req, res, next) => {
         // Store message before destroying session
         const accountDeletedMessage = 'Your account has been deleted by the website administrator. If you believe this is an error, please contact support.';
 
-        // Destroy session
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('Session destruction error:', err);
-          }
+        // Destroy session before responding. Middleware handles cookie cleanup.
+        await new Promise((resolve) => {
+          req.session.destroy((err) => {
+            if (err) {
+              console.error('Session destruction error:', err);
+            }
+            resolve();
+          });
         });
-
-        // Clear cookie
-        res.clearCookie('connect.sid');
 
         // Redirect to a special page showing the message
         return res.render('error/account-deleted', {

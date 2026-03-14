@@ -307,6 +307,23 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Email link overrides — admin can change button/link URLs in outgoing emails
+  emailLinks: {
+    baseDomain: { type: String, default: '' },
+    loginUrl: { type: String, default: '' },
+    accountReactivationUrl: { type: String, default: '' },
+    artistDashboardUrl: { type: String, default: '' },
+    artistApplicationReviewUrl: { type: String, default: '' },
+    concertViewUrl: { type: String, default: '' },
+    ticketViewUrl: { type: String, default: '' },
+    subscriptionViewUrl: { type: String, default: '' },
+    refundViewUrl: { type: String, default: '' },
+    learningUrl: { type: String, default: '' },
+    teamReviewUrl: { type: String, default: '' },
+    termsUrl: { type: String, default: '' },
+    privacyUrl: { type: String, default: '' }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -74,6 +74,11 @@
           <i class="bi bi-credit-card-2-front me-2"></i>Application Fees
         </button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="email-links-tab" data-bs-toggle="tab" data-bs-target="#email-links" type="button" role="tab">
+          <i class="bi bi-envelope-at me-2"></i>Email Links
+        </button>
+      </li>
     </ul>
   </div>
 
@@ -1198,6 +1203,119 @@
           <div class="mt-4">
             <button type="submit" class="btn btn-primary">
               <i class="bi bi-save me-1"></i>Save Fee Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Email Links Tab -->
+      <div class="tab-pane fade" id="email-links" role="tabpanel">
+        <form action="/admin/website-settings/email-links" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-1">Email Button Link Overrides</h5>
+              <p class="text-muted mb-4">Override the URL used in email buttons/links sent from this platform. Leave blank to use the default <code class="text-info">BASE_URL + path</code>. Changes apply to all future emails instantly.</p>
+
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-person me-1"></i> User Emails</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Email Links Base Domain (Domain only)</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="baseDomain"
+                       value="<%= settings.emailLinks && settings.emailLinks.baseDomain ? settings.emailLinks.baseDomain : '' %>"
+                       placeholder="rapira.in or https://rapira.in">
+                <small class="text-muted">Only domain changes. Routes stay fixed automatically, e.g. <em>/auth/login</em>, <em>/account-reactivation</em>, <em>/tickets/{ticketId}</em>.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Predefined Ticket Route (Fixed)</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" value="/tickets/{ticketId}" readonly>
+                <small class="text-muted">Ticket email buttons always use this route; only the domain above is replaced.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Login Button URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="loginUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.loginUrl ? settings.emailLinks.loginUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/auth/login' %>">
+                <small class="text-muted">Button: <em>Login to Your Account</em> — in welcome &amp; general emails</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Account Reactivation Page URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="accountReactivationUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.accountReactivationUrl ? settings.emailLinks.accountReactivationUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/account-reactivation' %>">
+                <small class="text-muted">Used in account deletion/reactivation emails for the reactivation button/page link</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Terms of Service URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="termsUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.termsUrl ? settings.emailLinks.termsUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/terms-of-service' %>">
+                <small class="text-muted">Footer link in all emails</small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Privacy Policy URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="privacyUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.privacyUrl ? settings.emailLinks.privacyUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/privacy-policy' %>">
+                <small class="text-muted">Footer link in all emails</small>
+              </div>
+
+              <hr class="border-secondary">
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-music-note me-1"></i> Artist Emails</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Artist Dashboard Button URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="artistDashboardUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.artistDashboardUrl ? settings.emailLinks.artistDashboardUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/artists/dashboard' %>">
+                <small class="text-muted">Button: <em>Go to Artist Dashboard</em> / <em>Go to Dashboard</em></small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Artist Application Review URL (Admin)</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="artistApplicationReviewUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.artistApplicationReviewUrl ? settings.emailLinks.artistApplicationReviewUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/artist-applications/admin' %>">
+                <small class="text-muted">Button: <em>Review Application</em> — sent to admins when a new application arrives</small>
+              </div>
+
+              <hr class="border-secondary">
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-bag me-1"></i> Subscription &amp; Learning</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">View My Subscription URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="subscriptionViewUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.subscriptionViewUrl ? settings.emailLinks.subscriptionViewUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/subscriptions/my-subscriptions' %>">
+                <small class="text-muted">Button: <em>View My Subscription</em></small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Learning / Start Learning URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="learningUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.learningUrl ? settings.emailLinks.learningUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/learning' %>">
+                <small class="text-muted">Button: <em>Start Learning</em> — in artist approval emails</small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>How it works</h6>
+                  <ul class="text-muted small mb-4">
+                    <li class="mb-2">Leave a field blank to keep the default link (your site's BASE URL + path).</li>
+                    <li class="mb-2">Enter a full URL (including <code>https://</code>) to override that button in all matching emails.</li>
+                    <li class="mb-2">Overrides apply immediately — no restart needed.</li>
+                    <li class="mb-2">Dynamic links (ticket/concert/refund IDs) are not overridable here as they include unique IDs per email.</li>
+                  </ul>
+                  <div class="alert alert-dark border border-secondary p-2">
+                    <small class="text-white-50"><i class="bi bi-lightbulb me-1 text-warning"></i>
+                      Useful when you change your domain or want a different landing page for a button without editing code.
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Email Links
             </button>
           </div>
         </form>

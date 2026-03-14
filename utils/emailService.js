@@ -46,6 +46,197 @@ console.log('Brevo API Key:', BREVO_API_KEY ? `${BREVO_API_KEY.substring(0, 5)}.
 console.log('Email sender configured as:', `${SENDER_NAME} <${SENDER_EMAIL}>`);
 console.log('SMTP fallback configured:', SMTP_HOST ? 'Yes' : 'No');
 
+// ─── Email link resolver ─────────────────────────────────────────────────────
+// Returns the URL to use in emails. Admin can override any link via Website
+// Settings → Email Links. Falls back to BASE_URL + defaultPath if not set.
+let _cachedEmailLinks = null;
+let _emailLinksCacheExpiry = 0;
+
+function normalizeBaseDomain(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, '');
+}
+
+async function loadEmailLinksCache() {
+  const now = Date.now();
+  if (_cachedEmailLinks && now <= _emailLinksCacheExpiry) {
+    return _cachedEmailLinks;
+  }
+
+  const WebsiteSettings = require('../models/WebsiteSettings');
+  const settings = await WebsiteSettings.getSettings();
+  _cachedEmailLinks = (settings && settings.emailLinks)
+    ? (settings.emailLinks.toObject ? settings.emailLinks.toObject() : settings.emailLinks)
+    : {};
+  _emailLinksCacheExpiry = now + 60000; // cache for 60 s
+  return _cachedEmailLinks;
+}
+
+function replaceKnownBaseDomains(content, baseDomain) {
+  if (!content || !baseDomain) return content;
+
+  const knownBases = [
+    process.env.BASE_URL,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ]
+    .filter(Boolean)
+    .map(v => String(v).trim().replace(/\/+$/, ''));
+
+  let result = content;
+  const uniqueBases = [...new Set(knownBases)];
+  for (const base of uniqueBases) {
+    result = result.split(base).join(baseDomain);
+  }
+
+  return result;
+}
+
+async function getEmailLink(key, defaultPath) {
+  try {
+    const emailLinks = await loadEmailLinksCache();
+    const baseDomain = normalizeBaseDomain(emailLinks.baseDomain);
+
+    const defaultBase = baseDomain || String(process.env.BASE_URL || '').replace(/\/+$/, '');
+
+    const override = emailLinks[key];
+    if (override && override.trim()) {
+      const normalized = normalizeBaseDomain(override) || override.trim();
+      return normalized;
+    }
+
+    return `${defaultBase}${defaultPath}`;
+  } catch (_) {
+    // silently fall through to default
+  }
+  return `${process.env.BASE_URL}${defaultPath}`;
+}
+
+function clearEmailLinksCache() {
+  _cachedEmailLinks = null;
+  _emailLinksCacheExpiry = 0;
+}
+
+// Post-process HTML: replace known static BASE_URL paths with admin overrides.
+// Dynamic paths (containing IDs) are skipped — only static endpoints are swapped.
+const STATIC_LINK_MAP = [
+  ['/auth/login',                           'loginUrl'],
+  ['/account-reactivation',                 'accountReactivationUrl'],
+  ['/artists/dashboard',                    'artistDashboardUrl'],
+  ['/artist-applications/admin',            'artistApplicationReviewUrl'],
+  ['/subscriptions/my-subscriptions',       'subscriptionViewUrl'],
+  ['/learning',                             'learningUrl'],
+  ['/terms-of-service',                     'termsUrl'],
+  ['/privacy-policy',                       'privacyUrl'],
+];
+
+async function applyEmailLinkOverrides(html) {
+  if (!html) return html;
+  try {
+    const emailLinks = await loadEmailLinksCache();
+    const baseDomain = normalizeBaseDomain(emailLinks.baseDomain);
+
+    let result = html;
+
+    // Domain-only override: keep all routes unchanged (including dynamic ones like /tickets/:id)
+    result = replaceKnownBaseDomains(result, baseDomain);
+
+    for (const [path, key] of STATIC_LINK_MAP) {
+      const override = (emailLinks[key] || '').trim();
+      if (!override) continue;
+
+      const normalizedOverride = normalizeBaseDomain(override) || override;
+
+      const baseCandidates = [
+        normalizeBaseDomain(process.env.BASE_URL),
+        baseDomain,
+        'http://localhost:3000',
+        'https://rapiraa.onrender.com',
+        'https://rapira.officialbac.in',
+        'https://rapira.in'
+      ].filter(Boolean);
+
+      for (const base of [...new Set(baseCandidates)]) {
+        const original = `${base}${path}`;
+        if (normalizedOverride !== original) {
+          result = result.split(original).join(normalizedOverride);
+        }
+      }
+    }
+    return result;
+  } catch (_) {
+    return html;
+  }
+}
+
+function applyOverridesToString(content, emailLinks) {
+  if (typeof content !== 'string') {
+    return content;
+  }
+
+  const baseDomain = normalizeBaseDomain(emailLinks.baseDomain);
+  let result = replaceKnownBaseDomains(content, baseDomain);
+
+  const baseCandidates = [
+    normalizeBaseDomain(process.env.BASE_URL),
+    baseDomain,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ].filter(Boolean);
+
+  for (const [path, key] of STATIC_LINK_MAP) {
+    const override = String(emailLinks[key] || '').trim();
+    if (!override) continue;
+
+    const normalizedOverride = normalizeBaseDomain(override) || override;
+    for (const base of [...new Set(baseCandidates)]) {
+      const original = `${base}${path}`;
+      if (normalizedOverride !== original) {
+        result = result.split(original).join(normalizedOverride);
+      }
+    }
+  }
+
+  return result;
+}
+
+function applyOverridesDeep(value, emailLinks) {
+  if (typeof value === 'string') {
+    return applyOverridesToString(value, emailLinks);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(item => applyOverridesDeep(item, emailLinks));
+  }
+
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = applyOverridesDeep(val, emailLinks);
+    }
+    return out;
+  }
+
+  return value;
+}
+
+async function postToBrevo(url, payload, config) {
+  try {
+    const emailLinks = await loadEmailLinksCache();
+    const body = applyOverridesDeep(payload, emailLinks);
+    return await axios.request({ method: 'post', url, data: body, ...(config || {}) });
+  } catch (_) {
+    return await axios.request({ method: 'post', url, data: payload, ...(config || {}) });
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 // IMPORTANT PRODUCTION NOTES:
 // 1. If you see a 401 error with message about unrecognized IP address, you MUST authorize your IP at:
 //    https://app.brevo.com/security/authorised_ips
@@ -131,7 +322,7 @@ const sendEmail = async (options) => {
       console.log('Sending email to:', to, 'with template ID:', templateId);
 
       // Make the API request
-      const response = await axios.post(BREVO_API_URL, payload, {
+      const response = await postToBrevo(BREVO_API_URL, payload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -264,7 +455,7 @@ const sendWelcomeEmail = async (user) => {
       console.log('Sending welcome email to:', user.email);
 
       // Send direct email
-      const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+      const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -384,7 +575,7 @@ const sendConcertSubmissionEmail = async (artist, concert) => {
       console.log('Sending to:', artist.email, 'Subject:', subject);
 
       // Send direct email
-      const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+      const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -509,7 +700,7 @@ const sendConcertApprovalEmail = async (artist, concert) => {
       console.log('Sending to:', artist.email, 'Subject:', subject);
 
       // Send direct email
-      const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+      const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -617,7 +808,7 @@ const sendConcertRejectionEmail = async (artist, concert, reason) => {
     console.log('Sending to:', artist.email, 'Subject:', directEmailPayload.subject);
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -769,7 +960,7 @@ const sendTicketPurchaseEmail = async (user, ticket, concert) => {
     };
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -800,14 +991,20 @@ const sendDirectEmail = async (options) => {
       return { success: false, error: 'Missing required email parameters' };
     }
 
+    // Apply admin email link overrides (replaces static button URLs from DB settings)
+    const processedHtml = await applyEmailLinkOverrides(html);
+
     // Ensure text content is provided (required by Brevo API)
     let textContent = text;
     if (!textContent) {
       console.warn('Text content not provided, generating plain text version from HTML');
       // Create a simple text version by removing HTML tags
-      textContent = html.replace(/<[^>]*>/g, ' ')
+      textContent = processedHtml.replace(/<[^>]*>/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+    } else {
+      // If caller already provided text, still apply domain override replacements.
+      textContent = await applyEmailLinkOverrides(textContent);
     }
 
     // Log recipient information for debugging
@@ -835,14 +1032,14 @@ const sendDirectEmail = async (options) => {
         ? to.map(email => ({ email, name: name || (typeof email === 'string' ? email.split('@')[0] : 'User') }))
         : [{ email: to, name: name || (typeof to === 'string' ? to.split('@')[0] : 'User') }],
       subject: subject,
-      htmlContent: html,
+      htmlContent: processedHtml,
       textContent: textContent
     };
 
     console.log('Sending email with payload:', JSON.stringify(payload).substring(0, 200) + '...');
 
     // Make the API request - using the exact same format that worked in our test
-    const response = await axios.post(BREVO_API_URL, payload, {
+    const response = await postToBrevo(BREVO_API_URL, payload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -943,7 +1140,7 @@ const sendTestEmail = async (to) => {
       };
 
       // Send the email via API
-      const response = await axios.post(BREVO_API_URL, payload, {
+      const response = await postToBrevo(BREVO_API_URL, payload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -1075,7 +1272,7 @@ const sendArtistApplicationEmail = async (user, artistLevel) => {
     console.log('Sending artist application notification to all admins:', recipients.map(r => r.email).join(', '));
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1168,7 +1365,7 @@ const sendArtistApprovalEmail = async (user, artistLevel) => {
     console.log('Sending artist approval email to:', user.email);
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1251,7 +1448,7 @@ const sendArtistRejectionEmail = async (user, artistLevel, reason) => {
     console.log('Sending artist rejection email to:', user.email);
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1360,7 +1557,7 @@ const sendTeamBookingRequestEmail = async (request, role) => {
     console.log('Sending team booking request notification to all admins:', recipients.map(r => r.email).join(', '));
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1442,7 +1639,7 @@ const sendTeamBookingApprovalEmail = async (request, role) => {
     console.log('Sending team booking approval email to:', request.email);
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1522,7 +1719,7 @@ const sendTeamBookingRejectionEmail = async (request, role) => {
     console.log('Sending team booking rejection email to:', request.email);
 
     // Send direct email
-    const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+    const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1633,7 +1830,7 @@ const sendRefundApprovalEmail = async (user, refundRequest, ticket, concert) => 
       console.log('Sending refund approval email to:', user.email);
 
       // Send direct email using the correct API endpoint
-      const response = await axios.post('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
+      const response = await postToBrevo('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
         headers: {
           'Content-Type': 'application/json',
           'api-key': BREVO_API_KEY
@@ -1757,7 +1954,7 @@ const sendRefundRejectionEmail = async (user, refundRequest, ticket, concert) =>
       console.log('Sending refund rejection email to:', user.email);
 
       // Send direct email using the correct API endpoint
-      const response = await axios.post('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
+      const response = await postToBrevo('https://api.sendinblue.com/v3/smtp/email', directEmailPayload, {
         headers: {
           'Content-Type': 'application/json',
           'api-key': BREVO_API_KEY
@@ -1828,7 +2025,7 @@ const sendBulkEmail = async (recipients, subject, htmlContent, textContent = nul
     console.log('Sending bulk email to:', recipients.map(r => r.email).join(', '));
 
     // Send the email
-    const response = await axios.post(BREVO_API_URL, payload, {
+    const response = await postToBrevo(BREVO_API_URL, payload, {
       headers: {
         'accept': 'application/json',
         'api-key': BREVO_API_KEY,
@@ -1859,6 +2056,7 @@ module.exports = {
   templates,
   sendEmail,
   sendDirectEmail,
+  clearEmailLinksCache,
   sendWelcomeEmail,
   sendConcertSubmissionEmail,
   sendConcertApprovalEmail,
@@ -1969,7 +2167,7 @@ const sendSubscriptionConfirmationEmail = async (user, subscription, plan) => {
       console.log('Sending subscription confirmation email to:', user.email);
 
       // Send direct email
-      const response = await axios.post(BREVO_API_URL, directEmailPayload, {
+      const response = await postToBrevo(BREVO_API_URL, directEmailPayload, {
         headers: {
           'accept': 'application/json',
           'api-key': BREVO_API_KEY,
@@ -2011,3 +2209,4 @@ const sendSubscriptionConfirmationEmail = async (user, subscription, plan) => {
 };
 
 module.exports.sendSubscriptionConfirmationEmail = sendSubscriptionConfirmationEmail;
+

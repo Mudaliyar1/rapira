@@ -13,6 +13,7 @@ const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService')
 const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail, sendAccountDeletionNotification } = require('../utils/brevoEmailService');
 const DeletedAccount = require('../models/DeletedAccount');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
+const WebsiteSettings = require('../models/WebsiteSettings');
 const crypto = require('crypto');
 const ActivityLogger = require('../utils/activityLogger');
 const Role = require('../models/Role');
@@ -602,11 +603,21 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
     await Ticket.deleteMany({ user: user._id });
     console.log(`Deleted all tickets for user ${user._id}`);
 
+    const normalizedUserEmail = String(user.email || '').trim().toLowerCase();
+
+    // Remove any stale deleted-account rows for this user/email before creating a fresh one
+    await DeletedAccount.deleteMany({
+      $or: [
+        { userId: user._id },
+        { $expr: { $eq: [{ $toLower: '$email' }, normalizedUserEmail] } }
+      ]
+    });
+
     // Create deleted account record
     const deletedAccount = new DeletedAccount({
       userId: user._id,
       name: user.name,
-      email: user.email,
+      email: normalizedUserEmail,
       role: user.role,
       profileImage: user.profileImage,
       bio: user.bio,
@@ -652,7 +663,7 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
     const recoveryToken = crypto.randomBytes(32).toString('hex');
     const recoveryTokenDoc = new AccountRecoveryToken({
       user: user._id,
-      email: user.email,
+      email: normalizedUserEmail,
       token: recoveryToken,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
     });
@@ -859,8 +870,14 @@ router.post('/recover-account/:token', async (req, res) => {
       profileImage: user.profileImage
     };
 
-    // Delete the deleted account record since the account is recovered
-    await DeletedAccount.deleteOne({ _id: deletedAccount._id });
+    // Delete all stale deleted-account records for this user/email since account is recovered
+    const normalizedRecoveredEmail = String(user.email || recoveryTokenDoc.email || '').trim().toLowerCase();
+    await DeletedAccount.deleteMany({
+      $or: [
+        { userId: user._id },
+        { $expr: { $eq: [{ $toLower: '$email' }, normalizedRecoveredEmail] } }
+      ]
+    });
 
     // Redirect to login with success message
     req.flash('success', 'Account recovered successfully! You are now logged in.');
@@ -917,6 +934,14 @@ router.post('/account-reactivation', async (req, res) => {
 
     await recoveryToken.save();
 
+    const settings = await WebsiteSettings.getSettings();
+    const configuredReactivationUrl =
+      settings && settings.emailLinks && settings.emailLinks.accountReactivationUrl
+        ? settings.emailLinks.accountReactivationUrl.trim()
+        : '';
+    const defaultBaseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const accountReactivationUrl = configuredReactivationUrl || `${defaultBaseUrl}/account-reactivation`;
+
     // Send OTP to user's email
     const emailResult = await sendEmail({
       to: email,
@@ -932,6 +957,7 @@ router.post('/account-reactivation', async (req, res) => {
             .header { background-color: #6366f1; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
             .content { padding: 20px; }
             .otp { font-size: 24px; font-weight: bold; text-align: center; margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; letter-spacing: 5px; }
+            .button { display: inline-block; padding: 12px 24px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 5px; margin: 16px 0; font-weight: bold; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -944,6 +970,10 @@ router.post('/account-reactivation', async (req, res) => {
               <p>Hello,</p>
               <p>We received a request to reactivate your account. Please use the following OTP to complete the reactivation process:</p>
               <div class="otp">${otp}</div>
+              <p style="text-align:center; margin: 0 0 12px 0;">
+                <a href="${accountReactivationUrl}" class="button">Open Account Reactivation Page</a>
+              </p>
+              <p>Reactivation page: <a href="${accountReactivationUrl}">${accountReactivationUrl}</a></p>
               <p>This OTP is valid for 15 minutes. If you did not request this reactivation, please ignore this email.</p>
               <p>If you don't see this email in your inbox, please check your spam or junk folder.</p>
               <p>Thank you,<br>The Rapira Team</p>
@@ -963,6 +993,8 @@ Hello,
 We received a request to reactivate your account. Please use the following OTP to complete the reactivation process:
 
 OTP: ${otp}
+
+Account Reactivation Page: ${accountReactivationUrl}
 
 This OTP is valid for 15 minutes. If you did not request this reactivation, please ignore this email.
 
@@ -1192,8 +1224,14 @@ router.post('/account-reactivation/set-password', async (req, res) => {
       profileImage: user.profileImage
     };
 
-    // Delete the deleted account record since the account is reactivated
-    await DeletedAccount.deleteOne({ _id: deletedAccount._id });
+    // Delete all stale deleted-account records for this user/email since account is reactivated
+    const normalizedReactivatedEmail = String(email || user.email || '').trim().toLowerCase();
+    await DeletedAccount.deleteMany({
+      $or: [
+        { userId: user._id },
+        { $expr: { $eq: [{ $toLower: '$email' }, normalizedReactivatedEmail] } }
+      ]
+    });
 
     // Redirect to home page with success message
     req.flash('success', 'Account reactivated successfully! You are now logged in.');

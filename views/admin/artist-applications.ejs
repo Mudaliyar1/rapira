@@ -142,7 +142,12 @@
         <span class="badge bg-info ms-2"><%= stats ? stats.filtered : 0 %> results</span>
       <% } %>
     </h5>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center">
+      <form method="POST" action="/artist-applications/admin/delete-selected" id="bulkDeleteApplicationsForm" class="mb-0">
+        <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteApplicationsBtn">
+          <i class="bi bi-trash me-1"></i> Delete Selected
+        </button>
+      </form>
       <button class="btn btn-sm btn-outline-light" id="exportApplications">
         <i class="bi bi-download me-1"></i> Export
       </button>
@@ -167,6 +172,9 @@
       <table class="table table-hover align-middle mb-0">
         <thead>
           <tr>
+            <th class="text-white" style="width: 44px;">
+              <input type="checkbox" class="form-check-input" id="selectAllApplications" aria-label="Select all applications">
+            </th>
             <th class="text-white">User</th>
             <th class="text-white">Artist Level</th>
             <th class="text-white">Location</th>
@@ -180,6 +188,14 @@
           <% if (applications && applications.length > 0) { %>
             <% applications.forEach(application => { %>
               <tr>
+                <td>
+                  <input type="checkbox"
+                         class="form-check-input application-select"
+                         name="applicationIds"
+                         value="<%= application._id %>"
+                         form="bulkDeleteApplicationsForm"
+                         aria-label="Select application <%= application.user ? application.user.name : application._id %>">
+                </td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div>
@@ -222,7 +238,7 @@
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="7" class="text-center py-4 text-white">
+              <td colspan="8" class="text-center py-4 text-white">
                 <i class="bi bi-file-earmark-x display-4 text-muted mb-3"></i>
                 <p class="mb-0">No applications found</p>
               </td>
@@ -281,8 +297,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Toggle statistics section
   const toggleStatsBtn = document.getElementById('toggleStats');
   const statsSection = document.getElementById('statsSection');
+  const selectAllApplications = document.getElementById('selectAllApplications');
+  const bulkDeleteApplicationsForm = document.getElementById('bulkDeleteApplicationsForm');
 
-  toggleStatsBtn.addEventListener('click', function() {
+  if (toggleStatsBtn) toggleStatsBtn.addEventListener('click', function() {
     if (statsSection.style.display === 'none') {
       statsSection.style.display = 'block';
       toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
@@ -291,6 +309,42 @@ document.addEventListener('DOMContentLoaded', function() {
       toggleStatsBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
     }
   });
+
+  // ----- Bulk delete selection -----
+  function getCheckedApplicationIds() {
+    return Array.from(document.querySelectorAll('.application-select:checked')).map(cb => cb.value);
+  }
+
+  if (selectAllApplications) {
+    selectAllApplications.addEventListener('change', function() {
+      document.querySelectorAll('.application-select').forEach(cb => {
+        cb.checked = selectAllApplications.checked;
+      });
+    });
+  }
+
+  document.addEventListener('change', function(e) {
+    if (!e.target.classList.contains('application-select')) return;
+    if (!selectAllApplications) return;
+    const all = document.querySelectorAll('.application-select');
+    const checked = document.querySelectorAll('.application-select:checked');
+    selectAllApplications.checked = all.length > 0 && all.length === checked.length;
+    selectAllApplications.indeterminate = checked.length > 0 && checked.length < all.length;
+  });
+
+  if (bulkDeleteApplicationsForm) {
+    bulkDeleteApplicationsForm.addEventListener('submit', function(event) {
+      const ids = getCheckedApplicationIds();
+      if (!ids.length) {
+        event.preventDefault();
+        alert('Please select at least one artist application record to delete.');
+        return;
+      }
+      if (!confirm('Delete ' + ids.length + ' selected artist application record(s)? This cannot be undone.')) {
+        event.preventDefault();
+      }
+    });
+  }
 
   // Export functionality
   const exportBtn = document.getElementById('exportApplications');
@@ -335,10 +389,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const applicationRows = document.querySelectorAll('tbody tr');
 
     applicationRows.forEach(row => {
-      const nameCell = row.querySelector('td:first-child h6');
-      const emailCell = row.querySelector('td:first-child small');
-      const cityCell = row.querySelector('td:nth-child(3) .fw-medium');
-      const stateCell = row.querySelector('td:nth-child(3) small');
+      const nameCell = row.querySelector('td:nth-child(2) h6');
+      const emailCell = row.querySelector('td:nth-child(2) small');
+      const cityCell = row.querySelector('td:nth-child(4) .fw-medium');
+      const stateCell = row.querySelector('td:nth-child(4) small');
 
       [nameCell, emailCell, cityCell, stateCell].forEach(cell => {
         if (cell && !cell.querySelector('mark')) {

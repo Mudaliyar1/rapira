@@ -3796,17 +3796,32 @@ router.get('/deleted-accounts', isLoggedIn, hasAdminPermission('manage_deleted_a
     const limit = 20;
     const skip = (page - 1) * limit;
 
-    // Get total count
-    const totalDeleted = await DeletedAccount.countDocuments();
+    // Get all deleted accounts sorted first (admin deleted account volume is typically manageable)
+    const allDeletedAccounts = await DeletedAccount.find()
+      .sort({ deletedAt: -1 });
 
-    // Get deleted accounts
-    const deletedAccounts = await DeletedAccount.find()
-      .sort({ deletedAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // Filter out stale rows where a live user with same email already exists
+    const existingEmails = await User.distinct('email');
+    const existingEmailSet = new Set((existingEmails || []).map(e => String(e || '').trim().toLowerCase()));
+    const visibleDeletedAccounts = allDeletedAccounts.filter(acc => !existingEmailSet.has(String(acc.email || '').trim().toLowerCase()));
+
+    // Collapse duplicate deleted-account rows by email (keep newest due sorted order)
+    const latestDeletedByEmail = new Map();
+    for (const account of visibleDeletedAccounts) {
+      const emailKey = String(account.email || '').trim().toLowerCase();
+      const key = emailKey || String(account.userId || account._id);
+      if (!latestDeletedByEmail.has(key)) {
+        latestDeletedByEmail.set(key, account);
+      }
+    }
+    const dedupedDeletedAccounts = Array.from(latestDeletedByEmail.values());
+
+    // Paginate visible/valid deleted accounts
+    const totalDeleted = dedupedDeletedAccounts.length;
+    const deletedAccounts = dedupedDeletedAccounts.slice(skip, skip + limit);
 
     // Calculate pagination
-    const totalPages = Math.ceil(totalDeleted / limit);
+    const totalPages = Math.ceil(totalDeleted / limit) || 1;
 
     res.render('admin/deleted-accounts', {
       layout: 'admin',
