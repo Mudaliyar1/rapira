@@ -3,14 +3,42 @@ const router = express.Router();
 const Ticket = require('../models/Ticket');
 const Concert = require('../models/Concert');
 const User = require('../models/User');
+const WebsiteSettings = require('../models/WebsiteSettings');
 const { v4: uuidv4 } = require('uuid');
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // Store active validation tokens in memory (in production, use Redis or database)
 const activeTokens = new Map();
 
+function normalizeBaseDomain(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, '');
+}
+
+async function resolvePublicBaseDomain() {
+  try {
+    const settings = await WebsiteSettings.getSettings();
+    const configuredBase = settings?.emailLinks?.baseDomain;
+    const normalizedConfiguredBase = normalizeBaseDomain(configuredBase);
+    if (normalizedConfiguredBase) {
+      return normalizedConfiguredBase;
+    }
+  } catch (error) {
+    console.error('Failed to load WebsiteSettings base domain for ticket validation:', error.message);
+  }
+
+  const envBase = normalizeBaseDomain(process.env.BASE_URL);
+  if (envBase) {
+    return envBase;
+  }
+
+  return 'http://localhost:3000';
+}
+
 // Get admin ticket validation page
-router.get('/admin/ticket-validation', isLoggedIn, hasAdminPermission('manage_ticket_validation'), (req, res) => {
+router.get('/admin/ticket-validation', isLoggedIn, hasAdminPermission('manage_ticket_validation'), async (req, res) => {
   try {
     // Generate a unique validation token
     const token = uuidv4();
@@ -20,7 +48,8 @@ router.get('/admin/ticket-validation', isLoggedIn, hasAdminPermission('manage_ti
     activeTokens.set(token, { createdAt: new Date(), expiresAt });
 
     // Generate validation URL with token
-    const validationUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/tickets/validate/${token}`;
+    const publicBaseDomain = await resolvePublicBaseDomain();
+    const validationUrl = `${publicBaseDomain}/tickets/validate/${token}`;
 
     console.log('Generated token:', token);
     console.log('Token expires at:', new Date(expiresAt));
