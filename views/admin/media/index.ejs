@@ -211,7 +211,21 @@
   <!-- Media Grid/Table -->
   <div class="card shadow-sm border-0">
     <div class="card-header bg-white border-bottom">
-      <h5 class="mb-0">Media Files (Page <%= currentPage %> of <%= totalPages %>)</h5>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0">Media Files (Page <%= currentPage %> of <%= totalPages %>)</h5>
+        <div class="d-flex align-items-center gap-2">
+          <div class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" id="selectAllMedia">
+            <label class="form-check-label small" for="selectAllMedia">Select all visible</label>
+          </div>
+          <form method="POST" action="/admin/media/delete-selected" id="bulkDeleteForm" class="mb-0" onsubmit="return confirm('Delete selected media file(s)? This cannot be undone.');">
+            <input type="hidden" name="selectedMediaIds" id="selectedMediaIds">
+            <button type="submit" class="btn btn-sm btn-danger" id="deleteSelectedBtn">
+              <i class="bi bi-trash me-1"></i>Delete Selected
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
     <div class="card-body" id="mediaContainer">
       
@@ -220,7 +234,10 @@
         <% if (mediaList && mediaList.length > 0) { %>
           <% mediaList.forEach(media => { %>
             <div class="col-md-3 col-sm-4 col-6 mb-4">
-              <div class="card h-100 shadow-sm media-card">
+              <div class="card h-100 shadow-sm media-card position-relative">
+                <div class="position-absolute top-0 start-0 m-2 z-3">
+                  <input class="form-check-input media-select" type="checkbox" name="mediaIds" form="bulkDeleteForm" value="<%= media._id %>" aria-label="Select media <%= media.original_filename %>">
+                </div>
                 <!-- Preview -->
                 <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px; overflow: hidden;">
                   <% if (media.resource_type === 'image') { %>
@@ -304,6 +321,7 @@
         <table class="table table-hover table-striped mb-0">
           <thead class="table-dark">
             <tr>
+              <th style="width: 40px;"></th>
               <th style="width: 60px;">Preview</th>
               <th>Filename</th>
               <th>Type</th>
@@ -318,6 +336,9 @@
             <% if (mediaList && mediaList.length > 0) { %>
               <% mediaList.forEach(media => { %>
                 <tr>
+                  <td>
+                    <input class="form-check-input media-select" type="checkbox" name="mediaIds" form="bulkDeleteForm" value="<%= media._id %>" aria-label="Select media <%= media.original_filename %>">
+                  </td>
                   <td>
                     <% if (media.resource_type === 'image') { %>
                       <img src="<%= media.secure_url %>" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
@@ -472,28 +493,61 @@
 .card-header {
   font-weight: 600;
 }
+
+.media-select {
+  cursor: pointer;
+}
 </style>
 
 <script>
+function getActiveViewContainer() {
+  const gridView = document.getElementById('gridView');
+  const listView = document.getElementById('listView');
+  if (!gridView || !listView) return document;
+  return gridView.style.display !== 'none' ? gridView : listView;
+}
+
+function getVisibleSelectedMediaIds() {
+  const activeContainer = getActiveViewContainer();
+  const checked = activeContainer.querySelectorAll('.media-select:checked');
+  const ids = [...checked].map((input) => input.value);
+  return [...new Set(ids)];
+}
+
+function syncSelectAllState() {
+  const selectAll = document.getElementById('selectAllMedia');
+  if (!selectAll) return;
+
+  const activeContainer = getActiveViewContainer();
+  const checkboxes = activeContainer.querySelectorAll('.media-select');
+  const checked = activeContainer.querySelectorAll('.media-select:checked');
+
+  if (!checkboxes.length) {
+    selectAll.checked = false;
+    selectAll.indeterminate = false;
+    return;
+  }
+
+  selectAll.checked = checked.length === checkboxes.length;
+  selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+}
+
 function toggleView(view) {
   const gridView = document.getElementById('gridView');
   const listView = document.getElementById('listView');
-  const buttons = document.querySelectorAll('.btn-group button');
+  if (!gridView || !listView) return;
   
   if (view === 'grid') {
     gridView.style.display = 'flex';
     listView.style.display = 'none';
-    buttons[0].classList.add('active');
-    buttons[1].classList.remove('active');
   } else {
     gridView.style.display = 'none';
     listView.style.display = 'block';
-    buttons[0].classList.remove('active');
-    buttons[1].classList.add('active');
   }
   
   // Save preference
   localStorage.setItem('mediaViewPreference', view);
+  syncSelectAllState();
 }
 
 // Auto-submit form when filters change
@@ -510,5 +564,37 @@ document.addEventListener('DOMContentLoaded', function() {
   if (savedView) {
     toggleView(savedView);
   }
+
+  const selectAll = document.getElementById('selectAllMedia');
+  const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+  const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+  document.querySelectorAll('.media-select').forEach((checkbox) => {
+    checkbox.addEventListener('change', syncSelectAllState);
+  });
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function() {
+      const activeContainer = getActiveViewContainer();
+      activeContainer.querySelectorAll('.media-select').forEach((checkbox) => {
+        checkbox.checked = this.checked;
+      });
+      syncSelectAllState();
+    });
+  }
+
+  if (bulkDeleteForm) {
+    bulkDeleteForm.addEventListener('submit', function(event) {
+      const ids = getVisibleSelectedMediaIds();
+
+      if (!ids.length) {
+        event.preventDefault();
+        alert('Please select at least one media file to delete.');
+        return;
+      }
+    });
+  }
+
+  syncSelectAllState();
 });
 </script>

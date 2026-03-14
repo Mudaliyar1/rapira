@@ -273,6 +273,74 @@ router.get('/:id/details', async (req, res) => {
 });
 
 // POST /admin/media/delete/:id - Delete a media item from Cloudinary
+router.post('/delete-selected', async (req, res) => {
+  try {
+    const rawIds = req.body.mediaIds;
+    let mediaIds = [];
+
+    if (Array.isArray(rawIds)) {
+      mediaIds = rawIds
+        .map((id) => String(id).trim())
+        .filter((id) => id.length > 0);
+    } else if (typeof rawIds === 'string' && rawIds.trim()) {
+      mediaIds = rawIds
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0);
+    }
+
+    mediaIds = mediaIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    const uniqueIds = [...new Set(mediaIds)];
+
+    if (!uniqueIds.length) {
+      req.flash('error', 'No valid media items were selected for deletion');
+      return res.redirect('/admin/media');
+    }
+
+    const selectedMedia = await Media.find({ _id: { $in: uniqueIds } });
+
+    if (!selectedMedia.length) {
+      req.flash('error', 'Selected media files were not found');
+      return res.redirect('/admin/media');
+    }
+
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    for (const media of selectedMedia) {
+      try {
+        await deleteMedia(media);
+        deletedCount += 1;
+      } catch (error) {
+        // If Cloudinary deletion fails (e.g., asset already missing), still remove stale DB entry.
+        console.error(`Error deleting media from Cloudinary ${media._id}:`, error.message);
+        try {
+          await Media.deleteOne({ _id: media._id });
+          deletedCount += 1;
+        } catch (dbError) {
+          failedCount += 1;
+          console.error(`Error deleting media DB record ${media._id}:`, dbError.message);
+        }
+      }
+    }
+
+    if (deletedCount > 0) {
+      req.flash('success', `${deletedCount} media item(s) deleted successfully`);
+    }
+
+    if (failedCount > 0) {
+      req.flash('error', `${failedCount} media item(s) could not be deleted`);
+    }
+
+    res.redirect('/admin/media');
+  } catch (error) {
+    console.error('Error deleting selected media:', error);
+    req.flash('error', 'Failed to delete selected media items');
+    res.redirect('/admin/media');
+  }
+});
+
 router.post('/delete/:id', async (req, res) => {
   try {
     const media = await Media.findById(req.params.id);
