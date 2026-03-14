@@ -6,7 +6,7 @@
       <h4 class="mb-0">Apply as Producer</h4>
     </div>
     <div class="card-body">
-      <form action="/producer-applications/apply" method="POST" enctype="multipart/form-data">
+      <form action="/producer-applications/apply" method="POST" enctype="multipart/form-data" id="producerForm">
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Mobile Number *</label>
@@ -64,7 +64,7 @@
             <% const producerFee = (websiteSettings && websiteSettings.registrationFees && websiteSettings.registrationFees.producerRegistrationFee > 0) ? websiteSettings.registrationFees.producerRegistrationFee : 0; %>
             <button type="submit" class="btn <%= producerFee > 0 ? 'btn-primary' : 'btn-success' %>">
               <% if (producerFee > 0) { %>
-                <i class="bi bi-credit-card me-2"></i>Pay ₹<%= producerFee %> & Submit Application
+                <i class="bi bi-credit-card me-2"></i>Pay ₹<%= producerFee %> & Submit
               <% } else { %>
                 <i class="bi bi-check-circle me-2"></i>Submit Application (Free)
               <% } %>
@@ -76,3 +76,4 @@
     </div>
   </div>
 </div>
+

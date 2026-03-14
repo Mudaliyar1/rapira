@@ -14,6 +14,31 @@ const { createArtistApplicationNotification } = require('../utils/notificationSe
 const WebsiteSettings = require('../models/WebsiteSettings');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 
+function wantsJsonResponse(req) {
+  return Boolean(
+    req.xhr ||
+    req.is('application/json') ||
+    req.headers.accept?.includes('json')
+  );
+}
+
+async function saveSession(req) {
+  if (!req.session || typeof req.session.save !== 'function') {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 
@@ -180,29 +205,44 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
 
     // Validate input
     if (!artistLevel || !aadharCard || !city || !state || !age || !phoneNumber) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please fill in all required fields' });
+      }
       req.flash('error', 'Please fill in all required fields');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     // Validate Aadhaar card format (exactly 12 digits)
     if (!/^\d{12}$/.test(aadharCard)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Aadhaar card number must be exactly 12 digits' });
+      }
       req.flash('error', 'Aadhaar card number must be exactly 12 digits');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     // Validate phone number format (exactly 10 digits)
     if (!/^\d{10}$/.test(phoneNumber)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Phone number must be exactly 10 digits' });
+      }
       req.flash('error', 'Phone number must be exactly 10 digits');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     if (!req.file) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please upload a proof photo' });
+      }
       req.flash('error', 'Please upload a proof photo');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     // Validate artist level
     if (!['Beginner', 'Intermediate', 'Established'].includes(artistLevel)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Invalid artist level' });
+      }
       req.flash('error', 'Invalid artist level');
       return res.redirect('/artist-applications/select-level');
     }
@@ -211,25 +251,17 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     const existingArtist = await Artist.findOne({ user: req.session.user.id });
 
     if (existingArtist) {
-      // If user has an artist profile but role is not artist, there's a mismatch
-      // This can happen if admin changed user role but didn't delete artist profile
       const user = await User.findById(req.session.user.id);
-
       if (user && user.role !== 'artist') {
-        console.log(`Fixing mismatch: User ${user._id} has role ${user.role} but has artist profile ${existingArtist._id}`);
-
-        // Delete the existing artist profile to allow user to apply again
         const Concert = require('../models/Concert');
         const Content = require('../models/Content');
-
         await Concert.deleteMany({ artist: existingArtist._id });
         await Content.deleteMany({ artist: existingArtist._id });
         await Artist.findByIdAndDelete(existingArtist._id);
-
-        console.log(`Fixed mismatch: Deleted artist profile ${existingArtist._id} for user ${user._id}`);
-
-        // Continue to the application process
       } else {
+        if (req.xhr || req.headers.accept?.includes('json')) {
+          return res.json({ success: false, message: 'You already have an artist profile' });
+        }
         req.flash('error', 'You already have an artist profile');
         return res.redirect('/artists/dashboard');
       }
@@ -242,11 +274,14 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     });
 
     if (pendingApplication) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'You already have a pending artist application' });
+      }
       req.flash('info', 'You already have a pending artist application');
       return res.redirect('/artist-applications/status');
     }
 
-    // Create new application with proof photo uploaded to Cloudinary
+    // Upload proof photo to Cloudinary
     let proofPhotoUrl = null;
     let proofPhotoMedia = null;
 
@@ -262,7 +297,9 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
         proofPhotoMedia = media._id;
       } catch (err) {
         console.error('Proof photo upload error:', err);
-        req.flash('warning', 'Application created, but proof photo upload failed. Please upload it later.');
+        if (req.xhr || req.headers.accept?.includes('json')) {
+          return res.json({ success: false, message: 'Failed to upload proof photo' });
+        }
       }
     }
 
@@ -270,47 +307,109 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     const settings = await WebsiteSettings.getSettings();
     const fee = settings.registrationFees ? settings.registrationFees.artistRegistrationFee : 0;
 
-    const newApplication = new ArtistApplication({
-      user: req.session.user.id,
+    // Store data in session for payment verification later
+    req.session.artistApplicationData = {
       artistLevel,
       aadharCard,
       state,
       city,
       age,
       phoneNumber,
-      proofPhoto: proofPhotoUrl,
-      proofPhotoData: req.file ? req.file.buffer : null,
-      proofPhotoContentType: req.file ? req.file.mimetype : null,
-      proofPhotoMedia: proofPhotoMedia,
-      status: 'pending',
-      registrationFee: fee,
-      paymentStatus: fee > 0 ? 'pending' : 'n/a'
+      proofPhotoUrl,
+      proofPhotoMedia,
+      registrationFee: fee
+    };
+
+    // If NO FEE, save immediately to DB
+    if (fee === 0) {
+      const newApplication = new ArtistApplication({
+        user: req.session.user.id,
+        artistLevel,
+        aadharCard,
+        state,
+        city,
+        age,
+        phoneNumber,
+        proofPhoto: proofPhotoUrl,
+        proofPhotoMedia: proofPhotoMedia,
+        status: 'pending',
+        registrationFee: fee,
+        paymentStatus: 'n/a'
+      });
+
+      await newApplication.save();
+      delete req.session.artistApplicationData;
+
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: true, isFree: true, message: 'Application submitted successfully' });
+      }
+
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = phoneNumber;
+        const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
+        await createArtistApplicationNotification(populatedApplication);
+      } catch (emailError) {
+        console.error('Error sending notification:', emailError);
+      }
+
+      req.flash('success', 'Your artist application has been submitted successfully');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // If FEE REQUIRED, create Razorpay order and show checkout page
+    const orderResult = await createOrder({
+      amount: fee,
+      receipt: `art_app_${Date.now()}`,
+      notes: {
+        type: 'artist_application',
+        artistLevel: artistLevel,
+        userId: req.session.user.id
+      }
     });
 
-    await newApplication.save();
-
-    // If fee required, redirect to payment page
-    if (fee > 0) {
-      return res.redirect(`/artist-applications/payment/${newApplication._id}`);
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
-    // No fee — send notifications and go to status
-    try {
-      const user = await User.findById(req.session.user.id);
-      user.phoneNumber = phoneNumber;
-      // Admin email notification disabled as requested
-      // const emailResult = await sendArtistApplicationEmail(user, artistLevel);
-      // console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
-      const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
-      await createArtistApplicationNotification(populatedApplication);
-    } catch (emailError) {
-      console.error('Error sending notification:', emailError);
-    }
+    // Store data in session for payment verification later
+    req.session.artistApplicationData = {
+      artistLevel,
+      aadharCard,
+      state,
+      city,
+      age,
+      phoneNumber,
+      proofPhotoUrl,
+      proofPhotoMedia,
+      registrationFee: fee
+    };
 
-    req.flash('success', 'Your artist application has been submitted successfully. You will be notified once it is reviewed.');
-    res.redirect('/artist-applications/status');
+    await saveSession(req);
+
+    // Render checkout page with order details
+    const user = await User.findById(req.session.user.id);
+    res.render('artist-applications/checkout', {
+      layout: false,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: { name: user.name, email: user.email },
+      data: {
+        artistLevel,
+        age,
+        city,
+        state,
+        phoneNumber,
+        registrationFee: fee
+      }
+    });
+
   } catch (error) {
     console.error('Error in submit artist application:', error);
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: false, message: 'An error occurred while submitting your application' });
+    }
     req.flash('error', 'An error occurred while submitting your application');
     res.redirect('/artist-applications/select-level');
   }
@@ -363,7 +462,162 @@ router.get('/payment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Verify artist registration payment
+// Verify artist registration payment (handles both AJAX and form submissions)
+router.post('/verify-payment', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const shouldReturnJson = wantsJsonResponse(req);
+    
+    // Check if payment data is valid
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Missing payment details' });
+      }
+      req.flash('error', 'Missing payment details');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Verify Razorpay signature
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (!verification.success) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Payment verification failed' });
+      }
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Check if application data is in session (new flow)
+    if (req.session.artistApplicationData) {
+      const appData = req.session.artistApplicationData;
+      
+      // Create new application
+      const newApplication = new ArtistApplication({
+        user: req.session.user.id,
+        artistLevel: appData.artistLevel,
+        aadharCard: appData.aadharCard,
+        state: appData.state,
+        city: appData.city,
+        age: appData.age,
+        phoneNumber: appData.phoneNumber,
+        proofPhoto: appData.proofPhotoUrl,
+        proofPhotoMedia: appData.proofPhotoMedia,
+        status: 'pending',
+        registrationFee: appData.registrationFee,
+        paymentStatus: 'paid',
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature
+      });
+
+      await newApplication.save();
+      delete req.session.artistApplicationData;
+
+      // Log transaction
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: newApplication.user,
+        type: 'registration',
+        amount: appData.registrationFee,
+        platformFee: 0,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        sourceModel: 'ArtistApplication',
+        sourceId: newApplication._id,
+        description: `Artist registration fee: ${appData.artistLevel} level`
+      });
+
+      // Send notifications
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = appData.phoneNumber;
+        const populatedApp = await ArtistApplication.findById(newApplication._id).populate('user');
+        await createArtistApplicationNotification(populatedApp);
+      } catch (e) {
+        console.error('Post-payment notification error:', e);
+      }
+
+      if (shouldReturnJson) {
+        return res.json({
+          success: true,
+          message: 'Payment successful! Your application is now under review.',
+          redirectUrl: '/artist-applications/status'
+        });
+      }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Old flow: application already exists (from payment page redirect)
+    const application = await ArtistApplication.findOne({
+      user: req.session.user.id,
+      razorpayOrderId: razorpay_order_id
+    });
+
+    if (!application) {
+      if (shouldReturnJson) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    application.paymentStatus = 'paid';
+    application.razorpayPaymentId = razorpay_payment_id;
+    await application.save();
+
+    // Log transaction
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: application.user,
+      type: 'registration',
+      amount: application.registrationFee,
+      platformFee: 0,
+      paymentId: application.razorpayPaymentId,
+      orderId: application.razorpayOrderId,
+      sourceModel: 'ArtistApplication',
+      sourceId: application._id,
+      description: `Artist registration fee: ${application.artistLevel} level`
+    });
+
+    // Send notifications
+    try {
+      const user = await User.findById(req.session.user.id);
+      user.phoneNumber = application.phoneNumber;
+      const populatedApp = await ArtistApplication.findById(application._id).populate('user');
+      await createArtistApplicationNotification(populatedApp);
+    } catch (e) {
+      console.error('Post-payment notification error:', e);
+    }
+
+    if (shouldReturnJson) {
+      return res.json({
+        success: true,
+        message: 'Payment successful! Your application is now under review.',
+        redirectUrl: '/artist-applications/status'
+      });
+    }
+
+    req.flash('success', 'Payment successful! Your application is now under review.');
+    return res.redirect('/artist-applications/status');
+
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    if (wantsJsonResponse(req)) {
+      return res.status(500).json({ success: false, message: 'Payment verification error. Please contact support.' });
+    }
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Verify artist registration payment (OLD endpoint for backwards compatibility with payment page)
 router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -402,8 +656,6 @@ router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
       try {
         const user = await User.findById(req.session.user.id);
         user.phoneNumber = application.phoneNumber;
-        // Admin email notification disabled as requested
-        // await sendArtistApplicationEmail(user, application.artistLevel);
         const populatedApp = await ArtistApplication.findById(application._id).populate('user');
         await createArtistApplicationNotification(populatedApp);
       } catch (e) { console.error('Post-payment notification error:', e); }
@@ -687,6 +939,11 @@ router.get('/proof/:id', isLoggedIn, hasAdminPermission('manage_artist_applicati
     const application = await ArtistApplication.findById(req.params.id);
     if (!application) {
       return res.status(404).send('Proof not found');
+    }
+
+    // If proofPhoto is a Cloudinary URL, redirect to it
+    if (application.proofPhoto && (application.proofPhoto.startsWith('http://') || application.proofPhoto.startsWith('https://'))) {
+      return res.redirect(application.proofPhoto);
     }
 
     if (application.proofPhotoData && application.proofPhotoContentType) {

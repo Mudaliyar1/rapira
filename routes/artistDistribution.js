@@ -18,6 +18,17 @@ const upload = multer({
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB
 });
 
+async function getArtistRequestOwnerIds(userId) {
+    const ownerIds = [userId];
+    const artistProfile = await Artist.findOne({ user: userId }).select('_id').lean();
+
+    if (artistProfile && artistProfile._id) {
+        ownerIds.push(artistProfile._id);
+    }
+
+    return ownerIds;
+}
+
 router.get('/distributors', isLoggedIn, isArtist, async (req, res) => {
     try {
         const { platform, state, city, search } = req.query;
@@ -130,8 +141,9 @@ router.get('/distributors', isLoggedIn, isArtist, async (req, res) => {
 router.get('/history', isLoggedIn, isArtist, async (req, res) => {
     try {
         const { status, distributorSearch } = req.query;
+        const ownerIds = await getArtistRequestOwnerIds(req.session.user.id);
         let query = {
-            artist: req.session.user.id,
+            artist: { $in: ownerIds },
             deletedByArtist: { $ne: true }
         };
 
@@ -179,7 +191,12 @@ router.get('/history', isLoggedIn, isArtist, async (req, res) => {
 
 router.post('/history/:id/delete', isLoggedIn, isArtist, async (req, res) => {
     try {
-        const request = await DistributionRequest.findOne({ _id: req.params.id, artist: req.session.user.id });
+        const ownerIds = await getArtistRequestOwnerIds(req.session.user.id);
+        const request = await DistributionRequest.findOne({
+            _id: req.params.id,
+            artist: { $in: ownerIds }
+        });
+
         if (!request) {
             req.flash('error', 'History record not found.');
             return res.redirect('/artist-distribution/history');
@@ -199,9 +216,10 @@ router.post('/history/:id/delete', isLoggedIn, isArtist, async (req, res) => {
 
 router.get('/cancel-request/:id', isLoggedIn, isArtist, async (req, res) => {
     try {
+        const ownerIds = await getArtistRequestOwnerIds(req.session.user.id);
         const request = await DistributionRequest.findOne({
             _id: req.params.id,
-            artist: req.session.user.id,
+            artist: { $in: ownerIds },
             paymentStatus: 'pending'
         });
 
@@ -449,11 +467,16 @@ router.post('/verify-payment/:id', isLoggedIn, isArtist, async (req, res) => {
 router.get('/request-details/:id', isLoggedIn, isArtist, async (req, res) => {
     try {
         const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
-        const request = await DistributionRequest.findById(req.params.id)
+        const ownerIds = await getArtistRequestOwnerIds(req.session.user.id);
+        const request = await DistributionRequest.findOne({
+            _id: req.params.id,
+            artist: { $in: ownerIds },
+            deletedByArtist: { $ne: true }
+        })
             .populate('distributor', 'name email profileImage')
             .populate('package');
 
-        if (!request || request.artist.toString() !== req.session.user.id) {
+        if (!request) {
             req.flash('error', 'Request not found');
             return res.redirect('/artist-distribution/history');
         }
@@ -475,12 +498,17 @@ router.get('/request-details/:id', isLoggedIn, isArtist, async (req, res) => {
 
 router.get('/receipt/:id', isLoggedIn, isArtist, async (req, res) => {
     try {
-        const request = await DistributionRequest.findById(req.params.id)
+        const ownerIds = await getArtistRequestOwnerIds(req.session.user.id);
+        const request = await DistributionRequest.findOne({
+            _id: req.params.id,
+            artist: { $in: ownerIds },
+            deletedByArtist: { $ne: true }
+        })
             .populate('distributor', 'name email profileImage')
             .populate('package')
             .populate('artist', 'name email');
 
-        if (!request || request.artist._id.toString() !== req.session.user.id) {
+        if (!request) {
             req.flash('error', 'Receipt not found');
             return res.redirect('/artist-distribution/history');
         }

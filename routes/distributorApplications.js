@@ -12,6 +12,31 @@ const { sendEmail } = require('../utils/brevoEmailService');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 
+function wantsJsonResponse(req) {
+    return Boolean(
+        req.xhr ||
+        req.is('application/json') ||
+        req.headers.accept?.includes('json')
+    );
+}
+
+async function saveSession(req) {
+    if (!req.session || typeof req.session.save !== 'function') {
+        return;
+    }
+
+    await new Promise((resolve, reject) => {
+        req.session.save((error) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            resolve();
+        });
+    });
+}
+
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 },
@@ -128,19 +153,61 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
             location = `${city}, ${state}`;
         }
 
-        if (!companyName) { req.flash('error', 'Company name is required'); return res.redirect('/distributor-applications/apply'); }
-        if (!mobileNumber) { req.flash('error', 'Mobile number is required'); return res.redirect('/distributor-applications/apply'); }
-        if (!experience) { req.flash('error', 'Experience details are required'); return res.redirect('/distributor-applications/apply'); }
-        if (!platforms) { req.flash('error', 'Please select at least one platform'); return res.redirect('/distributor-applications/apply'); }
-        if (!location) { req.flash('error', 'Location (City & State) is required'); return res.redirect('/distributor-applications/apply'); }
-        if (!idProofType) { req.flash('error', 'ID proof type is required'); return res.redirect('/distributor-applications/apply'); }
+        if (!companyName) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Company name is required' });
+            }
+            req.flash('error', 'Company name is required'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
+        if (!mobileNumber) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Mobile number is required' });
+            }
+            req.flash('error', 'Mobile number is required'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
+        if (!experience) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Experience details are required' });
+            }
+            req.flash('error', 'Experience details are required'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
+        if (!platforms) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Please select at least one platform' });
+            }
+            req.flash('error', 'Please select at least one platform'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
+        if (!location) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Location (City & State) is required' });
+            }
+            req.flash('error', 'Location (City & State) is required'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
+        if (!idProofType) { 
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'ID proof type is required' });
+            }
+            req.flash('error', 'ID proof type is required'); 
+            return res.redirect('/distributor-applications/apply'); 
+        }
 
         if (!req.file) {
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'Please upload an ID proof file' });
+            }
             req.flash('error', 'Please upload an ID proof file');
             return res.redirect('/distributor-applications/apply');
         }
 
         if (agreedToTerms !== 'on') {
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: false, message: 'You must agree to terms and conditions' });
+            }
             req.flash('error', 'You must agree to terms and conditions');
             return res.redirect('/distributor-applications/apply');
         }
@@ -155,8 +222,8 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
         const settings = await WebsiteSettings.getSettings();
         const fee = settings.registrationFees ? settings.registrationFees.distributorRegistrationFee : 0;
 
-        const application = new DistributorApplication({
-            user: req.session.user.id,
+        // Store data in session for payment verification later
+        req.session.distributorApplicationData = {
             companyName,
             mobileNumber,
             website: website || '',
@@ -167,21 +234,83 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
             idProofType,
             idProofUrl: media.secure_url,
             idProofMedia: media._id,
-            registrationFee: fee,
-            paymentStatus: fee > 0 ? 'pending' : 'n/a',
-            status: 'pending'
-        });
+            registrationFee: fee
+        };
 
-        await application.save();
+        // If NO FEE, save immediately to DB
+        if (fee === 0) {
+            const application = new DistributorApplication({
+                user: req.session.user.id,
+                ...req.session.distributorApplicationData,
+                paymentStatus: 'n/a',
+                status: 'pending'
+            });
 
-        if (fee > 0) {
-            return res.redirect(`/distributor-applications/payment/${application._id}`);
+            await application.save();
+            delete req.session.distributorApplicationData;
+
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.json({ success: true, isFree: true, message: 'Application submitted successfully' });
+            }
+
+            req.flash('success', 'Distributor application submitted successfully. We will review it shortly.');
+            return res.redirect('/distributor-applications/status');
         }
 
-        req.flash('success', 'Distributor application submitted successfully. We will review it shortly.');
-        res.redirect('/distributor-applications/status');
+        // If FEE REQUIRED, create Razorpay order and show checkout page
+        const orderResult = await createOrder({
+            amount: fee,
+            receipt: `dist_app_${Date.now()}`,
+            notes: {
+                type: 'distributor_application',
+                userId: req.session.user.id
+            }
+        });
+
+        if (!orderResult.success) {
+            req.flash('error', 'Failed to create payment order');
+            return res.redirect('/distributor-applications/apply');
+        }
+
+        // Store data in session for payment verification later
+        req.session.distributorApplicationData = {
+            companyName,
+            mobileNumber,
+            website: website || '',
+            instagramLink: instagramLink || '',
+            experience,
+            platforms: Array.isArray(platforms) ? platforms : [platforms],
+            location,
+            idProofType,
+            idProofUrl: media.secure_url,
+            idProofMedia: media._id,
+            registrationFee: fee
+        };
+
+        await saveSession(req);
+
+        // Render checkout page with order details
+        const user = await User.findById(req.session.user.id);
+        res.render('distributor-applications/checkout', {
+            layout: false,
+            order: orderResult.data,
+            keyId: process.env.RAZORPAY_KEY_ID,
+            currentUser: { name: user.name, email: user.email },
+            data: {
+                companyName,
+                mobileNumber,
+                website: website || '',
+                location,
+                experience,
+                registrationFee: fee
+            }
+        });
+
     } catch (error) {
         console.error('Distributor apply post error:', error);
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.json({ success: false, message: 'Failed to submit application' });
+        }
         req.flash('error', 'Failed to submit application');
         res.redirect('/distributor-applications/apply');
     }
@@ -250,6 +379,132 @@ router.get('/payment/:id', isLoggedIn, async (req, res) => {
     }
 });
 
+// Verify distributor registration payment (handles both AJAX and form submissions)
+router.post('/verify-payment', isLoggedIn, async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const shouldReturnJson = wantsJsonResponse(req);
+        
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            if (shouldReturnJson) {
+                return res.status(400).json({ success: false, message: 'Missing payment details' });
+            }
+            req.flash('error', 'Missing payment details');
+            return res.redirect('/distributor-applications/status');
+        }
+
+        const verification = verifyPayment({
+            orderId: razorpay_order_id,
+            paymentId: razorpay_payment_id,
+            signature: razorpay_signature
+        });
+
+        if (!verification.success) {
+            if (shouldReturnJson) {
+                return res.status(400).json({ success: false, message: 'Payment verification failed' });
+            }
+            req.flash('error', 'Payment verification failed. Please try again.');
+            return res.redirect('/distributor-applications/status');
+        }
+
+        // Check if application data is in session (new flow)
+        if (req.session.distributorApplicationData) {
+            const appData = req.session.distributorApplicationData;
+            
+            const application = new DistributorApplication({
+                user: req.session.user.id,
+                ...appData,
+                paymentStatus: 'paid',
+                status: 'pending',
+                razorpayOrderId: razorpay_order_id,
+                razorpayPaymentId: razorpay_payment_id,
+                razorpaySignature: razorpay_signature
+            });
+
+            await application.save();
+            delete req.session.distributorApplicationData;
+
+            // Log transaction
+            const { logTransaction } = require('../utils/transactionLogger');
+            await logTransaction({
+                user: application.user,
+                type: 'registration',
+                amount: appData.registrationFee,
+                platformFee: 0,
+                paymentId: razorpay_payment_id,
+                orderId: razorpay_order_id,
+                sourceModel: 'DistributorApplication',
+                sourceId: application._id,
+                description: 'Distributor registration fee'
+            });
+
+            if (shouldReturnJson) {
+                return res.json({
+                    success: true,
+                    message: 'Payment successful! Your application is now under review.',
+                    redirectUrl: '/distributor-applications/status'
+                });
+            }
+
+            req.flash('success', 'Payment successful! Your application is now under review.');
+            return res.redirect('/distributor-applications/status');
+        }
+
+        // Old flow: application already exists
+        const application = await DistributorApplication.findOne({
+            user: req.session.user.id,
+            razorpayOrderId: razorpay_order_id
+        });
+
+        if (!application) {
+            if (shouldReturnJson) {
+                return res.status(404).json({ success: false, message: 'Application not found' });
+            }
+            req.flash('error', 'Application not found');
+            return res.redirect('/distributor-applications/status');
+        }
+
+        application.paymentStatus = 'paid';
+        application.razorpayPaymentId = razorpay_payment_id;
+        application.razorpaySignature = razorpay_signature;
+        await application.save();
+
+        // Log transaction
+        const { logTransaction } = require('../utils/transactionLogger');
+        await logTransaction({
+            user: application.user,
+            type: 'registration',
+            amount: application.registrationFee,
+            platformFee: 0,
+            paymentId: application.razorpayPaymentId,
+            orderId: application.razorpayOrderId,
+            sourceModel: 'DistributorApplication',
+            sourceId: application._id,
+            description: 'Distributor registration fee'
+        });
+
+        if (shouldReturnJson) {
+            return res.json({
+                success: true,
+                message: 'Payment successful! Your application is now under review.',
+                redirectUrl: '/distributor-applications/status'
+            });
+        }
+
+        req.flash('success', 'Payment successful! Your application is now under review.');
+        return res.redirect('/distributor-applications/status');
+
+    } catch (error) {
+        console.error('Error verifying distributor payment:', error);
+        if (wantsJsonResponse(req)) {
+            return res.status(500).json({ success: false, message: 'Payment verification error. Please contact support.' });
+        }
+        req.flash('error', 'Payment verification error. Please contact support.');
+        res.redirect('/distributor-applications/status');
+    }
+});
+
+// Verify distributor registration payment (OLD endpoint for backwards compatibility)
 router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;

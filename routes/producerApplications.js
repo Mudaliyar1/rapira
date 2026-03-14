@@ -12,6 +12,31 @@ const { sendEmail } = require('../utils/brevoEmailService');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const { createOrder, verifyPayment } = require('../utils/paymentService');
 
+function wantsJsonResponse(req) {
+  return Boolean(
+    req.xhr ||
+    req.is('application/json') ||
+    req.headers.accept?.includes('json')
+  );
+}
+
+async function saveSession(req) {
+  if (!req.session || typeof req.session.save !== 'function') {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -149,21 +174,33 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
     } = req.body;
 
     if (!mobileNumber || !yearsOfExperience || !skills || !services || !location || !idProofType) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please fill all required fields' });
+      }
       req.flash('error', 'Please fill all required fields');
       return res.redirect('/producer-applications/apply');
     }
 
     if (!/^\d{10}$/.test(mobileNumber)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Mobile number must be exactly 10 digits' });
+      }
       req.flash('error', 'Mobile number must be exactly 10 digits');
       return res.redirect('/producer-applications/apply');
     }
 
     if (!req.file) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please upload one ID proof file' });
+      }
       req.flash('error', 'Please upload one ID proof file');
       return res.redirect('/producer-applications/apply');
     }
 
     if (agreedToTerms !== 'on') {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'You must agree to terms and conditions' });
+      }
       req.flash('error', 'You must agree to terms and conditions');
       return res.redirect('/producer-applications/apply');
     }
@@ -174,6 +211,9 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
     });
 
     if (existingPending) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'You already have a pending producer application' });
+      }
       req.flash('info', 'You already have a pending producer application.');
       return res.redirect('/producer-applications/status');
     }
@@ -184,12 +224,13 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
       ownerId: req.session.user.id,
       folder: 'rapira/producer-applications/proofs'
     });
+
     // Get registration fee from settings
     const settings = await WebsiteSettings.getSettings();
     const fee = settings.registrationFees ? settings.registrationFees.producerRegistrationFee : 0;
 
-    const application = new ProducerApplication({
-      user: req.session.user.id,
+    // Store data in session for payment verification later
+    req.session.producerApplicationData = {
       mobileNumber,
       yearsOfExperience: Number(yearsOfExperience),
       instagramLink: instagramLink || '',
@@ -201,30 +242,91 @@ router.post('/apply', isLoggedIn, upload.single('idProofFile'), async (req, res)
       idProofUrl: media.secure_url,
       idProofMedia: media._id,
       agreedToTerms: true,
-      status: 'pending',
-      registrationFee: fee,
-      paymentStatus: fee > 0 ? 'pending' : 'n/a'
-    });
+      registrationFee: fee
+    };
 
-    await application.save();
+    // If NO FEE, save immediately to DB
+    if (fee === 0) {
+      const application = new ProducerApplication({
+        user: req.session.user.id,
+        ...req.session.producerApplicationData,
+        status: 'pending',
+        paymentStatus: 'n/a'
+      });
 
-    // If fee required, redirect to payment page
-    if (fee > 0) {
-      return res.redirect(`/producer-applications/payment/${application._id}`);
+      await application.save();
+      delete req.session.producerApplicationData;
+
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: true, isFree: true, message: 'Application submitted successfully' });
+      }
+
+      try {
+        const user = await User.findById(req.session.user.id);
+        if (user) {
+          await notifyAdminsAboutProducerApplication(user);
+        }
+      } catch (e) { console.error('Notification error:', e); }
+
+      req.flash('success', 'Producer application submitted successfully');
+      return res.redirect('/producer-applications/status');
     }
 
-    // No fee — notify and go to status
-    try {
-      const user = await User.findById(req.session.user.id);
-      if (user) {
-        await notifyAdminsAboutProducerApplication(user);
+    // If FEE REQUIRED, create Razorpay order and show checkout page
+    const orderResult = await createOrder({
+      amount: fee,
+      receipt: `prod_app_${Date.now()}`,
+      notes: {
+        type: 'producer_application',
+        userId: req.session.user.id
       }
-    } catch (e) { console.error('Notification error:', e); }
+    });
 
-    req.flash('success', 'Producer application submitted successfully. You will receive an email after review.');
-    res.redirect('/producer-applications/status');
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order');
+      return res.redirect('/producer-applications/apply');
+    }
+
+    // Store data in session for payment verification later
+    req.session.producerApplicationData = {
+      mobileNumber,
+      yearsOfExperience: Number(yearsOfExperience),
+      instagramLink: instagramLink || '',
+      youtubeLink: youtubeLink || '',
+      skills,
+      services,
+      location,
+      idProofType,
+      idProofUrl: media.secure_url,
+      idProofMedia: media._id,
+      agreedToTerms: true,
+      registrationFee: fee
+    };
+
+    await saveSession(req);
+
+    // Render checkout page with order details
+    const user = await User.findById(req.session.user.id);
+    res.render('producer-applications/checkout', {
+      layout: false,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: { name: user.name, email: user.email },
+      data: {
+        mobileNumber,
+        yearsOfExperience,
+        instagramLink,
+        youtubeLink,
+        location,
+        registrationFee: fee
+      }
+    });
+
   } catch (error) {
     console.error('Producer apply submit error:', error);
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: false, message: 'Failed to submit producer application' });
+    }
     req.flash('error', 'Failed to submit producer application');
     res.redirect('/producer-applications/apply');
   }
@@ -277,7 +379,145 @@ router.get('/payment/:id', isLoggedIn, async (req, res) => {
   }
 });
 
-// Verify producer registration payment
+// Verify producer registration payment (handles both AJAX and form submissions)
+router.post('/verify-payment', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const shouldReturnJson = wantsJsonResponse(req);
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Missing payment details' });
+      }
+      req.flash('error', 'Missing payment details');
+      return res.redirect('/producer-applications/status');
+    }
+
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (!verification.success) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Payment verification failed' });
+      }
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect('/producer-applications/status');
+    }
+
+    // Check if application data is in session (new flow)
+    if (req.session.producerApplicationData) {
+      const appData = req.session.producerApplicationData;
+      
+      const application = new ProducerApplication({
+        user: req.session.user.id,
+        ...appData,
+        status: 'pending',
+        paymentStatus: 'paid',
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature
+      });
+
+      await application.save();
+      delete req.session.producerApplicationData;
+
+      // Log transaction
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: application.user,
+        type: 'registration',
+        amount: appData.registrationFee,
+        platformFee: 0,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        sourceModel: 'ProducerApplication',
+        sourceId: application._id,
+        description: 'Producer registration fee'
+      });
+
+      try {
+        const user = await User.findById(req.session.user.id);
+        if (user) {
+          await notifyAdminsAboutProducerApplication(user);
+        }
+      } catch (e) { console.error('Post-payment notification error:', e); }
+
+      if (shouldReturnJson) {
+        return res.json({
+          success: true,
+          message: 'Payment successful! Your application is now under review.',
+          redirectUrl: '/producer-applications/status'
+        });
+      }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/producer-applications/status');
+    }
+
+    // Old flow: application already exists
+    const application = await ProducerApplication.findOne({
+      user: req.session.user.id,
+      razorpayOrderId: razorpay_order_id
+    });
+
+    if (!application) {
+      if (shouldReturnJson) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+      req.flash('error', 'Application not found');
+      return res.redirect('/producer-applications/status');
+    }
+
+    application.paymentStatus = 'paid';
+    application.razorpayPaymentId = razorpay_payment_id;
+    await application.save();
+
+    // Log transaction
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: application.user,
+      type: 'registration',
+      amount: application.registrationFee,
+      platformFee: 0,
+      paymentId: application.razorpayPaymentId,
+      orderId: application.razorpayOrderId,
+      sourceModel: 'ProducerApplication',
+      sourceId: application._id,
+      description: 'Producer registration fee'
+    });
+
+    try {
+      const user = await User.findById(req.session.user.id);
+      if (user) {
+        await notifyAdminsAboutProducerApplication(user);
+      }
+    } catch (e) { console.error('Post-payment notification error:', e); }
+
+    if (shouldReturnJson) {
+      return res.json({
+        success: true,
+        message: 'Payment successful! Your application is now under review.',
+        redirectUrl: '/producer-applications/status'
+      });
+    }
+
+    req.flash('success', 'Payment successful! Your application is now under review.');
+    return res.redirect('/producer-applications/status');
+
+  } catch (error) {
+    console.error('Error verifying producer payment:', error);
+    if (wantsJsonResponse(req)) {
+      return res.status(500).json({ success: false, message: 'Payment verification error. Please contact support.' });
+    }
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/producer-applications/status');
+  }
+});
+
+// Verify producer registration payment (OLD endpoint for backwards compatibility)
 router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;

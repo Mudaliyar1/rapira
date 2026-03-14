@@ -7,7 +7,7 @@
       <p class="mb-0 text-white-50">Join our network of distributors and help artists reach global platforms.</p>
     </div>
     <div class="card-body p-4">
-      <form action="/distributor-applications/apply" method="POST" enctype="multipart/form-data">
+      <form action="/distributor-applications/apply" method="POST" enctype="multipart/form-data" id="distributorForm">
         <div class="row g-4">
           <div class="col-md-6">
             <label class="form-label fw-bold">Company/Individual Name *</label>
@@ -117,7 +117,7 @@
           <div class="col-12 d-flex gap-2 justify-content-end">
             <% const distFee = (websiteSettings && websiteSettings.registrationFees && websiteSettings.registrationFees.distributorRegistrationFee > 0) ? websiteSettings.registrationFees.distributorRegistrationFee : 0; %>
             <a href="/users/job-portal" class="btn btn-outline-secondary px-4">Cancel</a>
-            <button type="submit" class="btn px-5 text-white" style="background-color: #6f42c1; border-color: #6f42c1;">
+            <button type="submit" class="btn px-5  text-white" style="background-color: #6f42c1; border-color: #6f42c1;">
               <% if (distFee > 0) { %>
                 <i class="bi bi-credit-card me-2"></i>Pay ₹<%= distFee %> & Submit
               <% } else { %>
@@ -127,8 +127,6 @@
           </div>
         </div>
       </form>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -144,3 +142,4 @@
     }
   }
 </script>
+
