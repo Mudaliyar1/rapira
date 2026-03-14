@@ -250,8 +250,7 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
     try {
         const pkg = await DistributionPackage.findById(req.params.packageId).populate('distributor');
         if (!pkg || !pkg.isActive) {
-            req.flash('error', 'Package not found or inactive');
-            return res.redirect('/artist-distribution/distributors');
+            return res.status(400).json({ success: false, message: 'Package not found or inactive' });
         }
 
         const {
@@ -268,20 +267,17 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
         } = req.body;
 
         if (!contentTitle || !primaryArtist || !genre || !releaseDate) {
-            req.flash('error', 'Please fill in all required fields (Title, Primary Artist, Genre, Release Date)');
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
+            return res.status(400).json({ success: false, message: 'Please fill in all required fields (Title, Primary Artist, Genre, Release Date)' });
         }
 
         const audioFiles = req.files.audioFiles || [];
 
         if (audioFiles.length === 0) {
-            req.flash('error', 'Please upload at least one music file');
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
+            return res.status(400).json({ success: false, message: 'Please upload at least one music file' });
         }
 
         if (pkg.maxAudioFiles > 0 && audioFiles.length > pkg.maxAudioFiles) {
-            req.flash('error', `Maximum ${pkg.maxAudioFiles} audio files allowed.`);
-            return res.redirect(`/artist-distribution/package/${pkg._id}`);
+            return res.status(400).json({ success: false, message: `Maximum ${pkg.maxAudioFiles} audio files allowed.` });
         }
 
         let totalUploadedFiles = [];
@@ -302,8 +298,6 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
             });
         }
 
-
-
         // Upload poster if exists
         let posterRes = null;
         if (req.files.posterImage) {
@@ -323,7 +317,7 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
         const crypto = require('crypto');
         const receiptNum = 'RAPIRA-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
-        const request = new DistributionRequest({
+        const distributionRequest = new DistributionRequest({
             receiptNumber: receiptNum,
             artist: req.session.user.id,
             distributor: pkg.distributor._id,
@@ -349,72 +343,63 @@ router.post('/request/:packageId', isLoggedIn, isArtist, upload.fields([{ name: 
             status: 'pending'
         });
 
-        await request.save();
+        await distributionRequest.save();
 
-        if (totalAmount > 0) {
-            return res.redirect(`/artist-distribution/payment/${request._id}`);
+        // If FREE - return success immediately
+        if (totalAmount === 0) {
+            return res.json({ 
+                success: true, 
+                isFree: true, 
+                message: 'Distribution request submitted successfully! Your media is now with the distributor.' 
+            });
         }
 
-        req.flash('success', 'Distribution request submitted successfully!');
-        res.redirect('/artist-distribution/history');
-    } catch (error) {
-        console.error('Artist distribution request error:', error);
-        req.flash('error', 'Failed to submit request');
-        res.redirect('/artist-distribution/distributors');
-    }
-});
-
-router.get('/payment/:id', isLoggedIn, isArtist, async (req, res) => {
-    try {
-        const request = await DistributionRequest.findById(req.params.id).populate('package').populate('distributor');
-
-        if (!request || request.artist.toString() !== req.session.user.id) {
-            req.flash('error', 'Request not found');
-            return res.redirect('/artist-distribution/distributors');
-        }
-
-        if (request.paymentStatus === 'paid') {
-            req.flash('info', 'Payment already completed');
-            return res.redirect('/artist-distribution/distributors');
-        }
-
-        const amount = request.totalPaid;
+        // If PAID - create Razorpay order and return it
         const orderResult = await createOrder({
-            amount: amount,
-            receipt: `dist_req_${request._id}`,
+            amount: totalAmount,
+            receipt: `dist_req_${distributionRequest._id}`,
             notes: {
-                requestId: request._id.toString(),
+                requestId: distributionRequest._id.toString(),
                 type: 'distribution_purchase',
                 userId: req.session.user.id
             }
         });
 
         if (!orderResult.success) {
-            req.flash('error', 'Failed to create payment order. Please try again.');
-            return res.redirect('/artist-distribution/distributors');
+            return res.status(500).json({ success: false, message: 'Failed to create payment order. Please try again.' });
         }
 
-        request.razorpayOrderId = orderResult.data.id;
-        await request.save();
+        distributionRequest.razorpayOrderId = orderResult.data.id;
+        await distributionRequest.save();
 
-        res.render('users/distribution-payment', {
-            layout: false,
-            request,
+        res.json({
+            success: true,
             order: orderResult.data,
-            keyId: process.env.RAZORPAY_KEY_ID,
-            currentUser: req.session.user
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+            amount: totalAmount,
+            requestId: distributionRequest._id
         });
+
     } catch (error) {
-        console.error('Error loading distribution payment:', error);
-        req.flash('error', 'Failed to load payment page');
-        res.redirect('/artist-distribution/distributors');
+        console.error('Artist distribution request error:', error);
+        res.status(500).json({ success: false, message: 'Failed to submit request' });
     }
 });
+
+
 
 router.post('/verify-payment/:id', isLoggedIn, isArtist, async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-        const request = await DistributionRequest.findById(req.params.id);
+
+        if (!req.params.id || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.json({ success: false, message: 'Missing payment details' });
+        }
+
+        const distributionRequest = await DistributionRequest.findById(req.params.id);
+        if (!distributionRequest) {
+            return res.json({ success: false, message: 'Request not found' });
+        }
 
         const verification = verifyPayment({
             orderId: razorpay_order_id,
@@ -423,41 +408,41 @@ router.post('/verify-payment/:id', isLoggedIn, isArtist, async (req, res) => {
         });
 
         if (verification.success) {
-            request.paymentStatus = 'paid';
-            request.razorpayPaymentId = razorpay_payment_id;
-            request.razorpaySignature = razorpay_signature;
-            await request.save();
+            distributionRequest.paymentStatus = 'paid';
+            distributionRequest.razorpayPaymentId = razorpay_payment_id;
+            distributionRequest.razorpaySignature = razorpay_signature;
+            await distributionRequest.save();
 
             // Create Transaction record for the admin dashboard
             const newTx = new Transaction({
                 user: req.session.user.id,
                 type: 'distribution',
-                amount: request.totalPaid,
-                platformFee: request.commissionAmount || 0,
-                netAmount: request.totalPaid - (request.commissionAmount || 0),
-                payee: request.distributor, // User who is the distributor
+                amount: distributionRequest.totalPaid,
+                platformFee: distributionRequest.commissionAmount || 0,
+                netAmount: distributionRequest.totalPaid - (distributionRequest.commissionAmount || 0),
+                payee: distributionRequest.distributor, // User who is the distributor
                 paymentId: razorpay_payment_id,
                 orderId: razorpay_order_id,
                 status: 'success',
-                payoutStatus: request.totalPaid > 0 ? 'pending' : 'not_applicable',
+                payoutStatus: distributionRequest.totalPaid > 0 ? 'pending' : 'not_applicable',
                 sourceModel: 'DistributionRequest',
-                sourceId: request._id,
-                description: `Distribution: ${request.contentTitle} (${request.contentType})`
+                sourceId: distributionRequest._id,
+                description: `Distribution: ${distributionRequest.contentTitle} (${distributionRequest.contentType})`
             });
             await newTx.save();
 
-            req.flash('success', 'Payment successful! Your distribution request is now with the distributor.');
-            return res.redirect('/artist-distribution/distributors');
+            return res.json({ 
+                success: true, 
+                message: 'Payment successful! Your distribution request is now with the distributor.' 
+            });
         } else {
-            request.paymentStatus = 'failed';
-            await request.save();
-            req.flash('error', 'Payment verification failed.');
-            return res.redirect(`/artist-distribution/payment/${request._id}`);
+            distributionRequest.paymentStatus = 'failed';
+            await distributionRequest.save();
+            return res.json({ success: false, message: 'Payment verification failed.' });
         }
     } catch (error) {
         console.error('Error verifying distribution payment:', error);
-        req.flash('error', 'Payment verification error.');
-        res.redirect('/artist-distribution/distributors');
+        res.status(500).json({ success: false, message: 'Payment verification error.' });
     }
 });
 

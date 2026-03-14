@@ -170,6 +170,7 @@
   </div>
 </div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   const maxAudios = parseInt('<%= cartPackage.maxAudioFiles || 0 %>');
   const maxVideos = parseInt('<%= cartPackage.maxVideoFiles || 0 %>');
@@ -192,20 +193,96 @@
       });
   }
 
-
-  
-  form.addEventListener('submit', function(e) {
+  form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
       // Validate at least one file is selected
       let hasAudio = audioInput && audioInput.files.length > 0;
       
       if (!hasAudio) {
-          e.preventDefault();
           alert('You must upload at least one music file to use this package.');
           return false;
       }
       
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading Files... Please stay on this page.';
+
+      try {
+          const formData = new FormData(form);
+          const res = await fetch(form.action, {
+              method: 'POST',
+              body: formData
+          });
+          const data = await res.json();
+          
+          if (!data.success) {
+              alert(data.message || 'Error submitting distribution request');
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+              return;
+          }
+
+          // If FREE distribution
+          if (data.isFree) {
+              alert('Files uploaded successfully! Your distribution request is now with the distributor.');
+              window.location.href = '/artist-distribution/history';
+              return;
+          }
+
+          // If PAID - open Razorpay automatically
+          if (data.order && data.razorpayKeyId) {
+              const options = {
+                  key: data.razorpayKeyId,
+                  amount: data.amount,
+                  currency: "INR",
+                  name: "Rapira Music Platform",
+                  description: "Distribution Upload & Payment",
+                  order_id: data.order.id,
+                  handler: async function(response) {
+                      try {
+                          const verifyRes = await fetch('/artist-distribution/verify-payment/' + data.requestId, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  razorpay_payment_id: response.razorpay_payment_id,
+                                  razorpay_order_id: response.razorpay_order_id,
+                                  razorpay_signature: response.razorpay_signature
+                              })
+                          });
+                          const verifyData = await verifyRes.json();
+                          if (verifyData.success) {
+                              alert('Payment successful! Your distribution request is now with the distributor.');
+                              window.location.href = '/artist-distribution/history';
+                          } else {
+                              alert(verifyData.message || 'Payment verification failed');
+                          }
+                      } catch(err) {
+                          console.error('Verify error:', err);
+                          alert('Error verifying payment.');
+                      }
+                  },
+                  prefill: {
+                      name: "<%= currentUser.name %>",
+                      email: "<%= currentUser.email %>"
+                  },
+                  theme: { color: "#6f42c1" },
+                  modal: {
+                      ondismiss: function() {
+                          submitBtn.disabled = false;
+                          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> Confirm Upload & Proceed to Payment';
+                      }
+                  }
+              };
+              
+              const rzp = new Razorpay(options);
+              rzp.open();
+          }
+      } catch(error) {
+          console.error('Submit error:', error);
+          alert('Error uploading files. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+      }
   });
 </script>
 
