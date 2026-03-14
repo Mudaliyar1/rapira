@@ -76,12 +76,12 @@
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle" style="min-width: 980px; table-layout: fixed;">
+        <table class="table table-hover mb-0 align-middle" style="min-width: 1300px; table-layout: fixed;">
           <thead class="table-light">
             <tr>
               <th style="width:100px;">Media</th>
               <th style="width:160px;">Artist</th>
-              <th>Caption</th>
+              <th class="caption-col" style="width:320px;">Caption</th>
               <th style="width:150px;">Status</th>
               <th style="width:70px;">Likes</th>
               <th style="width:70px;">Shares</th>
@@ -96,7 +96,7 @@
                 <td colspan="8" class="text-center py-4 text-muted">No posts found</td>
               </tr>
             <% } else { %>
-              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isActive ? 'success' : 'secondary'; const statusText = post.isActive ? 'Active' : 'Hidden'; %>
+              <% posts.forEach(post => { const media = post.media || {}; const mediaType = media.mediaType || media.type || 'image'; const mediaUrl = media.url || ''; const artist = post.artist || {}; const artistName = (artist.user && artist.user.name) || artist.stageName || 'Unknown'; const statusBadge = post.isActive ? 'success' : 'secondary'; const statusText = post.isActive ? 'Active' : 'Hidden'; const captionText = (post.caption || '(no caption)').replace(/\s+/g, ' ').trim(); const captionPreview = captionText.length > 120 ? (captionText.slice(0, 120) + '...') : captionText; %>
                 <tr>
                   <td style="width:100px;">
                     <div style="width:80px;height:80px;overflow:hidden;border-radius:8px;background:#0f0f0f;border:1px solid rgba(255,255,255,0.08);">
@@ -108,7 +108,7 @@
                     </div>
                   </td>
                   <td><small><%= artistName %></small></td>
-                  <td style="max-width: 320px;"><small><%= (post.caption || '(no caption)').slice(0, 140) %></small></td>
+                  <td class="caption-col" style="width:320px;"><small class="post-caption" title="<%= captionText %>"><%= captionPreview %></small></td>
                   <td>
                     <div class="d-flex gap-2 flex-wrap">
                       <span class="badge bg-<%= statusBadge %>" style="font-size:.8rem;"><%= statusText %></span>
@@ -140,5 +140,31 @@
     </div>
   </div>
 </div>
+
+<style>
+  .caption-col {
+    width: 320px;
+    max-width: 320px;
+  }
+
+  .post-caption {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .caption-col {
+      width: 180px;
+      max-width: 180px;
+    }
+
+    .post-caption {
+      font-size: 0.75rem;
+    }
+  }
+</style>
 
 <script></script>

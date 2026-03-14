@@ -924,4 +924,22 @@ router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_distribu
     }
 });
 
+router.post('/admin/:id/delete', isLoggedIn, hasAdminPermission('manage_distributor_applications'), async (req, res) => {
+    try {
+        const deletedApplication = await DistributorApplication.findByIdAndDelete(req.params.id);
+
+        if (!deletedApplication) {
+            req.flash('error', 'Distributor application not found');
+            return res.redirect('/distributor-applications/admin');
+        }
+
+        req.flash('success', 'Distributor application record deleted successfully');
+        res.redirect('/distributor-applications/admin');
+    } catch (error) {
+        console.error('Delete distributor application error:', error);
+        req.flash('error', 'Failed to delete distributor application record');
+        res.redirect('/distributor-applications/admin');
+    }
+});
+
 module.exports = router;

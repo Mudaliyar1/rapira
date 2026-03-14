@@ -2064,6 +2064,79 @@ router.get('/artists', isLoggedIn, hasAdminPermission('manage_artists'), async (
   }
 });
 
+// Manage blocked artists
+router.get('/artists/blocked', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
+  try {
+    const { search = '', state = '', city = '', sortBy = 'blockedAt', sortOrder = 'desc' } = req.query;
+
+    const query = { isBlocked: true };
+
+    if (state && state.trim()) {
+      query.state = { $regex: state.trim(), $options: 'i' };
+    }
+
+    if (city && city.trim()) {
+      query.city = { $regex: city.trim(), $options: 'i' };
+    }
+
+    let sortOptions = { blockedAt: -1 };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      sortOptions = { [sortBy]: order };
+    }
+
+    let artists = await Artist.find(query)
+      .populate('user', 'name email profileImage')
+      .populate('blockedBy', 'name email')
+      .sort(sortOptions)
+      .then((items) => items.filter((artist) => artist.user));
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      artists = artists.filter((artist) => {
+        const stageName = (artist.stageName || '').toLowerCase();
+        const userName = (artist.user ? artist.user.name : '').toLowerCase();
+        const userEmail = (artist.user ? artist.user.email : '').toLowerCase();
+        const genre = (artist.genre || '').toLowerCase();
+
+        return stageName.includes(searchTerm) ||
+          userName.includes(searchTerm) ||
+          userEmail.includes(searchTerm) ||
+          genre.includes(searchTerm);
+      });
+    }
+
+    const totalBlocked = await Artist.countDocuments({ isBlocked: true });
+
+    const blockedStates = await Artist.find({ isBlocked: true }).distinct('state');
+    const blockedCities = await Artist.find({ isBlocked: true }).distinct('city');
+
+    res.render('admin/blocked-artists', {
+      layout: 'admin',
+      currentPath: '/admin/artists/blocked',
+      title: 'Blocked Artists',
+      artists,
+      searchParams: {
+        search,
+        state,
+        city,
+        sortBy,
+        sortOrder
+      },
+      stats: {
+        totalBlocked,
+        filtered: artists.length
+      },
+      states: blockedStates.filter((item) => item && item.trim() !== '').sort(),
+      cities: blockedCities.filter((item) => item && item.trim() !== '').sort()
+    });
+  } catch (error) {
+    console.error('Blocked artists page error:', error);
+    req.flash('error', 'Failed to load blocked artists list');
+    res.redirect('/admin/artists');
+  }
+});
+
 // Export artists to CSV
 router.get('/artists/export', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
@@ -2417,12 +2490,19 @@ router.post('/artists/:id/unblock', isLoggedIn, hasAdminPermission('manage_artis
       }
     );
 
+    const redirectTo = (req.body && req.body.redirectTo === '/admin/artists/blocked')
+      ? '/admin/artists/blocked'
+      : '/admin/artists';
+
     req.flash('success', 'Artist unblocked successfully');
-    res.redirect('/admin/artists');
+    res.redirect(redirectTo);
   } catch (error) {
     console.error('Unblock artist error:', error);
     req.flash('error', 'Failed to unblock artist');
-    res.redirect('/admin/artists');
+    const fallbackRedirect = (req.body && req.body.redirectTo === '/admin/artists/blocked')
+      ? '/admin/artists/blocked'
+      : '/admin/artists';
+    res.redirect(fallbackRedirect);
   }
 });
 
