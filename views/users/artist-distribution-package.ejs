@@ -252,13 +252,20 @@
                           const verifyData = await verifyRes.json();
                           if (verifyData.success) {
                               alert('Payment successful! Your distribution request is now with the distributor.');
-                              window.location.href = '/artist-distribution/history';
+                              // Ensure redirect happens with a small delay for mobile compatibility
+                              setTimeout(function() {
+                                  window.location.href = '/artist-distribution/history';
+                              }, 500);
                           } else {
                               alert(verifyData.message || 'Payment verification failed');
+                              submitBtn.disabled = false;
+                              submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
                           }
                       } catch(err) {
                           console.error('Verify error:', err);
                           alert('Error verifying payment.');
+                          submitBtn.disabled = false;
+                          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
                       }
                   },
                   prefill: {

@@ -49,15 +49,7 @@
               <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
             </div>
 
-            <div id="debug-info" class="alert alert-info mt-4 text-start">
-              <h5>Debug Information:</h5>
-              <p><strong>Key:</strong> <%= key %></p>
-              <p><strong>Order ID:</strong> <%= order.id %></p>
-              <p><strong>Amount:</strong> <%= order.amount %> paise (₹<%= order.amount/100 %>)</p>
-              <p><strong>Plan Price:</strong> ₹<%= plan.price %></p>
-              <p><strong>Subscription ID:</strong> <%= subscription %></p>
-              <p class="text-muted small">Note: Razorpay requires amounts in paise (1 rupee = 100 paise). The amount shown is correct.</p>
-            </div>
+
 
             <div class="d-grid gap-2 mt-3">
               <button id="manual-open" class="btn btn-lg btn-primary pulse-animation">
@@ -93,12 +85,8 @@
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    // Log to console for debugging
-    console.log('Payment redirect page loaded');
-    console.log('Key:', '<%= key %>');
-    console.log('Order ID:', '<%= order.id %>');
-    console.log('Amount:', '<%= order.amount %>');
-
+    // Initialize payment
+    
     function openRazorpay() {
       console.log('Opening Razorpay...');
 
@@ -159,7 +147,7 @@
         console.log('Razorpay opened successfully');
       } catch (error) {
         console.error('Error opening Razorpay:', error);
-        document.getElementById('debug-info').innerHTML += '<p class="text-danger">Error: ' + error.message + '</p>';
+        alert('Error opening payment gateway: ' + error.message);
       }
     }
 

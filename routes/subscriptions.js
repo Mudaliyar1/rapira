@@ -154,7 +154,7 @@ router.post('/create-order/:id', isLoggedIn, async (req, res) => {
     // Check if this is an AJAX request or a form submission
     if (req.xhr || req.headers.accept.indexOf('json') > -1) {
       // Return order details with complete information for AJAX requests
-      console.log('Sending order details to client with key:', process.env.RAZORPAY_KEY_ID);
+      console.log('Sending order details to client');
       return res.json({
         success: true,
         order: orderResult.data,
