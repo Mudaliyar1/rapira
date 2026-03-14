@@ -693,7 +693,7 @@ async function loadMyPosts() {
               <span><i class="bi bi-share"></i> ${post.shares || 0}</span>
               <span><i class="bi bi-eye"></i> ${post.views || 0}</span>
               <span><i class="bi bi-chat-dots text-success"></i> ${post.comments ? post.comments.length : 0}</span>
-              <span><i class="bi bi-flag text-warning"></i> ${post.reports ? post.reports.length : 0}</span>
+              <span style="display: none;"><i class="bi bi-flag text-warning"></i> ${post.reports ? post.reports.length : 0}</span>
               <span class="ms-auto">${toISTDateString(post.createdAt)}</span>
             </div>
             <div class="mb-2">
@@ -710,7 +710,7 @@ async function loadMyPosts() {
               <button class="btn btn-sm btn-outline-warning" onclick="viewPostComments('${post._id}')" title="Comments">
                 <i class="bi bi-chat-dots"></i>
               </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="viewPostReports('${post._id}')" title="Reports">
+              <button class="btn btn-sm btn-outline-secondary d-none" onclick="viewPostReports('${post._id}')" title="Reports">
                 <i class="bi bi-flag"></i>
               </button>
               <a class="btn btn-sm btn-outline-danger" href="/artists/posts/${post._id}/delete" title="Delete">

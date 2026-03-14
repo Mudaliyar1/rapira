@@ -945,8 +945,24 @@ router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
       };
     }
 
-    // Calculate revenue
-    const ticketRevenue = concert.ticketsSold * (concert.price || 0);
+    // Calculate revenue breakdown
+    let totalPlatformFees = 0;
+    let artistNetIncome = 0;
+    let totalSalesValue = 0;
+
+    tickets.forEach(ticket => {
+      if (ticket.paymentStatus === 'completed') {
+        const commission = ticket.commissionAmount || 0;
+        const total = ticket.totalAmount || 0;
+
+        totalPlatformFees += commission;
+        artistNetIncome += (total - commission);
+        totalSalesValue += total;
+      }
+    });
+
+    // Use totalSalesValue as the overall ticketRevenue
+    const ticketRevenue = totalSalesValue;
 
     res.render('artists/concert-details', {
       layout: false,
@@ -956,6 +972,8 @@ router.get('/concerts/:id/details', isLoggedIn, isArtist, async (req, res) => {
       concert,
       venueFinancials,
       ticketRevenue,
+      totalPlatformFees,
+      artistNetIncome,
       tickets
     });
   } catch (error) {

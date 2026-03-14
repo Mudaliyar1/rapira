@@ -1392,6 +1392,21 @@ router.get('/concerts/:id/details', isLoggedIn, hasAdminPermission('manage_conce
       paymentBadge = 'bg-warning text-dark';
     }
 
+    // Get tickets for revenue breakdown
+    const tickets = await Ticket.find({ concert: concert._id, paymentStatus: 'completed' });
+
+    let totalPlatformFees = 0;
+    let artistNetIncome = 0;
+    let totalTicketRevenue = 0;
+
+    tickets.forEach(ticket => {
+      const commission = ticket.commissionAmount || 0;
+      const total = ticket.totalAmount || 0;
+      totalPlatformFees += commission;
+      artistNetIncome += (total - commission);
+      totalTicketRevenue += total;
+    });
+
     res.render('admin/concert-details-new', {
       layout: 'admin',
       currentPath: '/admin/concerts',
@@ -1410,12 +1425,99 @@ router.get('/concerts/:id/details', isLoggedIn, hasAdminPermission('manage_conce
         remainingBalance,
         paymentStatus,
         paymentBadge
-      }
+      },
+      totalPlatformFees,
+      artistNetIncome,
+      totalTicketRevenue,
+      tickets,
+      toISTDateString: require('../utils/dateFormatter').toISTDateString
     });
   } catch (error) {
     console.error('Concert details error:', error);
     req.flash('error', 'Failed to load concert details');
     res.redirect('/admin/concerts');
+  }
+});
+
+// Update concert payment details
+router.post('/concerts/:id/update-payment', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
+  try {
+    const { isPaid, amountPaidByArtist, commissionPaid } = req.body;
+    const concert = await Concert.findById(req.params.id);
+
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/admin/concerts');
+    }
+
+    if (!concert.venueBooking) {
+      concert.venueBooking = {};
+    }
+
+    concert.venueBooking.isPaid = isPaid === 'on';
+    concert.venueBooking.amountPaidByArtist = parseFloat(amountPaidByArtist) || 0;
+
+    if (!concert.venueBooking.adminCommission) {
+      concert.venueBooking.adminCommission = { percentage: 0, advanceAmount: 0 };
+    }
+    concert.venueBooking.adminCommission.advanceAmount = parseFloat(commissionPaid) || 0;
+
+    await concert.save();
+
+    req.flash('success', 'Payment details updated successfully');
+    res.redirect(`/admin/concerts/${concert._id}/details`);
+  } catch (error) {
+    console.error('Update payment error:', error);
+    req.flash('error', 'Failed to update payment details');
+    res.redirect(`/admin/concerts/${req.params.id}/details`);
+  }
+});
+
+// Update artist payout details
+router.post('/concerts/:id/update-payout', isLoggedIn, hasAdminPermission('manage_concerts_list'), async (req, res) => {
+  try {
+    const { amount, status, transactionId, notes } = req.body;
+    const concert = await Concert.findById(req.params.id);
+
+    if (!concert) {
+      req.flash('error', 'Concert not found');
+      return res.redirect('/admin/concerts');
+    }
+
+    // Validate amount doesn't exceed artist net income
+    const tickets = await Ticket.find({ concert: concert._id, paymentStatus: 'completed' });
+    let maxArtistNetIncome = 0;
+    tickets.forEach(ticket => {
+      maxArtistNetIncome += ((ticket.totalAmount || 0) - (ticket.commissionAmount || 0));
+    });
+
+    const payoutAmount = parseFloat(amount) || 0;
+    if (payoutAmount > maxArtistNetIncome + 0.01) { // Add small buffer for float precision
+      req.flash('error', `Payout amount (₹${payoutAmount}) cannot exceed artist net income (₹${maxArtistNetIncome.toFixed(2)})`);
+      return res.redirect(`/admin/concerts/${concert._id}/details`);
+    }
+
+    if (!concert.artistPayout) {
+      concert.artistPayout = { amount: 0, status: 'pending' };
+    }
+
+    concert.artistPayout.amount = payoutAmount;
+    concert.artistPayout.status = status;
+    concert.artistPayout.transactionId = transactionId || '';
+    concert.artistPayout.notes = notes || '';
+
+    if (status === 'paid' && !concert.artistPayout.payoutDate) {
+      concert.artistPayout.payoutDate = new Date();
+    }
+
+    await concert.save();
+
+    req.flash('success', 'Artist payout updated successfully');
+    res.redirect(`/admin/concerts/${concert._id}/details`);
+  } catch (error) {
+    console.error('Update payout error:', error);
+    req.flash('error', 'Failed to update payout details');
+    res.redirect(`/admin/concerts/${req.params.id}/details`);
   }
 });
 
