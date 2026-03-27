@@ -7,6 +7,12 @@ const Artist = require('../models/Artist');
 const ArtistPost = require('../models/ArtistPost');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
+const getViewsDisplay = (postLike) => {
+	const fake = String(postLike?.fakeViewsLabel || '').trim();
+	if (fake) return fake;
+	return String(postLike?.views || 0);
+};
+
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
@@ -137,6 +143,7 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 				likesCount: postObj.likesCount || 0,
 				shares: postObj.shares || 0,
 				views: postObj.views || 0,
+				viewsDisplay: getViewsDisplay(postObj),
 				createdAt: postObj.createdAt,
 				isApproved: postObj.isApproved,
 				isActive: postObj.isActive,
@@ -180,6 +187,7 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 				likesCount: postObj.likesCount || 0,
 				shares: postObj.shares || 0,
 				views: postObj.views || 0, // Add views to response
+				viewsDisplay: getViewsDisplay(postObj),
 				createdAt: postObj.createdAt,
 				isApproved: postObj.isApproved,
 				isActive: postObj.isActive
@@ -329,7 +337,7 @@ router.post('/posts/:id/view', async (req, res) => {
 			{ $inc: { views: 1 } },
 			{ new: true }
 		);
-		res.json({ success: true, views: post.views });
+		res.json({ success: true, views: post.views, viewsDisplay: getViewsDisplay(post) });
 	} catch (err) {
 		res.status(500).json({ success: false });
 	}
@@ -338,6 +346,11 @@ router.post('/posts/:id/view', async (req, res) => {
 // JSON endpoint for single post (for modal rendering)
 router.get('/posts/:id/json', async (req, res) => {
 	try {
+		res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+		res.set('Pragma', 'no-cache');
+		res.set('Expires', '0');
+		res.set('Surrogate-Control', 'no-store');
+
 		const post = await ArtistPost.findById(req.params.id)
 			.populate({
 				path: 'artist',
@@ -372,6 +385,8 @@ router.get('/posts/:id/json', async (req, res) => {
 			likesCount: post.likesCount || 0,
 			shares: post.shares || 0,
 			views: post.views || 0, // Include views in response
+			fakeViewsLabel: post.fakeViewsLabel || '',
+			viewsDisplay: getViewsDisplay(post),
 			createdAt: post.createdAt,
 			artist: {
 				_id: post.artist?._id,

@@ -56,6 +56,10 @@ const artistPostSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  fakeViewsLabel: {
+    type: String,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -80,5 +84,34 @@ const artistPostSchema = new mongoose.Schema({
 // Index for efficient queries
 artistPostSchema.index({ artist: 1, createdAt: -1 });
 artistPostSchema.index({ isApproved: 1, isActive: 1 });
+
+async function removeViewIncreaserMappingForPost(postId) {
+  if (!postId) return;
+
+  try {
+    const WebsiteSettings = mongoose.model('WebsiteSettings');
+    await WebsiteSettings.updateOne(
+      {},
+      {
+        $pull: {
+          'viewIncreaser.entries': { postId }
+        }
+      }
+    );
+  } catch (error) {
+    // Non-blocking cleanup: post deletion should still succeed.
+    console.error('Failed to cleanup view increaser mapping for deleted post:', error.message);
+  }
+}
+
+artistPostSchema.post('findOneAndDelete', async function (doc) {
+  if (!doc || !doc._id) return;
+  await removeViewIncreaserMappingForPost(doc._id);
+});
+
+artistPostSchema.post('findOneAndRemove', async function (doc) {
+  if (!doc || !doc._id) return;
+  await removeViewIncreaserMappingForPost(doc._id);
+});
 
 module.exports = mongoose.model('ArtistPost', artistPostSchema);

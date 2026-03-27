@@ -43,8 +43,9 @@
 				}
 			}
 
-			const res = await fetch(`/posts/${id}/json`, {
-				headers: { 'X-Requested-With': 'XMLHttpRequest' }
+			const res = await fetch(`/posts/${id}/json?_ts=${Date.now()}`, {
+				headers: { 'X-Requested-With': 'XMLHttpRequest' },
+				cache: 'no-store'
 			});
 			const data = await res.json();
 			if (!data.success) {
@@ -284,7 +285,7 @@
 			// counts + like state
 			document.getElementById('post-likes-count').textContent = post.likesCount || 0;
 			document.getElementById('post-shares-count').textContent = post.shares || 0;
-			document.getElementById('post-views-count').textContent = post.views || 0;
+			document.getElementById('post-views-count').textContent = post.fakeViewsLabel || post.viewsDisplay || post.views || 0;
 			const likeIcon = document.getElementById('post-like-icon');
 			if (likeIcon) likeIcon.className = post.liked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
 

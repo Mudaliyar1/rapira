@@ -72,8 +72,9 @@ async function viewPost(postId) {
     }
 
     // Fetch post data
-    const res = await fetch(`/posts/${postId}/json`, {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    const res = await fetch(`/posts/${postId}/json?_ts=${Date.now()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      cache: 'no-store'
     });
     if (!res.ok) throw new Error('Failed to load post');
 
@@ -97,7 +98,7 @@ async function viewPost(postId) {
     document.getElementById('post-created-at').textContent = formatTimeAgo(currentPost.createdAt);
     document.getElementById('post-likes-count').textContent = currentPost.likesCount || 0;
     document.getElementById('post-shares-count').textContent = currentPost.shares || 0;
-    document.getElementById('post-views-count').textContent = currentPost.views || 0;
+    document.getElementById('post-views-count').textContent = currentPost.fakeViewsLabel || currentPost.viewsDisplay || currentPost.views || 0;
     document.getElementById('post-comments-count').textContent = (currentPost.comments || []).length;
     document.getElementById('post-reports-count').textContent = (currentPost.reports || []).length;
 

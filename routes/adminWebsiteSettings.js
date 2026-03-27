@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const Media = require('../models/Media');
+const ArtistPost = require('../models/ArtistPost');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { getMenuConfiguration, getAllRoutes } = require('../utils/routeDiscovery');
@@ -124,6 +125,88 @@ const normalizeLinkUrl = (value) => {
   return `/${input}`;
 };
 
+const normalizeViewsLabel = (value) => {
+  const input = String(value || '').trim().replace(/\s+/g, '');
+  if (!input) return '';
+
+  const match = input.match(/^(\d+(?:\.\d+)?)([kKmMbBtT]?)$/);
+  if (!match) return '';
+
+  const numberPart = parseFloat(match[1]);
+  const suffix = (match[2] || '').toUpperCase();
+
+  if (!Number.isFinite(numberPart) || numberPart < 0) {
+    return '';
+  }
+
+  const multiplierMap = {
+    '': 1,
+    K: 1e3,
+    M: 1e6,
+    B: 1e9,
+    T: 1e12
+  };
+
+  const absoluteViews = numberPart * (multiplierMap[suffix] || 1);
+
+  const formatCompact = (num) => {
+    if (!Number.isFinite(num)) return '';
+    const rounded = Number(num.toFixed(2));
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  };
+
+  if (absoluteViews >= 1e12) {
+    return `${formatCompact(absoluteViews / 1e12)}T`;
+  }
+  if (absoluteViews >= 1e9) {
+    return `${formatCompact(absoluteViews / 1e9)}B`;
+  }
+  if (absoluteViews >= 1e6) {
+    return `${formatCompact(absoluteViews / 1e6)}M`;
+  }
+  if (absoluteViews >= 1e3) {
+    return `${formatCompact(absoluteViews / 1e3)}K`;
+  }
+
+  return formatCompact(absoluteViews);
+};
+
+const extractPostIdFromLink = (value) => {
+  const input = String(value || '').trim();
+  if (!input) return '';
+
+  if (/^[a-f\d]{24}$/i.test(input)) {
+    return input;
+  }
+
+  // Accept any URL/text containing one or more ObjectIds.
+  // If artistId and postId both exist in a link, the last one is usually postId.
+  const fromAnyText = (text) => {
+    const matches = String(text || '').match(/[a-f\d]{24}/ig);
+    if (!matches || matches.length === 0) return '';
+    return matches[matches.length - 1];
+  };
+
+  const fromRaw = fromAnyText(input);
+  if (fromRaw) return fromRaw;
+
+  const fromPath = (pathValue) => {
+    const match = String(pathValue || '').match(/([a-f\d]{24})(?=\/|$|\?|#)/i);
+    return match ? match[1] : '';
+  };
+
+  try {
+    const parsed = new URL(input, process.env.BASE_URL || 'http://localhost:3000');
+    const fromQuery = parsed.searchParams.get('postId') || parsed.searchParams.get('id') || '';
+    if (/^[a-f\d]{24}$/i.test(fromQuery)) {
+      return fromQuery;
+    }
+    return fromAnyText(`${parsed.pathname}${parsed.search}${parsed.hash}`) || fromPath(parsed.pathname);
+  } catch (_) {
+    return fromAnyText(input) || fromPath(input);
+  }
+};
+
 // Configure multer for logo uploads (memory → Cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -201,6 +284,28 @@ router.get('/', isLoggedIn, hasAdminPermission('manage_website_settings'), async
     // Ensure slides array exists (but don't auto-populate if empty)
     if (!settings.heroCarouselSettings.slides) {
       settings.heroCarouselSettings.slides = [];
+    }
+
+    // Remove stale View Increaser entries for posts that no longer exist.
+    if (!settings.viewIncreaser) settings.viewIncreaser = { entries: [] };
+    if (!Array.isArray(settings.viewIncreaser.entries)) settings.viewIncreaser.entries = [];
+    if (settings.viewIncreaser.entries.length > 0) {
+      const mappedPostIds = settings.viewIncreaser.entries
+        .map(entry => (entry && entry.postId ? String(entry.postId) : ''))
+        .filter(Boolean);
+
+      if (mappedPostIds.length > 0) {
+        const existingPosts = await ArtistPost.find({ _id: { $in: mappedPostIds } }).select('_id').lean();
+        const existingSet = new Set(existingPosts.map(post => String(post._id)));
+        const filteredEntries = settings.viewIncreaser.entries.filter(entry => {
+          const id = entry && entry.postId ? String(entry.postId) : '';
+          return id && existingSet.has(id);
+        });
+
+        if (filteredEntries.length !== settings.viewIncreaser.entries.length) {
+          settings.viewIncreaser.entries = filteredEntries;
+        }
+      }
     }
 
     // Initialize all route items with default values if they don't exist
@@ -920,6 +1025,105 @@ router.post('/email-links', isLoggedIn, hasAdminPermission('manage_website_setti
     console.error('Error updating email links:', error);
     req.flash('error', 'Failed to save email link overrides');
     res.redirect('/admin/website-settings');
+  }
+});
+
+// POST /admin/website-settings/view-increaser - Update fake view labels for artist posts
+router.post('/view-increaser', isLoggedIn, hasAdminPermission('manage_website_settings'), async (req, res) => {
+  try {
+    const settings = await WebsiteSettings.getSettings();
+    if (!settings.viewIncreaser) settings.viewIncreaser = { entries: [] };
+
+    const links = toArray(req.body.postLink);
+    const labels = toArray(req.body.viewsLabel);
+    const maxLen = Math.max(links.length, labels.length);
+
+    const incomingEntries = [];
+    const invalidRows = [];
+    let hasNonEmptyRow = false;
+
+    for (let i = 0; i < maxLen; i += 1) {
+      const postLink = String(links[i] || '').trim();
+      const rawLabel = String(labels[i] || '').trim();
+
+      if (!postLink && !rawLabel) {
+        continue;
+      }
+
+      hasNonEmptyRow = true;
+
+      const postId = extractPostIdFromLink(postLink);
+      const viewsLabel = normalizeViewsLabel(rawLabel);
+
+      if (!postId || !viewsLabel) {
+        invalidRows.push(i + 1);
+        continue;
+      }
+
+      const postExists = await ArtistPost.exists({ _id: postId });
+      if (!postExists) {
+        invalidRows.push(i + 1);
+        continue;
+      }
+
+      incomingEntries.push({
+        postId,
+        postLink,
+        viewsLabel,
+        updatedAt: new Date()
+      });
+    }
+
+    // Keep only one entry per post (latest one in form wins)
+    const dedupedMap = new Map();
+    incomingEntries.forEach(entry => {
+      dedupedMap.set(String(entry.postId), entry);
+    });
+    const dedupedEntries = Array.from(dedupedMap.values());
+
+    // If admin submitted data but none of the rows are valid, do not erase existing settings.
+    if (hasNonEmptyRow && dedupedEntries.length === 0) {
+      req.flash('error', 'No valid rows were found. Nothing was changed. Please check post link and view format.');
+      return res.redirect('/admin/website-settings#view-increaser');
+    }
+
+    const previousPostIds = new Set(
+      (settings.viewIncreaser.entries || [])
+        .map(entry => (entry && entry.postId ? String(entry.postId) : ''))
+        .filter(Boolean)
+    );
+    const nextPostIds = new Set(dedupedEntries.map(entry => String(entry.postId)));
+
+    const removedPostIds = Array.from(previousPostIds).filter(id => !nextPostIds.has(id));
+
+    // Clear removed fake labels
+    if (removedPostIds.length > 0) {
+      await ArtistPost.updateMany(
+        { _id: { $in: removedPostIds } },
+        { $unset: { fakeViewsLabel: '' } }
+      );
+    }
+
+    // Apply latest fake labels
+    for (const entry of dedupedEntries) {
+      await ArtistPost.findByIdAndUpdate(entry.postId, { fakeViewsLabel: entry.viewsLabel });
+    }
+
+    settings.viewIncreaser.entries = dedupedEntries;
+    settings.lastUpdatedBy = req.session.user.id;
+    await settings.save();
+    clearSettingsCache();
+
+    if (invalidRows.length > 0) {
+      req.flash('error', `Some rows were skipped due to invalid post link or view format: ${invalidRows.join(', ')}`);
+    }
+
+    req.flash('success', 'View increaser settings saved successfully!');
+    res.redirect('/admin/website-settings#view-increaser');
+  } catch (error) {
+    console.error('Error updating view increaser settings:', error);
+    req.flash('error', 'Failed to save view increaser settings');
+    res.redirect('/admin/website-settings#view-increaser');
   }
 });
 

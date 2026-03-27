@@ -7,6 +7,12 @@ const Page = require('../models/Page');
 const ArtistPost = require('../models/ArtistPost');
 const { sendTestEmail, sendConcertSubmissionEmail } = require('../utils/emailService');
 
+const getViewsDisplay = (item) => {
+  const fake = String(item?.fakeViewsLabel || '').trim();
+  if (fake) return fake;
+  return String(item?.views || 0);
+};
+
 // Home page
 router.get('/', async (req, res) => {
   try {
@@ -341,6 +347,7 @@ router.get('/content', async (req, res) => {
           artist: item.artist,
           createdAt: item.createdAt,
           views: item.views || 0,
+          viewsDisplay: String(item.views || 0),
           likesCount: item.likes || 0,
           media: {
             url: item.fileUrl,
@@ -357,6 +364,7 @@ router.get('/content', async (req, res) => {
         return {
           ...post,
           title: post.title || post.caption || 'Artist Post',
+          viewsDisplay: getViewsDisplay(post),
           likesCount: post.likesCount || (post.likes ? post.likes.length : 0),
           isYoutube: !!ytId,
           youtubeId: ytId,

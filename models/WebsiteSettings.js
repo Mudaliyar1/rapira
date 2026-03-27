@@ -324,6 +324,21 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     privacyUrl: { type: String, default: '' }
   },
 
+  // Admin-controlled fake post view labels (e.g. 12K, 2.5M)
+  viewIncreaser: {
+    entries: {
+      type: [
+        {
+          postId: { type: mongoose.Schema.Types.ObjectId, ref: 'ArtistPost' },
+          postLink: { type: String, default: '' },
+          viewsLabel: { type: String, default: '' },
+          updatedAt: { type: Date, default: Date.now }
+        }
+      ],
+      default: []
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
