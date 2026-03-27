@@ -21,7 +21,17 @@
           </div>
 
           <div class="ticket-body p-3">
-            <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
+            <% if (concert && concert.status === 'cancelled' && ticket.paymentStatus !== 'refunded' && (!refundRequest || refundRequest.status !== 'approved')) { %>
+              <div class="alert alert-warning mb-3" style="background-color: rgba(255, 193, 7, 0.8); border-color: rgba(255, 193, 7, 0.9);">
+                <h5 class="alert-heading text-dark"><i class="bi bi-exclamation-octagon-fill me-2"></i>Concert Cancelled</h5>
+                <p class="mb-1 text-dark">This concert has been cancelled by the artist.</p>
+                <p class="mb-0 text-dark">You can issue a refund request for this ticket.</p>
+                <% if (concert.rejectionReason) { %>
+                  <hr>
+                  <p class="mb-0 text-dark small"><strong>Reason:</strong> <%= concert.rejectionReason %></p>
+                <% } %>
+              </div>
+            <% } else if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
               <div class="alert alert-danger mb-3" style="background-color: rgba(220, 53, 69, 0.8); border-color: rgba(220, 53, 69, 0.9);">
                 <h5 class="alert-heading text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ticket Refunded</h5>
                 <p class="mb-0 text-white">This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
@@ -389,7 +399,7 @@
                 <div class="d-grid gap-3 d-md-flex justify-content-md-center">
                   <% if (!ticket.attended) { %>
                     <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning">
-                      <i class="bi bi-arrow-counterclockwise me-2"></i> Refund
+                      <i class="bi bi-arrow-counterclockwise me-2"></i> <%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
                     </a>
                   <% } %>
                   <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
@@ -457,7 +467,7 @@
   <div class="d-flex flex-column" style="gap: 10px;">
     <% if (!ticket.attended) { %>
       <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-        <i class="bi bi-arrow-counterclockwise me-1"></i> Refund
+        <i class="bi bi-arrow-counterclockwise me-1"></i> <%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
       </a>
     <% } %>
     <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">

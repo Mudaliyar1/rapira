@@ -121,10 +121,12 @@ router.get('/request/:ticketId', isLoggedIn, async (req, res) => {
     }
 
     // Check if the concert date has passed (if concert exists)
+    // Cancelled concerts should still allow refund requests even after the date.
     if (ticket.concert) {
       const concertDate = new Date(ticket.concert.date);
       const currentDate = new Date();
-      if (currentDate > concertDate) {
+      const isCancelledConcert = ticket.concert.status === 'cancelled';
+      if (currentDate > concertDate && !isCancelledConcert) {
         req.flash('error', 'Refunds cannot be requested after the concert date has passed');
         return res.redirect(`/tickets/${ticket._id}`);
       }

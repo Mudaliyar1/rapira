@@ -1137,31 +1137,8 @@ router.get('/tickets/:id/view', isLoggedIn, isArtist, async (req, res) => {
 // Delete ticket confirmation page
 router.get('/tickets/:id/delete', isLoggedIn, isArtist, async (req, res) => {
   try {
-    const Ticket = require('../models/Ticket');
-    const ticket = await Ticket.findById(req.params.id)
-      .populate('concert')
-      .populate('user', 'name email');
-
-    if (!ticket) {
-      req.flash('error', 'Ticket not found');
-      return res.redirect('/artists/manage-tickets');
-    }
-
-    // Check if the artist owns the concert associated with this ticket
-    const artist = await Artist.findOne({ user: req.session.user.id });
-
-    if (!artist || !ticket.concert || ticket.concert.artist.toString() !== artist._id.toString()) {
-      req.flash('error', 'You do not have permission to delete this ticket');
-      return res.redirect('/artists/manage-tickets');
-    }
-
-    res.render('artists/delete-ticket', {
-      layout: false,
-      currentPath: '/artists/tickets/delete',
-      title: 'Delete Ticket Confirmation',
-      artist,
-      ticket
-    });
+    req.flash('error', 'Artists can only view ticket details. Ticket deletion is disabled.');
+    return res.redirect('/artists/manage-tickets');
   } catch (error) {
     console.error('Delete ticket confirmation page error:', error);
     req.flash('error', 'Failed to load delete confirmation page');
@@ -1172,27 +1149,8 @@ router.get('/tickets/:id/delete', isLoggedIn, isArtist, async (req, res) => {
 // Process ticket deletion
 router.post('/tickets/:id/delete', isLoggedIn, isArtist, async (req, res) => {
   try {
-    const Ticket = require('../models/Ticket');
-    const ticket = await Ticket.findById(req.params.id).populate('concert');
-
-    if (!ticket) {
-      req.flash('error', 'Ticket not found');
-      return res.redirect('/artists/manage-tickets');
-    }
-
-    // Check if the artist owns the concert associated with this ticket
-    const artist = await Artist.findOne({ user: req.session.user.id });
-
-    if (!artist || !ticket.concert || ticket.concert.artist.toString() !== artist._id.toString()) {
-      req.flash('error', 'You do not have permission to delete this ticket');
-      return res.redirect('/artists/manage-tickets');
-    }
-
-    // Delete the ticket
-    await Ticket.findByIdAndDelete(req.params.id);
-
-    req.flash('success', 'Ticket deleted successfully');
-    res.redirect('/artists/manage-tickets');
+    req.flash('error', 'Artists can only view ticket details. Ticket deletion is disabled.');
+    return res.redirect('/artists/manage-tickets');
   } catch (error) {
     console.error('Delete ticket error:', error);
     req.flash('error', 'Failed to delete ticket');
