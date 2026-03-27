@@ -60,6 +60,10 @@ const artistPostSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fakeLikesLabel: {
+    type: String,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true

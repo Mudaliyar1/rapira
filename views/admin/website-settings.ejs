@@ -1340,13 +1340,18 @@
                   <% viewIncreaserEntries.forEach((entry, idx) => { %>
                     <div class="border border-secondary rounded p-3 bg-dark bg-opacity-50 view-increaser-row">
                       <div class="row g-3 align-items-end">
+                        <input type="hidden" name="rowPostId" value="<%= entry.postId ? entry.postId : '' %>">
                         <div class="col-md-8">
                           <label class="form-label text-white">Artist Post Link</label>
                           <input type="text" class="form-control bg-dark text-white border-secondary" name="postLink" value="<%= entry.postLink || '' %>" placeholder="https://yourdomain.com/posts/POST_ID or just POST_ID">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                           <label class="form-label text-white">View Display</label>
                           <input type="text" class="form-control bg-dark text-white border-secondary" name="viewsLabel" value="<%= entry.viewsLabel || '' %>" placeholder="12K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                        </div>
+                        <div class="col-md-1">
+                          <label class="form-label text-white">Likes (opt.)</label>
+                          <input type="text" class="form-control bg-dark text-white border-secondary" name="likesLabel" value="<%= entry.fakeLikesLabel || '' %>" placeholder="3K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
                         </div>
                         <div class="col-md-1 d-grid">
                           <button type="button" class="btn btn-outline-danger remove-view-row" title="Remove row" onclick="(function(btn){var c=document.getElementById('viewIncreaserRows');if(!c)return;var r=btn.closest('.view-increaser-row');if(!r)return;var rows=c.querySelectorAll('.view-increaser-row');if(rows.length<=1){var a=r.querySelector('input[name=&quot;postLink&quot;]');var b=r.querySelector('input[name=&quot;viewsLabel&quot;]');if(a)a.value='';if(b)b.value='';return;}r.remove();})(this); return false;">
@@ -1359,13 +1364,18 @@
                 <% } else { %>
                   <div class="border border-secondary rounded p-3 bg-dark bg-opacity-50 view-increaser-row">
                     <div class="row g-3 align-items-end">
+                      <input type="hidden" name="rowPostId" value="">
                       <div class="col-md-8">
                         <label class="form-label text-white">Artist Post Link</label>
                         <input type="text" class="form-control bg-dark text-white border-secondary" name="postLink" value="" placeholder="https://yourdomain.com/posts/POST_ID or just POST_ID">
                       </div>
-                      <div class="col-md-3">
+                      <div class="col-md-2">
                         <label class="form-label text-white">View Display</label>
                         <input type="text" class="form-control bg-dark text-white border-secondary" name="viewsLabel" value="" placeholder="12K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                      </div>
+                      <div class="col-md-1">
+                        <label class="form-label text-white">Likes (opt.)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" name="likesLabel" value="" placeholder="3K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
                       </div>
                       <div class="col-md-1 d-grid">
                         <button type="button" class="btn btn-outline-danger remove-view-row" title="Remove row" onclick="(function(btn){var c=document.getElementById('viewIncreaserRows');if(!c)return;var r=btn.closest('.view-increaser-row');if(!r)return;var rows=c.querySelectorAll('.view-increaser-row');if(rows.length<=1){var a=r.querySelector('input[name=&quot;postLink&quot;]');var b=r.querySelector('input[name=&quot;viewsLabel&quot;]');if(a)a.value='';if(b)b.value='';return;}r.remove();})(this); return false;">

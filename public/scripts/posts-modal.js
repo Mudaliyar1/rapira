@@ -283,7 +283,7 @@
 			tagsEl.innerHTML = (post.hashtags || []).map(t => `<span class="me-2">#${t}</span>`).join('');
 
 			// counts + like state
-			document.getElementById('post-likes-count').textContent = post.likesCount || 0;
+			document.getElementById('post-likes-count').textContent = post.likesDisplay || post.fakeLikesLabel || post.likesCount || 0;
 			document.getElementById('post-shares-count').textContent = post.shares || 0;
 			document.getElementById('post-views-count').textContent = post.fakeViewsLabel || post.viewsDisplay || post.views || 0;
 			const likeIcon = document.getElementById('post-like-icon');
@@ -318,7 +318,9 @@
 			if (data.success) {
 				currentPost.liked = data.liked;
 				currentPost.likesCount = data.likesCount;
-				document.getElementById('post-likes-count').textContent = data.likesCount;
+				currentPost.fakeLikesLabel = data.fakeLikesLabel || currentPost.fakeLikesLabel || '';
+				currentPost.likesDisplay = data.likesDisplay || currentPost.likesDisplay || String(data.likesCount || 0);
+				document.getElementById('post-likes-count').textContent = currentPost.likesDisplay || currentPost.fakeLikesLabel || data.likesCount;
 				const likeIcon = document.getElementById('post-like-icon');
 				if (likeIcon) likeIcon.className = data.liked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
 				btn.innerHTML = data.liked ? '<i class="bi bi-heart-fill text-danger"></i> Unlike' : '<i class="bi bi-heart"></i> Like';

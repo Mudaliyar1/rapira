@@ -13,6 +13,12 @@ const getViewsDisplay = (item) => {
   return String(item?.views || 0);
 };
 
+const getLikesDisplay = (item) => {
+  const fake = String(item?.fakeLikesLabel || '').trim();
+  if (fake) return fake;
+  return String(item?.likesCount || (Array.isArray(item?.likes) ? item.likes.length : 0));
+};
+
 // Home page
 router.get('/', async (req, res) => {
   try {
@@ -365,6 +371,7 @@ router.get('/content', async (req, res) => {
           ...post,
           title: post.title || post.caption || 'Artist Post',
           viewsDisplay: getViewsDisplay(post),
+          likesDisplay: getLikesDisplay(post),
           likesCount: post.likesCount || (post.likes ? post.likes.length : 0),
           isYoutube: !!ytId,
           youtubeId: ytId,

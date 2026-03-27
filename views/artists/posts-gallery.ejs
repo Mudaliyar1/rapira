@@ -274,7 +274,7 @@ async function loadPosts() {
             <div class="post-overlay-content-gallery">
               <div class="post-overlay-item-gallery">
                 <i class="bi bi-heart-fill"></i>
-                <span>${post.likesCount || 0}</span>
+                <span>${post.likesDisplay || post.fakeLikesLabel || post.likesCount || 0}</span>
               </div>
               <div class="post-overlay-item-gallery">
                 <i class="bi bi-share"></i>
@@ -344,7 +344,7 @@ function viewPost(postId) {
   // Load info
   document.getElementById('postCaption').textContent = post.caption || '(no caption)';
   document.getElementById('postHashtags').innerHTML = post.hashtags.map(tag => `<span class="me-2">#${tag}</span>`).join('') || '';
-  document.getElementById('postLikes').textContent = post.likesCount || 0;
+  document.getElementById('postLikes').textContent = post.likesDisplay || post.fakeLikesLabel || post.likesCount || 0;
   document.getElementById('postShares').textContent = post.shares || 0;
   document.getElementById('postCommentsCount').textContent = (post.comments || []).length;
 
@@ -398,7 +398,7 @@ async function toggleLike() {
     
     const data = await res.json();
     if (data.success) {
-      document.getElementById('postLikes').textContent = data.likesCount;
+      document.getElementById('postLikes').textContent = data.likesDisplay || data.likesCount;
       const btn = document.getElementById('likeBtn');
       if (data.liked) {
         btn.innerHTML = '<i class="bi bi-heart-fill text-danger"></i> Unlike';

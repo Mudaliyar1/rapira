@@ -160,8 +160,8 @@
                   <small class="text-muted">
                     <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
                     <span class="ms-2"><i class="bi bi-eye"></i> <%= item.viewsDisplay || item.views || 0 %> views</span>
-                    <% if (item.likes && item.likes.length > 0) { %>
-                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likes.length %> likes</span>
+                    <% if ((item.likesDisplay && String(item.likesDisplay).trim()) || item.likesCount || (item.likes && item.likes.length > 0)) { %>
+                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likesDisplay || item.likesCount || (item.likes ? item.likes.length : 0) %> likes</span>
                     <% } %>
                   </small>
                 </p>
@@ -300,7 +300,7 @@
                     <i class="bi bi-clock-history"></i>
                     <%= toISTDateString(p.createdAt) %>
                     <span class="ms-2"><i class="bi bi-eye"></i> <%= p.viewsDisplay || p.views || 0 %> views</span>
-                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesCount || 0 %></span>
+                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesDisplay || p.likesCount || 0 %></span>
                     <span class="ms-2"><i class="bi bi-share"></i> <%= p.shares || 0 %></span>
                   </small>
                 </p>

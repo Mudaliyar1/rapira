@@ -332,6 +332,7 @@ const WebsiteSettingsSchema = new mongoose.Schema({
           postId: { type: mongoose.Schema.Types.ObjectId, ref: 'ArtistPost' },
           postLink: { type: String, default: '' },
           viewsLabel: { type: String, default: '' },
+          fakeLikesLabel: { type: String, default: '' },
           updatedAt: { type: Date, default: Date.now }
         }
       ],

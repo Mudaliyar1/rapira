@@ -171,6 +171,8 @@ const normalizeViewsLabel = (value) => {
   return formatCompact(absoluteViews);
 };
 
+const normalizeCountLabel = (value) => normalizeViewsLabel(value);
+
 const extractPostIdFromLink = (value) => {
   const input = String(value || '').trim();
   if (!input) return '';
@@ -1035,8 +1037,10 @@ router.post('/view-increaser', isLoggedIn, hasAdminPermission('manage_website_se
     if (!settings.viewIncreaser) settings.viewIncreaser = { entries: [] };
 
     const links = toArray(req.body.postLink);
+    const rowPostIds = toArray(req.body.rowPostId);
     const labels = toArray(req.body.viewsLabel);
-    const maxLen = Math.max(links.length, labels.length);
+    const likesLabels = toArray(req.body.likesLabel);
+    const maxLen = Math.max(links.length, labels.length, likesLabels.length, rowPostIds.length);
 
     const incomingEntries = [];
     const invalidRows = [];
@@ -1044,16 +1048,21 @@ router.post('/view-increaser', isLoggedIn, hasAdminPermission('manage_website_se
 
     for (let i = 0; i < maxLen; i += 1) {
       const postLink = String(links[i] || '').trim();
+      const explicitPostId = String(rowPostIds[i] || '').trim();
       const rawLabel = String(labels[i] || '').trim();
+      const rawLikesLabel = String(likesLabels[i] || '').trim();
 
-      if (!postLink && !rawLabel) {
+      if (!postLink && !rawLabel && !rawLikesLabel && !explicitPostId) {
         continue;
       }
 
       hasNonEmptyRow = true;
 
-      const postId = extractPostIdFromLink(postLink);
+      const postId = /^[a-f\d]{24}$/i.test(explicitPostId)
+        ? explicitPostId
+        : extractPostIdFromLink(postLink);
       const viewsLabel = normalizeViewsLabel(rawLabel);
+      const fakeLikesLabel = normalizeCountLabel(rawLikesLabel);
 
       if (!postId || !viewsLabel) {
         invalidRows.push(i + 1);
@@ -1070,6 +1079,7 @@ router.post('/view-increaser', isLoggedIn, hasAdminPermission('manage_website_se
         postId,
         postLink,
         viewsLabel,
+        fakeLikesLabel,
         updatedAt: new Date()
       });
     }
@@ -1100,13 +1110,16 @@ router.post('/view-increaser', isLoggedIn, hasAdminPermission('manage_website_se
     if (removedPostIds.length > 0) {
       await ArtistPost.updateMany(
         { _id: { $in: removedPostIds } },
-        { $unset: { fakeViewsLabel: '' } }
+        { $unset: { fakeViewsLabel: '', fakeLikesLabel: '' } }
       );
     }
 
     // Apply latest fake labels
     for (const entry of dedupedEntries) {
-      await ArtistPost.findByIdAndUpdate(entry.postId, { fakeViewsLabel: entry.viewsLabel });
+      await ArtistPost.findByIdAndUpdate(entry.postId, {
+        fakeViewsLabel: entry.viewsLabel,
+        fakeLikesLabel: entry.fakeLikesLabel || ''
+      });
     }
 
     settings.viewIncreaser.entries = dedupedEntries;

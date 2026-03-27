@@ -96,7 +96,7 @@ async function viewPost(postId) {
     artistImg.onclick = () => window.location.href = artistProfileUrl;
 
     document.getElementById('post-created-at').textContent = formatTimeAgo(currentPost.createdAt);
-    document.getElementById('post-likes-count').textContent = currentPost.likesCount || 0;
+    document.getElementById('post-likes-count').textContent = currentPost.likesDisplay || currentPost.fakeLikesLabel || currentPost.likesCount || 0;
     document.getElementById('post-shares-count').textContent = currentPost.shares || 0;
     document.getElementById('post-views-count').textContent = currentPost.fakeViewsLabel || currentPost.viewsDisplay || currentPost.views || 0;
     document.getElementById('post-comments-count').textContent = (currentPost.comments || []).length;
@@ -724,8 +724,10 @@ async function togglePostLike() {
     if (data.success) {
       currentPost.liked = data.liked;
       currentPost.likesCount = data.likesCount;
+      currentPost.fakeLikesLabel = data.fakeLikesLabel || currentPost.fakeLikesLabel || '';
+      currentPost.likesDisplay = data.likesDisplay || currentPost.likesDisplay || String(data.likesCount || 0);
 
-      document.getElementById('post-likes-count').textContent = data.likesCount;
+      document.getElementById('post-likes-count').textContent = currentPost.likesDisplay || currentPost.fakeLikesLabel || data.likesCount;
       updateLikeButton(data.liked);
 
       showToast(data.liked ? '❤️ Liked!' : 'Unliked', 'success');

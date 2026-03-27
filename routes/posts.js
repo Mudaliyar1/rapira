@@ -13,6 +13,45 @@ const getViewsDisplay = (postLike) => {
 	return String(postLike?.views || 0);
 };
 
+const getLikesDisplay = (postLike) => {
+	const fake = String(postLike?.fakeLikesLabel || '').trim();
+
+	const parseCompactLabel = (label) => {
+		const normalized = String(label || '').trim().replace(/\s+/g, '');
+		if (!normalized) return null;
+		const match = normalized.match(/^(\d+(?:\.\d+)?)([kKmMbBtT]?)$/);
+		if (!match) return null;
+		const value = parseFloat(match[1]);
+		if (!Number.isFinite(value)) return null;
+		const suffix = (match[2] || '').toUpperCase();
+		const multipliers = { '': 1, K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
+		return value * (multipliers[suffix] || 1);
+	};
+
+	const formatCompact = (num) => {
+		const safeNum = Math.max(0, Number(num) || 0);
+		const round2 = (v) => {
+			const r = Number(v.toFixed(2));
+			return Number.isInteger(r) ? String(r) : String(r);
+		};
+
+		if (safeNum >= 1e12) return `${round2(safeNum / 1e12)}T`;
+		if (safeNum >= 1e9) return `${round2(safeNum / 1e9)}B`;
+		if (safeNum >= 1e6) return `${round2(safeNum / 1e6)}M`;
+		if (safeNum >= 1e3) return `${round2(safeNum / 1e3)}K`;
+		return round2(safeNum);
+	};
+
+	const realLikes = Number(postLike?.likesCount || 0);
+	const fakeBase = parseCompactLabel(fake);
+
+	if (fakeBase !== null) {
+		return formatCompact(fakeBase + realLikes);
+	}
+
+	return formatCompact(realLikes);
+};
+
 const upload = multer({
 	storage: multer.memoryStorage(),
 	limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
@@ -141,6 +180,8 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 				},
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
+				fakeLikesLabel: postObj.fakeLikesLabel || '',
+				likesDisplay: getLikesDisplay(postObj),
 				shares: postObj.shares || 0,
 				views: postObj.views || 0,
 				viewsDisplay: getViewsDisplay(postObj),
@@ -185,6 +226,8 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 				},
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
+				fakeLikesLabel: postObj.fakeLikesLabel || '',
+				likesDisplay: getLikesDisplay(postObj),
 				shares: postObj.shares || 0,
 				views: postObj.views || 0, // Add views to response
 				viewsDisplay: getViewsDisplay(postObj),
@@ -295,7 +338,13 @@ router.post('/posts/:id/like', isLoggedIn, async (req, res) => {
 
 		await post.save();
 		console.log('[POST LIKE] Success! New like count:', post.likesCount);
-		res.json({ success: true, liked: !alreadyLiked, likesCount: post.likesCount });
+		res.json({
+			success: true,
+			liked: !alreadyLiked,
+			likesCount: post.likesCount,
+			fakeLikesLabel: post.fakeLikesLabel || '',
+			likesDisplay: getLikesDisplay(post)
+		});
 	} catch (err) {
 		console.error('[POST LIKE] Error:', err);
 		res.status(500).json({ success: false, message: err.message });
@@ -383,6 +432,8 @@ router.get('/posts/:id/json', async (req, res) => {
 				publicId: post.media?.publicId || ''
 			},
 			likesCount: post.likesCount || 0,
+			fakeLikesLabel: post.fakeLikesLabel || '',
+			likesDisplay: getLikesDisplay(post),
 			shares: post.shares || 0,
 			views: post.views || 0, // Include views in response
 			fakeViewsLabel: post.fakeViewsLabel || '',
