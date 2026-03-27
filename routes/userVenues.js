@@ -11,6 +11,18 @@ const fs = require('fs');
 const { isLoggedIn } = require('../middleware/auth');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
+const getSessionUserId = (req) => {
+  if (!req || !req.session || !req.session.user) return null;
+  return String(req.session.user.id || req.session.user._id || '').trim() || null;
+};
+
+const isVenueOwnedBySessionUser = (venueDoc, req) => {
+  const sessionUserId = getSessionUserId(req);
+  if (!sessionUserId || !venueDoc) return false;
+  const ownerId = venueDoc.createdBy && (venueDoc.createdBy._id || venueDoc.createdBy);
+  return ownerId ? String(ownerId) === sessionUserId : false;
+};
+
 // Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -616,7 +628,7 @@ router.post('/:venueId/bookings/:bookingId/decide', isLoggedIn, async (req, res)
       return res.redirect(`/users/venues/${venueId}/bookings`);
     }
 
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to update this booking');
       return res.redirect('/users/venues');
     }
@@ -671,7 +683,7 @@ router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the venue
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to update this booking'
@@ -736,7 +748,7 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the venue
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to access this booking');
       return res.redirect('back');
     }
@@ -1320,7 +1332,7 @@ router.get('/bookings/:id/edit-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
@@ -1389,7 +1401,7 @@ router.get('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
@@ -1458,7 +1470,7 @@ router.post('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
@@ -1520,7 +1532,7 @@ router.put('/bookings/:id/update-payment', isLoggedIn, async (req, res) => {
     }
 
     // Verify venue ownership
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to update this booking'

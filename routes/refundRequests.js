@@ -11,6 +11,23 @@ const {
   sendRefundRejectionEmail
 } = require('../utils/emailService');
 
+const getSessionUserId = (req) => {
+  if (!req || !req.session || !req.session.user) return null;
+  return String(req.session.user.id || req.session.user._id || '').trim() || null;
+};
+
+const isOwnedBySessionUser = (docOrId, req) => {
+  const sessionUserId = getSessionUserId(req);
+  if (!sessionUserId || !docOrId) return false;
+  const ownerId = docOrId._id || docOrId.user || docOrId;
+  return ownerId ? String(ownerId) === sessionUserId : false;
+};
+
+const isTicketOwnedBySessionUser = (ticketDoc, req) => {
+  if (!ticketDoc) return false;
+  return isOwnedBySessionUser(ticketDoc.user, req);
+};
+
 // User routes
 
 // Test route
@@ -48,7 +65,7 @@ router.get('/view/:id', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the refund request
-    if (refundRequest.user.toString() !== req.session.user.id) {
+    if (!isOwnedBySessionUser(refundRequest.user, req)) {
       req.flash('error', 'You do not have permission to view this refund request');
       return res.redirect('/refund-requests/my-requests');
     }
@@ -75,7 +92,7 @@ router.get('/request/:ticketId', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the ticket
-    if (ticket.user._id.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to request a refund for this ticket');
       return res.redirect('/users/profile');
     }
@@ -155,7 +172,7 @@ router.post('/submit', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the ticket
-    if (ticket.user._id.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to request a refund for this ticket');
       return res.redirect('/users/profile');
     }

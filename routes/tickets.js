@@ -11,6 +11,18 @@ const { isConcertPassed } = require('../utils/ticketHelper');
 const path = require('path');
 const ejs = require('ejs');
 
+const getSessionUserId = (req) => {
+  if (!req || !req.session || !req.session.user) return null;
+  return String(req.session.user.id || req.session.user._id || '').trim() || null;
+};
+
+const isTicketOwnedBySessionUser = (ticketDoc, req) => {
+  const sessionUserId = getSessionUserId(req);
+  if (!sessionUserId || !ticketDoc) return false;
+  const ticketUserId = ticketDoc.user && (ticketDoc.user._id || ticketDoc.user);
+  return ticketUserId ? String(ticketUserId) === sessionUserId : false;
+};
+
 // Book free ticket
 router.post('/book-free', isLoggedIn, async (req, res) => {
   try {
@@ -541,7 +553,7 @@ router.get('/:id', isLoggedIn, async (req, res) => {
     ticket.concert = concert;
 
     // Check if user owns the ticket or is admin
-    if (ticket.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
+    if (!isTicketOwnedBySessionUser(ticket, req) && req.session.user.role !== 'admin') {
       req.flash('error', 'You do not have permission to view this ticket');
       return res.redirect('/users/profile');
     }
@@ -601,7 +613,7 @@ router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
     }
 
     // Check if the ticket belongs to the current user
-    if (ticket.user.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to cancel this payment');
       return res.redirect('/concerts');
     }
@@ -652,7 +664,7 @@ router.get('/:id/download-html', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the ticket or is admin
-    if (ticket.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
+    if (!isTicketOwnedBySessionUser(ticket, req) && req.session.user.role !== 'admin') {
       req.flash('error', 'You do not have permission to download this ticket');
       return res.redirect('/users/profile');
     }
@@ -785,7 +797,7 @@ router.get('/:id/delete', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the ticket
-    if (ticket.user._id.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to delete this ticket');
       return res.redirect('/tickets');
     }
@@ -834,7 +846,7 @@ router.post('/:id/delete', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the ticket
-    if (ticket.user._id.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to delete this ticket');
       return res.redirect('/tickets');
     }
