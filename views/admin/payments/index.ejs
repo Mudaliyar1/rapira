@@ -35,8 +35,8 @@
                 <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 48px; height: 48px;">
                     <i class="bi bi-credit-card text-info fs-4"></i>
                 </div>
-                <h4 class="text-white mb-1"><%= transactions.length %></h4>
-                <p class="text-muted small mb-0">Total Transactions</p>
+                <h4 class="text-white mb-1"><%= stats.totalTransactions %></h4>
+                <p class="text-muted small mb-0">Matching Transactions</p>
             </div>
         </div>
     </div>
@@ -198,6 +198,35 @@
             </table>
         </div>
     </div>
+
+    <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="d-flex justify-content-between align-items-center mt-4 px-1 flex-wrap gap-2">
+            <div class="text-muted small">
+                Showing <%= ((pagination.page - 1) * pagination.limit) + 1 %> to <%= Math.min(pagination.page * pagination.limit, pagination.totalTransactions) %> of <%= pagination.totalTransactions %> payments
+            </div>
+            <nav aria-label="Payments pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item <%= pagination.hasPrev ? '' : 'disabled' %>">
+                        <a class="page-link bg-dark border-secondary text-white" href="<%= pagination.prevUrl || '#' %>">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <% if (pagination.pageUrls && pagination.pageUrls.length > 0) { %>
+                        <% pagination.pageUrls.forEach(pageItem => { %>
+                        <li class="page-item <%= pageItem.isCurrent ? 'active' : '' %>">
+                            <a class="page-link <%= pageItem.isCurrent ? 'bg-primary border-primary' : 'bg-dark border-secondary text-white' %>" href="<%= pageItem.url %>"><%= pageItem.page %></a>
+                        </li>
+                        <% }); %>
+                    <% } %>
+                    <li class="page-item <%= pagination.hasNext ? '' : 'disabled' %>">
+                        <a class="page-link bg-dark border-secondary text-white" href="<%= pagination.nextUrl || '#' %>">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    <% } %>
 </div>
 
 <%- contentFor('scripts') %>
@@ -213,5 +242,10 @@
         padding: 0.5em 1em;
         font-weight: 600;
         letter-spacing: 0.5px;
+    }
+
+    .page-link.disabled {
+        pointer-events: none;
+        opacity: 0.5;
     }
 </style>

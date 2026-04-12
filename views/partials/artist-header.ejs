@@ -39,7 +39,10 @@
           </div>
           <div>
             <h6 class="mb-0"><%= artist.user.name %></h6>
-            <small class="text-muted">Artist</small>
+            <small class="text-muted d-block">Artist</small>
+            <span class="badge bg-primary-subtle border border-primary-subtle mt-1" style="color: #000 !important;">
+              <i class="bi bi-person-badge me-1" style="color: #000 !important;"></i><%= artist.artistLevel || 'Beginner' %> Level
+            </span>
           </div>
         </div>
         <ul class="nav flex-column">

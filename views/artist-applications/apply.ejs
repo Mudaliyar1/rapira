@@ -53,10 +53,12 @@
 
               <div class="mb-4">
                 <label for="panCard" class="form-label text-white">PAN Card Number</label>
-                <input type="text" class="form-control" id="panCard" name="panCard" required
-                       pattern="[A-Z]{5}[0-9]{4}[A-Z]" maxlength="10" title="Please enter a valid PAN number (example: ABCDE1234F)"
+                  <input type="text" class="form-control" id="panCard" name="panCard" required
+                    style="text-transform: uppercase;"
+                    autocapitalize="characters" autocorrect="off" spellcheck="false"
+                    pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" maxlength="10" title="Please enter a valid PAN number (example: ABCDE1234F)"
                        value="<%= typeof savedFormData !== 'undefined' && savedFormData.panCard ? savedFormData.panCard : '' %>">
-                <div class="form-text">Enter your 10-character PAN number (example: ABCDE1234F)</div>
+                  <div class="form-text">Enter your 10-character PAN number (example: ABCDE1234F)</div>
               </div>
 
               <div class="mb-4">
@@ -159,19 +161,6 @@
 <script>
   // Form validation and submission handling
   document.addEventListener('DOMContentLoaded', function() {
-    // PAN card validation
-    const panInput = document.getElementById('panCard');
-
-    panInput.addEventListener('input', function() {
-      // Keep only letters and digits, force uppercase.
-      this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
-      // Limit to 10 characters.
-      if (this.value.length > 10) {
-        this.value = this.value.slice(0, 10);
-      }
-    });
-
     // Phone number validation
     const phoneInput = document.getElementById('phoneNumber');
 

@@ -235,7 +235,8 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     const normalizedGenre = String(genre || '').trim();
     const normalizedInstagramHandle = normalizeInstagramHandle(instagramId);
     const normalizedAadhar = String(aadharCard || '').replace(/\D/g, '');
-    const normalizedPan = String(panCard || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const rawPan = String(panCard || '').replace(/[^a-zA-Z0-9]/g, '').trim();
+    const normalizedPan = rawPan.toUpperCase();
 
     // Validate input
     if (!artistLevel || !normalizedStageName || !normalizedGenre || !normalizedInstagramHandle || !normalizedPan || !city || !state || !age || !phoneNumber) {
@@ -270,7 +271,7 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
-    // Validate PAN format (ABCDE1234F)
+    // Validate PAN format and normalize to uppercase before saving
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(normalizedPan)) {
       if (req.xhr || req.headers.accept?.includes('json')) {
         return res.json({ success: false, message: 'PAN card number must be in valid format (example: ABCDE1234F)' });

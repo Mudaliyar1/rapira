@@ -5134,4 +5134,30 @@ router.post('/distribution-requests/:id/delete', isLoggedIn, hasAdminPermission(
   }
 });
 
+router.post('/distribution-requests/bulk-delete', isLoggedIn, hasAdminPermission('manage_distribution_receipts'), async (req, res) => {
+  try {
+    const DistributionRequest = require('../models/DistributionRequest');
+    const selectedIds = req.body.requestIds;
+
+    if (!selectedIds || (Array.isArray(selectedIds) && selectedIds.length === 0)) {
+      req.flash('error', 'No distribution records selected for deletion');
+      return res.redirect('/admin/distribution-requests');
+    }
+
+    const ids = Array.isArray(selectedIds) ? selectedIds : [selectedIds];
+
+    const result = await DistributionRequest.updateMany(
+      { _id: { $in: ids } },
+      { $set: { deletedByAdmin: true } }
+    );
+
+    req.flash('success', `Removed ${result.modifiedCount || 0} distribution record(s) from admin dashboard`);
+    res.redirect('/admin/distribution-requests');
+  } catch (error) {
+    console.error('Error bulk deleting distribution requests:', error);
+    req.flash('error', 'Failed to delete selected records');
+    res.redirect('/admin/distribution-requests');
+  }
+});
+
 module.exports = router;
