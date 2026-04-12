@@ -189,7 +189,11 @@ router.post('/', isLoggedIn, hasAdminPermission('manage_compose_email'), async (
     const result = await sendBulkEmail(users, subject, htmlContent);
 
     if (result.success) {
-      req.flash('success', `Email sent successfully to ${result.recipientCount} users`);
+      if (result.failedCount && result.failedCount > 0) {
+        req.flash('success', `Email sent privately to ${result.sentCount} user(s). Failed for ${result.failedCount} recipient(s).`);
+      } else {
+        req.flash('success', `Email sent privately to ${result.sentCount || result.recipientCount} user(s)`);
+      }
     } else {
       console.error('Failed to send bulk email:', result.error);
       req.flash('error', `Failed to send email: ${result.error}`);

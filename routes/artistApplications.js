@@ -39,6 +39,34 @@ async function saveSession(req) {
   });
 }
 
+function normalizeInstagramHandle(instagramValue) {
+  const rawValue = String(instagramValue || '').trim();
+  if (!rawValue) {
+    return '';
+  }
+
+  let handle = rawValue.replace(/^@+/, '');
+
+  try {
+    const parsedUrl = new URL(handle);
+    if (parsedUrl.hostname.includes('instagram.com')) {
+      handle = parsedUrl.pathname.split('/').filter(Boolean)[0] || '';
+    }
+  } catch (error) {
+    handle = handle
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+      .replace(/\?.*$/, '')
+      .replace(/\/.*/, '');
+  }
+
+  return handle.replace(/[^a-zA-Z0-9._]/g, '');
+}
+
+function instagramHandleToUrl(instagramValue) {
+  const handle = normalizeInstagramHandle(instagramValue);
+  return handle ? `https://instagram.com/${handle}` : '';
+}
+
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
 
@@ -201,10 +229,16 @@ const handleApplyUpload = (req, res, next) => {
 // Submit artist application
 router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
   try {
-    const { artistLevel, aadharCard, city, state, age, phoneNumber } = req.body;
+    const { artistLevel, stageName, genre, instagramId, aadharCard, panCard, city, state, age, phoneNumber } = req.body;
+    req.session.applyFormData = req.body;
+    const normalizedStageName = String(stageName || '').trim();
+    const normalizedGenre = String(genre || '').trim();
+    const normalizedInstagramHandle = normalizeInstagramHandle(instagramId);
+    const normalizedAadhar = String(aadharCard || '').replace(/\D/g, '');
+    const normalizedPan = String(panCard || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
     // Validate input
-    if (!artistLevel || !aadharCard || !city || !state || !age || !phoneNumber) {
+    if (!artistLevel || !normalizedStageName || !normalizedGenre || !normalizedInstagramHandle || !normalizedPan || !city || !state || !age || !phoneNumber) {
       if (req.xhr || req.headers.accept?.includes('json')) {
         return res.json({ success: false, message: 'Please fill in all required fields' });
       }
@@ -212,8 +246,41 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
-    // Validate Aadhaar card format (exactly 12 digits)
-    if (!/^\d{12}$/.test(aadharCard)) {
+    if (normalizedStageName.length > 60) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Stage name must be 60 characters or less' });
+      }
+      req.flash('error', 'Stage name must be 60 characters or less');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    if (normalizedGenre.length > 60) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Genre must be 60 characters or less' });
+      }
+      req.flash('error', 'Genre must be 60 characters or less');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    if (!/^[a-zA-Z0-9._]{1,30}$/.test(normalizedInstagramHandle)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please enter a valid Instagram handle or link' });
+      }
+      req.flash('error', 'Please enter a valid Instagram handle or link');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    // Validate PAN format (ABCDE1234F)
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(normalizedPan)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'PAN card number must be in valid format (example: ABCDE1234F)' });
+      }
+      req.flash('error', 'PAN card number must be in valid format (example: ABCDE1234F)');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    // Aadhaar is optional for new applications. If provided, validate format.
+    if (normalizedAadhar && !/^\d{12}$/.test(normalizedAadhar)) {
       if (req.xhr || req.headers.accept?.includes('json')) {
         return res.json({ success: false, message: 'Aadhaar card number must be exactly 12 digits' });
       }
@@ -310,7 +377,11 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     // Store data in session for payment verification later
     req.session.artistApplicationData = {
       artistLevel,
-      aadharCard,
+      stageName: normalizedStageName,
+      genre: normalizedGenre,
+      instagramId: normalizedInstagramHandle,
+      aadharCard: normalizedAadhar,
+      panCard: normalizedPan,
       state,
       city,
       age,
@@ -325,7 +396,11 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
       const newApplication = new ArtistApplication({
         user: req.session.user.id,
         artistLevel,
-        aadharCard,
+        stageName: normalizedStageName,
+        genre: normalizedGenre,
+        instagramId: normalizedInstagramHandle,
+        aadharCard: normalizedAadhar,
+        panCard: normalizedPan,
         state,
         city,
         age,
@@ -339,6 +414,7 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
 
       await newApplication.save();
       delete req.session.artistApplicationData;
+  delete req.session.applyFormData;
 
       if (req.xhr || req.headers.accept?.includes('json')) {
         return res.json({ success: true, isFree: true, message: 'Application submitted successfully' });
@@ -376,7 +452,11 @@ router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
     // Store data in session for payment verification later
     req.session.artistApplicationData = {
       artistLevel,
-      aadharCard,
+      stageName: normalizedStageName,
+      genre: normalizedGenre,
+      instagramId: normalizedInstagramHandle,
+      aadharCard: normalizedAadhar,
+      panCard: normalizedPan,
       state,
       city,
       age,
@@ -500,7 +580,11 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
       const newApplication = new ArtistApplication({
         user: req.session.user.id,
         artistLevel: appData.artistLevel,
+        stageName: appData.stageName,
+        genre: appData.genre,
+        instagramId: appData.instagramId,
         aadharCard: appData.aadharCard,
+        panCard: appData.panCard,
         state: appData.state,
         city: appData.city,
         age: appData.age,
@@ -517,6 +601,7 @@ router.post('/verify-payment', isLoggedIn, async (req, res) => {
 
       await newApplication.save();
       delete req.session.artistApplicationData;
+  delete req.session.applyFormData;
 
       // Log transaction
       const { logTransaction } = require('../utils/transactionLogger');
@@ -1076,10 +1161,11 @@ router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_artist_
       // Create artist profile
       artist = new Artist({
         user: application.user._id,
-        stageName: application.user.name, // Default to user name, can be updated later
-        genre: 'Hip Hop', // Default genre, can be updated later
+        stageName: application.stageName || application.user.name,
+        genre: application.genre || 'Hip Hop',
         artistLevel: application.artistLevel,
         aadharCard: application.aadharCard,
+        panCard: application.panCard,
         state: application.state,
         city: application.city,
         age: application.age,
@@ -1091,7 +1177,15 @@ router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_artist_
     } else {
       // Update existing artist profile
       artist.artistLevel = application.artistLevel;
+      // Keep artist-edited identity fields intact after first creation.
+      if (!artist.stageName || !String(artist.stageName).trim()) {
+        artist.stageName = application.stageName || application.user.name;
+      }
+      if (!artist.genre || !String(artist.genre).trim()) {
+        artist.genre = application.genre || 'Hip Hop';
+      }
       artist.aadharCard = application.aadharCard;
+      artist.panCard = application.panCard;
       artist.state = application.state;
       artist.city = application.city;
       artist.age = application.age;
@@ -1099,6 +1193,12 @@ router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_artist_
       artist.proofPhoto = application.proofPhoto;
 
       await artist.save();
+    }
+
+    if (application.user) {
+      application.user.socialLinks = application.user.socialLinks || {};
+      application.user.socialLinks.instagram = instagramHandleToUrl(application.instagramId);
+      await application.user.save();
     }
 
     // Update user role if not already an artist

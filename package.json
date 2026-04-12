@@ -18,7 +18,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:merchandise": "jest tests/merchandise.test.js",
-    "init:team-updates": "node scripts/init-team-updates.js"
+    "init:team-updates": "node scripts/init-team-updates.js",
+    "cleanup:orphaned-venues": "node scripts/cleanup-orphaned-venues.js",
+    "cleanup:orphaned-venues:dry": "node scripts/cleanup-orphaned-venues.js --dry-run"
   },
   "keywords": [
     "rap",
@@ -54,6 +56,7 @@
     "sharp": "^0.34.2",
     "sib-api-v3-sdk": "^8.5.0",
     "streamifier": "^0.1.1",
+    "tesseract.js": "^7.0.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

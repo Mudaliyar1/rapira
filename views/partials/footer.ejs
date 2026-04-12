@@ -50,6 +50,9 @@
         <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.privacyPolicy !== false)) { %>
           <a href="/privacy-policy" class="text-decoration-none text-white-50 small d-block mb-2">Privacy Policy</a>
         <% } %>
+        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.documentIdPolicy !== false)) { %>
+          <a href="/document-id-policy" class="text-decoration-none text-white-50 small d-block mb-2">Document and ID Protection Policy</a>
+        <% } %>
         <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.refundPolicy !== false)) { %>
           <a href="/refund-policy" class="text-decoration-none text-white-50 small d-block mb-2">Refund Policy</a>
         <% } %>

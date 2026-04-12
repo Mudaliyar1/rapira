@@ -22,17 +22,41 @@
             <h2 class="card-title mb-0 text-white"><%= level %> Artist Application</h2>
           </div>
           <div class="card-body p-4">
-            <p class="text-white-75 mb-4">Please fill out the form below to apply as a <%= level %> Artist. All fields are required.</p>
+            <p class="text-white-75 mb-4">Please fill out the form below to apply as a <%= level %> Artist.</p>
 
             <form action="/artist-applications/apply" method="POST" enctype="multipart/form-data">
               <input type="hidden" name="artistLevel" value="<%= level %>">
 
               <div class="mb-4">
-                <label for="aadharCard" class="form-label text-white">Aadhaar Card Number</label>
-                <input type="text" class="form-control" id="aadharCard" name="aadharCard" required
-                       pattern="[0-9]{12}" maxlength="12" title="Please enter a valid 12-digit Aadhaar number"
-                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.aadharCard ? savedFormData.aadharCard : '' %>">
-                <div class="form-text">Enter your 12-digit Aadhaar Card number without spaces</div>
+                <label for="stageName" class="form-label text-white">Stage Name</label>
+                <input type="text" class="form-control" id="stageName" name="stageName" required maxlength="60"
+                       placeholder="Your artist name"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.stageName ? savedFormData.stageName : '' %>">
+                <div class="form-text">This is the name you perform with. It can be different from your legal name.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="genre" class="form-label text-white">Genre</label>
+                <input type="text" class="form-control" id="genre" name="genre" required maxlength="60"
+                       placeholder="Hip Hop, Rap, Trap, Drill..."
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.genre ? savedFormData.genre : '' %>">
+                <div class="form-text">Enter your main music style or genre.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="instagramId" class="form-label text-white">Instagram ID</label>
+                <input type="text" class="form-control" id="instagramId" name="instagramId" required maxlength="100"
+                       placeholder="@yourhandle or https://instagram.com/yourhandle"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.instagramId ? savedFormData.instagramId : '' %>">
+                <div class="form-text">Enter your Instagram handle or profile link.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="panCard" class="form-label text-white">PAN Card Number</label>
+                <input type="text" class="form-control" id="panCard" name="panCard" required
+                       pattern="[A-Z]{5}[0-9]{4}[A-Z]" maxlength="10" title="Please enter a valid PAN number (example: ABCDE1234F)"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.panCard ? savedFormData.panCard : '' %>">
+                <div class="form-text">Enter your 10-character PAN number (example: ABCDE1234F)</div>
               </div>
 
               <div class="mb-4">
@@ -109,7 +133,7 @@
 
               <div class="alert alert-info mb-4">
                 <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Important Information</h5>
-                <p class="mb-0">By submitting this application, you agree to our <a href="/terms-of-service" class="alert-link">Terms of Service</a> and <a href="/privacy-policy" class="alert-link">Privacy Policy</a>. Your application will be reviewed by our team, and you will be notified of the decision via email.</p>
+                <p class="mb-0">By submitting this application, you agree to our <a href="/terms-of-service" class="alert-link">Terms of Service</a> and <a href="/privacy-policy" class="alert-link">Privacy Policy</a>. Before uploading any document or ID number, please review our <a href="/document-id-policy" class="alert-link">Document and ID Protection Policy</a>. Your application will be reviewed by our team, and you will be notified of the decision via email.</p>
               </div>
 
               <div class="d-grid gap-2">
@@ -135,16 +159,16 @@
 <script>
   // Form validation and submission handling
   document.addEventListener('DOMContentLoaded', function() {
-    // Aadhaar card validation
-    const aadharInput = document.getElementById('aadharCard');
+    // PAN card validation
+    const panInput = document.getElementById('panCard');
 
-    aadharInput.addEventListener('input', function() {
-      // Remove any non-numeric characters
-      this.value = this.value.replace(/\D/g, '');
+    panInput.addEventListener('input', function() {
+      // Keep only letters and digits, force uppercase.
+      this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 
-      // Limit to 12 digits
-      if (this.value.length > 12) {
-        this.value = this.value.slice(0, 12);
+      // Limit to 10 characters.
+      if (this.value.length > 10) {
+        this.value = this.value.slice(0, 10);
       }
     });
 

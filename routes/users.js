@@ -3,7 +3,10 @@ const router = express.Router();
 const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ArtistApplication = require('../models/ArtistApplication');
+const Venue = require('../models/Venue');
 const VenueRequest = require('../models/VenueRequest');
+const VenueEditRequest = require('../models/VenueEditRequest');
+const VenueExternalBooking = require('../models/VenueExternalBooking');
 const { isLoggedIn } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
@@ -19,6 +22,39 @@ const ActivityLogger = require('../utils/activityLogger');
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
 const ProducerApplication = require('../models/ProducerApplication');
+
+async function cleanupVenuesOwnedByUser(userId) {
+  const Concert = require('../models/Concert');
+  const Ticket = require('../models/Ticket');
+
+  const ownedVenues = await Venue.find({ createdBy: userId }).select('_id').lean();
+  const venueIds = ownedVenues.map(v => v._id);
+
+  if (!venueIds.length) {
+    return { venuesDeleted: 0, concertsDeleted: 0, venueTicketsDeleted: 0 };
+  }
+
+  const concertIds = await Concert.find({ venue: { $in: venueIds } }).distinct('_id');
+  let venueTicketsDeleted = 0;
+
+  if (concertIds.length) {
+    const ticketDeleteResult = await Ticket.deleteMany({ concert: { $in: concertIds } });
+    venueTicketsDeleted = ticketDeleteResult.deletedCount || 0;
+    await Concert.deleteMany({ _id: { $in: concertIds } });
+  }
+
+  await VenueExternalBooking.deleteMany({ $or: [{ createdBy: userId }, { venue: { $in: venueIds } }] });
+  await VenueEditRequest.deleteMany({ $or: [{ user: userId }, { venue: { $in: venueIds } }] });
+  await VenueRequest.deleteMany({ $or: [{ user: userId }, { createdVenue: { $in: venueIds } }] });
+
+  const venueDeleteResult = await Venue.deleteMany({ _id: { $in: venueIds } });
+
+  return {
+    venuesDeleted: venueDeleteResult.deletedCount || 0,
+    concertsDeleted: concertIds.length,
+    venueTicketsDeleted
+  };
+}
 
 // Configure multer for profile image uploads (memory → Cloudinary)
 const upload = multer({
@@ -602,6 +638,11 @@ router.post('/delete-account', isLoggedIn, async (req, res) => {
     // Delete user's tickets
     await Ticket.deleteMany({ user: user._id });
     console.log(`Deleted all tickets for user ${user._id}`);
+
+    const venueCleanup = await cleanupVenuesOwnedByUser(user._id);
+    if (venueCleanup.venuesDeleted > 0 || venueCleanup.concertsDeleted > 0 || venueCleanup.venueTicketsDeleted > 0) {
+      console.log(`Venue cascade cleanup for self-deleted user ${user._id}:`, venueCleanup);
+    }
 
     const normalizedUserEmail = String(user.email || '').trim().toLowerCase();
 

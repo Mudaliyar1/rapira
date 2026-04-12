@@ -7,6 +7,8 @@ const Page = require('../models/Page');
 const ArtistPost = require('../models/ArtistPost');
 const { sendTestEmail, sendConcertSubmissionEmail } = require('../utils/emailService');
 
+const POLICY_LAST_UPDATED = '12 Apr 2026';
+
 const getViewsDisplay = (item) => {
   const fake = String(item?.fakeViewsLabel || '').trim();
   if (fake) return fake;
@@ -211,7 +213,8 @@ router.get('/privacy-policy', (req, res) => {
     currentUser,
     path: '/privacy-policy',
     title: 'Privacy Policy - Rapira',
-    description: 'Rapira privacy policy details how we collect, use, and protect your personal information.'
+    description: 'Rapira privacy policy details how we collect, use, and protect your personal information.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -222,7 +225,8 @@ router.get('/terms-of-service', (req, res) => {
     currentUser,
     path: '/terms-of-service',
     title: 'Terms of Service - Rapira',
-    description: 'Rapira terms of service outline the rules and guidelines for using our platform.'
+    description: 'Rapira terms of service outline the rules and guidelines for using our platform.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -233,7 +237,8 @@ router.get('/refund-policy', (req, res) => {
     currentUser,
     path: '/refund-policy',
     title: 'Refund Policy - Rapira',
-    description: 'Rapira refund policy details our procedures for ticket refunds and cancellations.'
+    description: 'Rapira refund policy details our procedures for ticket refunds and cancellations.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -244,7 +249,8 @@ router.get('/subscription-policy', (req, res) => {
     currentUser,
     path: '/subscription-policy',
     title: 'Subscription Policy - Rapira',
-    description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.'
+    description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -255,7 +261,20 @@ router.get('/shopping-policy', (req, res) => {
     currentUser,
     path: '/shopping-policy',
     title: 'Shopping Policy - Rapira',
-    description: 'RAPIRA shopping policy covers merchandise purchases, returns, exchanges, shipping, and customer support.'
+    description: 'RAPIRA shopping policy covers merchandise purchases, returns, exchanges, shipping, and customer support.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
+  });
+});
+
+// Document and ID protection policy
+router.get('/document-id-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('document-id-policy', {
+    currentUser,
+    path: '/document-id-policy',
+    title: 'Document and ID Protection Policy - Rapira',
+    description: 'Rapira document and ID protection policy explains how we collect, store, and protect uploaded identity documents and ID numbers.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -266,7 +285,8 @@ router.get('/event-attending-policy', (req, res) => {
     currentUser,
     path: '/event-attending-policy',
     title: 'Event Attending Policy - Rapira',
-    description: 'Rapira event attending policy outlines the rules and conditions applicable to attendees of events and concerts.'
+    description: 'Rapira event attending policy outlines the rules and conditions applicable to attendees of events and concerts.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -277,7 +297,8 @@ router.get('/temp-email-policy', (req, res) => {
     currentUser,
     path: '/temp-email-policy',
     title: 'Temporary Email Policy - Rapira',
-    description: 'Rapira temporary email policy explains why disposable emails are not allowed and what types of email addresses are acceptable.'
+    description: 'Rapira temporary email policy explains why disposable emails are not allowed and what types of email addresses are acceptable.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 

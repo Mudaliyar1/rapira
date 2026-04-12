@@ -5,9 +5,27 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
+const Ticket = require('../models/Ticket');
+const VenueRequest = require('../models/VenueRequest');
+const VenueEditRequest = require('../models/VenueEditRequest');
+const VenueExternalBooking = require('../models/VenueExternalBooking');
 const Media = require('../models/Media');
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
+
+async function cascadeDeleteVenueById(venueId) {
+  const concertIds = await Concert.find({ venue: venueId }).distinct('_id');
+
+  if (concertIds.length) {
+    await Ticket.deleteMany({ concert: { $in: concertIds } });
+    await Concert.deleteMany({ _id: { $in: concertIds } });
+  }
+
+  await VenueExternalBooking.deleteMany({ venue: venueId });
+  await VenueEditRequest.deleteMany({ venue: venueId });
+  await VenueRequest.deleteMany({ createdVenue: venueId });
+  await Venue.deleteOne({ _id: venueId });
+}
 
 // Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
@@ -92,6 +110,17 @@ router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res
       .limit(limit)
       .lean();
 
+    // If any venue owner account is deleted, remove that orphaned venue immediately.
+    const orphanedVenues = venues.filter(v => !v.createdBy);
+    if (orphanedVenues.length) {
+      for (const orphanVenue of orphanedVenues) {
+        await cascadeDeleteVenueById(orphanVenue._id);
+      }
+      console.log(`Removed ${orphanedVenues.length} orphaned venues during admin list load`);
+    }
+
+    const visibleVenues = venues.filter(v => v.createdBy);
+
     // Get total count for pagination
     const totalVenues = await Venue.countDocuments(filter);
     const totalPages = Math.ceil(totalVenues / limit);
@@ -105,8 +134,8 @@ router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res
     const allCities = await Venue.distinct('city');
     const allStates = await Venue.distinct('state');
 
-    console.log('Venues found for admin:', venues.length);
-    venues.forEach((venue, index) => {
+    console.log('Venues found for admin:', visibleVenues.length);
+    visibleVenues.forEach((venue, index) => {
       console.log(`Venue ${index + 1}:`, {
         id: venue._id,
         name: venue.name,
@@ -119,7 +148,7 @@ router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res
       layout: 'admin',
       currentPath: '/admin/venues',
       title: 'Venue Management',
-      venues,
+      venues: visibleVenues,
       pagination: {
         current: page,
         total: totalPages,
@@ -295,15 +324,29 @@ router.get('/:id/details', isLoggedIn, hasAdminPermission('manage_venues'), asyn
       return res.redirect('/admin/venues');
     }
 
+    if (!venue.createdBy) {
+      await cascadeDeleteVenueById(venue._id);
+      req.flash('success', 'Orphaned venue was automatically removed because its owner account was deleted.');
+      return res.redirect('/admin/venues');
+    }
+
     // Get concert count for this venue
     const concertCount = await Concert.countDocuments({ venue: venue._id });
+    const hostedConcerts = await Concert.find({ venue: venue._id })
+      .populate({
+        path: 'artist',
+        select: 'stageName user',
+        populate: { path: 'user', select: 'name email' }
+      })
+      .sort({ date: -1, createdAt: -1 });
 
     res.render('admin/venues/details', {
       layout: 'admin',
       currentPath: '/admin/venues',
       title: `${venue.name} - Details`,
       venue,
-      concertCount
+      concertCount,
+      hostedConcerts
     });
   } catch (error) {
     console.error('View venue details error:', error);

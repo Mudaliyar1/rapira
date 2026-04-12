@@ -12,14 +12,41 @@ const ArtistApplicationSchema = new mongoose.Schema({
     enum: ['Beginner', 'Intermediate', 'Established'],
     required: true
   },
+  stageName: {
+    type: String,
+    default: ''
+  },
+  genre: {
+    type: String,
+    default: ''
+  },
+  instagramId: {
+    type: String,
+    default: ''
+  },
   aadharCard: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
     validate: {
       validator: function (v) {
+        if (!v) return true;
         return /^\d{12}$/.test(v);
       },
       message: props => `${props.value} is not a valid Aadhaar number! Must be exactly 12 digits.`
+    }
+  },
+  panCard: {
+    type: String,
+    required: false,
+    default: '',
+    uppercase: true,
+    validate: {
+      validator: function (v) {
+        if (!v) return true;
+        return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v);
+      },
+      message: props => `${props.value} is not a valid PAN number! Format must be ABCDE1234F.`
     }
   },
   state: {

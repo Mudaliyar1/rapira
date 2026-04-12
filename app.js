@@ -527,7 +527,7 @@ app.use(async (req, res, next) => {
     const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password',
       '/about', '/contact', '/faq', '/artists', '/concerts', '/shop', '/pages', '/content', '/demo',
       '/privacy-policy', '/terms-of-service', '/refund-policy', '/subscription-policy',
-      '/shopping-policy', '/event-attending-policy', '/temp-email-policy', '/account-reactivation',
+      '/shopping-policy', '/event-attending-policy', '/document-id-policy', '/temp-email-policy', '/account-reactivation',
       '/tickets/validate', '/find-my-artist', '/team-requirement'];
     const isPublicPage = publicPaths.some(path => req.path === path || req.path.startsWith(path + '/'));
 

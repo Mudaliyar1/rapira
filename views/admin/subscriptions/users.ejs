@@ -139,9 +139,11 @@
     <a href="/admin/subscriptions/assign" class="btn btn-success">
       <i class="bi bi-gift me-1"></i> Assign Free Subscription
     </a>
-    <button class="btn btn-outline-warning" id="bulkDeleteBtn" onclick="toggleBulkDelete()">
-      <i class="bi bi-trash me-1"></i> Bulk Delete
-    </button>
+    <form method="POST" action="/admin/subscriptions/users/bulk-delete" id="bulkDeleteSubscriptionsForm" class="mb-0">
+      <button type="submit" class="btn btn-outline-danger" id="bulkDeleteSubscriptionsBtn">
+        <i class="bi bi-trash me-1"></i> Delete Selected
+      </button>
+    </form>
     <a href="/admin/subscriptions/plans" class="btn btn-outline-secondary">
       <i class="bi bi-gear me-1"></i> Manage Plans
     </a>
@@ -157,7 +159,12 @@
       <table class="table table-dark table-hover align-middle">
         <thead>
           <tr>
-            <th>User</th>
+            <th>
+              <div class="d-flex align-items-center">
+                <input type="checkbox" class="form-check-input me-2" id="selectAll" aria-label="Select all subscriptions">
+                <span>User</span>
+              </div>
+            </th>
             <th>Plan</th>
             <th>Purchase Date</th>
             <th>Expiry Date</th>
@@ -179,7 +186,12 @@
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
-                    <input type="checkbox" class="form-check-input subscription-checkbox me-2" value="<%= subscription._id %>" style="display: none;">
+                    <input type="checkbox"
+                           class="form-check-input subscription-checkbox me-2"
+                           name="subscriptionIds"
+                           value="<%= subscription._id %>"
+                           form="bulkDeleteSubscriptionsForm"
+                           aria-label="Select subscription <%= subscription._id %>">
                     <div>
                       <div class="fw-bold"><%= subscription.user ? subscription.user.name : 'User Deleted' %></div>
                       <div class="small text-muted"><%= subscription.user ? subscription.user.email : 'Email not available' %></div>
@@ -413,144 +425,45 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// Bulk delete functionality
-let bulkDeleteMode = false;
-
-function toggleBulkDelete() {
-  bulkDeleteMode = !bulkDeleteMode;
-  const bulkBtn = document.getElementById('bulkDeleteBtn');
-  const selectAll = document.getElementById('selectAll');
-  const selectAllLabel = document.getElementById('selectAllLabel');
-  const checkboxes = document.querySelectorAll('.subscription-checkbox');
-
-  if (bulkDeleteMode) {
-    // Enable bulk delete mode
-    bulkBtn.innerHTML = '<i class="bi bi-x me-1"></i> Cancel Bulk Delete';
-    bulkBtn.className = 'btn btn-outline-secondary';
-    selectAll.style.display = 'inline-block';
-    selectAllLabel.textContent = 'Select All';
-
-    // Show checkboxes in each row
-    checkboxes.forEach(checkbox => {
-      checkbox.style.display = 'inline-block';
-    });
-
-    // Show bulk delete actions
-    showBulkDeleteActions();
-  } else {
-    // Disable bulk delete mode
-    bulkBtn.innerHTML = '<i class="bi bi-trash me-1"></i> Bulk Delete';
-    bulkBtn.className = 'btn btn-outline-warning';
-    selectAll.style.display = 'none';
-    selectAllLabel.textContent = 'User';
-    selectAll.checked = false;
-
-    // Hide checkboxes
-    checkboxes.forEach(checkbox => {
-      checkbox.style.display = 'none';
-      checkbox.checked = false;
-    });
-
-    // Hide bulk delete actions
-    hideBulkDeleteActions();
-  }
-}
-
-function showBulkDeleteActions() {
-  const actionsHtml = `
-    <div id="bulkDeleteActions" class="alert alert-warning mt-3">
-      <div class="d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-info-circle me-2"></i>Select subscriptions to delete</span>
-        <button class="btn btn-danger btn-sm" onclick="confirmBulkDelete()" id="bulkDeleteConfirmBtn" disabled>
-          <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selectedCount">0</span>)
-        </button>
-      </div>
-    </div>
-  `;
-
-  const statsSection = document.getElementById('statsSection');
-  if (statsSection) {
-    statsSection.insertAdjacentHTML('afterend', actionsHtml);
-  }
-}
-
-function hideBulkDeleteActions() {
-  const bulkActions = document.getElementById('bulkDeleteActions');
-  if (bulkActions) {
-    bulkActions.remove();
-  }
-}
-
-function updateSelectedCount() {
-  const selectedCheckboxes = document.querySelectorAll('.subscription-checkbox:checked');
-  const count = selectedCheckboxes.length;
-  const countSpan = document.getElementById('selectedCount');
-  const confirmBtn = document.getElementById('bulkDeleteConfirmBtn');
-
-  if (countSpan) countSpan.textContent = count;
-  if (confirmBtn) confirmBtn.disabled = count === 0;
-}
-
-function confirmBulkDelete() {
-  const selectedCheckboxes = document.querySelectorAll('.subscription-checkbox:checked');
-  const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.value);
-
-  if (selectedIds.length === 0) {
-    alert('Please select at least one subscription to delete.');
-    return;
-  }
-
-  const confirmMessage = `Are you sure you want to delete ${selectedIds.length} subscription(s)? This action cannot be undone.`;
-
-  if (confirm(confirmMessage)) {
-    // Create a form to submit the bulk delete
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/admin/subscriptions/users/bulk-delete';
-
-    selectedIds.forEach(id => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'subscriptionIds[]';
-      input.value = id;
-      form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-  }
-}
-
-// Event listeners for bulk delete
+// Bulk delete selection (same pattern as Artist Applications)
 document.addEventListener('DOMContentLoaded', function() {
-  // Select all functionality
   const selectAll = document.getElementById('selectAll');
+  const bulkDeleteSubscriptionsForm = document.getElementById('bulkDeleteSubscriptionsForm');
+
+  function getCheckedSubscriptionIds() {
+    return Array.from(document.querySelectorAll('.subscription-checkbox:checked')).map(cb => cb.value);
+  }
+
   if (selectAll) {
     selectAll.addEventListener('change', function() {
-      const checkboxes = document.querySelectorAll('.subscription-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
+      document.querySelectorAll('.subscription-checkbox').forEach(cb => {
+        cb.checked = selectAll.checked;
       });
-      updateSelectedCount();
     });
   }
 
-  // Individual checkbox listeners
   document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('subscription-checkbox')) {
-      updateSelectedCount();
-
-      // Update select all checkbox
-      const selectAll = document.getElementById('selectAll');
-      const checkboxes = document.querySelectorAll('.subscription-checkbox');
-      const checkedBoxes = document.querySelectorAll('.subscription-checkbox:checked');
-
-      if (selectAll) {
-        selectAll.checked = checkboxes.length === checkedBoxes.length;
-        selectAll.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < checkboxes.length;
-      }
-    }
+    if (!e.target.classList.contains('subscription-checkbox')) return;
+    if (!selectAll) return;
+    const all = document.querySelectorAll('.subscription-checkbox');
+    const checked = document.querySelectorAll('.subscription-checkbox:checked');
+    selectAll.checked = all.length > 0 && all.length === checked.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
   });
+
+  if (bulkDeleteSubscriptionsForm) {
+    bulkDeleteSubscriptionsForm.addEventListener('submit', function(event) {
+      const ids = getCheckedSubscriptionIds();
+      if (!ids.length) {
+        event.preventDefault();
+        alert('Please select at least one subscription record to delete.');
+        return;
+      }
+      if (!confirm('Delete ' + ids.length + ' selected subscription record(s)? This cannot be undone.')) {
+        event.preventDefault();
+      }
+    });
+  }
 });
 </script>
 

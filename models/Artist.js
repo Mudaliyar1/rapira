@@ -84,6 +84,10 @@ const ArtistSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  panCard: {
+    type: String,
+    default: ''
+  },
   state: {
     type: String,
     default: ''

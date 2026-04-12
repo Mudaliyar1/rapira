@@ -1998,43 +1998,82 @@ const sendBulkEmail = async (recipients, subject, htmlContent, textContent = nul
         .trim();
     }
 
-    // Prepare the request payload for multiple recipients
-    const payload = {
-      sender: {
-        name: SENDER_NAME,
-        email: SENDER_EMAIL
-      },
-      replyTo: {
-        name: 'Rapira Support',
-        email: SENDER_EMAIL
-      },
-      // Add headers for tracking
-      headers: {
-        'X-Mailin-Tag': 'bulk-email'
-      },
-      to: recipients.map(recipient => ({
-        email: recipient.email,
-        name: recipient.name || recipient.email.split('@')[0]
-      })),
-      subject: subject,
-      htmlContent: htmlContent,
-      textContent: textContent
-    };
+    // Ensure unique recipient emails and send privately (one recipient per API request)
+    const seenEmails = new Set();
+    const uniqueRecipients = [];
 
-    // Log the email being sent
-    console.log('Sending bulk email to:', recipients.map(r => r.email).join(', '));
+    for (const recipient of recipients) {
+      const email = String(recipient.email || '').trim().toLowerCase();
+      if (!email || seenEmails.has(email)) continue;
+      seenEmails.add(email);
+      uniqueRecipients.push({
+        email,
+        name: recipient.name || email.split('@')[0]
+      });
+    }
 
-    // Send the email
-    const response = await postToBrevo(BREVO_API_URL, payload, {
-      headers: {
-        'accept': 'application/json',
-        'api-key': BREVO_API_KEY,
-        'content-type': 'application/json'
+    console.log('Sending private bulk email to unique recipients:', uniqueRecipients.length);
+
+    let sentCount = 0;
+    let failedCount = 0;
+    const failedRecipients = [];
+
+    for (const recipient of uniqueRecipients) {
+      const payload = {
+        sender: {
+          name: SENDER_NAME,
+          email: SENDER_EMAIL
+        },
+        replyTo: {
+          name: 'Rapira Support',
+          email: SENDER_EMAIL
+        },
+        headers: {
+          'X-Mailin-Tag': 'bulk-email-private'
+        },
+        to: [{
+          email: recipient.email,
+          name: recipient.name
+        }],
+        subject: subject,
+        htmlContent: htmlContent,
+        textContent: textContent
+      };
+
+      try {
+        await postToBrevo(BREVO_API_URL, payload, {
+          headers: {
+            'accept': 'application/json',
+            'api-key': BREVO_API_KEY,
+            'content-type': 'application/json'
+          }
+        });
+        sentCount += 1;
+      } catch (recipientError) {
+        failedCount += 1;
+        failedRecipients.push({
+          email: recipient.email,
+          error: recipientError.message
+        });
       }
-    });
+    }
 
-    console.log('Bulk email sent successfully. Response:', response.status, response.statusText);
-    return { success: true, data: response.data, method: 'api', recipientCount: recipients.length };
+    const isSuccess = sentCount > 0;
+    if (failedCount > 0) {
+      console.warn(`Bulk email private send completed with failures. Sent: ${sentCount}, Failed: ${failedCount}`);
+    } else {
+      console.log(`Bulk email private send completed. Sent: ${sentCount}`);
+    }
+
+    return {
+      success: isSuccess,
+      method: 'api-private',
+      recipientCount: uniqueRecipients.length,
+      sentCount,
+      failedCount,
+      failedRecipients,
+      partial: failedCount > 0
+    };
 
   } catch (error) {
     console.error('Error in sendBulkEmail:', error);

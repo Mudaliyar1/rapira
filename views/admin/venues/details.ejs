@@ -155,6 +155,85 @@
         </div>
       </div>
     <% } %>
+
+    <!-- Hosted Concerts -->
+    <div class="card mt-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0" style="color: white !important;">Hosted Concerts</h5>
+        <span class="badge bg-info fs-6"><%= concertCount %></span>
+      </div>
+      <div class="card-body">
+        <% if (hostedConcerts && hostedConcerts.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table table-striped align-middle">
+              <thead>
+                <tr>
+                  <th>Concert</th>
+                  <th>Artist</th>
+                  <th>Date & Time</th>
+                  <th>Status</th>
+                  <th>Tickets</th>
+                  <th>Pricing</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% hostedConcerts.forEach(concert => { %>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold"><%= concert.title %></div>
+                      <div class="small text-muted"><%= concert.city || 'N/A' %></div>
+                    </td>
+                    <td>
+                      <% if (concert.artist) { %>
+                        <div><%= concert.artist.stageName || (concert.artist.user && concert.artist.user.name) || 'Unknown Artist' %></div>
+                        <% if (concert.artist.user && concert.artist.user.email) { %>
+                          <div class="small text-muted"><%= concert.artist.user.email %></div>
+                        <% } %>
+                      <% } else { %>
+                        <span class="text-muted">Artist deleted</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div><%= concert.date ? concert.date.toLocaleDateString('en-US') : 'N/A' %></div>
+                      <div class="small text-muted"><%= concert.time || 'N/A' %></div>
+                    </td>
+                    <td>
+                      <span class="badge <%= concert.status === 'approved' ? 'bg-success' : (concert.status === 'pending' ? 'bg-warning text-dark' : (concert.status === 'rejected' ? 'bg-danger' : 'bg-secondary')) %>">
+                        <%= concert.status || 'unknown' %>
+                      </span>
+                    </td>
+                    <td>
+                      <%= concert.ticketsSold || 0 %>
+                      <% if (concert.maxTickets && concert.maxTickets > 0) { %>
+                        / <%= concert.maxTickets %>
+                      <% } else { %>
+                        / Unlimited
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (concert.isPaid) { %>
+                        <span class="badge bg-primary">Paid</span>
+                        <div class="small text-muted">INR <%= (concert.price || 0).toFixed(2) %></div>
+                      <% } else { %>
+                        <span class="badge bg-success">Free</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-outline-primary">
+                        View Details
+                      </a>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-muted mb-0">No concerts have been hosted at this venue yet.</p>
+        <% } %>
+      </div>
+    </div>
   </div>
 
   <!-- Sidebar -->

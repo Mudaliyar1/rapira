@@ -7,6 +7,9 @@ const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
 const Artist = require('../models/Artist');
 const Venue = require('../models/Venue');
+const VenueRequest = require('../models/VenueRequest');
+const VenueEditRequest = require('../models/VenueEditRequest');
+const VenueExternalBooking = require('../models/VenueExternalBooking');
 const Concert = require('../models/Concert');
 const Ticket = require('../models/Ticket');
 const Content = require('../models/Content');
@@ -22,6 +25,36 @@ const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, send
 const { sendAccountDeletionNotification } = require('../utils/brevoEmailService');
 const { getAllCollectionStats, formatBytes } = require('../utils/storageStats');
 const bcrypt = require('bcryptjs');
+
+async function cleanupVenuesOwnedByUser(userId) {
+  const ownedVenues = await Venue.find({ createdBy: userId }).select('_id').lean();
+  const venueIds = ownedVenues.map(v => v._id);
+
+  if (!venueIds.length) {
+    return { venuesDeleted: 0, concertsDeleted: 0, venueTicketsDeleted: 0 };
+  }
+
+  const concertIds = await Concert.find({ venue: { $in: venueIds } }).distinct('_id');
+  let venueTicketsDeleted = 0;
+
+  if (concertIds.length) {
+    const ticketDeleteResult = await Ticket.deleteMany({ concert: { $in: concertIds } });
+    venueTicketsDeleted = ticketDeleteResult.deletedCount || 0;
+    await Concert.deleteMany({ _id: { $in: concertIds } });
+  }
+
+  await VenueExternalBooking.deleteMany({ $or: [{ createdBy: userId }, { venue: { $in: venueIds } }] });
+  await VenueEditRequest.deleteMany({ $or: [{ user: userId }, { venue: { $in: venueIds } }] });
+  await VenueRequest.deleteMany({ $or: [{ user: userId }, { createdVenue: { $in: venueIds } }] });
+
+  const venueDeleteResult = await Venue.deleteMany({ _id: { $in: venueIds } });
+
+  return {
+    venuesDeleted: venueDeleteResult.deletedCount || 0,
+    concertsDeleted: concertIds.length,
+    venueTicketsDeleted
+  };
+}
 
 // Permission denied page
 router.get('/permission-denied', isLoggedIn, (req, res) => {
@@ -1064,6 +1097,11 @@ router.post('/users/:id/delete', isLoggedIn, hasAdminPermission('manage_users_li
     // Delete user's tickets
     await Ticket.deleteMany({ user: user._id });
     console.log(`Deleted all tickets for user ${user._id}`);
+
+    const venueCleanup = await cleanupVenuesOwnedByUser(user._id);
+    if (venueCleanup.venuesDeleted > 0 || venueCleanup.concertsDeleted > 0 || venueCleanup.venueTicketsDeleted > 0) {
+      console.log(`Venue cascade cleanup for deleted user ${user._id}:`, venueCleanup);
+    }
 
     // Generate recovery token (valid for 30 days) 
     const recoveryToken = crypto.randomBytes(32).toString('hex');
