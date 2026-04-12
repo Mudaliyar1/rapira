@@ -115,6 +115,17 @@ const ArtistSchema = new mongoose.Schema({
   completedLearning: {
     type: Boolean,
     default: false
+  },
+  dashboardTutorialSeen: {
+    type: Boolean,
+    default: false
+  },
+  dashboardTutorialSeenAt: {
+    type: Date
+  },
+  dashboardTutorialSkipped: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

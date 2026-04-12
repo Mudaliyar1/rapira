@@ -602,6 +602,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Add click event to close sidebar when overlay is clicked
           overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             adminSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -657,6 +661,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Add click event to close sidebar when overlay is clicked
           overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             artistSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -712,6 +720,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Add click event to close sidebar when overlay is clicked
           overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             producerSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -767,6 +779,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Add click event to close sidebar when overlay is clicked
           overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             distributorSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -823,6 +839,11 @@ document.addEventListener('DOMContentLoaded', function () {
   // Close sidebar button
   if (closeSidebar) {
     closeSidebar.addEventListener('click', function () {
+      // Don't close sidebar during tutorial
+      if (window.tutorialMode) {
+        return;
+      }
+      
       // Check which sidebar is present
       const isAdminSidebar = !!adminSidebar;
       const isArtistSidebar = !!artistSidebar;
@@ -874,6 +895,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Close sidebar when clicking outside on mobile
   document.addEventListener('click', function (e) {
+    if (window.tutorialMode) {
+      return;
+    }
+
     // For admin sidebar
     if (adminSidebar &&
       window.innerWidth < 992 &&

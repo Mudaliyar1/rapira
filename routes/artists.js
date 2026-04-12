@@ -252,12 +252,28 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
       });
     }
 
+    // Tutorial behavior:
+    // - Auto-show once for artists who have never seen it.
+    // - Allow manual replay with ?tutorial=1.
+    const isTutorialReplay = req.query.tutorial === '1';
+    const shouldAutoShowTutorial = !artist.dashboardTutorialSeen;
+    const showDashboardTutorial = isTutorialReplay || shouldAutoShowTutorial;
+
+    // Persist one-time onboarding visibility as soon as it is shown automatically.
+    if (shouldAutoShowTutorial) {
+      artist.dashboardTutorialSeen = true;
+      artist.dashboardTutorialSeenAt = artist.dashboardTutorialSeenAt || new Date();
+      await artist.save();
+    }
+
     // Regular page request
     res.render('artists/dashboard-new', {
       layout: false,
       currentPath: '/artists/dashboard',
       title: 'Artist Dashboard',
       artist,
+      showDashboardTutorial,
+      isTutorialReplay,
       concerts,
       content,
       followers,
@@ -274,6 +290,28 @@ router.get('/dashboard', isLoggedIn, isArtist, async (req, res) => {
     }
     req.flash('error', 'Failed to load dashboard');
     res.redirect('/');
+  }
+});
+
+// Mark artist dashboard tutorial as completed/skipped (one-time onboarding)
+router.post('/dashboard/tutorial-status', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const action = req.body && req.body.action === 'skip' ? 'skip' : 'complete';
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist) {
+      return res.status(404).json({ success: false, message: 'Artist profile not found' });
+    }
+
+    artist.dashboardTutorialSeen = true;
+    artist.dashboardTutorialSeenAt = new Date();
+    artist.dashboardTutorialSkipped = action === 'skip';
+    await artist.save();
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Dashboard tutorial status error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save tutorial status' });
   }
 });
 
