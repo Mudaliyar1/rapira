@@ -2369,6 +2369,41 @@ router.post('/artists/:id/feature', isLoggedIn, hasAdminPermission('manage_artis
   }
 });
 
+// Update artist level
+router.post('/artists/:id/update-level', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
+  try {
+    const { artistLevel } = req.body;
+    const validLevels = ['Beginner', 'Intermediate', 'Established'];
+
+    // Validate the new level
+    if (!artistLevel || !validLevels.includes(artistLevel)) {
+      req.flash('error', 'Invalid artist level. Must be Beginner, Intermediate, or Established');
+      return res.redirect(`/admin/artists/${req.params.id}/view`);
+    }
+
+    const artist = await Artist.findById(req.params.id);
+
+    if (!artist) {
+      req.flash('error', 'Artist not found');
+      return res.redirect('/admin/artists');
+    }
+
+    const oldLevel = artist.artistLevel;
+    artist.artistLevel = artistLevel;
+    await artist.save();
+
+    // Log the level change for audit purposes
+    console.log(`Admin updated artist ${artist.stageName} (${artist._id}) level from ${oldLevel} to ${artistLevel}`);
+
+    req.flash('success', `Artist level updated from ${oldLevel} to ${artistLevel} successfully`);
+    res.redirect(`/admin/artists/${req.params.id}/view`);
+  } catch (error) {
+    console.error('Update artist level error:', error);
+    req.flash('error', 'Failed to update artist level');
+    res.redirect(`/admin/artists/${req.params.id}/view`);
+  }
+});
+
 // Delete artist
 router.post('/artists/:id/delete', isLoggedIn, hasAdminPermission('manage_artists'), async (req, res) => {
   try {
