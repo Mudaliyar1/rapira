@@ -20,6 +20,12 @@ const Transaction = require('../models/Transaction');
 const ArtistUnblockRequest = require('../models/ArtistUnblockRequest');
 const AccountRecoveryToken = require('../models/AccountRecoveryToken');
 const { deleteMedia } = require('../utils/mediaService');
+
+const isConcertOverForDelete = (concert) => {
+  if (!concert) return false;
+  if (concert.status === 'completed') return true;
+  return new Date(concert.date) < new Date();
+};
 const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { sendConcertApprovalEmail, sendConcertRejectionEmail, sendTestEmail, sendDirectEmail } = require('../utils/emailService');
 const { sendAccountDeletionNotification } = require('../utils/brevoEmailService');
@@ -1897,6 +1903,12 @@ router.get('/concerts/:id/delete-confirm', isLoggedIn, hasAdminPermission('manag
       return res.redirect('/admin/concerts');
     }
 
+    // Allow delete if completed or already over by date.
+    if (!isConcertOverForDelete(concert)) {
+      req.flash('error', 'You cannot delete upcoming or ongoing concerts. Please cancel the concert instead. You can delete concerts after they are over.');
+      return res.redirect('/admin/concerts');
+    }
+
     res.render('admin/confirm-delete-concert', {
       layout: 'admin',
       currentPath: '/admin/concerts',
@@ -1915,6 +1927,12 @@ router.post('/concerts/:id/delete', isLoggedIn, hasAdminPermission('manage_conce
 
     if (!concert) {
       req.flash('error', 'Concert not found');
+      return res.redirect('/admin/concerts');
+    }
+
+    // Safety guard: allow delete only if completed or already over by date.
+    if (!isConcertOverForDelete(concert)) {
+      req.flash('error', 'You cannot delete upcoming or ongoing concerts. Please cancel the concert instead. You can delete concerts after they are over.');
       return res.redirect('/admin/concerts');
     }
 

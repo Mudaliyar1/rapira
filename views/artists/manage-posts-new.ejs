@@ -22,6 +22,12 @@
           <small class="text-muted d-block mt-2">Any image, video, or audio format supported (Max 100MB)</small>
         </div>
 
+        <div class="mb-3">
+          <label for="thumbnailImage" class="form-label">Thumbnail (For Audio/Video)</label>
+          <input type="file" class="form-control" id="thumbnailImage" name="thumbnailImage" accept="image/*">
+          <small class="text-muted d-block mt-2">Optional: Upload a custom thumbnail for audio/video posts (Max 5MB).</small>
+        </div>
+
         <div id="mediaPreview" class="mb-3" style="max-height: 300px; border-radius: 8px; overflow: hidden; display: none;">
           <!-- Preview will appear here -->
         </div>
@@ -539,6 +545,24 @@ document.getElementById('media').addEventListener('change', function(e) {
   }
 });
 
+// Thumbnail validation (max 5MB)
+document.getElementById('thumbnailImage').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  const THUMB_MAX_SIZE = 5 * 1024 * 1024;
+  if (file.size > THUMB_MAX_SIZE) {
+    showAlert('thumbnail exceed limit please under 5mb', 'danger');
+    this.value = '';
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    showAlert('thumbnail must be an image file', 'danger');
+    this.value = '';
+  }
+});
+
 // Character counter
 document.getElementById('caption').addEventListener('input', function() {
   document.getElementById('charCount').textContent = this.value.length;
@@ -565,6 +589,20 @@ document.getElementById('postForm').addEventListener('submit', function(e) {
   if (fileInput.files[0].size > MAX_SIZE) {
     showAlert('file exceed limit please under 100mb', 'danger');
     return;
+  }
+
+  const thumbnailInput = document.getElementById('thumbnailImage');
+  if (thumbnailInput && thumbnailInput.files.length > 0) {
+    const thumbFile = thumbnailInput.files[0];
+    const THUMB_MAX_SIZE = 5 * 1024 * 1024;
+    if (thumbFile.size > THUMB_MAX_SIZE) {
+      showAlert('thumbnail exceed limit please under 5mb', 'danger');
+      return;
+    }
+    if (!thumbFile.type.startsWith('image/')) {
+      showAlert('thumbnail must be an image file', 'danger');
+      return;
+    }
   }
 
   const formData = new FormData(this);
@@ -675,15 +713,19 @@ async function loadMyPosts() {
           ${post.media.mediaType === 'image'
             ? `<img src="${post.media.url}" class="post-media" alt="post">`
             : post.media.mediaType === 'audio'
-            ? `<div class="audio-gallery-card post-media">
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-               </div>`
-            : `<video class="post-media" controls><source src="${post.media.url}"></video>`
+            ? (post.media.thumbnailUrl
+               ? `<img src="${post.media.thumbnailUrl}" class="post-media" alt="audio thumbnail">`
+               : `<div class="audio-gallery-card post-media">
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                  </div>`)
+            : (post.media.thumbnailUrl
+               ? `<img src="${post.media.thumbnailUrl}" class="post-media" alt="video thumbnail">`
+               : `<video class="post-media" controls><source src="${post.media.url}"></video>`)
           }
           <div class="post-info">
             <div class="post-caption">${escapeHtml(post.caption || '(no caption)')}</div>

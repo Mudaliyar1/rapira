@@ -197,9 +197,15 @@
                     <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-outline-primary me-1">
                       <i class="bi bi-eye"></i> Details
                     </a>
-                    <a href="/admin/concerts/<%= concert._id %>/delete-confirm" class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-trash"></i> Delete
-                    </a>
+                    <% if ((concert.status === 'completed') || (new Date(concert.date) < new Date())) { %>
+                      <a href="/admin/concerts/<%= concert._id %>/delete-confirm" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                      </a>
+                    <% } else { %>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Only completed or ended concerts can be deleted">
+                        <i class="bi bi-lock"></i> Delete Disabled
+                      </button>
+                    <% } %>
                   </div>
                 </td>
               </tr>

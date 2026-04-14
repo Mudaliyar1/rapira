@@ -183,6 +183,19 @@ async function viewPost(postId) {
       audioContainer.className = 'audio-visualizer-modal';
       audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
 
+      const audioThumbnailUrl = (currentPost.media && currentPost.media.thumbnailUrl) ? currentPost.media.thumbnailUrl : '';
+      const hasAudioThumbnail = !!audioThumbnailUrl;
+
+      if (hasAudioThumbnail) {
+        audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: #000;';
+        const cover = document.createElement('img');
+        cover.src = audioThumbnailUrl;
+        cover.alt = 'Audio thumbnail';
+        cover.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;';
+        cover.onerror = function () { this.onerror = null; this.src = '/images/default-thumbnail.jpg'; };
+        audioContainer.appendChild(cover);
+      }
+
       // Inline SVG Visualizer (Guaranteed to animate)
       const svgHtml = `
         <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
@@ -226,9 +239,11 @@ async function viewPost(postId) {
         </svg>
       `;
 
-      const vizContainer = document.createElement('div');
-      vizContainer.innerHTML = svgHtml;
-      audioContainer.appendChild(vizContainer);
+      if (!hasAudioThumbnail) {
+        const vizContainer = document.createElement('div');
+        vizContainer.innerHTML = svgHtml;
+        audioContainer.appendChild(vizContainer);
+      }
 
       // Audio player (hidden)
       const audio = document.createElement('audio');
@@ -254,7 +269,9 @@ async function viewPost(postId) {
 
       // Minimal player container (Spotify style)
       const playerContainer = document.createElement('div');
-      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
+      playerContainer.style.cssText = hasAudioThumbnail
+        ? 'display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); max-width: 680px; background: rgba(0, 0, 0, 0.58); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0, 212, 255, 0.25); backdrop-filter: blur(10px); z-index: 12; position: absolute; left: 10px; right: 10px; bottom: 10px;'
+        : 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
 
       // Play/Pause button - circular
       const playBtn = document.createElement('button');
@@ -323,7 +340,46 @@ async function viewPost(postId) {
       const volIcon = document.createElement('i');
       volIcon.className = 'bi bi-volume-up ms-2';
       volIcon.style.cssText = 'color: #00d4ff; opacity: 0.8; cursor: pointer;';
+
+      const volSlider = document.createElement('input');
+      volSlider.type = 'range';
+      volSlider.min = '0';
+      volSlider.max = '100';
+      volSlider.value = '80';
+      audio.volume = 0.8;
+      volSlider.style.cssText = 'width: 70px; height: 4px; cursor: pointer; -webkit-appearance: none; background: rgba(0, 212, 255, 0.2); border-radius: 2px; outline: none; margin-left: 8px; flex-shrink: 0;';
+
+      // Reuse slider thumb styling for audio controls if needed.
+      if (!document.getElementById('rapira-audio-thumb-style')) {
+        const styleTag = document.createElement('style');
+        styleTag.id = 'rapira-audio-thumb-style';
+        styleTag.textContent = `
+          input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,212,255,0.6); border: none; }
+          input[type=range]::-moz-range-thumb { height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0,212,255,0.6); }
+        `;
+        document.head.appendChild(styleTag);
+      }
+
+      volSlider.addEventListener('input', (e) => {
+        const val = e.target.value / 100;
+        audio.volume = val;
+        volIcon.className = val === 0 ? 'bi bi-volume-mute ms-2' : val < 0.5 ? 'bi bi-volume-down ms-2' : 'bi bi-volume-up ms-2';
+      });
+
+      volIcon.addEventListener('click', () => {
+        if (audio.volume > 0) {
+          audio.volume = 0;
+          volSlider.value = '0';
+          volIcon.className = 'bi bi-volume-mute ms-2';
+        } else {
+          audio.volume = 0.8;
+          volSlider.value = '80';
+          volIcon.className = 'bi bi-volume-up ms-2';
+        }
+      });
+
       playerContainer.appendChild(volIcon);
+      playerContainer.appendChild(volSlider);
 
       audioContainer.appendChild(playerContainer);
       mediaContainer.appendChild(audioContainer);
@@ -485,6 +541,19 @@ async function viewPost(postId) {
       audioContainer.className = 'audio-visualizer-modal';
       audioContainer.style.cssText = 'width: 100%; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
 
+      const audioThumbnailUrl = (currentPost.media && currentPost.media.thumbnailUrl) ? currentPost.media.thumbnailUrl : '';
+      const hasAudioThumbnail = !!audioThumbnailUrl;
+
+      if (hasAudioThumbnail) {
+        audioContainer.style.cssText = 'width: 100%; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: #000;';
+        const cover = document.createElement('img');
+        cover.src = audioThumbnailUrl;
+        cover.alt = 'Audio thumbnail';
+        cover.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;';
+        cover.onerror = function () { this.onerror = null; this.src = '/images/default-thumbnail.jpg'; };
+        audioContainer.appendChild(cover);
+      }
+
       // Inline SVG Visualizer (Guaranteed to animate)
       const svgHtml = `
         <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
@@ -528,9 +597,11 @@ async function viewPost(postId) {
         </svg>
       `;
 
-      const vizContainer = document.createElement('div');
-      vizContainer.innerHTML = svgHtml;
-      audioContainer.appendChild(vizContainer);
+      if (!hasAudioThumbnail) {
+        const vizContainer = document.createElement('div');
+        vizContainer.innerHTML = svgHtml;
+        audioContainer.appendChild(vizContainer);
+      }
 
       // Audio player (hidden)
       const audio = document.createElement('audio');
@@ -550,7 +621,9 @@ async function viewPost(postId) {
 
       // Minimal player container (Spotify style)
       const playerContainer = document.createElement('div');
-      playerContainer.style.cssText = 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
+      playerContainer.style.cssText = hasAudioThumbnail
+        ? 'display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); max-width: 680px; background: rgba(0, 0, 0, 0.58); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0, 212, 255, 0.25); backdrop-filter: blur(10px); z-index: 12; position: absolute; left: 10px; right: 10px; bottom: 10px;'
+        : 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
 
       // Play/Pause button - circular
       const playBtn = document.createElement('button');

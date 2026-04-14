@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
+const http = require('http');
+const https = require('https');
+const path = require('path');
 const Concert = require('../models/Concert');
 const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
 const ArtistPost = require('../models/ArtistPost');
 const { sendTestEmail, sendConcertSubmissionEmail } = require('../utils/emailService');
+const Media = require('../models/Media');
+const { deleteMedia } = require('../utils/mediaService');
+const { extractYoutubeId, isYoutubeVideoAvailable } = require('../utils/youtube');
 
 const POLICY_LAST_UPDATED = '12 Apr 2026';
 
@@ -19,6 +25,55 @@ const getLikesDisplay = (item) => {
   const fake = String(item?.fakeLikesLabel || '').trim();
   if (fake) return fake;
   return String(item?.likesCount || (Array.isArray(item?.likes) ? item.likes.length : 0));
+};
+
+const sanitizeFilename = (value) => {
+  const safe = String(value || 'download')
+    .trim()
+    .replace(/[^a-z0-9\-_]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+  return safe || 'download';
+};
+
+const getExtensionFromUrl = (mediaUrl) => {
+  try {
+    const parsedUrl = new URL(mediaUrl);
+    const ext = path.extname(parsedUrl.pathname || '');
+    return ext || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+const streamRemoteFile = (mediaUrl, res) => {
+  const parsedUrl = new URL(mediaUrl);
+  const client = parsedUrl.protocol === 'http:' ? http : https;
+
+  const request = client.get(parsedUrl, (remoteRes) => {
+    if (remoteRes.statusCode >= 300 && remoteRes.statusCode < 400 && remoteRes.headers.location) {
+      return streamRemoteFile(remoteRes.headers.location, res);
+    }
+
+    if (remoteRes.statusCode !== 200) {
+      res.status(502).send('Unable to download file');
+      remoteRes.resume();
+      return;
+    }
+
+    if (remoteRes.headers['content-type']) {
+      res.setHeader('Content-Type', remoteRes.headers['content-type']);
+    }
+
+    remoteRes.pipe(res);
+  });
+
+  request.on('error', () => {
+    if (!res.headersSent) {
+      res.status(502).send('Unable to download file');
+    } else {
+      res.end();
+    }
+  });
 };
 
 // Home page
@@ -329,14 +384,6 @@ router.get('/content', async (req, res) => {
   try {
     const { mediaType = '', artist = '', sort = 'latest' } = req.query;
 
-    // Helper: extract YouTube ID from a URL
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-    const extractYoutubeId = (url) => {
-      if (!url) return null;
-      const match = url.match(youtubeRegex);
-      return match ? match[1] : null;
-    };
-
     // --- Build Filters ---
     const contentFilter = {};
     const postFilter = { isActive: true, isApproved: true };
@@ -363,9 +410,37 @@ router.get('/content', async (req, res) => {
       ArtistPost.find(postFilter).populate({ path: 'artist', populate: { path: 'user', select: 'name' } }).lean()
     ]);
 
+    const cleanedContent = [];
+    for (const item of rawContent) {
+      const isYoutubeContent = item.isYoutubeLink || item.youtubeId || /(?:youtube\.com|youtu\.be)/i.test(String(item.fileUrl || ''));
+      if (isYoutubeContent) {
+        const youtubeId = item.youtubeId || extractYoutubeId(item.fileUrl);
+        const available = await isYoutubeVideoAvailable(youtubeId || item.fileUrl);
+        if (!available) {
+          try {
+            if (item.thumbnailMedia) {
+              const thumbnailMedia = await Media.findById(item.thumbnailMedia);
+              if (thumbnailMedia) await deleteMedia(thumbnailMedia);
+            }
+            if (item.fileMedia) {
+              const fileMedia = await Media.findById(item.fileMedia);
+              if (fileMedia) await deleteMedia(fileMedia);
+            }
+          } catch (cleanupError) {
+            console.error('Failed to cleanup deleted YouTube content from library:', cleanupError.message);
+          }
+
+          await Content.deleteOne({ _id: item._id });
+          continue;
+        }
+      }
+
+      cleanedContent.push(item);
+    }
+
     // --- Standardize Data Formats ---
     let unifiedList = [
-      ...rawContent.map(item => {
+      ...cleanedContent.map(item => {
         const ytId = item.isYoutubeLink ? item.youtubeId : extractYoutubeId(item.fileUrl);
         return {
           _id: item._id,
@@ -378,7 +453,8 @@ router.get('/content', async (req, res) => {
           likesCount: item.likes || 0,
           media: {
             url: item.fileUrl,
-            mediaType: item.type === 'song' ? 'audio' : 'video'
+            mediaType: item.type === 'song' ? 'audio' : 'video',
+            thumbnailUrl: item.thumbnailUrl || ''
           },
           isYoutube: !!ytId || item.isYoutubeLink,
           youtubeId: ytId || item.youtubeId,
@@ -456,6 +532,52 @@ router.get('/content', async (req, res) => {
     console.error('Content library error:', error);
     req.flash('error', 'Failed to load content library');
     res.redirect('/');
+  }
+});
+
+router.get('/content/download', async (req, res) => {
+  try {
+    const { sourceModel, id } = req.query;
+
+    if (!sourceModel || !id) {
+      return res.status(400).send('Missing download parameters');
+    }
+
+    let item = null;
+    if (sourceModel === 'Content') {
+      item = await Content.findById(id).lean();
+    } else if (sourceModel === 'ArtistPost') {
+      item = await ArtistPost.findById(id).lean();
+    }
+
+    if (!item) {
+      return res.status(404).send('Content not found');
+    }
+
+    const mediaUrl = sourceModel === 'Content'
+      ? item.fileUrl
+      : item.media && item.media.url;
+
+    if (!mediaUrl) {
+      return res.status(404).send('Media not available for download');
+    }
+
+    if (String(mediaUrl).includes('youtube.com') || String(mediaUrl).includes('youtu.be')) {
+      return res.status(400).send('YouTube media cannot be downloaded from here');
+    }
+
+    const baseName = sourceModel === 'Content'
+      ? item.title
+      : (item.title || item.caption || 'artist-post');
+    const fileName = `${sanitizeFilename(baseName)}${getExtensionFromUrl(mediaUrl) || ''}`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return streamRemoteFile(mediaUrl, res);
+  } catch (error) {
+    console.error('Content download error:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Failed to download file');
+    }
   }
 });
 

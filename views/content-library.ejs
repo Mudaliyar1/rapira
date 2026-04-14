@@ -1,5 +1,24 @@
 <%- contentFor('body') %>
 
+<style>
+  .gradient-purple-btn {
+    background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
+    background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
+    border: 0 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;
+  }
+
+  .gradient-purple-btn:hover,
+  .gradient-purple-btn:focus {
+    background: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
+    background-image: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 12px 28px rgba(109, 40, 217, 0.35) !important;
+  }
+</style>
+
 <!-- Hero Section -->
 <section class="py-5 bg-gradient-primary text-white">
   <div class="container">
@@ -121,6 +140,12 @@
                     <i class="bi bi-youtube"></i>
                     <%= item.media && item.media.mediaType === 'audio' ? 'YT Audio' : 'YT Video' %>
                   </span>
+                <% } else if (item.media && item.media.thumbnailUrl && (item.media.mediaType === 'audio' || item.media.mediaType === 'video')) { %>
+                  <img src="<%= item.media.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
+                  <span class="badge <%= item.media.mediaType === 'audio' ? 'bg-success' : 'bg-danger' %> content-type-badge">
+                    <i class="bi <%= item.media.mediaType === 'audio' ? 'bi-music-note-beamed' : 'bi-camera-video' %>"></i>
+                    <%= item.media.mediaType === 'audio' ? 'Audio' : 'Video' %>
+                  </span>
                 <% } else if (item.media && item.media.mediaType === 'audio') { %>
                   <div class="card-img-top content-thumbnail d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <i class="bi bi-music-note-beamed text-white" style="font-size: 4rem;"></i>
@@ -167,35 +192,46 @@
                 </p>
               </div>
               <div class="card-footer bg-white border-top-0">
-                <% if (item.sourceModel === 'Content' || item.isYoutube) { %>
-                  <a href="<%= item.sourceModel === 'Content' ? '/content/' + item._id : '/posts/view/' + item._id %>" 
-                     class="btn btn-outline-primary w-100">
-                    <% if (item.isYoutube) { %>
-                      <i class="bi bi-youtube me-1" style="color:#f00;"></i> Watch on YouTube
-                    <% } else if (item.media && item.media.mediaType === 'video') { %>
-                      <i class="bi bi-play-circle me-1"></i> Watch
-                    <% } else if (item.media && item.media.mediaType === 'audio') { %>
-                      <i class="bi bi-headphones me-1"></i> Listen
-                    <% } else if (item.media && item.media.mediaType === 'image') { %>
-                      <i class="bi bi-eye me-1"></i> View
-                    <% } else { %>
-                      Open
-                    <% } %>
-                  </a>
-                <% } else { %>
-                  <button onclick="viewPost('<%= item._id %>', '<%= item.sourceModel %>')"
-                     class="btn btn-outline-primary w-100">
-                    <% if (item.media && item.media.mediaType === 'video') { %>
-                      <i class="bi bi-play-circle me-1"></i> Watch
-                    <% } else if (item.media && item.media.mediaType === 'audio') { %>
-                      <i class="bi bi-headphones me-1"></i> Listen
-                    <% } else if (item.media && item.media.mediaType === 'image') { %>
-                      <i class="bi bi-eye me-1"></i> View
-                    <% } else { %>
-                      Open
-                    <% } %>
-                  </button>
-                <% } %>
+                <div class="d-grid gap-2">
+                  <% if (item.sourceModel === 'Content' || item.isYoutube) { %>
+                      <a href="<%= item.sourceModel === 'Content' ? '/content/' + item._id : '/posts/view/' + item._id %>" 
+                        class="btn"
+                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <% if (item.isYoutube) { %>
+                        <i class="bi bi-youtube me-1" style="color:#f00;"></i> Watch on YouTube
+                      <% } else if (item.media && item.media.mediaType === 'video') { %>
+                        <i class="bi bi-play-circle me-1"></i> Watch
+                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
+                        <i class="bi bi-headphones me-1"></i> Listen
+                      <% } else if (item.media && item.media.mediaType === 'image') { %>
+                        <i class="bi bi-eye me-1"></i> View
+                      <% } else { %>
+                        Open
+                      <% } %>
+                    </a>
+                  <% } else { %>
+                      <button onclick="viewPost('<%= item._id %>', '<%= item.sourceModel %>')"
+                        class="btn"
+                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <% if (item.media && item.media.mediaType === 'video') { %>
+                        <i class="bi bi-play-circle me-1"></i> Watch
+                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
+                        <i class="bi bi-headphones me-1"></i> Listen
+                      <% } else if (item.media && item.media.mediaType === 'image') { %>
+                        <i class="bi bi-eye me-1"></i> View
+                      <% } else { %>
+                        Open
+                      <% } %>
+                    </button>
+                  <% } %>
+
+                  <% if (!item.isYoutube && item.media && item.media.url) { %>
+                    <a href="/content/download?sourceModel=<%= item.sourceModel %>&id=<%= item._id %>" class="btn"
+                      style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <i class="bi bi-download me-1"></i> Download
+                    </a>
+                  <% } %>
+                </div>
               </div>
             </div>
           </div>

@@ -10,7 +10,9 @@ const artistPostSchema = new mongoose.Schema({
   media: {
     url: String,
     mediaType: String, // 'image', 'video', or 'audio'
-    publicId: String // For Cloudinary deletion
+    publicId: String, // For Cloudinary deletion
+    thumbnailUrl: String,
+    thumbnailPublicId: String
   },
   caption: String,
   hashtags: [String],

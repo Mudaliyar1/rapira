@@ -260,15 +260,19 @@ async function loadPosts() {
           ${post.media.mediaType === 'image'
             ? `<img src="${post.media.url}" alt="post">`
             : post.media.mediaType === 'video'
-            ? `<video muted><source src="${post.media.url}"></video>`
-            : `<div class="audio-gallery-card">
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-                 <div class="visualizer-bar"></div>
-               </div>`
+            ? (post.media.thumbnailUrl
+               ? `<img src="${post.media.thumbnailUrl}" alt="video thumbnail">`
+               : `<video muted><source src="${post.media.url}"></video>`)
+            : (post.media.thumbnailUrl
+               ? `<img src="${post.media.thumbnailUrl}" alt="audio thumbnail">`
+               : `<div class="audio-gallery-card">
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                    <div class="visualizer-bar"></div>
+                  </div>`)
           }
           <div class="post-overlay-gallery">
             <div class="post-overlay-content-gallery">

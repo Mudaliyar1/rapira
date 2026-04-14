@@ -25,6 +25,57 @@ const { createOrder, verifyPayment } = require('../utils/paymentService');
 const { getFileUrl } = require('../utils/fileHelper');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
+const getConcertStartDateTime = (concert) => {
+  if (!concert || !concert.date) return null;
+
+  const baseDate = new Date(concert.date);
+  if (Number.isNaN(baseDate.getTime())) return null;
+
+  const startDateTime = new Date(baseDate);
+  const timeRaw = String(concert.time || '').trim();
+  if (!timeRaw) {
+    startDateTime.setHours(0, 0, 0, 0);
+    return startDateTime;
+  }
+
+  let hours = 0;
+  let minutes = 0;
+
+  const amPmMatch = timeRaw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (amPmMatch) {
+    hours = parseInt(amPmMatch[1], 10);
+    minutes = parseInt(amPmMatch[2], 10);
+    const period = amPmMatch[3].toUpperCase();
+
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+  } else {
+    const twentyFourHourMatch = timeRaw.match(/^(\d{1,2}):(\d{2})$/);
+    if (twentyFourHourMatch) {
+      hours = parseInt(twentyFourHourMatch[1], 10);
+      minutes = parseInt(twentyFourHourMatch[2], 10);
+    } else {
+      startDateTime.setHours(0, 0, 0, 0);
+      return startDateTime;
+    }
+  }
+
+  startDateTime.setHours(hours, minutes, 0, 0);
+  return startDateTime;
+};
+
+const isConcertStarted = (concert) => {
+  const startDateTime = getConcertStartDateTime(concert);
+  if (!startDateTime) return false;
+  return startDateTime <= new Date();
+};
+
+const isConcertOverForDelete = (concert) => {
+  if (!concert) return false;
+  if (concert.status === 'completed') return true;
+  return isConcertStarted(concert);
+};
+
 // Configure multer for concert image uploads (memory → Cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1135,6 +1186,11 @@ router.get('/:id/edit', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/artists/dashboard');
     }
 
+    if (isConcertStarted(concert)) {
+      req.flash('error', "You can't edit this concert because it is ongoing or already passed.");
+      return res.redirect('/artists/manage-concerts');
+    }
+
     // Allow editing if concert is pending, rejected, or an upcoming approved concert
     if (concert.status !== 'pending' && concert.status !== 'rejected' &&
       !(concert.status === 'approved' && new Date(concert.date) >= new Date())) {
@@ -1197,6 +1253,11 @@ router.post('/:id/edit', isLoggedIn, isArtist, (req, res, next) => {
     if (!concert) {
       req.flash('error', 'Concert not found or you do not have permission to edit it');
       return res.redirect('/artists/dashboard');
+    }
+
+    if (isConcertStarted(concert)) {
+      req.flash('error', "You can't edit this concert because it is ongoing or already passed.");
+      return res.redirect('/artists/manage-concerts');
     }
 
     // Prevent editing of approved concerts - they need to use edit request system
@@ -1339,6 +1400,44 @@ router.post('/:id/cancel', isLoggedIn, isArtist, async (req, res) => {
     console.error('Cancel concert error:', error);
     req.flash('error', 'Failed to cancel concert');
     res.redirect('/artists/manage-concerts');
+  }
+});
+
+// Delete concert (artist)
+// Completed or already-ended concerts can be deleted.
+router.post('/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    const concert = await Concert.findOne({
+      _id: req.params.id,
+      artist: artist._id
+    });
+
+    if (!concert) {
+      req.flash('error', 'Concert not found or you do not have permission to delete it');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    if (!isConcertOverForDelete(concert)) {
+      req.flash('error', 'You cannot delete upcoming or ongoing concerts. Please cancel the concert instead. You can delete concerts after they are over.');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    await Ticket.deleteMany({ concert: concert._id });
+    await Concert.findByIdAndDelete(concert._id);
+
+    req.flash('success', 'Completed concert deleted successfully');
+    return res.redirect('/artists/manage-concerts');
+  } catch (error) {
+    console.error('Delete concert error:', error);
+    req.flash('error', 'Failed to delete concert');
+    return res.redirect('/artists/manage-concerts');
   }
 });
 

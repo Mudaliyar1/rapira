@@ -45,6 +45,38 @@
       background: #000;
       display: block;
     }
+
+    .audio-detail-cover {
+      position: relative;
+      width: 100%;
+      min-height: 320px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .audio-detail-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .audio-controls-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 14px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.25));
+    }
+
+    .audio-controls-overlay audio {
+      width: 100%;
+    }
     
     /* Ensure images are fully responsive */
     .post-media[alt="post"] {
@@ -362,12 +394,23 @@
                 <source src="<%= post.media.url %>">
               </video>
             <% } else if (post.media && post.media.mediaType === 'audio') { %>
-              <div style="background: #222; padding: 40px; text-align: center; border-radius: 12px;">
-                <i class="bi bi-music-note-beamed" style="font-size: 5rem; color: #00d4ff; display: block; margin-bottom: 20px;"></i>
-                <audio controls style="width: 100%;">
-                  <source src="<%= post.media.url %>">
-                </audio>
-              </div>
+              <% if (post.media.thumbnailUrl) { %>
+                <div class="audio-detail-cover">
+                  <img src="<%= post.media.thumbnailUrl %>" alt="Audio thumbnail" onerror="this.onerror=null; this.src='/images/default-thumbnail.jpg';">
+                  <div class="audio-controls-overlay">
+                    <audio controls>
+                      <source src="<%= post.media.url %>">
+                    </audio>
+                  </div>
+                </div>
+              <% } else { %>
+                <div style="background: #222; padding: 40px; text-align: center; border-radius: 12px;">
+                  <i class="bi bi-music-note-beamed" style="font-size: 5rem; color: #00d4ff; display: block; margin-bottom: 20px;"></i>
+                  <audio controls style="width: 100%;">
+                    <source src="<%= post.media.url %>">
+                  </audio>
+                </div>
+              <% } %>
             <% } %>
           </div>
         </div>

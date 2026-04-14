@@ -101,9 +101,14 @@
                               <i class="bi bi-x-circle"></i> Reject
                             </button>
                           <% } %>
-                          <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= concert._id %>">
-                            <i class="bi bi-trash"></i> Delete
-                          </button>
+                          <% const canDeleteConcert = (concert.status === 'completed') || (new Date(concert.date) < new Date()); %>
+                          <% if (canDeleteConcert) { %>
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= concert._id %>">
+                              <i class="bi bi-trash"></i> Delete
+                            </button>
+                          <% } else { %>
+                            <span class="badge bg-secondary">Delete disabled</span>
+                          <% } %>
                         </div>
 
 
@@ -151,33 +156,35 @@
         </div>
       <% } %>
 
-      <!-- Delete Modal for each concert -->
-      <div class="modal fade" id="deleteModal<%= concert._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= concert._id %>" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="deleteModalLabel<%= concert._id %>">Delete Concert</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <p class="text-danger fw-bold">Warning: This action cannot be undone!</p>
-              <p>Are you sure you want to permanently delete the concert "<%= concert.title %>"?</p>
-              <p>This will remove all records of this concert, including:</p>
-              <ul>
-                <li>All ticket records</li>
-                <li>All booking information</li>
-                <li>All concert details</li>
-              </ul>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <form action="/admin/concerts/<%= concert._id %>/delete" method="POST">
-                <button type="submit" class="btn btn-danger">Delete Permanently</button>
-              </form>
+      <% if ((concert.status === 'completed') || (new Date(concert.date) < new Date())) { %>
+        <!-- Delete Modal for each completed/ended concert -->
+        <div class="modal fade" id="deleteModal<%= concert._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= concert._id %>" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel<%= concert._id %>">Delete Concert</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p class="text-danger fw-bold">Warning: This action cannot be undone!</p>
+                <p>Are you sure you want to permanently delete the concert "<%= concert.title %>"?</p>
+                <p>This will remove all records of this concert, including:</p>
+                <ul>
+                  <li>All ticket records</li>
+                  <li>All booking information</li>
+                  <li>All concert details</li>
+                </ul>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/admin/concerts/<%= concert._id %>/delete" method="POST">
+                  <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      <% } %>
     <% }); %>
   <% } %>
 

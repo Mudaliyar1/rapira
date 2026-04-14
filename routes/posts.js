@@ -5,6 +5,7 @@ const path = require('path');
 const { isLoggedIn } = require('../middleware/auth');
 const Artist = require('../models/Artist');
 const ArtistPost = require('../models/ArtistPost');
+const Media = require('../models/Media');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
 const getViewsDisplay = (postLike) => {
@@ -68,11 +69,45 @@ const upload = multer({
 	}
 });
 
+const THUMBNAIL_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const thumbnailUpload = multer({
+	storage: multer.memoryStorage(),
+	limits: { fileSize: THUMBNAIL_MAX_SIZE },
+	fileFilter: (req, file, cb) => {
+		if (file.mimetype && file.mimetype.startsWith('image/')) {
+			return cb(null, true);
+		}
+		cb(new Error('Thumbnail must be an image file'));
+	}
+});
+
+const parseThumbnailUpload = (req, res, next) => {
+	const contentType = req.headers['content-type'] || '';
+	if (!contentType.includes('multipart/form-data')) {
+		return next();
+	}
+
+	thumbnailUpload.single('thumbnailImage')(req, res, (err) => {
+		if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+			if (req.flash) req.flash('error', 'Thumbnail size must be 5MB or less');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+		if (err) {
+			if (req.flash) req.flash('error', err.message || 'Invalid thumbnail upload');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+		next();
+	});
+};
+
 // === ARTIST ROUTES ===
 
 // Create post with error handling wrapper for multer
 router.post('/posts', isLoggedIn, (req, res, next) => {
-	upload.single('media')(req, res, (err) => {
+	upload.fields([
+		{ name: 'media', maxCount: 1 },
+		{ name: 'thumbnailImage', maxCount: 1 }
+	])(req, res, (err) => {
 		if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
 			return res.status(400).json({ success: false, message: 'file exceed limit please under 100mb' });
 		} else if (err) {
@@ -93,13 +128,16 @@ router.post('/posts', isLoggedIn, (req, res, next) => {
 			return res.status(404).json({ success: false, message: 'Artist profile not found' });
 		}
 
-		if (!req.file) {
+		const mediaFile = req.files && req.files.media ? req.files.media[0] : null;
+		const thumbnailFile = req.files && req.files.thumbnailImage ? req.files.thumbnailImage[0] : null;
+
+		if (!mediaFile) {
 			return res.status(400).json({ success: false, message: 'Please upload an image, video, or audio file' });
 		}
 
-		const isImage = req.file.mimetype.startsWith('image/');
-		const isVideo = req.file.mimetype.startsWith('video/');
-		const isAudio = req.file.mimetype.startsWith('audio/');
+		const isImage = mediaFile.mimetype.startsWith('image/');
+		const isVideo = mediaFile.mimetype.startsWith('video/');
+		const isAudio = mediaFile.mimetype.startsWith('audio/');
 
 		if (!isImage && !isVideo && !isAudio) {
 			return res.status(400).json({ success: false, message: 'Only image/video/audio files allowed' });
@@ -116,7 +154,7 @@ router.post('/posts', isLoggedIn, (req, res, next) => {
 			mediaType = 'audio';
 		}
 
-		const uploadRes = await uploadFileToCloudinary(req.file, {
+		const uploadRes = await uploadFileToCloudinary(mediaFile, {
 			folder,
 			module: 'artistPost',
 			ownerType: 'artist',
@@ -130,12 +168,39 @@ router.post('/posts', isLoggedIn, (req, res, next) => {
 		const caption = req.body.caption || '';
 		const hashtags = caption.match(/#\w+/g) || [];
 
+		let thumbnailUrl = '';
+		let thumbnailPublicId = '';
+
+		if ((isVideo || isAudio) && thumbnailFile) {
+			if (!thumbnailFile.mimetype.startsWith('image/')) {
+				return res.status(400).json({ success: false, message: 'Thumbnail must be an image file' });
+			}
+
+			if (thumbnailFile.size > THUMBNAIL_MAX_SIZE) {
+				return res.status(400).json({ success: false, message: 'Thumbnail size must be 5MB or less' });
+			}
+
+			const thumbnailUpload = await uploadFileToCloudinary(thumbnailFile, {
+				folder: 'rapira/artist-posts/thumbnails',
+				module: 'artistPost',
+				ownerType: 'artist',
+				ownerId: artist._id
+			});
+
+			if (thumbnailUpload && thumbnailUpload.media) {
+				thumbnailUrl = thumbnailUpload.media.secure_url;
+				thumbnailPublicId = thumbnailUpload.media.public_id;
+			}
+		}
+
 		const post = new ArtistPost({
 			artist: artist._id,
 			media: {
 				url: uploadRes.media.secure_url || uploadRes.result.secure_url,
 				mediaType: mediaType,
-				publicId: uploadRes.media.public_id || uploadRes.result.public_id
+				publicId: uploadRes.media.public_id || uploadRes.result.public_id,
+				thumbnailUrl,
+				thumbnailPublicId
 			},
 			caption,
 			hashtags: hashtags.map(tag => tag.substring(1).toLowerCase()),
@@ -176,7 +241,8 @@ router.get('/my-posts', isLoggedIn, async (req, res) => {
 				media: {
 					url: postObj.media?.url || '',
 					mediaType: postObj.media?.mediaType || postObj.mediaType || 'image',
-					publicId: postObj.media?.publicId || ''
+					publicId: postObj.media?.publicId || '',
+					thumbnailUrl: postObj.media?.thumbnailUrl || ''
 				},
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
@@ -222,7 +288,8 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 				media: {
 					url: postObj.media?.url || '',
 					mediaType: postObj.media?.mediaType || 'image',
-					publicId: postObj.media?.publicId || ''
+					publicId: postObj.media?.publicId || '',
+					thumbnailUrl: postObj.media?.thumbnailUrl || ''
 				},
 				likes: postObj.likes || [],
 				likesCount: postObj.likesCount || 0,
@@ -243,8 +310,8 @@ router.get('/artist/:artistId/posts', async (req, res) => {
 	}
 });
 
-// Update post caption
-router.put('/posts/:id', isLoggedIn, async (req, res) => {
+// Update post caption and optional thumbnail
+router.put('/posts/:id', isLoggedIn, parseThumbnailUpload, async (req, res) => {
 	try {
 		const post = await ArtistPost.findById(req.params.id);
 		if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
@@ -256,6 +323,30 @@ router.put('/posts/:id', isLoggedIn, async (req, res) => {
 
 		const caption = req.body.caption || '';
 		const hashtags = caption.match(/#\w+/g) || [];
+		const thumbnailFile = req.file || null;
+
+		if (thumbnailFile) {
+			if (post.media?.mediaType !== 'audio' && post.media?.mediaType !== 'video') {
+				return res.status(400).json({ success: false, message: 'Thumbnail can be changed only for audio/video posts' });
+			}
+
+			if (post.media?.thumbnailPublicId) {
+				const existingThumbnail = await Media.findOne({ public_id: post.media.thumbnailPublicId });
+				if (existingThumbnail) {
+					await deleteMedia(existingThumbnail);
+				}
+			}
+
+			const thumbnailUploadResult = await uploadFileToCloudinary(thumbnailFile, {
+				folder: 'rapira/artist-posts/thumbnails',
+				module: 'artistPost',
+				ownerType: 'artist',
+				ownerId: artist._id
+			});
+
+			post.set('media.thumbnailUrl', thumbnailUploadResult?.media?.secure_url || '');
+			post.set('media.thumbnailPublicId', thumbnailUploadResult?.media?.public_id || '');
+		}
 
 		post.caption = caption;
 		post.hashtags = hashtags.map(tag => tag.substring(1).toLowerCase());
@@ -276,6 +367,123 @@ router.put('/posts/:id', isLoggedIn, async (req, res) => {
 		}
 		if (req.flash) req.flash('error', 'Failed to update post');
 		return res.redirect('/artists/manage-posts');
+	}
+});
+
+// Update post thumbnail (artist-owned)
+router.post('/posts/:id/thumbnail', isLoggedIn, (req, res, next) => {
+	upload.single('thumbnailImage')(req, res, (err) => {
+		if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+			if (req.flash) req.flash('error', 'Thumbnail size must be 5MB or less');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+		if (err) {
+			if (req.flash) req.flash('error', err.message || 'Invalid thumbnail upload');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+		next();
+	});
+}, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) {
+			if (req.flash) req.flash('error', 'Post not found');
+			return res.redirect('/artists/manage-posts');
+		}
+
+		const artist = await Artist.findOne({ user: req.session.user.id });
+		if (!artist || post.artist.toString() !== artist._id.toString()) {
+			if (req.flash) req.flash('error', 'Not authorized');
+			return res.redirect('/artists/manage-posts');
+		}
+
+		if (!req.file) {
+			if (req.flash) req.flash('error', 'Please select a thumbnail image');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+
+		if (!req.file.mimetype.startsWith('image/')) {
+			if (req.flash) req.flash('error', 'Thumbnail must be an image file');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+
+		if (req.file.size > THUMBNAIL_MAX_SIZE) {
+			if (req.flash) req.flash('error', 'Thumbnail size must be 5MB or less');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+
+		if (post.media?.mediaType !== 'audio' && post.media?.mediaType !== 'video') {
+			if (req.flash) req.flash('error', 'Thumbnail can be changed only for audio/video posts');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+
+		if (post.media?.thumbnailPublicId) {
+			const existingThumbnail = await Media.findOne({ public_id: post.media.thumbnailPublicId });
+			if (existingThumbnail) {
+				await deleteMedia(existingThumbnail);
+			}
+		}
+
+		const thumbnailUpload = await uploadFileToCloudinary(req.file, {
+			folder: 'rapira/artist-posts/thumbnails',
+			module: 'artistPost',
+			ownerType: 'artist',
+			ownerId: artist._id
+		});
+
+		post.set('media.thumbnailUrl', thumbnailUpload?.media?.secure_url || '');
+		post.set('media.thumbnailPublicId', thumbnailUpload?.media?.public_id || '');
+
+		post.updatedAt = new Date();
+		await post.save();
+
+		if (req.flash) req.flash('success', 'Thumbnail updated successfully');
+		return res.redirect(`/artists/posts/${req.params.id}/edit`);
+	} catch (err) {
+		console.error('[POST THUMBNAIL UPDATE] Error:', err);
+		if (req.flash) req.flash('error', 'Failed to update thumbnail');
+		return res.redirect(`/artists/posts/${req.params.id}/edit`);
+	}
+});
+
+// Remove post thumbnail (artist-owned)
+router.post('/posts/:id/thumbnail-remove', isLoggedIn, async (req, res) => {
+	try {
+		const post = await ArtistPost.findById(req.params.id);
+		if (!post) {
+			if (req.flash) req.flash('error', 'Post not found');
+			return res.redirect('/artists/manage-posts');
+		}
+
+		const artist = await Artist.findOne({ user: req.session.user.id });
+		if (!artist || post.artist.toString() !== artist._id.toString()) {
+			if (req.flash) req.flash('error', 'Not authorized');
+			return res.redirect('/artists/manage-posts');
+		}
+
+		if (!post.media?.thumbnailUrl && !post.media?.thumbnailPublicId) {
+			if (req.flash) req.flash('error', 'No thumbnail to remove');
+			return res.redirect(`/artists/posts/${req.params.id}/edit`);
+		}
+
+		if (post.media?.thumbnailPublicId) {
+			const existingThumbnail = await Media.findOne({ public_id: post.media.thumbnailPublicId });
+			if (existingThumbnail) {
+				await deleteMedia(existingThumbnail);
+			}
+		}
+
+		post.set('media.thumbnailUrl', '');
+		post.set('media.thumbnailPublicId', '');
+		post.updatedAt = new Date();
+		await post.save();
+
+		if (req.flash) req.flash('success', 'Thumbnail removed successfully');
+		return res.redirect(`/artists/posts/${req.params.id}/edit`);
+	} catch (err) {
+		console.error('[POST THUMBNAIL REMOVE] Error:', err);
+		if (req.flash) req.flash('error', 'Failed to remove thumbnail');
+		return res.redirect(`/artists/posts/${req.params.id}/edit`);
 	}
 });
 
@@ -429,7 +637,8 @@ router.get('/posts/:id/json', async (req, res) => {
 			media: {
 				url: post.media?.url || '',
 				mediaType: post.media?.mediaType || 'image',
-				publicId: post.media?.publicId || ''
+				publicId: post.media?.publicId || '',
+				thumbnailUrl: post.media?.thumbnailUrl || ''
 			},
 			likesCount: post.likesCount || 0,
 			fakeLikesLabel: post.fakeLikesLabel || '',

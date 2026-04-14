@@ -19,6 +19,7 @@ const multer = require('multer');
 const path = require('path');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { getFileUrl } = require('../utils/fileHelper');
+const { extractYoutubeId, isYoutubeVideoAvailable } = require('../utils/youtube');
 
 // Configure multer for artist uploads (memory → Cloudinary)
 const upload = multer({
@@ -387,20 +388,22 @@ router.post('/upload-content', isLoggedIn, isArtist,
         // Clean up the YouTube link (trim whitespace, etc.)
         const cleanYoutubeLink = youtubeLink.trim();
 
-        // Extract YouTube video ID from various YouTube URL formats
-        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-        const match = cleanYoutubeLink.match(youtubeRegex);
+        youtubeId = extractYoutubeId(cleanYoutubeLink);
 
-        if (!match || !match[1]) {
+        if (!youtubeId) {
           req.flash('error', 'Invalid YouTube link. Please provide a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
           return res.redirect('/artists/upload-content');
         }
 
-        youtubeId = match[1];
-
         // Verify the YouTube ID is valid by checking if it's 11 characters
         if (youtubeId.length !== 11) {
           req.flash('error', 'Invalid YouTube video ID. Please check your link and try again.');
+          return res.redirect('/artists/upload-content');
+        }
+
+        const youtubeAvailable = await isYoutubeVideoAvailable(youtubeId);
+        if (!youtubeAvailable) {
+          req.flash('error', 'This YouTube video is unavailable or deleted. Please use an active video link.');
           return res.redirect('/artists/upload-content');
         }
 
@@ -474,6 +477,30 @@ router.get('/content/:id/edit', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/artists/dashboard');
     }
 
+    const isYoutubeContent = content.isYoutubeLink || content.youtubeId || /(?:youtube\.com|youtu\.be)/i.test(String(content.fileUrl || ''));
+    if (isYoutubeContent) {
+      const youtubeId = content.youtubeId || extractYoutubeId(content.fileUrl);
+      const available = await isYoutubeVideoAvailable(youtubeId || content.fileUrl);
+      if (!available) {
+        try {
+          if (content.thumbnailMedia) {
+            const thumbnailMedia = await Media.findById(content.thumbnailMedia);
+            if (thumbnailMedia) await deleteMedia(thumbnailMedia);
+          }
+          if (content.fileMedia) {
+            const fileMedia = await Media.findById(content.fileMedia);
+            if (fileMedia) await deleteMedia(fileMedia);
+          }
+        } catch (cleanupError) {
+          console.error('Failed to cleanup deleted YouTube content while opening edit page:', cleanupError.message);
+        }
+
+        await Content.deleteOne({ _id: content._id });
+        req.flash('error', 'This YouTube content is no longer available and has been removed.');
+        return res.redirect('/artists/manage-content');
+      }
+    }
+
     const artist = await Artist.findOne({ user: req.session.user.id }).populate('user');
 
     // Check if the artist owns this content
@@ -537,19 +564,22 @@ router.post('/content/:id/update', isLoggedIn, isArtist,
           const cleanYoutubeLink = youtubeLink.trim();
 
           // Validate YouTube link
-          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
-          const match = cleanYoutubeLink.match(youtubeRegex);
+          const youtubeId = extractYoutubeId(cleanYoutubeLink);
 
-          if (!match || !match[1]) {
+          if (!youtubeId) {
             req.flash('error', 'Invalid YouTube link. Please provide a valid YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
             return res.redirect(`/artists/content/${req.params.id}/edit`);
           }
 
-          const youtubeId = match[1];
-
           // Verify the YouTube ID is valid by checking if it's 11 characters
           if (youtubeId.length !== 11) {
             req.flash('error', 'Invalid YouTube video ID. Please check your link and try again.');
+            return res.redirect(`/artists/content/${req.params.id}/edit`);
+          }
+
+          const youtubeAvailable = await isYoutubeVideoAvailable(youtubeId);
+          if (!youtubeAvailable) {
+            req.flash('error', 'This YouTube video is unavailable or deleted. Please use an active video link.');
             return res.redirect(`/artists/content/${req.params.id}/edit`);
           }
 
@@ -671,8 +701,36 @@ router.get('/manage-content', isLoggedIn, isArtist, async (req, res) => {
     }
 
     // Get artist's content with filters
-    const content = await Content.find(filter)
+    const rawContent = await Content.find(filter)
       .sort(sortOptions);
+
+    const content = [];
+    for (const item of rawContent) {
+      const isYoutubeContent = item.isYoutubeLink || item.youtubeId || /(?:youtube\.com|youtu\.be)/i.test(String(item.fileUrl || ''));
+      if (isYoutubeContent) {
+        const youtubeId = item.youtubeId || extractYoutubeId(item.fileUrl);
+        const available = await isYoutubeVideoAvailable(youtubeId || item.fileUrl);
+        if (!available) {
+          try {
+            if (item.thumbnailMedia) {
+              const thumbnailMedia = await Media.findById(item.thumbnailMedia);
+              if (thumbnailMedia) await deleteMedia(thumbnailMedia);
+            }
+            if (item.fileMedia) {
+              const fileMedia = await Media.findById(item.fileMedia);
+              if (fileMedia) await deleteMedia(fileMedia);
+            }
+          } catch (cleanupError) {
+            console.error('Failed to cleanup deleted YouTube content:', cleanupError.message);
+          }
+
+          await Content.deleteOne({ _id: item._id });
+          continue;
+        }
+      }
+
+      content.push(item);
+    }
 
     // Get stats for the artist's content
     const totalContent = await Content.countDocuments({ artist: artist._id });
