@@ -1,541 +1,214 @@
-<!-- Ticket Details -->
-<section class="py-5">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <div class="glass-card-dark mb-4">
-          <div class="ticket-header p-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <h3 class="fw-bold mb-0 text-white">Concert Ticket</h3>
-              <div>
-                <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
-                  <span class="badge <%= refundRequest.status === 'pending' ? 'bg-warning' : (refundRequest.status === 'approved' ? 'bg-danger' : 'bg-secondary') %> me-2">
-                    Refund <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
-                  </span>
-                <% } %>
-                <span class="badge bg-light text-dark">
-                  <%= ticket.paymentStatus === 'completed' ? 'Confirmed' : (ticket.paymentStatus === 'refunded' ? 'Refunded' : ticket.paymentStatus) %>
-                </span>
-              </div>
-            </div>
-          </div>
+﻿<link rel="stylesheet" href="/css/ticket-details.css">
 
-          <div class="ticket-body p-3">
-            <% if (concert && concert.status === 'cancelled' && ticket.paymentStatus !== 'refunded' && (!refundRequest || refundRequest.status !== 'approved')) { %>
-              <div class="alert alert-warning mb-3" style="background-color: rgba(255, 193, 7, 0.8); border-color: rgba(255, 193, 7, 0.9);">
-                <h5 class="alert-heading text-dark"><i class="bi bi-exclamation-octagon-fill me-2"></i>Concert Cancelled</h5>
-                <p class="mb-1 text-dark">This concert has been cancelled by the artist.</p>
-                <p class="mb-0 text-dark">You can issue a refund request for this ticket.</p>
-                <% if (concert.rejectionReason) { %>
-                  <hr>
-                  <p class="mb-0 text-dark small"><strong>Reason:</strong> <%= concert.rejectionReason %></p>
-                <% } %>
-              </div>
-            <% } else if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
-              <div class="alert alert-danger mb-3" style="background-color: rgba(220, 53, 69, 0.8); border-color: rgba(220, 53, 69, 0.9);">
-                <h5 class="alert-heading text-white"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ticket Refunded</h5>
-                <p class="mb-0 text-white">This ticket has been refunded and is no longer valid for entry. The refund amount will be credited to your bank account within 7-10 business days.</p>
-                <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
-                  <hr style="border-color: rgba(255, 255, 255, 0.3);">
-                  <p class="mb-0 text-white small">
-                    <strong>Refund Status:</strong> <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %>
-                    <% if (refundRequest.refundedAt) { %>
-                      <br><strong>Processed on:</strong> <%= toISTLocaleString(refundRequest.refundedAt) %>
-                    <% } %>
-                    <% if (refundRequest.transactionId) { %>
-                      <br><strong>Transaction ID:</strong> <%= refundRequest.transactionId %>
-                    <% } %>
-                  </p>
-                <% } %>
-              </div>
-            <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'pending') { %>
-              <div class="alert alert-warning mb-3" style="background-color: rgba(255, 193, 7, 0.7); border-color: rgba(255, 193, 7, 0.8);">
-                <h5 class="alert-heading text-white"><i class="bi bi-hourglass-split me-2"></i>Refund Pending</h5>
-                <p class="mb-0 text-white">Your refund request for this ticket is currently under review. You will be notified once it is processed.</p>
-                <hr style="border-color: rgba(255, 255, 255, 0.3);">
-                <p class="mb-0 text-white small">
-                  <strong>Request Date:</strong> <%= toISTLocaleString(refundRequest.createdAt) %>
-                </p>
-              </div>
-            <% } else if (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'rejected') { %>
-              <div class="alert alert-secondary mb-3">
-                <h5 class="alert-heading text-dark"><i class="bi bi-x-circle-fill me-2"></i>Refund Rejected</h5>
-                <p class="mb-0 text-dark">Your refund request for this ticket has been rejected. This ticket is still valid for entry.</p>
-                <% if (refundRequest.adminNotes) { %>
-                  <hr>
-                  <p class="mb-0 text-dark small">
-                    <strong>Reason:</strong> <%= refundRequest.adminNotes %>
-                  </p>
-                <% } %>
-              </div>
+<section class="ticket-stage py-5">
+  <div class="container ticket-shell">
+    <div class="ticket-topbar mb-4">
+      <div>
+        <p class="ticket-kicker mb-1">Rapira Pass</p>
+        <h1 class="ticket-page-title mb-0">Ticket Details</h1>
+      </div>
+      <a href="/tickets" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Tickets
+      </a>
+    </div>
+
+    <% if (concert && concert.status === 'cancelled' && ticket.paymentStatus !== 'refunded' && (!refundRequest || refundRequest.status !== 'approved')) { %>
+      <div class="ticket-alert ticket-alert-warning mb-4">
+        <h5 class="mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Concert Cancelled</h5>
+        <p class="mb-0">This event was cancelled. You can request a refund below.</p>
+      </div>
+    <% } %>
+
+    <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
+      <div class="ticket-alert ticket-alert-danger mb-4">
+        <h5 class="mb-1"><i class="bi bi-x-octagon-fill me-2"></i>Ticket Refunded</h5>
+        <p class="mb-0">This ticket is refunded and cannot be used for entry.</p>
+      </div>
+    <% } %>
+
+    <% 
+      const qty = ticket.quantity || 1;
+      const validatedCount = ticket.validatedTicketsCount || 0;
+      const remaining = Math.max(0, qty - validatedCount);
+
+      let bookingHours = (concert && concert.venueBooking && concert.venueBooking.bookingHours) ? concert.venueBooking.bookingHours : 1;
+      let startTime12hr = concert ? String(concert.time || '').trim() : '';
+      let endTime12hr = '';
+
+      const to12 = (h, m) => {
+        const p = h >= 12 ? 'PM' : 'AM';
+        let hh = h % 12;
+        if (hh === 0) hh = 12;
+        return `${hh}:${String(m).padStart(2, '0')} ${p}`;
+      };
+
+      if (concert) {
+        const rawTime = String(concert.time || '').trim();
+        const plainMatch = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+        const amPmMatch = rawTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+
+        if (plainMatch || amPmMatch) {
+          let h = plainMatch ? parseInt(plainMatch[1], 10) : parseInt(amPmMatch[1], 10);
+          const m = plainMatch ? parseInt(plainMatch[2], 10) : parseInt(amPmMatch[2], 10);
+
+          if (amPmMatch) {
+            const period = amPmMatch[3].toUpperCase();
+            if (period === 'PM' && h < 12) h += 12;
+            if (period === 'AM' && h === 12) h = 0;
+          }
+
+          startTime12hr = to12(h, m);
+          let endHour = h + bookingHours;
+          if (endHour >= 24) {
+            endHour -= 24;
+            endTime12hr = `${to12(endHour, m)} (+1 day)`;
+          } else {
+            endTime12hr = to12(endHour, m);
+          }
+        } else {
+          endTime12hr = rawTime || 'Not set';
+        }
+      }
+
+      const cardStatus = ticket.paymentStatus === 'completed' ? 'Confirmed' : (ticket.paymentStatus === 'refunded' ? 'Refunded' : ticket.paymentStatus);
+      const canAskRefund = !ticket.attended;
+      const canDeleteTicket = concert && isPastConcert;
+    %>
+
+    <div class="ticket-main-card">
+      <div class="ticket-main-head">
+        <div>
+          <p class="ticket-kicker mb-1">Entry Pass</p>
+          <h2 class="ticket-title mb-1"><%= isDeletedConcert ? 'Concert Unavailable' : concert.title %></h2>
+          <p class="ticket-subtitle mb-0"><%= isDeletedConcert ? 'This concert record was removed.' : 'Keep this page ready at entry gate.' %></p>
+        </div>
+        <div class="ticket-status-stack">
+          <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
+            <span class="status-pill refund-pill">Refund: <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %></span>
+          <% } %>
+          <span class="status-pill"><%= cardStatus %></span>
+        </div>
+      </div>
+
+      <% if (!isDeletedConcert) { %>
+      <div class="ticket-schedule-grid">
+        <div class="schedule-box">
+          <span class="label">Date</span>
+          <span class="value"><%= toISTDateString(concert.date) %></span>
+        </div>
+        <div class="schedule-box">
+          <span class="label">Starts At</span>
+          <span class="value"><%= startTime12hr %></span>
+        </div>
+        <div class="schedule-box">
+          <span class="label">Ends At</span>
+          <span class="value"><%= endTime12hr %></span>
+        </div>
+        <div class="schedule-box">
+          <span class="label">Duration</span>
+          <span class="value"><%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %></span>
+        </div>
+      </div>
+      <% } %>
+
+      <div class="ticket-info-grid mt-4">
+        <div class="info-panel">
+          <h5 class="panel-title">Ticket Info</h5>
+          <div class="row-line"><span>Ticket Number</span><strong><%= ticket.ticketNumber %></strong></div>
+          <div class="row-line"><span>Quantity</span><strong><%= qty %> ticket<%= qty > 1 ? 's' : '' %></strong></div>
+          <div class="row-line"><span>Booked On</span><strong><%= toISTDateString(ticket.purchaseDate) %></strong></div>
+          <% if (!isDeletedConcert) { %>
+            <div class="row-line"><span>Venue</span><strong><%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>, <%= concert.city %></strong></div>
+            <% if (concert.venue && concert.venue.googleMapsLink) { %>
+              <div class="row-line"><span>Google Location</span><strong><a href="<%= concert.venue.googleMapsLink %>" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></strong></div>
             <% } %>
-
-            <div class="row mb-4">
-              <div class="col-md-8">
-                <% if (isDeletedConcert) { %>
-                  <h4 class="fw-bold mb-2 text-white ticket-title">Concert Unavailable</h4>
-                  <p class="text-white-50 mb-3 concert-date-info">
-                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>
-                    <% if (ticket.attended) { %>
-                      This concert has been removed or deleted.
-                    <% } else { %>
-                      This concert has been removed or deleted. Please ask for a refund.
-                    <% } %>
-                  </p>
-                  <% if (!ticket.attended && (!refundRequest || refundRequest.status === 'rejected')) { %>
-                    <div class="mt-3">
-                      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning btn-sm">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i> Ask for Refund
-                      </a>
-                    </div>
-                  <% } %>
-                <% } else { %>
-                  <h4 class="fw-bold mb-2 text-white ticket-title"><%= concert.title %></h4>
-                  <p class="text-white-50 mb-0 concert-date-info">
-                    <i class="bi bi-calendar3 me-2 text-primary"></i>
-                    <%= toISTDateString(concert.date) %>
-                  </p>
-                  <p class="text-white-50 mb-0">
-                    <i class="bi bi-clock me-2 text-primary"></i>
-                    <span class="fw-medium">Concert Time:</span> <%= concert.time %>
-                  </p>
-                  <% 
-                    // Get booking hours from concert venue booking data
-                    let bookingHours = (concert.venueBooking && concert.venueBooking.bookingHours) ? concert.venueBooking.bookingHours : 1;
-                    
-                    // Parse time and convert to 12-hour format with AM/PM
-                    let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
-                    let displayTime = concert.time;
-                    let startTime12hr = concert.time;
-                    let endTime12hr = '';
-                    
-                    if (timeMatch) {
-                      let hours = parseInt(timeMatch[1]);
-                      let minutes = timeMatch[2];
-                      
-                      // Convert to 12-hour format for start time
-                      let startAmPm = hours >= 12 ? 'PM' : 'AM';
-                      let startHour12 = hours % 12;
-                      if (startHour12 === 0) startHour12 = 12;
-                      startTime12hr = `${startHour12}:${minutes} ${startAmPm}`;
-                      
-                      // Calculate end time
-                      let endHours = hours + bookingHours;
-                      let endAmPm = endHours >= 12 ? 'PM' : 'AM';
-                      let endHour12 = endHours % 12;
-                      if (endHour12 === 0) endHour12 = 12;
-                      
-                      // Handle day overflow
-                      if (endHours >= 24) {
-                        endHours = endHours - 24;
-                        endAmPm = endHours >= 12 ? 'PM' : 'AM';
-                        endHour12 = endHours % 12;
-                        if (endHour12 === 0) endHour12 = 12;
-                        endTime12hr = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
-                      } else {
-                        endTime12hr = `${endHour12}:${minutes} ${endAmPm}`;
-                      }
-                    }
-                  %>
-                  <p class="text-white-50 mb-0">
-                    <i class="bi bi-hourglass-split me-2 text-primary"></i>
-                    <span class="fw-medium">Duration:</span> <%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %>
-                  </p>
-                  <p class="text-white-50 mb-0">
-                    <i class="bi bi-play-circle me-2 text-success"></i>
-                    <span class="fw-medium">Start Time:</span> <%= startTime12hr %>
-                  </p>
-                  <p class="text-white-50 mb-0">
-                    <i class="bi bi-stop-circle me-2 text-danger"></i>
-                    <span class="fw-medium">End Time:</span> <%= endTime12hr %>
-                  </p>
-                  <p class="text-white-50 mb-0 concert-venue-info">
-                    <i class="bi bi-geo-alt me-2 text-primary"></i>
-                    <%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>, <%= concert.city %>
-                  </p>
-                <% } %>
-              </div>
-              <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <% if (!isDeletedConcert) { %>
-                  <div class="concert-date mx-auto mx-md-0 ms-md-auto me-md-0">
-                    <div class="month"><%= toISTDateString(concert.date).split('/')[0].padStart(2, '0').slice(-2) %></div>
-                    <div class="day"><%= new Date(concert.date).getDate() %></div>
-                  </div>
-                <% } %>
-              </div>
-            </div>
-
-            <hr class="my-4 border-secondary">
-
-            <div class="row mb-4">
-              <div class="col-md-6 mb-3 mb-md-0">
-                <h5 class="fw-bold mb-3 text-white">Ticket Information</h5>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Ticket Number:</span><br>
-                  <span class="ticket-number text-white-50"><%= ticket.ticketNumber %></span>
-                </p>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Quantity:</span><br>
-                  <span class="text-white-50"><%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></span>
-                </p>
-                <p class="mb-0">
-                  <span class="fw-medium text-white">Purchase Date:</span><br>
-                  <span class="text-white-50"><%= toISTDateString(ticket.purchaseDate) %></span>
-                </p>
-              </div>
-              <div class="col-md-6">
-                <h5 class="fw-bold mb-3 text-white">Attendee Details</h5>
-                <% ticket.attendees.forEach((attendee, index) => { %>
-                  <p class="mb-<%= index < ticket.attendees.length - 1 ? '2' : '0' %>">
-                    <span class="fw-medium text-white">Attendee <%= index + 1 %>:</span><br>
-                    <span class="text-white-50"><%= attendee.name %> (Age: <%= attendee.age %>)</span>
-                  </p>
-                <% }); %>
-              </div>
-            </div>
-
-            <% if (ticket.paymentId) { %>
-              <hr class="my-4 border-secondary">
-
-              <div class="mb-4">
-                <h5 class="fw-bold mb-3 text-white">Payment Information</h5>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Payment ID:</span><br>
-                  <span class="text-white-50"><%= ticket.paymentId %></span>
-                </p>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Amount Paid:</span><br>
-                  <span class="text-white-50">₹<%= ticket.totalAmount %></span>
-                </p>
-                <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Original Price:</span><br>
-                  <span class="text-white-50"><s>₹<%= ticket.originalAmount %></s></span>
-                </p>
-                <p class="mb-2">
-                  <span class="fw-medium text-success">Subscription Discount:</span><br>
-                  <span class="text-success"><%= ticket.discountPercentage %>% off</span>
-                </p>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">You Saved:</span><br>
-                  <span class="text-success">₹<%= ticket.originalAmount - ticket.totalAmount %></span>
-                </p>
-                <% } %>
-                <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
-                <p class="mb-2">
-                  <span class="fw-medium text-white">Base Ticket Price:</span><br>
-                  <span class="text-white-50">₹<%= (ticket.totalAmount / (1 + (ticket.commissionPercentage / 100))).toFixed(2) %></span>
-                </p>
-                <p class="mb-2">
-                  <span class="fw-medium text-warning">Platform Commission:</span><br>
-                  <span class="text-warning"><%= ticket.commissionPercentage %>%</span>
-                </p>
-                <p class="mb-0">
-                  <span class="fw-medium text-white">Platform Fee:</span><br>
-                  <span class="text-warning">₹<%= ticket.commissionAmount %></span>
-                </p>
-                <% } %>
-                <p class="mb-0">
-                  <span class="fw-medium text-white">Payment Status:</span><br>
-                  <span class="badge bg-success">Completed</span>
-                </p>
-              </div>
-            <% } %>
-
-            <!-- Attendance Status -->
-            <hr class="my-4 border-secondary">
-            <div class="mb-4">
-              <h5 class="fw-bold mb-3 text-white">Attendance Status</h5>
-              <% 
-                const validatedTicketsCount = ticket.validatedTicketsCount || 0;
-                const totalTickets = ticket.quantity || 1;
-                const remainingTickets = Math.max(0, totalTickets - validatedTicketsCount);
-              %>
-              <% if (validatedTicketsCount > 0) { %>
-                <div class="alert alert-success" style="background-color: rgba(40, 167, 69, 0.2); border-color: rgba(40, 167, 69, 0.3);">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;"></i>
-                    <div>
-                      <h6 class="text-success mb-0"><%= validatedTicketsCount %> of <%= totalTickets %> Ticket<%= totalTickets > 1 ? 's' : '' %> Validated</h6>
-                      <p class="mb-0 text-white-50">Successfully validated <%= validatedTicketsCount %> out of <%= totalTickets %> ticket<%= totalTickets > 1 ? 's' : '' %> for this purchase.</p>
-                      <% if (ticket.attendedAt) { %>
-                        <small class="text-white-50">Last validated on <%= toISTLocaleString(ticket.attendedAt) %></small>
-                      <% } %>
-                      <% if (remainingTickets > 0) { %>
-                        <small class="text-white-50 d-block"><%= remainingTickets %> ticket<%= remainingTickets > 1 ? 's' : '' %> remaining to be validated</small>
-                      <% } %>
-                    </div>
-                  </div>
-                </div>
-              <% } else { %>
-                <div class="alert alert-warning" style="background-color: rgba(255, 193, 7, 0.2); border-color: rgba(255, 193, 7, 0.3);">
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill text-warning me-2" style="font-size: 1.5rem;"></i>
-                    <div>
-                      <h6 class="text-warning mb-0">No Tickets Validated Yet</h6>
-                      <p class="mb-0 text-white-50">This ticket has not been validated at the venue entrance yet.</p>
-                      <small class="text-white-50">Total tickets in this purchase: <%= totalTickets %></small>
-                      <small class="text-white-50 d-block">Tickets remaining to validate: <%= totalTickets %></small>
-                    </div>
-                  </div>
-                </div>
-              <% } %>
-            </div>
-
-            <!-- QR Code Section -->
-            <hr class="my-4 border-secondary">
-            <div class="row mb-4">
-              <div class="col-md-6 mb-3 mb-md-0">
-                <h5 class="fw-bold mb-3 text-white">Ticket QR Code</h5>
-                <p class="mb-2 text-white-50">Scan this QR code at the venue entrance for quick verification.</p>
-              </div>
-              <div class="col-md-6 text-center">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<%= ticket._id %>" alt="Ticket QR Code" class="img-fluid" style="max-width: 150px; background-color: white; padding: 10px; border-radius: 8px;">
-              </div>
-            </div>
-
-            <!-- Venue Location Map -->
-            <% if (!isDeletedConcert && concert.venue) { %>
-            <hr class="my-4 border-secondary">
-            <div class="mb-4">
-              <h5 class="fw-bold mb-3 text-white">Venue Location</h5>
-              <div class="row">
-                <div class="col-md-8 mb-3 mb-md-0">
-                  <div class="bg-dark rounded p-3 border border-secondary">
-                    <h6 class="text-white mb-2">
-                      <i class="bi bi-geo-alt-fill me-2 text-primary"></i>
-                      <%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>
-                    </h6>
-                    <p class="text-white-50 mb-2">
-                      <i class="bi bi-building me-2"></i>
-                      <% if (concert.venue && concert.venue.address && concert.venue.address.trim() !== '') { %>
-                        <%= concert.venue.address %>
-                        <% if (concert.venue.city && concert.venue.city.trim() !== '') { %>, <%= concert.venue.city %><% } %>
-                        <% if (concert.venue.state && concert.venue.state.trim() !== '') { %>, <%= concert.venue.state %><% } %>
-                        <% if (concert.venue.pincode && concert.venue.pincode.trim() !== '') { %> - <%= concert.venue.pincode %><% } %>
-                      <% } else { %>
-                        Full address will be provided closer to event date
-                      <% } %>
-                    </p>
-                    <p class="text-white-50 mb-0">
-                      <i class="bi bi-map me-2"></i>
-                      <%= concert.city %>
-                    </p>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="text-center">
-                    <% 
-                      // Use venue's Google Maps link if available, otherwise create search query
-                      let mapsLink = '';
-                      
-                      if (concert.venue && concert.venue.googleMapsLink && concert.venue.googleMapsLink.trim() !== '') {
-                        // Use the venue owner's provided Google Maps link
-                        mapsLink = concert.venue.googleMapsLink;
-                      } else {
-                        // Fall back to creating a search query
-                        let venueName = concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue');
-                        let venueAddress = '';
-                        
-                        if (concert.venue && concert.venue.address) {
-                          venueAddress = concert.venue.address;
-                          // Add venue city if different from concert city
-                          if (concert.venue.city && concert.venue.city !== concert.city) {
-                            venueAddress += ', ' + concert.venue.city;
-                          }
-                        }
-                        
-                        // Build comprehensive map query using only address (no venue name)
-                        let mapQuery = '';
-                        if (venueAddress) {
-                          mapQuery = venueAddress;
-                        }
-                        if (concert.city) {
-                          mapQuery += (mapQuery ? ', ' : '') + concert.city;
-                        }
-                        mapQuery = encodeURIComponent(mapQuery);
-                        mapsLink = 'https://www.google.com/maps/search/' + mapQuery;
-                      }
-                    %>
-                    <!-- Simple map placeholder with click to open -->
-                    <div class="map-placeholder" onclick="window.open('<%= mapsLink %>', '_blank')" 
-                         style="width: 100%; height: 200px; background: linear-gradient(135deg, #1e3c72, #2a5298); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;">
-                      <div class="text-center text-white">
-                        <i class="bi bi-geo-alt-fill" style="font-size: 3rem; opacity: 0.8;"></i>
-                        <div class="mt-2">
-                          <strong>Click to View Location</strong>
-                          <br><small>Opens in Google Maps</small>
-                        </div>
-                      </div>
-                      <div style="position: absolute; top: 10px; right: 10px;">
-                        <i class="bi bi-box-arrow-up-right text-white"></i>
-                      </div>
-                    </div>
-                    <div class="mt-2">
-                      <a href="<%= mapsLink %>" 
-                         target="_blank" 
-                         class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-map me-1"></i> Open in Maps
-                      </a>
-                      <% if (concert.venue && concert.venue.googleMapsLink && concert.venue.googleMapsLink.trim() !== '') { %>
-                        <small class="text-success d-block mt-1">
-                          <i class="bi bi-check-circle-fill"></i> Venue verified location
-                        </small>
-                      <% } %>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <% } %>
-
-            <!-- REFUND SECTION - SIMPLE AND PROMINENT -->
-            <hr class="my-4 border-secondary">
-            <div class="row mb-4">
-              <div class="col-12 text-center">
-                <h5 class="fw-bold mb-4 text-white">Ticket Actions</h5>
-
-                <!-- Simple, always visible refund button -->
-                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
-                  <% if (!ticket.attended) { %>
-                    <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning">
-                      <i class="bi bi-arrow-counterclockwise me-2"></i> <%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
-                    </a>
-                  <% } %>
-                  <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary">
-                    <i class="bi bi-download me-2"></i> Download
-                  </a>
-                  <% if (concert && isPastConcert) { %>
-                  <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')">
-                    <i class="bi bi-trash me-2"></i> Delete
-                  </a>
-                  <% } %>
-                  <a href="/tickets" class="btn btn-light">
-                    <i class="bi bi-arrow-left me-2"></i> Back
-                  </a>
-                </div>
-
-
-              </div>
-            </div>
-          </div>
-
-          <div class="ticket-footer p-3 border-top border-secondary">
-            <div class="row align-items-center">
-              <div class="col-md-6 mb-3 mb-md-0">
-                <div class="d-flex align-items-center">
-                  <img src="/images/logo.png" alt="Rapira" height="30" class="me-2">
-                  <span class="fw-bold text-white">Rapira</span>
-                </div>
-              </div>
-              <div class="col-md-6 text-md-end">
-                <div class="d-flex justify-content-start justify-content-md-end gap-2">
-                  <small class="text-white-50">Ticket verified and ready for use</small>
-                </div>
-              </div>
-            </div>
-          </div>
+          <% } %>
         </div>
 
-        <% if (!isDeletedConcert) { %>
-        <!-- Artist Information -->
-        <div class="glass-card-dark">
-          <div class="card-body p-3">
-            <h5 class="fw-bold mb-3 text-white">Artist Information</h5>
-            <div class="d-flex align-items-center mb-3">
-              <img src="<%= concert.artist.user.profileImage %>" alt="<%= concert.artist.user.name %>" class="rounded-circle me-3" width="60" height="60">
-              <div>
-                <h6 class="mb-1 text-white"><%= concert.artist.user.name %></h6>
-                <% if (concert.artist.verified) { %>
-                  <span class="badge bg-primary">
-                    <i class="bi bi-patch-check-fill me-1"></i> Verified
-                  </span>
-                <% } %>
+        <div class="info-panel">
+          <h5 class="panel-title">Who Can Enter</h5>
+          <% if (ticket.attendees && ticket.attendees.length > 0) { %>
+            <% ticket.attendees.forEach((attendee, i) => { %>
+              <div class="attendee-chip">
+                <div>
+                  <div class="attendee-name">Attendee <%= i + 1 %>: <%= attendee.name %></div>
+                  <small>Age: <%= attendee.age %></small>
+                </div>
               </div>
-            </div>
-            <a href="/artists/<%= concert.artist._id %>" class="btn btn-primary">View Artist Profile</a>
-          </div>
+            <% }); %>
+          <% } else { %>
+            <p class="mb-0 text-light">No attendee details found.</p>
+          <% } %>
         </div>
+
+        <div class="info-panel">
+          <h5 class="panel-title">Payment</h5>
+          <% if (ticket.paymentId) { %>
+            <div class="row-line"><span>Payment ID</span><strong><%= ticket.paymentId %></strong></div>
+          <% } %>
+          <div class="row-line"><span>Paid</span><strong>₹<%= ticket.totalAmount %></strong></div>
+          <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
+            <div class="row-line"><span>Original</span><strong><s>₹<%= ticket.originalAmount %></s></strong></div>
+            <div class="row-line"><span>Discount</span><strong class="text-success"><%= ticket.discountPercentage %>%</strong></div>
+            <div class="row-line"><span>You Saved</span><strong class="text-success">₹<%= ticket.originalAmount - ticket.totalAmount %></strong></div>
+          <% } %>
+          <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
+            <div class="row-line"><span>Platform Fee</span><strong class="text-warning">₹<%= ticket.commissionAmount %> (<%= ticket.commissionPercentage %>%)</strong></div>
+          <% } %>
+        </div>
+
+        <div class="info-panel qr-panel">
+          <h5 class="panel-title">Gate QR</h5>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=<%= ticket._id %>" alt="Ticket QR" class="qr-image">
+          <p class="qr-note mb-0">Show this at the entry gate.</p>
+        </div>
+      </div>
+
+      <div class="attendance-strip mt-4">
+        <div>
+          <h6 class="mb-1">Attendance</h6>
+          <p class="mb-0">
+            <%= validatedCount %> validated / <%= qty %> total
+            <% if (remaining > 0) { %>
+              | <%= remaining %> left
+            <% } %>
+          </p>
+        </div>
+        <div class="attendance-badge <%= validatedCount > 0 ? 'ok' : 'pending' %>">
+          <%= validatedCount > 0 ? 'Used' : 'Not Used Yet' %>
+        </div>
+      </div>
+
+      <div class="ticket-actions mt-4">
+        <% if (canAskRefund) { %>
+          <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning action-btn">
+            <i class="bi bi-arrow-counterclockwise me-2"></i><%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
+          </a>
         <% } %>
+        <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary action-btn">
+          <i class="bi bi-download me-2"></i>Download
+        </a>
+        <% if (canDeleteTicket) { %>
+          <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger action-btn" onclick="return confirm('Download ticket first as backup. Continue to delete?')">
+            <i class="bi bi-trash me-2"></i>Delete
+          </a>
+        <% } %>
+        <a href="/tickets" class="btn btn-light action-btn">
+          <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
       </div>
     </div>
+
+    <% if (!isDeletedConcert && concert && concert.artist && concert.artist.user) { %>
+      <div class="artist-mini-card mt-4">
+        <img src="<%= concert.artist.user.profileImage %>" alt="<%= concert.artist.user.name %>" class="artist-avatar" onerror="this.onerror=null;this.src='/images/default-profile.svg';">
+        <div>
+          <h6 class="mb-1"><%= concert.artist.user.name %></h6>
+          <small class="text-white-50">Performer</small>
+        </div>
+        <a href="/artists/<%= concert.artist._id %>" class="btn btn-outline-light btn-sm ms-auto">View Artist</a>
+      </div>
+    <% } %>
   </div>
 </section>
 
-<!-- Fixed Action Buttons -->
-<div id="fixedActionContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-  <div class="d-flex flex-column" style="gap: 10px;">
-    <% if (!ticket.attended) { %>
-      <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-        <i class="bi bi-arrow-counterclockwise me-1"></i> <%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
-      </a>
-    <% } %>
-    <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-      <i class="bi bi-download me-1"></i> Download
-    </a>
-    <% if (concert && isPastConcert) { %>
-    <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 4px; display: inline-flex; align-items: center; height: 36px; line-height: 1; min-width: 150px; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')">
-      <i class="bi bi-trash me-1"></i> Delete
-    </a>
-    <% } %>
-
-  </div>
-</div>
-
-<!-- Print and responsive styles -->
-<style>
-  @media print {
-    #fixedActionContainer {
-      display: none;
-    }
-  }
-
-  /* Responsive styles for mobile devices */
-  @media (max-width: 576px) {
-    .glass-card-dark {
-      padding: 10px;
-    }
-
-    .ticket-header {
-      flex-direction: column;
-      align-items: flex-start !important;
-    }
-
-    .ticket-header .d-flex {
-      width: 100%;
-      margin-top: 10px;
-    }
-
-    .btn {
-      margin-bottom: 5px;
-    }
-
-    /* Ensure buttons don't overflow on small screens */
-    .d-flex.flex-wrap {
-      justify-content: center;
-      width: 100%;
-    }
-
-    /* Make buttons more mobile-friendly */
-    .btn {
-      min-width: 120px !important;
-      font-size: 0.8rem !important;
-      height: 34px !important;
-    }
-  }
-</style>
-
-<script>
-  // Check for success parameters in URL (removed animations)
-  document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentSuccess = urlParams.get('payment') === 'success';
-    const ticketBooking = urlParams.get('ticket_booking') === 'true';
-    
-    if (paymentSuccess && ticketBooking) {
-      // Clean up URL parameters only, no animations
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-    }
-  });
-</script>
