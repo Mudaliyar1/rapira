@@ -88,8 +88,8 @@
       <div class="card">
         <div class="card-body text-center">
           <h6>Request Information</h6>
-          <p class="mb-1"><strong>Submitted:</strong> <%= new Date(editRequest.createdAt).toLocaleDateString() %></p>
-          <p class="mb-0"><strong>Time:</strong> <%= new Date(editRequest.createdAt).toLocaleTimeString() %></p>
+          <p class="mb-1"><strong>Submitted:</strong> <%= toISTDateString(editRequest.createdAt) %></p>
+          <p class="mb-0"><strong>Time:</strong> <%= toISTTimeString(editRequest.createdAt) %></p>
         </div>
       </div>
     </div>
@@ -358,7 +358,7 @@
                   </span>
                 </p>
                 <% if (editRequest.processedAt) { %>
-                  <p><strong>Processed:</strong> <%= new Date(editRequest.processedAt).toLocaleString() %></p>
+                  <p><strong>Processed:</strong> <%= toISTLocaleString(editRequest.processedAt) %></p>
                 <% } %>
                 <% if (editRequest.processedBy) { %>
                   <p><strong>Processed By:</strong> <%= editRequest.processedBy.name %></p>

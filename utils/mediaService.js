@@ -60,8 +60,11 @@ function buildDefaultTransformation(resourceType) {
   if (resourceType === RESOURCE_IMAGE) {
     return [{ width: 1280, crop: 'limit', quality: 'auto:good', fetch_format: 'auto' }];
   }
+  // Remove synchronous video transformations. Transforming video synchronously
+  // causes the Cloudinary API to hang and time out on larger files.
+  // Producer beats should be saved in their original quality anyway.
   if (resourceType === RESOURCE_VIDEO) {
-    return [{ width: 1280, crop: 'limit', quality: 'auto', fetch_format: 'auto' }];
+    return undefined;
   }
   return undefined;
 }

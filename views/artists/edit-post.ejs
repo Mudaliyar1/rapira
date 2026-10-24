@@ -10,22 +10,67 @@
       <h5 class="mb-0">Edit Post</h5>
     </div>
     <div class="card-body">
+        <% const thumbnailStamp = post.updatedAt ? new Date(post.updatedAt).getTime() : new Date(post.createdAt || Date.now()).getTime(); %>
       <div class="mb-3">
         <% if (post.media && post.media.mediaType === 'video') { %>
           <video controls style="width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000;">
             <source src="<%= post.media.url %>">
           </video>
+        <% } else if (post.media && post.media.mediaType === 'audio') { %>
+          <% if (post.media && post.media.thumbnailUrl) { %>
+              <img src="<%= post.media.thumbnailUrl %>?v=<%= thumbnailStamp %>" alt="Audio thumbnail" style="width:100%; max-height:320px; object-fit:cover; border-radius:8px; background:#000;">
+          <% } else { %>
+            <div style="width:100%; max-height:320px; min-height:220px; object-fit:contain; border-radius:8px; background:#111; color:#00d4ff; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+              <i class="bi bi-music-note-beamed" style="font-size:3rem;"></i>
+              <small class="mt-2 text-white-50">No thumbnail uploaded</small>
+            </div>
+          <% } %>
         <% } else { %>
           <img src="<%= post.media && post.media.url ? post.media.url : '/images/default-profile.svg' %>" alt="post" style="width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000;">
         <% } %>
       </div>
 
-      <form action="/posts/<%= post._id %>?_method=PUT" method="POST">
+      <% if (post.media && (post.media.mediaType === 'audio' || post.media.mediaType === 'video')) { %>
+        <div class="card mb-3 border-secondary">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">Thumbnail</h6>
+              <% if (post.media.thumbnailUrl) { %>
+                <form action="/posts/<%= post._id %>/thumbnail-remove" method="POST" onsubmit="return confirm('Remove the current thumbnail?');">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i> Remove Thumbnail
+                  </button>
+                </form>
+              <% } %>
+            </div>
+            <p class="text-muted mb-2">Current thumbnail preview:</p>
+            <% if (post.media && post.media.thumbnailUrl) { %>
+              <img src="<%= post.media.thumbnailUrl %>?v=<%= thumbnailStamp %>" alt="Current thumbnail" style="width: 100%; max-width: 320px; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+            <% } else { %>
+              <p class="text-muted">No thumbnail set for this post.</p>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
+      <form action="/posts/<%= post._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
           <label for="caption" class="form-label">Caption (add #hashtags)</label>
           <textarea class="form-control" id="caption" name="caption" rows="4" maxlength="2200" required><%= post.caption || '' %></textarea>
           <small class="text-muted"><span id="charCount">0</span>/2200</small>
         </div>
+
+        <% if (post.media && (post.media.mediaType === 'audio' || post.media.mediaType === 'video')) { %>
+          <div class="mb-3">
+            <label for="thumbnailImage" class="form-label">Change Thumbnail (max 5MB)</label>
+            <input type="file" class="form-control" id="thumbnailImage" name="thumbnailImage" accept="image/*">
+            <div class="form-text">Choose a new image and click Save Changes to update the post thumbnail.</div>
+          </div>
+          <div id="thumbnailPreviewWrap" class="mb-3 d-none">
+            <p class="text-muted mb-2">New thumbnail preview:</p>
+            <img id="thumbnailPreviewImg" alt="New thumbnail preview" style="width: 100%; max-width: 320px; max-height: 180px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+          </div>
+        <% } %>
 
         <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
         <a href="/artists/manage-posts" class="btn btn-outline-secondary ms-2">Cancel</a>
@@ -37,7 +82,47 @@
 <script>
   const captionEl = document.getElementById('caption');
   const counterEl = document.getElementById('charCount');
+  const thumbnailInput = document.getElementById('thumbnailImage');
+  const thumbnailPreviewWrap = document.getElementById('thumbnailPreviewWrap');
+  const thumbnailPreviewImg = document.getElementById('thumbnailPreviewImg');
+
   function updateCount(){ counterEl.textContent = captionEl.value.length; }
   captionEl.addEventListener('input', updateCount);
   updateCount();
+
+  if (thumbnailInput && thumbnailPreviewWrap && thumbnailPreviewImg) {
+    thumbnailInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (!file) {
+        thumbnailPreviewWrap.classList.add('d-none');
+        thumbnailPreviewImg.src = '';
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Thumbnail must be 5MB or less');
+        this.value = '';
+        thumbnailPreviewWrap.classList.add('d-none');
+        thumbnailPreviewImg.src = '';
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert('Thumbnail must be an image file');
+        this.value = '';
+        thumbnailPreviewWrap.classList.add('d-none');
+        thumbnailPreviewImg.src = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        thumbnailPreviewImg.src = e.target.result;
+        thumbnailPreviewWrap.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 </script>
+
+<%- include('../partials/artist-footer') %>

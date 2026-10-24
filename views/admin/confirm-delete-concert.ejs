@@ -1,0 +1,35 @@
+<%- contentFor('body') %>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="glass-card-dark border border-danger p-4 text-center">
+            <div class="mb-4">
+                <i class="bi bi-calendar-x text-danger display-1"></i>
+            </div>
+            
+            <h2 class="text-white mb-3">Delete Concert</h2>
+            <p class="text-white-50 mb-4">
+                Are you sure you want to delete the concert <strong><%= concert.title %></strong>?
+            </p>
+            
+            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger text-danger mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                This action is <strong>permanent</strong>. All tickets associated with this concert will also be invalidated.
+            </div>
+            
+            <form action="/admin/concerts/<%= concert._id %>/delete" method="POST">
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/admin/concerts" class="btn btn-lg btn-outline-light">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-lg btn-danger">
+                        <i class="bi bi-trash me-1"></i> Confirm Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('title') %>Confirm Delete Concert
+<%- contentFor('header') %>Confirm Delete Concert

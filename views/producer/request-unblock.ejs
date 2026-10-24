@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Account Unblock - Rapira</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-white">
+  <!-- Simple Header - No Navigation for Blocked Users -->
+  <div class="bg-dark border-bottom border-secondary py-3">
+    <div class="container">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <h3 class="mb-0 text-danger">
+            <i class="bi bi-lock-fill me-2"></i>Account Blocked
+          </h3>
+        </div>
+        <div class="text-muted">
+          <small>You have been blocked from accessing the platform</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <div class="admin-content">
+
+<div class="container mt-4">
+  <!-- Blocked Alert -->
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle me-2"></i>
+    <strong>Account Blocked</strong>
+    <p class="mb-0 mt-2">Your producer account has been blocked. You can submit an unblock request below for admin review.</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Request Form -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark border-bottom">
+          <h4 class="fw-bold mb-0 text-light">
+            <i class="bi bi-shield-check me-2"></i> Request Account Unblock
+          </h4>
+        </div>
+        <div class="card-body">
+          <p class="text-dark mb-3">Please provide details about why you believe your account should be unblocked. Be specific and honest in your response.</p>
+          
+          <form id="unblockForm">
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark">Your Name</label>
+              <input type="text" class="form-control" value="<%= producerUser.name %>" disabled>
+              <small class="text-muted">Your account information</small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold mb-2 text-dark">Unblock Request Message *</label>
+              <textarea id="message" name="message" class="form-control" rows="6" placeholder="Please explain why your account should be unblocked..."></textarea>
+              <small class="text-muted">Minimum 10 characters. Be detailed and respectful.</small>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                <label class="form-check-label" for="agreeTerms">
+                  I understand that providing false information may result in permanent account suspension.
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-send me-2"></i> Submit Unblock Request
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Previous Requests -->
+      <% if (previousRequests.length > 0) { %>
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-light border-bottom">
+            <h5 class="fw-bold mb-0">
+              <i class="bi bi-clock-history me-2"></i> Previous Requests
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Response</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% previousRequests.forEach(req => { %>
+                    <tr>
+                      <td>
+                        <%= new Date(req.createdAt).toLocaleDateString('en-IN') %>
+                        <br>
+                        <small class="text-muted"><%= new Date(req.createdAt).toLocaleTimeString('en-IN') %></small>
+                      </td>
+                      <td>
+                        <span class="badge <%= req.status === 'approved' ? 'bg-success' : req.status === 'pending' ? 'bg-warning' : 'bg-danger' %>">
+                          <%= req.status.charAt(0).toUpperCase() + req.status.slice(1) %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (req.adminResponse) { %>
+                          <small><%= req.adminResponse.substring(0, 50) %>...</small>
+                        <% } else { %>
+                          <small class="text-muted">Pending review</small>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="alert bg-dark border-secondary text-white">
+          <i class="bi bi-info-circle me-2"></i>
+          You haven't submitted any unblock requests yet.
+        </div>
+      <% } %>
+
+      <!-- Help Info -->
+      <div class="alert bg-dark border-secondary text-white mt-4">
+        <h6 class="fw-bold mb-2 text-white">Tips for a Successful Unblock Request:</h6>
+        <ul class="mb-0 small text-white-75">
+          <li>Be honest and respectful in your message</li>
+          <li>Explain what caused the account to be blocked (if applicable)</li>
+          <li>Describe any changes you've made to avoid future issues</li>
+          <li>Provide any relevant details that may help the admin make a decision</li>
+          <li>The admin will review your request and contact you with a decision</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('unblockForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const message = document.getElementById('message').value;
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+
+    if (!agreeTerms) {
+      alert('Please agree to the terms');
+      return;
+    }
+
+    if (!message.trim() || message.trim().length < 10) {
+      alert('Please enter a detailed message (at least 10 characters)');
+      return;
+    }
+
+    try {
+      const response = await fetch('/producer-dashboard/unblock-request/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Unblock request submitted successfully!');
+        window.location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (error) {
+      alert('Failed to submit request: ' + error.message);
+    }
+  });
+</script>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

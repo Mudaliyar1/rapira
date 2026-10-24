@@ -64,7 +64,7 @@
                         <strong class="text-dark">🎵 <%= conflictDetails.requestedBooking.title %></strong><br>
                         <small class="text-dark">
                           👤 Artist: <%= conflictDetails.requestedBooking.artistName %><br>
-                          📅 Date: <%= new Date(conflictDetails.requestedBooking.date).toLocaleDateString('en-IN') %><br>
+                          📅 Date: <%= toISTDateString(conflictDetails.requestedBooking.date) %><br>
                           🕐 Time: <%= conflictDetails.requestedBooking.startTime %><br>
                           ⏱️ Duration: <%= conflictDetails.requestedBooking.durationHours %> hours
                         </small>
@@ -110,15 +110,15 @@
 
           <!-- Important Rules Alert -->
           <div class="alert alert-info mb-4">
-            <h6 class="alert-heading">
-              <i class="bi bi-info-circle me-2"></i>Important Booking Rules
+            <h6 class="alert-heading" style="color: #000000 !important;">
+              <i class="bi bi-info-circle me-2" style="color: #000000 !important;"></i>Important Booking Rules
             </h6>
-            <ul class="mb-0">
-              <li><strong>12-hour minimum gap</strong> between any bookings</li>
-              <li>System will check conflicts with website bookings automatically when you submit</li>
-              <li>External bookings will appear in venue dashboard</li>
-              <li>This helps prevent double bookings</li>
-              <li><strong>Note:</strong> Conflicts will be shown if any exist when you click "Add External Booking"</li>
+            <ul class="mb-0" style="color: #000000 !important;">
+              <li style="color: #000000 !important;"><strong style="color: #000000 !important;">12-hour minimum gap</strong> between any bookings</li>
+              <li style="color: #000000 !important;">System will check conflicts with website bookings automatically when you submit</li>
+              <li style="color: #000000 !important;">External bookings will appear in venue dashboard</li>
+              <li style="color: #000000 !important;">This helps prevent double bookings</li>
+              <li style="color: #000000 !important;"><strong style="color: #000000 !important;">Note:</strong> Conflicts will be shown if any exist when you click "Add External Booking"</li>
             </ul>
           </div>
 

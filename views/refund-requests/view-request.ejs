@@ -61,7 +61,7 @@
                 </div>
                 <div class="row mb-2">
                   <div class="col-md-4 text-white-50">Date:</div>
-                  <div class="col-md-8 text-white"><%= new Date(refundRequest.concert.date).toLocaleDateString() %></div>
+                  <div class="col-md-8 text-white"><%= toISTDateString(refundRequest.concert.date) %></div>
                 </div>
                 <div class="row mb-2">
                   <div class="col-md-4 text-white-50">Venue:</div>
@@ -115,20 +115,20 @@
               <div class="p-4 border border-secondary rounded-3">
                 <div class="mb-4">
                   <h6 class="text-white mb-1">Request Submitted</h6>
-                  <p class="text-white-50 mb-0"><%= new Date(refundRequest.createdAt).toLocaleString() %></p>
+                  <p class="text-white-50 mb-0"><%= toISTLocaleString(refundRequest.createdAt) %></p>
                 </div>
 
                 <% if (refundRequest.status !== 'pending') { %>
                   <div class="mb-4">
                     <h6 class="text-white mb-1">Request <%= refundRequest.status === 'approved' ? 'Approved' : 'Rejected' %></h6>
-                    <p class="text-white-50 mb-0"><%= refundRequest.reviewedAt ? new Date(refundRequest.reviewedAt).toLocaleString() : 'N/A' %></p>
+                    <p class="text-white-50 mb-0"><%= refundRequest.reviewedAt ? toISTLocaleString(refundRequest.reviewedAt) : 'N/A' %></p>
                   </div>
                 <% } %>
 
                 <% if (refundRequest.status === 'approved' && refundRequest.refundedAt) { %>
                   <div>
                     <h6 class="text-white mb-1">Refund Processed</h6>
-                    <p class="text-white-50 mb-0"><%= new Date(refundRequest.refundedAt).toLocaleString() %></p>
+                    <p class="text-white-50 mb-0"><%= toISTLocaleString(refundRequest.refundedAt) %></p>
                     <% if (refundRequest.transactionId) { %>
                       <p class="text-white-50 mb-0">Transaction ID: <%= refundRequest.transactionId %></p>
                     <% } %>

@@ -1,0 +1,326 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4" style="background-color: #000 !important;">
+  <div class="row">
+    <!-- Back Button & Header -->
+    <div class="col-12 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <a href="/producer-applications/admin" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-2"></i> Back to Applications
+        </a>
+        <div>
+          <h2 class="fw-bold mb-1" style="color: #fff !important;">Producer Application Details</h2>
+          <p class="mb-0" style="color: #aaa !important;">Application from <strong style="color: #fff !important;"><%= application.user ? application.user.name : 'Unknown' %></strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="col-lg-8">
+      <!-- Application Header -->
+      <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+        <div class="card-header border-bottom d-flex justify-content-between align-items-center" style="background-color: #000 !important; border-color: #333 !important;">
+          <h4 class="fw-bold mb-0" style="color: #fff !important;">Application Information</h4>
+          <span class="badge <%= application.status === 'approved' ? 'bg-success' : application.status === 'pending' ? 'bg-warning text-dark' : 'bg-danger' %>">
+            <%= application.status.toUpperCase() %>
+          </span>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Years of Experience</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.yearsOfExperience %> years</p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Location</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.location %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Submission Date</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;">
+                <%= new Date(application.createdAt).toLocaleDateString('en-IN') %>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Submission Time</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;">
+                <%= new Date(application.createdAt).toLocaleTimeString('en-IN') %>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Mobile Number</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.mobileNumber %></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">ID Proof Type</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.idProofType %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Information -->
+      <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+        <div class="card-header border-bottom d-flex justify-content-between align-items-center" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Payment Information</h5>
+          <span class="badge <%= application.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning text-dark' %>">
+            <%= application.paymentStatus.toUpperCase() %>
+          </span>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <div class="row g-3">
+            <% if (application.registrationFee > 0) { %>
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Fee Amount</label>
+                <p class="form-control-plaintext fw-bold" style="color: #fff !important;">₹<%= application.registrationFee %></p>
+              </div>
+            <% } %>
+            <% if (application.razorpayPaymentId) { %>
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Razorpay Payment ID</label>
+                <p class="form-control-plaintext font-monospace small" style="color: #fff !important;"><%= application.razorpayPaymentId %></p>
+              </div>
+            <% } %>
+            <% if (!application.registrationFee && !application.razorpayPaymentId) { %>
+                <div class="col-12">
+                    <p class="text-white-50 mb-0 italic">No payment details recorded for this application.</p>
+                </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+        <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Professional Details</h5>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <div class="row g-4">
+            <div class="col-12">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Skills</label>
+              <div style="background-color: #1a1a1a !important; padding: 1rem; border-radius: 0.25rem; border: 1px solid #333;">
+                <p class="mb-0" style="color: #fff !important;"><%= application.skills %></p>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Services</label>
+              <div style="background-color: #1a1a1a !important; padding: 1rem; border-radius: 0.25rem; border: 1px solid #333;">
+                <p class="mb-0" style="color: #fff !important;"><%= application.services %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Media Links -->
+      <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+        <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Social Media Links</h5>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Instagram</label>
+              <% if (application.instagramLink) { %>
+                <p class="form-control-plaintext fw-500">
+                  <a href="<%= application.instagramLink %>" target="_blank" class="text-decoration-none" style="color: #0d6efd !important;">
+                    <i class="bi bi-instagram me-2"></i>
+                    <span class="text-truncate" style="max-width: 300px; display: inline-block;"><%= application.instagramLink %></span>
+                  </a>
+                </p>
+              <% } else { %>
+                <p class="form-control-plaintext" style="color: #aaa !important;">Not provided</p>
+              <% } %>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">YouTube</label>
+              <% if (application.youtubeLink) { %>
+                <p class="form-control-plaintext fw-500">
+                  <a href="<%= application.youtubeLink %>" target="_blank" class="text-decoration-none" style="color: #0d6efd !important;">
+                    <i class="bi bi-youtube me-2"></i>
+                    <span class="text-truncate" style="max-width: 300px; display: inline-block;"><%= application.youtubeLink %></span>
+                  </a>
+                </p>
+              <% } else { %>
+                <p class="form-control-plaintext" style="color: #aaa !important;">Not provided</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Notes -->
+      <% if (application.adminNotes) { %>
+        <div class="card border-0 shadow-sm mb-4" style="background-color: #000 !important;">
+          <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+            <h5 class="fw-bold mb-0" style="color: #fff !important;">Admin Notes</h5>
+          </div>
+          <div class="card-body" style="background-color: #000 !important;">
+            <div style="background-color: #1a1a1a !important; padding: 1rem; border-radius: 0.25rem; border-left: 4px solid #0d6efd;">
+              <p class="mb-0" style="color: #fff !important;"><%= application.adminNotes %></p>
+            </div>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Review Information -->
+      <% if (application.reviewedAt) { %>
+        <div class="card border-0 shadow-sm" style="background-color: #000 !important;">
+          <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+            <h5 class="fw-bold mb-0" style="color: #fff !important;">Review Information</h5>
+          </div>
+          <div class="card-body" style="background-color: #000 !important;">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Reviewed Date</label>
+                <p class="form-control-plaintext fw-500" style="color: #fff !important;">
+                  <%= new Date(application.reviewedAt).toLocaleDateString('en-IN') %>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold mb-2" style="color: #fff !important;">Reviewed By</label>
+                <p class="form-control-plaintext fw-500" style="color: #fff !important;">
+                  <%= application.reviewedBy ? application.reviewedBy.name : 'Unknown' %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Right Sidebar - ID Proof Image -->
+    <div class="col-lg-4">
+      <!-- ID Proof Card -->
+      <div class="card border-0 shadow-sm position-sticky mb-3" style="top: 20px; background-color: #000 !important;">
+        <div class="card-header text-white border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">
+            <i class="bi bi-card-text me-2"></i> ID Proof Document
+          </h5>
+          <small style="color: #aaa !important;" class="d-block mt-1">
+            Type: <strong style="color: #fff !important;"><%= application.idProofType %></strong>
+          </small>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <% 
+            let mediaUrl = null;
+            let urlSource = 'none';
+            
+            if (application.idProofMedia) {
+              if (application.idProofMedia.secure_url) {
+                mediaUrl = application.idProofMedia.secure_url;
+                urlSource = 'Cloudinary';
+              } else if (application.idProofMedia.url) {
+                mediaUrl = application.idProofMedia.url;
+                urlSource = 'Media URL';
+              }
+            }
+            
+            if (!mediaUrl && application.idProofUrl) {
+              mediaUrl = application.idProofUrl;
+              urlSource = 'Direct URL';
+            }
+          %>
+
+          <% if (mediaUrl) { %>
+            <div class="text-center mb-3">
+              <img src="<%= mediaUrl %>" 
+                   alt="ID Proof - <%= application.idProofType %>"
+                   class="img-fluid rounded border border-2"
+                   style="max-width: 100%; max-height: 450px; object-fit: contain; border-color: #333 !important;">
+            </div>
+            <div class="mb-3">
+              <small style="color: #aaa !important;" class="d-block mb-2">Source: <strong style="color: #fff !important;"><%= urlSource %></strong></small>
+            </div>
+            <a href="<%= mediaUrl %>" target="_blank" class="btn btn-primary w-100 mb-2">
+              <i class="bi bi-arrow-up-right me-2"></i> Open Full Size
+            </a>
+          <% } else { %>
+            <div class="text-center mb-0" style="background-color: #1a1a1a !important; padding: 1rem; border-radius: 0.25rem; border: 1px solid #333;">
+              <i class="bi bi-exclamation-triangle" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #ffc107;"></i>
+              <p class="fw-bold mb-2" style="color: #fff !important;">No Image Available</p>
+              <small style="color: #aaa !important;" class="d-block mb-2">
+                idProofUrl: <%= application.idProofUrl ? '✓ Present' : '✗ Missing' %><br>
+                idProofMedia: <%= application.idProofMedia ? '✓ Linked' : '✗ Not linked' %>
+              </small>
+              <% if (application.idProofUrl) { %>
+                <a href="<%= application.idProofUrl %>" target="_blank" class="btn btn-sm btn-warning mt-2">
+                  <i class="bi bi-download me-1"></i> Try Direct Link
+                </a>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Producer Info Card -->
+      <div class="card border-0 shadow-sm mb-3" style="background-color: #000 !important;">
+        <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Producer Information</h5>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <% if (application.user) { %>
+            <div class="text-center mb-3">
+              <img src="<%= application.user.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(application.user.name.charAt(0)) %>"
+                   alt="<%= application.user.name %>"
+                   class="rounded-circle border"
+                   width="80" height="80"
+                   style="object-fit: cover; border-color: #333 !important;">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold mb-1" style="color: #fff !important;">Name</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.user.name %></p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold mb-1" style="color: #fff !important;">Email</label>
+              <p class="form-control-plaintext fw-500 text-truncate">
+                <a href="mailto:<%= application.user.email %>" style="color: #0d6efd !important;"><%= application.user.email %></a>
+              </p>
+            </div>
+            <div>
+              <label class="form-label fw-bold mb-1" style="color: #fff !important;">Phone</label>
+              <p class="form-control-plaintext fw-500" style="color: #fff !important;"><%= application.user.phone || 'Not provided' %></p>
+            </div>
+          <% } else { %>
+            <p style="color: #aaa !important;">Producer information not available</p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Actions Card -->
+      <div class="card border-0 shadow-sm" style="background-color: #000 !important;">
+        <div class="card-header border-bottom" style="background-color: #000 !important; border-color: #333 !important;">
+          <h5 class="fw-bold mb-0" style="color: #fff !important;">Review Actions</h5>
+        </div>
+        <div class="card-body" style="background-color: #000 !important;">
+          <% if (application.status === 'pending') { %>
+            <form method="POST" action="/producer-applications/admin/<%= application._id %>/approve" class="mb-3">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Approval Note (Optional)</label>
+              <textarea name="adminNotes" class="form-control mb-2" rows="3" placeholder="Enter any approval notes..." style="background-color: #1a1a1a !important; color: #fff !important; border-color: #333 !important;"></textarea>
+              <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-check-circle me-2"></i> Approve Application
+              </button>
+            </form>
+
+            <hr style="border-color: #333 !important;">
+
+            <form method="POST" action="/producer-applications/admin/<%= application._id %>/reject">
+              <label class="form-label fw-bold mb-2" style="color: #fff !important;">Rejection Reason *</label>
+              <textarea name="adminNotes" class="form-control mb-2" rows="3" placeholder="Explain why this application is rejected..." required style="background-color: #1a1a1a !important; color: #fff !important; border-color: #333 !important;"></textarea>
+              <button type="submit" class="btn btn-danger w-100">
+                <i class="bi bi-x-circle me-2"></i> Reject Application
+              </button>
+            </form>
+          <% } else { %>
+            <div style="background-color: #1a1a1a !important; padding: 1rem; border-radius: 0.25rem; border-left: 4px solid #0d6efd;">
+              <i class="bi bi-info-circle me-2" style="color: #0d6efd;"></i>
+              <strong style="color: #fff !important;">Already Reviewed</strong>
+              <p class="small mb-0 mt-1" style="color: #aaa !important;">This application has already been reviewed.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- contentFor('title') %>Producer Application Details

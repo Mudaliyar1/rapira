@@ -5,31 +5,32 @@
         <div class="card-body p-5">
           <h1 class="display-5 fw-bold mb-4">Refund Policy</h1>
 
-          <p class="lead mb-4">Last Updated: <%= new Date().toLocaleDateString() %></p>
+          <p class="lead mb-4">Last Updated: <%= typeof lastUpdatedDate !== 'undefined' ? lastUpdatedDate : '12 Apr 2026' %></p>
 
           <div class="mb-4">
             <h2 class="h4 fw-bold">1. Ticket Refund Policy</h2>
-            <p>This policy outlines the terms and conditions for refunds related to ticket purchases on our platform.</p>
+            <p>This policy applies to all tickets purchased through our Platform for concerts, events, and performances.</p>
           </div>
 
           <div class="mb-4">
             <h2 class="h4 fw-bold">2. General Refund Terms</h2>
             <p>All ticket sales are considered final once completed. However, refunds may be issued under the following circumstances:</p>
             <ul>
-              <li>Event cancellation by the organizer or artist</li>
-              <li>Significant rescheduling of the event (as determined by the organizer)</li>
-              <li>Significant venue change that makes attendance impractical</li>
-              <li>Technical error in the payment processing system that resulted in duplicate charges</li>
+              <li>event cancellation by the organizer or artist</li>
+              <li>significant rescheduling of the event</li>
+              <li>substantial venue change that makes attendance impractical</li>
+              <li>verified technical or payment processing errors resulting in duplicate/incorrect charges</li>
             </ul>
           </div>
 
           <div class="mb-4">
             <h2 class="h4 fw-bold">3. Event Cancellation</h2>
-            <p>If an event is cancelled by the organizer or artist:</p>
+            <p>If an event is canceled by the organizer or artist:</p>
             <ul>
-              <li>Full refunds will be processed automatically within 7-10 business days</li>
-              <li>You will be notified via email about the cancellation and refund process</li>
-              <li>The refund will be issued to the original payment method used for the purchase</li>
+              <li>a refund of the ticket amount will be initiated</li>
+              <li>refunds are typically processed within 7–10 business days</li>
+              <li>notification will be sent via email</li>
+              <li>refunds will be credited to the original payment method</li>
             </ul>
           </div>
 
@@ -37,106 +38,112 @@
             <h2 class="h4 fw-bold">4. Event Rescheduling</h2>
             <p>If an event is rescheduled:</p>
             <ul>
-              <li>Your tickets will remain valid for the new date</li>
-              <li>If you cannot attend on the new date, you may request a refund within 14 days of the rescheduling announcement</li>
-              <li>Refund requests after the 14-day period may not be honored</li>
+              <li>previously issued tickets remain valid for the new date</li>
+              <li>if you are unable to attend, you may request a refund within 14 days of the rescheduling notice</li>
+              <li>refund requests submitted after 14 days may not be accepted</li>
             </ul>
           </div>
 
           <div class="mb-4">
             <h2 class="h4 fw-bold">5. Venue Changes</h2>
-            <p>If the venue for an event changes significantly:</p>
+            <p>If the event venue is changed:</p>
             <ul>
-              <li>Your tickets will remain valid for the new venue</li>
-              <li>If the new venue is more than 50km from the original venue, you may request a refund</li>
-              <li>Refund requests must be submitted within 14 days of the venue change announcement</li>
+              <li>tickets remain valid for the new venue</li>
+              <li>if the new venue is located more than 50 km from the original venue, you may request a refund</li>
+              <li>refund requests must be submitted within 14 days from the announcement</li>
             </ul>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">6. Technical Errors</h2>
-            <p>If you experience a technical error resulting in duplicate charges or incorrect ticket purchases:</p>
+            <h2 class="h4 fw-bold">6. Technical Errors and Duplicate Charges</h2>
+            <p>In case of technical errors resulting in:</p>
             <ul>
-              <li>Contact our support team immediately at vijaymudaliyar224@gmail.com</li>
-              <li>Provide proof of the duplicate or erroneous charges</li>
-              <li>Refunds for technical errors will be processed within 5-7 business days after verification</li>
+              <li>duplicate payments</li>
+              <li>incorrect charge amounts</li>
+            </ul>
+            <p>You must immediately contact us at vijaymudaliyar224@gmail.com.</p>
+            <p>Refunds for verified technical errors are typically processed within 5–7 business days.</p>
+          </div>
+
+          <div class="mb-4">
+            <h2 class="h4 fw-bold">7. Non-Refundable Fees (Important)</h2>
+            <p>The following will not be refunded under any circumstances:</p>
+            <ul>
+              <li>platform fees</li>
+              <li>convenience fees</li>
+              <li>payment gateway or transaction charges</li>
+              <li>service or processing fees</li>
+              <li>commissions or administrative charges</li>
+            </ul>
+            <p>Only the base ticket price may be refunded, where eligible.</p>
+            <p>Users acknowledge and agree to these charges at the time of purchase.</p>
+          </div>
+
+          <div class="mb-4">
+            <h2 class="h4 fw-bold">8. Weather Conditions</h2>
+            <p>Refunds related to weather are handled as follows:</p>
+            <ul>
+              <li>If an event is canceled 3–4 hours before start time due to adverse weather, the ticket amount may be refunded</li>
+              <li>If bad weather occurs during the event after commencement, no refund will be issued</li>
             </ul>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">7. Non-Refundable Items</h2>
-            <p>The following are not eligible for refunds:</p>
-            <ul>
-              <li>Service fees and processing charges</li>
-              <li>Tickets for events that you simply choose not to attend</li>
-              <li>Tickets purchased from unauthorized resellers or third parties</li>
-              <li>Lost, stolen, or damaged tickets</li>
-            </ul>
+            <h2 class="h4 fw-bold">9. Refund Processing Time</h2>
+            <p>Refunds are generally processed within 7–10 business days.</p>
+            <p>Depending on your bank or payment provider, additional time may be required for the amount to reflect.</p>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">8. Refund Processing Time</h2>
-            <p>Refunds are typically processed within 7-10 business days. However, depending on your payment method and financial institution, it may take additional time for the refund to appear in your account.</p>
-          </div>
-
-          <div class="mb-4">
-            <h2 class="h4 fw-bold">9. How to Request a Refund</h2>
+            <h2 class="h4 fw-bold">10. How to Request a Refund</h2>
             <p>To request a refund:</p>
-            <ol>
+            <ul>
               <li>Log in to your account</li>
-              <li>Navigate to "My Tickets" in your profile</li>
-              <li>Select the ticket you wish to refund</li>
-              <li>Click on the "Request Refund" button</li>
-              <li>Fill out the refund request form with your reason and bank details</li>
-              <li>Submit the form and wait for admin approval</li>
-            </ol>
-            <p>Please note:</p>
+              <li>Navigate to My Tickets</li>
+              <li>Select the applicable ticket</li>
+              <li>Click Request Refund</li>
+              <li>Submit the refund form</li>
+            </ul>
+            <p>Notes:</p>
             <ul>
-              <li>Refund requests can only be made for paid tickets</li>
-              <li>Refunds cannot be requested after the concert date has passed</li>
-              <li>You must provide valid bank account details for the refund to be processed</li>
-              <li>Refund requests are subject to review and may be approved or rejected based on our policy</li>
-              <li>Once approved, refunds typically take 7-10 business days to appear in your account</li>
+              <li>refund requests are subject to policy review and approval</li>
+              <li>refunds cannot be requested after the event date has passed</li>
+              <li>valid account/payment details must be provided for processing</li>
             </ul>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">10. Post-Concert Ticket Management</h2>
-            <p>Once a concert or event has been completed (the event date has passed), the following policies apply to your purchased tickets:</p>
+            <h2 class="h4 fw-bold">11. Post-Concert Tickets</h2>
+            <p>After the event date has passed:</p>
             <ul>
-              <li><strong>Automatic Ticket Archival:</strong> Tickets for completed events will be automatically moved to your "Past Events" section in your account</li>
-              <li><strong>No Refund Eligibility:</strong> Tickets for completed events are no longer eligible for refunds under any circumstances</li>
-              <li><strong>Ticket Deletion Option:</strong> You may choose to permanently delete tickets for completed events from your account if you no longer wish to keep them as records</li>
-              <li><strong>Data Retention:</strong> Even if you delete tickets from your account view, we may retain transaction records for legal and accounting purposes as required by law</li>
+              <li>tickets move automatically to Past Events</li>
+              <li>tickets are no longer refundable</li>
+              <li>you may optionally delete old tickets from your account</li>
+              <li>deletion does not erase legal and accounting transaction records</li>
             </ul>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">11. Ticket Deletion Policy</h2>
-            <p>For concerts that have been completed (event date has passed), you have the option to delete tickets from your account:</p>
+            <h2 class="h4 fw-bold">12. Ticket Deletion Policy</h2>
+            <p>For completed events, you may delete tickets from "Past Events."</p>
+            <p>Deletion is:</p>
             <ul>
-              <li><strong>Eligibility:</strong> Only tickets for events that have already taken place can be deleted</li>
-              <li><strong>Storage Management:</strong> You can delete tickets for storage purposes to keep your account organized and reduce clutter from past events</li>
-              <li><strong>Permanent Action:</strong> Ticket deletion is permanent and cannot be undone. Once deleted, you will no longer have access to the ticket details in your account</li>
-              <li><strong>How to Delete:</strong> Navigate to "My Tickets" → "Past Events" → Select the ticket → Click "Delete Ticket" → Confirm deletion</li>
-              <li><strong>Proof of Attendance:</strong> If you need proof of attendance for completed events, we recommend downloading or saving ticket details before deletion</li>
-              <li><strong>No Impact on Records:</strong> Deleting tickets from your account does not affect our internal transaction records or your purchase history for business purposes</li>
+              <li>permanent</li>
+              <li>optional</li>
+              <li>does not impact internal transaction records</li>
             </ul>
-            <p><strong>Storage Benefits:</strong> Deleting old tickets helps maintain a clean and organized account, making it easier to find current and upcoming event tickets. This feature is particularly useful for frequent event attendees who want to manage their account storage efficiently.</p>
-            <p><strong>Important Note:</strong> This deletion feature is provided for your convenience to manage your account storage and organization. We recommend keeping tickets for events you attended as personal records or memorabilia before choosing to delete them.</p>
+            <p>You are advised to download tickets before deletion if needed for personal records.</p>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">12. Special Circumstances</h2>
-            <p>In cases of extraordinary circumstances (such as natural disasters, public health emergencies, etc.), special refund policies may be implemented. These will be communicated directly to affected ticket holders.</p>
+            <h2 class="h4 fw-bold">13. Special Circumstances</h2>
+            <p>In extraordinary events such as natural disasters, government restrictions, or public health emergencies, Rapira may announce special refund procedures applicable to affected ticket holders.</p>
           </div>
 
           <div class="mb-4">
-            <h2 class="h4 fw-bold">13. Contact Information</h2>
-            <p>If you have any questions about our refund policy, please contact us at:</p>
-            <p>Email: vijaymudaliyar224@gmail.com<br>
-            Phone: +91 123 456 7890<br>
-            Hours: Monday-Friday, 9:00 AM - 6:00 PM IST</p>
+            <h2 class="h4 fw-bold">14. Contact Information</h2>
+            <p>For refund-related inquiries, please contact:</p>
+            <p>📧 vijaymudaliyar224@gmail.com</p>
           </div>
         </div>
       </div>

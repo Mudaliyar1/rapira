@@ -45,6 +45,38 @@
       background: #000;
       display: block;
     }
+
+    .audio-detail-cover {
+      position: relative;
+      width: 100%;
+      min-height: 320px;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .audio-detail-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .audio-controls-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 14px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.25));
+    }
+
+    .audio-controls-overlay audio {
+      width: 100%;
+    }
     
     /* Ensure images are fully responsive */
     .post-media[alt="post"] {
@@ -343,7 +375,7 @@
     <div class="container">
       <!-- Back Button -->
       <a href="javascript:history.back()" class="back-btn">
-        <i class="bi bi-chevron-left"></i> Back to Profile
+        <i class="bi bi-chevron-left"></i> Back
       </a>
 
       <!-- Post Container -->
@@ -351,12 +383,34 @@
         <!-- Media Column -->
         <div class="col-12 col-lg-7" style="max-width: 100%; overflow: hidden;">
           <div class="post-container" style="max-width: 100%;">
-            <% if (post.media && post.media.mediaType === 'image') { %>
+            <% if (typeof youtubeId !== 'undefined' && youtubeId) { %>
+              <div class="ratio ratio-16x9">
+                <iframe src="https://www.youtube.com/embed/<%= youtubeId %>?autoplay=1&rel=0" frameborder="0" allowfullscreen></iframe>
+              </div>
+            <% } else if (post.media && post.media.mediaType === 'image') { %>
               <img src="<%= post.media.url %>" alt="post" class="post-media" style="max-width: 100%; width: 100%; height: auto; display: block;">
             <% } else if (post.media && post.media.mediaType === 'video') { %>
-              <video controls class="post-media" style="width: 100%; max-width: 100%; height: auto; display: block;">
+              <video controls class="post-media" style="width: 100%; max-width: 100%; height: auto; display: block;" autoplay>
                 <source src="<%= post.media.url %>">
               </video>
+            <% } else if (post.media && post.media.mediaType === 'audio') { %>
+              <% if (post.media.thumbnailUrl) { %>
+                <div class="audio-detail-cover">
+                  <img src="<%= post.media.thumbnailUrl %>" alt="Audio thumbnail" onerror="this.onerror=null; this.src='/images/default-thumbnail.jpg';">
+                  <div class="audio-controls-overlay">
+                    <audio controls>
+                      <source src="<%= post.media.url %>">
+                    </audio>
+                  </div>
+                </div>
+              <% } else { %>
+                <div style="background: #222; padding: 40px; text-align: center; border-radius: 12px;">
+                  <i class="bi bi-music-note-beamed" style="font-size: 5rem; color: #00d4ff; display: block; margin-bottom: 20px;"></i>
+                  <audio controls style="width: 100%;">
+                    <source src="<%= post.media.url %>">
+                  </audio>
+                </div>
+              <% } %>
             <% } %>
           </div>
         </div>
@@ -405,32 +459,93 @@
                 <strong id="sharesCount"><%= post.shares || 0 %></strong>
                 <small>Shares</small>
               </div>
+              <div class="stat-item" id="openCommentsLabel" style="cursor:pointer;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                <i class="bi bi-chat-dots"></i>
+                <strong id="commentsCount"><%= (post.comments || []).length %></strong>
+                <small>Comments</small>
+              </div>
               <div class="stat-item">
                 <i class="bi bi-calendar-event"></i>
-                <strong><%= new Date(post.createdAt).toLocaleDateString() %></strong>
+                <strong><%= toISTDateString(post.createdAt) %></strong>
                 <small>Posted</small>
               </div>
             </div>
 
-            <!-- Action Buttons - Icon Only -->
-            <div class="action-buttons" style="display: flex; gap: 20px; align-items: center; justify-content: center; padding: 20px 0;">
-              <!-- Like Button -->
-              <button id="likeBtn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255, 23, 68, 0.1)'; this.style.borderColor='#ff1744';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
-                <i class="bi bi-heart" style="font-size: 1.8rem; color: #fff; pointer-events: none;"></i>
-              </button>
-              
-              <!-- Share Button -->
-              <button id="shareBtn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(0, 212, 255, 0.2)'; this.style.borderColor='#00d4ff';" onmouseout="this.style.background='rgba(0, 212, 255, 0.1)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
-                <i class="bi bi-share" style="font-size: 1.8rem; color: #00d4ff; pointer-events: none;"></i>
-              </button>
-            </div>
+            <!-- Action Buttons - Only show if logged in -->
+            <% if (user) { %>
+              <div class="action-buttons" style="display: flex; gap: 20px; align-items: center; justify-content: center; padding: 20px 0;">
+                <!-- Like Button -->
+                <button id="likeBtn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255, 23, 68, 0.1)'; this.style.borderColor='#ff1744';" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.2)';">
+                  <i class="bi bi-heart" style="font-size: 1.8rem; color: #fff; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Share Button -->
+                <button id="shareBtn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(0, 212, 255, 0.2)'; this.style.borderColor='#00d4ff';" onmouseout="this.style.background='rgba(0, 212, 255, 0.1)'; this.style.borderColor='rgba(0, 212, 255, 0.3)';">
+                  <i class="bi bi-share" style="font-size: 1.8rem; color: #00d4ff; pointer-events: none;"></i>
+                </button>
 
-            <!-- Login Message (if not logged in) -->
-            <% if (!user) { %>
-              <div class="login-message">
-                <p class="mb-0 text-muted">Please log in to like and share posts</p>
+                <!-- Comments Button -->
+                <button id="commentsBtn" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'; this.style.borderColor='#10b981';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.borderColor='rgba(16, 185, 129, 0.3)';">
+                  <i class="bi bi-chat-dots" style="font-size: 1.8rem; color: #10b981; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Report Button -->
+                <button id="reportBtn" style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); cursor: pointer; padding: 15px; transition: all 0.3s ease; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.borderColor='#ef4444';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';">
+                  <i class="bi bi-flag" style="font-size: 1.8rem; color: #ef4444; pointer-events: none;"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <!-- Login Message (if not logged in) -->
+              <div class="login-message" style="text-align: center; padding: 20px 0;">
+                <p class="mb-0 text-muted" style="font-size: 1.1rem;">
+                  <i class="bi bi-lock me-2"></i>
+                  <a href="/auth/login" class="text-decoration-none text-primary fw-bold">Login to interact with post</a>
+                </p>
               </div>
             <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-white border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title"><i class="bi bi-flag text-danger"></i> Report Post</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Please tell us why you are reporting this post:</p>
+          <textarea id="reportReason" class="form-control bg-dark text-white" rows="4" placeholder="Reason..."></textarea>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="submitReportBtn">Submit Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal fade" id="commentsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content bg-dark text-white border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title"><i class="bi bi-chat-dots text-success"></i> Comments</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="max-height: 50vh; overflow-y: auto;">
+          <div id="commentsList" class="d-flex flex-column gap-3">
+            <!-- Comments to load here -->
+          </div>
+        </div>
+        <div class="modal-footer border-secondary flex-column align-items-stretch">
+          <div class="d-flex gap-2">
+            <input type="text" id="newComment" class="form-control bg-dark text-white" placeholder="Add a comment...">
+            <button class="btn btn-success" id="submitCommentBtn"><i class="bi bi-send"></i></button>
           </div>
         </div>
       </div>
@@ -447,7 +562,7 @@
       console.log('[POST DETAIL] DOM loaded, initializing...');
       
       const postId = '<%= post._id %>';
-      const userId = '<%= (typeof user !== "undefined" && user && user._id) ? user._id : "" %>';
+      const userId = '<%= (typeof user !== "undefined" && user) ? (user.id || user._id || "") : "" %>';
       let isLiked = false;
       let isProcessing = false;
       
@@ -486,6 +601,9 @@
         
         if (!userId) {
           showToast('Please log in to like posts', 'info');
+          setTimeout(() => {
+            window.location.href = '/auth/login';
+          }, 1500);
           return;
         }
         
@@ -501,12 +619,28 @@
           
           const res = await fetch(endpoint, { 
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            skipLoader: true
           });
           
           console.log('[POST DETAIL] Response status:', res.status);
           
-          if (!res.ok) throw new Error('Network error');
+          // Handle 401 Unauthorized (not logged in or session expired)
+          if (res.status === 401) {
+            const data = await res.json();
+            showToast(data.message || 'Your session expired. Please log in again.', 'info');
+            setTimeout(() => {
+              window.location.href = '/auth/login';
+            }, 1500);
+            return;
+          }
+          
+          // Handle other errors
+          if (!res.ok) {
+            const data = await res.json();
+            showToast(data.message || 'Failed to like post', 'error');
+            return;
+          }
           
           const data = await res.json();
           console.log('[POST DETAIL] Response data:', data);
@@ -522,11 +656,11 @@
             
             showToast(data.liked ? '❤️ Liked!' : 'Unliked', 'success');
           } else {
-            showToast(data.message || 'Failed to like', 'error');
+            showToast(data.message || 'Failed to like post', 'error');
           }
         } catch (err) {
           console.error('[POST DETAIL] Like error:', err);
-          showToast('Failed to like post', 'error');
+          showToast('Network error. Please try again.', 'error');
         } finally {
           isProcessing = false;
           likeBtn.disabled = false;
@@ -540,7 +674,8 @@
         try {
           const res = await fetch(`/posts/${postId}/share`, { 
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            skipLoader: true
           });
           
           if (res.ok) {
@@ -644,23 +779,295 @@
       // Attach event listeners to buttons
       const likeBtn = document.getElementById('likeBtn');
       const shareBtn = document.getElementById('shareBtn');
+      const commentsBtn = document.getElementById('commentsBtn');
+      const reportBtn = document.getElementById('reportBtn');
+      const openCommentsLabel = document.getElementById('openCommentsLabel');
       
-      console.log('[POST DETAIL] Like button found:', !!likeBtn);
-      console.log('[POST DETAIL] Share button found:', !!shareBtn);
+      if (likeBtn) likeBtn.addEventListener('click', postToggleLike);
+      if (shareBtn) shareBtn.addEventListener('click', postSharePost);
       
-      if (likeBtn) {
-        likeBtn.addEventListener('click', postToggleLike);
-        console.log('[POST DETAIL] Like button listener attached');
-      } else {
-        console.error('[POST DETAIL] Like button not found!');
+      if (reportBtn) {
+        reportBtn.addEventListener('click', () => {
+          const m = new bootstrap.Modal(document.getElementById('reportModal'));
+          m.show();
+        });
       }
-      
-      if (shareBtn) {
-        shareBtn.addEventListener('click', postSharePost);
-        console.log('[POST DETAIL] Share button listener attached');
-      } else {
-        console.error('[POST DETAIL] Share button not found!');
+
+      document.getElementById('submitReportBtn')?.addEventListener('click', async function() {
+        const reason = document.getElementById('reportReason').value.trim();
+        if (!reason) return showToast('Please enter a reason', 'error');
+        
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = 'Submitting...';
+        
+        try {
+          const res = await fetch(`/posts/${postId}/report`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Post reported. Thank you.', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('reportModal')).hide();
+            document.getElementById('reportReason').value = '';
+          } else {
+            showToast(data.message, 'error');
+          }
+        } catch (err) {
+          showToast('Error sending report', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = 'Submit Report';
+        }
+      });
+
+      async function loadComments() {
+        try {
+          const res = await fetch(`/posts/${postId}/comments`);
+          const data = await res.json();
+          const list = document.getElementById('commentsList');
+          if (data.success && data.comments.length > 0) {
+            document.getElementById('commentsCount').textContent = data.comments.length;
+            
+            const visibleComments = data.comments.slice(0, 3);
+            const remainingComments = data.comments.slice(3);
+
+            const postAuthorUID = "<%= (typeof artist !== 'undefined' && artist && artist.user && artist.user._id) ? artist.user._id : (typeof artist !== 'undefined' && artist && artist.user ? artist.user : '') %>";
+
+            let contentHtml = visibleComments.map(c => {
+               const currentUID = document.body.getAttribute('data-user-id');
+               const commentUserId = c.user && c.user._id ? c.user._id : c.user;
+               const isOwner = currentUID && currentUID === commentUserId;
+               const isCommentAuthor = postAuthorUID && commentUserId === postAuthorUID;
+               
+               let repliesHtml = '';
+               if (c.replies && c.replies.length > 0) {
+                 const visibleReplies = c.replies.slice(0, 3);
+                 const remainingReplies = c.replies.slice(3);
+
+                 repliesHtml = visibleReplies.map(r => {
+                   const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                   const isReplyOwner = currentUID && currentUID === replyUserId;
+                   const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
+                   return `
+                        <div class="d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary">
+                          <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                          <div class="flex-grow-1">
+                            <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                            ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                            <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                            <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                            
+                            ${isReplyOwner ? `
+                                <div class="d-flex gap-2">
+                                   <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                                   <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                                </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                        `;
+                 }).join('');
+
+                 if (remainingReplies.length > 0) {
+                   repliesHtml += remainingReplies.map(r => {
+                    const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                    const isReplyOwner = currentUID && currentUID === replyUserId;
+                    const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
+                    return `
+                        <div class="hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none !important;">
+                          <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                          <div class="flex-grow-1">
+                            <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                            ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                            <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                            <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                            
+                            ${isReplyOwner ? `
+                                <div class="d-flex gap-2">
+                                   <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                                   <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                                </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                        `;
+                    }).join('');
+                    repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
+                 }
+               }
+
+               return `
+                <div class="d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}">
+                  <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                  <div class="flex-grow-1 w-100 pr-2">
+                    <strong>${c.user ? c.user.name : 'Anonymous'}</strong> 
+                    ${isCommentAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                    ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+                    <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+                    <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                    
+                    <div class="d-flex gap-3 mb-2 align-items-center">
+                      ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
+                      ${isOwner ? `
+                         <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
+                         <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
+                      ` : ''}
+                    </div>
+
+                    <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
+                       <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
+                       <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
+                    </div>
+
+                    ${repliesHtml}
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            // Unrendered remaining comments
+            if (remainingComments.length > 0) {
+              contentHtml += remainingComments.map(c => {
+                 const currentUID = document.body.getAttribute('data-user-id');
+                 const commentUserId = c.user && c.user._id ? c.user._id : c.user;
+                 const isOwner = currentUID && currentUID === commentUserId;
+                 const isCommentAuthor = postAuthorUID && commentUserId === postAuthorUID;
+                 
+                 let repliesHtml = '';
+                 if (c.replies && c.replies.length > 0) {
+                   const visibleReplies = c.replies.slice(0, 3);
+                   const remainingReplies = c.replies.slice(3);
+
+                   repliesHtml = visibleReplies.map(r => {
+                     const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                     const isReplyOwner = currentUID && currentUID === replyUserId;
+                     const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
+                     return `
+                          <div class="d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary">
+                            <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                              <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                              ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                              <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                              <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                              
+                              ${isReplyOwner ? `
+                                  <div class="d-flex gap-2">
+                                     <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                                     <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                                  </div>
+                              ` : ''}
+                            </div>
+                          </div>
+                          `;
+                   }).join('');
+
+                   if (remainingReplies.length > 0) {
+                     repliesHtml += remainingReplies.map(r => {
+                      const replyUserId = r.user && r.user._id ? r.user._id : r.user;
+                      const isReplyOwner = currentUID && currentUID === replyUserId;
+                      const isReplyAuthor = postAuthorUID && replyUserId === postAuthorUID;
+                      return `
+                          <div class="hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none !important;">
+                            <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                              <strong>${r.user && r.user.name ? r.user.name : 'Anonymous'}</strong> 
+                              ${isReplyAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                              <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+                              <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                              
+                              ${isReplyOwner ? `
+                                  <div class="d-flex gap-2">
+                                     <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                                     <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                                  </div>
+                              ` : ''}
+                            </div>
+                          </div>
+                          `;
+                      }).join('');
+                      repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
+                   }
+                 }
+
+                 return `
+                  <div class="hidden-comment d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}" style="display: none !important;">
+                    <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                    <div class="flex-grow-1 w-100 pr-2">
+                      <strong>${c.user && c.user.name ? c.user.name : 'Anonymous'}</strong> 
+                      ${isCommentAuthor ? '<span class="badge bg-primary ms-2" style="font-size: 0.70rem;"><i class="bi bi-person-badge"></i> Author</span>' : ''}
+                      ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+                      <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+                      <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+                      
+                      <div class="d-flex gap-3 mb-2 align-items-center">
+                        ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
+                        ${isOwner ? `
+                           <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
+                           <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
+                        ` : ''}
+                      </div>
+
+                      <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
+                         <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
+                         <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
+                      </div>
+
+                      ${repliesHtml}
+                    </div>
+                  </div>
+                `;
+              }).join('');
+              
+              contentHtml += `<div class="text-center mt-3"><button id="btn-show-comments" class="btn btn-outline-secondary btn-sm" onclick="showMoreComments()">View ${remainingComments.length} more comments...</button></div>`;
+            }
+
+            list.innerHTML = contentHtml;
+          } else {
+            list.innerHTML = '<div class="text-center text-muted">No comments yet. Be the first!</div>';
+            document.getElementById('commentsCount').textContent = '0';
+          }
+        } catch (err) {
+          console.error('[LOAD COMMENTS] Error:', err);
+        }
       }
+
+      function openComments() {
+        loadComments();
+        const m = new bootstrap.Modal(document.getElementById('commentsModal'));
+        m.show();
+      }
+
+      if (commentsBtn) commentsBtn.addEventListener('click', openComments);
+      if (openCommentsLabel) openCommentsLabel.addEventListener('click', openComments);
+
+      document.getElementById('submitCommentBtn')?.addEventListener('click', async function() {
+        const text = document.getElementById('newComment').value.trim();
+        if (!text) return;
+        
+        try {
+          const res = await fetch(`/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text }),
+            skipLoader: true
+          });
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('newComment').value = '';
+            showToast('Comment posted', 'success');
+            loadComments();
+          } else {
+            showToast(data.message, 'error');
+          }
+        } catch (err) {
+          showToast('Error posting comment', 'error');
+        }
+      });
+      
     });
   </script>
 </body>

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const User = require('../models/User');
 const { sendBulkEmail } = require('../utils/emailService');
 
 // GET /admin/compose-email - Show email composition form
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_compose_email'), async (req, res) => {
   try {
     // Get user counts for different roles to display in the UI
     const userCount = await User.countDocuments({ role: 'user' });
@@ -32,7 +32,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/compose-email - Send email to selected users
-router.post('/', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/', isLoggedIn, hasAdminPermission('manage_compose_email'), async (req, res) => {
   try {
     const { subject, content, recipients } = req.body;
 
@@ -61,30 +61,30 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
       // Handle custom selection - get user IDs from the customRecipients field
       const customRecipients = req.body.customRecipients;
       const customEmailRecipients = req.body.customEmailRecipients;
-      
+
       // Check if at least one custom field is provided
       if (!customRecipients && !customEmailRecipients) {
         req.flash('error', 'Please enter either user IDs or email addresses for custom recipients');
         return res.redirect('/admin/compose-email');
       }
-      
+
       // Handle user IDs
       if (customRecipients) {
         // Parse the comma-separated list of user IDs
         const userIds = customRecipients.split(',').map(id => id.trim()).filter(id => id);
-        
+
         if (userIds.length > 0) {
           // Find users by their IDs
           const usersFromIds = await User.find({ _id: { $in: userIds } }).select('name email');
           users = users.concat(usersFromIds);
         }
       }
-      
+
       // Handle direct email addresses
       if (customEmailRecipients) {
         // Parse the comma-separated list of email addresses
         const emailAddresses = customEmailRecipients.split(',').map(email => email.trim()).filter(email => email);
-        
+
         if (emailAddresses.length > 0) {
           // Create user objects for direct email addresses
           const emailUsers = emailAddresses.map(email => {
@@ -98,24 +98,24 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
             }
             return null;
           }).filter(user => user !== null);
-          
+
           users = users.concat(emailUsers);
         }
       }
-      
+
       // Remove duplicates based on email
       const uniqueUsers = [];
       const seenEmails = new Set();
-      
+
       for (const user of users) {
         if (!seenEmails.has(user.email)) {
           seenEmails.add(user.email);
           uniqueUsers.push(user);
         }
       }
-      
+
       users = uniqueUsers;
-      
+
       // Check if any valid recipients were found
       if (users.length === 0) {
         req.flash('error', 'No valid recipients found. Please check user IDs or email addresses format');
@@ -125,13 +125,13 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
       // Handle single user selection
       const singleUserId = req.body.singleUser;
       const singleUserEmail = req.body.singleUserEmail;
-      
+
       // Validate that only one of the fields is provided
       if (singleUserId && singleUserEmail) {
         req.flash('error', 'Please select either a user from the list OR enter an email address, not both');
         return res.redirect('/admin/compose-email');
       }
-      
+
       // Check if direct email is provided
       if (singleUserEmail) {
         // Validate email format
@@ -189,7 +189,11 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
     const result = await sendBulkEmail(users, subject, htmlContent);
 
     if (result.success) {
-      req.flash('success', `Email sent successfully to ${result.recipientCount} users`);
+      if (result.failedCount && result.failedCount > 0) {
+        req.flash('success', `Email sent privately to ${result.sentCount} user(s). Failed for ${result.failedCount} recipient(s).`);
+      } else {
+        req.flash('success', `Email sent privately to ${result.sentCount || result.recipientCount} user(s)`);
+      }
     } else {
       console.error('Failed to send bulk email:', result.error);
       req.flash('error', `Failed to send email: ${result.error}`);
@@ -204,11 +208,11 @@ router.post('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/compose-email/users - Get users for single user selection
-router.get('/users', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/users', isLoggedIn, hasAdminPermission('manage_compose_email'), async (req, res) => {
   try {
     // Get all users for single user selection dropdown
     const users = await User.find({}).select('name email _id').sort({ name: 1 });
-    
+
     res.json({ success: true, users });
   } catch (error) {
     console.error('Error fetching users:', error);

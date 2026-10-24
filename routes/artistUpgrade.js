@@ -31,8 +31,11 @@ router.get('/artist-upgrade/pending', isLoggedIn, isArtist, async (req, res) => 
     }
 
     res.render('artists/pending-upgrade-request', {
+      layout: false,
+      currentPath: '/learning',
       title: 'Pending Upgrade Request',
-      request
+      request,
+      artist
     });
   } catch (error) {
     console.error('Error in view pending upgrade request:', error);
@@ -54,8 +57,8 @@ router.get('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) => 
 
     // Check if artist is eligible for upgrade
     if ((artist.artistLevel === 'Beginner' && !artist.completedLearning) ||
-        (artist.artistLevel === 'Intermediate' && !artist.completedLearning) ||
-        artist.artistLevel === 'Established') {
+      (artist.artistLevel === 'Intermediate' && !artist.completedLearning) ||
+      artist.artistLevel === 'Established') {
       req.flash('error', 'You are not eligible for an artist level upgrade at this time');
       return res.redirect('/learning');
     }
@@ -86,6 +89,8 @@ router.get('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) => 
     }));
 
     res.render('artists/upgrade-request', {
+      layout: false,
+      currentPath: '/learning',
       title: 'Request Artist Level Upgrade',
       artist,
       completedModules
@@ -122,7 +127,7 @@ router.post('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) =>
     }
 
     if ((currentLevel === 'Beginner' && requestedLevel !== 'Intermediate') ||
-        (currentLevel === 'Intermediate' && requestedLevel !== 'Established')) {
+      (currentLevel === 'Intermediate' && requestedLevel !== 'Established')) {
       req.flash('error', 'Invalid requested artist level');
       return res.redirect('/artist-upgrade/request');
     }
@@ -160,7 +165,8 @@ router.post('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) =>
 
     await newRequest.save();
 
-    // Send email notification to admin
+    // Send email notification to admin - Disabled as requested
+    /*
     try {
       const admins = await User.find({ role: 'admin' });
 
@@ -209,6 +215,7 @@ router.post('/artist-upgrade/request', isLoggedIn, isArtist, async (req, res) =>
     } catch (emailError) {
       console.error('Error sending admin notification email:', emailError);
     }
+    */
 
     req.flash('success', 'Your upgrade request has been submitted and is pending review');
     res.redirect('/artists/dashboard');
@@ -271,10 +278,10 @@ router.get('/admin/artist-upgrade-requests', isLoggedIn, isAdmin, async (req, re
         const status = (request.status || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               currentLevel.includes(searchTerm) ||
-               requestedLevel.includes(searchTerm) ||
-               status.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          currentLevel.includes(searchTerm) ||
+          requestedLevel.includes(searchTerm) ||
+          status.includes(searchTerm);
       });
     }
 
@@ -362,10 +369,10 @@ router.get('/admin/artist-upgrade-requests/export', isLoggedIn, isAdmin, async (
         const status = (request.status || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               currentLevel.includes(searchTerm) ||
-               requestedLevel.includes(searchTerm) ||
-               status.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          currentLevel.includes(searchTerm) ||
+          requestedLevel.includes(searchTerm) ||
+          status.includes(searchTerm);
       });
     }
 

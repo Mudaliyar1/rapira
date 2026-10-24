@@ -51,7 +51,7 @@
             <% if (editRequest.user) { %>
               <p><strong>Requested by:</strong> <%= editRequest.user.name %> (<%= editRequest.user.email %>)</p>
             <% } %>
-            <p><strong>Submitted:</strong> <%= new Date(editRequest.createdAt).toLocaleString() %></p>
+            <p><strong>Submitted:</strong> <%= toISTLocaleString(editRequest.createdAt) %></p>
             <% if (editRequest.changedFields) { %>
               <p><strong>Fields to change:</strong> <%= editRequest.changedFields.join(', ') %></p>
             <% } %>
@@ -155,7 +155,7 @@
               <i class="bi bi-hourglass-split me-1"></i>Pending
             </span>
           </p>
-          <p><strong>Submitted:</strong><br><%= new Date(editRequest.createdAt).toLocaleString() %></p>
+          <p><strong>Submitted:</strong><br><%= toISTLocaleString(editRequest.createdAt) %></p>
           <% if (editRequest.reason) { %>
             <p><strong>Reason:</strong><br>
               <em class="text-muted">"<%= editRequest.reason %>"</em>
@@ -183,7 +183,7 @@
               </div>
             </div>
             <p class="mb-1"><strong>Role:</strong> <%= editRequest.user.role || 'User' %></p>
-            <p class="mb-0"><strong>Member since:</strong> <%= new Date(editRequest.user.createdAt).toLocaleDateString() %></p>
+            <p class="mb-0"><strong>Member since:</strong> <%= toISTDateString(editRequest.user.createdAt) %></p>
           </div>
         </div>
       <% } %>

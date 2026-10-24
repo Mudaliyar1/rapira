@@ -1,0 +1,251 @@
+<%- contentFor('body') %>
+
+<div class="glass-card-dark border border-secondary mb-4 p-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <h4 class="mb-1 fw-bold text-white">Blocked Artists</h4>
+      <p class="text-white-50 mb-0">View blocked artist accounts, inspect details, and unblock when needed.</p>
+    </div>
+    <div class="d-flex gap-3">
+      <div class="text-center px-3 border-end border-secondary">
+        <h5 class="text-danger mb-0 fw-bold"><%= stats.totalBlocked %></h5>
+        <small class="text-white-50">Total Blocked</small>
+      </div>
+      <div class="text-center px-3">
+        <h5 class="text-info mb-0 fw-bold"><%= stats.filtered %></h5>
+        <small class="text-white-50">Filtered</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="glass-card-dark border border-secondary mb-4">
+  <div class="card-header border-bottom border-secondary bg-transparent py-3">
+    <h5 class="card-title mb-0 text-white"><i class="bi bi-funnel me-2"></i>Search & Filter</h5>
+  </div>
+  <div class="card-body">
+    <form method="GET" action="/admin/artists/blocked" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label text-white-50 small fw-bold">SEARCH</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-search"></i></span>
+          <input type="text" name="search" class="form-control bg-dark border-secondary text-white" placeholder="Stage name, user, email, genre" value="<%= searchParams.search %>">
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-white-50 small fw-bold">STATE</label>
+        <select name="state" class="form-select form-select-sm bg-dark border-secondary text-white">
+          <option value="">All States</option>
+          <% states.forEach(s => { %>
+            <option value="<%= s %>" <%= searchParams.state === s ? 'selected' : '' %>><%= s %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-white-50 small fw-bold">CITY</label>
+        <select name="city" class="form-select form-select-sm bg-dark border-secondary text-white">
+          <option value="">All Cities</option>
+          <% cities.forEach(c => { %>
+            <option value="<%= c %>" <%= searchParams.city === c ? 'selected' : '' %>><%= c %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-white-50 small fw-bold">SORT BY</label>
+        <select name="sortBy" class="form-select form-select-sm bg-dark border-secondary text-white">
+          <option value="blockedAt" <%= searchParams.sortBy === 'blockedAt' ? 'selected' : '' %>>Blocked Date</option>
+          <option value="stageName" <%= searchParams.sortBy === 'stageName' ? 'selected' : '' %>>Stage Name</option>
+          <option value="createdAt" <%= searchParams.sortBy === 'createdAt' ? 'selected' : '' %>>Join Date</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label text-white-50 small fw-bold">ORDER</label>
+        <select name="sortOrder" class="form-select form-select-sm bg-dark border-secondary text-white">
+          <option value="desc" <%= searchParams.sortOrder === 'desc' ? 'selected' : '' %>>Newest</option>
+          <option value="asc" <%= searchParams.sortOrder === 'asc' ? 'selected' : '' %>>Oldest</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary btn-sm px-3">
+          <i class="bi bi-funnel me-1"></i>Apply Filters
+        </button>
+        <a href="/admin/artists/blocked" class="btn btn-outline-secondary btn-sm px-3">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        </a>
+        <a href="/admin/artists" class="btn btn-outline-light btn-sm px-3">
+          <i class="bi bi-music-note-beamed me-1"></i>Back To All Artists
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="glass-card-dark border border-secondary">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 text-white">
+        <thead class="bg-dark text-white-50">
+          <tr>
+            <th class="ps-4 border-secondary py-3">Artist</th>
+            <th class="border-secondary py-3">User Details</th>
+            <th class="border-secondary py-3">Location</th>
+            <th class="border-secondary py-3 block-info-col">Block Info</th>
+            <th class="border-secondary py-3">Blocked By</th>
+            <th class="text-end pe-4 border-secondary py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (artists.length > 0) { %>
+            <% artists.forEach(artist => { %>
+              <tr class="border-secondary">
+                <td class="ps-4 py-3">
+                  <div class="d-flex align-items-center">
+                    <% if (artist.user && artist.user.profileImage) { %>
+                      <img src="<%= artist.user.profileImage %>" alt="<%= artist.user.name %>" class="rounded-circle me-3 border border-secondary" width="45" height="45" style="object-fit: cover;">
+                    <% } else { %>
+                      <img src="/images/default-profile.svg" class="rounded-circle me-3 border border-secondary" width="45" height="45" alt="Artist profile">
+                    <% } %>
+                    <div>
+                      <div class="fw-bold text-white"><%= artist.stageName || (artist.user ? artist.user.name : 'Unknown Artist') %></div>
+                      <div class="small text-white-50"><%= artist.artistLevel || 'Beginner' %> • <%= artist.genre || 'N/A' %></div>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="py-3">
+                  <% if (artist.user) { %>
+                    <div class="fw-bold text-white"><%= artist.user.name %></div>
+                    <div class="small text-primary"><%= artist.user.email %></div>
+                  <% } else { %>
+                    <span class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>User account deleted</span>
+                  <% } %>
+                </td>
+
+                <td class="py-3">
+                  <div class="small text-white"><%= artist.city || 'N/A' %>, <%= artist.state || 'N/A' %></div>
+                </td>
+
+                <td class="py-3 block-info-col">
+                  <% const reasonText = (artist.blockReason || 'No reason provided').replace(/\s+/g, ' ').trim(); %>
+                  <div class="d-flex flex-column gap-1">
+                    <span class="badge bg-danger" style="width: fit-content;">BLOCKED</span>
+                    <span class="small text-white-50">
+                      <%= artist.blockedAt ? new Date(artist.blockedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Date not available' %>
+                    </span>
+                    <span class="small text-warning block-reason" title="<%= reasonText %>"><%= reasonText.length > 42 ? reasonText.slice(0, 42) + '...' : reasonText %></span>
+                  </div>
+                </td>
+
+                <td class="py-3">
+                  <% if (artist.blockedBy) { %>
+                    <div class="fw-bold text-white"><%= artist.blockedBy.name %></div>
+                    <div class="small text-white-50"><%= artist.blockedBy.email || 'Admin' %></div>
+                  <% } else { %>
+                    <span class="text-white-50 small">System / Unknown</span>
+                  <% } %>
+                </td>
+
+                <td class="text-end pe-4 py-3">
+                  <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    <a href="/admin/artists/<%= artist._id %>/view" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                      <i class="bi bi-eye me-1"></i>Details
+                    </a>
+                    <form action="/admin/artists/<%= artist._id %>/unblock" method="POST" class="d-inline" onsubmit="return confirm('Unblock this artist now?');">
+                      <input type="hidden" name="redirectTo" value="/admin/artists/blocked">
+                      <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                        <i class="bi bi-unlock-fill me-1"></i>Unblock
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" class="text-center py-5 border-secondary">
+                <div class="text-white-50 mb-3"><i class="bi bi-shield-check fs-1"></i></div>
+                <div class="text-white">No blocked artists found.</div>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .glass-card-dark {
+    background: #0a0a0a;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  .form-control:focus, .form-select:focus {
+    background-color: #000 !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  }
+
+  .table-responsive::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .table-responsive::-webkit-scrollbar-track {
+    background: #111;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+
+  .block-info-col {
+    width: 230px;
+    max-width: 230px;
+  }
+
+  .block-reason {
+    display: inline-block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 768px) {
+    .table {
+      table-layout: fixed;
+    }
+
+    .table {
+      font-size: 0.85rem;
+    }
+
+    .block-info-col {
+      width: 130px;
+      max-width: 130px;
+    }
+
+    .block-reason {
+      font-size: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+</style>

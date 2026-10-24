@@ -48,7 +48,7 @@
                 </tr>
                 <tr>
                   <th>Submitted On</th>
-                  <td class="text-white"><%= new Date(request.createdAt).toLocaleString() %></td>
+                  <td class="text-white"><%= toISTLocaleString(request.createdAt) %></td>
                 </tr>
               </table>
             </div>
@@ -57,7 +57,7 @@
               <table class="table table-bordered">
                 <tr>
                   <th style="width: 40%;">Event Date</th>
-                  <td class="text-white"><%= new Date(request.eventDate).toLocaleDateString() %></td>
+                  <td class="text-white"><%= toISTDateString(request.eventDate) %></td>
                 </tr>
                 <tr>
                   <th>Location</th>
@@ -238,7 +238,7 @@
                   </tr>
                   <tr>
                     <th>Reviewed On</th>
-                    <td class="text-white"><%= request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Unknown' %></td>
+                    <td class="text-white"><%= request.reviewedAt ? toISTLocaleString(request.reviewedAt) : 'Unknown' %></td>
                   </tr>
                   <tr>
                     <th>Admin Notes</th>

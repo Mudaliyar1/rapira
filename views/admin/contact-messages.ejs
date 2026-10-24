@@ -254,7 +254,7 @@
                 <td><%= message.name %></td>
                 <td><a href="mailto:<%= message.email %>"><%= message.email %></a></td>
                 <td><%= message.subject %></td>
-                <td><%= new Date(message.createdAt).toLocaleDateString() %></td>
+                <td><%= toISTDateString(message.createdAt) %></td>
                 <td>
                   <div class="btn-group">
                     <a href="/admin/contact-messages/<%= message._id %>" class="btn btn-sm btn-primary" title="View Message">

@@ -228,47 +228,23 @@ function initializePage() {
   // Copy link functionality
   if (copyLinkBtn && validationLink) {
     console.log('Setting up copy link functionality');
-    copyLinkBtn.addEventListener('click', function(event) {
+    copyLinkBtn.addEventListener('click', async function(event) {
       event.preventDefault();
-      validationLink.select();
-      
-      // Copy to clipboard
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(validationLink.value).then(() => {
-          // Show success feedback
-          const originalText = copyLinkBtn.innerHTML;
-          copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
-          copyLinkBtn.classList.remove('btn-outline-primary');
-          copyLinkBtn.classList.add('btn-success');
-          
-          setTimeout(() => {
-            copyLinkBtn.innerHTML = originalText;
-            copyLinkBtn.classList.remove('btn-success');
-            copyLinkBtn.classList.add('btn-outline-primary');
-          }, 2000);
-        }).catch(err => {
-          console.error('Copy failed:', err);
-          alert('Failed to copy link. Please try again.');
-        });
-      } else {
-        // Fallback for older browsers
-        validationLink.select();
-        try {
-          document.execCommand('copy');
-          const originalText = copyLinkBtn.innerHTML;
-          copyLinkBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
-          copyLinkBtn.classList.remove('btn-outline-primary');
-          copyLinkBtn.classList.add('btn-success');
-          
-          setTimeout(() => {
-            copyLinkBtn.innerHTML = originalText;
-            copyLinkBtn.classList.remove('btn-success');
-            copyLinkBtn.classList.add('btn-outline-primary');
-          }, 2000);
-        } catch (e) {
-          console.error('Copy failed:', e);
-          alert('Failed to copy link. Please try again.');
+      const linkToCopy = (validationLink.value || '').trim();
+      if (!linkToCopy) {
+        showToast('No validation link available to copy', 'error');
+        return;
+      }
+
+      try {
+        const copied = await copyText(linkToCopy);
+        if (!copied) {
+          throw new Error('Copy command returned false');
         }
+        showCopyButtonSuccess(copyLinkBtn);
+      } catch (err) {
+        console.error('Copy failed:', err);
+        showToast('Failed to copy link. Please try again.', 'error');
       }
     });
   } else {
@@ -390,23 +366,49 @@ function openShareModal(url) {
   console.log('Modal should be shown now');
 }
 
+function showCopyButtonSuccess(button) {
+  if (!button) return;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+  button.classList.remove('btn-outline-primary');
+  button.classList.add('btn-success');
+
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.classList.remove('btn-success');
+    button.classList.add('btn-outline-primary');
+  }, 2000);
+}
+
+async function copyText(text) {
+  const safeText = String(text || '').trim();
+  if (!safeText) {
+    return false;
+  }
+
+  // navigator.clipboard requires secure context on most browsers.
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(safeText);
+    return true;
+  }
+
+  return fallbackCopyTextToClipboard(safeText);
+}
+
 // Copy to clipboard function
-function copyToClipboard(url) {
+async function copyToClipboard(url) {
   console.log('Copying to clipboard:', url);
-  
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url)
-      .then(() => {
-        showToast('🔗 Link copied to clipboard!', 'success');
-      })
-      .catch((err) => {
-        console.error('Failed to copy: ', err);
-        // Fallback for older browsers
-        fallbackCopyTextToClipboard(url);
-      });
-  } else {
-    // Fallback for older browsers
-    fallbackCopyTextToClipboard(url);
+
+  try {
+    const copied = await copyText(url);
+    if (copied) {
+      showToast('🔗 Link copied to clipboard!', 'success');
+    } else {
+      showToast('Failed to copy link', 'error');
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    showToast('Failed to copy link', 'error');
   }
 }
 
@@ -424,18 +426,15 @@ function fallbackCopyTextToClipboard(text) {
   document.body.appendChild(textArea);
   textArea.focus();
   textArea.select();
+  textArea.setSelectionRange(0, textArea.value.length);
   
   try {
     const successful = document.execCommand('copy');
     document.body.removeChild(textArea);
-    if (successful) {
-      showToast('🔗 Link copied to clipboard!', 'success');
-    } else {
-      showToast('Failed to copy link', 'error');
-    }
+    return successful;
   } catch (err) {
     document.body.removeChild(textArea);
-    showToast('Failed to copy link', 'error');
+    return false;
   }
 }
 
@@ -572,8 +571,8 @@ function displayActiveLinks(links) {
     // Handle potential date parsing issues
     let createdDate, expiresDate, timeLeft;
     try {
-      createdDate = new Date(link.createdAt).toLocaleString();
-      expiresDate = new Date(link.expiresAt).toLocaleString();
+      createdDate = toISTLocaleString(link.createdAt);
+      expiresDate = toISTLocaleString(link.expiresAt);
       timeLeft = Math.ceil((new Date(link.expiresAt) - new Date()) / (1000 * 60 * 60)); // Hours left
       
       // Check if timeLeft is valid

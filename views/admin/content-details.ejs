@@ -121,7 +121,7 @@
           </li>
           <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-bottom">
             <span class="text-muted">Uploaded</span>
-            <span class="fw-medium"><%= new Date(content.createdAt).toLocaleDateString() %></span>
+            <span class="fw-medium"><%= toISTDateString(content.createdAt) %></span>
           </li>
           <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-bottom">
             <span class="text-muted">Views</span>
@@ -129,7 +129,7 @@
           </li>
           <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
             <span class="text-muted">Last Updated</span>
-            <span class="fw-medium"><%= new Date(content.updatedAt).toLocaleDateString() %></span>
+            <span class="fw-medium"><%= toISTDateString(content.updatedAt) %></span>
           </li>
         </ul>
       </div>

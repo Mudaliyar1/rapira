@@ -1,0 +1,188 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <h4 class="mb-0 fw-bold text-warning"><i class="bi bi-shield-lock-fill me-2"></i>Administrator Management</h4>
+              <p class="text-white-50 mb-0 small">Overview of system administrators and their specific access permissions.</p>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-search"></i></span>
+                <input type="text" id="adminSearch" class="form-control bg-dark text-white border-secondary" placeholder="Search by name or email...">
+              </div>
+            </div>
+            <div class="col-md-2 text-md-end">
+              <a href="/admin/super/add-admin" class="btn btn-warning rounded-pill w-100">
+                <i class="bi bi-person-plus-fill me-1"></i> Add New
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary shadow-lg">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+              <thead>
+                <tr class="border-secondary text-white-50 small">
+                  <th class="ps-4">Admin Name</th>
+                  <th>Contact Email</th>
+                  <th>System Role</th>
+                  <th>Assigned Features</th>
+                  <th>Created</th>
+                  <th class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (admins && admins.length > 0) { %>
+                  <% admins.forEach(admin => { %>
+                    <tr class="border-secondary hover-row">
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                          <img src="<%= admin.profileImage && admin.profileImage !== '/images/default-profile.svg' ? admin.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(admin.name) + '&background=random&color=fff&bold=true') %>" 
+                               class="rounded-circle me-3 border border-secondary" width="40" height="40" alt="">
+                          <div class="fw-bold text-white"><%= admin.name %></div>
+                          <% if (admin.adminTitle) { %>
+                            <div class="text-info extra-small fw-bold mt-1 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                              <i class="bi bi-briefcase me-1"></i><%= admin.adminTitle %>
+                            </div>
+                          <% } %>
+                        </div>
+                      </td>
+                      <td class="text-white-50">
+                        <%= admin.email %>
+                      </td>
+                      <td>
+                        <% if (admin.isSuperAdmin) { %>
+                          <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-star-fill me-1"></i> Super Admin</span>
+                        <% } else { %>
+                          <span class="badge bg-primary px-2 py-1"><i class="bi bi-person-badge me-1"></i> Standard Admin</span>
+                        <% } %>
+                      </td>
+                      <td style="max-width: 300px;">
+                        <% if (admin.isSuperAdmin) { %>
+                           <span class="badge bg-success bg-opacity-25 text-success border border-success me-1 mb-1">Unrestricted Access (ALL)</span>
+                        <% } else if (admin.adminPermissions && admin.adminPermissions.length > 0) { %>
+                          <% admin.adminPermissions.forEach(perm => { 
+                             let diagName = perm;
+                             for (const group in PERMISSION_GROUPS) {
+                               const found = PERMISSION_GROUPS[group].find(p => p.id === perm);
+                               if (found) { diagName = found.name; break; }
+                             }
+                          %>
+                            <span class="badge bg-secondary text-light me-1 mb-1"><%= diagName %></span>
+                          <% }); %>
+                        <% } else { %>
+                           <span class="text-white-50 small fst-italic">No features assigned (Restricted)</span>
+                        <% } %>
+                      </td>
+                      <td class="text-white-50 small">
+                        <%= new Date(admin.createdAt).toLocaleDateString() %>
+                      </td>
+                      <td class="text-end pe-4">
+                        <% 
+                          const isSelf = currentUser.id === admin._id.toString();
+                          const canEdit = !isSelf && (currentUser.isSuperAdmin || !admin.isSuperAdmin);
+                          const canDelete = !isSelf && (currentUser.isSuperAdmin || !admin.isSuperAdmin);
+                        %>
+
+                        <% if (canEdit) { %>
+                          <a href="/admin/super/edit-admin/<%= admin._id %>" class="btn btn-sm btn-outline-info rounded-pill px-3 me-2">
+                            <i class="bi bi-pencil-fill"></i> Edit
+                          </a>
+                        <% } else { %>
+                          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-2" disabled 
+                                  title="<%= isSelf ? 'Use profile settings to edit yourself' : 'Standard admins cannot edit Super Admins' %>">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                        <% } %>
+
+                        <% if (canDelete) { %>
+                          <form action="/admin/super/delete-admin/<%= admin._id %>" method="POST" class="d-inline" onsubmit="return confirm('WARNING: Are you absolutely sure you want to permanently delete this Admin? All their data will be lost.');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                          </form>
+                        <% } else { %>
+                          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled 
+                                  title="<%= isSelf ? 'You cannot delete yourself' : 'Standard admins cannot delete Super Admins' %>">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="6" class="text-center text-white-50 py-5">
+                      <i class="bi bi-shield-slash fs-1 text-muted d-block mb-2"></i>
+                      No administrators found in system
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+  // Filter administrators by name or email
+  document.getElementById('adminSearch').addEventListener('input', function(e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr.hover-row');
+    
+    rows.forEach(row => {
+      const name = row.querySelector('.fw-bold.text-white').textContent.toLowerCase();
+      const email = row.querySelector('.text-white-50').textContent.toLowerCase();
+      const title = row.querySelector('.text-info.extra-small') ? row.querySelector('.text-info.extra-small').textContent.toLowerCase() : '';
+      
+      if (name.includes(term) || email.includes(term) || title.includes(term)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    // Handle "No Results" message
+    const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
+    let noResultsRow = document.getElementById('noResultsRow');
+    
+    if (visibleRows.length === 0 && rows.length > 0) {
+      if (!noResultsRow) {
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = `<td colspan="6" class="text-center text-white-50 py-5">
+          <i class="bi bi-search fs-1 text-muted d-block mb-2"></i>
+          No administrators match your search term "${term}"
+        </td>`;
+        document.querySelector('tbody').appendChild(noResultsRow);
+      } else {
+        noResultsRow.querySelector('td').innerHTML = `<i class="bi bi-search fs-1 text-muted d-block mb-2"></i>
+          No administrators match your search term "${term}"`;
+        noResultsRow.style.display = '';
+      }
+    } else if (noResultsRow) {
+      noResultsRow.style.display = 'none';
+    }
+  });
+</script>
+
+<style>
+.hover-row {
+  transition: all 0.2s ease;
+}
+.hover-row:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+</style>
+</div>

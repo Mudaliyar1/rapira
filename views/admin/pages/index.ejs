@@ -68,7 +68,7 @@
                         <% } %>
                       </td>
                       <td><%= page.order %></td>
-                      <td><%= new Date(page.createdAt).toLocaleDateString() %></td>
+                      <td><%= toISTDateString(page.createdAt) %></td>
                       <td>
                         <div class="dropdown">
                           <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton<%= page._id %>" data-bs-toggle="dropdown" aria-expanded="false">

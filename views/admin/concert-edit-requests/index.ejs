@@ -97,7 +97,7 @@
                     <strong><%= request.concert ? request.concert.title : 'Concert Deleted' %></strong>
                     <% if (request.concert) { %>
                       <br><small class="text-muted">
-                        <%= new Date(request.concert.date).toLocaleDateString() %> • 
+                        <%= toISTDateString(request.concert.date) %> • 
                         <%= request.concert.venue ? request.concert.venue.name : 'No venue' %>
                       </small>
                     <% } %>
@@ -111,8 +111,8 @@
                     <% } %>
                   </td>
                   <td>
-                    <%= new Date(request.requestedAt).toLocaleDateString() %>
-                    <br><small class="text-muted"><%= new Date(request.requestedAt).toLocaleTimeString() %></small>
+                    <%= toISTDateString(request.requestedAt) %>
+                    <br><small class="text-muted"><%= toISTTimeString(request.requestedAt) %></small>
                   </td>
                   <td>
                     <% if (request.status === 'pending') { %>
@@ -125,7 +125,7 @@
                     
                     <% if (request.adminResponse && request.adminResponse.respondedAt) { %>
                       <br><small class="text-muted">
-                        <%= new Date(request.adminResponse.respondedAt).toLocaleDateString() %>
+                        <%= toISTDateString(request.adminResponse.respondedAt) %>
                       </small>
                     <% } %>
                   </td>

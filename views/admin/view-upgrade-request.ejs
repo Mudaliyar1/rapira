@@ -61,14 +61,14 @@
           <% if (request.status !== 'pending') { %>
             <div class="mt-3">
               <small class="text-white-50">Reviewed by: <%= request.reviewedBy ? request.reviewedBy.name : 'Unknown' %></small><br>
-              <small class="text-white-50">Reviewed on: <%= request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Unknown' %></small>
+              <small class="text-white-50">Reviewed on: <%= request.reviewedAt ? toISTLocaleString(request.reviewedAt) : 'Unknown' %></small>
             </div>
           <% } %>
         </div>
 
         <div class="glass-card-dark p-3">
           <h6 class="text-white-50 mb-2">Request Date</h6>
-          <p class="text-white mb-0"><%= new Date(request.createdAt).toLocaleString() %></p>
+          <p class="text-white mb-0"><%= toISTLocaleString(request.createdAt) %></p>
         </div>
       </div>
 
@@ -96,7 +96,7 @@
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <h6 class="mb-1"><%= module.title %></h6>
-                      <small class="text-muted">Completed on <%= module.progress ? new Date(module.progress.completedAt).toLocaleDateString() : 'Unknown' %></small>
+                      <small class="text-muted">Completed on <%= module.progress ? toISTDateString(module.progress.completedAt) : 'Unknown' %></small>
                     </div>
                     <span class="badge bg-success">
                       <i class="bi bi-check-circle-fill"></i>

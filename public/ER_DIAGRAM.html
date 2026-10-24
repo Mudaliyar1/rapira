@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB ER Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #000;
+        }
+
+        .diagram-wrapper {
+            position: relative;
+            width: 100%;
+            height: 1000px;
+            border: 1px solid #000;
+            background: white;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .entities {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Entity Box Styles */
+        .entity {
+            position: absolute;
+            background: white;
+            border: 2px solid #000;
+            padding: 15px;
+            width: 200px;
+            font-size: 13px;
+        }
+
+        .entity-title {
+            font-size: 14px;
+            font-weight: bold;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .entity-content {
+            color: #000;
+            line-height: 1.6;
+        }
+
+        .field {
+            margin: 5px 0;
+            padding: 3px 0;
+        }
+
+        .field-name {
+            font-weight: bold;
+        }
+
+        .field-type {
+            font-size: 12px;
+            color: #333;
+        }
+
+        .primary-key {
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding: 3px 0;
+        }
+
+        .reference {
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Positions */
+        .admin {
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .user {
+            top: 280px;
+            left: 50px;
+        }
+
+        .subscription {
+            top: 280px;
+            right: 50px;
+        }
+
+        .artist {
+            top: 520px;
+            left: 80px;
+        }
+
+        .venue {
+            top: 520px;
+            right: 80px;
+        }
+
+        .content {
+            top: 750px;
+            left: 50px;
+        }
+
+        .ticket {
+            top: 750px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .payment {
+            top: 750px;
+            right: 50px;
+        }
+
+        .legend {
+            margin-top: 30px;
+            font-size: 13px;
+            border-top: 1px solid #000;
+            padding-top: 20px;
+        }
+
+        .legend-item {
+            margin: 8px 0;
+        }
+
+        .relationship-label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .cardinality {
+            font-weight: bold;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MongoDB ER Diagram - RAPIRA Project</h1>
+    </div>
+
+    <div class="diagram-wrapper">
+        <div class="entities">
+            <!-- Admin -->
+            <div class="entity admin" id="admin-box">
+                <div class="entity-title">Admin</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">email</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">password</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">role</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">createdAt</span><br/><span class="field-type">Date</span></div>
+                </div>
+            </div>
+
+            <!-- User -->
+            <div class="entity user" id="user-box">
+                <div class="entity-title">User</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">name</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">email</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">subscriptionId</span><br/><span class="reference">→ Subscription._id</span></div>
+                    <div class="field"><span class="field-name">createdAt</span><br/><span class="field-type">Date</span></div>
+                </div>
+            </div>
+
+            <!-- Subscription -->
+            <div class="entity subscription" id="subscription-box">
+                <div class="entity-title">Subscription</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">type</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">price</span><br/><span class="field-type">Number</span></div>
+                    <div class="field"><span class="field-name">duration</span><br/><span class="field-type">Number</span></div>
+                    <div class="field"><span class="field-name">features</span><br/><span class="field-type">Array</span></div>
+                </div>
+            </div>
+
+            <!-- Artist -->
+            <div class="entity artist" id="artist-box">
+                <div class="entity-title">Artist</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">name</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">bio</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">genre</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">profileImage</span><br/><span class="field-type">String</span></div>
+                </div>
+            </div>
+
+            <!-- Venue -->
+            <div class="entity venue" id="venue-box">
+                <div class="entity-title">Venue</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">name</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">location</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">capacity</span><br/><span class="field-type">Number</span></div>
+                    <div class="field"><span class="field-name">pricing</span><br/><span class="field-type">Object</span></div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="entity content" id="content-box">
+                <div class="entity-title">Content</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">title</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">artistId</span><br/><span class="reference">→ Artist._id</span></div>
+                    <div class="field"><span class="field-name">type</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">url</span><br/><span class="field-type">String</span></div>
+                </div>
+            </div>
+
+            <!-- Ticket -->
+            <div class="entity ticket" id="ticket-box">
+                <div class="entity-title">Ticket</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">userId</span><br/><span class="reference">→ User._id</span></div>
+                    <div class="field"><span class="field-name">venueId</span><br/><span class="reference">→ Venue._id</span></div>
+                    <div class="field"><span class="field-name">price</span><br/><span class="field-type">Number</span></div>
+                    <div class="field"><span class="field-name">purchasedAt</span><br/><span class="field-type">Date</span></div>
+                </div>
+            </div>
+
+            <!-- Payment -->
+            <div class="entity payment" id="payment-box">
+                <div class="entity-title">Payment</div>
+                <div class="entity-content">
+                    <div class="primary-key">_id (ObjectId)</div>
+                    <div class="field"><span class="field-name">userId</span><br/><span class="reference">→ User._id</span></div>
+                    <div class="field"><span class="field-name">ticketId</span><br/><span class="reference">→ Ticket._id</span></div>
+                    <div class="field"><span class="field-name">amount</span><br/><span class="field-type">Number</span></div>
+                    <div class="field"><span class="field-name">method</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">status</span><br/><span class="field-type">String</span></div>
+                    <div class="field"><span class="field-name">paymentDate</span><br/><span class="field-type">Date</span></div>
+                </div>
+            </div>
+        </div>
+
+        <svg id="relationshipSVG" width="100%" height="100%"></svg>
+    </div>
+
+    <script>
+        function drawDiagram() {
+            const svg = document.getElementById('relationshipSVG');
+            const wrapper = svg.parentElement;
+            
+            // Get positions of all boxes
+            const getPos = (id) => {
+                const el = document.getElementById(id);
+                const rect = el.getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                return {
+                    left: rect.left - wrapperRect.left,
+                    top: rect.top - wrapperRect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    centerX: (rect.left - wrapperRect.left) + rect.width / 2,
+                    centerY: (rect.top - wrapperRect.top) + rect.height / 2
+                };
+            };
+
+            const admin = getPos('admin-box');
+            const user = getPos('user-box');
+            const subscription = getPos('subscription-box');
+            const artist = getPos('artist-box');
+            const venue = getPos('venue-box');
+            const content = getPos('content-box');
+            const ticket = getPos('ticket-box');
+            const payment = getPos('payment-box');
+
+            svg.innerHTML = `
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#000" />
+                    </marker>
+                </defs>
+
+                <!-- Admin to User -->
+                <path d="M ${admin.centerX} ${admin.top + admin.height} L ${admin.centerX} ${admin.top + admin.height + 50} L ${user.centerX} ${user.top - 50} L ${user.centerX} ${user.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(admin.centerX + user.centerX) / 2 - 40}" y="${admin.top + admin.height + 35}" class="relationship-label">manages (1-M)</text>
+
+                <!-- Admin to Artist -->
+                <path d="M ${admin.centerX - 30} ${admin.top + admin.height} L ${admin.centerX - 30} ${admin.top + admin.height + 150} L ${artist.centerX} ${artist.top - 150} L ${artist.centerX} ${artist.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(admin.centerX + artist.centerX) / 2 - 60}" y="${(admin.top + artist.top) / 2}" class="relationship-label">manages (1-M)</text>
+
+                <!-- Admin to Venue -->
+                <path d="M ${admin.centerX + 30} ${admin.top + admin.height} L ${admin.centerX + 30} ${admin.top + admin.height + 150} L ${venue.centerX} ${venue.top - 150} L ${venue.centerX} ${venue.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(admin.centerX + venue.centerX) / 2}" y="${(admin.top + venue.top) / 2}" class="relationship-label">manages (1-M)</text>
+
+                <!-- Admin to Content -->
+                <path d="M ${admin.centerX} ${admin.top + admin.height} L ${admin.centerX} ${admin.top + admin.height + 400} L ${content.centerX} ${content.top - 400} L ${content.centerX} ${content.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(admin.centerX + content.centerX) / 2 - 60}" y="${(admin.top + admin.height + 200)}" class="relationship-label">manages (1-M)</text>
+
+                <!-- User to Subscription -->
+                <path d="M ${user.left + user.width} ${user.centerY} L ${subscription.left} ${subscription.centerY}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(user.left + user.width + subscription.left) / 2 - 20}" y="${user.centerY - 10}" class="relationship-label">has (1-1)</text>
+
+                <!-- User to Ticket -->
+                <path d="M ${user.centerX} ${user.top + user.height} L ${user.centerX} ${user.top + user.height + 150} L ${ticket.centerX} ${ticket.top - 150} L ${ticket.centerX} ${ticket.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(user.centerX + ticket.centerX) / 2 - 60}" y="${user.top + user.height + 100}" class="relationship-label">purchases (1-M)</text>
+
+                <!-- User to Payment -->
+                <path d="M ${user.left + user.width} ${user.centerY + 50} L ${payment.left} ${payment.centerY}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(user.left + user.width + payment.left) / 2 - 20}" y="${(user.centerY + payment.centerY) / 2 + 20}" class="relationship-label">makes (1-M)</text>
+
+                <!-- Ticket to Payment -->
+                <path d="M ${ticket.left + ticket.width} ${ticket.centerY} L ${payment.left} ${payment.centerY}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(ticket.left + ticket.width + payment.left) / 2}" y="${(ticket.centerY + payment.centerY) / 2 - 15}" class="relationship-label">for (1-1)</text>
+
+                <!-- Artist to Content -->
+                <path d="M ${artist.centerX} ${artist.top + artist.height} L ${artist.centerX} ${artist.top + artist.height + 50} L ${content.centerX} ${content.top - 50} L ${content.centerX} ${content.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(artist.centerX + content.centerX) / 2 - 40}" y="${(artist.top + artist.height + content.top) / 2}" class="relationship-label">creates (1-M)</text>
+
+                <!-- Venue to Ticket -->
+                <path d="M ${venue.centerX} ${venue.top + venue.height} L ${venue.centerX} ${venue.top + venue.height + 50} L ${ticket.centerX} ${ticket.top - 50} L ${ticket.centerX} ${ticket.top}" stroke="#000" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="${(venue.centerX + ticket.centerX) / 2}" y="${(venue.top + venue.height + ticket.top) / 2}" class="relationship-label">hosts (1-M)</text>
+            `;
+        }
+
+        window.addEventListener('load', drawDiagram);
+        window.addEventListener('resize', drawDiagram);
+    </script>
+
+    <div class="legend">
+        <strong>LEGEND:</strong><br><br>
+        <div class="legend-item">→ Reference fields point to other collections via ObjectId</div>
+        <div class="legend-item">1-1: One-to-One relationship (User has one Subscription)</div>
+        <div class="legend-item">1-M: One-to-Many relationship (Admin manages multiple Artists, Venues, etc.)</div>
+    </div>
+</body>
+</html>

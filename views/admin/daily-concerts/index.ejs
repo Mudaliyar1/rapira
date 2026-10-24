@@ -261,7 +261,7 @@
                     <% } %>
                   </td>
                   <td>
-                    <%= new Date(concert.eventDate).toLocaleDateString() %> at <%= concert.eventTime %>
+                    <%= toISTDateString(concert.eventDate) %> at <%= concert.eventTime %>
                   </td>
                   <td><%= concert.eventCity %>, <%= concert.eventState %></td>
                   <td><%= concert.organizerName %></td>

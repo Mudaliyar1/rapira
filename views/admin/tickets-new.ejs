@@ -188,7 +188,7 @@
                 <td>
                   <% if (ticket.concert) { %>
                     <div class="fw-medium text-white"><%= ticket.concert.title %></div>
-                    <div class="small text-primary"><%= new Date(ticket.concert.date).toLocaleDateString() %></div>
+                    <div class="small text-primary"><%= toISTDateString(ticket.concert.date) %></div>
                   <% } else { %>
                     <span class="text-muted">N/A</span>
                   <% } %>
@@ -203,7 +203,7 @@
                     <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
                   </span>
                 </td>
-                <td class="text-white"><%= new Date(ticket.purchaseDate).toLocaleDateString() %></td>
+                <td class="text-white"><%= toISTDateString(ticket.purchaseDate) %></td>
                 <td>
                   <div class="d-flex gap-2">
                     <a href="/admin/tickets/<%= ticket._id %>" class="btn btn-sm btn-outline-primary">

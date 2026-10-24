@@ -62,7 +62,7 @@
                   <td><%= post.likesCount || 0 %></td>
                   <td><%= post.shares || 0 %></td>
                   <td><%= post.views || 0 %></td>
-                  <td><small><%= new Date(post.createdAt).toLocaleDateString() %></small></td>
+                  <td><small><%= toISTDateString(post.createdAt) %></small></td>
                   <td>
                     <div class="d-flex flex-wrap gap-2">
                       <a class="btn btn-sm btn-outline-info" href="/admin/posts/<%= post._id %>" title="View">

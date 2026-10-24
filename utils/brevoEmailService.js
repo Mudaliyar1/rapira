@@ -1,4 +1,5 @@
 const axios = require('axios');
+const WebsiteSettings = require('../models/WebsiteSettings');
 
 // Get Brevo API key from environment variables
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -10,6 +11,115 @@ if (!BREVO_API_KEY) {
 
 // Determine if we're in production mode
 const isProduction = process.env.NODE_ENV === 'production';
+
+let _cachedEmailLinks = null;
+let _emailLinksCacheExpiry = 0;
+
+function normalizeBaseDomain(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, '');
+}
+
+async function loadEmailLinks() {
+  const now = Date.now();
+  if (_cachedEmailLinks && now <= _emailLinksCacheExpiry) {
+    return _cachedEmailLinks;
+  }
+
+  const settings = await WebsiteSettings.getSettings();
+  _cachedEmailLinks = (settings && settings.emailLinks)
+    ? (settings.emailLinks.toObject ? settings.emailLinks.toObject() : settings.emailLinks)
+    : {};
+  _emailLinksCacheExpiry = now + 60000;
+  return _cachedEmailLinks;
+}
+
+function clearBrevoEmailLinksCache() {
+  _cachedEmailLinks = null;
+  _emailLinksCacheExpiry = 0;
+}
+
+function replaceKnownBaseDomains(content, baseDomain) {
+  if (!content || !baseDomain) return content;
+
+  const knownBases = [
+    process.env.BASE_URL,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ]
+    .filter(Boolean)
+    .map(v => String(v).trim().replace(/\/+$/, ''));
+
+  let result = content;
+  for (const base of [...new Set(knownBases)]) {
+    result = result.split(base).join(baseDomain);
+  }
+  return result;
+}
+
+const STATIC_LINK_MAP = [
+  ['/auth/login', 'loginUrl'],
+  ['/account-reactivation', 'accountReactivationUrl'],
+  ['/artists/dashboard', 'artistDashboardUrl'],
+  ['/artist-applications/admin', 'artistApplicationReviewUrl'],
+  ['/subscriptions/my-subscriptions', 'subscriptionViewUrl'],
+  ['/learning', 'learningUrl'],
+  ['/terms-of-service', 'termsUrl'],
+  ['/privacy-policy', 'privacyUrl']
+];
+
+async function applyEmailOverrides(htmlContent, textContent) {
+  const emailLinks = await loadEmailLinks();
+  const baseDomain = normalizeBaseDomain(emailLinks.baseDomain);
+
+  let html = htmlContent || '';
+  let text = textContent || '';
+
+  // Domain-only override keeps routes predefined, including dynamic routes like /tickets/:id
+  html = replaceKnownBaseDomains(html, baseDomain);
+  text = replaceKnownBaseDomains(text, baseDomain);
+
+  const baseCandidates = [
+    normalizeBaseDomain(process.env.BASE_URL),
+    baseDomain,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ].filter(Boolean);
+
+  for (const [path, key] of STATIC_LINK_MAP) {
+    const override = String(emailLinks[key] || '').trim();
+    if (!override) continue;
+
+    const normalizedOverride = normalizeBaseDomain(override) || override;
+    for (const base of [...new Set(baseCandidates)]) {
+      const original = `${base}${path}`;
+      if (normalizedOverride !== original) {
+        html = html.split(original).join(normalizedOverride);
+        text = text.split(original).join(normalizedOverride);
+      }
+    }
+  }
+
+  return { html, text };
+}
+
+async function postToBrevo(url, payload, config) {
+  const body = { ...(payload || {}) };
+
+  if (typeof body.htmlContent === 'string' || typeof body.textContent === 'string') {
+    const { html, text } = await applyEmailOverrides(body.htmlContent, body.textContent);
+    body.htmlContent = html;
+    body.textContent = text;
+  }
+
+  return await axios.request({ method: 'post', url, data: body, ...(config || {}) });
+}
 
 /**
  * Send an email using Brevo API
@@ -33,7 +143,7 @@ const sendEmail = async (options) => {
 
   try {
     // Try to send email via Brevo API
-    const response = await axios.post(
+    const response = await postToBrevo(
       'https://api.sendinblue.com/v3/smtp/email',
       {
         sender: {
@@ -659,7 +769,7 @@ const sendArtistBookingRequestEmail = async (request) => {
     console.log('Sending artist booking request notification to all admins:', recipients.map(r => r.email).join(', '));
 
     // Send direct email
-    const response = await axios.post(
+    const response = await postToBrevo(
       'https://api.sendinblue.com/v3/smtp/email',
       directEmailPayload,
       {
@@ -889,11 +999,174 @@ const sendOrderConfirmationEmail = async (userEmail, orderData) => {
   });
 };
 
+const crypto = require('crypto');
+
+/**
+ * Send account deletion notification with recovery link
+ * @param {Object} user - User object
+ * @param {String} recoveryToken - Token for account recovery
+ * @returns {Promise} - A promise that resolves when the email is sent
+ */
+const sendAccountDeletionNotification = async (user, recoveryToken) => {
+  const WebsiteSettings = require('../models/WebsiteSettings');
+  const settings = await WebsiteSettings.getSettings();
+
+  const baseUrl = process.env.BASE_URL || 'https://rapiraa.onrender.com';
+  const accountReactivationUrl =
+    (settings && settings.emailLinks && settings.emailLinks.accountReactivationUrl
+      ? settings.emailLinks.accountReactivationUrl
+      : '') || `${baseUrl}/account-reactivation`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+        }
+        .header {
+          background-color: #ef4444;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 5px 5px 0 0;
+        }
+        .content {
+          padding: 20px;
+        }
+        .account-info {
+          background-color: #f8f9fa;
+          border-radius: 8px;
+          padding: 15px;
+          margin: 20px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+          color: #666;
+        }
+        .button {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: #6366f1;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin: 15px 0;
+          font-weight: bold;
+        }
+        .warning {
+          background-color: #fef3c7;
+          border: 1px solid #fbbf24;
+          color: #92400e;
+          padding: 10px;
+          border-radius: 5px;
+          margin: 15px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Account Deletion Notification</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${user.name || 'User'},</p>
+          
+          <div class="warning">
+            <strong>Important:</strong> Your account has been successfully deleted from Rapira Music Platform.
+          </div>
+          
+          <p>We're sorry to see you go. Your account with the following details has been permanently removed:</p>
+          
+          <div class="account-info">
+            <h3>Account Information:</h3>
+            <p><strong>Username:</strong> ${user.name}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Account Type:</strong> ${user.role || 'User'}</p>
+          </div>
+          
+          <p>If you want to recover your account, use the button below to open the Account Reactivation page.</p>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a class="button" href="${accountReactivationUrl}">Recover My Account</a>
+          </div>
+          
+          <p><strong>Important:</strong> Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.</p>
+          
+          <p>If you did not request this account deletion or need assistance, please contact our support team.</p>
+          
+          <p>Thank you for being part of Rapira Music Platform.</p>
+          
+          <p>Best regards,<br>The Rapira Team</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email. Please do not reply to this message.</p>
+          <p>&copy; ${new Date().getFullYear()} Rapira Music Platform. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+    Account Deletion Notification
+
+    Hello ${user.name || 'User'},
+
+    We're sorry to see you go. Your account has been successfully deleted from Rapira Music Platform.
+
+    Account Information:
+    Username: ${user.name}
+    Email: ${user.email}
+    Account Type: ${user.role || 'User'}
+
+    Recover your account here:
+    ${accountReactivationUrl}
+
+    Important: Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.
+
+    If you did not request this account deletion or need assistance, please contact our support team.
+
+    Thank you for being part of Rapira Music Platform.
+
+    Best regards,
+    The Rapira Team
+
+    This is an automated email. Please do not reply to this message.
+    © ${new Date().getFullYear()} Rapira Music Platform. All rights reserved.
+  `;
+
+  return sendEmail({
+    to: user.email,
+    toName: user.name,
+    subject: 'Your Account Has Been Deleted - Recovery Available',
+    htmlContent,
+    textContent
+  });
+};
+
 module.exports = {
+  clearBrevoEmailLinksCache,
   sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendTicketEmail,
   sendArtistBookingRequestEmail,
-  sendOrderConfirmationEmail
+  sendOrderConfirmationEmail,
+  sendAccountDeletionNotification
 };
+

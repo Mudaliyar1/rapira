@@ -1,0 +1,89 @@
+<%- include('../partials/distributor-header') %>
+
+<!-- Stats -->
+<div class="row g-4 mb-5">
+  <div class="col-md-4">
+    <div class="glass-card-dark h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-hourglass-split text-primary" style="font-size: 2.5rem;"></i>
+        </div>
+        <h3 class="fw-bold mb-1"><%= stats.pendingRequests %></h3>
+        <p class="text-white-50 mb-0">Pending Requests</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-card-dark h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-check-circle text-success" style="font-size: 2.5rem;"></i>
+        </div>
+        <h3 class="fw-bold mb-1"><%= stats.activePackages %></h3>
+        <p class="text-white-50 mb-0">Active Packages</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-card-dark h-100">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <i class="bi bi-currency-rupee text-info" style="font-size: 2.5rem;"></i>
+        </div>
+        <h3 class="fw-bold mb-1">₹<%= stats.lifetimeEarned ? stats.lifetimeEarned.toFixed(2) : '0.00' %></h3>
+        <p class="text-white-50 mb-0">Total Earnings</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Artist Discovery -->
+<div class="glass-card-dark">
+  <div class="card-header d-flex justify-content-between align-items-center border-bottom border-secondary pb-3">
+    <h4 class="card-title mb-0"><i class="bi bi-people me-2"></i>Discover Artists</h4>
+    <a href="/distributor-dashboard/artists" class="btn btn-sm btn-outline-light">View All Artists</a>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Artist Name</th>
+            <th>Location</th>
+            <th>Joined Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (artists && artists.length > 0) { %>
+            <% artists.forEach(artist => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= (artist.user.profileImage && artist.user.profileImage !== '/images/default-profile.svg') ? artist.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(artist.user.name.charAt(0).toUpperCase()) + '&background=random&color=fff&bold=true') %>" 
+                         class="rounded-circle me-3" width="45" height="45" style="object-fit: cover;">
+                    <div>
+                      <div class="fw-bold text-white"><%= artist.user.name %></div>
+                      <div class="text-white-50 small"><%= artist.user.email %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= artist.state || 'India' %></td>
+                <td><%= new Date(artist.createdAt).toLocaleDateString() %></td>
+                <td class="text-end">
+                  <a href="/distributor-dashboard/artists/<%= artist._id %>" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Posts</a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="text-center py-4 text-white-50">No artists found application-wide.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/distributor-footer') %>

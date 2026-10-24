@@ -26,7 +26,7 @@
                   <i class="bi <%= content.type === 'song' ? 'bi-music-note' : content.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %> me-1"></i>
                   <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>
                 </span>
-                <small class="ms-2">Uploaded on <%= new Date(content.createdAt).toLocaleDateString() %></small>
+                <small class="ms-2">Uploaded on <%= toISTDateString(content.createdAt) %></small>
               </p>
               <% if (content.description) { %>
                 <p class="mb-0 small"><%= content.description %></p>

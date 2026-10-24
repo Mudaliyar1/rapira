@@ -11,7 +11,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { deleteMedia } = require('../utils/mediaService');
 const { uploadFileToCloudinary } = require('../utils/mediaService');
 const path = require('path');
@@ -19,7 +19,7 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 
 // All routes require admin authentication
-router.use(isLoggedIn, isAdmin);
+router.use(isLoggedIn, hasAdminPermission('manage_media_management'));
 
 // GET /admin/media - List all media with pagination and filters
 router.get('/', async (req, res) => {
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
     });
 
     let filter = {};
-    
+
     // Basic filters
     if (module && module !== 'all') filter.module = module;
     if (ownerType && ownerType !== 'all') filter.ownerType = ownerType;
@@ -52,12 +52,12 @@ router.get('/', async (req, res) => {
     if (ownerSearch && ownerSearch.trim()) {
       const User = require('../models/User');
       const Artist = require('../models/Artist');
-      
+
       try {
         // Trim whitespace from search term
         const trimmedSearch = ownerSearch.trim();
         console.log('🔍 Searching for owner:', trimmedSearch);
-        
+
         // Search for users by email or username
         const users = await User.find({
           $or: [
@@ -65,34 +65,34 @@ router.get('/', async (req, res) => {
             { username: { $regex: trimmedSearch, $options: 'i' } }
           ]
         }).select('_id email username').lean();
-        
+
         console.log(`   Found ${users.length} users:`, users.map(u => `${u.email}/${u.username}`));
-        
+
         // Get user IDs
         const userIds = users.map(u => u._id);
-        
+
         // Search for artists by stageName OR by their linked user ID
         const artistFilter = {
           $or: [
             { stageName: { $regex: trimmedSearch, $options: 'i' } }
           ]
         };
-        
+
         // If we found users, also include artists that are linked to those users
         if (userIds.length > 0) {
           artistFilter.$or.push({ user: { $in: userIds } });
         }
-        
+
         const artists = await Artist.find(artistFilter).select('_id user stageName').populate('user', 'email').lean();
-        
+
         console.log(`   Found ${artists.length} artists:`, artists.map(a => `${a.stageName} (${a.user?.email || 'no email'})`));
-        
+
         // Combine all owner IDs
         const ownerIds = [
           ...userIds,
           ...artists.map(a => a._id)
         ];
-        
+
         if (ownerIds.length > 0) {
           filter.ownerId = { $in: ownerIds };
           console.log(`   ✅ Filter set for ${ownerIds.length} owners (${userIds.length} users, ${artists.length} artists)`);
@@ -107,7 +107,7 @@ router.get('/', async (req, res) => {
         console.error('Error searching for owner:', err);
       }
     }
-    
+
     // Handle filename/public_id search
     if (search && search.trim()) {
       filter.$or = [
@@ -117,27 +117,27 @@ router.get('/', async (req, res) => {
     }
 
     const sortOptions = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
-    
+
     // Debug filter
     console.log('🔎 Final filter:', JSON.stringify(filter, null, 2));
-    
+
     const mediaList = await Media.find(filter)
       .sort(sortOptions)
       .skip(skip)
       .limit(limit)
       .lean();
-    
+
     console.log(`📌 Query found ${mediaList.length} media items`);
 
     // Populate owner details
     const User = require('../models/User');
     const Artist = require('../models/Artist');
     const Venue = require('../models/Venue');
-    
+
     const enrichedMediaList = await Promise.all(
       mediaList.map(async (media) => {
         let ownerDetails = null;
-        
+
         if (media.ownerId && media.ownerType) {
           try {
             if (media.ownerType === 'user') {
@@ -151,7 +151,7 @@ router.get('/', async (req, res) => {
             console.error('Error populating owner:', err);
           }
         }
-        
+
         return { ...media, ownerDetails };
       })
     );
@@ -243,7 +243,12 @@ router.get('/:id/details', async (req, res) => {
         if (media.ownerType === 'user') {
           ownerDetails = await User.findById(media.ownerId).select('email username firstName lastName profileImage phone city state bio').lean();
         } else if (media.ownerType === 'artist') {
-          ownerDetails = await Artist.findById(media.ownerId).select('email stageName firstName lastName profileImage phone city state bio description').lean();
+          const artist = await Artist.findById(media.ownerId).populate('user', 'email').select('stageName firstName lastName profileImage phone city state bio description').lean();
+          ownerDetails = artist;
+          // Add email from user
+          if (artist && artist.user) {
+            ownerDetails.email = artist.user.email;
+          }
         } else if (media.ownerType === 'venue') {
           ownerDetails = await Venue.findById(media.ownerId).select('email name venueImage phone city state description').lean();
         }
@@ -268,6 +273,74 @@ router.get('/:id/details', async (req, res) => {
 });
 
 // POST /admin/media/delete/:id - Delete a media item from Cloudinary
+router.post('/delete-selected', async (req, res) => {
+  try {
+    const rawIds = req.body.mediaIds;
+    let mediaIds = [];
+
+    if (Array.isArray(rawIds)) {
+      mediaIds = rawIds
+        .map((id) => String(id).trim())
+        .filter((id) => id.length > 0);
+    } else if (typeof rawIds === 'string' && rawIds.trim()) {
+      mediaIds = rawIds
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id.length > 0);
+    }
+
+    mediaIds = mediaIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    const uniqueIds = [...new Set(mediaIds)];
+
+    if (!uniqueIds.length) {
+      req.flash('error', 'No valid media items were selected for deletion');
+      return res.redirect('/admin/media');
+    }
+
+    const selectedMedia = await Media.find({ _id: { $in: uniqueIds } });
+
+    if (!selectedMedia.length) {
+      req.flash('error', 'Selected media files were not found');
+      return res.redirect('/admin/media');
+    }
+
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    for (const media of selectedMedia) {
+      try {
+        await deleteMedia(media);
+        deletedCount += 1;
+      } catch (error) {
+        // If Cloudinary deletion fails (e.g., asset already missing), still remove stale DB entry.
+        console.error(`Error deleting media from Cloudinary ${media._id}:`, error.message);
+        try {
+          await Media.deleteOne({ _id: media._id });
+          deletedCount += 1;
+        } catch (dbError) {
+          failedCount += 1;
+          console.error(`Error deleting media DB record ${media._id}:`, dbError.message);
+        }
+      }
+    }
+
+    if (deletedCount > 0) {
+      req.flash('success', `${deletedCount} media item(s) deleted successfully`);
+    }
+
+    if (failedCount > 0) {
+      req.flash('error', `${failedCount} media item(s) could not be deleted`);
+    }
+
+    res.redirect('/admin/media');
+  } catch (error) {
+    console.error('Error deleting selected media:', error);
+    req.flash('error', 'Failed to delete selected media items');
+    res.redirect('/admin/media');
+  }
+});
+
 router.post('/delete/:id', async (req, res) => {
   try {
     const media = await Media.findById(req.params.id);

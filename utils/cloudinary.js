@@ -16,11 +16,30 @@ cloudinary.config({
  */
 function uploadFromBuffer(buffer, options = {}) {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
-      if (error) return reject(error);
-      resolve(result);
-    });
-    stream.end(buffer);
+    const { Readable } = require('stream');
+    const streamOptions = { ...options, timeout: 120000 };
+
+    let uploaderStream;
+    if (options.resource_type === 'video') {
+      streamOptions.chunk_size = 20000000; // 20MB chunks
+      uploaderStream = cloudinary.uploader.upload_chunked_stream(streamOptions, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      });
+    } else {
+      uploaderStream = cloudinary.uploader.upload_stream(streamOptions, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      });
+    }
+
+    // Convert Buffer to Readable Stream to respect backpressure and prevent hanging
+    const readableStream = new Readable();
+    readableStream._read = () => { };
+    readableStream.push(buffer);
+    readableStream.push(null);
+
+    readableStream.pipe(uploaderStream);
   });
 }
 

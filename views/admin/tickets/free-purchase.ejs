@@ -28,7 +28,7 @@
                 <% concerts.forEach(concert => { %>
                   <option value="<%= concert._id %>" <%= concert.isSoldOut ? 'disabled' : '' %>>
                     <%= concert.title %> - <%= concert.artist && concert.artist.user ? concert.artist.user.name : 'Unknown Artist' %> 
-                    (<%= new Date(concert.date).toLocaleDateString() %>)
+                    (<%= toISTDateString(concert.date) %>)
                     <% if (concert.isPaid) { %>
                       (Paid - ₹<%= concert.price %>)
                     <% } else { %>

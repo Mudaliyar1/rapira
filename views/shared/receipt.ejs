@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt #<%= purchase._id.toString().slice(-8).toUpperCase() %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- html2pdf.js for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+    }
+    .receipt-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #000 !important;
+      color: #fff !important;
+      border: none;
+      border-radius: 0;
+      padding: 30px;
+    }
+    /* Hide the back button and download button during PDF generation */
+    .no-print {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container pb-5">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-3 no-print" id="action-buttons">
+      <a href="<%= backUrl %>" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+      <button class="btn btn-primary" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
+    </div>
+
+    <div class="receipt-container" id="receipt-content">
+      <div class="text-center mb-4">
+        <i class="bi bi-receipt fs-1 text-primary mb-2 d-inline-block"></i>
+        <h2 class="fw-bold mb-1 border-bottom border-secondary pb-3 text-white">TRANSACTION RECEIPT</h2>
+        <p class="text-white-50 mt-2">Receipt #<%= purchase._id.toString().slice(-8).toUpperCase() %></p>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-6">
+          <h6 class="text-white-50 text-uppercase mb-2 small">Producer (Seller)</h6>
+          <% if (purchase.producer) { %>
+            <strong class="d-block text-white"><%= purchase.producer.name %></strong>
+            <span class="text-white-50 small"><%= purchase.producer.email %></span>
+          <% } else { %>
+            <strong class="d-block text-white">Unknown Producer</strong>
+            <span class="text-white-50 small">Profile Deleted</span>
+          <% } %>
+        </div>
+        <div class="col-6 text-end">
+          <h6 class="text-white-50 text-uppercase mb-2 small">Artist (Buyer)</h6>
+          <% if (purchase.artist) { %>
+            <strong class="d-block text-white"><%= purchase.artist.name %></strong>
+            <span class="text-white-50 small"><%= purchase.artist.email %></span>
+          <% } else { %>
+            <strong class="d-block text-white">Unknown Artist</strong>
+            <span class="text-white-50 small">Profile Deleted</span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h6 class="text-white-50 text-uppercase mb-2 small border-bottom border-secondary pb-1">Purchase Details</h6>
+        <div class="d-flex justify-content-between mb-1 small">
+          <span class="text-white-50">Transaction ID</span>
+          <span class="text-white font-monospace"><%= purchase.transactionId || 'N/A' %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-1 small">
+          <span class="text-white-50">Date & Time</span>
+          <span class="text-white"><%= new Date(purchase.createdAt).toLocaleString() %></span>
+        </div>
+        <div class="d-flex justify-content-between mb-1 small">
+          <span class="text-white-50">Payment Method</span>
+          <span class="text-white text-capitalize"><%= purchase.paymentMethod || 'Razorpay' %></span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-white-50">Status</span>
+          <span class="text-success fw-bold">Completed</span>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h6 class="text-white-50 text-uppercase mb-2 small border-bottom border-secondary pb-1">Item Summary</h6>
+        <table class="table table-dark table-sm table-borderless mb-0">
+          <thead>
+            <tr class="text-white-50 border-bottom border-secondary small">
+              <th>Item</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="py-2">
+                <div class="text-white"><%= purchase.beat ? purchase.beat.title : (purchase.backupTitle || 'Deleted Beat') %></div>
+                <div class="text-white-50 extra-small">Exclusive License</div>
+              </td>
+              <td class="py-2 text-end text-white">
+                <%= purchase.amount === 0 ? 'FREE' : '₹' + purchase.amount.toFixed(2) %>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="row justify-content-end mb-4">
+        <div class="col-6">
+          <div class="d-flex justify-content-between mb-1 small">
+            <span class="text-white-50">Subtotal</span>
+            <span class="text-white"><%= purchase.amount === 0 ? 'FREE' : '₹' + purchase.amount.toFixed(2) %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2 border-bottom border-secondary pb-2 small">
+            <span class="text-white-50">Platform Fee</span>
+            <span class="text-white"><%= purchase.platformFee === 0 ? 'FREE' : '₹' + purchase.platformFee.toFixed(2) %></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-white">Total Paid</span>
+            <span class="fs-5 fw-bold text-success"><%= purchase.totalAmountPaid === 0 ? 'FREE' : '₹' + purchase.totalAmountPaid.toFixed(2) %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center pt-3 border-top border-secondary mt-2">
+        <p class="text-white-50 mb-0 small" style="font-size: 0.75rem;">Support: help@rapira.com | System Generated Receipt</p>
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    .extra-small { font-size: 0.7rem; }
+  </style>
+
+  <script>
+    function downloadPDF() {
+      const buttons = document.getElementById('action-buttons');
+      buttons.style.display = 'none';
+      
+      const element = document.getElementById('receipt-content');
+      
+      const opt = {
+        margin:       0,
+        filename:     'Receipt_<%= purchase._id.toString().slice(-8).toUpperCase() %>.pdf',
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { 
+          scale: 3, 
+          useCORS: true, 
+          backgroundColor: '#000000',
+          logging: false
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        buttons.style.display = 'flex';
+      });
+    }
+  </script>
+</body>
+</html>

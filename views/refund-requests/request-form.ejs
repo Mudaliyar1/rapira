@@ -25,7 +25,7 @@
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Date:</div>
-                <div class="col-md-8 text-white"><%= new Date(ticket.concert.date).toLocaleDateString() %></div>
+                <div class="col-md-8 text-white"><%= toISTDateString(ticket.concert.date) %></div>
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Venue:</div>

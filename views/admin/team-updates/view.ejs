@@ -70,13 +70,7 @@
             <div>
               <h6 class="mb-0 text-white"><%= update.createdBy.name %></h6>
               <small class="text-white-50">
-                <%= new Date(update.createdAt).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) %>
+                <%= toISTDateString(update.createdAt) %>
               </small>
             </div>
           </div>
@@ -159,13 +153,7 @@
             <div class="mb-3">
               <strong class="text-white">Date:</strong>
               <span class="text-white-50 ms-2">
-                <%= new Date(update.meetingDate).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) %>
+                <%= toISTDateString(update.meetingDate) %>
               </span>
             </div>
           <% } %>
@@ -215,7 +203,7 @@
                   <% if (item.dueDate) { %>
                     <span>
                       <i class="bi bi-calendar me-1"></i>
-                      <%= new Date(item.dueDate).toLocaleDateString() %>
+                      <%= toISTDateString(item.dueDate) %>
                     </span>
                   <% } %>
                 </div>
@@ -292,7 +280,7 @@
                       <div class="d-flex align-items-center gap-2 mb-2">
                         <h6 class="mb-0 text-white"><%= comment.author.name %></h6>
                         <small class="text-white-50">
-                          <%= new Date(comment.createdAt).toLocaleDateString() %>
+                          <%= toISTDateString(comment.createdAt) %>
                         </small>
                         <% if (comment.isEdited) { %>
                           <small class="text-warning">(edited)</small>
@@ -338,7 +326,7 @@
           <div class="mb-3">
             <strong class="text-white">Expires:</strong>
             <span class="text-white-50 ms-2">
-              <%= new Date(update.expiresAt).toLocaleDateString() %>
+              <%= toISTDateString(update.expiresAt) %>
             </span>
           </div>
         <% } %>
@@ -346,7 +334,7 @@
           <div class="mb-3">
             <strong class="text-white">Last Updated:</strong>
             <span class="text-white-50 ms-2">
-              <%= new Date(update.updatedAt).toLocaleDateString() %>
+              <%= toISTDateString(update.updatedAt) %>
             </span>
           </div>
         <% } %>
@@ -371,7 +359,7 @@
                 <span class="text-white-50 small"><%= view.user.name %></span>
                 <br>
                 <span class="text-muted" style="font-size: 0.7rem;">
-                  <%= new Date(view.viewedAt).toLocaleDateString() %>
+                  <%= toISTDateString(view.viewedAt) %>
                 </span>
               </div>
             </div>

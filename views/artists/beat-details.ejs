@@ -1,0 +1,271 @@
+<%- include('../partials/artist-header') %>
+
+<style>
+  .beat-details-container {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.4) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .player-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .premium-badge {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+  }
+
+  .price-card {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .btn-buy {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    padding: 0.8rem 2rem !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .btn-buy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4) !important;
+  }
+
+  .protected-media-container video, .protected-media-container audio {
+    width: 100% !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+  }
+</style>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="beat-details-container p-4 p-lg-5 shadow-2xl mb-5">
+  <div class="row g-5">
+    <!-- Left Column: Media Player & Description -->
+    <div class="col-lg-7">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/artists/beats" class="btn btn-outline-light btn-sm rounded-circle">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="text-white mb-0 fw-bold"><%= beat.title %></h2>
+        <% if (beat.price === 0) { %>
+          <span class="premium-badge bg-info text-white">Free Beat</span>
+        <% } else { %>
+          <span class="premium-badge">Exclusive</span>
+        <% } %>
+      </div>
+
+      <div class="player-section mb-4">
+        <div class="protected-media-container <%= isPurchased ? 'purchased-container' : '' %>" oncontextmenu="return false;">
+          <% if (!isPurchased) { %>
+            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning d-flex align-items-center mb-3">
+              <i class="bi bi-shield-lock-fill me-2 fs-5"></i>
+              <span class="small font-monospace">PREVIEW MODE: Restricted metadata & audio quality. Complete purchase to unlock HQ file.</span>
+            </div>
+          <% } %>
+          <% if (beat.mediaType === 'video') { %>
+            <video class="w-100 d-block" controls controlsList="nodownload noplaybackrate" style="max-height: 500px;" 
+              <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : 'disablePictureInPicture disableRemotePlayback' %>>
+              <source src="/artists/beats/stream/<%= beat._id %>">
+              Your browser does not support the video tag.
+            </video>
+          <% } else { %>
+            <div class="p-5 text-center">
+              <i class="bi bi-music-note-beamed text-primary mb-4 d-block" style="font-size: 5rem;"></i>
+              <audio class="w-100" controls controlsList="nodownload noplaybackrate"
+                <%= isPurchased ? 'data-purchased="true" data-allow-background="true"' : '' %>>
+                <source src="/artists/beats/stream/<%= beat._id %>">
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="row g-4 text-white-50">
+          <div class="col-md-6">
+            <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>Beat Information</h6>
+            <p class="mb-2"><span class="text-white">Format:</span> <%= beat.mediaType.toUpperCase() %></p>
+            <p class="mb-2"><span class="text-white">Uploaded:</span> <%= toISTDateString(beat.createdAt) %></p>
+            <p class="mb-2"><span class="text-white">Stats:</span> <%= beat.viewsCount %> Views, <%= beat.purchasesCount %> Sales</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <h6 class="text-white mb-3"><i class="bi bi-person-badge me-2"></i>Producer</h6>
+            <div class="d-flex align-items-center justify-content-md-end">
+              <% if (beat.producer) { %>
+                <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" width="40" height="40" class="rounded-circle me-2" alt="">
+                <div class="text-start">
+                  <p class="mb-0 text-white"><%= beat.producer.name %></p>
+                  <small><%= beat.producer.email %></small>
+                </div>
+              <% } else { %>
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px; font-size: 20px;">
+                  <i class="bi bi-person-slash"></i>
+                </div>
+                <div class="text-start">
+                  <p class="mb-0 text-white">Unknown Producer</p>
+                  <small class="text-muted fst-italic">Profile Deleted</small>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Right Side: Purchase Card -->
+  <div class="col-lg-4">
+    <div class="card bg-dark border-secondary sticky-top" style="top: 1rem;">
+      <div class="card-body">
+        <h5 class="text-white mb-4">Pricing & License</h5>
+        
+        <div class="pricing-box p-3 rounded mb-4" style="background: rgba(255,255,255,0.05);">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-white-50">Base Price</span>
+            <span class="text-white fw-bold"><%= beat.price === 0 ? 'FREE' : '₹' + beat.price %></span>
+          </div>
+          <div class="d-flex justify-content-between mb-3 border-bottom border-secondary pb-2">
+            <span class="text-white-50">Platform Fee (<%= commissionPct %>%)</span>
+            <span class="text-white text-info fw-bold"><%= beat.price === 0 ? '₹0' : '₹' + (beat.price * commissionPct / 100).toFixed(2) %></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-white fs-5 fw-bold">Total Amount</span>
+            <span class="text-success fs-3 fw-bold"><%= beat.price === 0 ? 'FREE' : '₹' + (beat.price + (beat.price * commissionPct / 100)).toFixed(2) %></span>
+          </div>
+        </div>
+
+        <ul class="list-unstyled text-white-50 mb-4 small">
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Exclusive License</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>HQ Media Download</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Commercial Rights Included</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Permanent Access in Library</li>
+        </ul>
+
+        <% if (isPurchased) { %>
+          <div class="alert alert-success d-flex align-items-center mb-3">
+            <i class="bi bi-patch-check-fill fs-4 me-2"></i>
+            <div>Owned in Library</div>
+          </div>
+          <a href="/artists/library" class="btn btn-primary w-100 mb-2">
+            <i class="bi bi-music-player me-2"></i> Go to Library
+          </a>
+          <a href="/artists/beats/download/<%= beat._id %>" class="btn btn-success w-100">
+            <i class="bi bi-download me-2"></i> Download Again
+          </a>
+        <% } else { %>
+          <button type="button" class="btn btn-buy btn-lg w-100 py-3" onclick="purchaseBeat('<%= beat._id %>', <%= beat.price === 0 ? `'Free'` : (beat.price + (beat.price * commissionPct / 100)) %>)">
+            <i class="bi bi-cart-fill me-2"></i> <%= beat.price === 0 ? 'Get for Free' : 'Purchase Now' %>
+          </button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  async function purchaseBeat(beatId, formattedAmount) {
+    let confirmMsg = `You are about to purchase this beat for ₹${formattedAmount}. Proceed to payment?`;
+    if (formattedAmount === 'Free') {
+      confirmMsg = `You are about to add this free beat to your library. Proceed?`;
+    }
+    
+    if(!confirm(confirmMsg)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/artists/beats/${beatId}/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        alert(data.message || 'Error initiating payment');
+        return;
+      }
+
+      if (data.isFree) {
+        alert('Free beat successfully added to your library!');
+        window.location.href = '/artists/library';
+        return;
+      }
+
+      const options = {
+        key: data.razorpayKeyId,
+        amount: data.amount,
+        currency: "INR",
+        name: "Rapira Producer Beat",
+        description: "Beat Purchase",
+        order_id: data.order.id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch('/artists/beats/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                beatId: beatId,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              window.location.href = '/artists/library';
+            } else {
+              alert(verifyData.message || 'Payment verification failed');
+            }
+          } catch(err) {
+            console.error('Verify error:', err);
+            alert('Error verifying payment.');
+          }
+        },
+        theme: { color: "#0d6efd" }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Purchase error", error);
+      alert('Error initiating purchase request');
+    }
+  }
+</script>
+
+<%- include('../partials/media-protection') %>
+<%- include('../partials/artist-footer') %>

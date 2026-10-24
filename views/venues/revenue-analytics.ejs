@@ -80,7 +80,7 @@
               <option value="">All concerts</option>
               <% availableConcerts.forEach(concert => { %>
                 <option value="<%= concert.id %>" <%= (filters && filters.concertId === concert.id.toString()) ? 'selected' : '' %>>
-                  <%= concert.title %> — <%= new Date(concert.date).toLocaleDateString('en-IN') %>
+                  <%= concert.title %> — <%= toISTDateString(concert.date) %>
                 </option>
               <% }); %>
             </select>
@@ -146,7 +146,7 @@
                       <td><%= booking.artistName %></td>
                       <td>
                         <div>
-                          <div class="fw-bold" style="color: #000000;"><%= new Date(booking.date).toLocaleDateString('en-IN') %></div>
+                          <div class="fw-bold" style="color: #000000;"><%= toISTDateString(booking.date) %></div>
                         </div>
                       </td>
                       <td>

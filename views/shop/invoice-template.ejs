@@ -25,11 +25,7 @@
             </div>
             <div class="info-box">
                 <h3>Order Details:</h3>
-                <p><strong>Order Date:</strong> <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                }) %></p>
+                <p><strong>Order Date:</strong> <%= toISTDateString(order.createdAt) %></p>
                 <p><strong>Payment ID:</strong> <%= order.paymentId %></p>
                 <p><strong>Payment Status:</strong>
                     <span class="status-badge status-<%= order.paymentStatus %>">

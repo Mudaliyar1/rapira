@@ -36,7 +36,7 @@
         <div class="card-body">
           <% if (editRequest.concert) { %>
             <p><strong>Concert:</strong> <%= editRequest.concert.title %></p>
-            <p><strong>Current Date:</strong> <%= new Date(editRequest.concert.date).toLocaleDateString() %></p>
+            <p><strong>Current Date:</strong> <%= toISTDateString(editRequest.concert.date) %></p>
             <p><strong>Current Time:</strong> <%= editRequest.concert.time %></p>
             <p><strong>Current Venue:</strong> <%= editRequest.concert.venue ? editRequest.concert.venue.name : 'No venue' %></p>
             <p><strong>Current Price:</strong> ₹<%= editRequest.concert.price %></p>
@@ -47,7 +47,7 @@
           <hr>
           
           <p><strong>Artist:</strong> <%= editRequest.artist && editRequest.artist.user ? editRequest.artist.user.name : 'Unknown' %></p>
-          <p><strong>Requested Date:</strong> <%= new Date(editRequest.requestedAt).toLocaleDateString() %></p>
+          <p><strong>Requested Date:</strong> <%= toISTDateString(editRequest.requestedAt) %></p>
           <p><strong>Reason:</strong> <%= editRequest.reason %></p>
         </div>
       </div>
@@ -82,7 +82,7 @@
               <% if (changes.date) { %>
                 <div class="list-group-item bg-dark text-white border-secondary">
                   <strong>Date:</strong> 
-                  <span class="text-success"><%= new Date(changes.date).toLocaleDateString() %></span>
+                  <span class="text-success"><%= toISTDateString(changes.date) %></span>
                 </div>
               <% } %>
               

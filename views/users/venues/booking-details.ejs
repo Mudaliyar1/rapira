@@ -49,7 +49,11 @@
         } else if (booking.status === 'rejected') {
           alertClass = 'danger';
           statusIcon = 'x-circle';
-          statusMessage = 'This booking has been rejected';
+          statusMessage = 'This booking has been rejected' + (booking.rejectionReason ? `: ${booking.rejectionReason}` : '');
+        } else if (booking.status === 'cancelled') {
+          alertClass = 'secondary';
+          statusIcon = 'dash-circle';
+          statusMessage = 'This booking has been cancelled' + (booking.rejectionReason ? `: ${booking.rejectionReason}` : '');
         }
       %>
       <div class="alert alert-<%= alertClass %> d-flex align-items-center">
@@ -94,12 +98,7 @@
                 <label class="text-muted small">Event Date</label>
                 <h6 class="fw-bold text-info">
                   <i class="bi bi-calendar3 me-1"></i>
-                  <%= new Date(booking.date).toLocaleDateString('en-IN', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  }) %>
+                  <%= toISTDateString(booking.date) %>
                 </h6>
               </div>
               <div class="mb-3">
@@ -114,7 +113,7 @@
               </div>
               <div class="mb-3">
                 <label class="text-muted small">Booking Created</label>
-                <p class="mb-0"><%= new Date(booking.createdAt || booking.date).toLocaleDateString('en-IN') %></p>
+                <p class="mb-0"><%= toISTDateString(booking.createdAt || booking.date) %></p>
               </div>
             </div>
           </div>
@@ -374,17 +373,21 @@
         </div>
         <div class="card-body">
           <% if (booking.status === 'pending') { %>
-            <div class="d-grid gap-2 mb-3">
-              <button class="btn btn-success" onclick="updateBookingStatus('<%= booking._id %>', 'approved')">
-                <i class="bi bi-check-lg me-1"></i>Approve Booking
-              </button>
-              <button class="btn btn-danger" onclick="updateBookingStatus('<%= booking._id %>', 'rejected')">
-                <i class="bi bi-x-lg me-1"></i>Reject Booking
-              </button>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>/decide?action=approve" class="btn btn-success w-100 rounded-pill py-3">
+                  <i class="bi bi-check-lg me-1"></i>Approve
+                </a>
+              </div>
+              <div class="col-6">
+                <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>/decide?action=reject" class="btn btn-danger w-100 rounded-pill py-3">
+                  <i class="bi bi-x-lg me-1"></i>Reject
+                </a>
+              </div>
             </div>
           <% } else if (booking.status === 'approved') { %>
             <div class="d-grid gap-2 mb-3">
-              <a href="/users/venues/bookings/<%= booking._id %>/receipt" class="btn btn-outline-primary">
+              <a href="/users/venues/bookings/<%= booking._id %>/receipt" class="btn btn-outline-primary rounded-pill">
                 <i class="bi bi-download me-1"></i>Download Receipt
               </a>
             </div>
@@ -392,7 +395,7 @@
           
           <div class="d-grid">
             <% if (booking.artist && booking.artist.user && booking.artist.user.email) { %>
-              <a href="mailto:<%= booking.artist.user.email %>?subject=Regarding Your Venue Booking - <%= venue.name %>&body=Hello <%= booking.artist.stageName || booking.artist.user.name %>,\n\nI hope this email finds you well. I am writing regarding your venue booking for <%= venue.name %> on <%= new Date(booking.date).toLocaleDateString('en-IN') %>.\n\nBest regards,\n<%= venue.contactPerson ? venue.contactPerson.name : 'Venue Owner' %>" class="btn btn-outline-secondary">
+              <a href="mailto:<%= booking.artist.user.email %>?subject=Regarding Your Venue Booking - <%= venue.name %>&body=Hello <%= booking.artist.stageName || booking.artist.user.name %>,\n\nI hope this email finds you well. I am writing regarding your venue booking for <%= venue.name %> on <%= toISTDateString(booking.date) %>.\n\nBest regards,\n<%= venue.contactPerson ? venue.contactPerson.name : 'Venue Owner' %>" class="btn btn-outline-secondary">
                 <i class="bi bi-envelope me-1"></i>Contact Artist
               </a>
             <% } else { %>
@@ -407,51 +410,7 @@
   </div>
 </div>
 
-<!-- Status Update Script -->
-<script>
-function updateBookingStatus(bookingId, newStatus) {
-  const statusText = newStatus === 'approved' ? 'approve' : newStatus === 'rejected' ? 'reject' : 'cancel';
-  
-  if (confirm(`Are you sure you want to ${statusText} this booking?`)) {
-    // Show loading state
-    const buttons = document.querySelectorAll(`button[onclick*="${bookingId}"]`);
-    buttons.forEach(btn => {
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-    });
 
-    fetch(`/users/venues/bookings/${bookingId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Show success message and reload
-        alert(`Booking has been ${statusText}ed successfully!`);
-        window.location.reload();
-      } else {
-        alert('Error updating booking status: ' + (data.message || 'Unknown error'));
-        // Restore buttons
-        buttons.forEach(btn => {
-          btn.disabled = false;
-        });
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error updating booking status. Please try again.');
-      // Restore buttons
-      buttons.forEach(btn => {
-        btn.disabled = false;
-      });
-    });
-  }
-}
-</script>
 
 <style>
 .card {
@@ -550,7 +509,6 @@ function savePaymentUpdate() {
 
   const btn = event.target;
   btn.disabled = true;
-  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
 
   fetch(`/users/venues/bookings/${currentBookingId}/update-payment`, {
     method: 'PUT',
@@ -582,14 +540,15 @@ function savePaymentUpdate() {
     } else {
       alert('Error: ' + data.message);
       btn.disabled = false;
-      btn.innerHTML = 'Update Payment';
     }
   })
   .catch(error => {
     console.error('Error:', error);
     alert('Failed to update payment');
     btn.disabled = false;
-    btn.innerHTML = 'Update Payment';
   });
 }
+// Finalize payment update script remains here
 </script>
+
+

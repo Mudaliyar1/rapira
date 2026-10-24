@@ -329,14 +329,14 @@
               <div class="mb-2">
                 <strong class="text-white">Created:</strong>
                 <span class="text-white-50 ms-2">
-                  <%= new Date(update.createdAt).toLocaleDateString() %>
+                  <%= toISTDateString(update.createdAt) %>
                 </span>
               </div>
               <% if (update.updatedAt && update.updatedAt !== update.createdAt) { %>
                 <div class="mb-2">
                   <strong class="text-white">Last updated:</strong>
                   <span class="text-white-50 ms-2">
-                    <%= new Date(update.updatedAt).toLocaleDateString() %>
+                    <%= toISTDateString(update.updatedAt) %>
                   </span>
                 </div>
               <% } %>

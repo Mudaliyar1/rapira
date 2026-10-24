@@ -1,5 +1,61 @@
 <%- include('../partials/artist-header') %>
 
+<style>
+  .venue-tap-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(13, 202, 240, 0.2);
+    border-color: rgba(13, 202, 240, 0.5) !important;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(13, 202, 240, 0.3);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(13, 202, 240, 0.5);
+  }
+
+  .selection-feedback {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #0dcaf0;
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(13, 202, 240, 0.3);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    transform: translateY(100px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+  }
+  .selection-feedback.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  
+  .venue-filter-card {
+    transition: all 0.3s ease;
+    border-style: dashed !important;
+  }
+
+  .venue-filter-card:hover {
+    background-color: rgba(13, 202, 240, 0.05) !important;
+    border-style: solid !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(13, 202, 240, 0.1);
+  }
+</style>
+
 <!-- Concert Edit Status Check -->
 <% if (concert.status === 'approved') { %>
   <!-- Edit Request Form for Approved Concerts -->
@@ -16,7 +72,7 @@
         <div class="row">
           <div class="col-md-6">
             <p><strong>Title:</strong> <%= concert.title %></p>
-            <p><strong>Date:</strong> <%= new Date(concert.date).toLocaleDateString() %></p>
+            <p><strong>Date:</strong> <%= toISTDateString(concert.date) %></p>
             <p><strong>Time:</strong> <%= concert.time %></p>
             <p><strong>Venue:</strong> <%= concert.venue ? concert.venue.name : 'N/A' %></p>
           </div>
@@ -60,25 +116,34 @@
               </div>
             </div>
 
+            <!-- Venue: LOCKED - cannot be changed -->
             <div class="mb-3">
-              <label for="venue" class="form-label">Venue</label>
-              <select class="form-control" id="venue" name="venue">
-                <option value="">Keep current venue</option>
-                <% if (venues && venues.length > 0) { %>
-                  <% venues.forEach(venue => { %>
-                    <option value="<%= venue._id %>" 
-                            data-capacity="<%= venue.capacity || 0 %>"
-                            data-city="<%= venue.city %>"
-                            <%= concert.venue && concert.venue._id && concert.venue._id.toString() === venue._id.toString() ? 'selected' : '' %>>
-                      <%= venue.name %> - <%= venue.city %> (Capacity: <%= venue.capacity || 'Unlimited' %>)
-                    </option>
-                  <% }); %>
-                <% } %>
-              </select>
+              <label class="form-label d-flex align-items-center gap-2">
+                <i class="bi bi-lock-fill text-warning"></i> Venue
+                <span class="badge bg-warning text-dark" style="font-size:0.65rem;">Cannot be changed</span>
+              </label>
+              <input type="text" class="form-control bg-dark text-white border-warning opacity-75"
+                     value="<%= concert.venue ? concert.venue.name + ' — ' + concert.venue.city + (concert.venue.state ? ', ' + concert.venue.state : '') : 'Unknown Venue' %>"
+                     readonly disabled>
+              <input type="hidden" name="venue" value="<%= concert.venue ? concert.venue._id : '' %>">
+              <input type="hidden" id="req_venueId" value="<%= concert.venue ? concert.venue._id : '' %>">
+              <input type="hidden" id="req_bookingHours" value="<%= concert.venueBooking && concert.venueBooking.bookingHours ? concert.venueBooking.bookingHours : '2' %>">
+            </div>
+
+            <!-- Auto Availability Check -->
+            <div id="availabilityCard_request" class="card border-warning mb-3" style="background: rgba(255,193,7,0.05); display: none;">
+              <div class="card-header bg-warning text-dark py-2">
+                <h6 class="mb-0 small fw-bold"><i class="bi bi-calendar-check me-1"></i> Venue Availability</h6>
+              </div>
+              <div class="card-body p-2" id="availabilityResults_request">
+                <div class="text-center text-muted small">
+                  <i class="bi bi-hourglass-split me-1"></i> Checking...
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="col-md-6">
+        <div class="col-md-6">
             <div class="mb-3">
               <label for="posterImage" class="form-label">New Poster Image</label>
               <input type="file" class="form-control" id="posterImage" name="posterImage">
@@ -153,33 +218,91 @@
             </div>
           </div>
 
+          <div class="card mb-3 bg-dark border-info bg-opacity-25 venue-filter-card">
+            <div class="card-body p-3">
+              <h6 class="mb-3 text-info d-flex align-items-center">
+                <i class="bi bi-funnel me-2"></i> Filter Venues
+                <span class="ms-auto badge bg-info text-dark" id="venueCountBadge">0 venues</span>
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">State</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="stateFilter">
+                    <option value="">All States</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">City</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="cityFilter">
+                    <option value="">All Cities</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">Budget</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="budgetFilter">
+                    <option value="">All Budgets</option>
+                    <option value="Budget">Budget (< ₹1k/hr)</option>
+                    <option value="Mid-Range">Mid-Range (₹1k-5k/hr)</option>
+                    <option value="Premium">Premium (₹5k-15k/hr)</option>
+                    <option value="Luxury">Luxury (> ₹15k/hr)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mt-2 text-end">
+                <button type="button" class="btn btn-link btn-sm text-info p-0 text-decoration-none" id="resetFilters">
+                  <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="mb-3">
-            <label for="venue" class="form-label">Venue <span class="text-danger">*</span></label>
-            <select class="form-control" id="venue" name="venue" required>
+            <label class="form-label d-flex justify-content-between align-items-center">
+              <span>Select Venue <span class="text-danger">*</span></span>
+              <small class="text-info opacity-75" id="venueSearchStatus_normal">Filter to find venues</small>
+            </label>
+            <select class="form-control d-none" id="venue" name="venue" required>
               <option value="">Select a venue</option>
               <% if (venues && venues.length > 0) { %>
                 <% venues.forEach(venue => { %>
                   <option value="<%= venue._id %>" 
                           data-city="<%= venue.city %>"
+                          data-state="<%= venue.state %>"
+                          data-city-full="<%= venue.city %>, <%= venue.state %>"
+                          data-price-range="<%= venue.priceRange || 'Mid-Range' %>"
                           data-hourly-rates='<%- JSON.stringify(venue.pricing && venue.pricing.hourlyRates ? venue.pricing.hourlyRates : []) %>'
                           data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
                           data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
                           data-suggested-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.suggestedPrice ? venue.pricing.ticketPricing.suggestedPrice : 100 %>"
                           data-venue-name="<%= venue.name %>"
                           data-venue-type="<%= venue.venueType || 'Not specified' %>"
-                          data-capacity="<%= venue.capacity || 'Not specified' %>"
+                          data-capacity="<%= venue.capacity || 'Unlimited' %>"
                           data-facilities='<%- JSON.stringify(venue.facilities || []) %>'
                           data-address="<%= venue.address %>"
                           data-description="<%= venue.description || '' %>"
                           <%= concert.venue && concert.venue._id && concert.venue._id.toString() === venue._id.toString() ? 'selected' : '' %>>
-                    <%= venue.name %> - <%= venue.city %> (<%= venue.venueType || 'Venue' %>)
+                    <%= venue.name %>
                   </option>
                 <% }); %>
-              <% } else { %>
-                <option disabled>No venues available</option>
               <% } %>
             </select>
-            <div class="form-text">Select from admin-approved venues only</div>
+            
+            <div id="venueSelectionList_normal" class="venue-cards-container custom-scrollbar mb-2" style="max-height: 300px; overflow-y: auto;">
+              <!-- Venue cards will be injected here via JS -->
+            </div>
+            <div class="form-text">Tap on a venue card above to select it</div>
+
+            <!-- Auto Availability Check for Normal Edit -->
+            <div id="availabilityCard_normal" class="card border-info mt-2 mb-3" style="display:none; background: rgba(0,0,0,0.2);">
+              <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0 small fw-bold"><i class="bi bi-calendar-check me-1"></i> Venue Availability</h6>
+              </div>
+              <div class="card-body p-2" id="availabilityResults_normal">
+                <div class="text-center text-muted small">
+                  <i class="bi bi-hourglass-split me-1"></i> Checking...
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Venue Pricing Information -->
@@ -348,6 +471,7 @@
 <script>
   // Concert data for initialization - will be set in DOM ready function
   var currentConcertBookingHours;
+  var CURRENT_CONCERT_ID = '<%= concert._id %>';
   
   // Set minimum date to today and initialize
   document.addEventListener('DOMContentLoaded', function() {
@@ -376,55 +500,95 @@
   });
 
   function handleApprovedConcertForm() {
-    const venueSelect = document.getElementById('venue');
-    const cityInput = document.getElementById('city');
-    const maxTicketsInput = document.getElementById('maxTickets');
-    const capacityInfo = document.getElementById('capacityInfo');
+    // Venue is LOCKED — only date/time can change.
+    const venueId = (document.getElementById('req_venueId') || {}).value;
+    const bookingHoursVal = (document.getElementById('req_bookingHours') || {}).value || '2';
+    const dateInput = document.querySelector('form[action*="request-edit"] input[name="date"]');
+    const timeInput = document.querySelector('form[action*="request-edit"] input[name="time"]');
+    const availCard = document.getElementById('availabilityCard_request');
+    const resultsDiv = document.getElementById('availabilityResults_request');
+    const requestForm = document.querySelector('form[action*="request-edit"]');
 
-    if (venueSelect) {
-      venueSelect.addEventListener('change', function() {
-        const selectedOption = venueSelect.options[venueSelect.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-          const city = selectedOption.dataset.city;
-          const capacity = parseInt(selectedOption.dataset.capacity) || 0;
-          
-          if (cityInput) {
-            cityInput.value = city || '';
-          }
-          
-          if (capacityInfo && maxTicketsInput) {
-            if (capacity > 0) {
-              capacityInfo.innerHTML = `Venue capacity: ${capacity} (cannot exceed this limit)`;
-              capacityInfo.className = 'form-text text-warning';
-              maxTicketsInput.max = capacity;
-              
-              // Validate current value
-              if (parseInt(maxTicketsInput.value) > capacity) {
-                maxTicketsInput.value = capacity;
-              }
-            } else {
-              capacityInfo.innerHTML = 'Venue capacity: Unlimited';
-              capacityInfo.className = 'form-text text-info';
-              maxTicketsInput.removeAttribute('max');
+    let isAvailable = null; // null = not checked yet, true = available, false = not available
+
+    let debounceTimer;
+    async function autoCheckAvailability() {
+      if (!venueId || !dateInput || !dateInput.value || !timeInput || !timeInput.value) return;
+      isAvailable = null; // reset while checking
+      if (availCard) { availCard.style.display = 'block'; availCard.className = 'card border-warning mb-3'; }
+      if (resultsDiv) resultsDiv.innerHTML = '<div class="text-center text-muted small"><span class="spinner-border spinner-border-sm text-warning"></span> Checking availability...</div>';
+      try {
+        const res = await fetch('/venue-availability/check-availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueId, date: dateInput.value, startTime: timeInput.value, duration: parseInt(bookingHoursVal) || 2, concertId: CURRENT_CONCERT_ID })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (data.available) {
+            isAvailable = true;
+            if (availCard) availCard.className = 'card border-success mt-2 mb-3';
+            if (resultsDiv) resultsDiv.innerHTML = `<div class="alert alert-success p-2 mb-0 small"><i class="bi bi-check-circle-fill"></i> <strong>Available!</strong> ${data.requestedSlot.startTime} – ${data.requestedSlot.endTime}</div>`;
+          } else {
+            isAvailable = false;
+            if (availCard) availCard.className = 'card border-danger mt-2 mb-3';
+            let suggestionsHtml = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+              suggestionsHtml = `<div class="mt-2 pt-2 border-top border-danger">
+                <small class="fw-bold text-warning"><i class="bi bi-lightbulb-fill me-1"></i>Suggested free slots (click to select):</small>
+                <div class="mt-1">` +
+                data.suggestions.slice(0, 5).map(s =>
+                  `<span class="badge bg-secondary me-1 mb-1" style="font-size:0.7rem;cursor:pointer;"
+                    onclick="(function(){var d=document.querySelector('form[action*=\\'request-edit\\'] input[name=\\'date\\']');var t=document.querySelector('form[action*=\\'request-edit\\'] input[name=\\'time\\']');if(d)d.value='${s.date}';if(t)t.value='${s.startTime}';if(d)d.dispatchEvent(new Event('change'));})()">
+                    <i class="bi bi-calendar2-check me-1"></i>${s.date} at ${s.startTime}</span>`
+                ).join('') +
+                `</div></div>`;
             }
+            if (resultsDiv) resultsDiv.innerHTML = `<div class="alert alert-danger p-2 mb-0 small"><i class="bi bi-x-circle-fill"></i> <strong>Not Available.</strong> Conflicts with ${data.conflicts.length} booking(s). Try a different time.${suggestionsHtml}</div>`;
           }
+        } else {
+          isAvailable = null;
+          if (resultsDiv) resultsDiv.innerHTML = `<div class="alert alert-danger p-2 mb-0 small">Error: ${data.message}</div>`;
+        }
+      } catch(e) {
+        isAvailable = null;
+        if (resultsDiv) resultsDiv.innerHTML = '<div class="alert alert-danger p-2 mb-0 small">Network error.</div>';
+      }
+    }
+
+    function debounceCheck() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(autoCheckAvailability, 600);
+    }
+
+    if (dateInput) dateInput.addEventListener('change', debounceCheck);
+    if (timeInput) timeInput.addEventListener('change', debounceCheck);
+
+    // Block submission if venue is not available
+    if (requestForm) {
+      requestForm.addEventListener('submit', function(e) {
+        if (isAvailable === false) {
+          e.preventDefault();
+          if (availCard) availCard.className = 'card border-danger mt-2 mb-3';
+          if (resultsDiv) resultsDiv.innerHTML = '<div class="alert alert-danger p-2 mb-0"><i class="bi bi-x-circle-fill"></i> <strong>Cannot submit!</strong> The venue is not available at the selected date &amp; time. Please choose a different date or time.</div>';
+          availCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return false;
+        }
+        if (isAvailable === null && dateInput && dateInput.value && timeInput && timeInput.value) {
+          e.preventDefault();
+          if (availCard) { availCard.style.display = 'block'; availCard.className = 'card border-warning mt-2 mb-3'; }
+          if (resultsDiv) resultsDiv.innerHTML = '<div class="alert alert-warning p-2 mb-0"><i class="bi bi-hourglass-split"></i> Please wait for availability check to complete before submitting.</div>';
+          availCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          autoCheckAvailability();
+          return false;
         }
       });
+    }
 
-      // Validate max tickets on input
-      if (maxTicketsInput) {
-        maxTicketsInput.addEventListener('input', function() {
-          const selectedOption = venueSelect.options[venueSelect.selectedIndex];
-          if (selectedOption && selectedOption.value) {
-            const capacity = parseInt(selectedOption.dataset.capacity) || 0;
-            if (capacity > 0 && parseInt(this.value) > capacity) {
-              this.setCustomValidity(`Cannot exceed venue capacity of ${capacity}`);
-            } else {
-              this.setCustomValidity('');
-            }
-          }
-        });
-      }
+    // Auto-check on load if all fields are present
+    if (venueId && dateInput && dateInput.value && timeInput && timeInput.value) {
+      if (availCard) availCard.style.display = 'block';
+      setTimeout(autoCheckAvailability, 400);
     }
   }
 
@@ -451,6 +615,9 @@
     let currentVenue = null;
     let currentVenueCapacity = 0;
     let currentVenueMinimumHours = 1; // Enforce venue-specific minimum hours
+
+    // Initialize filters
+    initVenueFilters(venueSelect);
 
     function updateVenuePricing() {
       const selectedOption = venueSelect.options[venueSelect.selectedIndex];
@@ -791,6 +958,272 @@
         }, 100); // Small delay to ensure options are populated
       }
     }
+  }
+
+  function initVenueFilters(venueSelect) {
+    const parentContainer = venueSelect.closest('.mb-3');
+    const isRequestForm = venueSelect.id === 'venue' && !parentContainer.querySelector('#venueSelectionList_normal');
+    
+    // In edit-new.ejs, we have two sections. We need to find the correct filters.
+    // The filters are actually outside the containers in the current HTML.
+    
+    const stateFilter = isRequestForm ? document.querySelectorAll('#stateFilter')[0] : document.querySelectorAll('#stateFilter')[1];
+    const cityFilter = isRequestForm ? document.querySelectorAll('#cityFilter')[0] : document.querySelectorAll('#cityFilter')[1];
+    const budgetFilter = isRequestForm ? document.querySelectorAll('#budgetFilter')[0] : document.querySelectorAll('#budgetFilter')[1];
+    const resetFiltersBtn = isRequestForm ? document.querySelectorAll('#resetFilters')[0] : document.querySelectorAll('#resetFilters')[1];
+    const venueCountBadge = isRequestForm ? document.querySelectorAll('#venueCountBadge')[0] : document.querySelectorAll('#venueCountBadge')[1];
+    const venueSelectionList = isRequestForm ? document.getElementById('venueSelectionList_request') : document.getElementById('venueSelectionList_normal');
+    
+    if (!venueSelect || !stateFilter || !venueSelectionList) return;
+
+    const venueOptions = Array.from(venueSelect.options).slice(1);
+
+    function updateCityOptions() {
+      const selectedState = stateFilter.value;
+      const currentCity = cityFilter.value;
+      cityFilter.innerHTML = '<option value="">All Cities</option>';
+      
+      const cities = new Set();
+      venueOptions.forEach(opt => {
+        if (!selectedState || opt.dataset.state === selectedState) {
+          if (opt.dataset.city) cities.add(opt.dataset.city);
+        }
+      });
+
+      Array.from(cities).sort().forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        cityFilter.appendChild(option);
+      });
+
+      if (Array.from(cities).includes(currentCity)) {
+        cityFilter.value = currentCity;
+      }
+    }
+
+    function applyVenueFilters() {
+      const selectedState = stateFilter.value;
+      const selectedCity = cityFilter.value;
+      const selectedBudget = budgetFilter.value;
+      
+      const filteredOptions = venueOptions.filter(opt => {
+        const stateMatch = !selectedState || opt.dataset.state === selectedState;
+        const cityMatch = !selectedCity || opt.dataset.city === selectedCity;
+        const budgetMatch = !selectedBudget || opt.dataset.priceRange === selectedBudget;
+        return stateMatch && cityMatch && budgetMatch;
+      });
+
+      renderVenueCards(filteredOptions);
+      updateVenueCount(filteredOptions.length);
+    }
+
+    function renderVenueCards(options) {
+      if (!venueSelectionList) return;
+      venueSelectionList.innerHTML = '';
+      if (options.length === 0) {
+        venueSelectionList.innerHTML = '<div class="text-center p-4 opacity-50 bg-dark rounded border border-secondary border-opacity-25">No venues match filters</div>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'row g-2 p-1';
+      
+      options.forEach(opt => {
+        const isSelected = venueSelect.value === opt.value;
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+        
+        col.innerHTML = `
+          <div class="card h-100 venue-tap-card ${isSelected ? 'border-info bg-info bg-opacity-10' : 'bg-dark border-secondary border-opacity-50'}" 
+               data-venue-id="${opt.value}" style="cursor: pointer; transition: all 0.2s ease;">
+            <div class="card-body p-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="fw-bold text-truncate" style="max-width: 120px;">${opt.dataset.venueName}</small>
+                <span class="badge ${isSelected ? 'bg-info text-dark' : 'bg-secondary'} rounded-pill" style="font-size: 0.6rem;">
+                  ${isSelected ? 'Selected' : opt.dataset.priceRange}
+                </span>
+              </div>
+              <p style="font-size: 0.7rem;" class="text-muted mb-0">
+                <i class="bi bi-geo-alt"></i> ${opt.dataset.cityFull} | Cap: ${opt.dataset.capacity}
+              </p>
+            </div>
+          </div>
+        `;
+
+        col.querySelector('.venue-tap-card').addEventListener('click', function() {
+          venueSelect.value = this.dataset.venueId;
+          venueSelect.dispatchEvent(new Event('change'));
+          applyVenueFilters();
+          
+          if (typeof showSelectionFeedback === 'function') {
+            showSelectionFeedback(`Selected ${opt.dataset.venueName}`);
+          }
+        });
+
+        grid.appendChild(col);
+      });
+
+      venueSelectionList.appendChild(grid);
+    }
+
+    function updateVenueCount(count) {
+      if (venueCountBadge) {
+        venueCountBadge.textContent = `${count} venue${count !== 1 ? 's' : ''}`;
+        venueCountBadge.className = count > 0 ? 'ms-auto badge bg-info text-dark' : 'ms-auto badge bg-danger text-white';
+      }
+    }
+
+    // Initialize States
+    if (stateFilter) {
+      const states = new Set();
+      venueOptions.forEach(opt => {
+        if (opt.dataset.state) states.add(opt.dataset.state);
+      });
+
+      Array.from(states).sort().forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateFilter.appendChild(option);
+      });
+
+      stateFilter.addEventListener('change', () => {
+        updateCityOptions();
+        applyVenueFilters();
+      });
+    }
+
+    if (cityFilter) cityFilter.addEventListener('change', applyVenueFilters);
+    if (budgetFilter) budgetFilter.addEventListener('change', applyVenueFilters);
+
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', () => {
+        stateFilter.value = '';
+        updateCityOptions();
+        budgetFilter.value = '';
+        applyVenueFilters();
+      });
+    }
+
+    // --- Auto Availability Check for normal edit ---
+    const availCardNormal = document.getElementById('availabilityCard_normal');
+    const availResultsNormal = document.getElementById('availabilityResults_normal');
+    const editForm = venueSelect.closest('form');
+
+    let availTimer;
+    let isAvailableNormal = null; // null=not checked, true=available, false=unavailable
+
+    async function autoCheckNormal() {
+      if (!venueSelect.value) return;
+      const dateEl = editForm ? editForm.querySelector('input[name="date"]') : null;
+      const timeEl = editForm ? editForm.querySelector('input[name="time"]') : null;
+      const hoursEl = editForm ? editForm.querySelector('select[name="bookingHours"]') : null;
+      // Use booking hours dropdown value, OR fall back to existing concert booking hours
+      const duration = (hoursEl && hoursEl.value) ? hoursEl.value : (currentConcertBookingHours || 2);
+      if (!dateEl || !dateEl.value || !timeEl || !timeEl.value) return;
+
+      isAvailableNormal = null;
+      if (availCardNormal) { availCardNormal.style.display = 'block'; availCardNormal.className = 'card border-info mt-2 mb-3'; }
+      if (availResultsNormal) availResultsNormal.innerHTML = '<div class="text-center text-muted small"><span class="spinner-border spinner-border-sm text-info"></span> Checking availability...</div>';
+      try {
+        const res = await fetch('/venue-availability/check-availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueId: venueSelect.value, date: dateEl.value, startTime: timeEl.value, duration: parseInt(duration), concertId: CURRENT_CONCERT_ID })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (data.available) {
+            isAvailableNormal = true;
+            if (availCardNormal) availCardNormal.className = 'card border-success mt-2 mb-3';
+            if (availResultsNormal) availResultsNormal.innerHTML = `<div class="alert alert-success p-2 mb-0 small"><i class="bi bi-check-circle-fill"></i> <strong>Available!</strong> ${data.requestedSlot.startTime} – ${data.requestedSlot.endTime}</div>`;
+          } else {
+            isAvailableNormal = false;
+            if (availCardNormal) availCardNormal.className = 'card border-danger mt-2 mb-3';
+            let suggestionsHtml2 = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+              suggestionsHtml2 = `<div class="mt-2 pt-2 border-top border-danger">
+                <small class="fw-bold text-warning"><i class="bi bi-lightbulb-fill me-1"></i>Suggested free slots:</small>
+                <div class="mt-1">` +
+                data.suggestions.slice(0, 5).map(s => {
+                  const formDateEl = editForm ? editForm.querySelector('input[name="date"]') : null;
+                  const formTimeEl = editForm ? editForm.querySelector('input[name="time"]') : null;
+                  return `<span class="badge bg-secondary me-1 mb-1" style="font-size:0.7rem;cursor:pointer;" onclick="${formDateEl ? '' : ''}document.getElementById('date') && (document.getElementById('date').value='${s.date}'); document.getElementById('time') && (document.getElementById('time').value='${s.startTime}'); debounceNormal();"><i class="bi bi-calendar2-check me-1"></i>${s.date} ${s.startTime}</span>`;
+                }).join('') +
+                `</div></div>`;
+            }
+            if (availResultsNormal) availResultsNormal.innerHTML = `<div class="alert alert-danger p-2 mb-0 small"><i class="bi bi-x-circle-fill"></i> <strong>Not Available.</strong> Conflicts with ${data.conflicts.length} booking(s).${suggestionsHtml2}</div>`;
+          }
+        } else {
+          isAvailableNormal = null;
+          if (availResultsNormal) availResultsNormal.innerHTML = `<div class="alert alert-danger p-2 mb-0 small">Error: ${data.message}</div>`;
+        }
+      } catch(e) {
+        isAvailableNormal = null;
+        if (availResultsNormal) availResultsNormal.innerHTML = '<div class="alert alert-danger p-2 mb-0 small">Network error.</div>';
+      }
+    }
+
+    function debounceNormal() {
+      clearTimeout(availTimer);
+      availTimer = setTimeout(autoCheckNormal, 600);
+    }
+
+    // Trigger check when venue changes
+    venueSelect.addEventListener('change', () => { if (venueSelect.value) debounceNormal(); });
+
+    // Trigger check when date/time/hours change
+    if (editForm) {
+      const dateEl = editForm.querySelector('input[name="date"]');
+      const timeEl = editForm.querySelector('input[name="time"]');
+      const hoursEl = editForm.querySelector('select[name="bookingHours"]');
+      if (dateEl) dateEl.addEventListener('change', debounceNormal);
+      if (timeEl) timeEl.addEventListener('change', debounceNormal);
+      if (hoursEl) hoursEl.addEventListener('change', debounceNormal);
+    }
+
+    // Block submission if venue is not available
+    if (editForm) {
+      editForm.addEventListener('submit', function(e) {
+        if (!venueSelect.value) return; // no venue selected, allow normal form validation
+        if (isAvailableNormal === false) {
+          e.preventDefault();
+          if (availCardNormal) availCardNormal.className = 'card border-danger mt-2 mb-3';
+          if (availResultsNormal) availResultsNormal.innerHTML = '<div class="alert alert-danger p-2 mb-0"><i class="bi bi-x-circle-fill"></i> <strong>Cannot submit!</strong> The venue is not available at the selected date &amp; time. Please pick a different time.</div>';
+          if (availCardNormal) availCardNormal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return false;
+        }
+        if (isAvailableNormal === null && venueSelect.value) {
+          e.preventDefault();
+          if (availCardNormal) { availCardNormal.style.display = 'block'; availCardNormal.className = 'card border-warning mt-2 mb-3'; }
+          if (availResultsNormal) availResultsNormal.innerHTML = '<div class="alert alert-warning p-2 mb-0"><i class="bi bi-hourglass-split"></i> Please wait for availability check to complete.</div>';
+          if (availCardNormal) availCardNormal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          autoCheckNormal();
+          return false;
+        }
+      });
+    }
+
+    // Auto-check on page load if venue already selected
+    if (venueSelect.value) {
+      setTimeout(autoCheckNormal, 800); // slight delay so updateVenuePricing populates bookingHours first
+    }
+
+    updateCityOptions();
+    applyVenueFilters();
+  }
+
+  function showSelectionFeedback(message) {
+    const feedback = document.createElement('div');
+    feedback.className = 'selection-feedback';
+    feedback.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> ${message}`;
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.classList.add('show'), 10);
+    setTimeout(() => {
+      feedback.classList.remove('show');
+      setTimeout(() => feedback.remove(), 300);
+    }, 3000);
   }
 </script>
 

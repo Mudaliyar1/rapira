@@ -19,7 +19,7 @@
     <%- extraStyles %>
   <% } %>
 </head>
-<body>
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
   <div class="admin-layout">
     <!-- Sidebar -->
     <%- include('../partials/admin-sidebar', { path: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
@@ -106,6 +106,12 @@
       setInterval(updateNotificationBadge, 60000);
     });
   </script>
+
+  <!-- Network Status Monitor -->
+  <script src="/js/network-status.js"></script>
+  
+  <!-- Account Monitor (Real-time Deletion Detection) -->
+  <script src="/js/account-monitor.js"></script>
 
   <% if (typeof extraScripts !== 'undefined') { %>
     <%- extraScripts %>

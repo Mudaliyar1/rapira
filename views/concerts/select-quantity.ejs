@@ -1,0 +1,105 @@
+<section class="py-5" style="min-height: auto;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-7 col-lg-6">
+        <div class="glass-card-dark border-gradient">
+          <div class="border-gradient-content">
+            <div class="card-body p-3 p-md-4">
+              <!-- Back Button -->
+              <a href="/concerts/<%= concert._id %>" class="btn btn-outline-secondary btn-sm mb-3">
+                <i class="bi bi-arrow-left me-1"></i>Back
+              </a>
+
+              <!-- Concert Info - Compact -->
+              <div class="text-center mb-3">
+                <h4 class="gradient-text-purple mb-2 fw-bold"><%= concert.title %></h4>
+                <p class="text-muted small mb-1">
+                  <%
+                    function toISTDateString(dateString) {
+                      const date = new Date(dateString);
+                      const options = { 
+                        weekday: 'short',
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric',
+                        timeZone: 'Asia/Kolkata'
+                      };
+                      return date.toLocaleDateString('en-IN', options);
+                    }
+                    
+                    let displayTime = concert.time || '';
+                    const timeMatch = displayTime.match(/^(\d+):(\d+)/);
+                    if (timeMatch) {
+                      let hours = parseInt(timeMatch[1]);
+                      let minutes = timeMatch[2];
+                      let amPm = hours >= 12 ? 'PM' : 'AM';
+                      let hour12 = hours % 12;
+                      if (hour12 === 0) hour12 = 12;
+                      displayTime = `${hour12}:${minutes} ${amPm}`;
+                    }
+                  %>
+                  <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(concert.date) %> • <%= displayTime %>
+                </p>
+                <p class="text-muted small mb-0">
+                  <i class="bi bi-geo-alt me-1"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>
+                </p>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-3 small">
+                <div>
+                  <% if (concert.isPaid) { %>
+                    <span class="text-white">₹<%= concert.price %>/ticket</span>
+                  <% } else { %>
+                    <span class="gradient-text-blue fw-bold">FREE</span>
+                  <% } %>
+                </div>
+                <% if (ticketsRemaining !== 'Unlimited') { %>
+                  <span class="text-warning"><%= ticketsRemaining %> left</span>
+                <% } %>
+              </div>
+
+              <hr class="border-secondary my-3">
+
+              <!-- Quantity Selection -->
+              <div class="mb-3">
+                <p class="text-white small fw-bold mb-2">Select Tickets:</p>
+                <div class="row g-2 mb-3">
+                  <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
+                    <div class="col-4 col-md-3">
+                      <a href="/concerts/<%= concert._id %>/book?quantity=<%= i %>" class="btn btn-outline-primary w-100 py-2 quantity-btn">
+                        <%= i %>
+                      </a>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+
+              <% if (concert.isPaid) { %>
+                <div class="alert alert-info alert-sm py-2 px-3 mb-0" style="font-size: 12px;">
+                  <i class="bi bi-info-circle me-1"></i> Platform charges added at checkout
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.quantity-btn {
+  transition: all 0.3s ease;
+  border: 2px solid var(--primary);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.quantity-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-color: var(--secondary);
+  color: white !important;
+}
+</style>

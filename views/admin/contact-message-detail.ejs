@@ -48,13 +48,13 @@
             </p>
             <small class="text-muted">
               <i class="bi bi-clock me-1"></i>
-              <%= new Date(message.createdAt).toLocaleString() %>
+              <%= toISTLocaleString(message.createdAt) %>
             </small>
           </div>
         </div>
 
-        <div class="message-content p-3 bg-light rounded mb-4">
-          <p style="white-space: pre-line; color: #000000;"><%= message.message %></p>
+        <div class="message-content p-3 rounded mb-4" style="background: transparent; border: 1px solid rgba(255, 255, 255, 0.15);">
+          <p style="white-space: pre-line; color: #e9ecef;"><%= message.message %></p>
         </div>
 
         <div class="d-flex justify-content-between">

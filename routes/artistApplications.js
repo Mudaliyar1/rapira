@@ -4,13 +4,68 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const ArtistApplication = require('../models/ArtistApplication');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 const { sendArtistApplicationEmail, sendArtistApprovalEmail, sendArtistRejectionEmail } = require('../utils/emailService');
 const { createArtistApplicationNotification } = require('../utils/notificationService');
+const WebsiteSettings = require('../models/WebsiteSettings');
+const { createOrder, verifyPayment } = require('../utils/paymentService');
+
+function wantsJsonResponse(req) {
+  return Boolean(
+    req.xhr ||
+    req.is('application/json') ||
+    req.headers.accept?.includes('json')
+  );
+}
+
+async function saveSession(req) {
+  if (!req.session || typeof req.session.save !== 'function') {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function normalizeInstagramHandle(instagramValue) {
+  const rawValue = String(instagramValue || '').trim();
+  if (!rawValue) {
+    return '';
+  }
+
+  let handle = rawValue.replace(/^@+/, '');
+
+  try {
+    const parsedUrl = new URL(handle);
+    if (parsedUrl.hostname.includes('instagram.com')) {
+      handle = parsedUrl.pathname.split('/').filter(Boolean)[0] || '';
+    }
+  } catch (error) {
+    handle = handle
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+      .replace(/\?.*$/, '')
+      .replace(/\/.*/, '');
+  }
+
+  return handle.replace(/[^a-zA-Z0-9._]/g, '');
+}
+
+function instagramHandleToUrl(instagramValue) {
+  const handle = normalizeInstagramHandle(instagramValue);
+  return handle ? `https://instagram.com/${handle}` : '';
+}
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -19,14 +74,14 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|pdf/;
+    const filetypes = /jpeg|jpg|png/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
 
     if (extname && mimetype) {
       return cb(null, true);
     } else {
-      cb(new Error('Only image (JPEG, JPG, PNG) and PDF files are allowed'));
+      cb(new Error('Only image files (JPEG, JPG, PNG) are allowed'));
     }
   }
 });
@@ -133,9 +188,14 @@ router.get('/apply/:level', isLoggedIn, async (req, res) => {
       return res.redirect('/artist-applications/status');
     }
 
+    // Retrieve saved form data (if redirected after file error)
+    const savedFormData = req.session.applyFormData || {};
+    delete req.session.applyFormData;
+
     res.render('artist-applications/apply', {
       title: 'Artist Application',
-      level
+      level,
+      savedFormData
     });
   } catch (error) {
     console.error('Error in artist application form:', error);
@@ -144,36 +204,113 @@ router.get('/apply/:level', isLoggedIn, async (req, res) => {
   }
 });
 
+// Submit artist application custom upload handler
+const handleApplyUpload = (req, res, next) => {
+  upload.single('proofPhoto')(req, res, function (err) {
+    const fallbackLevel = (req.body && req.body.artistLevel) || 'Beginner';
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        req.flash('error', 'The file you selected is too large. Maximum size allowed is 5MB.');
+      } else {
+        req.flash('error', err.message);
+      }
+      // Save form data to session so the form can be pre-filled after redirect
+      req.session.applyFormData = req.body;
+      return res.redirect(`/artist-applications/apply/${fallbackLevel}`);
+    } else if (err) {
+      req.flash('error', err.message);
+      req.session.applyFormData = req.body;
+      return res.redirect(`/artist-applications/apply/${fallbackLevel}`);
+    }
+    next();
+  });
+};
+
 // Submit artist application
-router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) => {
+router.post('/apply', isLoggedIn, handleApplyUpload, async (req, res) => {
   try {
-    const { artistLevel, aadharCard, city, state, age, phoneNumber } = req.body;
+    const { artistLevel, stageName, genre, instagramId, aadharCard, panCard, city, state, age, phoneNumber } = req.body;
+    req.session.applyFormData = req.body;
+    const normalizedStageName = String(stageName || '').trim();
+    const normalizedGenre = String(genre || '').trim();
+    const normalizedInstagramHandle = normalizeInstagramHandle(instagramId);
+    const normalizedAadhar = String(aadharCard || '').replace(/\D/g, '');
+    const rawPan = String(panCard || '').replace(/[^a-zA-Z0-9]/g, '').trim();
+    const normalizedPan = rawPan.toUpperCase();
 
     // Validate input
-    if (!artistLevel || !aadharCard || !city || !state || !age || !phoneNumber) {
+    if (!artistLevel || !normalizedStageName || !normalizedGenre || !normalizedInstagramHandle || !normalizedPan || !city || !state || !age || !phoneNumber) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please fill in all required fields' });
+      }
       req.flash('error', 'Please fill in all required fields');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
-    // Validate Aadhaar card format (exactly 12 digits)
-    if (!/^\d{12}$/.test(aadharCard)) {
+    if (normalizedStageName.length > 60) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Stage name must be 60 characters or less' });
+      }
+      req.flash('error', 'Stage name must be 60 characters or less');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    if (normalizedGenre.length > 60) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Genre must be 60 characters or less' });
+      }
+      req.flash('error', 'Genre must be 60 characters or less');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    if (!/^[a-zA-Z0-9._]{1,30}$/.test(normalizedInstagramHandle)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please enter a valid Instagram handle or link' });
+      }
+      req.flash('error', 'Please enter a valid Instagram handle or link');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    // Validate PAN format and normalize to uppercase before saving
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(normalizedPan)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'PAN card number must be in valid format (example: ABCDE1234F)' });
+      }
+      req.flash('error', 'PAN card number must be in valid format (example: ABCDE1234F)');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    // Aadhaar is optional for new applications. If provided, validate format.
+    if (normalizedAadhar && !/^\d{12}$/.test(normalizedAadhar)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Aadhaar card number must be exactly 12 digits' });
+      }
       req.flash('error', 'Aadhaar card number must be exactly 12 digits');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     // Validate phone number format (exactly 10 digits)
     if (!/^\d{10}$/.test(phoneNumber)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Phone number must be exactly 10 digits' });
+      }
       req.flash('error', 'Phone number must be exactly 10 digits');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     if (!req.file) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Please upload a proof photo' });
+      }
       req.flash('error', 'Please upload a proof photo');
       return res.redirect(`/artist-applications/apply/${artistLevel}`);
     }
 
     // Validate artist level
     if (!['Beginner', 'Intermediate', 'Established'].includes(artistLevel)) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'Invalid artist level' });
+      }
       req.flash('error', 'Invalid artist level');
       return res.redirect('/artist-applications/select-level');
     }
@@ -182,25 +319,17 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
     const existingArtist = await Artist.findOne({ user: req.session.user.id });
 
     if (existingArtist) {
-      // If user has an artist profile but role is not artist, there's a mismatch
-      // This can happen if admin changed user role but didn't delete artist profile
       const user = await User.findById(req.session.user.id);
-
       if (user && user.role !== 'artist') {
-        console.log(`Fixing mismatch: User ${user._id} has role ${user.role} but has artist profile ${existingArtist._id}`);
-
-        // Delete the existing artist profile to allow user to apply again
         const Concert = require('../models/Concert');
         const Content = require('../models/Content');
-
         await Concert.deleteMany({ artist: existingArtist._id });
         await Content.deleteMany({ artist: existingArtist._id });
         await Artist.findByIdAndDelete(existingArtist._id);
-
-        console.log(`Fixed mismatch: Deleted artist profile ${existingArtist._id} for user ${user._id}`);
-
-        // Continue to the application process
       } else {
+        if (req.xhr || req.headers.accept?.includes('json')) {
+          return res.json({ success: false, message: 'You already have an artist profile' });
+        }
         req.flash('error', 'You already have an artist profile');
         return res.redirect('/artists/dashboard');
       }
@@ -213,14 +342,17 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
     });
 
     if (pendingApplication) {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: false, message: 'You already have a pending artist application' });
+      }
       req.flash('info', 'You already have a pending artist application');
       return res.redirect('/artist-applications/status');
     }
 
-    // Create new application with proof photo uploaded to Cloudinary
+    // Upload proof photo to Cloudinary
     let proofPhotoUrl = null;
     let proofPhotoMedia = null;
-    
+
     if (req.file) {
       try {
         const { media } = await uploadFileToCloudinary(req.file, {
@@ -233,55 +365,417 @@ router.post('/apply', isLoggedIn, upload.single('proofPhoto'), async (req, res) 
         proofPhotoMedia = media._id;
       } catch (err) {
         console.error('Proof photo upload error:', err);
-        req.flash('warning', 'Application created, but proof photo upload failed. Please upload it later.');
+        if (req.xhr || req.headers.accept?.includes('json')) {
+          return res.json({ success: false, message: 'Failed to upload proof photo' });
+        }
       }
     }
 
-    const newApplication = new ArtistApplication({
-      user: req.session.user.id,
+    // Get registration fee from settings
+    const settings = await WebsiteSettings.getSettings();
+    const fee = settings.registrationFees ? settings.registrationFees.artistRegistrationFee : 0;
+
+    // Store data in session for payment verification later
+    req.session.artistApplicationData = {
       artistLevel,
-      aadharCard,
+      stageName: normalizedStageName,
+      genre: normalizedGenre,
+      instagramId: normalizedInstagramHandle,
+      aadharCard: normalizedAadhar,
+      panCard: normalizedPan,
       state,
       city,
       age,
       phoneNumber,
-      proofPhoto: proofPhotoUrl,
-      proofPhotoData: req.file ? req.file.buffer : null,
-      proofPhotoContentType: req.file ? req.file.mimetype : null,
-      proofPhotoMedia: proofPhotoMedia,
-      status: 'pending'
-    });
+      proofPhotoUrl,
+      proofPhotoMedia,
+      registrationFee: fee
+    };
 
-    await newApplication.save();
+    // If NO FEE, save immediately to DB
+    if (fee === 0) {
+      const newApplication = new ArtistApplication({
+        user: req.session.user.id,
+        artistLevel,
+        stageName: normalizedStageName,
+        genre: normalizedGenre,
+        instagramId: normalizedInstagramHandle,
+        aadharCard: normalizedAadhar,
+        panCard: normalizedPan,
+        state,
+        city,
+        age,
+        phoneNumber,
+        proofPhoto: proofPhotoUrl,
+        proofPhotoMedia: proofPhotoMedia,
+        status: 'pending',
+        registrationFee: fee,
+        paymentStatus: 'n/a'
+      });
 
-    // Send email notification to admin
-    try {
-      const user = await User.findById(req.session.user.id);
+      await newApplication.save();
+      delete req.session.artistApplicationData;
+  delete req.session.applyFormData;
 
-      // Add phone number to user object for email template
-      user.phoneNumber = phoneNumber;
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.json({ success: true, isFree: true, message: 'Application submitted successfully' });
+      }
 
-      // Send email to all admin users
-      const emailResult = await sendArtistApplicationEmail(user, artistLevel);
-      console.log(`Artist application email sent to ${emailResult.recipientCount || 0} admin(s)`);
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = phoneNumber;
+        const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
+        await createArtistApplicationNotification(populatedApplication);
+      } catch (emailError) {
+        console.error('Error sending notification:', emailError);
+      }
 
-      // Create notification for admin dashboard
-      const populatedApplication = await ArtistApplication.findById(newApplication._id).populate('user');
-      await createArtistApplicationNotification(populatedApplication);
-      console.log(`Notification created for artist application: ${newApplication._id}`);
-    } catch (emailError) {
-      console.error('Error sending artist application email or creating notification:', emailError);
-      // Continue with the process even if email fails
+      req.flash('success', 'Your artist application has been submitted successfully');
+      return res.redirect('/artist-applications/status');
     }
 
-    // Add a success flash message
-    req.flash('success', 'Your artist application has been submitted successfully. You will be notified once it is reviewed.');
+    // If FEE REQUIRED, create Razorpay order and show checkout page
+    const orderResult = await createOrder({
+      amount: fee,
+      receipt: `art_app_${Date.now()}`,
+      notes: {
+        type: 'artist_application',
+        artistLevel: artistLevel,
+        userId: req.session.user.id
+      }
+    });
 
-    // Redirect to status page
-    res.redirect('/artist-applications/status');
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order');
+      return res.redirect(`/artist-applications/apply/${artistLevel}`);
+    }
+
+    // Store data in session for payment verification later
+    req.session.artistApplicationData = {
+      artistLevel,
+      stageName: normalizedStageName,
+      genre: normalizedGenre,
+      instagramId: normalizedInstagramHandle,
+      aadharCard: normalizedAadhar,
+      panCard: normalizedPan,
+      state,
+      city,
+      age,
+      phoneNumber,
+      proofPhotoUrl,
+      proofPhotoMedia,
+      registrationFee: fee
+    };
+
+    await saveSession(req);
+
+    // Render checkout page with order details
+    const user = await User.findById(req.session.user.id);
+    res.render('artist-applications/checkout', {
+      layout: false,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: { name: user.name, email: user.email },
+      data: {
+        artistLevel,
+        age,
+        city,
+        state,
+        phoneNumber,
+        registrationFee: fee
+      }
+    });
+
   } catch (error) {
     console.error('Error in submit artist application:', error);
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: false, message: 'An error occurred while submitting your application' });
+    }
     req.flash('error', 'An error occurred while submitting your application');
+    res.redirect('/artist-applications/select-level');
+  }
+});
+
+// Payment page for artist registration (standalone - no layout)
+router.get('/payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (!application || application.user.toString() !== req.session.user.id) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    if (application.paymentStatus === 'paid') {
+      req.flash('info', 'Payment already completed');
+      return res.redirect('/artist-applications/status');
+    }
+
+    const orderResult = await createOrder({
+      amount: application.registrationFee,
+      receipt: `art_reg_${application._id}`,
+      notes: {
+        applicationId: application._id.toString(),
+        type: 'artist_registration',
+        userId: req.session.user.id
+      }
+    });
+
+    if (!orderResult.success) {
+      req.flash('error', 'Failed to create payment order. Please try again.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    application.razorpayOrderId = orderResult.data.id;
+    await application.save();
+
+    res.render('artist-applications/payment', {
+      layout: false,
+      application,
+      order: orderResult.data,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      currentUser: req.session.user
+    });
+  } catch (error) {
+    console.error('Error loading payment page:', error);
+    req.flash('error', 'Failed to load payment page');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Verify artist registration payment (handles both AJAX and form submissions)
+router.post('/verify-payment', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const shouldReturnJson = wantsJsonResponse(req);
+    
+    // Check if payment data is valid
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Missing payment details' });
+      }
+      req.flash('error', 'Missing payment details');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Verify Razorpay signature
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (!verification.success) {
+      if (shouldReturnJson) {
+        return res.status(400).json({ success: false, message: 'Payment verification failed' });
+      }
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Check if application data is in session (new flow)
+    if (req.session.artistApplicationData) {
+      const appData = req.session.artistApplicationData;
+      
+      // Create new application
+      const newApplication = new ArtistApplication({
+        user: req.session.user.id,
+        artistLevel: appData.artistLevel,
+        stageName: appData.stageName,
+        genre: appData.genre,
+        instagramId: appData.instagramId,
+        aadharCard: appData.aadharCard,
+        panCard: appData.panCard,
+        state: appData.state,
+        city: appData.city,
+        age: appData.age,
+        phoneNumber: appData.phoneNumber,
+        proofPhoto: appData.proofPhotoUrl,
+        proofPhotoMedia: appData.proofPhotoMedia,
+        status: 'pending',
+        registrationFee: appData.registrationFee,
+        paymentStatus: 'paid',
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature
+      });
+
+      await newApplication.save();
+      delete req.session.artistApplicationData;
+  delete req.session.applyFormData;
+
+      // Log transaction
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: newApplication.user,
+        type: 'registration',
+        amount: appData.registrationFee,
+        platformFee: 0,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        sourceModel: 'ArtistApplication',
+        sourceId: newApplication._id,
+        description: `Artist registration fee: ${appData.artistLevel} level`
+      });
+
+      // Send notifications
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = appData.phoneNumber;
+        const populatedApp = await ArtistApplication.findById(newApplication._id).populate('user');
+        await createArtistApplicationNotification(populatedApp);
+      } catch (e) {
+        console.error('Post-payment notification error:', e);
+      }
+
+      if (shouldReturnJson) {
+        return res.json({
+          success: true,
+          message: 'Payment successful! Your application is now under review.',
+          redirectUrl: '/artist-applications/status'
+        });
+      }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/artist-applications/status');
+    }
+
+    // Old flow: application already exists (from payment page redirect)
+    const application = await ArtistApplication.findOne({
+      user: req.session.user.id,
+      razorpayOrderId: razorpay_order_id
+    });
+
+    if (!application) {
+      if (shouldReturnJson) {
+        return res.status(404).json({ success: false, message: 'Application not found' });
+      }
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    application.paymentStatus = 'paid';
+    application.razorpayPaymentId = razorpay_payment_id;
+    await application.save();
+
+    // Log transaction
+    const { logTransaction } = require('../utils/transactionLogger');
+    await logTransaction({
+      user: application.user,
+      type: 'registration',
+      amount: application.registrationFee,
+      platformFee: 0,
+      paymentId: application.razorpayPaymentId,
+      orderId: application.razorpayOrderId,
+      sourceModel: 'ArtistApplication',
+      sourceId: application._id,
+      description: `Artist registration fee: ${application.artistLevel} level`
+    });
+
+    // Send notifications
+    try {
+      const user = await User.findById(req.session.user.id);
+      user.phoneNumber = application.phoneNumber;
+      const populatedApp = await ArtistApplication.findById(application._id).populate('user');
+      await createArtistApplicationNotification(populatedApp);
+    } catch (e) {
+      console.error('Post-payment notification error:', e);
+    }
+
+    if (shouldReturnJson) {
+      return res.json({
+        success: true,
+        message: 'Payment successful! Your application is now under review.',
+        redirectUrl: '/artist-applications/status'
+      });
+    }
+
+    req.flash('success', 'Payment successful! Your application is now under review.');
+    return res.redirect('/artist-applications/status');
+
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    if (wantsJsonResponse(req)) {
+      return res.status(500).json({ success: false, message: 'Payment verification error. Please contact support.' });
+    }
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Verify artist registration payment (OLD endpoint for backwards compatibility with payment page)
+router.post('/verify-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (!application) {
+      req.flash('error', 'Application not found');
+      return res.redirect('/artist-applications/status');
+    }
+
+    const verification = verifyPayment({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    });
+
+    if (verification.success) {
+      application.razorpayPaymentId = razorpay_payment_id;
+      await application.save();
+
+      // Log the transaction for admin payments page
+      const { logTransaction } = require('../utils/transactionLogger');
+      await logTransaction({
+        user: application.user,
+        type: 'registration',
+        amount: application.registrationFee,
+        platformFee: 0,
+        paymentId: application.razorpayPaymentId,
+        orderId: application.razorpayOrderId,
+        sourceModel: 'ArtistApplication',
+        sourceId: application._id,
+        description: `Artist registration fee: ${application.artistLevel} level`
+      });
+
+      // Send notifications after successful payment
+      try {
+        const user = await User.findById(req.session.user.id);
+        user.phoneNumber = application.phoneNumber;
+        const populatedApp = await ArtistApplication.findById(application._id).populate('user');
+        await createArtistApplicationNotification(populatedApp);
+      } catch (e) { console.error('Post-payment notification error:', e); }
+
+      req.flash('success', 'Payment successful! Your application is now under review.');
+      return res.redirect('/artist-applications/status');
+    } else {
+      application.paymentStatus = 'failed';
+      await application.save();
+      req.flash('error', 'Payment verification failed. Please try again.');
+      return res.redirect(`/artist-applications/payment/${application._id}`);
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    req.flash('error', 'Payment verification error. Please contact support.');
+    res.redirect('/artist-applications/status');
+  }
+});
+
+// Cancel payment - delete unpaid application and go back to apply form
+router.get('/cancel-payment/:id', isLoggedIn, async (req, res) => {
+  try {
+    const application = await ArtistApplication.findById(req.params.id);
+
+    if (application && application.user.toString() === req.session.user.id && application.paymentStatus !== 'paid') {
+      await ArtistApplication.findByIdAndDelete(req.params.id);
+      console.log(`Deleted unpaid artist application: ${req.params.id}`);
+    }
+
+    req.flash('error', 'Payment was cancelled. Please fill the form and try again.');
+    res.redirect('/artist-applications/select-level');
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    req.flash('error', 'Something went wrong. Please try again.');
     res.redirect('/artist-applications/select-level');
   }
 });
@@ -305,10 +799,13 @@ router.get('/status', isLoggedIn, async (req, res) => {
 });
 
 // Admin: List all applications
-router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
 
     // Build filter object
     const filter = {};
@@ -328,43 +825,56 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
       filter.state = { $regex: state, $options: 'i' };
     }
 
+    // DB-level text search where possible
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      filter.$or = [
+        { state: { $regex: searchTerm, $options: 'i' } },
+        { city: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+
     // Build sort options
-    let sortOptions = { createdAt: -1 }; // Default sort
+    let sortOptions = { createdAt: -1 };
     if (sortBy) {
       const order = sortOrder === 'asc' ? 1 : -1;
       sortOptions = { [sortBy]: order };
     }
 
-    // Get applications with filters
-    let applications = await ArtistApplication.find(filter)
-      .sort(sortOptions)
-      .populate('user', 'name email');
+    // Run ALL queries in PARALLEL - massively faster than sequential awaits
+    const [applicationsRaw, totalFiltered, totalApplications, pendingApplications, approvedApplications, rejectedApplications, allStates] = await Promise.all([
+      ArtistApplication.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .select('-proofPhotoData -proofPhotoContentType')  // exclude heavy binary buffer fields
+        .populate('user', 'name email')
+        .lean(),
+      ArtistApplication.countDocuments(filter),
+      ArtistApplication.countDocuments(),
+      ArtistApplication.countDocuments({ status: 'pending' }),
+      ArtistApplication.countDocuments({ status: 'approved' }),
+      ArtistApplication.countDocuments({ status: 'rejected' }),
+      ArtistApplication.distinct('state')
+    ]);
 
-    // Apply text search on populated data
+    // Filter out empty states for dropdown
+    const states = allStates.filter(s => s && s.trim()).sort();
+
+    // Secondary in-memory filter for name/email search (not possible at DB level without text index)
+    let applications = applicationsRaw;
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
-      applications = applications.filter(app => {
+      applications = applicationsRaw.filter(app => {
         const userName = (app.user ? app.user.name : '').toLowerCase();
         const userEmail = (app.user ? app.user.email : '').toLowerCase();
-        const state = (app.state || '').toLowerCase();
-        const city = (app.city || '').toLowerCase();
-
-        return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               city.includes(searchTerm);
+        return userName.includes(searchTerm) || userEmail.includes(searchTerm) ||
+          (app.state || '').toLowerCase().includes(searchTerm) ||
+          (app.city || '').toLowerCase().includes(searchTerm);
       });
     }
 
-    // Get statistics
-    const totalApplications = await ArtistApplication.countDocuments();
-    const pendingApplications = await ArtistApplication.countDocuments({ status: 'pending' });
-    const approvedApplications = await ArtistApplication.countDocuments({ status: 'approved' });
-    const rejectedApplications = await ArtistApplication.countDocuments({ status: 'rejected' });
-
-    // Get unique states for filter dropdown
-    const allStates = await ArtistApplication.find().distinct('state');
-    const states = allStates.filter(s => s && s.trim()).sort();
+    const totalPages = Math.ceil(totalFiltered / limit);
 
     res.render('admin/artist-applications', {
       layout: 'admin',
@@ -384,9 +894,15 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
         pending: pendingApplications,
         approved: approvedApplications,
         rejected: rejectedApplications,
-        filtered: applications.length
+        filtered: totalFiltered
       },
-      states
+      states,
+      pagination: {
+        page,
+        totalPages,
+        totalFiltered,
+        limit
+      }
     });
   } catch (error) {
     console.error('Error in admin applications list:', error);
@@ -395,8 +911,9 @@ router.get('/admin', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+
 // Export artist applications to CSV
-router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/export', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     // Get search parameters (same as main admin route)
     const { search, status, artistLevel, state, sortBy, sortOrder } = req.query;
@@ -438,9 +955,9 @@ router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
         const city = (app.city || '').toLowerCase();
 
         return userName.includes(searchTerm) ||
-               userEmail.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               city.includes(searchTerm);
+          userEmail.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          city.includes(searchTerm);
       });
     }
 
@@ -478,8 +995,86 @@ router.get('/admin/export', isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+// Admin: Bulk delete application history records
+router.post('/admin/delete-selected', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
+  try {
+    let { applicationIds } = req.body;
+
+    if (Array.isArray(applicationIds)) {
+      applicationIds = applicationIds
+        .flatMap(id => String(id || '').split(','))
+        .map(id => id.trim())
+        .filter(Boolean);
+    } else if (typeof applicationIds === 'string') {
+      applicationIds = applicationIds
+        .split(',')
+        .map(id => id.trim())
+        .filter(Boolean);
+    } else {
+      applicationIds = [];
+    }
+
+    applicationIds = [...new Set(applicationIds)]
+      .filter(id => /^[a-fA-F0-9]{24}$/.test(id));
+
+    if (!applicationIds.length) {
+      req.flash('error', 'Please select at least one valid artist application record to delete.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    const applications = await ArtistApplication.find({ _id: { $in: applicationIds } })
+      .select('_id proofPhoto');
+
+    if (!applications.length) {
+      req.flash('error', 'No valid artist application records were found for deletion.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    for (const application of applications) {
+      if (!application.proofPhoto) {
+        continue;
+      }
+
+      const isCloudUrl =
+        application.proofPhoto.startsWith('http://') ||
+        application.proofPhoto.startsWith('https://');
+
+      if (isCloudUrl) {
+        continue;
+      }
+
+      const proofPhotoPath = path.join(__dirname, '../public', application.proofPhoto);
+      if (!fs.existsSync(proofPhotoPath)) {
+        continue;
+      }
+
+      try {
+        fs.unlinkSync(proofPhotoPath);
+      } catch (unlinkError) {
+        console.error(`Failed to delete proof photo for application ${application._id}:`, unlinkError);
+      }
+    }
+
+    const { deletedCount = 0 } = await ArtistApplication.deleteMany({
+      _id: { $in: applications.map(app => app._id) }
+    });
+
+    if (!deletedCount) {
+      req.flash('error', 'No artist application records were deleted.');
+      return res.redirect('/artist-applications/admin');
+    }
+
+    req.flash('success', `${deletedCount} artist application record(s) deleted successfully`);
+    return res.redirect('/artist-applications/admin');
+  } catch (error) {
+    console.error('Error in bulk delete artist applications:', error);
+    req.flash('error', 'An error occurred while deleting selected artist applications');
+    return res.redirect('/artist-applications/admin');
+  }
+});
+
 // Admin: View application details
-router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user', 'name email profileImage');
@@ -503,11 +1098,16 @@ router.get('/admin/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Serve proof photo/PDF directly (admin only)
-router.get('/proof/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/proof/:id', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id);
     if (!application) {
       return res.status(404).send('Proof not found');
+    }
+
+    // If proofPhoto is a Cloudinary URL, redirect to it
+    if (application.proofPhoto && (application.proofPhoto.startsWith('http://') || application.proofPhoto.startsWith('https://'))) {
+      return res.redirect(application.proofPhoto);
     }
 
     if (application.proofPhotoData && application.proofPhotoContentType) {
@@ -530,7 +1130,7 @@ router.get('/proof/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Approve application
-router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/approve', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user');
@@ -562,10 +1162,11 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
       // Create artist profile
       artist = new Artist({
         user: application.user._id,
-        stageName: application.user.name, // Default to user name, can be updated later
-        genre: 'Hip Hop', // Default genre, can be updated later
+        stageName: application.stageName || application.user.name,
+        genre: application.genre || 'Hip Hop',
         artistLevel: application.artistLevel,
         aadharCard: application.aadharCard,
+        panCard: application.panCard,
         state: application.state,
         city: application.city,
         age: application.age,
@@ -577,7 +1178,15 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     } else {
       // Update existing artist profile
       artist.artistLevel = application.artistLevel;
+      // Keep artist-edited identity fields intact after first creation.
+      if (!artist.stageName || !String(artist.stageName).trim()) {
+        artist.stageName = application.stageName || application.user.name;
+      }
+      if (!artist.genre || !String(artist.genre).trim()) {
+        artist.genre = application.genre || 'Hip Hop';
+      }
       artist.aadharCard = application.aadharCard;
+      artist.panCard = application.panCard;
       artist.state = application.state;
       artist.city = application.city;
       artist.age = application.age;
@@ -585,6 +1194,12 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
       artist.proofPhoto = application.proofPhoto;
 
       await artist.save();
+    }
+
+    if (application.user) {
+      application.user.socialLinks = application.user.socialLinks || {};
+      application.user.socialLinks.instagram = instagramHandleToUrl(application.instagramId);
+      await application.user.save();
     }
 
     // Update user role if not already an artist
@@ -620,7 +1235,7 @@ router.post('/admin/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Reject application
-router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/admin/:id/reject', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user');
@@ -667,7 +1282,7 @@ router.post('/admin/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Admin: Confirm delete application
-router.get('/admin/:id/confirm-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/admin/:id/confirm-delete', isLoggedIn, hasAdminPermission('manage_artist_applications'), async (req, res) => {
   try {
     const application = await ArtistApplication.findById(req.params.id)
       .populate('user', 'name email profileImage');

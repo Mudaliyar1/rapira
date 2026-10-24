@@ -62,7 +62,7 @@
                           <span class="badge bg-secondary">Draft</span>
                         <% } %>
                       </td>
-                      <td><%= new Date(page.updatedAt).toLocaleDateString() %></td>
+                      <td><%= toISTDateString(page.updatedAt) %></td>
                       <td>
                         <div class="d-flex gap-2">
                           <a href="/page/<%= page.slug %>" class="btn btn-sm btn-outline-primary" target="_blank">
