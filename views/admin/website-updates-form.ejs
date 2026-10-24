@@ -104,7 +104,7 @@
               <%= isEdit ? update.description : 'Your description will appear here...' %>
             </p>
             <small class="text-muted">
-              Posted <%= isEdit ? update.timestamp.toLocaleDateString() : new Date().toLocaleDateString() %>
+              Posted <%= isEdit ? toISTDateString(update.timestamp) : toISTDateString(new Date()) %>
             </small>
           </div>
         </div>

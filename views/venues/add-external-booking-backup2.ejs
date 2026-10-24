@@ -192,7 +192,7 @@ function checkAvailability(date, startTime, duration) {
     resultsDiv.innerHTML = `
       <div class="alert alert-info text-center">
         <div class="spinner-border spinner-border-sm me-2"></div>
-        Checking availability for ${new Date(date).toLocaleDateString()} at ${startTime}...
+        Checking availability for ${toISTDateString(date)} at ${startTime}...
       </div>
     `;
     
@@ -230,7 +230,7 @@ function checkAvailability(date, startTime, duration) {
                       <i class="bi bi-check-circle me-2"></i>✅ Excellent! Time Slot Available
                     </h5>
                     <p class="mb-2">
-                      <strong>📅 Date:</strong> ${new Date(date).toLocaleDateString()}<br>
+                      <strong>📅 Date:</strong> ${toISTDateString(date)}<br>
                       <strong>🕐 Time:</strong> ${startTime} (${duration} hours)<br>
                       <strong>✨ Status:</strong> No conflicts found!
                     </p>

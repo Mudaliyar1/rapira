@@ -67,7 +67,7 @@
       <div class="row mb-3">
         <div class="col-md-8">
           <h5 class="mb-1"><%= bookingView.title %></h5>
-          <p class="text-muted mb-0">Artist: <strong><%= bookingView.artistName %></strong> | Date: <%= new Date(bookingView.date).toLocaleDateString('en-IN') %></p>
+          <p class=\"text-muted mb-0\">Artist: <strong><%= bookingView.artistName %></strong> | Date: <%= toISTDateString(bookingView.date) %></p>
         </div>
         <div class="col-md-4 text-md-end">
           <span class="badge bg-light text-dark">Booking ID: <%= bookingView.id.toString().slice(-8).toUpperCase() %></span>

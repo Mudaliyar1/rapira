@@ -1,0 +1,48 @@
+<%- contentFor('body') %>
+
+<div class="container py-5" style="max-width: 900px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Producer Application Status</h3>
+    <a href="/producer-applications/apply" class="btn btn-primary">New Application</a>
+  </div>
+
+  <% if (applications && applications.length > 0) { %>
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Submitted</th>
+              <th>Experience</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Admin Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% applications.forEach(application => { %>
+              <tr>
+                <td><%= toISTDateString(application.createdAt) %></td>
+                <td><%= application.yearsOfExperience %> years</td>
+                <td><%= application.location %></td>
+                <td>
+                  <span class="badge <%= application.status === 'approved' ? 'bg-success' : application.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>">
+                    <%= application.status %>
+                  </span>
+                </td>
+                <td><%= application.adminNotes || '-' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } else { %>
+    <div class="card">
+      <div class="card-body text-center py-5">
+        <p class="mb-3">You have not submitted any producer application yet.</p>
+        <a href="/producer-applications/apply" class="btn btn-primary">Apply as Producer</a>
+      </div>
+    </div>
+  <% } %>
+</div>

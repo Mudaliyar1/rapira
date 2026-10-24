@@ -30,19 +30,18 @@ const checkVenueOwnership = async (req, res, next) => {
 // GET /venue-dashboard - List all user's venues for dashboard access
 router.get('/', isLoggedIn, async (req, res) => {
   try {
-    const venues = await Venue.find({ 
-      createdBy: req.session.user.id,
-      isActive: true 
+    const venues = await Venue.find({
+      createdBy: req.session.user.id
     })
-    .sort({ name: 1 })
-    .lean();
+      .sort({ name: 1 })
+      .lean();
 
     // Get quick stats for each venue
     const venuesWithStats = await Promise.all(venues.map(async (venue) => {
       const totalWebsiteBookings = await Concert.countDocuments({ venue: venue._id });
-      const totalExternalBookings = await VenueExternalBooking.countDocuments({ 
-        venue: venue._id, 
-        status: 'active' 
+      const totalExternalBookings = await VenueExternalBooking.countDocuments({
+        venue: venue._id,
+        status: 'active'
       });
       const upcomingBookings = await Concert.countDocuments({
         venue: venue._id,
@@ -62,6 +61,9 @@ router.get('/', isLoggedIn, async (req, res) => {
     }));
 
     res.render('venues/dashboard-list', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: 'My Venue Dashboards',
       venues: venuesWithStats,
       user: req.session.user
@@ -78,12 +80,12 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
   try {
     const venue = req.venue;
     const { month, year, viewAll } = req.query;
-    
+
     // Current date for filtering
     const currentDate = new Date();
     const targetYear = year ? parseInt(year) : currentDate.getFullYear();
     const targetMonth = month ? parseInt(month) - 1 : currentDate.getMonth();
-    
+
     // Date filter - either all time or specific month
     let dateFilter = {};
     if (viewAll !== 'true') {
@@ -105,12 +107,12 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
     }
 
     const websiteBookings = await Concert.find(websiteBookingsQuery)
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name email' }
-    })
-    .sort({ date: 1, time: 1 })
-    .lean();
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email' }
+      })
+      .sort({ date: 1, time: 1 })
+      .lean();
 
     // Get external bookings
     const externalBookingsQuery = {
@@ -122,12 +124,12 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
     }
 
     const externalBookings = await VenueExternalBooking.find(externalBookingsQuery)
-    .sort({ date: 1, startTime: 1 })
-    .lean();
+      .sort({ date: 1, startTime: 1 })
+      .lean();
 
     // Combine and format bookings for calendar
     const allBookings = [];
-    
+
     // Add website bookings
     websiteBookings.forEach(booking => {
       allBookings.push({
@@ -140,8 +142,8 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
         duration: booking.venueBooking?.bookingHours || 2,
         status: booking.status,
         contactInfo: booking.artist?.user?.email || '',
-        color: booking.status === 'approved' ? '#28a745' : 
-               booking.status === 'pending' ? '#ffc107' : '#6c757d'
+        color: booking.status === 'approved' ? '#28a745' :
+          booking.status === 'pending' ? '#ffc107' : '#6c757d'
       });
     });
 
@@ -181,6 +183,9 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
       pendingApprovals: websiteBookings.filter(b => b.status === 'pending').length
     };
     res.render('venues/dashboard', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `${venue.name} - Dashboard`,
       venue,
       bookings: allBookings,
@@ -203,16 +208,19 @@ router.get('/:venueId/dashboard', isLoggedIn, checkVenueOwnership, async (req, r
 router.get('/:venueId/add-external-booking', isLoggedIn, checkVenueOwnership, async (req, res) => {
   try {
     const venue = req.venue;
-    
+
     // Get conflict details from session if they exist
     const conflictDetails = req.session.conflictDetails || null;
-    
+
     // Clear conflict details from session after using them
     if (req.session.conflictDetails) {
       delete req.session.conflictDetails;
     }
 
     res.render('venues/add-external-booking', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `Add External Booking - ${venue.name}`,
       venue,
       user: req.session.user,
@@ -242,9 +250,9 @@ router.post('/:venueId/add-booking', isLoggedIn, checkVenueOwnership, async (req
 
     // Check for conflicts
     const conflictCheck = await VenueExternalBooking.checkConflicts(
-      venue._id, 
-      date, 
-      startTime, 
+      venue._id,
+      date,
+      startTime,
       parseInt(durationHours)
     );
 
@@ -268,7 +276,7 @@ router.post('/:venueId/add-booking', isLoggedIn, checkVenueOwnership, async (req
           durationHours: parseInt(durationHours)
         }
       };
-      
+
       req.flash('error', 'Cannot add booking due to conflicts with existing bookings. Please check the details below and choose a different date/time.');
       return res.redirect(`/venue-dashboard/${venue._id}/add-external-booking?conflicts=true`);
     }
@@ -312,9 +320,9 @@ router.post('/:venueId/check-availability', isLoggedIn, checkVenueOwnership, asy
 
     // Check for conflicts
     const conflictCheck = await VenueExternalBooking.checkConflicts(
-      venue._id, 
-      date, 
-      startTime, 
+      venue._id,
+      date,
+      startTime,
       parseInt(durationHours)
     );
 
@@ -333,8 +341,8 @@ router.post('/:venueId/check-availability', isLoggedIn, checkVenueOwnership, asy
       success: true,
       available: !conflictCheck.hasConflicts,
       conflicts: formattedConflicts,
-      message: conflictCheck.hasConflicts ? 
-        'Time slot conflicts found' : 
+      message: conflictCheck.hasConflicts ?
+        'Time slot conflicts found' :
         'Time slot is available',
       venue: {
         name: venue.name,
@@ -363,7 +371,7 @@ router.get('/:venueId/external-bookings', isLoggedIn, checkVenueOwnership, async
 
     // Build query
     const query = { venue: venue._id };
-    
+
     if (status !== 'all') {
       query.status = status;
     }
@@ -379,6 +387,9 @@ router.get('/:venueId/external-bookings', isLoggedIn, checkVenueOwnership, async
       .lean();
 
     res.render('venues/external-bookings', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `External Bookings - ${venue.name}`,
       venue,
       bookings: externalBookings,
@@ -412,6 +423,9 @@ router.get('/:venueId/external-bookings/:bookingId', isLoggedIn, checkVenueOwner
     }
 
     res.render('venues/external-booking-details', {
+      layout: 'layouts/venue',
+      currentPath: '/venue-dashboard',
+      currentUser: req.session.user,
       title: `External Booking Details - ${venue.name}`,
       venue,
       booking,
@@ -479,14 +493,14 @@ router.put('/:venueId/external-bookings/:bookingId', isLoggedIn, checkVenueOwner
     }
 
     // If date/time is being changed, check for conflicts
-    if (date !== booking.date.toISOString().split('T')[0] || 
-        startTime !== booking.startTime || 
-        parseInt(durationHours) !== booking.durationHours) {
-      
+    if (date !== booking.date.toISOString().split('T')[0] ||
+      startTime !== booking.startTime ||
+      parseInt(durationHours) !== booking.durationHours) {
+
       const conflictCheck = await VenueExternalBooking.checkConflicts(
-        venue._id, 
-        date, 
-        startTime, 
+        venue._id,
+        date,
+        startTime,
         parseInt(durationHours),
         bookingId // Exclude current booking from conflict check
       );
@@ -523,6 +537,23 @@ router.put('/:venueId/external-bookings/:bookingId', isLoggedIn, checkVenueOwner
       success: false,
       message: 'Failed to update booking'
     });
+  }
+});
+
+// POST /venue-dashboard/:venueId/toggle-status - Enable/Disable venue
+router.post('/:venueId/toggle-status', isLoggedIn, checkVenueOwnership, async (req, res) => {
+  try {
+    const venue = req.venue;
+    venue.isActive = !venue.isActive;
+    await venue.save();
+
+    const statusText = venue.isActive ? 'enabled' : 'disabled';
+    req.flash('success', `Venue "${venue.name}" has been ${statusText} successfully.`);
+    res.redirect(`/venue-dashboard/${venue._id}/dashboard`);
+  } catch (error) {
+    console.error('Error toggling venue status:', error);
+    req.flash('error', 'Failed to update venue status');
+    res.redirect(`/venue-dashboard/${req.params.venueId}/dashboard`);
   }
 });
 

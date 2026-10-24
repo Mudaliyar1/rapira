@@ -35,13 +35,13 @@
                     </div>
                     <div class="mb-3">
                       <p class="text-white-50 mb-0" style="font-size: 0.85rem;">Requested On:</p>
-                      <p class="text-white mb-1" style="font-size: 0.95rem;"><%= new Date(request.createdAt).toLocaleDateString() %></p>
+                      <p class="text-white mb-1" style="font-size: 0.95rem;"><%= toISTDateString(request.createdAt) %></p>
                     </div>
 
                     <% if (request.status === 'approved') { %>
                       <div class="p-2 mb-3" style="background-color: rgba(25, 135, 84, 0.3); border-radius: 4px; border: 1px solid rgba(25, 135, 84, 0.4);">
                         <h6 class="mb-0 text-white" style="font-size: 0.95rem;">Refund Approved</h6>
-                        <p class="mb-0 text-white small" style="font-size: 0.85rem;">Processed: <%= request.refundedAt ? new Date(request.refundedAt).toLocaleDateString() : 'Processing' %></p>
+                        <p class="mb-0 text-white small" style="font-size: 0.85rem;">Processed: <%= request.refundedAt ? toISTDateString(request.refundedAt) : 'Processing' %></p>
                       </div>
                     <% } else if (request.status === 'rejected') { %>
                       <div class="p-2 mb-3" style="background-color: rgba(220, 53, 69, 0.3); border-radius: 4px; border: 1px solid rgba(220, 53, 69, 0.4);">

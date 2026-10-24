@@ -208,7 +208,7 @@
                     <% } %>
                   </td>
                   <td><%= request.eventCity %>, <%= request.eventState %></td>
-                  <td><%= new Date(request.eventDate).toLocaleDateString() %></td>
+                  <td><%= toISTDateString(request.eventDate) %></td>
                   <td>
                     <% if (request.status === 'pending') { %>
                       <span class="badge bg-warning text-dark">Pending</span>

@@ -1,0 +1,156 @@
+<%- include('../partials/producer-header') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="text-white mb-2">Beat Sales & Receipts</h5>
+      <p class="text-white-50 mb-0">Track all purchases of your beats by artists.</p>
+    </div>
+    <div class="text-end">
+      <h3 class="text-success mb-0">₹<%= lifetimeEarned.toFixed(2) %></h3>
+      <p class="text-white-50 small mb-0">Total Lifetime Earnings</p>
+    </div>
+  </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+  <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <h5 class="mb-0 text-white">Sales History</h5>
+      <span class="badge bg-success">₹<%= totalEarned.toFixed(2) %> Filtered</span>
+    </div>
+    <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="<%= (filters.searchArtist || filters.dateFrom || filters.dateTo) ? 'true' : 'false' %>" aria-controls="filterCollapse">
+      <i class="bi bi-funnel"></i> Filters
+    </button>
+  </div>
+  
+  <div class="collapse <%= (filters.searchArtist || filters.dateFrom || filters.dateTo) ? 'show' : '' %>" id="filterCollapse">
+    <div class="card-body border-bottom border-secondary bg-darker">
+      <form action="/producer-dashboard/beat-sales" method="GET" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label text-white-50 small">Artist Name</label>
+          <input type="text" name="searchArtist" class="form-control bg-dark text-white border-secondary" placeholder="Search by artist name..." value="<%= filters.searchArtist || '' %>">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label text-white-50 small">Date From</label>
+          <input type="date" name="dateFrom" class="form-control bg-dark text-white border-secondary" value="<%= filters.dateFrom || '' %>">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label text-white-50 small">Date To</label>
+          <input type="date" name="dateTo" class="form-control bg-dark text-white border-secondary" value="<%= filters.dateTo || '' %>">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+          <% if (filters.searchArtist || filters.dateFrom || filters.dateTo) { %>
+            <a href="/producer-dashboard/beat-sales" class="btn btn-outline-danger" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+          <% } %>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card-body pt-0 mt-3">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover mb-0 align-middle text-white" style="background-color: #000000 !important; color: #ffffff !important; --bs-table-bg: #000000 !important; --bs-table-color: #ffffff !important; --bs-table-striped-bg: #000000 !important; --bs-table-hover-bg: #1a1a1a !important;">
+        <thead>
+          <tr style="border-bottom: 2px solid #333; background-color: #000000 !important;">
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Date</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Artist</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Beat Title</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Base Price</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Platform Fee</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Total Paid</th>
+            <th class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">Transaction ID</th>
+            <th class="border-secondary text-white-50 text-end" style="background-color: #000000 !important; color: #ffffff !important;">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (sales && sales.length > 0) { %>
+            <% sales.forEach(sale => { %>
+              <tr style="background-color: #000000 !important;">
+                <td class="border-secondary text-white-50" style="background-color: #000000 !important; color: #ffffff !important;"><%= new Date(sale.createdAt).toLocaleDateString() %> <%= new Date(sale.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></td>
+                <td class="border-secondary" style="background-color: #000000 !important; color: #ffffff !important;">
+                  <div class="d-flex align-items-center text-white" style="color: #ffffff !important;">
+                    <img src="<%= sale.artist.profileImage || '/images/default-profile.svg' %>" width="32" height="32" class="rounded-circle me-2" alt="">
+                    <span><%= sale.artist.name %></span>
+                  </div>
+                </td>
+                <td class="border-secondary fw-bold text-white" style="background-color: #000000 !important; color: #ffffff !important;"><%= sale.beat ? sale.beat.title : (sale.backupTitle || 'Deleted Beat') %></td>
+                <td class="border-secondary fw-bold text-success" style="background-color: #000000 !important;"><%= sale.amount === 0 ? 'Free' : '₹' + sale.amount.toFixed(2) %></td>
+                <td class="border-secondary text-danger" style="background-color: #000000 !important;"><%= sale.platformFee === 0 ? 'Free' : '₹' + sale.platformFee.toFixed(2) %></td>
+                <td class="border-secondary text-info fw-bold" style="background-color: #000000 !important;"><%= sale.totalAmountPaid === 0 ? 'Free' : '₹' + sale.totalAmountPaid.toFixed(2) %></td>
+                <td class="border-secondary text-white-50 small font-monospace" style="background-color: #000000 !important; color: #ffffff !important;"><%= sale.transactionId || 'N/A' %></td>
+                <td class="border-secondary text-end" style="background-color: #000000 !important;">
+                  <div class="d-flex align-items-center justify-content-end gap-2">
+                    <a href="/producer-dashboard/beat-sales/<%= sale._id %>/receipt" class="btn btn-sm btn-outline-info text-nowrap">
+                      <i class="bi bi-receipt"></i> View Receipt
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteSaleModal-<%= sale._id %>" title="Hide Sale Record">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+            <% }); %>
+          <% } else { %>
+            <tr style="background-color: #000000 !important;">
+              <td colspan="8" class="text-center py-4 text-white-50" style="background-color: #000000 !important; color: #ffffff !important;">
+                <i class="bi bi-cart-x fs-2 d-block mb-3"></i>
+                No beats sold yet.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<% if (sales && sales.length > 0) { %>
+  <% sales.forEach(sale => { %>
+    <!-- Delete Sale Modal -->
+    <div class="modal fade" id="deleteSaleModal-<%= sale._id %>" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Record</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to permanently delete this sale record from your dashboard?</p>
+            <p class="text-white-50 small mb-0"><strong>Note:</strong> We recommend downloading a PDF copy as a backup before deleting it. Also, deleting this will <strong>not</strong> delete the receipt for the artist.</p>
+            <div class="text-center mt-3">
+              <a href="/producer-dashboard/beat-sales/<%= sale._id %>/receipt" class="btn btn-sm btn-info text-nowrap">
+                <i class="bi bi-file-earmark-pdf"></i> View & Download Receipt
+              </a>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/producer-dashboard/beat-sales/<%= sale._id %>/delete" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-danger">Yes, Delete Record</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- include('../partials/producer-footer') %>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment - Music Distribution</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body { background: #f4f6f9; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Inter', sans-serif; }
+    .payment-modal { background: white; max-width: 480px; width: 100%; border-radius: 2rem; box-shadow: 0 2rem 5rem rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: #1a1a1a; color: white; padding: 2.5rem 2rem; text-align: center; }
+    .price-tag { background: #edf2ff; color: #4361ee; font-size: 2.5rem; font-weight: 800; padding: 1rem; border-radius: 1.5rem; margin-bottom: 2rem; }
+    .detail-row { display: flex; justify-content: space-between; margin-bottom: 1rem; color: #666; font-size: 0.95rem; }
+    .total-row { display: flex; justify-content: space-between; border-top: 1px dashed #ddd; padding-top: 1.5rem; margin-top: 1.5rem; font-weight: 800; font-size: 1.25rem; }
+    .btn-pay { background: #6f42c1; color: white; border: none; padding: 1.2rem; border-radius: 1rem; width: 100%; font-weight: bold; font-size: 1.1rem; transition: all 0.2s; }
+    .btn-pay:hover { background: #5a32a3; transform: translateY(-2px); box-shadow: 0 0.5rem 1.5rem rgba(111, 66, 193, 0.3); }
+  </style>
+</head>
+<body>
+  <div class="payment-modal">
+    <div class="header">
+      <h3 class="fw-bold mb-1">Confirm Distribution</h3>
+      <p class="mb-0 opacity-75 small">Secure Payment to Rapira Platform</p>
+    </div>
+    
+    <div class="p-4 p-md-5">
+      <div class="text-center mb-4">
+        <h5 class="fw-bold text-dark"><%= request.contentTitle %></h5>
+        <div class="badge bg-light text-muted border px-3 py-2 rounded-pill"><%= request.package.name %></div>
+      </div>
+
+      <div class="price-tag text-center animate__animated animate__pulse">
+        ₹<%= Number(request.totalPaid).toFixed(2) %>
+      </div>
+
+      <div class="details mb-5">
+        <div class="detail-row">
+          <span>Distribution Fee</span>
+          <span class="fw-bold">₹<%= Number(request.price).toFixed(2) %></span>
+        </div>
+        <div class="detail-row">
+          <span>Platform Fee</span>
+          <span class="fw-bold">₹<%= Number(request.commissionAmount).toFixed(2) %></span>
+        </div>
+        <div class="total-row text-dark">
+          <span>Total Payable</span>
+          <span class="text-primary">₹<%= Number(request.totalPaid).toFixed(2) %></span>
+        </div>
+      </div>
+
+      <button id="rzp-button" class="btn btn-pay">
+        <i class="bi bi-shield-check me-2"></i> Confirm & Pay Now
+      </button>
+      
+      <div class="mt-3">
+        <a href="/artist-distribution/cancel-request/<%= request._id %>" class="btn btn-danger w-100 py-3 rounded-4 fw-bold shadow-sm">
+          <i class="bi bi-x-lg me-2"></i> Cancel Distribution Request
+        </a>
+      </div>
+
+      <div class="mt-5 text-center p-3 bg-light rounded-4">
+        <p class="small text-muted mb-0"><i class="bi bi-lock-fill text-success"></i> Your transaction is encrypted with 256-bit SSL security.</p>
+      </div>
+    </div>
+  </div>
+
+  <form id="verifyForm" action="/artist-distribution/verify-payment/<%= request._id %>" method="POST">
+    <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+    <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+    <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+  </form>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    const options = {
+      key: "<%= keyId %>",
+      amount: "<%= order.amount %>",
+      currency: "INR",
+      name: "Rapira Music Platform",
+      description: "Distribution Purchase: <%= request.contentTitle %>",
+      order_id: "<%= order.id %>",
+      handler: function(response){
+        document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+        document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+        document.getElementById('razorpay_signature').value = response.razorpay_signature;
+        document.getElementById('verifyForm').submit();
+      },
+      prefill: {
+        name: "<%= currentUser.name %>",
+        email: "<%= currentUser.email %>"
+      },
+      theme: { color: "#6f42c1" }
+    };
+    const rzp = new Razorpay(options);
+    document.getElementById('rzp-button').onclick = function(e){
+      rzp.open();
+      e.preventDefault();
+    }
+  </script>
+</body>
+</html>

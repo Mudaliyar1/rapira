@@ -1,0 +1,102 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 mb-0 text-white">Artist Beat Purchases</h2>
+        <p class="text-white-50 mb-0">Monitor and manage beats purchased by artists.</p>
+    </div>
+</div>
+
+<% if (success && success.length > 0) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= success %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<% } %>
+
+<!-- Filter Section -->
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <form action="/admin/artist-beat-purchases" method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="email" class="form-label text-white-50 small fw-bold">Search Artist Email</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-envelope"></i></span>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="email" name="email" value="<%= filters.email || '' %>" placeholder="artist@example.com">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="startDate" class="form-label text-white-50 small fw-bold">Start Date</label>
+                <input type="date" class="form-control bg-dark text-white border-secondary" id="startDate" name="startDate" value="<%= filters.startDate || '' %>">
+            </div>
+            <div class="col-md-3">
+                <label for="endDate" class="form-label text-white-50 small fw-bold">End Date</label>
+                <input type="date" class="form-control bg-dark text-white border-secondary" id="endDate" name="endDate" value="<%= filters.endDate || '' %>">
+            </div>
+            <div class="col-md-2">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                    <a href="/admin/artist-beat-purchases" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Artist</th>
+                        <th>Email</th>
+                        <th class="text-center">Active Library Beats</th>
+                        <th class="text-center">Total Lifetime Spend</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (artists && artists.length > 0) { %>
+                        <% artists.forEach(artist => { %>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="<%= artist.profileImage || '/images/default-profile.svg' %>" alt="" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover; border: 2px solid #333;">
+                                        <div class="text-white fw-bold"><%= artist.name %></div>
+                                    </div>
+                                </td>
+                                <td class="text-white-50"><%= artist.email %></td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill"><%= artist.purchaseCount %> Beats</span>
+                                </td>
+                                <td class="text-center text-success fw-bold">₹<%= artist.totalSpent.toFixed(2) %></td>
+                                <td class="text-end">
+                                    <a href="/admin/artist-beat-purchases/artist/<%= artist._id %>" class="btn btn-sm btn-info">
+                                        <i class="bi bi-eye mr-1"></i> View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-white-50">
+                                <i class="bi bi-person-x d-block fs-1 mb-3"></i>
+                                No artists have purchased any beats yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

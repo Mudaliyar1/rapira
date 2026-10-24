@@ -1,0 +1,83 @@
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-white mb-0">
+      <i class="bi bi-file-text"></i> Unblock Request Details
+    </h4>
+    <a href="/admin/unblock-requests" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="row g-3">
+    <!-- Artist Info -->
+    <div class="col-lg-4">
+      <div class="glass-card-dark border border-secondary p-3 h-100">
+        <h6 class="text-white mb-3">Artist</h6>
+        <div class="d-flex align-items-center mb-3">
+          <% if (request.artist && request.artist.user && request.artist.user.profileImage) { %>
+            <img src="<%= request.artist.user.profileImage %>" alt="<%= request.artist.stageName %>" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+          <% } else { %>
+            <div class="bg-secondary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+              <i class="bi bi-person-fill text-white fs-3"></i>
+            </div>
+          <% } %>
+          <div>
+            <div class="text-white fw-semibold"><%= request.artist ? request.artist.stageName : 'Unknown' %></div>
+            <div class="text-white-50 small"><%= request.artist && request.artist.user ? request.artist.user.email : 'N/A' %></div>
+          </div>
+        </div>
+        <div>
+          <span class="badge <%= request.status === 'pending' ? 'bg-warning' : (request.status === 'approved' ? 'bg-success' : 'bg-danger') %>">
+            <i class="bi <%= request.status === 'pending' ? 'bi-hourglass-split' : (request.status === 'approved' ? 'bi-check-circle-fill' : 'bi-x-circle-fill') %>"></i>
+            <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
+          </span>
+        </div>
+        <div class="mt-2 text-white-50 small">
+          Requested: <%= new Date(request.createdAt).toLocaleString('en-IN') %>
+        </div>
+        <% if (request.reviewedAt) { %>
+          <div class="text-white-50 small">
+            Reviewed: <%= new Date(request.reviewedAt).toLocaleString('en-IN') %> by <%= request.reviewedBy ? request.reviewedBy.name : 'N/A' %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Message & Admin Response -->
+    <div class="col-lg-8">
+      <div class="glass-card-dark border border-secondary p-3 mb-3">
+        <h6 class="text-white mb-2">Artist Message</h6>
+        <p class="text-white" style="white-space: pre-wrap;"><%= request.message %></p>
+      </div>
+
+      <% if (request.adminResponse) { %>
+      <div class="glass-card-dark border border-info p-3 mb-3">
+        <h6 class="text-info mb-2"><i class="bi bi-info-circle"></i> Admin Response</h6>
+        <p class="text-white" style="white-space: pre-wrap;"><%= request.adminResponse %></p>
+      </div>
+      <% } %>
+
+      <!-- Actions -->
+      <div class="glass-card-dark border border-secondary p-3">
+        <% if (request.status === 'pending') { %>
+          <form class="d-flex flex-wrap gap-2" method="POST" action="/admin/unblock-requests/<%= request._id %>/approve">
+            <div class="flex-grow-1">
+              <textarea class="form-control" name="adminResponse" rows="2" placeholder="Optional response to artist..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Approve</button>
+          </form>
+          <form class="d-flex flex-wrap gap-2 mt-2" method="POST" action="/admin/unblock-requests/<%= request._id %>/reject">
+            <div class="flex-grow-1">
+              <textarea class="form-control" name="adminResponse" rows="2" required placeholder="Reason for rejection..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
+          </form>
+        <% } else { %>
+          <div class="text-white-50">
+            This request has been <span class="text-white"><%= request.status %></span>.
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

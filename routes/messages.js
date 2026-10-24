@@ -5,12 +5,50 @@ const User = require('../models/User');
 const Artist = require('../models/Artist');
 const Role = require('../models/Role');
 const UserRole = require('../models/UserRole');
+const ProducerApplication = require('../models/ProducerApplication');
 const { isLoggedIn } = require('../middleware/auth');
 const mongoose = require('mongoose');
+
+const getDashboardMessagingContext = async (sessionUser) => {
+  if (!sessionUser || !sessionUser.id) return null;
+
+  if (sessionUser.role === 'artist') {
+    const artist = await Artist.findOne({ user: sessionUser.id }).populate('user');
+    if (artist) {
+      return {
+        dashboardType: 'artist',
+        artist,
+        producerUser: null
+      };
+    }
+  }
+
+  const userRoles = await UserRole.find({ user: sessionUser.id }).populate('role');
+  const hasProducerRole = userRoles.some(entry => entry.role && entry.role.name && entry.role.name.toLowerCase() === 'producer');
+
+  if (hasProducerRole) {
+    return {
+      dashboardType: 'producer',
+      artist: null,
+      producerUser: sessionUser
+    };
+  }
+
+  return null;
+};
 
 // Middleware to check if user can message a specific role
 const canMessageRole = async (req, res, next) => {
   try {
+    const User = require('../models/User');
+
+    // Check if current user is blocked
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot send messages.');
+      return res.redirect('/messages');
+    }
+
     // Get the current user's artist profile if they are an artist
     let artist = null;
 
@@ -109,9 +147,41 @@ const canMessageRole = async (req, res, next) => {
   }
 };
 
+// Middleware to check if user is blocked
+const checkBlocked = async (req, res, next) => {
+  try {
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot access this feature.');
+      return res.redirect('/producer-dashboard/unblock-request');
+    }
+    next();
+  } catch (error) {
+    console.error('Error in checkBlocked middleware:', error);
+    next();
+  }
+};
+
 // Messages inbox
 router.get('/', isLoggedIn, async (req, res) => {
   try {
+    const User = require('../models/User');
+
+    // Check if current user is blocked
+    const currentUser = await User.findById(req.session.user.id);
+    if (currentUser && currentUser.isBlocked) {
+      req.flash('error', 'Your account has been blocked. You cannot access messages.');
+      return res.redirect('/producer-dashboard/unblock-request');
+    }
+
+    await Message.updateMany(
+      {
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
     // Get conversations (grouped by the other user)
     const conversations = await Message.aggregate([
       {
@@ -207,7 +277,11 @@ router.get('/', isLoggedIn, async (req, res) => {
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    res.render('messages/inbox', {
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/inbox-dashboard' : 'messages/inbox';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: 'Messages',
       conversations,
       userMap,
@@ -216,7 +290,11 @@ router.get('/', isLoggedIn, async (req, res) => {
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages'
     });
   } catch (error) {
     console.error('Error in messages inbox:', error);
@@ -238,6 +316,15 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       return res.redirect('/messages');
     }
 
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
     // Get messages between the two users
     const messages = await Message.find({
       $or: [
@@ -253,7 +340,7 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
         receiver: req.session.user.id,
         isRead: false
       },
-      { isRead: true }
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
     );
 
     // Get other user's artist profile if they are an artist
@@ -281,7 +368,11 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    res.render('messages/conversation', {
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/conversation-dashboard' : 'messages/conversation';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: `Conversation with ${otherUser.name}`,
       otherUser,
       otherUserArtist,
@@ -290,7 +381,11 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages'
     });
   } catch (error) {
     console.error('Error in view conversation:', error);
@@ -300,7 +395,7 @@ router.get('/conversation/:userId', isLoggedIn, canMessageRole, async (req, res)
 });
 
 // Send message
-router.post('/send', isLoggedIn, async (req, res) => {
+router.post('/send', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     const { recipientId, content } = req.body;
 
@@ -393,11 +488,97 @@ router.post('/send', isLoggedIn, async (req, res) => {
       return res.redirect('/messages');
     }
 
+    // Aggressive Universal Contact Detection (Precision Refined)
+    const multilingualNumberWords = [
+      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'teen', 'char', 'panch', 'saat', 'aath', 'nau', 'das', 'shunya',
+      'uno', 'tres', 'quatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'
+    ];
+    // Pattern for numbers written in words (Strict boundaries)
+    const writtenNumberPattern = new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'i');
+
+    // Social Social Pattern (Strict boundaries for common word parts)
+    const socialPattern = /\b(instagram|whatsapp|telegram|facebook|snapchat|insta|wtsapp|tele|viber|signal|discord|skype|fb\.com|twitt|linktr)\b|wame|tme|ig@|wa\.me/i;
+    const intentPattern = /\b(call|whatsapp|message|contact|msg me|text me|ping|dm|reach|dial|num|number|save|write|moj)\b/i;
+
+    const piiPattern = /\b(credit card|debit card|bank account|cvv|otp|aadhaar|pan card|passport number|routing number|ifsc)\b/i;
+    const nativeVulgarsRaw = "madarchod|bhenchod|behenchod|chutiya|bhosadike|bhosdi|randi|harami|gaandu|gandu|lodu|chinal|kamina|bhadwa|randa|chodu|lund|laura|muthiya|chut|kaminey|haraami|saala";
+    const badWordsPattern = new RegExp(`\\b(fuck|shit|bitch|cunt|asshole|slut|whore|nigga|nigger|bastard|mc|bc|${nativeVulgarsRaw})\\b`, 'i');
+
+    let violationType = null;
+    const normalizedText = content.toLowerCase();
+
+    // 1. Check for Socials/Contact (Now with strict boundaries)
+    if (socialPattern.test(normalizedText)) violationType = 'Personal Contact Details';
+    // 2. Check for PII/Financial
+    if (!violationType && piiPattern.test(normalizedText)) violationType = 'Financial or ID Information';
+    // 3. Check for direct profanity
+    if (!violationType && badWordsPattern.test(normalizedText)) violationType = 'Vulgarity/Abusive Language';
+
+    // 4. Check for intentional sharing via words (Enhanced accuracy)
+    if (!violationType && writtenNumberPattern.test(normalizedText) && intentPattern.test(normalizedText)) {
+      const matchWords = normalizedText.match(new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'gi')) || [];
+      if (matchWords.length >= 2 || /number|num|call|whatsapp|save/i.test(normalizedText)) {
+        violationType = 'Personal Contact Details';
+      }
+    }
+
+    // 5. Check for Technical/Encoded Bypasses (Morse, Binary, Code)
+    if (!violationType) {
+      const morsePattern = /^[.\- ]{20,}$|(?:\.\.\.\.\.|\-\-\-\-\-)/; // Very strict (20 symbols or 5 dots/dashes in row)
+      const binaryPattern = /\b[01]{16,}\b/; // Require 16 bits to avoid small numbers/dates
+      const programmingPattern = /\b(function|const|ifdef|elif|endif|namespace|public\s+class|struct|async|await|console\.log|print\(|echo\s+|<\?php)\b|[{};]{4,}|<\/?[a-z][^>]*>/i;
+
+      if (morsePattern.test(content) && content.length > 10) violationType = 'Encoded or Technical Content';
+      else if (binaryPattern.test(content)) violationType = 'Encoded or Technical Content';
+      else if (programmingPattern.test(content)) violationType = 'Programming Syntax or Scripting';
+    }
+
+    // Aggregate recent history for deeper checks
+    const timeframe = new Date(Date.now() - 10 * 60 * 1000);
+    const recentMessages = await Message.find({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      createdAt: { $gte: timeframe }
+    }).limit(10).select('content');
+
+    const recentActualContent = recentMessages.filter(m => m.content && !m.content.includes('[SYSTEM_ADVISORY:') && !m.content.includes('RAPIRA Shield:')).map(m => m.content).join(' ');
+    const cleanNumbers = (text) => text.replace(/\b\d{4}-\d{2}-\d{2}\b/g, '').replace(/\b\d{2}\/\d{2}\/\d{2,4}\b/g, '').replace(/\b\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm))?\b/gi, '').replace(/\b202\d\b/g, '');
+
+    const currentDigits = cleanNumbers(content).replace(/\D/g, '').length;
+    const previousDigits = cleanNumbers(recentActualContent).replace(/\D/g, '').length;
+
+    if (!violationType && (previousDigits + currentDigits >= 10)) violationType = 'Personal Contact Details';
+
+    // 6. Smarter Deep Scanner
+    const isSuspiciousFragment = content.length <= 5 || (recentMessages.length > 0 && recentActualContent.length / (recentMessages.length || 1) < 6);
+    if (!violationType && isSuspiciousFragment) {
+      // Keep a space between messages so words aren't formed across message splits accidentally
+      const ghostCombinedSquished = (recentActualContent + ' ' + content).toLowerCase().replace(/[^a-z0-9 ]/g, '');
+      const nativeVulgars = nativeVulgarsRaw.split('|');
+      for (const v of nativeVulgars) {
+        if (ghostCombinedSquished.includes(v)) {
+          // Flag only if the bad word is a significant part of the message (60%)
+          if (v.length > (ghostCombinedSquished.length * 0.6) || ghostCombinedSquished === v) {
+            violationType = 'Vulgarity/Abusive Language';
+            break;
+          }
+        }
+      }
+    }
+
+    let finalContent = content;
+    if (violationType) {
+      finalContent = `🛡️ [RAPIRA Shield: This message was redacted because it contains ${violationType}. Security is monitored 24/7.]`;
+    }
+
     // Create new message
     const newMessage = new Message({
       sender: req.session.user.id,
       receiver: recipientId,
-      content
+      content: finalContent,
+      deliveredAt: null,
+      readAt: null
     });
 
     await newMessage.save();
@@ -410,8 +591,362 @@ router.post('/send', isLoggedIn, async (req, res) => {
   }
 });
 
+router.get('/api/conversation/:userId', isLoggedIn, canMessageRole, async (req, res) => {
+  try {
+    const otherUserId = req.params.userId;
+
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        deliveredAt: null
+      },
+      { deliveredAt: new Date() }
+    );
+
+    await Message.updateMany(
+      {
+        sender: otherUserId,
+        receiver: req.session.user.id,
+        isRead: false
+      },
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
+    );
+
+    let messages = await Message.find({
+      $or: [
+        { sender: req.session.user.id, receiver: otherUserId },
+        { sender: otherUserId, receiver: req.session.user.id }
+      ]
+    }).sort({ createdAt: 1 }).lean();
+
+    // Check if other user is typing
+    const otherUser = await User.findById(otherUserId).select('typingTo lastTypingAt');
+    let isTyping = false;
+    if (otherUser && otherUser.typingTo && otherUser.typingTo.toString() === req.session.user.id) {
+      const now = new Date();
+      if (otherUser.lastTypingAt && (now - otherUser.lastTypingAt) < 6000) {
+        isTyping = true;
+      }
+    }
+
+    // Filter out deleted messages based on user
+    messages = messages.map(msg => {
+      const deletedFor = msg.deletedFor || [];
+      if (msg.isDeleted || deletedFor.some(id => id.toString() === req.session.user.id)) {
+        return {
+          ...msg,
+          content: null,
+          isDeleted: true,
+          isEdited: false
+        };
+      }
+      return msg;
+    });
+
+    res.json({ success: true, messages, isTyping });
+  } catch (error) {
+    console.error('Conversation API error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch conversation' });
+  }
+});
+
+// Update typing status
+router.post('/api/typing/:recipientId', isLoggedIn, async (req, res) => {
+  try {
+    const { isTyping } = req.body;
+    const myId = req.session.user.id;
+    const recipientId = req.params.recipientId;
+
+    if (isTyping) {
+      await User.findByIdAndUpdate(myId, {
+        typingTo: recipientId,
+        lastTypingAt: new Date()
+      });
+    } else {
+      await User.findByIdAndUpdate(myId, {
+        typingTo: null
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
+  }
+});
+
+router.post('/api/send', isLoggedIn, canMessageRole, async (req, res) => {
+  try {
+    const { recipientId, content } = req.body;
+
+    if (!recipientId || !content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Recipient and content are required' });
+    }
+
+    const recipient = await User.findById(recipientId);
+    if (!recipient) {
+      return res.status(404).json({ success: false, message: 'Recipient not found' });
+    }
+
+    // Aggressive Universal Contact Detection (Precision Refined)
+    const multilingualNumberWords = [
+      'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+      'teen', 'char', 'panch', 'saat', 'aath', 'nau', 'das', 'shunya',
+      'uno', 'tres', 'quatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'
+    ];
+    const writtenNumberPattern = new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'i');
+    const socialPattern = /\b(instagram|whatsapp|telegram|facebook|snapchat|insta|wtsapp|tele|viber|signal|discord|skype|fb\.com|twitt|linktr)\b|wame|tme|ig@|wa\.me/i;
+    const intentPattern = /\b(call|whatsapp|message|contact|msg me|text me|ping|dm|reach|dial|num|number|save|write|moj)\b/i;
+
+    const piiPattern = /\b(credit card|debit card|bank account|cvv|otp|aadhaar|pan card|passport number|routing number|ifsc)\b/i;
+    const nativeVulgarsRaw = "madarchod|bhenchod|behenchod|chutiya|bhosadike|bhosdi|randi|harami|gaandu|gandu|lodu|chinal|kamina|bhadwa|randa|chodu|lund|laura|muthiya|chut|kaminey|haraami|saala";
+    const badWordsPattern = new RegExp(`\\b(fuck|shit|bitch|cunt|asshole|slut|whore|nigga|nigger|bastard|mc|bc|${nativeVulgarsRaw})\\b`, 'i');
+
+    let violationType = null;
+    const normalizedText = content.toLowerCase();
+
+    // 1. Check for Socials/Contact (Precision boundaries)
+    if (socialPattern.test(normalizedText)) violationType = 'Personal Contact Details';
+    // 2. Check for PII/Financial
+    if (!violationType && piiPattern.test(normalizedText)) violationType = 'Financial or ID Information';
+    // 3. Check for direct profanity
+    if (!violationType && badWordsPattern.test(normalizedText)) violationType = 'Vulgarity/Abusive Language';
+
+    // Aggregate recent history for deeper checks
+    const timeframe = new Date(Date.now() - 10 * 60 * 1000);
+    const recentMessages = await Message.find({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      createdAt: { $gte: timeframe }
+    }).limit(10).select('content');
+
+    const recentActualContent = recentMessages.filter(m => m.content && !m.content.includes('[SYSTEM_ADVISORY:') && !m.content.includes('RAPIRA')).map(m => m.content).join(' ');
+
+    // Function to clean up dates, times, and common non-phone numbers
+    const cleanNumbers = (text) => {
+      return text
+        .replace(/\b\d{4}-\d{2}-\d{2}\b/g, '') // YYYY-MM-DD
+        .replace(/\b\d{2}\/\d{2}\/\d{2,4}\b/g, '') // DD/MM/YYYY
+        .replace(/\b\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm))?\b/gi, '') // Time
+        .replace(/\b202\d\b/g, ''); // Current decade years
+    };
+    const currentDigits = cleanNumbers(content).replace(/\D/g, '').length;
+    const previousDigits = cleanNumbers(recentActualContent).replace(/\D/g, '').length;
+
+    if (!violationType && (previousDigits + currentDigits >= 10)) violationType = 'Personal Contact Details';
+
+    // 5. Check for intentional sharing via words (Enhanced accuracy)
+    if (!violationType && writtenNumberPattern.test(normalizedText)) {
+      const matchWords = normalizedText.match(new RegExp(`\\b(${multilingualNumberWords.join('|')})\\b`, 'gi')) || [];
+      if (matchWords.length >= 2 || /number|num|call|whatsapp|save/i.test(normalizedText)) {
+        violationType = 'Personal Contact Details';
+      }
+    }
+
+    // 5-B. Check for Technical/Encoded Bypasses (Morse, Binary, Code)
+    if (!violationType) {
+      const morsePattern = /^[.\- ]{20,}$|(?:\.\.\.\.\.|\-\-\-\-\-)/;
+      const binaryPattern = /\b[01]{16,}\b/;
+      const programmingPattern = /\b(function|const|ifdef|elif|endif|namespace|public\s+class|struct|async|await|console\.log|print\(|echo\s+|<\?php)\b|[{};]{4,}|<\/?[a-z][^>]*>/i;
+
+      if (morsePattern.test(content) && content.length > 10) violationType = 'Encoded or Technical Content';
+      else if (binaryPattern.test(content)) violationType = 'Encoded or Technical Content';
+      else if (programmingPattern.test(content)) violationType = 'Programming Syntax or Scripting';
+    }
+
+    // 6. Smarter Deep Scanner
+    const isSuspiciousFragment = content.length <= 5 || (recentMessages.length > 0 && recentActualContent.length / (recentMessages.length || 1) < 6);
+    if (!violationType && isSuspiciousFragment) {
+      const ghostCombinedSquished = (recentActualContent + ' ' + content).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const nativeVulgars = nativeVulgarsRaw.split('|');
+      for (const v of nativeVulgars) {
+        if (ghostCombinedSquished.includes(v)) {
+          if (v.length > (ghostCombinedSquished.length * 0.6) || ghostCombinedSquished === v) {
+            violationType = 'Vulgarity/Abusive Language';
+            break;
+          }
+        }
+      }
+    }
+
+    let finalContent = content.trim();
+    if (violationType) {
+      finalContent = `🛡️ [RAPIRA Shield: This message was redacted because it contains ${violationType}. Security is monitored 24/7.]`;
+    }
+
+    const newMessage = new Message({
+      sender: req.session.user.id,
+      receiver: recipientId,
+      content: finalContent,
+      deliveredAt: null,
+      readAt: null
+    });
+
+    await newMessage.save();
+
+    res.json({ success: true, message: newMessage });
+  } catch (error) {
+    console.error('Send API error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+});
+
+router.post('/api/mark-read/:userId', isLoggedIn, checkBlocked, async (req, res) => {
+  try {
+    await Message.updateMany(
+      {
+        sender: req.params.userId,
+        receiver: req.session.user.id,
+        isRead: false
+      },
+      { isRead: true, readAt: new Date(), deliveredAt: new Date() }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark read API error:', error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Edit message
+router.put('/api/edit/:messageId', isLoggedIn, checkBlocked, async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: 'Content cannot be empty' });
+    }
+
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    // Only sender can edit their message
+    if (message.sender.toString() !== req.session.user.id) {
+      return res.status(403).json({ success: false, message: 'You can only edit your own messages' });
+    }
+
+    // Cannot edit deleted messages
+    if (message.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Cannot edit deleted messages' });
+    }
+
+    // Store original content if not already stored
+    if (!message.originalContent) {
+      message.originalContent = message.content;
+    }
+
+    message.content = content.trim();
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('Edit message error:', error);
+    res.status(500).json({ success: false, message: 'Failed to edit message' });
+  }
+});
+
+// Delete message
+router.delete('/api/delete/:messageId', isLoggedIn, checkBlocked, async (req, res) => {
+  try {
+    const { deleteFor } = req.body; // 'me' or 'everyone'
+
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    // Check permissions
+    const isSender = message.sender.toString() === req.session.user.id;
+    const isReceiver = message.receiver.toString() === req.session.user.id;
+
+    if (!isSender && !isReceiver) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    if (deleteFor === 'everyone' && !isSender) {
+      return res.status(403).json({ success: false, message: 'Only sender can delete for everyone' });
+    }
+
+    if (deleteFor === 'everyone') {
+      // Delete for everyone
+      message.isDeleted = true;
+      message.deletedAt = new Date();
+      message.deletedFor = [message.sender, message.receiver];
+    } else {
+      // Delete for me only
+      if (!message.deletedFor.includes(req.session.user.id)) {
+        message.deletedFor.push(req.session.user.id);
+      }
+    }
+
+    await message.save();
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete message' });
+  }
+});
+
+// Bulk delete messages
+router.post('/api/bulk-delete', isLoggedIn, checkBlocked, async (req, res) => {
+  try {
+    const { messageIds, deleteFor } = req.body; // deleteFor: 'me' or 'everyone'
+
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No messages selected' });
+    }
+
+    const messages = await Message.find({ _id: { $in: messageIds } });
+
+    // Check permissions
+    for (const msg of messages) {
+      const isSender = msg.sender.toString() === req.session.user.id;
+      const isReceiver = msg.receiver.toString() === req.session.user.id;
+
+      if (!isSender && !isReceiver) {
+        return res.status(403).json({ success: false, message: 'Unauthorized to delete some messages' });
+      }
+
+      if (deleteFor === 'everyone' && !isSender) {
+        return res.status(403).json({ success: false, message: 'Only sender can delete messages for everyone' });
+      }
+    }
+
+    // Update all messages
+    if (deleteFor === 'everyone') {
+      await Message.updateMany(
+        { _id: { $in: messageIds } },
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedFor: [messages[0].sender, messages[0].receiver]
+        }
+      );
+    } else {
+      for (const msg of messages) {
+        if (!msg.deletedFor.includes(req.session.user.id)) {
+          msg.deletedFor.push(req.session.user.id);
+        }
+        await msg.save();
+      }
+    }
+
+    res.json({ success: true, deletedCount: messages.length });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete messages' });
+  }
+});
+
 // Find users to message
-router.get('/find', isLoggedIn, async (req, res) => {
+router.get('/find', isLoggedIn, checkBlocked, async (req, res) => {
   try {
     // Get filter parameters
     const { role, state } = req.query;
@@ -430,126 +965,142 @@ router.get('/find', isLoggedIn, async (req, res) => {
       .filter(ur => ur.role) // Filter out null role references
       .map(ur => ur.role.name);
 
-    // Get all roles
-    const roles = await Role.find().sort({ name: 1 });
+    // Get all roles for filter dropdown (Only Producers and Artists)
+    const roles = await Role.find({ name: { $regex: /^(producer|artist)$/i } }).sort({ name: 1 });
 
-    // Prepare to find users with roles
+    // Ensure Artist is in the roles list for the filter
+    const hasArtistRole = roles.some(r => r.name.toLowerCase() === 'artist');
+    if (!hasArtistRole) {
+      roles.push({ _id: 'artist', name: 'Artist' });
+    }
 
-    // If role is specified, filter by role
-    let roleFilter = null;
+    // Build users list based on current user type
+    let usersToShow = [];
+    let artistMap = {};
 
-    if (role) {
+    // Current user is ARTIST or PRODUCER - show all producers and other artists
+    const producerRole = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    let producerUsers = [];
+
+    if (producerRole) {
+      const userRoles = await UserRole.find({ role: producerRole._id }).populate('user');
+      producerUsers = userRoles
+        .filter(ur => ur.user && ur.user._id.toString() !== req.session.user.id)
+        .map(ur => ur.user);
+    }
+
+    const allArtists = await Artist.find().populate('user');
+    const otherArtistUsers = allArtists
+      .filter(a => a.user && a.user._id.toString() !== req.session.user.id)
+      .map(a => a.user);
+
+    // Create artist map
+    allArtists.forEach(artist => {
+      if (artist.user && artist.user._id) {
+        artistMap[artist.user._id.toString()] = artist;
+      }
+    });
+
+    // Filter out duplicates based on _id
+    const combinedUsers = [...producerUsers, ...otherArtistUsers];
+    const uniqueUsersMap = new Map();
+    combinedUsers.forEach(u => {
+      if (u && u._id && !uniqueUsersMap.has(u._id.toString())) {
+        uniqueUsersMap.set(u._id.toString(), u);
+      }
+    });
+
+    usersToShow = Array.from(uniqueUsersMap.values());
+
+    // Apply role filter if specified
+    if (role === 'artist') {
+      usersToShow = usersToShow.filter(u => u.role === 'artist');
+    } else if (role) {
       const selectedRole = await Role.findById(role);
-
       if (selectedRole) {
-        roleFilter = selectedRole;
+        const userRolesFiltered = await UserRole.find({ role: selectedRole._id }).populate('user');
+        const roleUserIds = userRolesFiltered
+          .filter(ur => ur.user && ur.user._id)
+          .map(ur => ur.user._id.toString());
+        usersToShow = usersToShow.filter(u => roleUserIds.includes(u._id.toString()));
       }
     }
 
-    // Get users with roles
-    let usersWithRoles = [];
-
-    if (roleFilter) {
-      // Get users with the selected role
-      const userRoles = await UserRole.find({ role: roleFilter._id })
-        .populate('user');
-
-      usersWithRoles = userRoles.map(ur => ur.user);
-    } else {
-      // Get all users with any role
-      const userRoles = await UserRole.find()
-        .populate('user')
-        .populate('role');
-
-      // Group by user
-      const userRoleMap = {};
-
-      userRoles.forEach(ur => {
-        // Skip entries with null user or role references
-        if (!ur.user || !ur.role) {
-          console.log('Found user role with null user or role reference:', ur);
-          return;
-        }
-
-        if (!userRoleMap[ur.user._id]) {
-          userRoleMap[ur.user._id] = {
-            user: ur.user,
-            roles: []
-          };
-        }
-
-        userRoleMap[ur.user._id].roles.push(ur.role);
-      });
-
-      usersWithRoles = Object.values(userRoleMap).map(ur => ur.user);
-    }
-
-    // Filter out the current user
-    usersWithRoles = usersWithRoles.filter(u => u._id.toString() !== req.session.user.id);
-
-    // Get artist details for users who are artists
-    const artistUsers = usersWithRoles.filter(u => u.role === 'artist').map(u => u._id);
-    const artists = await Artist.find({ user: { $in: artistUsers } });
-
-    // Create a map of artist details for easier access
-    const artistMap = {};
-    artists.forEach(artist => {
-      artistMap[artist.user.toString()] = artist;
+    // Apply state/location filter if specified
+    const producerApps = await ProducerApplication.find({ status: 'approved', location: { $exists: true, $ne: '' } });
+    const producerLocations = {};
+    producerApps.forEach(app => {
+      producerLocations[app.user.toString()] = { state: app.location };
     });
 
-    // Filter by state if specified
     if (state) {
-      // Filter artists by state
-      const artistsInState = artists.filter(a => a.state === state);
-      const artistUserIds = artistsInState.map(a => a.user.toString());
+      usersToShow = usersToShow.filter(u => {
+        const uId = u._id.toString();
+        const artist = artistMap[uId];
+        const producerApp = producerLocations[uId];
 
-      // Filter users by state or by artist state
-      usersWithRoles = usersWithRoles.filter(u => {
-        if (u.role === 'artist') {
-          return artistUserIds.includes(u._id.toString());
-        } else {
-          return u.city && u.city.includes(state);
-        }
+        if (artist && artist.state === state) return true;
+        if (producerApp && producerApp.state === state) return true;
+
+        return false;
       });
     }
 
     // Get user roles for display
-    const userIds = usersWithRoles.map(u => u._id);
+    const userIds = usersToShow.map(u => u._id);
     const userRoles = await UserRole.find({ user: { $in: userIds } })
       .populate('role');
 
     // Create a map of user roles for easier access
     const userRoleMap = {};
     userRoles.forEach(ur => {
-      // Skip entries with null role references
-      if (!ur.role) {
-        console.log('Found user role with null role reference:', ur);
-        return;
+      if (ur.role) {
+        if (!userRoleMap[ur.user.toString()]) {
+          userRoleMap[ur.user.toString()] = [];
+        }
+        userRoleMap[ur.user.toString()].push(ur.role);
       }
-
-      if (!userRoleMap[ur.user.toString()]) {
-        userRoleMap[ur.user.toString()] = [];
-      }
-
-      userRoleMap[ur.user.toString()].push(ur.role);
     });
 
-    // Get list of states from artists
-    const states = [...new Set(artists.map(a => a.state).filter(s => s))];
+    // Final filter: Only show Producers and Artists
+    const producerRoleQuery = await Role.findOne({ name: { $regex: '^producer$', $options: 'i' } });
+    const prodRoleId = producerRoleQuery ? producerRoleQuery._id.toString() : null;
 
-    res.render('messages/find', {
+    usersToShow = usersToShow.filter(u => {
+      if (u.role === 'artist') return true;
+      if (!prodRoleId) return false;
+
+      const uRoles = userRoleMap[u._id.toString()];
+      return uRoles && uRoles.some(r => r._id.toString() === prodRoleId);
+    });
+
+    // Get list of states
+    const allArtistsWithStates = await Artist.find().select('state').distinct('state');
+    const allProducersWithLocations = await ProducerApplication.find({ status: 'approved' }).select('location').distinct('location');
+    states = [...new Set([...allArtistsWithStates, ...allProducersWithLocations])].filter(Boolean).sort();
+
+    const dashboardContext = await getDashboardMessagingContext(req.session.user);
+    const viewName = dashboardContext ? 'messages/find-dashboard' : 'messages/find';
+
+    res.render(viewName, {
+      layout: dashboardContext ? false : undefined,
       title: 'Find Users',
-      users: usersWithRoles,
+      users: usersToShow,
       artistMap,
+      producerLocations,
       userRoleMap,
       roles,
       states,
-      selectedRole: roleFilter,
-      selectedState: state,
+      selectedRole: role || '',
+      selectedState: state || '',
       currentUserArtist,
       hasRoles,
       userRoles: currentUserRoleNames,
-      user: req.session.user // Add the current user from the session
+      user: req.session.user,
+      dashboardType: dashboardContext ? dashboardContext.dashboardType : null,
+      artist: dashboardContext ? dashboardContext.artist : null,
+      producerUser: dashboardContext ? dashboardContext.producerUser : null,
+      currentPath: '/messages/find'
     });
   } catch (error) {
     console.error('Error in find users:', error);

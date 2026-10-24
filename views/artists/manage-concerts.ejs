@@ -1,5 +1,20 @@
 <%- include('../partials/artist-header') %>
 
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
 <!-- Search and Filter Section -->
 <div class="glass-card-dark border border-secondary mb-4">
   <div class="card-header border-bottom border-secondary">
@@ -158,7 +173,7 @@
                     </div>
                   </div>
                 </td>
-                <td style="color: #000000 !important;"><%= new Date(concert.date).toLocaleDateString() %> • <%= concert.time %></td>
+                <td style="color: #000000 !important;"><%= toISTDateString(concert.date) %> • <%= concert.time %></td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                 <td style="color: #000000 !important;"><%= concert.city %></td>
                 <td style="color: #000000 !important;">
@@ -224,7 +239,7 @@
                     </div>
                   </div>
                 </td>
-                <td style="color: #000000 !important;"><%= new Date(concert.date).toLocaleDateString() %> • <%= concert.time %></td>
+                <td style="color: #000000 !important;"><%= toISTDateString(concert.date) %> • <%= concert.time %></td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                 <td style="color: #000000 !important;"><%= concert.city %></td>
                 <td style="color: #000000 !important;">
@@ -290,7 +305,7 @@
                     </div>
                   </div>
                 </td>
-                <td style="color: #000000 !important;"><%= new Date(concert.date).toLocaleDateString() %> • <%= concert.time %></td>
+                <td style="color: #000000 !important;"><%= toISTDateString(concert.date) %> • <%= concert.time %></td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                 <td style="color: #000000 !important;"><%= concert.city %></td>
                 <td style="color: #000000 !important;">
@@ -358,7 +373,7 @@
                     </div>
                   </div>
                 </td>
-                <td style="color: #000000 !important;"><%= new Date(concert.date).toLocaleDateString() %> • <%= concert.time %></td>
+                <td style="color: #000000 !important;"><%= toISTDateString(concert.date) %> • <%= concert.time %></td>
                 <td style="color: #000000 !important;"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                 <td style="color: #000000 !important;"><%= concert.city %></td>
                 <td style="color: #000000 !important;">
@@ -373,6 +388,11 @@
                     <a href="/artists/concerts/<%= concert._id %>/details" class="btn btn-sm btn-light me-1" title="View Details">
                       <i class="bi bi-eye" style="color: #000000 !important;"></i>
                     </a>
+                    <form action="/concerts/<%= concert._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this ended concert? This action cannot be undone.');">
+                      <button type="submit" class="btn btn-sm btn-light" title="Delete Concert">
+                        <i class="bi bi-trash" style="color: #000000 !important;"></i>
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>

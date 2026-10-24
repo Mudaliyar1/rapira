@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= artist.stageName %> - Profile Unavailable</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .banned-container {
+      max-width: 380px;
+      width: 100%;
+      padding: 0;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .banned-card {
+      background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .ban-icon {
+      font-size: 4rem;
+      color: #fff;
+      margin-bottom: 1rem;
+      animation: pulse 2s infinite;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .banned-title {
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      font-size: 1.8rem;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .banned-subtitle {
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      line-height: 1.5;
+    }
+
+    .btn-home {
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 0.6rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #fff;
+      font-size: 0.9rem;
+      margin: 0.3rem;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-home:hover {
+      background: rgba(255, 255, 255, 0.35);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 480px) {
+      .banned-card {
+        padding: 1.5rem;
+      }
+
+      .ban-icon {
+        font-size: 3rem;
+      }
+
+      .banned-title {
+        font-size: 1.5rem;
+      }
+
+      .btn-home {
+        display: block;
+        width: 100%;
+        margin: 0.3rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="banned-container">
+    <div class="banned-card">
+      <i class="bi bi-ban ban-icon"></i>
+      <h1 class="banned-title">Artist Banned</h1>
+      <p class="banned-subtitle">This artist has been banned by the website.</p>
+
+      <div style="margin-top: 1.5rem;">
+        <a href="/" class="btn-home">
+          <i class="bi bi-house"></i> Homepage
+        </a>
+        <a href="/artists" class="btn-home">
+          <i class="bi bi-music-note-beamed"></i> Browse Artists
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

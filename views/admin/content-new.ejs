@@ -60,7 +60,7 @@
                     <%= item.featured ? 'Featured' : 'Not Featured' %>
                   </span>
                 </td>
-                <td class="text-white"><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                <td class="text-white"><%= toISTDateString(item.createdAt) %></td>
                 <td>
                   <div class="btn-group">
                     <form action="/admin/content/<%= item._id %>/feature" method="POST" class="me-1">

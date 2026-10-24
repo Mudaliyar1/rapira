@@ -3,21 +3,19 @@ const router = express.Router();
 const Concert = require('../models/Concert');
 const Venue = require('../models/Venue');
 const Artist = require('../models/Artist');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
-
-// Middleware to ensure only admin can access
-router.use(isLoggedIn, isAdmin);
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
+router.use(isLoggedIn, hasAdminPermission('manage_venue_bookings'));
 
 // GET: Venue Bookings Management Page
 router.get('/', async (req, res) => {
   try {
     const { venue, date, status } = req.query;
     let filter = {};
-    
+
     if (venue) {
       filter.venue = venue;
     }
-    
+
     if (date) {
       const searchDate = new Date(date);
       const nextDay = new Date(searchDate);
@@ -27,7 +25,7 @@ router.get('/', async (req, res) => {
         $lt: nextDay
       };
     }
-    
+
     if (status) {
       filter.status = status;
     }
@@ -45,10 +43,10 @@ router.get('/', async (req, res) => {
 
     // Group concerts by venue
     const venueBookings = {};
-    
+
     concerts.forEach(concert => {
       const venueId = concert.venue._id.toString();
-      
+
       if (!venueBookings[venueId]) {
         venueBookings[venueId] = {
           venue: concert.venue,
@@ -58,10 +56,10 @@ router.get('/', async (req, res) => {
           completedBookings: 0
         };
       }
-      
+
       venueBookings[venueId].bookings.push(concert);
       venueBookings[venueId].totalBookings++;
-      
+
       if (concert.status === 'completed') {
         venueBookings[venueId].completedBookings++;
       } else if (concert.status === 'approved') {
@@ -82,9 +80,9 @@ router.get('/', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching venue bookings:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       message: 'Error loading venue bookings',
-      error: error 
+      error: error
     });
   }
 });
@@ -105,7 +103,7 @@ router.get('/check-availability', async (req, res) => {
     const bookingDate = new Date(date);
     const [hours, minutes] = time.split(':').map(Number);
     const durationHours = parseInt(duration) || 2;
-    
+
     const currentDate = new Date(bookingDate);
     const previousDate = new Date(currentDate);
     previousDate.setDate(currentDate.getDate() - 1);
@@ -121,8 +119,8 @@ router.get('/check-availability', async (req, res) => {
       },
       status: { $in: ['approved', 'pending'] }
     })
-    .populate('artist', 'stageName')
-    .select('title time date artist venueBooking.bookingHours status');
+      .populate('artist', 'stageName')
+      .select('title time date artist venueBooking.bookingHours status');
 
     // Enhanced conflict checking with new rules
     const conflicts = [];
@@ -133,10 +131,10 @@ router.get('/check-availability', async (req, res) => {
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       const concertEnd = new Date(concertStart);
       concertEnd.setTime(concertEnd.getTime() + (duration * 60 * 60 * 1000));
-      
+
       return concertEnd;
     };
 
@@ -145,7 +143,7 @@ router.get('/check-availability', async (req, res) => {
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       return concertStart;
     };
 
@@ -157,7 +155,7 @@ router.get('/check-availability', async (req, res) => {
       if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
         const existingBookingDate = new Date(booking.date);
         const existingDuration = booking.venueBooking.bookingHours;
-        
+
         const existingStartTime = getConcertStartTime(existingBookingDate, booking.time);
         const existingEndTime = getConcertEndTime(existingBookingDate, booking.time, existingDuration);
 
@@ -231,7 +229,7 @@ router.get('/venue/:venueId', async (req, res) => {
 
     // Build filter
     let filter = { venue: venueId };
-    
+
     if (date) {
       const targetDate = new Date(date);
       const nextDate = new Date(targetDate);
@@ -241,7 +239,7 @@ router.get('/venue/:venueId', async (req, res) => {
         $lt: nextDate
       };
     }
-    
+
     if (status) {
       filter.status = status;
     }

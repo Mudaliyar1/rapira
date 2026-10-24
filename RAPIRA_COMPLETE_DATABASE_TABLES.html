@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPIRA - All 25 Database Tables</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; line-height: 1.6; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        .table-section { background: white; padding: 25px; margin-bottom: 40px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h2 { color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px; margin-bottom: 20px; }
+        h3 { color: #555; margin: 20px 0 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        tr:hover { background: #f0f4ff; }
+        .example { background: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; margin-top: 15px; }
+        pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🎤 RAPIRA - Complete Database Tables (All 25 Collections)</h1>
+
+    <!-- TABLE 1: Artist -->
+    <div class="table-section">
+        <h2>1. Artist</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>User reference</td></tr>
+            <tr><td>stageName</td><td>String</td><td>required: true</td><td>Artist stage name</td></tr>
+            <tr><td>genre</td><td>String</td><td>required: true</td><td>Music genre</td></tr>
+            <tr><td>artistLevel</td><td>String</td><td>enum: ['Beginner', 'Intermediate', 'Established']</td><td>Artist level</td></tr>
+            <tr><td>yearsActive</td><td>Number</td><td>default: 0</td><td>Years active</td></tr>
+            <tr><td>verified</td><td>Boolean</td><td>default: false</td><td>Verification status</td></tr>
+            <tr><td>featuredArtist</td><td>Boolean</td><td>default: false</td><td>Featured status</td></tr>
+            <tr><td>about</td><td>String</td><td>default: " "</td><td>Biography</td></tr>
+            <tr><td>aadharCard</td><td>String</td><td>default: " "</td><td>Aadhaar number</td></tr>
+            <tr><td>state</td><td>String</td><td>default: " "</td><td>State</td></tr>
+            <tr><td>city</td><td>String</td><td>default: " "</td><td>City</td></tr>
+            <tr><td>age</td><td>Number</td><td>default: 0</td><td>Age</td></tr>
+            <tr><td>phoneNumber</td><td>String</td><td>default: " "</td><td>Phone (10 digits)</td></tr>
+            <tr><td>proofPhoto</td><td>String</td><td>default: " "</td><td>Proof photo URL</td></tr>
+            <tr><td>proofPhotoMedia</td><td>ObjectId</td><td>ref: 'Media'</td><td>Proof media</td></tr>
+            <tr><td>completedLearning</td><td>Boolean</td><td>default: false</td><td>Learning status</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <div class="example">
+            <h3>Example Document</h3>
+            <table>
+                <tr><th>Field</th><th>Example Value</th></tr>
+                <tr><td>_id</td><td>507f1f77bcf86cd799439014</td></tr>
+                <tr><td>user</td><td>507f191e810c19729de860ed</td></tr>
+                <tr><td>stageName</td><td>MC RapStar</td></tr>
+                <tr><td>genre</td><td>Hip Hop</td></tr>
+                <tr><td>artistLevel</td><td>Intermediate</td></tr>
+                <tr><td>yearsActive</td><td>3</td></tr>
+                <tr><td>verified</td><td>true</td></tr>
+                <tr><td>featuredArtist</td><td>false</td></tr>
+                <tr><td>about</td><td>Passionate rapper from Mumbai</td></tr>
+                <tr><td>state</td><td>Maharashtra</td></tr>
+                <tr><td>city</td><td>Mumbai</td></tr>
+                <tr><td>age</td><td>25</td></tr>
+                <tr><td>phoneNumber</td><td>9876543210</td></tr>
+                <tr><td>completedLearning</td><td>true</td></tr>
+                <tr><td>createdAt</td><td>2026-01-10T00:00:00.000Z</td></tr>
+                <tr><td>updatedAt</td><td>2026-02-01T00:00:00.000Z</td></tr>
+            </table>
+        </div>
+    </div>
+
+    
+<!-- TABLE 2: ArtistApplication -->
+    <div class="table-section">
+        <h2>2. ArtistApplication</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Applicant user</td></tr>
+            <tr><td>artistLevel</td><td>String</td><td>required: true, enum: ['Beginner', 'Intermediate', 'Established']</td><td>Requested artist level</td></tr>
+            <tr><td>aadharCard</td><td>String</td><td>required: true, match: /^\\d{12}$/</td><td>Aadhaar number (12 digits)</td></tr>
+            <tr><td>state</td><td>String</td><td>required: true</td><td>State</td></tr>
+            <tr><td>city</td><td>String</td><td>required: true</td><td>City</td></tr>
+            <tr><td>age</td><td>Number</td><td>required: true</td><td>Age</td></tr>
+            <tr><td>phoneNumber</td><td>String</td><td>required: true, match: /^\\d{10}$/</td><td>Phone (10 digits)</td></tr>
+            <tr><td>proofPhoto</td><td>String</td><td>required: true</td><td>Proof photo URL</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected'], default: 'pending'</td><td>Application status</td></tr>
+            <tr><td>adminComments</td><td>String</td><td>default: ' '</td><td>Admin comments</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <div class="example">
+            <h3>Example Document</h3>
+            <table>
+                <tr><th>Field</th><th>Example Value</th></tr>
+                <tr><td>_id</td><td>507f1f77bcf86cd799439015</td></tr>
+                <tr><td>user</td><td>507f191e810c19729de860ee</td></tr>
+                <tr><td>artistLevel</td><td>Beginner</td></tr>
+                <tr><td>aadharCard</td><td>123456789012</td></tr>
+                <tr><td>state</td><td>Delhi</td></tr>
+                <tr><td>city</td><td>New Delhi</td></tr>
+                <tr><td>age</td><td>22</td></tr>
+                <tr><td>phoneNumber</td><td>9123456789</td></tr>
+                <tr><td>proofPhoto</td><td>/uploads/proof/abc123.jpg</td></tr>
+                <tr><td>status</td><td>pending</td></tr>
+                <tr><td>adminComments</td><td>(empty)</td></tr>
+                <tr><td>createdAt</td><td>2026-02-05T00:00:00.000Z</td></tr>
+                <tr><td>updatedAt</td><td>2026-02-05T00:00:00.000Z</td></tr>
+            </table>
+        </div>
+    </div>
+
+    
+<!-- TABLE 3: ArtistUpgradeRequest -->
+    <div class="table-section">
+        <h2>3. ArtistUpgradeRequest</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, ref: 'Artist'</td><td>Artist reference</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>User reference</td></tr>
+            <tr><td>currentLevel</td><td>String</td><td>required: true, enum: ['Beginner', 'Intermediate']</td><td>Current artist level</td></tr>
+            <tr><td>requestedLevel</td><td>String</td><td>required: true, enum: ['Intermediate', 'Established']</td><td>Requested upgrade level</td></tr>
+            <tr><td>reason</td><td>String</td><td>required: true</td><td>Reason for upgrade</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected'], default: 'pending'</td><td>Request status</td></tr>
+            <tr><td>adminNotes</td><td>String</td><td>default: ' '</td><td>Admin notes</td></tr>
+            <tr><td>completedModules</td><td>Array</td><td>type: [ObjectId], ref: 'LearningModule'</td><td>Completed modules</td></tr>
+            <tr><td>reviewedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Reviewing admin</td></tr>
+            <tr><td>reviewedAt</td><td>Date</td><td>type: Date</td><td>Review timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd79943901b</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ed</td></tr>
+            <tr><td>currentLevel</td><td>Beginner</td></tr>
+            <tr><td>requestedLevel</td><td>Intermediate</td></tr>
+            <tr><td>reason</td><td>Completed all learning modules, performed at 5+ venues, 1000+ followers</td></tr>
+            <tr><td>status</td><td>approved</td></tr>
+            <tr><td>adminNotes</td><td>Good progress shown. Approved based on completed modules and performance history.</td></tr>
+            <tr><td>completedModules</td><td>["507f1f77bcf86cd799439020", "507f1f77bcf86cd799439021"]</td></tr>
+            <tr><td>reviewedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>reviewedAt</td><td>2026-02-06T14:00:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-02-05T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-06T14:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 4: Concert -->
+    <div class="table-section">
+        <h2>4. Concert</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, ref: 'Artist'</td><td>Artist reference</td></tr>
+            <tr><td>title</td><td>String</td><td>required: true</td><td>Concert title</td></tr>
+            <tr><td>description</td><td>String</td><td>required: true</td><td>Concert description</td></tr>
+            <tr><td>date</td><td>Date</td><td>required: true</td><td>Concert date</td></tr>
+            <tr><td>time</td><td>String</td><td>required: true</td><td>Concert time</td></tr>
+            <tr><td>venue</td><td>ObjectId</td><td>required: true, ref: 'Venue'</td><td>Venue reference</td></tr>
+            <tr><td>city</td><td>String</td><td>required: true</td><td>Concert city</td></tr>
+            <tr><td>isPaid</td><td>Boolean</td><td>default: false</td><td>Is paid concert</td></tr>
+            <tr><td>price</td><td>Number</td><td>default: 0</td><td>Ticket price</td></tr>
+            <tr><td>posterImage</td><td>String</td><td>default: '/images/default-concert.jpg'</td><td>Poster URL</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected', 'completed', 'cancelled']</td><td>Concert status</td></tr>
+            <tr><td>rejectionReason</td><td>String</td><td>maxlength: 500</td><td>Rejection reason</td></tr>
+            <tr><td>maxTickets</td><td>Number</td><td>default: 0</td><td>Max tickets (0=unlimited)</td></tr>
+            <tr><td>ticketsSold</td><td>Number</td><td>default: 0</td><td>Tickets sold count</td></tr>
+            <tr><td>paymentId</td><td>String</td><td>type: String</td><td>Razorpay payment ID</td></tr>
+            <tr><td>orderId</td><td>String</td><td>type: String</td><td>Razorpay order ID</td></tr>
+            <tr><td>venueBooking</td><td>Object</td><td>type: Object (bookingHours, hourlyRate, totalVenueCost, amountPaidByArtist, adminCommission, isPaid, paymentDate, paymentId, orderId, paidAt)</td><td>Venue booking details</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>default: Date.now, timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd79943901c</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>title</td><td>Mumbai Rap Night - MC RapStar Live</td></tr>
+            <tr><td>description</td><td>An evening of hip-hop music featuring MC RapStar with live band performance</td></tr>
+            <tr><td>date</td><td>2026-03-20T00:00:00.000Z</td></tr>
+            <tr><td>time</td><td>20:00</td></tr>
+            <tr><td>venue</td><td>507f1f77bcf86cd799439030</td></tr>
+            <tr><td>city</td><td>Mumbai</td></tr>
+            <tr><td>isPaid</td><td>true</td></tr>
+            <tr><td>price</td><td>500</td></tr>
+            <tr><td>status</td><td>approved</td></tr>
+            <tr><td>maxTickets</td><td>200</td></tr>
+            <tr><td>ticketsSold</td><td>89</td></tr>
+            <tr><td>venueBooking</td><td>{"bookingHours": 4, "hourlyRate": 5000, "totalVenueCost": 20000, "amountPaidByArtist": 18000, "adminCommission": {"percentage": 10, "advanceAmount": 2000}, "isPaid": true}</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-08T12:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 5: ConcertEditRequest -->
+    <div class="table-section">
+        <h2>5. ConcertEditRequest</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>concert</td><td>ObjectId</td><td>required: true, ref: 'Concert'</td><td>Concert reference</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, ref: 'Artist'</td><td>Artist reference</td></tr>
+            <tr><td>requestedChanges</td><td>Object</td><td>required: true, type: Object</td><td>Proposed changes object</td></tr>
+            <tr><td>reason</td><td>String</td><td>required: true, maxlength: 500</td><td>Reason for changes</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected'], default: 'pending'</td><td>Request status</td></tr>
+            <tr><td>adminResponse</td><td>Object</td><td>type: Object (message, respondedBy, respondedAt)</td><td>Admin response</td></tr>
+            <tr><td>requestedAt</td><td>Date</td><td>default: Date.now</td><td>Request timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd79943901d</td></tr>
+            <tr><td>concert</td><td>507f1f77bcf86cd79943901c</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>requestedChanges</td><td>{"title": "Mumbai Rap Night 2.0 - MC RapStar Live", "price": 600}</td></tr>
+            <tr><td>reason</td><td>Need to update title to reflect new theme and adjust pricing due to increased production costs</td></tr>
+            <tr><td>status</td><td>approved</td></tr>
+            <tr><td>adminResponse</td><td>{"message": "Changes approved. Updated title and pricing.", "respondedBy": "507f191e810c19729de860ec", "respondedAt": "2026-02-07T10:00:00.000Z"}</td></tr>
+            <tr><td>requestedAt</td><td>2026-02-06T14:30:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-02-06T14:30:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-07T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 6: Contact -->
+    <div class="table-section">
+        <h2>6. Contact</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true, trim: true</td><td>Sender name</td></tr>
+            <tr><td>email</td><td>String</td><td>required: true, trim: true, lowercase: true</td><td>Email address</td></tr>
+            <tr><td>subject</td><td>String</td><td>required: true, trim: true</td><td>Message subject</td></tr>
+            <tr><td>message</td><td>String</td><td>required: true</td><td>Message content</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['new', 'read', 'replied', 'archived'], default: 'new'</td><td>Message status</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>default: Date.now</td><td>Creation timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd79943901e</td></tr>
+            <tr><td>name</td><td>Priya Sharma</td></tr>
+            <tr><td>email</td><td>priya.sharma@example.com</td></tr>
+            <tr><td>subject</td><td>Partnership Inquiry</td></tr>
+            <tr><td>message</td><td>Hi, I'm interested in partnering with RAPIRA for our upcoming music festival. Could you please provide more details?</td></tr>
+            <tr><td>status</td><td>new</td></tr>
+            <tr><td>createdAt</td><td>2026-02-08T09:15:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 7: Content -->
+    <div class="table-section">
+        <h2>7. Content</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, ref: 'Artist'</td><td>Artist reference</td></tr>
+            <tr><td>title</td><td>String</td><td>required: true</td><td>Content title</td></tr>
+            <tr><td>type</td><td>String</td><td>required: true, enum: ['song', 'video']</td><td>Content type</td></tr>
+            <tr><td>description</td><td>String</td><td>default: ' '</td><td>Content description</td></tr>
+            <tr><td>fileUrl</td><td>String</td><td>required: true</td><td>File URL</td></tr>
+            <tr><td>fileMedia</td><td>ObjectId</td><td>ref: 'Media'</td><td>File media reference</td></tr>
+            <tr><td>isYoutubeLink</td><td>Boolean</td><td>default: false</td><td>Is YouTube link</td></tr>
+            <tr><td>youtubeId</td><td>String</td><td>default: ' '</td><td>YouTube video ID</td></tr>
+            <tr><td>thumbnailUrl</td><td>String</td><td>default: '/images/default-thumbnail.jpg'</td><td>Thumbnail URL</td></tr>
+            <tr><td>thumbnailMedia</td><td>ObjectId</td><td>ref: 'Media'</td><td>Thumbnail media reference</td></tr>
+            <tr><td>releaseDate</td><td>Date</td><td>default: Date.now</td><td>Release date</td></tr>
+            <tr><td>likes</td><td>Number</td><td>default: 0</td><td>Like count</td></tr>
+            <tr><td>views</td><td>Number</td><td>default: 0</td><td>View count</td></tr>
+            <tr><td>featured</td><td>Boolean</td><td>default: false</td><td>Featured content</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd79943901f</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>title</td><td>Mumbai Streets - Official Music Video</td></tr>
+            <tr><td>type</td><td>video</td></tr>
+            <tr><td>description</td><td>My latest single about life in Mumbai. Directed by XYZ Productions.</td></tr>
+            <tr><td>fileUrl</td><td>https://www.youtube.com/watch?v=dQw4w9WgXcQ</td></tr>
+            <tr><td>isYoutubeLink</td><td>true</td></tr>
+            <tr><td>youtubeId</td><td>dQw4w9WgXcQ</td></tr>
+            <tr><td>thumbnailUrl</td><td>https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg</td></tr>
+            <tr><td>releaseDate</td><td>2026-02-01T00:00:00.000Z</td></tr>
+            <tr><td>likes</td><td>3450</td></tr>
+            <tr><td>views</td><td>45678</td></tr>
+            <tr><td>featured</td><td>true</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T12:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-08T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 8: DeletedAccount -->
+    <div class="table-section">
+        <h2>8. DeletedAccount</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>userId</td><td>ObjectId</td><td>required: true</td><td>Original user ID</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true</td><td>User name</td></tr>
+            <tr><td>email</td><td>String</td><td>required: true, index: true</td><td>User email</td></tr>
+            <tr><td>role</td><td>String</td><td>enum: ['user', 'artist', 'admin'], default: 'user'</td><td>User role</td></tr>
+            <tr><td>profileImage</td><td>String</td><td>default: null</td><td>Profile image URL</td></tr>
+            <tr><td>bio</td><td>String</td><td>default: ' '</td><td>User bio</td></tr>
+            <tr><td>city</td><td>String</td><td>default: ' '</td><td>City</td></tr>
+            <tr><td>socialLinks</td><td>Object</td><td>type: Object (instagram, twitter, youtube, spotify)</td><td>Social media links</td></tr>
+            <tr><td>deletedAt</td><td>Date</td><td>default: Date.now, index: true</td><td>Deletion timestamp</td></tr>
+            <tr><td>deletedBy</td><td>String</td><td>enum: ['user', 'admin']</td><td>Who deleted account</td></tr>
+            <tr><td>deletionReason</td><td>String</td><td>default: 'User requested account deletion'</td><td>Deletion reason</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>type: Date</td><td>Original account creation</td></tr>
+            <tr><td>totalTicketsPurchased</td><td>Number</td><td>type: Number</td><td>Ticket purchase count</td></tr>
+            <tr><td>totalConcerts</td><td>Number</td><td>type: Number</td><td>Concerts attended</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439021</td></tr>
+            <tr><td>userId</td><td>507f191e810c19729de860ef</td></tr>
+            <tr><td>name</td><td>Amit Singh</td></tr>
+            <tr><td>email</td><td>amit.singh@example.com</td></tr>
+            <tr><td>role</td><td>user</td></tr>
+            <tr><td>bio</td><td>Music enthusiast</td></tr>
+            <tr><td>city</td><td>Delhi</td></tr>
+            <tr><td>socialLinks</td><td>{"instagram": "@amitsingh", "twitter": "@amit_music"}</td></tr>
+            <tr><td>deletedAt</td><td>2026-02-08T08:00:00.000Z</td></tr>
+            <tr><td>deletedBy</td><td>user</td></tr>
+            <tr><td>deletionReason</td><td>User requested account deletion</td></tr>
+            <tr><td>totalTicketsPurchased</td><td>15</td></tr>
+            <tr><td>totalConcerts</td><td>12</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 9: FeaturedArtist -->
+    <div class="table-section">
+        <h2>9. FeaturedArtist</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, unique: true, ref: 'Artist'</td><td>Artist reference (unique)</td></tr>
+            <tr><td>addedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Admin who added</td></tr>
+            <tr><td>addedAt</td><td>Date</td><td>default: Date.now</td><td>Addition timestamp</td></tr>
+            <tr><td>displayOrder</td><td>Number</td><td>default: 0</td><td>Display order</td></tr>
+            <tr><td>customDescription</td><td>String</td><td>default: ' '</td><td>Custom description</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439022</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>addedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>addedAt</td><td>2026-02-05T00:00:00.000Z</td></tr>
+            <tr><td>displayOrder</td><td>1</td></tr>
+            <tr><td>customDescription</td><td>Rising star of Mumbai hip-hop scene</td></tr>
+            <tr><td>createdAt</td><td>2026-02-05T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-05T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 10: LearningModule -->
+    <div class="table-section">
+        <h2>10. LearningModule</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>title</td><td>String</td><td>required: true</td><td>Module title</td></tr>
+            <tr><td>description</td><td>String</td><td>required: true</td><td>Module description</td></tr>
+            <tr><td>contentItems</td><td>Array</td><td>type: [Object] (type, content)</td><td>Content items array</td></tr>
+            <tr><td>contentType</td><td>String</td><td>enum: ['video', 'text', 'pdf', 'link', 'image'], default: 'text'</td><td>Content type</td></tr>
+            <tr><td>content</td><td>String</td><td>type: String</td><td>Module content (legacy)</td></tr>
+            <tr><td>thumbnailImage</td><td>String</td><td>default: '/images/default-learning.jpg'</td><td>Thumbnail URL</td></tr>
+            <tr><td>forArtistLevel</td><td>String</td><td>enum: ['Beginner', 'Intermediate', 'Established', 'All'], default: 'Beginner'</td><td>Target artist level</td></tr>
+            <tr><td>order</td><td>Number</td><td>default: 0</td><td>Module order</td></tr>
+            <tr><td>isRequired</td><td>Boolean</td><td>default: true</td><td>Is mandatory</td></tr>
+            <tr><td>createdBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Creator admin</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439024</td></tr>
+            <tr><td>title</td><td>Introduction to Hip Hop Culture</td></tr>
+            <tr><td>description</td><td>Learn the basics of hip hop culture, history, and fundamentals</td></tr>
+            <tr><td>contentItems</td><td>[{"type": "video", "content": "https://youtube.com/watch?v=abc"}, {"type": "text", "content": "Hip hop originated in..."}]</td></tr>
+            <tr><td>contentType</td><td>video</td></tr>
+            <tr><td>thumbnailImage</td><td>/uploads/modules/hiphop-intro.jpg</td></tr>
+            <tr><td>forArtistLevel</td><td>Beginner</td></tr>
+            <tr><td>order</td><td>1</td></tr>
+            <tr><td>isRequired</td><td>true</td></tr>
+            <tr><td>createdBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>createdAt</td><td>2026-01-01T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-01-01T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 11: LearningProgress -->
+    <div class="table-section">
+        <h2>11. LearningProgress</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>artist</td><td>ObjectId</td><td>required: true, ref: 'Artist'</td><td>Artist reference</td></tr>
+            <tr><td>module</td><td>ObjectId</td><td>required: true, ref: 'LearningModule'</td><td>Learning module reference</td></tr>
+            <tr><td>completed</td><td>Boolean</td><td>default: false</td><td>Completion status</td></tr>
+            <tr><td>completedAt</td><td>Date</td><td>type: Date</td><td>Completion timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439025</td></tr>
+            <tr><td>artist</td><td>507f1f77bcf86cd799439014</td></tr>
+            <tr><td>module</td><td>507f1f77bcf86cd799439024</td></tr>
+            <tr><td>completed</td><td>true</td></tr>
+            <tr><td>completedAt</td><td>2026-01-15T14:30:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-01-10T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-01-15T14:30:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 12: Message -->
+    <div class="table-section">
+        <h2>12. Message</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>sender</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Sender user reference</td></tr>
+            <tr><td>receiver</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Receiver user reference</td></tr>
+            <tr><td>message</td><td>String</td><td>required: true</td><td>Message content</td></tr>
+            <tr><td>read</td><td>Boolean</td><td>default: false</td><td>Read status</td></tr>
+            <tr><td>readAt</td><td>Date</td><td>type: Date</td><td>Read timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439028</td></tr>
+            <tr><td>sender</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>receiver</td><td>507f191e810c19729de860ed</td></tr>
+            <tr><td>message</td><td>Hey, loved your latest track! Are you available for a college event?</td></tr>
+            <tr><td>read</td><td>true</td></tr>
+            <tr><td>readAt</td><td>2026-02-06T15:30:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-02-06T14:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-06T15:30:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 13: Notification -->
+    <div class="table-section">
+        <h2>13. Notification</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Recipient user reference</td></tr>
+            <tr><td>type</td><td>String</td><td>required: true, enum: ['booking', 'follow', 'like', 'comment', 'share', 'message', 'payment', 'upgrade', 'concert', 'post', 'story', 'admin', 'refund', 'wallet']</td><td>Notification type</td></tr>
+            <tr><td>title</td><td>String</td><td>required: true</td><td>Notification title</td></tr>
+            <tr><td>message</td><td>String</td><td>required: true</td><td>Notification message</td></tr>
+            <tr><td>relatedModel</td><td>String</td><td>enum: ['User', 'Artist', 'Concert', 'ArtistPost', 'ArtistStory', 'Content', 'ArtistBookingRequest', 'Ticket', 'RefundRequest', 'ArtistUpgradeRequest']</td><td>Related model name</td></tr>
+            <tr><td>relatedId</td><td>ObjectId</td><td>type: ObjectId</td><td>Related document ID</td></tr>
+            <tr><td>read</td><td>Boolean</td><td>default: false</td><td>Read status</td></tr>
+            <tr><td>readAt</td><td>Date</td><td>type: Date</td><td>Read timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439029</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ed</td></tr>
+            <tr><td>type</td><td>booking</td></tr>
+            <tr><td>title</td><td>New Booking Request</td></tr>
+            <tr><td>message</td><td>You have received a new booking request for March 15, 2026</td></tr>
+            <tr><td>relatedModel</td><td>ArtistBookingRequest</td></tr>
+            <tr><td>relatedId</td><td>507f1f77bcf86cd799439016</td></tr>
+            <tr><td>read</td><td>false</td></tr>
+            <tr><td>createdAt</td><td>2026-02-07T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-07T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 14: RefundRequest -->
+    <div class="table-section">
+        <h2>14. RefundRequest</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Requester user reference</td></tr>
+            <tr><td>ticket</td><td>ObjectId</td><td>required: true, ref: 'Ticket'</td><td>Ticket reference</td></tr>
+            <tr><td>razorpayPaymentId</td><td>String</td><td>type: String</td><td>Razorpay payment ID</td></tr>
+            <tr><td>razorpayRefundId</td><td>String</td><td>type: String</td><td>Razorpay refund ID</td></tr>
+            <tr><td>amount</td><td>Number</td><td>required: true</td><td>Refund amount</td></tr>
+            <tr><td>reason</td><td>String</td><td>required: true</td><td>Refund reason</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected', 'processing', 'completed'], default: 'pending'</td><td>Refund status</td></tr>
+            <tr><td>adminResponse</td><td>String</td><td>default: ' '</td><td>Admin response message</td></tr>
+            <tr><td>reviewedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Reviewing admin</td></tr>
+            <tr><td>reviewedAt</td><td>Date</td><td>type: Date</td><td>Review timestamp</td></tr>
+            <tr><td>processedAt</td><td>Date</td><td>type: Date</td><td>Processing timestamp</td></tr>
+            <tr><td>completedAt</td><td>Date</td><td>type: Date</td><td>Completion timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439031</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>ticket</td><td>507f1f77bcf86cd799439018</td></tr>
+            <tr><td>razorpayPaymentId</td><td>pay_ABC123XYZ456</td></tr>
+            <tr><td>razorpayRefundId</td><td>rfnd_DEF789GHI012</td></tr>
+            <tr><td>amount</td><td>500</td></tr>
+            <tr><td>reason</td><td>Concert cancelled due to unforeseen circumstances</td></tr>
+            <tr><td>status</td><td>completed</td></tr>
+            <tr><td>adminResponse</td><td>Refund processed successfully</td></tr>
+            <tr><td>reviewedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>reviewedAt</td><td>2026-02-05T12:00:00.000Z</td></tr>
+            <tr><td>completedAt</td><td>2026-02-06T10:00:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-02-05T09:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-06T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 15: SubscriptionPlan -->
+    <div class="table-section">
+        <h2>15. SubscriptionPlan</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true, unique: true</td><td>Plan name</td></tr>
+            <tr><td>displayName</td><td>String</td><td>required: true</td><td>Display name</td></tr>
+            <tr><td>description</td><td>String</td><td>required: true</td><td>Plan description</td></tr>
+            <tr><td>price</td><td>Number</td><td>required: true</td><td>Plan price</td></tr>
+            <tr><td>duration</td><td>Number</td><td>required: true</td><td>Duration in days</td></tr>
+            <tr><td>features</td><td>Array</td><td>type: [String]</td><td>Plan features list</td></tr>
+            <tr><td>isActive</td><td>Boolean</td><td>default: true</td><td>Active status</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439033</td></tr>
+            <tr><td>name</td><td>premium-monthly</td></tr>
+            <tr><td>displayName</td><td>Premium Monthly</td></tr>
+            <tr><td>description</td><td>Get unlimited access to all premium content and features</td></tr>
+            <tr><td>price</td><td>299</td></tr>
+            <tr><td>duration</td><td>30</td></tr>
+            <tr><td>features</td><td>["Unlimited content access", "Ad-free experience", "Early concert bookings", "Exclusive artist content"]</td></tr>
+            <tr><td>isActive</td><td>true</td></tr>
+            <tr><td>createdAt</td><td>2026-01-01T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-01-01T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 16: Ticket -->
+    <div class="table-section">
+        <h2>16. Ticket</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>concert</td><td>ObjectId</td><td>required: true, ref: 'Concert'</td><td>Concert reference</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Buyer user reference</td></tr>
+            <tr><td>attendees</td><td>Array</td><td>type: [Object], AttendeeSchema (name, age)</td><td>Attendees list</td></tr>
+            <tr><td>quantity</td><td>Number</td><td>required: true, min: 1</td><td>Ticket quantity</td></tr>
+            <tr><td>basePrice</td><td>Number</td><td>required: true</td><td>Base price per ticket</td></tr>
+            <tr><td>totalPrice</td><td>Number</td><td>required: true</td><td>Total price</td></tr>
+            <tr><td>discountType</td><td>String</td><td>enum: ['none', 'promo_code', 'early_bird', 'student', 'group'], default: 'none'</td><td>Discount type</td></tr>
+            <tr><td>discountAmount</td><td>Number</td><td>default: 0</td><td>Discount amount</td></tr>
+            <tr><td>platformCommission</td><td>Number</td><td>default: 0</td><td>Platform commission</td></tr>
+            <tr><td>razorpayOrderId</td><td>String</td><td>type: String</td><td>Razorpay order ID</td></tr>
+            <tr><td>razorpayPaymentId</td><td>String</td><td>type: String</td><td>Razorpay payment ID</td></tr>
+            <tr><td>paymentStatus</td><td>String</td><td>enum: ['pending', 'completed', 'failed', 'refunded'], default: 'pending'</td><td>Payment status</td></tr>
+            <tr><td>purchasedAt</td><td>Date</td><td>type: Date</td><td>Purchase timestamp</td></tr>
+            <tr><td>validated</td><td>Boolean</td><td>default: false</td><td>Validation status</td></tr>
+            <tr><td>validatedAt</td><td>Date</td><td>type: Date</td><td>Validation timestamp</td></tr>
+            <tr><td>validatedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Validator admin</td></tr>
+            <tr><td>qrCode</td><td>String</td><td>type: String</td><td>QR code data</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439018</td></tr>
+            <tr><td>concert</td><td>507f1f77bcf86cd799439015</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>attendees</td><td>[{"name": "Rahul Sharma", "age": 24}, {"name": "Priya Singh", "age": 22}]</td></tr>
+            <tr><td>quantity</td><td>2</td></tr>
+            <tr><td>basePrice</td><td>500</td></tr>
+            <tr><td>totalPrice</td><td>1000</td></tr>
+            <tr><td>discountType</td><td>early_bird</td></tr>
+            <tr><td>discountAmount</td><td>100</td></tr>
+            <tr><td>platformCommission</td><td>50</td></tr>
+            <tr><td>razorpayOrderId</td><td>order_ABC123XYZ456</td></tr>
+            <tr><td>razorpayPaymentId</td><td>pay_DEF789GHI012</td></tr>
+            <tr><td>paymentStatus</td><td>completed</td></tr>
+            <tr><td>purchasedAt</td><td>2026-02-01T12:00:00.000Z</td></tr>
+            <tr><td>validated</td><td>false</td></tr>
+            <tr><td>qrCode</td><td>507f1f77bcf86cd799439018_ticket_qr</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T12:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-01T12:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 17: User -->
+    <div class="table-section">
+        <h2>17. User</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true, trim: true</td><td>User name</td></tr>
+            <tr><td>email</td><td>String</td><td>required: true, unique: true, lowercase: true, trim: true</td><td>Email address</td></tr>
+            <tr><td>password</td><td>String</td><td>required: true</td><td>Hashed password</td></tr>
+            <tr><td>role</td><td>String</td><td>enum: ['user', 'artist', 'admin'], default: 'user'</td><td>User role</td></tr>
+            <tr><td>profileImage</td><td>String</td><td>default: null</td><td>Profile image URL</td></tr>
+            <tr><td>coverImage</td><td>String</td><td>type: String</td><td>Cover image URL</td></tr>
+            <tr><td>bio</td><td>String</td><td>maxlength: 500, default: ' '</td><td>User bio</td></tr>
+            <tr><td>city</td><td>String</td><td>trim: true, default: ' '</td><td>City</td></tr>
+            <tr><td>state</td><td>String</td><td>trim: true, default: ' '</td><td>State</td></tr>
+            <tr><td>phone</td><td>String</td><td>match: /^\d{10}$/, default: ' '</td><td>Phone number (10 digits)</td></tr>
+            <tr><td>socialLinks</td><td>Object</td><td>type: Object (instagram, twitter, youtube, spotify)</td><td>Social media links</td></tr>
+            <tr><td>isVerified</td><td>Boolean</td><td>default: false</td><td>Email verification status</td></tr>
+            <tr><td>resetPasswordOTP</td><td>String</td><td>type: String</td><td>Password reset OTP</td></tr>
+            <tr><td>resetPasswordOTPExpires</td><td>Date</td><td>type: Date</td><td>OTP expiration</td></tr>
+            <tr><td>newEmail</td><td>String</td><td>type: String</td><td>New email for change request</td></tr>
+            <tr><td>newEmailOTP</td><td>String</td><td>type: String</td><td>Email change OTP</td></tr>
+            <tr><td>newEmailOTPExpires</td><td>Date</td><td>type: Date</td><td>Email OTP expiration</td></tr>
+            <tr><td>isOnline</td><td>Boolean</td><td>default: false</td><td>Online status</td></tr>
+            <tr><td>lastSeen</td><td>Date</td><td>type: Date</td><td>Last seen timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>name</td><td>Rajesh Kumar</td></tr>
+            <tr><td>email</td><td>rajesh.kumar@example.com</td></tr>
+            <tr><td>password</td><td>$2b$10$xyzabc123def456ghi789jkl</td></tr>
+            <tr><td>role</td><td>user</td></tr>
+            <tr><td>profileImage</td><td>/uploads/profiles/user123.jpg</td></tr>
+            <tr><td>bio</td><td>Hip hop enthusiast from Delhi</td></tr>
+            <tr><td>city</td><td>Delhi</td></tr>
+            <tr><td>state</td><td>Delhi</td></tr>
+            <tr><td>phone</td><td>9876543210</td></tr>
+            <tr><td>socialLinks</td><td>{"instagram": "@rajesh_music", "twitter": "@rajesh_hiphop"}</td></tr>
+            <tr><td>isVerified</td><td>true</td></tr>
+            <tr><td>isOnline</td><td>true</td></tr>
+            <tr><td>lastSeen</td><td>2026-02-08T11:30:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2025-12-01T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-08T11:30:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 18: UserActivityLog -->
+    <div class="table-section">
+        <h2>18. UserActivityLog</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User', index: true</td><td>User reference</td></tr>
+            <tr><td>action</td><td>String</td><td>required: true, enum: ['login', 'logout', 'profile_update', 'password_change', 'email_change', 'ticket_purchase', 'booking_request', 'post_create', 'post_delete', 'content_upload', 'wallet_transaction']</td><td>Action type</td></tr>
+            <tr><td>description</td><td>String</td><td>required: true</td><td>Activity description</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>default: Date.now, index: true</td><td>Creation timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439038</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>action</td><td>ticket_purchase</td></tr>
+            <tr><td>description</td><td>Purchased 2 tickets for Mumbai Hip Hop Festival</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T12:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 19: UserSubscription -->
+    <div class="table-section">
+        <h2>19. UserSubscription</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>user</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>User reference</td></tr>
+            <tr><td>plan</td><td>ObjectId</td><td>required: true, ref: 'SubscriptionPlan'</td><td>Plan reference</td></tr>
+            <tr><td>startDate</td><td>Date</td><td>required: true</td><td>Subscription start date</td></tr>
+            <tr><td>endDate</td><td>Date</td><td>required: true</td><td>Subscription end date</td></tr>
+            <tr><td>isActive</td><td>Boolean</td><td>default: true</td><td>Active status</td></tr>
+            <tr><td>autoRenew</td><td>Boolean</td><td>default: false</td><td>Auto-renewal flag</td></tr>
+            <tr><td>razorpaySubscriptionId</td><td>String</td><td>type: String</td><td>Razorpay subscription ID</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439042</td></tr>
+            <tr><td>user</td><td>507f191e810c19729de860ea</td></tr>
+            <tr><td>plan</td><td>507f1f77bcf86cd799439033</td></tr>
+            <tr><td>startDate</td><td>2026-02-01T00:00:00.000Z</td></tr>
+            <tr><td>endDate</td><td>2026-03-03T00:00:00.000Z</td></tr>
+            <tr><td>isActive</td><td>true</td></tr>
+            <tr><td>autoRenew</td><td>true</td></tr>
+            <tr><td>razorpaySubscriptionId</td><td>sub_ABC123XYZ456</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-01T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 20: Venue -->
+    <div class="table-section">
+        <h2>20. Venue</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true, trim: true</td><td>Venue name</td></tr>
+            <tr><td>venueOwnerName</td><td>String</td><td>required: true, trim: true</td><td>Owner name</td></tr>
+            <tr><td>email</td><td>String</td><td>required: true, unique: true, lowercase: true, trim: true</td><td>Email address</td></tr>
+            <tr><td>phone</td><td>String</td><td>required: true, match: /^\d{10}$/</td><td>Phone number</td></tr>
+            <tr><td>addressLine1</td><td>String</td><td>required: true, trim: true</td><td>Address line 1</td></tr>
+            <tr><td>addressLine2</td><td>String</td><td>trim: true, default: ' '</td><td>Address line 2</td></tr>
+            <tr><td>city</td><td>String</td><td>required: true, trim: true</td><td>City</td></tr>
+            <tr><td>state</td><td>String</td><td>required: true, trim: true</td><td>State</td></tr>
+            <tr><td>pincode</td><td>String</td><td>required: true, match: /^\d{6}$/</td><td>Pincode</td></tr>
+            <tr><td>description</td><td>String</td><td>default: ' '</td><td>Venue description</td></tr>
+            <tr><td>images</td><td>Array</td><td>type: [String]</td><td>Image URLs</td></tr>
+            <tr><td>capacity</td><td>Number</td><td>required: true, min: 1</td><td>Maximum capacity</td></tr>
+            <tr><td>facilities</td><td>Array</td><td>type: [String], enum: ['Parking', 'Wifi', 'AC', 'Sound System', 'Lighting', 'Stage', 'Green Room', 'Restrooms', 'Bar', 'Food Court', 'Security', 'Wheelchair Access']</td><td>Available facilities</td></tr>
+            <tr><td>pricing</td><td>Object</td><td>type: Object with hourlyRates array [{hours, rate}], advancePaymentPercentage, adminCommission {percentage, advancePaymentPercentage}</td><td>Complete pricing structure</td></tr>
+            <tr><td>isApproved</td><td>Boolean</td><td>default: false</td><td>Approval status</td></tr>
+            <tr><td>approvedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Approving admin</td></tr>
+            <tr><td>approvedAt</td><td>Date</td><td>type: Date</td><td>Approval timestamp</td></tr>
+            <tr><td>rejectionReason</td><td>String</td><td>default: ' '</td><td>Rejection reason</td></tr>
+            <tr><td>isActive</td><td>Boolean</td><td>default: true</td><td>Active status</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439043</td></tr>
+            <tr><td>name</td><td>Phoenix Music Arena</td></tr>
+            <tr><td>venueOwnerName</td><td>Vikram Patel</td></tr>
+            <tr><td>email</td><td>phoenix.arena@example.com</td></tr>
+            <tr><td>phone</td><td>9876543210</td></tr>
+            <tr><td>addressLine1</td><td>123, MG Road</td></tr>
+            <tr><td>addressLine2</td><td>Near City Mall</td></tr>
+            <tr><td>city</td><td>Bangalore</td></tr>
+            <tr><td>state</td><td>Karnataka</td></tr>
+            <tr><td>pincode</td><td>560001</td></tr>
+            <tr><td>description</td><td>Premium music venue with state-of-the-art facilities</td></tr>
+            <tr><td>capacity</td><td>500</td></tr>
+            <tr><td>facilities</td><td>["Parking", "AC", "Sound System", "Lighting", "Stage", "Bar", "Security"]</td></tr>
+            <tr><td>pricing</td><td>{"hourlyRates": [{"hours": 4, "rate": 5000}, {"hours": 8, "rate": 8000}], "advancePaymentPercentage": 30, "adminCommission": {"percentage": 10, "advancePaymentPercentage": 100}}</td></tr>
+            <tr><td>isApproved</td><td>true</td></tr>
+            <tr><td>approvedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>approvedAt</td><td>2026-01-15T00:00:00.000Z</td></tr>
+            <tr><td>isActive</td><td>true</td></tr>
+            <tr><td>createdAt</td><td>2026-01-10T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-01-15T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 21: VenueEditRequest -->
+    <div class="table-section">
+        <h2>21. VenueEditRequest</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>venue</td><td>ObjectId</td><td>required: true, ref: 'Venue'</td><td>Venue reference</td></tr>
+            <tr><td>requestedChanges</td><td>Object</td><td>required: true, type: Object</td><td>Requested changes object</td></tr>
+            <tr><td>reason</td><td>String</td><td>required: true</td><td>Change reason</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected'], default: 'pending'</td><td>Request status</td></tr>
+            <tr><td>adminResponse</td><td>String</td><td>default: ' '</td><td>Admin response</td></tr>
+            <tr><td>reviewedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Reviewing admin</td></tr>
+            <tr><td>reviewedAt</td><td>Date</td><td>type: Date</td><td>Review timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439044</td></tr>
+            <tr><td>venue</td><td>507f1f77bcf86cd799439043</td></tr>
+            <tr><td>requestedChanges</td><td>{"capacity": 600, "facilities": ["Parking", "AC", "Sound System", "Lighting", "Stage", "Bar", "Security", "Food Court"]}</td></tr>
+            <tr><td>reason</td><td>Venue renovation completed, increased capacity and added food court</td></tr>
+            <tr><td>status</td><td>approved</td></tr>
+            <tr><td>adminResponse</td><td>Changes approved after verification</td></tr>
+            <tr><td>reviewedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>reviewedAt</td><td>2026-02-05T12:00:00.000Z</td></tr>
+            <tr><td>createdAt</td><td>2026-02-03T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-05T12:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 22: VenueExternalBooking -->
+    <div class="table-section">
+        <h2>22. VenueExternalBooking</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>venue</td><td>ObjectId</td><td>required: true, ref: 'Venue'</td><td>Venue reference</td></tr>
+            <tr><td>eventDate</td><td>Date</td><td>required: true</td><td>Event date</td></tr>
+            <tr><td>startTime</td><td>String</td><td>required: true</td><td>Start time (HH:MM)</td></tr>
+            <tr><td>endTime</td><td>String</td><td>required: true</td><td>End time (HH:MM)</td></tr>
+            <tr><td>reason</td><td>String</td><td>required: true</td><td>Booking reason</td></tr>
+            <tr><td>createdBy</td><td>ObjectId</td><td>required: true, ref: 'User'</td><td>Creator admin</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439045</td></tr>
+            <tr><td>venue</td><td>507f1f77bcf86cd799439043</td></tr>
+            <tr><td>eventDate</td><td>2026-03-10T00:00:00.000Z</td></tr>
+            <tr><td>startTime</td><td>18:00</td></tr>
+            <tr><td>endTime</td><td>23:00</td></tr>
+            <tr><td>reason</td><td>Private corporate event - venue unavailable for public bookings</td></tr>
+            <tr><td>createdBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>createdAt</td><td>2026-02-01T09:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-01T09:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 23: VenueRequest -->
+    <div class="table-section">
+        <h2>23. VenueRequest</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>name</td><td>String</td><td>required: true, trim: true</td><td>Venue name</td></tr>
+            <tr><td>venueOwnerName</td><td>String</td><td>required: true, trim: true</td><td>Owner name</td></tr>
+            <tr><td>email</td><td>String</td><td>required: true, lowercase: true, trim: true</td><td>Email address</td></tr>
+            <tr><td>phone</td><td>String</td><td>required: true, match: /^\d{10}$/</td><td>Phone number</td></tr>
+            <tr><td>addressLine1</td><td>String</td><td>required: true, trim: true</td><td>Address line 1</td></tr>
+            <tr><td>addressLine2</td><td>String</td><td>trim: true, default: ' '</td><td>Address line 2</td></tr>
+            <tr><td>city</td><td>String</td><td>required: true, trim: true</td><td>City</td></tr>
+            <tr><td>state</td><td>String</td><td>required: true, trim: true</td><td>State</td></tr>
+            <tr><td>pincode</td><td>String</td><td>required: true, match: /^\d{6}$/</td><td>Pincode</td></tr>
+            <tr><td>description</td><td>String</td><td>default: ' '</td><td>Venue description</td></tr>
+            <tr><td>images</td><td>Array</td><td>type: [String]</td><td>Image URLs</td></tr>
+            <tr><td>capacity</td><td>Number</td><td>required: true, min: 1</td><td>Maximum capacity</td></tr>
+            <tr><td>facilities</td><td>Array</td><td>type: [String]</td><td>Available facilities</td></tr>
+            <tr><td>pricing</td><td>Object</td><td>type: Object</td><td>Pricing structure</td></tr>
+            <tr><td>status</td><td>String</td><td>enum: ['pending', 'approved', 'rejected'], default: 'pending'</td><td>Request status</td></tr>
+            <tr><td>adminResponse</td><td>String</td><td>default: ' '</td><td>Admin response</td></tr>
+            <tr><td>reviewedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Reviewing admin</td></tr>
+            <tr><td>reviewedAt</td><td>Date</td><td>type: Date</td><td>Review timestamp</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439046</td></tr>
+            <tr><td>name</td><td>Rhythm Heights</td></tr>
+            <tr><td>venueOwnerName</td><td>Sanjay Mehta</td></tr>
+            <tr><td>email</td><td>rhythm.heights@example.com</td></tr>
+            <tr><td>phone</td><td>9123456789</td></tr>
+            <tr><td>addressLine1</td><td>45, Brigade Road</td></tr>
+            <tr><td>addressLine2</td><td>3rd Floor</td></tr>
+            <tr><td>city</td><td>Bangalore</td></tr>
+            <tr><td>state</td><td>Karnataka</td></tr>
+            <tr><td>pincode</td><td>560025</td></tr>
+            <tr><td>description</td><td>Modern music venue in the heart of the city</td></tr>
+            <tr><td>capacity</td><td>300</td></tr>
+            <tr><td>facilities</td><td>["AC", "Sound System", "Lighting", "Stage"]</td></tr>
+            <tr><td>pricing</td><td>{"hourlyRates": [{"hours": 4, "rate": 4000}], "advancePaymentPercentage": 30}</td></tr>
+            <tr><td>status</td><td>pending</td></tr>
+            <tr><td>createdAt</td><td>2026-02-07T10:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-07T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 24: WebsiteSettings -->
+    <div class="table-section">
+        <h2>24. WebsiteSettings</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>siteName</td><td>String</td><td>default: 'RAPIRA'</td><td>Site name</td></tr>
+            <tr><td>siteTagline</td><td>String</td><td>default: 'Rap Artistry Platform India'</td><td>Site tagline</td></tr>
+            <tr><td>logo</td><td>String</td><td>type: String</td><td>Logo URL</td></tr>
+            <tr><td>logoMedia</td><td>ObjectId</td><td>ref: 'Media'</td><td>Logo media reference</td></tr>
+            <tr><td>favicon</td><td>String</td><td>type: String</td><td>Favicon URL</td></tr>
+            <tr><td>faviconMedia</td><td>ObjectId</td><td>ref: 'Media'</td><td>Favicon media reference</td></tr>
+            <tr><td>siteSettings</td><td>Object</td><td>type: Object (contactEmail, contactPhone, socialLinks, maintenanceMode)</td><td>Site settings object</td></tr>
+            <tr><td>headerSettings</td><td>Object</td><td>type: Object (showLogo, showSearch, showNotifications, showUserMenu, backgroundColor, textColor)</td><td>Header settings</td></tr>
+            <tr><td>menuSettings</td><td>Object</td><td>type: Object with 4 menus (mainMenu, footerMenu, userMenu, adminMenu), each with items array</td><td>Menu configurations</td></tr>
+            <tr><td>platformCommission</td><td>Number</td><td>default: 10, min: 0, max: 100</td><td>Platform commission %</td></tr>
+            <tr><td>updatedBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Last updater admin</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439047</td></tr>
+            <tr><td>siteName</td><td>RAPIRA</td></tr>
+            <tr><td>siteTagline</td><td>Rap Artistry Platform India</td></tr>
+            <tr><td>logo</td><td>/images/logo.png</td></tr>
+            <tr><td>siteSettings</td><td>{"contactEmail": "info@rapira.com", "contactPhone": "9876543210", "maintenanceMode": false}</td></tr>
+            <tr><td>headerSettings</td><td>{"showLogo": true, "showSearch": true, "showNotifications": true, "backgroundColor": "#667eea", "textColor": "#ffffff"}</td></tr>
+            <tr><td>menuSettings</td><td>{"mainMenu": [{"label": "Home", "url": "/", "order": 1}], "footerMenu": [{"label": "About", "url": "/about", "order": 1}]}</td></tr>
+            <tr><td>platformCommission</td><td>10</td></tr>
+            <tr><td>updatedBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>createdAt</td><td>2026-01-01T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-01T10:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+    
+<!-- TABLE 25: WebsiteUpdate -->
+    <div class="table-section">
+        <h2>25. WebsiteUpdate</h2>
+        <h3>Field Specifications</h3>
+        <table>
+            <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr>
+            <tr><td>_id</td><td>ObjectId</td><td>Primary Key</td><td>Unique identifier</td></tr>
+            <tr><td>version</td><td>String</td><td>required: true</td><td>Version number</td></tr>
+            <tr><td>title</td><td>String</td><td>required: true</td><td>Update title</td></tr>
+            <tr><td>description</td><td>String</td><td>required: true</td><td>Update description</td></tr>
+            <tr><td>changes</td><td>Array</td><td>type: [String]</td><td>List of changes</td></tr>
+            <tr><td>releaseDate</td><td>Date</td><td>default: Date.now</td><td>Release date</td></tr>
+            <tr><td>isPublished</td><td>Boolean</td><td>default: false</td><td>Publish status</td></tr>
+            <tr><td>createdBy</td><td>ObjectId</td><td>ref: 'User'</td><td>Creator admin</td></tr>
+            <tr><td>createdAt</td><td>Date</td><td>timestamps: true</td><td>Creation timestamp</td></tr>
+            <tr><td>updatedAt</td><td>Date</td><td>timestamps: true</td><td>Update timestamp</td></tr>
+        </table>
+        <h3>Example Document</h3>
+        <table>
+            <tr><th>Field</th><th>Example Value</th></tr>
+            <tr><td>_id</td><td>507f1f77bcf86cd799439048</td></tr>
+            <tr><td>version</td><td>1.2.0</td></tr>
+            <tr><td>title</td><td>February 2026 Platform Update</td></tr>
+            <tr><td>description</td><td>Major update with new artist dashboard and analytics features</td></tr>
+            <tr><td>changes</td><td>["Added artist analytics dashboard", "Improved ticket booking flow", "Fixed mobile responsive issues", "Enhanced search functionality"]</td></tr>
+            <tr><td>releaseDate</td><td>2026-02-01T00:00:00.000Z</td></tr>
+            <tr><td>isPublished</td><td>true</td></tr>
+            <tr><td>createdBy</td><td>507f191e810c19729de860ec</td></tr>
+            <tr><td>createdAt</td><td>2026-01-25T00:00:00.000Z</td></tr>
+            <tr><td>updatedAt</td><td>2026-02-01T00:00:00.000Z</td></tr>
+        </table>
+    </div>
+
+
+</body>
+</html>

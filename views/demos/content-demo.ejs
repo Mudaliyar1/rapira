@@ -277,7 +277,7 @@
         const youtubeUrl = document.getElementById('youtubeUrl').value;
         
         // Format date for display
-        const formattedDate = new Date(releaseDate).toLocaleDateString();
+        const formattedDate = toISTDateString(releaseDate);
         
         // Update content table
         const tableBody = document.getElementById('contentTableBody');

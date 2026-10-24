@@ -61,7 +61,9 @@ async function initializeWebsiteSettings() {
               privacy_policy: true,
               refund_policy: true,
               subscription_policy: true,
-              shopping_policy: true
+              shopping_policy: true,
+              event_attending_policy: true,
+              account_reactivation: true
             }
           }
         },

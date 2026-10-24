@@ -107,7 +107,7 @@
         <!-- Discover Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.discoverMenu && menuSettings.discoverMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path === '/about' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || path.startsWith('/learning') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && (path === '/' || path === '/about' || path === '/reels' || path && (path.startsWith('/content') || path.startsWith('/concerts') || path.startsWith('/daily-concerts') || path.startsWith('/learning') || (path.startsWith('/artists') && !path.includes('dashboard')))) ? 'active' : '' %>"
              href="#" id="discoverDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-compass me-1"></i> Discover
           </a>
@@ -120,6 +120,7 @@
             <% } %>
             <% if (menuSettings.discoverMenu.items.contentLibrary) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/content') ? 'active' : '' %>" href="/content"><i class="bi bi-collection me-2"></i>Content Library</a></li>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path === '/reels' ? 'active' : '' %>" href="/reels"><i class="bi bi-camera-reels me-2"></i>Reels</a></li>
             <% } %>
             <% if (menuSettings.discoverMenu.items.concerts) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path.startsWith('/concerts') ? 'active' : '' %>" href="/concerts"><i class="bi bi-music-note-beamed me-2"></i>Concerts</a></li>
@@ -181,7 +182,7 @@
         <!-- Help & Support Dropdown -->
         <% if (typeof menuSettings !== 'undefined' && menuSettings && menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.enabled) { %>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/demo') ? 'active' : '' %>"
+          <a class="nav-link dropdown-toggle <%= typeof path !== 'undefined' && path && (path === '/contact' || path === '/terms-of-service' || path === '/privacy-policy' || path === '/refund-policy' || path === '/subscription-policy' || path === '/shopping-policy' || path === '/event-attending-policy' || path === '/temp-email-policy' || path === '/account-reactivation' || path === '/demo') ? 'active' : '' %>"
              href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-question-circle me-1"></i> Help & Support
           </a>
@@ -210,6 +211,13 @@
             <% if (menuSettings.helpSupportMenu.items.shoppingPolicy) { %>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/shopping-policy' ? 'active' : '' %>" href="/shopping-policy"><i class="bi bi-bag-check me-2"></i>Shopping Policy</a></li>
             <% } %>
+            <% if (menuSettings.helpSupportMenu.items.eventAttendingPolicy) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/event-attending-policy' ? 'active' : '' %>" href="/event-attending-policy"><i class="bi bi-ticket-perforated me-2"></i>Event Attending Policy</a></li>
+            <% } %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/temp-email-policy' ? 'active' : '' %>" href="/temp-email-policy"><i class="bi bi-shield-check me-2"></i>Temp Email Policy</a></li>
+            <% if (menuSettings.helpSupportMenu.items.accountReactivation) { %>
+            <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/account-reactivation' ? 'active' : '' %>" href="/account-reactivation"><i class="bi bi-person-plus me-2"></i>Account Reactivation</a></li>
+            <% } %>
             <li><hr class="dropdown-divider border-secondary"></li>
             <li><a class="dropdown-item text-white <%= typeof path !== 'undefined' && path && path === '/website-updates' ? 'active' : '' %>" href="/website-updates"><i class="bi bi-megaphone me-2"></i>Website Updates</a></li>
           </ul>
@@ -223,6 +231,11 @@
           <% if (typeof isArtist !== 'undefined' && isArtist) { %>
             <li class="nav-item">
               <a class="nav-link <%= typeof path !== 'undefined' && path && path.includes('dashboard') ? 'active' : '' %>" href="/artists/dashboard">Artist Dashboard</a>
+            </li>
+          <% } %>
+          <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+            <li class="nav-item">
+              <a class="nav-link <%= typeof path !== 'undefined' && path && path.startsWith('/producer-dashboard') ? 'active' : '' %>" href="/producer-dashboard">Producer Dashboard</a>
             </li>
           <% } %>
           <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
@@ -248,13 +261,6 @@
         </div>
 
 
-        <% if (typeof currentUser !== 'undefined' && currentUser && typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
-          <li class="nav-item me-2">
-            <a class="nav-link position-relative" href="/messages">
-              <i class="bi bi-chat-dots"></i> Messages
-            </a>
-          </li>
-        <% } %>
         <% if (typeof currentUser !== 'undefined' && currentUser) { %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -271,9 +277,8 @@
               <li><a class="dropdown-item text-white" href="/tickets"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a></li>
               <li><a class="dropdown-item text-white" href="/orders/my-orders"><i class="bi bi-bag-check me-2"></i>My Orders</a></li>
               <li><a class="dropdown-item text-white" href="/subscriptions/my-subscriptions"><i class="bi bi-star me-2"></i>My Subscriptions</a></li>
-              <% if (typeof hasRoles !== 'undefined' && hasRoles && typeof isArtist !== 'undefined' && !isArtist) { %>
-              <li><a class="dropdown-item text-white" href="/messages"><i class="bi bi-chat-dots me-2"></i>Messages</a></li>
-              <li><a class="dropdown-item text-white" href="/messages/find"><i class="bi bi-people me-2"></i>Connect with Artists</a></li>
+              <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+              <li><a class="dropdown-item text-white" href="/producer-dashboard"><i class="bi bi-mic-fill me-2"></i>Producer Dashboard</a></li>
               <% } %>
               <li><hr class="dropdown-divider border-secondary"></li>
               <li><a class="dropdown-item text-white" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>

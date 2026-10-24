@@ -140,7 +140,7 @@
                     </span>
                     <span>
                       <i class="bi bi-calendar me-1"></i>
-                      <%= new Date(review.createdAt).toLocaleDateString('en-IN') %>
+                      <%= toISTDateString(review.createdAt) %>
                     </span>
                     <% if (review.isVerifiedPurchase) { %>
                       <span class="badge bg-success">Verified Purchase</span>

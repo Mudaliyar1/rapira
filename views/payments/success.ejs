@@ -19,7 +19,7 @@
                   <p class="mb-1"><strong><%= ticket.concert.title %></strong></p>
                   <p class="mb-1">
                     <i class="bi bi-calendar3 text-primary me-1"></i>
-                    <%= new Date(ticket.concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                    <%= toISTDateString(ticket.concert.date) %>
                   </p>
                   <p class="mb-1">
                     <i class="bi bi-clock text-primary me-1"></i>

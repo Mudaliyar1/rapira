@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ER Diagram - Database Schema</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #000;
+        }
+
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .download-btn:hover {
+            background: #333;
+        }
+
+        .download-html-btn {
+            position: fixed;
+            top: 20px;
+            right: 220px;
+            background: #0275d8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .download-html-btn:hover {
+            background: #0256b8;
+        }
+
+        .diagram-wrapper {
+            position: relative;
+            width: 100%;
+            height: 2800px;
+            border: 1px solid #000;
+            background: white;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .entities {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Entity Box Styles */
+        .entity {
+            position: absolute;
+            background: white;
+            border: 2px solid #000;
+            padding: 12px;
+            width: 240px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .entity-title {
+            font-size: 13px;
+            font-weight: bold;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .entity-content {
+            color: #000;
+            line-height: 1.5;
+        }
+
+        .field {
+            margin: 4px 0;
+            padding: 2px 0;
+        }
+
+        .field-text {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+        }
+
+        .pk {
+            color: #d9534f;
+            font-weight: bold;
+        }
+
+        .fk {
+            color: #0275d8;
+            font-weight: bold;
+        }
+
+        /* Positions */
+        .admin {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .user {
+            top: 520px;
+            left: 30px;
+        }
+
+        .subscription {
+            top: 520px;
+            right: 30px;
+            display: none;
+        }
+
+        .artist {
+            top: 520px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .venue {
+            top: 520px;
+            right: 30px;
+        }
+
+        .content-entity {
+            top: 1150px;
+            left: 30px;
+        }
+
+        .ticket {
+            top: 1750px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .content {
+            top: 2350px;
+            left: 30px;
+        }
+
+        .payment {
+            top: 2350px;
+            right: 30px;
+        }
+
+        .subscription-plan {
+            top: 1150px;
+            right: 30px;
+        }
+
+        .user-subscription {
+            top: 1750px;
+            left: 30px;
+        }
+
+        .legend {
+            margin-top: 30px;
+            font-size: 11px;
+            border-top: 1px solid #000;
+            padding-top: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .legend-item {
+            margin: 6px 0;
+        }
+
+        .relationship-label {
+            font-weight: bold;
+            font-size: 10px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <button class="download-html-btn" onclick="downloadHTML()">📄 Download HTML</button>
+    <button class="download-btn" onclick="downloadPDF()">📥 Download PDF</button>
+    
+    <div class="header">
+        <h1>ER Diagram - Traditional SQL Database Schema</h1>
+        <p>Entities: User, Admin, Artist, Venue, Concert, Ticket, Payment, Content, SubscriptionPlan, UserSubscription</p>
+    </div>
+
+    <div class="diagram-wrapper">
+        <div class="entities">
+            <!-- Admin -->
+            <div class="entity admin" id="admin-box">
+                <div class="entity-title">Admin</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">admin_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text">email VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">password VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">role VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">created_at DATE</span></div>
+                </div>
+            </div>
+
+            <!-- User -->
+            <div class="entity user" id="user-box">
+                <div class="entity-title">User</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">user_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text">name VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">email VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">password VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">role VARCHAR(20)</span></div>
+                    <div class="field"><span class="field-text">profileImage VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">profileMedia INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">bio VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">city VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">age INT(11)</span></div>
+                    <div class="field"><span class="field-text">heardFrom VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">socialLinks VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">isVerified BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">resetPasswordOTP VARCHAR(10)</span></div>
+                    <div class="field"><span class="field-text">resetPasswordExpires DATETIME</span></div>
+                    <div class="field"><span class="field-text">pendingEmail VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">emailChangeOTP VARCHAR(10)</span></div>
+                    <div class="field"><span class="field-text">emailChangeExpires DATETIME</span></div>
+                    <div class="field"><span class="field-text">walletBalance DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">lastLogin DATETIME</span></div>
+                    <div class="field"><span class="field-text">currentLoginTime DATETIME</span></div>
+                    <div class="field"><span class="field-text">isOnline BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">currentPage VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">lastPageUpdate DATETIME</span></div>
+                    <div class="field"><span class="field-text">created_at DATETIME</span></div>
+                </div>
+            </div>
+
+<!-- Artist -->
+            <div class="entity artist" id="artist-box">
+                <div class="entity-title">Artist</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">artist_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">user_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">stageName VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">genre VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">artistLevel VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">yearsActive INT(11)</span></div>
+                    <div class="field"><span class="field-text">verified BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">featuredArtist BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">isBlocked BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">blockReason VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">blockedAt DATETIME</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">blockedBy INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">about VARCHAR(1000)</span></div>
+                    <div class="field"><span class="field-text">bannerImage VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">bannerMedia INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">aadharCard VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">state VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">city VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">age INT(11)</span></div>
+                    <div class="field"><span class="field-text">phoneNumber VARCHAR(15)</span></div>
+                    <div class="field"><span class="field-text">proofPhoto VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">completedLearning BOOLEAN</span></div>
+                </div>
+            </div>
+
+            <!-- Venue -->
+            <div class="entity venue" id="venue-box">
+                <div class="entity-title">Venue</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">venue_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text">name VARCHAR(200)</span></div>
+                    <div class="field"><span class="field-text">address VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">city VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">state VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">pincode VARCHAR(10)</span></div>
+                    <div class="field"><span class="field-text">capacity INT(11)</span></div>
+                    <div class="field"><span class="field-text">venueType VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">facilities VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">contactPersonName VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">contactPersonPhone VARCHAR(15)</span></div>
+                    <div class="field"><span class="field-text">contactPersonEmail VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">priceRange VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">pricingHourlyRates VARCHAR(1000)</span></div>
+                    <div class="field"><span class="field-text">pricingMinimumHours INT(11)</span></div>
+                    <div class="field"><span class="field-text">pricingCurrency VARCHAR(10)</span></div>
+                    <div class="field"><span class="field-text">adminCommissionPercentage INT(11)</span></div>
+                    <div class="field"><span class="field-text">adminCommissionAdvanceAmount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">ticketMinimumPrice DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">ticketSuggestedPrice DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">additionalCharges VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">description VARCHAR(1000)</span></div>
+                    <div class="field"><span class="field-text">images VARCHAR(1000)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">imageMedia INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">isActive BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">isVerified BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">googleMapsLink VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">website VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">createdBy INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">lastUpdatedBy INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">created_at DATETIME</span></div>
+                    <div class="field"><span class="field-text">updated_at DATETIME</span></div>
+                </div>
+            </div>
+
+            <!-- Ticket -->
+            <div class="entity content" id="content-box">
+                <div class="entity-title">Ticket</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">ticket_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">concert_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">user_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">quantity INT(11)</span></div>
+                    <div class="field"><span class="field-text">totalAmount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">originalAmount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">discountApplied BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">discountPercentage INT(11)</span></div>
+                    <div class="field"><span class="field-text">discountType VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">commissionApplied BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">commissionPercentage INT(11)</span></div>
+                    <div class="field"><span class="field-text">commissionAmount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">paymentId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">orderId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">paymentStatus VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">ticketNumber VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">purchaseDate DATETIME</span></div>
+                    <div class="field"><span class="field-text">attended BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">attendedAt DATETIME</span></div>
+                    <div class="field"><span class="field-text">validatedTicketsCount INT(11)</span></div>
+                </div>
+            </div>
+
+            <!-- Concert (Ticket/Event) -->
+            <div class="entity ticket" id="ticket-box">
+                <div class="entity-title">Concert</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">concert_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">artist_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">title VARCHAR(200)</span></div>
+                    <div class="field"><span class="field-text">description VARCHAR(1000)</span></div>
+                    <div class="field"><span class="field-text">date DATETIME</span></div>
+                    <div class="field"><span class="field-text">time VARCHAR(20)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">venue_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">city VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">isPaid BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">price DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">posterImage VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text">status VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">rejectionReason VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">maxTickets INT(11)</span></div>
+                    <div class="field"><span class="field-text">ticketsSold INT(11)</span></div>
+                    <div class="field"><span class="field-text">bookingHours INT(11)</span></div>
+                    <div class="field"><span class="field-text">totalVenueCost DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">amountPaidByArtist DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">adminCommission DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">paymentId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">orderId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">created_at DATETIME</span></div>
+                </div>
+            </div>
+
+            <!-- Payment -->
+            <div class="entity payment" id="payment-box">
+                <div class="entity-title">Payment</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">payment_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">user_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">ticket_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">amount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">method VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">status VARCHAR(50)</span></div>
+                    <div class="field"><span class="field-text">payment_date DATE</span></div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="entity content-entity" id="content-entity-box">
+                <div class="entity-title">Content</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">content_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">artist_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">title VARCHAR(200)</span></div>
+                    <div class="field"><span class="field-text">type VARCHAR(20)</span></div>
+                    <div class="field"><span class="field-text">description VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">fileUrl VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">fileMedia INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">isYoutubeLink BOOLEAN</span></div>
+                    <div class="field"><span class="field-text">youtubeId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">thumbnailUrl VARCHAR(255)</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">thumbnailMedia INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">releaseDate DATE</span></div>
+                    <div class="field"><span class="field-text">likes INT(11)</span></div>
+                    <div class="field"><span class="field-text">views INT(11)</span></div>
+                    <div class="field"><span class="field-text">featured BOOLEAN</span></div>
+                </div>
+            </div>
+
+            <!-- SubscriptionPlan -->
+            <div class="entity subscription-plan" id="subscription-plan-box">
+                <div class="entity-title">SubscriptionPlan</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">plan_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text">name VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">price DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">duration INT(11)</span></div>
+                    <div class="field"><span class="field-text">durationUnit VARCHAR(20)</span></div>
+                    <div class="field"><span class="field-text">benefits VARCHAR(500)</span></div>
+                    <div class="field"><span class="field-text">discountPercentage INT(11)</span></div>
+                    <div class="field"><span class="field-text">isActive BOOLEAN</span></div>
+                    <div class="field"><span class="field-text"><span class="fk">createdBy INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">created_at DATETIME</span></div>
+                </div>
+            </div>
+
+            <!-- UserSubscription -->
+            <div class="entity user-subscription" id="user-subscription-box">
+                <div class="entity-title">UserSubscription</div>
+                <div class="entity-content">
+                    <div class="field"><span class="field-text"><span class="pk">subscription_id INT(11) PK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">user_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text"><span class="fk">plan_id INT(11) FK</span></span></div>
+                    <div class="field"><span class="field-text">purchaseDate DATETIME</span></div>
+                    <div class="field"><span class="field-text">expiryDate DATETIME</span></div>
+                    <div class="field"><span class="field-text">status VARCHAR(30)</span></div>
+                    <div class="field"><span class="field-text">paymentId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">orderId VARCHAR(100)</span></div>
+                    <div class="field"><span class="field-text">amount DECIMAL(10,2)</span></div>
+                    <div class="field"><span class="field-text">notes VARCHAR(500)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <svg id="relationshipSVG" width="100%" height="100%"></svg>
+    </div>
+
+    <div class="legend">
+        <strong>LEGEND:</strong><br><br>
+        <span class="pk">PK</span> = Primary Key | <span class="fk">FK</span> = Foreign Key | INT(11) = Integer | VARCHAR(n) = String | DECIMAL(10,2) = Decimal<br><br>
+        <strong>RELATIONSHIP CARDINALITY:</strong><br>
+        ——●—— One (Optional) | ══●══ One+ (Mandatory) | —|<—— Many (Optional) | —|<—— Many+ (Mandatory)<br>
+        <span style="color: #d9534f; font-weight: bold;">RED LINES = MANDATORY relationships</span> | <span style="color: #000; font-weight: bold;">BLACK LINES = OPTIONAL relationships</span>
+    </div>
+
+    <div style="margin-top: 200px; padding: 20px; border: 2px solid #000; background: #f9f9f9; font-family: 'Courier New', monospace; font-size: 12px;">
+        <strong style="font-size: 14px; display: block; margin-bottom: 15px;">📊 TABLE RELATIONSHIPS (ACTUAL DATABASE REQUIREMENTS):</strong>
+        
+        <div style="margin: 10px 0;">
+            <strong>Admin</strong> (0,1) manages → <strong>User</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Admin</strong> (0,1) manages → <strong>Artist</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Admin</strong> (0,1) manages → <strong>Venue</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Admin</strong> (0,1) approves → <strong>Concert</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Admin</strong> (0,1) manages → <strong>SubscriptionPlan</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>Artist</strong> (1,1) REQUIRED creates → <strong>Concert</strong> (0,M) | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">MANDATORY 1 to Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Artist</strong> (1,1) REQUIRED uploads → <strong>Content</strong> (1,M) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">MANDATORY 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>Venue</strong> (1,1) REQUIRED hosts → <strong>Concert</strong> (1,M) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">MANDATORY 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>User</strong> (0,1) purchases → <strong>Ticket</strong> (1,M) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">Optional 1 to MANDATORY Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>User</strong> (0,1) makes → <strong>Payment</strong> (1,M) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">Optional 1 to MANDATORY Many</span>
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>User</strong> (0,1) subscribes → <strong>UserSubscription</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>Concert</strong> (1,1) REQUIRED generates → <strong>Ticket</strong> (1,M) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">MANDATORY 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>SubscriptionPlan</strong> (0,1) used by → <strong>UserSubscription</strong> (0,M) | <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px;">Optional 1 to Many</span>
+        </div>
+        
+        <hr style="margin: 15px 0; border: 1px solid #ccc;">
+        
+        <div style="margin: 10px 0;">
+            <strong>Ticket</strong> (1,1) REQUIRED for → <strong>Payment</strong> (1,1) MANDATORY | <span style="background: #ffebee; padding: 2px 6px; border-radius: 3px; color: #d9534f; font-weight: bold;">MANDATORY 1-to-1</span>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 10px; background: #fffbcc; border-left: 3px solid #ffc107;">
+            <strong>FOREIGN KEY RELATIONSHIPS:</strong><br><br>
+            • User.profileMedia → Media<br>
+            • Artist.user_id → User<br>
+            • Artist.blockedBy → User<br>
+            • Artist.bannerMedia → Media<br>
+            • Venue.createdBy → User<br>
+            • Concert.artist_id → Artist<br>
+            • Concert.venue_id → Venue<br>
+            • Ticket.concert_id → Concert<br>
+            • Ticket.user_id → User<br>
+            • Payment.user_id → User<br>
+            • Payment.ticket_id → Ticket<br>
+            • Content.artist_id → Artist<br>
+            • Content.fileMedia → Media<br>
+            • Content.thumbnailMedia → Media<br>
+            • Venue.imageMedia → Media<br>
+            • SubscriptionPlan.createdBy → User<br>
+            • UserSubscription.user_id → User<br>
+            • UserSubscription.plan_id → SubscriptionPlan
+        </div>
+    </div>
+
+    <script>
+        function drawDiagram() {
+            const svg = document.getElementById('relationshipSVG');
+            const wrapper = svg.parentElement;
+            
+            const getPos = (id) => {
+                const el = document.getElementById(id);
+                const rect = el.getBoundingClientRect();
+                const wrapperRect = wrapper.getBoundingClientRect();
+                return {
+                    left: rect.left - wrapperRect.left,
+                    top: rect.top - wrapperRect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    centerX: (rect.left - wrapperRect.left) + rect.width / 2,
+                    centerY: (rect.top - wrapperRect.top) + rect.height / 2
+                };
+            };
+
+            const admin = getPos('admin-box');
+            const user = getPos('user-box');
+            const artist = getPos('artist-box');
+            const venue = getPos('venue-box');
+            const concert = getPos('ticket-box');
+            const ticket = getPos('content-box');
+            const payment = getPos('payment-box');
+            const content = getPos('content-entity-box');
+            const subscriptionPlan = getPos('subscription-plan-box');
+            const userSubscription = getPos('user-subscription-box');
+
+            svg.innerHTML = `
+                <defs>
+                    <!-- MANDATORY SIDE NOTATIONS -->
+                    <!-- Double line for mandatory one (1+) -->
+                    <marker id="mandatory-one" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto">
+                        <line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-width="2"/>
+                        <line x1="2" y1="0" x2="2" y2="8" stroke="#000" stroke-width="2"/>
+                    </marker>
+                    <!-- Crow's foot for mandatory many (M+) -->
+                    <marker id="mandatory-many" markerWidth="12" markerHeight="12" refX="12" refY="6" orient="auto">
+                        <line x1="0" y1="3" x2="12" y2="6" stroke="#000" stroke-width="2.5"/>
+                        <line x1="0" y1="9" x2="12" y2="6" stroke="#000" stroke-width="2.5"/>
+                        <line x1="0" y1="6" x2="2" y2="6" stroke="#000" stroke-width="2.5"/>
+                        <line x1="2" y1="3" x2="2" y2="9" stroke="#000" stroke-width="2.5"/>
+                    </marker>
+                    
+                    <!-- OPTIONAL SIDE NOTATIONS -->
+                    <!-- Single line for optional one (1) -->
+                    <marker id="optional-one" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto">
+                        <line x1="0" y1="1" x2="0" y2="7" stroke="#000" stroke-width="2"/>
+                        <circle cx="4" cy="4" r="2" stroke="#000" stroke-width="1.5" fill="none"/>
+                    </marker>
+                    <!-- Crow's foot for optional many (M) -->
+                    <marker id="optional-many" markerWidth="12" markerHeight="12" refX="12" refY="6" orient="auto">
+                        <line x1="0" y1="3" x2="12" y2="6" stroke="#000" stroke-width="2"/>
+                        <line x1="0" y1="9" x2="12" y2="6" stroke="#000" stroke-width="2"/>
+                        <line x1="0" y1="6" x2="2" y2="6" stroke="#000" stroke-width="2"/>
+                        <circle cx="4" cy="6" r="2" stroke="#000" stroke-width="1.5" fill="none"/>
+                    </marker>
+                </defs>
+
+                <!-- Admin to User (0-M: Optional one, Many) -->
+                <path d="M ${admin.centerX} ${admin.top + admin.height} L ${admin.centerX} ${admin.top + admin.height + 50} L ${user.centerX} ${user.top - 50} L ${user.centerX} ${user.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(admin.centerX + user.centerX) / 2 - 50}" y="${admin.top + admin.height + 35}" class="relationship-label">manages</text>
+
+                <!-- Admin to Artist (0-M: Optional one, Many) -->
+                <path d="M ${admin.centerX - 30} ${admin.top + admin.height} L ${admin.centerX - 30} ${admin.top + admin.height + 150} L ${artist.centerX} ${artist.top - 150} L ${artist.centerX} ${artist.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(admin.centerX + artist.centerX) / 2 - 70}" y="${(admin.top + artist.top) / 2}" class="relationship-label">manages</text>
+
+                <!-- Admin to Venue (0-M: Optional one, Many) -->
+                <path d="M ${admin.centerX + 30} ${admin.top + admin.height} L ${admin.centerX + 30} ${admin.top + admin.height + 150} L ${venue.centerX} ${venue.top - 150} L ${venue.centerX} ${venue.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(admin.centerX + venue.centerX) / 2 + 20}" y="${(admin.top + venue.top) / 2}" class="relationship-label">manages</text>
+
+                <!-- Admin to Concert (0-M: Optional one, Many) -->
+                <path d="M ${admin.centerX} ${admin.top + admin.height} L ${admin.centerX} ${admin.top + admin.height + 400} L ${concert.centerX} ${concert.top - 400} L ${concert.centerX} ${concert.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(admin.centerX + concert.centerX) / 2 - 70}" y="${(admin.top + admin.height + 220)}" class="relationship-label">approves</text>
+
+                <!-- Artist to Concert (1+-M+: MANDATORY one, MANDATORY many) -->
+                <path d="M ${artist.centerX} ${artist.top + artist.height} L ${artist.centerX} ${artist.top + artist.height + 50} L ${concert.centerX} ${concert.top - 50} L ${concert.centerX} ${concert.top}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#mandatory-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(artist.centerX + concert.centerX) / 2 - 50}" y="${(artist.top + artist.height + concert.top) / 2}" class="relationship-label">creates</text>
+
+                <!-- Venue to Concert (1+-M+: MANDATORY one, MANDATORY many) -->
+                <path d="M ${venue.centerX} ${venue.top + venue.height} L ${venue.centerX} ${venue.top + venue.height + 50} L ${concert.centerX} ${concert.top - 50} L ${concert.centerX} ${concert.top}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#mandatory-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(venue.centerX + concert.centerX) / 2}" y="${(venue.top + venue.height + concert.top) / 2}" class="relationship-label">hosts</text>
+
+                <!-- User to Ticket (0-M+: Optional one, MANDATORY many) -->
+                <path d="M ${user.centerX} ${user.top + user.height} L ${user.centerX} ${user.top + user.height + 150} L ${ticket.centerX} ${ticket.top - 150} L ${ticket.centerX} ${ticket.top}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#optional-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(user.centerX + ticket.centerX) / 2 - 70}" y="${user.top + user.height + 100}" class="relationship-label">purchases</text>
+
+                <!-- Concert to Ticket (1+-M+: MANDATORY one, MANDATORY many) -->
+                <path d="M ${concert.left + concert.width} ${concert.centerY} L ${ticket.left} ${ticket.centerY}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#mandatory-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(concert.left + concert.width + ticket.left) / 2 - 10}" y="${concert.centerY - 15}" class="relationship-label">generates</text>
+
+                <!-- User to Payment (0-M+: Optional one, MANDATORY many) -->
+                <path d="M ${user.left + user.width} ${user.centerY + 50} L ${payment.left} ${payment.centerY}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#optional-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(user.left + user.width + payment.left) / 2 - 20}" y="${(user.centerY + payment.centerY) / 2 + 20}" class="relationship-label">makes</text>
+
+                <!-- Ticket to Payment (1+-1+: MANDATORY one-to-one) -->
+                <path d="M ${ticket.left + ticket.width} ${ticket.centerY} L ${payment.left} ${payment.centerY}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#mandatory-one)" marker-end="url(#mandatory-one)"/>
+                <text x="${(ticket.left + ticket.width + payment.left) / 2}" y="${(ticket.centerY + payment.centerY) / 2 - 15}" class="relationship-label">for</text>
+
+                <!-- Artist to Content (1+-M+: MANDATORY one, MANDATORY many) -->
+                <path d="M ${artist.centerX} ${artist.top + artist.height} L ${artist.centerX} ${artist.top + artist.height + 100} L ${content.centerX} ${content.top - 100} L ${content.centerX} ${content.top}" stroke="#d9534f" stroke-width="2.5" fill="none" marker-start="url(#mandatory-one)" marker-end="url(#mandatory-many)"/>
+                <text x="${(artist.centerX + content.centerX) / 2 - 50}" y="${(artist.top + artist.height + content.top) / 2}" class="relationship-label">uploads</text>
+
+                <!-- Admin to SubscriptionPlan (0-M: Optional one, Many) -->
+                <path d="M ${admin.centerX} ${admin.top + admin.height} L ${admin.centerX} ${admin.top + admin.height + 100} L ${subscriptionPlan.centerX} ${subscriptionPlan.top - 100} L ${subscriptionPlan.centerX} ${subscriptionPlan.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(admin.centerX + subscriptionPlan.centerX) / 2 + 20}" y="${(admin.top + admin.height + subscriptionPlan.top) / 2}" class="relationship-label">manages</text>
+
+                <!-- User to UserSubscription (0-M: Optional one, Many) -->
+                <path d="M ${user.centerX} ${user.top + user.height} L ${user.centerX} ${user.top + user.height + 250} L ${userSubscription.centerX} ${userSubscription.top - 250} L ${userSubscription.centerX} ${userSubscription.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(user.centerX + userSubscription.centerX) / 2 - 50}" y="${user.top + user.height + 200}" class="relationship-label">subscribes</text>
+
+                <!-- SubscriptionPlan to UserSubscription (1-M: One to Many) -->
+                <path d="M ${subscriptionPlan.centerX} ${subscriptionPlan.top + subscriptionPlan.height} L ${subscriptionPlan.centerX} ${subscriptionPlan.top + subscriptionPlan.height + 80} L ${userSubscription.centerX} ${userSubscription.top - 80} L ${userSubscription.centerX} ${userSubscription.top}" stroke="#000" stroke-width="2" fill="none" marker-start="url(#optional-one)" marker-end="url(#optional-many)"/>
+                <text x="${(subscriptionPlan.centerX + userSubscription.centerX) / 2 - 40}" y="${(subscriptionPlan.top + subscriptionPlan.height + userSubscription.top) / 2}" class="relationship-label">used by</text>
+            `;
+        }
+
+        window.addEventListener('load', drawDiagram);
+        window.addEventListener('resize', drawDiagram);
+
+        function downloadPDF() {
+            const element = document.body;
+            const button = document.querySelector('.download-btn');
+            
+            // Hide button during PDF generation
+            button.style.display = 'none';
+            
+            const opt = {
+                margin: 10,
+                filename: 'ER_Diagram_Database_Schema.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Show button again after PDF is generated
+                button.style.display = 'block';
+            });
+        }
+
+        function downloadHTML() {
+            // Get the entire HTML content
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Create a blob from the HTML content
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            
+            // Create a temporary download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'ER_Diagram_Database_Schema.html';
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

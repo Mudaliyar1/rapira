@@ -5,10 +5,10 @@ const Venue = require('../models/Venue');
 const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // GET /admin/venue-edit-requests - List all venue edit requests
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const { status = 'all', page = 1, dateRange = '', search = '' } = req.query;
     const limit = 10;
@@ -24,7 +24,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     if (dateRange) {
       const now = new Date();
       let startDate;
-      
+
       switch (dateRange) {
         case 'today':
           startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -36,7 +36,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
       }
-      
+
       if (startDate) {
         filter.createdAt = { $gte: startDate };
       }
@@ -60,12 +60,12 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const userName = request.user?.name?.toLowerCase() || '';
         const userEmail = request.user?.email?.toLowerCase() || '';
         const searchLower = search.toLowerCase();
-        
-        return venueName.includes(searchLower) || 
-               venueCity.includes(searchLower) || 
-               venueState.includes(searchLower) ||
-               userName.includes(searchLower) || 
-               userEmail.includes(searchLower);
+
+        return venueName.includes(searchLower) ||
+          venueCity.includes(searchLower) ||
+          venueState.includes(searchLower) ||
+          userName.includes(searchLower) ||
+          userEmail.includes(searchLower);
       });
     }
 
@@ -110,7 +110,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venue-edit-requests/:id - View specific edit request
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const editRequest = await VenueEditRequest.findById(req.params.id)
       .populate('venue')
@@ -136,10 +136,10 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venue-edit-requests/:id/approve - Approve edit request
-router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const editRequest = await VenueEditRequest.findById(req.params.id).populate('venue');
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/venue-edit-requests');
@@ -151,19 +151,19 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const venue = editRequest.venue;
-    
+
     // Apply the requested changes to the venue
     const updates = editRequest.requestedChanges;
-    
+
     // Handle image updates
     if (editRequest.newImages && editRequest.newImages.length > 0) {
       venue.images = venue.images || [];
       venue.images.push(...editRequest.newImages);
     }
-    
+
     if (editRequest.imagesToRemove && editRequest.imagesToRemove.length > 0) {
       venue.images = venue.images.filter(img => !editRequest.imagesToRemove.includes(img));
-      
+
       // Delete physical files
       editRequest.imagesToRemove.forEach(imagePath => {
         const fullPath = path.join(__dirname, '../public', imagePath);
@@ -218,10 +218,10 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venue-edit-requests/:id/reject - Reject edit request
-router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const editRequest = await VenueEditRequest.findById(req.params.id);
-    
+
     if (!editRequest) {
       req.flash('error', 'Edit request not found');
       return res.redirect('/admin/venue-edit-requests');
@@ -259,6 +259,29 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
     console.error('Error rejecting edit request:', error);
     req.flash('error', 'Failed to reject edit request');
     res.redirect(`/admin/venue-edit-requests/${req.params.id}`);
+  }
+});
+
+// POST /admin/venue-edit-requests/:id/delete - Delete edit request
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
+  try {
+    const editRequest = await VenueEditRequest.findById(req.params.id);
+
+    if (!editRequest) {
+      req.flash('error', 'Edit request not found');
+      return res.redirect('/admin/venue-edit-requests');
+    }
+
+    // Delete the edit request
+    await VenueEditRequest.findByIdAndDelete(req.params.id);
+
+    req.flash('success', 'Venue edit request deleted successfully');
+    res.redirect('/admin/venue-edit-requests');
+
+  } catch (error) {
+    console.error('Error deleting edit request:', error);
+    req.flash('error', 'Failed to delete edit request');
+    res.redirect(`/admin/venue-edit-requests`);
   }
 });
 

@@ -54,7 +54,7 @@
                     <%= account.role %>
                   </span>
                 </td>
-                <td><small><%= new Date(account.deletedAt).toLocaleDateString() %></small></td>
+                <td><small><%= toISTDateString(account.deletedAt) %></small></td>
                 <td><small class="text-muted"><%= account.deletionReason %></small></td>
                 <td>
                   <a href="/admin/deleted-accounts/<%= account._id %>" class="btn btn-sm btn-outline-info">

@@ -18,8 +18,20 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'artist', 'admin'],
+    enum: ['user', 'artist', 'admin', 'superAdmin'],
     default: 'user'
+  },
+  isSuperAdmin: {
+    type: Boolean,
+    default: false
+  },
+  adminPermissions: {
+    type: [String],
+    default: []
+  },
+  adminTitle: {
+    type: String,
+    default: ''
   },
   profileImage: {
     type: String,
@@ -34,6 +46,16 @@ const UserSchema = new mongoose.Schema({
     default: ''
   },
   city: {
+    type: String,
+    default: ''
+  },
+  age: {
+    type: Number,
+    min: 0,
+    max: 120,
+    default: null
+  },
+  heardFrom: {
     type: String,
     default: ''
   },
@@ -74,11 +96,67 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  lastLogin: {
+    type: Date,
+    default: null
+  },
+  currentLoginTime: {
+    type: Date,
+    default: null
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  currentPage: {
+    type: String,
+    default: null
+  },
+  lastPageUpdate: {
+    type: Date,
+    default: null
+  },
+  // Blocking status
+  isBlocked: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  blockReason: {
+    type: String,
+    default: ''
+  },
+  blockedAt: {
+    type: Date,
+    default: null
+  },
+  unblockReason: {
+    type: String,
+    default: ''
+  },
+  unblockedAt: {
+    type: Date,
+    default: null
+  },
+  unblockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  typingTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  lastTypingAt: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 // Hash password before saving
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -92,12 +170,12 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to get profile image (default to avatar if not uploaded)
-UserSchema.methods.getDisplayProfileImage = function() {
+UserSchema.methods.getDisplayProfileImage = function () {
   if (this.profileImage) {
     return this.profileImage;
   }
@@ -105,7 +183,7 @@ UserSchema.methods.getDisplayProfileImage = function() {
 };
 
 // Virtual method to get profile image (default to avatar if not uploaded)
-UserSchema.virtual('displayProfileImage').get(function() {
+UserSchema.virtual('displayProfileImage').get(function () {
   if (this.profileImage) {
     return this.profileImage;
   }

@@ -272,7 +272,7 @@
                 <div class="ms-3">
                   <h6 class="mb-0 small fw-bold"><%= concert.title %></h6>
                   <p class="mb-0 small text-muted">
-                    <i class="bi bi-calendar3"></i> <%= new Date(concert.date).toLocaleDateString() %>
+                    <i class="bi bi-calendar3"></i> <%= toISTDateString(concert.date) %>
                   </p>
                 </div>
               </div>
@@ -344,7 +344,7 @@
                         <i class="bi bi-geo-alt"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
                       </p>
                       <p class="card-text text-muted mb-3">
-                        <i class="bi bi-calendar3"></i> <%= new Date(concert.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                        <i class="bi bi-calendar3"></i> <%= toISTDateString(concert.date) %>
                       </p>
                       <a href="/concerts/<%= concert._id %>" class="btn btn-primary w-100">View Details</a>
                     </div>

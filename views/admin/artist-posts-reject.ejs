@@ -17,7 +17,7 @@
       <div>
         <div class="mb-1"><strong>Artist:</strong> <%= artistName %></div>
         <div class="mb-1"><strong>Caption:</strong> <%= post.caption || '(no caption)' %></div>
-        <div class="text-muted"><small>Created: <%= new Date(post.createdAt).toLocaleString() %></small></div>
+        <div class="text-muted"><small>Created: <%= toISTLocaleString(post.createdAt) %></small></div>
       </div>
     </div>
   </div>

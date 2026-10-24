@@ -1,0 +1,141 @@
+<%- include('../partials/artist-header') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <h5 class="text-white mb-2">Beat Library</h5>
+    <p class="text-white-50 mb-0">Your personal collection of purchased and free beats. Listen, download, or manage your library content.</p>
+  </div>
+</div>
+
+<!-- Library Grid -->
+<div class="row g-4 mb-5">
+  <% if (purchases && purchases.length > 0) { %>
+    <% purchases.forEach(purchase => { %>
+      <div class="col-md-6 col-lg-4 col-xl-3">
+        <div class="glass-card-dark h-100 position-relative protected-media-container purchased-container">
+          <div class="card-body p-3 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="card-title text-white mb-0 text-truncate pe-3">
+                <%= purchase.beat ? purchase.beat.title : (purchase.backupTitle || 'Deleted Beat') %>
+              </h5>
+              <span class="badge <%= purchase.amount === 0 ? 'bg-info' : 'bg-primary' %>">
+                <%= purchase.amount === 0 ? 'Free' : 'Purchased' %>
+              </span>
+            </div>
+
+            <div class="d-flex align-items-center mb-4 text-white-50 small">
+              <% if (purchase.producer) { %>
+                <img src="<%= purchase.producer.profileImage || '/images/default-profile.svg' %>" width="24" height="24" class="rounded-circle me-2" alt="">
+                <span>By <%= purchase.producer.name %></span>
+              <% } else { %>
+                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 10px;">
+                  <i class="bi bi-person-slash"></i>
+                </div>
+                <span>By Unknown Producer</span>
+              <% } %>
+            </div>
+
+            <!-- Media Player -->
+            <div class="mb-4 bg-black bg-opacity-25 p-2 rounded">
+              <% const mediaUrl = purchase.beat ? purchase.beat.mediaUrl : purchase.backupMediaUrl; %>
+              <% const mediaType = purchase.beat ? purchase.beat.mediaType : (purchase.backupMediaType || 'audio'); %>
+              
+              <% if (mediaUrl) { %>
+                <% if (mediaType === 'video') { %>
+                  <video class="w-100 rounded" controls controlsList="nodownload noplaybackrate" style="max-height: 180px; object-fit: cover; background: #000;" data-purchased="true" data-allow-background="true">
+                    <source src="/artists/beats/stream/<%= purchase.beat ? purchase.beat._id : purchase._id %>">
+                    Your browser does not support the video tag.
+                  </video>
+                <% } else { %>
+                  <audio class="w-100" controls controlsList="nodownload noplaybackrate" data-purchased="true" data-allow-background="true">
+                    <source src="/artists/beats/stream/<%= purchase.beat ? purchase.beat._id : purchase._id %>">
+                    Your browser does not support the audio element.
+                  </audio>
+                <% } %>
+              <% } else { %>
+                <div class="text-center py-3 text-white-50">
+                  <i class="bi bi-exclamation-triangle"></i> Media File Unavailable
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-auto d-flex flex-column gap-2">
+              <div class="d-flex gap-2">
+                <% if (mediaUrl) { %>
+                  <a href="/artists/beats/download/<%= purchase.beat ? purchase.beat._id : purchase._id %>" class="btn btn-success flex-grow-1">
+                    <i class="bi bi-download me-1"></i> Download
+                  </a>
+                <% } %>
+                <a href="/artists/beat-purchases/<%= purchase._id %>/receipt" class="btn btn-outline-info" title="View Receipt">
+                  <i class="bi bi-receipt"></i>
+                </a>
+              </div>
+              <button class="btn btn-outline-danger w-100 mt-1" data-bs-toggle="modal" data-bs-target="#deleteLibraryModal-<%= purchase._id %>">
+                <i class="bi bi-trash me-1"></i> Remove from Library
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="col-12">
+      <div class="card bg-dark border-secondary py-5 text-center">
+        <div class="card-body">
+          <i class="bi bi-music-note-list text-white-50" style="font-size: 3rem;"></i>
+          <h5 class="text-white mt-3">Your library is empty</h5>
+          <p class="text-white-50">You haven't added any beats to your library yet.</p>
+          <a href="/artists/beats" class="btn btn-primary mt-2">Explore Marketplace</a>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- Remove from Library Modals -->
+<% if (purchases && purchases.length > 0) { %>
+  <% purchases.forEach(purchase => { %>
+    <div class="modal fade" id="deleteLibraryModal-<%= purchase._id %>" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Remove Beat</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to remove <strong><%= purchase.beat ? purchase.beat.title : purchase.backupTitle %></strong> from your library?</p>
+            <div class="alert alert-warning py-2 small">
+              <i class="bi bi-info-circle me-1"></i> <strong>Important:</strong> You will lose access to this media file. To get it back, you will need to repurchase it from the marketplace.
+            </div>
+            <p class="text-white-50 small mb-0">We recommend downloading the beat file and your receipt before proceeding.</p>
+          </div>
+          <div class="modal-footer border-secondary">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form action="/artists/beat-purchases/<%= purchase._id %>/delete" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-danger">Yes, Remove Beat</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<%- include('../partials/media-protection') %>
+<%- include('../partials/artist-footer') %>

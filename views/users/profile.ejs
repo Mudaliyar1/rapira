@@ -1,5 +1,17 @@
 <div class="container py-5">
   <div class="row">
+    <% if (!user.age || !user.heardFrom) { %>
+      <div class="col-12 mb-3">
+        <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+          <div>
+            <strong>Complete your profile:</strong> Add your age and where you heard about us (optional) to help us personalize your experience. 
+            <a href="/users/edit-profile" class="alert-link fw-bold">Click here to add details</a>
+          </div>
+          <a href="/users/edit-profile" class="btn btn-sm btn-outline-dark">Update now</a>
+        </div>
+      </div>
+    <% } %>
+
     <div class="col-lg-4 mb-4 mb-lg-0">
       <div class="card">
         <div class="card-body text-center p-4">
@@ -67,11 +79,28 @@
                 <i class="bi bi-music-note-beamed me-1"></i> Become an Artist
               </a>
             <% } %>
+
+            <a href="/users/job-portal" class="btn btn-info text-white">
+              <i class="bi bi-briefcase me-1"></i> Job Portal
+            </a>
+
             <% if (pendingApplication) { %>
               <a href="/artist-applications/status" class="btn btn-info text-white">
-                <i class="bi bi-hourglass-split me-1"></i> View Application Status
+                <i class="bi bi-hourglass-split me-1"></i> View Artist status
               </a>
             <% } %>
+            <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+              <a href="/producer-dashboard" class="btn btn-dark">
+                <i class="bi bi-mic-fill me-1"></i> Producer Dashboard
+              </a>
+            <% } %>
+
+            <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'distributor')) { %>
+              <a href="/distributor-dashboard" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
+                <i class="bi bi-broadcast me-1"></i> Distributor Dashboard
+              </a>
+            <% } %>
+
             <a href="/users/confirm-delete-account" class="btn btn-danger mt-3">
               <i class="bi bi-trash me-1"></i> Delete Account
             </a>
@@ -79,11 +108,21 @@
         </div>
       </div>
 
-      <% if (user.bio) { %>
+      <% if (user.bio || user.age || user.heardFrom) { %>
         <div class="card mt-4">
           <div class="card-body p-4">
             <h5 class="card-title fw-bold mb-3">About</h5>
-            <p class="card-text"><%= user.bio %></p>
+            <% if (user.bio) { %>
+              <p class="card-text mb-2"><%= user.bio %></p>
+            <% } %>
+            <ul class="list-unstyled mb-0">
+              <% if (user.age) { %>
+                <li><strong>Age:</strong> <%= user.age %></li>
+              <% } %>
+              <% if (user.heardFrom) { %>
+                <li><strong>Heard about us:</strong> <%= user.heardFrom %></li>
+              <% } %>
+            </ul>
           </div>
         </div>
       <% } %>
@@ -130,7 +169,7 @@
                   <% tickets.forEach(ticket => { %>
                     <tr>
                       <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
-                      <td><%= ticket.concert ? new Date(ticket.concert.date).toLocaleDateString() : 'N/A' %></td>
+                      <td><%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></td>
                       <td><%= ticket.concert && ticket.concert.venue ? (ticket.concert.venue.name || ticket.concert.venue) : 'N/A' %></td>
                       <td><%= ticket.quantity %></td>
                       <td>
@@ -168,7 +207,7 @@
           <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
             <div class="d-flex align-items-center mb-3">
               <div class="badge bg-success me-2">Active</div>
-              <div class="fw-bold"><%= activeSubscription.plan.name %> Plan</div>
+              <div class="fw-bold"><%= activeSubscription.plan ? activeSubscription.plan.name : 'Unknown' %> Plan</div>
             </div>
 
             <%
@@ -177,13 +216,13 @@
 
             <p class="mb-2">
               <strong>Expires:</strong>
-              <%= new Date(activeSubscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+              <%= toISTDateString(activeSubscription.expiryDate) %>
               <span class="<%= daysRemaining < 7 ? 'text-warning' : 'text-success' %>">
                 (<%= daysRemaining %> days left)
               </span>
             </p>
 
-            <% if (activeSubscription.plan.discountPercentage > 0) { %>
+            <% if (activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) { %>
               <p class="mb-2 text-success">
                 <i class="bi bi-tag-fill me-1"></i>
                 <strong><%= activeSubscription.plan.discountPercentage %>% discount</strong> on all ticket purchases
@@ -235,7 +274,7 @@
                     <% concerts.forEach(concert => { %>
                       <tr>
                         <td><%= concert.title %></td>
-                        <td><%= new Date(concert.date).toLocaleDateString() %></td>
+                      <td><%= toISTDateString(concert.date) %></td>
                         <td><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
                         <td>
                           <span class="badge <%= concert.status === 'approved' ? 'bg-success' : 'bg-warning' %>">

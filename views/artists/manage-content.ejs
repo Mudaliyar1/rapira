@@ -144,7 +144,7 @@
                       <%= item.type.charAt(0).toUpperCase() + item.type.slice(1) %>
                     </span>
                   </td>
-                  <td style="color: #000000 !important;"><%= new Date(item.createdAt).toLocaleDateString() %></td>
+                  <td style="color: #000000 !important;"><%= toISTDateString(item.createdAt) %></td>
                   <td style="color: #000000 !important;"><%= item.views %> <small style="color: #6c757d !important;">views</small></td>
                   <td style="color: #000000 !important;">
                     <span class="badge <%= item.featured ? 'bg-success' : 'bg-secondary' %> rounded-pill">

@@ -6,6 +6,7 @@ const { isNotLoggedIn, isLoggedIn } = require('../middleware/auth');
 const { sendWelcomeEmail, sendPasswordResetEmail, sendEmail } = require('../utils/brevoEmailService');
 const DeletedAccount = require('../models/DeletedAccount');
 const WebsiteSettings = require('../models/WebsiteSettings');
+const ActivityLogger = require('../utils/activityLogger');
 
 // Simple session test for production debugging
 router.get('/session-test', (req, res) => {
@@ -92,7 +93,24 @@ router.get('/session-check', (req, res) => {
 });
 
 // Login page
-router.get('/login', isNotLoggedIn, (req, res) => {
+router.get('/login', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
+  let returnTo = '';
+
+  if (typeof req.query.returnTo === 'string' && req.query.returnTo) {
+    returnTo = req.query.returnTo;
+  } else if (req.headers.referer) {
+    try {
+      const refUrl = new URL(req.headers.referer);
+      returnTo = `${refUrl.pathname}${refUrl.search || ''}`;
+    } catch (error) {
+      returnTo = '';
+    }
+  }
+
+  if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/auth')) {
+    req.session.returnTo = returnTo;
+  }
+
   res.render('auth/login');
 });
 
@@ -117,9 +135,22 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      // Log failed login attempt
+      await ActivityLogger.logLogin(user._id, req, false);
       req.flash('error', 'Invalid email or password');
       return res.redirect('/auth/login');
     }
+
+    // Update login tracking
+    user.lastLogin = user.currentLoginTime || new Date();
+    user.currentLoginTime = new Date();
+    user.isOnline = true;
+    user.currentPage = 'Home'; // Reset to home on fresh login
+    user.lastPageUpdate = new Date();
+    await user.save();
+
+    // Log successful login
+    await ActivityLogger.logLogin(user._id, req, true);
 
     // Create session with more user data
     req.session.user = {
@@ -127,6 +158,8 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString()
     };
@@ -150,8 +183,12 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       console.log('User in session:', req.session.user ? 'Yes' : 'No');
       console.log('Environment:', process.env.NODE_ENV);
 
+      const returnTo = req.session.returnTo;
+      delete req.session.returnTo;
+      const safeReturnTo = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/auth') ? returnTo : '/';
+
       req.flash('success', 'You are now logged in');
-      return res.redirect('/');
+      return res.redirect(safeReturnTo);
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -214,6 +251,8 @@ router.post('/maintenance-login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString(),
       maintenanceLogin: true // Flag to indicate this was a maintenance login
@@ -248,7 +287,7 @@ router.post('/maintenance-login', async (req, res) => {
 });
 
 // Register page
-router.get('/register', isNotLoggedIn, (req, res) => {
+router.get('/register', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   res.render('auth/register');
 });
 
@@ -305,7 +344,7 @@ router.post('/register', isNotLoggedIn, async (req, res) => {
 });
 
 // Register verify page
-router.get('/register/verify', isNotLoggedIn, (req, res) => {
+router.get('/register/verify', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   if (!req.session.registerData || !req.session.registerOTP) {
     req.flash('error', 'Please start registration again');
     return res.redirect('/auth/register');
@@ -398,13 +437,29 @@ router.post('/register/verify', isNotLoggedIn, async (req, res) => {
 });
 
 // Logout
-router.get('/logout', (req, res) => {
+router.get('/logout', async (req, res) => {
   // Get the user info for logging
   const userEmail = req.session && req.session.user ? req.session.user.email : 'unknown';
+  const userId = req.session && req.session.user ? req.session.user.id : null;
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Log the logout attempt
   console.log(`Logout attempt for user ${userEmail} in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+
+  // Mark user as offline in database
+  if (userId) {
+    try {
+      await User.findByIdAndUpdate(userId, {
+        isOnline: false,
+        currentPage: null,
+        lastPageUpdate: new Date()
+      });
+      // Log logout
+      await ActivityLogger.logLogout(userId, req);
+    } catch (err) {
+      console.error('Error updating user online status:', err);
+    }
+  }
 
   // Different logout strategies for development and production
   if (!isProduction) {
@@ -463,7 +518,7 @@ router.get('/logout', (req, res) => {
 });
 
 // Forgot password page
-router.get('/forgot-password', isNotLoggedIn, (req, res) => {
+router.get('/forgot-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   // Check if this is a resend OTP request
   const { email, resend } = req.query;
 
@@ -530,7 +585,7 @@ router.post('/forgot-password', isNotLoggedIn, async (req, res) => {
 });
 
 // Reset password page
-router.get('/reset-password', isNotLoggedIn, (req, res) => {
+router.get('/reset-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   const { email } = req.query;
 
   if (!email) {
@@ -542,7 +597,7 @@ router.get('/reset-password', isNotLoggedIn, (req, res) => {
 });
 
 // Set new password page
-router.get('/set-new-password', isNotLoggedIn, (req, res) => {
+router.get('/set-new-password', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
   const { email, otp } = req.query;
 
   if (!email || !otp) {

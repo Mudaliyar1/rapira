@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Login Timer Functionality
   const loginTimerValue = document.getElementById('loginTimerValue');
   const loginTimerDisplay = document.getElementById('loginTimerDisplay');
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add click handler to reset the timer
     if (loginTimerDisplay) {
-      loginTimerDisplay.addEventListener('click', function() {
+      loginTimerDisplay.addEventListener('click', function () {
         // Reset the login time to current time
         const newLoginTime = new Date().getTime();
         localStorage.setItem('loginTime', newLoginTime);
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(updateCartCount, 30000);
 
   // Listen for cart updates from other parts of the application
-  window.addEventListener('cartUpdated', function(event) {
+  window.addEventListener('cartUpdated', function (event) {
     if (event.detail && typeof event.detail.count !== 'undefined') {
       const cartCountElement = document.getElementById('cartCount');
       if (cartCountElement) {
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Helper function to trigger cart update event
-  window.updateCartCount = function(count) {
+  window.updateCartCount = function (count) {
     const event = new CustomEvent('cartUpdated', {
       detail: { count: count }
     });
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const logoutLinks = document.querySelectorAll('a[href="/auth/logout"]');
   if (logoutLinks.length > 0) {
     logoutLinks.forEach(link => {
-      link.addEventListener('click', function() {
+      link.addEventListener('click', function () {
         // Clear the login time from localStorage
         localStorage.removeItem('loginTime');
       });
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
       updateSpeedDisplay(speedMbps);
 
       // Listen for connection changes
-      navigator.connection.addEventListener('change', function() {
+      navigator.connection.addEventListener('change', function () {
         updateSpeedDisplay(navigator.connection.downlink);
       });
 
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Calculate average speed from the last few measurements
         const avgSpeed = window.speedMeasurements.reduce((sum, speed) => sum + speed, 0) /
-                        window.speedMeasurements.length;
+          window.speedMeasurements.length;
 
         updateSpeedDisplay(avgSpeed);
       })
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize speed measurement if the display element exists
   if (internetSpeedValue) {
     // Add click handler to run a new speed test on demand
-    internetSpeedValue.parentElement.addEventListener('click', function() {
+    internetSpeedValue.parentElement.addEventListener('click', function () {
       // Show measuring indicator
       internetSpeedValue.textContent = 'Testing...';
 
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Add smooth scroll behavior
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
+    anchor.addEventListener('click', function (e) {
       e.preventDefault();
       const targetId = this.getAttribute('href');
       if (targetId === '#') return;
@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Add animation classes to elements when they come into view
-  const animateOnScroll = function() {
+  const animateOnScroll = function () {
     const elements = document.querySelectorAll('.animate-on-scroll');
 
     elements.forEach(element => {
@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Password visibility toggle functionality
-  window.togglePasswordVisibility = function(inputId, buttonElement) {
+  window.togglePasswordVisibility = function (inputId, buttonElement) {
     try {
       const passwordInput = document.getElementById(inputId);
       const icon = buttonElement.querySelector('i');
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordToggleButtons.forEach(button => {
       const targetInputId = button.getAttribute('data-target');
       if (targetInputId) {
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
           e.preventDefault();
           window.togglePasswordVisibility(targetInputId, this);
         });
@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Newsletter form functionality
   const newsletterForm = document.getElementById('newsletterForm');
   if (newsletterForm) {
-    newsletterForm.addEventListener('submit', function(e) {
+    newsletterForm.addEventListener('submit', function (e) {
       e.preventDefault();
 
       const emailInput = this.querySelector('input[type="email"]');
@@ -541,12 +541,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const artistToggleButtons = document.querySelectorAll('#artistToggle, #sidebarToggle');
   const adminSidebar = document.getElementById('adminSidebar');
   const artistSidebar = document.getElementById('artistSidebar');
+  const producerSidebar = document.getElementById('producerSidebar');
+  const distributorSidebar = document.getElementById('distributorSidebar');
   const adminContent = document.querySelector('.admin-content');
   const closeSidebar = document.getElementById('closeSidebar');
 
   // Check for saved sidebar state or default to open
   const savedSidebarState = localStorage.getItem('sidebarState') || 'open';
   const savedArtistSidebarState = localStorage.getItem('artistSidebarState') || 'open';
+  const savedProducerSidebarState = localStorage.getItem('producerSidebarState') || 'open';
+  const savedDistributorSidebarState = localStorage.getItem('distributorSidebarState') || 'open';
 
   // Apply the saved sidebar state on page load for admin
   if (savedSidebarState === 'closed' && adminSidebar && adminContent) {
@@ -557,6 +561,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Apply the saved sidebar state on page load for artist
   if (savedArtistSidebarState === 'closed' && artistSidebar && adminContent) {
     artistSidebar.classList.add('collapsed');
+    adminContent.classList.add('expanded');
+  }
+
+  // Apply the saved sidebar state on page load for producer
+  if (savedProducerSidebarState === 'closed' && producerSidebar && adminContent) {
+    producerSidebar.classList.add('collapsed');
+    adminContent.classList.add('expanded');
+  }
+
+  // Apply the saved sidebar state on page load for distributor
+  if (savedDistributorSidebarState === 'closed' && distributorSidebar && adminContent) {
+    distributorSidebar.classList.add('collapsed');
     adminContent.classList.add('expanded');
   }
 
@@ -585,7 +601,11 @@ document.addEventListener('DOMContentLoaded', function() {
           document.body.appendChild(overlay);
 
           // Add click event to close sidebar when overlay is clicked
-          overlay.addEventListener('click', function() {
+          overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             adminSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -640,7 +660,11 @@ document.addEventListener('DOMContentLoaded', function() {
           document.body.appendChild(overlay);
 
           // Add click event to close sidebar when overlay is clicked
-          overlay.addEventListener('click', function() {
+          overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
             artistSidebar.classList.remove('show');
             this.style.display = 'none';
           });
@@ -670,6 +694,124 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 300);
   }
 
+  // Function to toggle producer sidebar
+  function toggleProducerSidebar() {
+    if (!producerSidebar) return;
+
+    if (window.innerWidth < 992) {
+      // Mobile behavior - use show/hide with overlay
+      producerSidebar.classList.toggle('show');
+
+      // Create and manage overlay for mobile
+      if (producerSidebar.classList.contains('show')) {
+        // Create overlay if it doesn't exist
+        if (!document.querySelector('.sidebar-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'sidebar-overlay';
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100%';
+          overlay.style.height = '100%';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          overlay.style.zIndex = '999';
+          overlay.style.display = 'none';
+          document.body.appendChild(overlay);
+
+          // Add click event to close sidebar when overlay is clicked
+          overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
+            producerSidebar.classList.remove('show');
+            this.style.display = 'none';
+          });
+        }
+        document.querySelector('.sidebar-overlay').style.display = 'block';
+      } else {
+        if (document.querySelector('.sidebar-overlay')) {
+          document.querySelector('.sidebar-overlay').style.display = 'none';
+        }
+      }
+    } else {
+      // Desktop behavior - use collapsed/expanded
+      producerSidebar.classList.toggle('collapsed');
+      if (adminContent) adminContent.classList.toggle('expanded');
+
+      // Save sidebar state to localStorage
+      if (producerSidebar.classList.contains('collapsed')) {
+        localStorage.setItem('producerSidebarState', 'closed');
+      } else {
+        localStorage.setItem('producerSidebarState', 'open');
+      }
+    }
+
+    // Force a small delay to ensure the transition completes properly
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 300);
+  }
+
+  // Function to toggle distributor sidebar
+  function toggleDistributorSidebar() {
+    if (!distributorSidebar) return;
+
+    if (window.innerWidth < 992) {
+      // Mobile behavior - use show/hide with overlay
+      distributorSidebar.classList.toggle('show');
+
+      // Create and manage overlay for mobile
+      if (distributorSidebar.classList.contains('show')) {
+        // Create overlay if it doesn't exist
+        if (!document.querySelector('.sidebar-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'sidebar-overlay';
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100%';
+          overlay.style.height = '100%';
+          overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          overlay.style.zIndex = '999';
+          overlay.style.display = 'none';
+          document.body.appendChild(overlay);
+
+          // Add click event to close sidebar when overlay is clicked
+          overlay.addEventListener('click', function () {
+            // Don't close sidebar during tutorial
+            if (window.tutorialMode) {
+              return;
+            }
+            distributorSidebar.classList.remove('show');
+            this.style.display = 'none';
+          });
+        }
+        document.querySelector('.sidebar-overlay').style.display = 'block';
+      } else {
+        if (document.querySelector('.sidebar-overlay')) {
+          document.querySelector('.sidebar-overlay').style.display = 'none';
+        }
+      }
+    } else {
+      // Desktop behavior - use collapsed/expanded
+      distributorSidebar.classList.toggle('collapsed');
+      if (adminContent) adminContent.classList.toggle('expanded');
+
+      // Save sidebar state to localStorage
+      if (distributorSidebar.classList.contains('collapsed')) {
+        localStorage.setItem('distributorSidebarState', 'closed');
+      } else {
+        localStorage.setItem('distributorSidebarState', 'open');
+      }
+    }
+
+    // Force a small delay to ensure the transition completes properly
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 300);
+  }
+
   // Add click event to all admin toggle buttons
   if (adminToggleButtons.length > 0) {
     adminToggleButtons.forEach(button => {
@@ -684,12 +826,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Add click event to producer sidebar toggle
+  if (producerSidebar && document.getElementById('sidebarToggle')) {
+    document.getElementById('sidebarToggle').addEventListener('click', toggleProducerSidebar);
+  }
+
+  // Add click event to distributor sidebar toggle
+  if (distributorSidebar && document.getElementById('sidebarToggle')) {
+    document.getElementById('sidebarToggle').addEventListener('click', toggleDistributorSidebar);
+  }
+
   // Close sidebar button
   if (closeSidebar) {
-    closeSidebar.addEventListener('click', function() {
+    closeSidebar.addEventListener('click', function () {
+      // Don't close sidebar during tutorial
+      if (window.tutorialMode) {
+        return;
+      }
+      
       // Check which sidebar is present
       const isAdminSidebar = !!adminSidebar;
       const isArtistSidebar = !!artistSidebar;
+      const isProducerSidebar = !!producerSidebar;
+      const isDistributorSidebar = !!distributorSidebar;
 
       if (window.innerWidth < 992) {
         // Mobile behavior
@@ -698,6 +857,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (isArtistSidebar) {
           artistSidebar.classList.remove('show');
+        }
+        if (isProducerSidebar) {
+          producerSidebar.classList.remove('show');
+        }
+        if (isDistributorSidebar) {
+          distributorSidebar.classList.remove('show');
         }
         if (document.querySelector('.sidebar-overlay')) {
           document.querySelector('.sidebar-overlay').style.display = 'none';
@@ -714,22 +879,48 @@ document.addEventListener('DOMContentLoaded', function() {
           if (adminContent) adminContent.classList.add('expanded');
           localStorage.setItem('artistSidebarState', 'closed');
         }
+        if (isProducerSidebar) {
+          producerSidebar.classList.add('collapsed');
+          if (adminContent) adminContent.classList.add('expanded');
+          localStorage.setItem('producerSidebarState', 'closed');
+        }
+        if (isDistributorSidebar) {
+          distributorSidebar.classList.add('collapsed');
+          if (adminContent) adminContent.classList.add('expanded');
+          localStorage.setItem('distributorSidebarState', 'closed');
+        }
       }
     });
   }
 
   // Close sidebar when clicking outside on mobile
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
+    if (window.tutorialMode) {
+      return;
+    }
+
     // For admin sidebar
     if (adminSidebar &&
-        window.innerWidth < 992 &&
-        adminSidebar.classList.contains('show') &&
-        !adminSidebar.contains(e.target) &&
-        !e.target.closest('#adminToggle') &&
-        !e.target.closest('#sidebarToggle') &&
-        !e.target.closest('.admin-toggle') &&
-        !e.target.closest('.mobile-toggle')) {
+      window.innerWidth < 992 &&
+      adminSidebar.classList.contains('show') &&
+      !adminSidebar.contains(e.target) &&
+      !e.target.closest('#adminToggle') &&
+      !e.target.closest('#sidebarToggle') &&
+      !e.target.closest('.admin-toggle') &&
+      !e.target.closest('.mobile-toggle')) {
       adminSidebar.classList.remove('show');
+      if (document.querySelector('.sidebar-overlay')) {
+        document.querySelector('.sidebar-overlay').style.display = 'none';
+      }
+    }
+
+    // For producer sidebar
+    if (producerSidebar &&
+      window.innerWidth < 992 &&
+      producerSidebar.classList.contains('show') &&
+      !producerSidebar.contains(e.target) &&
+      !e.target.closest('#sidebarToggle')) {
+      producerSidebar.classList.remove('show');
       if (document.querySelector('.sidebar-overlay')) {
         document.querySelector('.sidebar-overlay').style.display = 'none';
       }
@@ -737,14 +928,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // For artist sidebar
     if (artistSidebar &&
-        window.innerWidth < 992 &&
-        artistSidebar.classList.contains('show') &&
-        !artistSidebar.contains(e.target) &&
-        !e.target.closest('#artistToggle') &&
-        !e.target.closest('#sidebarToggle') &&
-        !e.target.closest('.admin-toggle') &&
-        !e.target.closest('.mobile-toggle')) {
+      window.innerWidth < 992 &&
+      artistSidebar.classList.contains('show') &&
+      !artistSidebar.contains(e.target) &&
+      !e.target.closest('#artistToggle') &&
+      !e.target.closest('#sidebarToggle') &&
+      !e.target.closest('.admin-toggle') &&
+      !e.target.closest('.mobile-toggle')) {
       artistSidebar.classList.remove('show');
+      if (document.querySelector('.sidebar-overlay')) {
+        document.querySelector('.sidebar-overlay').style.display = 'none';
+      }
+    }
+
+    // For distributor sidebar
+    if (distributorSidebar &&
+      window.innerWidth < 992 &&
+      distributorSidebar.classList.contains('show') &&
+      !distributorSidebar.contains(e.target) &&
+      !e.target.closest('#sidebarToggle')) {
+      distributorSidebar.classList.remove('show');
       if (document.querySelector('.sidebar-overlay')) {
         document.querySelector('.sidebar-overlay').style.display = 'none';
       }
@@ -758,7 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const totalAmount = document.getElementById('totalAmount');
 
   if (ticketQuantityInput && attendeesContainer) {
-    ticketQuantityInput.addEventListener('change', function() {
+    ticketQuantityInput.addEventListener('change', function () {
       const quantity = parseInt(this.value);
       updateAttendeesForms(quantity);
       updateTotalAmount(quantity);
@@ -824,11 +1027,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const nameInput = attendeeForm.querySelector(`#attendeeName${i}`);
       const ageInput = attendeeForm.querySelector(`#attendeeAge${i}`);
 
-      nameInput.addEventListener('input', function() {
+      nameInput.addEventListener('input', function () {
         updateAttendeeValue(i, nameInput.value, ageInput.value);
       });
 
-      ageInput.addEventListener('input', function() {
+      ageInput.addEventListener('input', function () {
         updateAttendeeValue(i, nameInput.value, ageInput.value);
       });
     }
@@ -865,8 +1068,39 @@ document.addEventListener('DOMContentLoaded', function() {
   const razorpayForm = document.getElementById('razorpayForm');
 
   if (razorpayForm) {
-    razorpayForm.addEventListener('submit', async function(e) {
+    razorpayForm.addEventListener('submit', async function (e) {
       e.preventDefault();
+
+      // Check if payment agreement checkbox is checked
+      const paymentAgreement = document.getElementById('paymentAgreement');
+      const checkboxError = document.getElementById('checkboxError');
+
+      if (paymentAgreement && !paymentAgreement.checked) {
+        // Show error message with styling
+        checkboxError.classList.remove('d-none');
+        paymentAgreement.classList.add('is-invalid');
+
+        // Scroll to the checkbox section
+        paymentAgreement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add visual feedback
+        paymentAgreement.style.animation = 'none';
+        setTimeout(() => {
+          paymentAgreement.style.animation = 'shake 0.5s ease';
+        }, 10);
+
+        // Auto-hide error after 5 seconds
+        setTimeout(() => {
+          checkboxError.classList.add('d-none');
+          paymentAgreement.classList.remove('is-invalid');
+        }, 5000);
+
+        return; // Stop here, don't proceed without checkbox
+      }
+
+      // Clear any previous error states
+      checkboxError.classList.add('d-none');
+      paymentAgreement.classList.remove('is-invalid');
 
       // Validate attendee forms
       const attendeeInputs = document.getElementsByName('attendees');
@@ -878,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = attendeeInputs[i];
         if (!input.value) {
           isValid = false;
-          emptyFields.push(`Attendee #${i+1}`);
+          emptyFields.push(`Attendee #${i + 1}`);
         }
       }
 
@@ -1017,29 +1251,52 @@ document.addEventListener('DOMContentLoaded', function() {
           name: 'Rapira',
           description: 'Concert Ticket Purchase',
           order_id: data.order.id,
-          handler: function(response) {
-            // Create hidden form for payment verification
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/tickets/verify-payment';
-
-            const fields = {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              ticket_id: data.ticket
-            };
-
-            for (const key in fields) {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = key;
-              input.value = fields[key];
-              form.appendChild(input);
+          handler: async function (response) {
+            // Use the existing global loader for verification status
+            if (window.loaderManager) {
+              window.loaderManager.show('Verifying Payment...');
             }
 
-            document.body.appendChild(form);
-            form.submit();
+            try {
+              // Prepare verification data
+              const fields = {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                ticket_id: data.ticket
+              };
+
+              // Call server via AJAX for verification
+              // skipLoader: true prevents the global interceptor from hiding the loader automatically
+              const verifyResponse = await fetch('/tickets/verify-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(fields),
+                skipLoader: true
+              });
+
+              if (verifyResponse.ok) {
+                if (window.loaderManager) {
+                  window.loaderManager.setText('Payment Verified! Redirecting...');
+                  // Set isDownloading to prevent loader from flickering on page unload
+                  window.loaderManager.isDownloading = true;
+                }
+
+                // Direct redirect to ticket page
+                window.location.href = `/tickets/${data.ticket}`;
+              } else {
+                throw new Error('Verification failed. Please contact support.');
+              }
+            } catch (err) {
+              console.error('Verification Error:', err);
+              overlay.classList.remove('show');
+              alert('Payment verification failed. If your money was deducted, please contact support with Order ID: ' + response.razorpay_order_id);
+              window.location.href = '/users/profile';
+            }
           },
           prefill: {
             name: document.getElementById('userName').value,
@@ -1050,7 +1307,7 @@ document.addEventListener('DOMContentLoaded', function() {
           },
           // Handle payment modal closing
           modal: {
-            ondismiss: function() {
+            ondismiss: function () {
               // Redirect to cancel payment route
               window.location.href = `/tickets/cancel-payment/${data.ticket}`;
             },
@@ -1069,7 +1326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const script = document.createElement('script');
             script.src = 'https://checkout.razorpay.com/v1/checkout.js';
             script.async = true;
-            script.onload = function() {
+            script.onload = function () {
               console.log('Razorpay script loaded dynamically');
               try {
                 const rzp = new Razorpay(options);
@@ -1079,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(`Payment initialization failed: ${err.message || 'Could not initialize payment gateway'}`);
               }
             };
-            script.onerror = function() {
+            script.onerror = function () {
               console.error('Failed to load Razorpay script dynamically');
               alert('Could not connect to payment gateway. Please check your internet connection and try again.');
             };

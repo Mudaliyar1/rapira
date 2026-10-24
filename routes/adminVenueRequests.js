@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const VenueRequest = require('../models/VenueRequest');
 const Venue = require('../models/Venue');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
+const { toISTCustomFormat } = require('../utils/dateFormatter');
 
 // GET /admin/venue-requests - List all venue requests
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const { status, city, search, page = 1 } = req.query;
     const limit = 20;
@@ -13,15 +15,15 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 
     // Build filter
     let filter = {};
-    
+
     if (status && status !== 'all') {
       filter.status = status;
     }
-    
+
     if (city && city !== 'all') {
       filter.city = new RegExp(city, 'i');
     }
-    
+
     if (search) {
       filter.$or = [
         { name: new RegExp(search, 'i') },
@@ -88,8 +90,12 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venue-requests/:id - View specific venue request details
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const venueRequest = await VenueRequest.findById(req.params.id)
       .populate('user', 'name email phone')
       .populate('reviewedBy', 'name email')
@@ -114,7 +120,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venue-requests/:id/approve - Show approve form
-router.get('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/approve', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venueRequest = await VenueRequest.findById(req.params.id)
       .populate('user', 'name email');
@@ -143,8 +149,12 @@ router.get('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venue-requests/:id/approve - Approve venue request
-router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/approve', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const { adminNotes, autoActivate } = req.body;
 
     const venueRequest = await VenueRequest.findById(req.params.id)
@@ -204,7 +214,7 @@ router.post('/:id/approve', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venue-requests/:id/reject - Show reject form
-router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venueRequest = await VenueRequest.findById(req.params.id)
       .populate('user', 'name email');
@@ -223,7 +233,8 @@ router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
       layout: 'admin',
       currentPath: '/admin/venue-requests',
       title: `Reject Venue Request - ${venueRequest.name}`,
-      venueRequest
+      venueRequest,
+      toISTCustomFormat
     });
   } catch (error) {
     console.error('Error loading reject form:', error);
@@ -233,8 +244,12 @@ router.get('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venue-requests/:id/reject - Reject venue request
-router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/reject', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const { rejectionReason, adminNotes } = req.body;
 
     const venueRequest = await VenueRequest.findById(req.params.id);
@@ -273,8 +288,12 @@ router.post('/:id/reject', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venue-requests/:id/delete - Delete venue request
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/admin/venue-requests');
+    }
     const venueRequest = await VenueRequest.findById(req.params.id);
 
     if (!venueRequest) {

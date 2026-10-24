@@ -185,7 +185,7 @@
                     <%= page.showInNavigation ? 'Shown' : 'Hidden' %>
                   </span>
                 </td>
-                <td class="text-white"><%= new Date(page.createdAt).toLocaleDateString() %></td>
+                <td class="text-white"><%= toISTDateString(page.createdAt) %></td>
                 <td>
                   <% if (page.isDummy) { %>
                     <span class="text-muted small">

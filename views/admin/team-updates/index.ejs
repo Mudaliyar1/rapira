@@ -165,7 +165,7 @@
                        style="object-fit: cover;">
                   <span>By <%= update.createdBy.name %></span>
                   <span class="mx-2">•</span>
-                  <span><%= new Date(update.createdAt).toLocaleDateString() %></span>
+                  <span><%= toISTDateString(update.createdAt) %></span>
                   <% if (update.category !== 'company_wide') { %>
                     <span class="mx-2">•</span>
                     <span class="badge bg-secondary"><%= update.category.replace('_', ' ') %></span>

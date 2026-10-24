@@ -28,6 +28,43 @@
     </div>
   </div>
 
+  <!-- Quick Actions Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="card-body text-white">
+          <h5 class="card-title mb-3">
+            <i class="bi bi-lightning-charge-fill me-2"></i>Quick Actions
+          </h5>
+          <p class="mb-3 opacity-75">
+            <i class="bi bi-info-circle me-1"></i>
+            Select a venue below to access bookings, concerts, and revenue analytics
+          </p>
+          <div class="row g-3">
+            <div class="col-lg-4 col-md-4 col-sm-6">
+              <a href="/users/venues" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
+                <i class="bi bi-building fs-1 mb-2"></i>
+                <span class="fw-semibold">Manage Venues</span>
+              </a>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6">
+              <a href="/users/venue-requests/create" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
+                <i class="bi bi-plus-circle fs-1 mb-2"></i>
+                <span class="fw-semibold">Request New Venue</span>
+              </a>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6">
+              <a href="/users/venue-requests" class="btn btn-lg w-100 d-flex flex-column align-items-center justify-content-center p-3" style="min-height: 120px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white;">
+                <i class="bi bi-file-earmark-text fs-1 mb-2"></i>
+                <span class="fw-semibold">My Requests</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Venues Grid -->
   <div class="row">
     <% if (venues.length === 0) { %>
@@ -37,7 +74,7 @@
             <i class="bi bi-building display-1 text-muted mb-3"></i>
             <h4 class="text-muted">No Venues Found</h4>
             <p class="text-muted">You haven't registered any venues yet.</p>
-            <a href="/users/venue-requests/register" class="btn btn-primary">
+            <a href="/users/venue-requests/create" class="btn btn-primary">
               <i class="bi bi-plus-circle me-1"></i>Register Your First Venue
             </a>
           </div>

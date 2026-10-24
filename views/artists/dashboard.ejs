@@ -415,22 +415,99 @@
       <div class="card mb-5" id="post-story">
         <div class="card-body">
           <h5 class="card-title fw-bold mb-4">Post a Story</h5>
-          <form action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
+          <form id="storyUploadForm" action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Media (image or short video)</label>
-              <input type="file" name="media" accept="image/*,video/*" class="form-control" required />
+              <label class="form-label">Media (image, video, or audio)</label>
+              <input type="file" name="media" accept="image/*,video/*,audio/*" class="form-control" required />
             </div>
             <div class="col-md-6">
               <label class="form-label">Caption (optional)</label>
               <input type="text" name="caption" maxlength="120" class="form-control" placeholder="Say something..." />
             </div>
             <div class="col-12">
-              <button type="submit" class="btn btn-primary">Post Story</button>
-              <span class="text-muted ms-2">Max 20 stories per 24 hours; up to 20MB.</span>
+              <div id="uploadProgressContainer" class="progress mb-3 d-none" style="height: 25px; border-radius: 12px; background-color: #444;">
+                <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+              </div>
+              <div id="uploadStatus" class="small mb-3 d-none" style="color: #ccc;"></div>
+              <button type="submit" id="storySubmitBtn" class="btn btn-primary d-flex align-items-center gap-2">
+                 <i class="bi bi-cloud-upload"></i> Post Story
+              </button>
+              <span class="text-muted ms-2">Max 20 stories per 24 hours; up to 100MB.</span>
             </div>
           </form>
         </div>
       </div>
+
+<script>
+document.getElementById('storyUploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const form = this;
+  const formData = new FormData(form);
+  const btn = document.getElementById('storySubmitBtn');
+  const progressBar = document.getElementById('uploadProgressBar');
+  const container = document.getElementById('uploadProgressContainer');
+  const status = document.getElementById('uploadStatus');
+  
+  // Disable button
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+  
+  // Show progress bar
+  container.classList.remove('d-none');
+  status.classList.remove('d-none');
+  status.textContent = 'Preparing upload...';
+  
+  const xhr = new XMLHttpRequest();
+  
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percentComplete = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = percentComplete + '%';
+      progressBar.setAttribute('aria-valuenow', percentComplete);
+      progressBar.textContent = percentComplete + '%';
+      
+      if (percentComplete < 100) {
+        status.textContent = `Uploading: ${percentComplete}% (${(e.loaded / (1024 * 1024)).toFixed(2)} MB / ${(e.total / (1024 * 1024)).toFixed(2)} MB)`;
+      } else {
+        status.textContent = 'Upload complete! Processing media on server... (may take a moment)';
+        progressBar.classList.add('bg-success');
+      }
+    }
+  });
+
+  xhr.addEventListener('load', function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      status.style.color = '#28a745';
+      status.textContent = 'Story posted successfully! Reloading...';
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      let errorMsg = 'Upload failed. Please try again.';
+      try {
+        const resp = JSON.parse(xhr.responseText);
+        errorMsg = resp.error || errorMsg;
+      } catch (err) {}
+      status.style.color = '#dc3545';
+      status.textContent = 'Error: ' + errorMsg;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+      progressBar.classList.remove('bg-success');
+      progressBar.classList.add('bg-danger');
+    }
+  });
+
+  xhr.addEventListener('error', function() {
+    status.style.color = '#dc3545';
+    status.textContent = 'A network error occurred.';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+  });
+
+  xhr.open('POST', form.action, true);
+  xhr.setRequestHeader('Accept', 'application/json'); // Tell server we want JSON
+  xhr.send(formData);
+});
+</script>
 
       <!-- Stats Cards -->
       <div class="row g-4 mb-5">
@@ -547,7 +624,7 @@
                     <tr>
                       <td style="color: #000000 !important;"><%= concert.title %></td>
                       <td style="color: #000000 !important;">
-                        <%= new Date(concert.date).toLocaleDateString() %><br>
+                        <%= toISTDateString(concert.date) %><br>
                         <small class="text-muted" style="color: #6c757d !important;"><%= concert.time %></small>
                       </td>
                       <td style="color: #000000 !important;">
@@ -644,7 +721,7 @@
                     <tr>
                       <td><%= concert.title %></td>
                       <td>
-                        <%= new Date(concert.date).toLocaleDateString() %><br>
+                        <%= toISTDateString(concert.date) %><br>
                         <small class="text-muted"><%= concert.time %></small>
                       </td>
                       <td>
@@ -707,7 +784,7 @@
                       <% } %>
                       <p class="card-text">
                         <small class="text-muted">
-                          <i class="bi bi-calendar3"></i> <%= new Date(item.releaseDate).toLocaleDateString() %>
+                          <i class="bi bi-calendar3"></i> <%= toISTDateString(item.releaseDate) %>
                         </small>
                       </p>
                     </div>

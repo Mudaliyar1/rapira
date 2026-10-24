@@ -19,11 +19,11 @@
           <div class="row mb-4">
             <div class="col-md-6">
               <h5 class="card-title"><%= dailyConcert.title %></h5>
-              <p class="text-muted mb-0">Created on <%= new Date(dailyConcert.createdAt).toLocaleDateString() %></p>
+              <p class="text-muted mb-0">Created on <%= toISTDateString(dailyConcert.createdAt) %></p>
             </div>
             <div class="col-md-6 text-md-end">
               <p class="mb-0">
-                <strong>Event Date:</strong> <%= new Date(dailyConcert.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                <strong>Event Date:</strong> <%= toISTDateString(dailyConcert.eventDate) %>
               </p>
               <p class="mb-0">
                 <strong>Event Time:</strong> <%= dailyConcert.eventTime %>

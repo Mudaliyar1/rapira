@@ -46,7 +46,7 @@
           </p>
           
           <h6 class="text-white-50 mb-2">Submitted On</h6>
-          <p class="text-white mb-3"><%= new Date(request.createdAt).toLocaleString() %></p>
+          <p class="text-white mb-3"><%= toISTLocaleString(request.createdAt) %></p>
           
           <% if (request.adminNotes) { %>
             <h6 class="text-white-50 mb-2">Admin Notes</h6>

@@ -29,7 +29,7 @@
           <p class="text-white mb-3"><%= application.artistLevel %></p>
 
           <h6 class="text-white-50 mb-2">Submitted On</h6>
-          <p class="text-white mb-3"><%= new Date(application.createdAt).toLocaleString() %></p>
+          <p class="text-white mb-3"><%= toISTLocaleString(application.createdAt) %></p>
         </div>
         <div class="col-md-6">
           <h6 class="text-white-50 mb-2">Status</h6>

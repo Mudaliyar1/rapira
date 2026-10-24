@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reels - RAPIRA</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent body scrolling */
+      background: #000;
+    }
+    
+    /* Reels Container to handle snap scrolling */
+    .reels-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+
+    .reels-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .reel-wrapper {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      border-left: 1px solid #222;
+      border-right: 1px solid #222;
+      overflow: hidden; /* Prevent expanded captions from bleeding out */
+    }
+
+    .reel-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .speed-badge {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+      z-index: 1000;
+      pointer-events: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-badge i {
+      font-size: 1rem;
+      animation: speedFast 0.5s infinite linear;
+    }
+
+    @keyframes speedFast {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+
+    .reel-media {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    
+    .reel-audio-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+    }
+    
+    .reel-audio-placeholder i {
+      font-size: 5rem;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* Premium Audio Visualizer for Reels */
+    .reel-audio-visualizer {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .viz-bars-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      height: 150px;
+    }
+
+    .viz-bar {
+      width: 12px;
+      height: 40px;
+      background: #00d4ff;
+      border-radius: 6px;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+      animation: viz-pulse 1s infinite ease-in-out;
+    }
+
+    @keyframes viz-pulse {
+      0%, 100% { height: 30px; background: #00d4ff; }
+      50% { height: 100px; background: #7c4dff; }
+    }
+
+    .viz-bar:nth-child(1) { animation-delay: -0.9s; }
+    .viz-bar:nth-child(2) { animation-delay: -0.7s; }
+    .viz-bar:nth-child(3) { animation-delay: -0.5s; }
+    .viz-bar:nth-child(4) { animation-delay: -0.3s; }
+    .viz-bar:nth-child(5) { animation-delay: -0.1s; }
+    .viz-bar:nth-child(6) { animation-delay: -0.4s; }
+    .viz-bar:nth-child(7) { animation-delay: -0.8s; }
+
+    .viz-label {
+      color: rgba(0, 212, 255, 0.4);
+      font-size: 0.8rem;
+      font-weight: bold;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin-top: 10px;
+    }
+
+    /* Reel Volume Control */
+
+    /* Reel Volume Control */
+    .reel-volume-ctrl {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%) rotate(-90deg);
+      transform-origin: left center;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 15px;
+      border-radius: 30px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255,255,255,0.1);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .reel-wrapper:hover .reel-volume-ctrl {
+      opacity: 1;
+    }
+
+    .reel-volume-ctrl input {
+      width: 100px;
+      height: 4px;
+      cursor: pointer;
+    }
+
+    /* Back Button */
+    .reels-back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Right Side Buttons */
+    .reel-actions {
+      position: absolute;
+      bottom: 110px;
+      right: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      z-index: 10;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+      transition: transform 0.2s;
+    }
+    
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .action-btn i {
+      font-size: 1.8rem;
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+    
+    .action-btn span {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .action-btn.liked i {
+      color: #ff1744;
+    }
+
+    /* Bottom Info overlay */
+    .reel-info {
+      position: absolute;
+      bottom: 25px;
+      left: 0;
+      width: 100%;
+      padding: 20px;
+      padding-bottom: 5px;
+      padding-right: 70px; /* Leave space for actions */
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
+      color: white;
+      z-index: 5;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+
+    /* Slim scrollbar for long captions */
+    .reel-info::-webkit-scrollbar {
+      width: 4px;
+    }
+    .reel-info::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+    .reel-info::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .artist-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      text-decoration: none;
+      color: white;
+    }
+    
+    .artist-profile img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid white;
+      object-fit: cover;
+    }
+    
+    .artist-profile span {
+      font-weight: bold;
+      font-size: 1rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .reel-caption {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      word-break: break-word;
+      overflow: hidden;
+    }
+
+    .reel-caption.is-truncated {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .more-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      color: rgba(255,255,255,0.7);
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+
+    .is-paused .play-overlay {
+      opacity: 1;
+    }
+
+    /* Tap to Play Overlay (First Reel Only) - Perfect Centering */
+    .reel-autoplay-overlay {
+      position: absolute;
+      inset: 0; /* Cover entire reel content */
+      display: none; /* Hidden by default */
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(2px);
+      cursor: pointer;
+    }
+
+    .autoplay-btn {
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 50px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(0, 212, 255, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+      animation: pulse 2s infinite;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-size: 0.95rem;
+    }
+
+    /* Instagram Style Comment Modal (Bottom Sheet) */
+    .comment-modal .modal-dialog {
+      margin: 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      max-width: 500px; /* Same as reel width */
+      margin: 0 auto;
+      transform: translateY(100%);
+      transition: transform 0.3s ease-out;
+    }
+
+    .comment-modal.show .modal-dialog {
+      transform: translateY(0);
+    }
+
+    .comment-modal .modal-content {
+      border-radius: 20px 20px 0 0;
+      background: #1c1c1c;
+      color: white;
+      border: none;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comment-modal .modal-header {
+      border-bottom: 1px solid #333;
+      padding: 10px 15px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .comment-modal .modal-header::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      width: 40px;
+      height: 4px;
+      background: #444;
+      border-radius: 2px;
+    }
+
+    .comment-modal .modal-body {
+      overflow-y: auto;
+      padding: 15px;
+      flex-grow: 1;
+    }
+
+    .comment-modal .modal-footer {
+      border-top: 1px solid #333;
+      padding: 10px 15px;
+      background: #1c1c1c;
+    }
+
+    .comment-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .comment-item img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-user {
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-right: 5px;
+    }
+
+    .comment-text {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .comment-meta {
+      font-size: 0.75rem;
+      color: #aaa;
+      display: flex;
+      gap: 15px;
+    }
+
+    .reply-list {
+      margin-top: 10px;
+      margin-left: 44px;
+      border-left: 1px solid #333;
+      padding-left: 10px;
+    }
+
+    .comment-input-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .comment-input {
+      flex: 1;
+      background: #333;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px #555;
+    }
+
+    .post-comment-btn {
+      color: #0095f6;
+      font-weight: 600;
+      border: none;
+      background: none;
+      font-size: 0.85rem;
+    }
+
+    .post-comment-btn:disabled {
+      opacity: 0.5;
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.3); }
+      50% { transform: scale(1.1); }
+      75% { transform: scale(1.25); }
+    }
+
+    /* Reel Toast Styles */
+    .reel-toast-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .reel-toast {
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .reel-toast.show {
+      opacity: 1;
+      transform: translateY(-20px);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 576px) {
+      .reel-wrapper {
+        border-left: none;
+        border-right: none;
+      }
+
+      .reel-actions {
+        bottom: 150px;
+        right: 12px;
+        gap: 20px;
+      }
+
+      .action-btn i {
+        font-size: 1.6rem;
+      }
+
+      .reel-info {
+        bottom: 60px;
+        padding: 15px;
+        padding-bottom: 0px;
+        padding-right: 65px;
+      }
+
+      .artist-profile span {
+        font-size: 0.95rem;
+      }
+
+      .reel-caption {
+        font-size: 0.9rem;
+      }
+
+      .reels-back {
+        top: 15px;
+        left: 15px;
+      }
+    }
+
+    /* Extra small screens (e.g. iPhone SE) */
+    @media (max-width: 380px) {
+      .reel-actions {
+        bottom: 140px;
+        gap: 16px;
+      }
+      .reel-info {
+        bottom: 55px;
+        padding-bottom: 0;
+      }
+    }
+
+    /* Very short screens */
+    @media (max-height: 650px) {
+      .reel-actions {
+        bottom: 110px;
+        gap: 12px;
+      }
+      .reel-info {
+        bottom: 45px;
+        padding-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="reels-back">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+
+  <div class="reel-toast-container" id="reelToastContainer">
+    <div class="reel-toast" id="reelToast">
+      <i class="bi bi-info-circle"></i>
+      <span id="reelToastMsg"></span>
+    </div>
+  </div>
+
+  <div class="container-fluid p-0">
+    <% if (reels && reels.length > 0) { %>
+      <div class="reels-container" id="reelsContainer">
+        <% reels.forEach((post, index) => { %>
+          <div class="reel-wrapper" id="reel-<%= post._id %>" data-index="<%= index %>">
+            <div class="reel-content" 
+                 oncontextmenu="return false;"
+                 onmousedown="startFastForward(event, this)" 
+                 onmouseup="stopFastForward(this)" 
+                 onmouseleave="stopFastForward(this)"
+                 ontouchstart="startFastForward(event, this)"
+                 ontouchend="stopFastForward(this)"
+                 onclick="togglePlay(this)">
+              
+              <div class="speed-badge forward-badge">
+                <i class="bi bi-fast-forward-fill"></i>
+                2X SPEED
+              </div>
+              <div class="speed-badge backward-badge">
+                <i class="bi bi-rewind-fill"></i>
+                REWIND
+              </div>
+
+              <% if (index === 0) { %>
+                <!-- Tap to play overlay ONLY for the first reel to handle refresh interaction -->
+                <div class="reel-autoplay-overlay" onclick="event.stopPropagation(); window.startFirstReel(this);">
+                   <div class="autoplay-btn">
+                     <i class="bi bi-play-circle-fill" style="font-size: 1.8rem; color: #00d4ff;"></i>
+                     TAP TO PLAY
+                   </div>
+                </div>
+              <% } %>
+
+              <% 
+                // Robust detection for Reels
+                const mediaUrl = (post.media.url || '').toLowerCase();
+                const isAudioFile = mediaUrl.endsWith('.mp3') || 
+                                    mediaUrl.endsWith('.wav') || 
+                                    mediaUrl.endsWith('.ogg') || 
+                                    mediaUrl.endsWith('.m4a') || 
+                                    mediaUrl.endsWith('.aac') ||
+                                    mediaUrl.includes('/artist-posts/audio/');
+                
+                const isActuallyAudio = post.media.mediaType === 'audio' || isAudioFile;
+              %>
+
+              <% if (isActuallyAudio) { %>
+                <!-- Forced Audio Visualizer (SVG) -->
+                <div class="reel-audio-visualizer">
+                  <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
+                    <rect x="10" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="20;80;20" dur="1s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="50;20;50" dur="1s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="35" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="30;100;30" dur="0.8s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="45;10;45" dur="0.8s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="60" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+                      <animate attributeName="height" values="25;90;25" dur="1.2s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="47.5;15;47.5" dur="1.2s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="85" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="40;110;40" dur="0.7s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="40;5;40" dur="0.7s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="110" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+                      <animate attributeName="height" values="20;70;20" dur="1.5s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="50;25;50" dur="1.5s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="135" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="35;95;35" dur="0.9s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="42.5;12.5;42.5" dur="0.9s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="160" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+                      <animate attributeName="height" values="25;85;25" dur="1.1s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="47.5;17.5;47.5" dur="1.1s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="185" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="30;105;30" dur="0.75s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="45;7.5;45" dur="0.75s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="210" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+                      <animate attributeName="height" values="20;100;20" dur="1.3s" repeatCount="indefinite" />
+                      <animate attributeName="y" values="50;10;50" dur="1.3s" repeatCount="indefinite" />
+                    </rect>
+                    <text x="50%" y="120" text-anchor="middle" fill="rgba(0, 212, 255, 0.4)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA AUDIO</text>
+                  </svg>
+                  <audio 
+                    class="reel-media reel-audio d-none" 
+                    src="<%- post.media.url %>" 
+                    loop 
+                    preload="<%= index < 3 ? 'auto' : 'none' %>"
+                    <%= index === 0 ? 'autoplay' : '' %>
+                  ></audio>
+                </div>
+                
+                <!-- Volume Slider Overlay -->
+                <div class="reel-volume-ctrl">
+                  <i class="bi bi-volume-up text-white" style="transform: rotate(90deg);"></i>
+                  <input type="range" min="0" max="100" value="80" 
+                    oninput="updateReelVolume(this, <%= index %>)"
+                    onclick="event.stopPropagation()">
+                </div>
+              <% } else { %>
+                <video 
+                  class="reel-media reel-video" 
+                  src="<%- post.media.url %>" 
+                  loop 
+                  playsinline 
+                  preload="<%= index < 3 ? 'auto' : 'none' %>"
+                  <%= index === 0 ? 'autoplay' : '' %>
+                ></video>
+                
+                <!-- Volume Slider Overlay -->
+                <div class="reel-volume-ctrl">
+                  <i class="bi bi-volume-up text-white" style="transform: rotate(90deg);"></i>
+                  <input type="range" min="0" max="100" value="80" 
+                    oninput="updateReelVolume(this, <%= index %>)"
+                    onclick="event.stopPropagation()">
+                </div>
+              <% } %>
+              
+              <i class="bi bi-play-fill play-overlay"></i>
+            </div>
+
+            <!-- Actions -->
+            <div class="reel-actions">
+              <button class="action-btn <%= post.liked ? 'liked' : '' %>" onclick="toggleLike(this, '<%= post._id %>')">
+                <i class="bi <%= post.liked ? 'bi-heart-fill' : 'bi-heart' %>"></i>
+                <span class="likes-count"><%= post.likesCount %></span>
+              </button>
+              <button class="action-btn" onclick="openComments('<%= post._id %>')">
+                <i class="bi bi-chat-dots"></i>
+                <span><%= post.commentsCount %></span>
+              </button>
+              <button class="action-btn" onclick="shareReel('<%= post._id %>')">
+                <i class="bi bi-share"></i>
+                <span><%= post.shares %></span>
+              </button>
+            </div>
+
+            <!-- Bottom Info -->
+            <div class="reel-info">
+              <a href="/artists/<%= post.artist._id %>" class="artist-profile">
+                <img src="<%= post.artist.profileImage %>" alt="<%= post.artist.stageName %>">
+                <span>@<%= post.artist.stageName %></span>
+              </a>
+              <% if (post.caption) { %>
+                <div class="caption-container">
+                  <p class="reel-caption is-truncated"><%= post.caption %></p>
+                  <% if (post.caption.length > 60) { %>
+                    <button class="more-btn" onclick="toggleCaption(this)">...more</button>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh; color: white;">
+        <i class="bi bi-camera-reels display-1 mb-4 text-muted"></i>
+        <h3>No Reels Available</h3>
+        <p class="text-muted">Check back later for new content!</p>
+        <a href="/" class="btn btn-primary mt-3">Go Home</a>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Comment Modal (Bottom Sheet) -->
+  <div class="modal fade comment-modal" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title w-100 text-center mt-2">Comments</h6>
+          <button type="button" class="btn-close btn-close-white d-none" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body position-relative">
+          <div id="commentLoading" class="text-center py-5 d-none">
+            <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+          </div>
+          <div id="commentList">
+            <!-- Comments will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="comment-input-container">
+            <img src="<%= (typeof currentUser !== 'undefined' && currentUser && currentUser.profileImage) ? currentUser.profileImage : '/images/default-profile.svg' %>" id="modalUserImg" style="width: 32px; height: 32px; border-radius: 50%;">
+            <input type="text" class="comment-input" id="modalCommentInput" placeholder="Add a comment...">
+            <button class="post-comment-btn" id="modalPostCommentBtn" disabled onclick="submitModalComment()">Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple Login Prompt Modal -->
+  <div class="modal fade" id="loginPromptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-4" style="background: #1c1c1c; color: white; border-radius: 16px;">
+        <i class="bi bi-person-circle display-4 text-primary mb-3"></i>
+        <h4>Login Required</h4>
+        <p class="text-white">Please login to interact with Reels, like posts, and join the conversation.</p>
+        <div class="d-grid gap-2 mt-4">
+          <a href="/auth/login" class="btn btn-primary rounded-pill">Login Now</a>
+          <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('reelToast');
+      const toastMsg = document.getElementById('reelToastMsg');
+      const icon = toast.querySelector('i');
+      
+      toastMsg.textContent = msg;
+      
+      // Update icon/color based on type
+      if (type === 'error') {
+        icon.className = 'bi bi-exclamation-circle text-danger';
+      } else if (type === 'success') {
+        icon.className = 'bi bi-check-circle text-success';
+      } else {
+        icon.className = 'bi bi-info-circle text-primary';
+      }
+
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    const IS_LOGGED_IN = <%= (typeof currentUser !== 'undefined' && currentUser) ? 'true' : 'false' %>;
+
+    function showLoginPrompt() {
+      const modal = new bootstrap.Modal(document.getElementById('loginPromptModal'));
+      modal.show();
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('reelsContainer');
+      if (!container) return;
+
+      const reels = document.querySelectorAll('.reel-wrapper');
+      
+      // Auto-scroll to specific reel if ID is in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('id');
+      if (targetId) {
+        const targetReel = document.getElementById(`reel-${targetId}`);
+        if (targetReel) {
+          // Use setTimeout to ensure container is ready
+          setTimeout(() => {
+            targetReel.scrollIntoView({ behavior: 'auto', block: 'center' });
+          }, 100);
+        }
+      }
+      
+      const observerOptions = {
+        root: container,
+        threshold: [0.1, 0.7] // Detect both entering and leaving clearly
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        // Global safety check: Reset all media playback rates and hide all badges
+        document.querySelectorAll('.reel-media').forEach(m => {
+          m.playbackRate = 1.0;
+        });
+        document.querySelectorAll('.forward-badge, .backward-badge').forEach(badge => {
+          badge.style.display = 'none';
+        });
+
+        entries.forEach(entry => {
+          const wrapper = entry.target;
+          const media = wrapper.querySelector('video, audio');
+          const index = parseInt(wrapper.getAttribute('data-index'));
+
+          // Aggressively stop FF/RW on ANY interaction change for this specific reel
+          const contentDiv = wrapper.querySelector('.reel-content');
+          if (contentDiv) stopFastForward(contentDiv);
+
+          if (!media) return;
+
+          // When a reel is strongly in view
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
+            if (media) {
+               // Reset media to start when re-entering focus
+               media.currentTime = 0;
+
+               // FORCE PAUSE EVERY OTHER MEDIA ON THE PAGE
+               document.querySelectorAll('.reel-media').forEach(otherMedia => {
+                 if (otherMedia !== media) {
+                   otherMedia.pause();
+                   const otherWrapper = otherMedia.closest('.reel-wrapper');
+                   if (otherWrapper) otherWrapper.classList.add('is-paused');
+                 }
+               });
+
+                // Safety: Reset any fast-forward or rewind states when playing a new reel
+                const contentDiv = wrapper.querySelector('.reel-content');
+                if (contentDiv) stopFastForward(contentDiv);
+
+               // Play the active one
+               const playPromise = media.play();
+               if (playPromise !== undefined) {
+                 playPromise.then(() => {
+                   wrapper.classList.remove('is-paused');
+                 }).catch(err => {
+                   console.log('Autoplay blocked:', err);
+                   // For the FIRST reel, show the "Tap to Play" overlay if blocked
+                   if (index === 0) {
+                     const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+                     if (overlay) overlay.style.display = 'flex';
+                     wrapper.classList.add('is-paused');
+                   } else {
+                     // For other reels, fall back to muted playback
+                     media.muted = true;
+                     media.play().then(() => {
+                       wrapper.classList.remove('is-paused');
+                     });
+                   }
+                 });
+               }
+            }
+          } 
+          // When a reel is mostly out of view (less than 10%)
+          else if (entry.intersectionRatio < 0.1) {
+             if (media) {
+                media.pause();
+                wrapper.classList.add('is-paused');
+                
+                // CRITICAL: Stop any hunting/scrubbing when scrolled away
+                const contentDiv = wrapper.querySelector('.reel-content');
+                if (contentDiv) stopFastForward(contentDiv);
+
+                // Hide autoplay overlay if it was showing for the first reel
+                const overlay = wrapper.querySelector('.reel-autoplay-overlay');
+                if (overlay) overlay.style.display = 'none';
+             }
+
+            // AUTO-COLLAPSE CAPTION: Prevent bleed or layout issues when scrolling away
+            const caption = wrapper.querySelector('.reel-caption');
+            const moreBtn = wrapper.querySelector('.more-btn');
+            if (caption && moreBtn && !caption.classList.contains('is-truncated')) {
+              caption.classList.add('is-truncated');
+              moreBtn.textContent = '...more';
+            }
+          }
+        });
+      }, observerOptions);
+
+      reels.forEach(reel => observer.observe(reel));
+
+      // NEW: Solve 'Always Muted' issue after refresh
+      // Restore sound globally as soon as user interacts with the page
+      const unmuteAll = () => {
+        document.querySelectorAll('.reel-media').forEach(m => {
+          m.muted = false;
+          // If the media is already playing (likely muted by our fallback),
+          // we call play() again now that we have a user interaction.
+          // This "promotes" the silent playback to full audio playback.
+          if (!m.paused) {
+            m.play().catch(err => console.log('[REELS] Re-play failed:', err));
+          }
+        });
+        // We only need to do this once per page load
+        ['click', 'touchstart', 'scroll', 'mousedown'].forEach(evt => 
+          document.removeEventListener(evt, unmuteAll)
+        );
+        console.log('[REELS] Global audio restored and re-played via user interaction');
+      };
+
+      ['click', 'touchstart', 'scroll', 'mousedown'].forEach(evt => 
+        document.addEventListener(evt, unmuteAll, { once: true })
+      );
+
+      // Global safety: Pause everything if user leaves the tab
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          document.querySelectorAll('.reel-media').forEach(m => m.pause());
+        }
+      });
+    });
+
+    // Toggle play/pause
+    let isFastForwarding = false;
+    let isRewinding = false;
+    let speedTimer = null;
+    let rewindInterval = null;
+
+     window.stopFastForward = function(contentDiv) {
+      // 1. Clear ALL timers & intervals immediately
+      clearTimeout(speedTimer);
+      clearInterval(rewindInterval);
+      speedTimer = null;
+      rewindInterval = null;
+      
+      // 3. Reset ALL global state flags
+      isFastForwarding = false;
+      isRewinding = false;
+      
+      // 4. Reset Media across the whole page to 1.0x speed for safety
+      document.querySelectorAll('.reel-media').forEach(m => {
+        m.playbackRate = 1.0;
+      });
+
+      // 5. Hide ALL badges across the whole document for safety
+      document.querySelectorAll('.forward-badge, .backward-badge').forEach(badge => {
+        badge.style.display = 'none';
+      });
+
+      // 6. Resume normal playback if needed
+      if (contentDiv) {
+        const wrapper = contentDiv.closest('.reel-wrapper');
+        if (wrapper) {
+          const media = wrapper.querySelector('video, audio');
+          if (media && !wrapper.classList.contains('is-paused') && media.paused && !media.ended) {
+            media.play().catch(() => {}); 
+          }
+        }
+      }
+    };
+
+    window.startFastForward = function(e, contentDiv) {
+      // Safety: Clear previous interaction state before starting a new one
+      stopFastForward(null);
+
+      // Block multi-finger glitches
+      if (e.touches && e.touches.length > 1) return;
+
+      const wrapper = contentDiv.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      if (!media) return;
+
+      // Determine side
+      const rect = contentDiv.getBoundingClientRect();
+      const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+      const x = clientX - rect.left;
+      const isLeftSide = x < rect.width / 2;
+
+      speedTimer = setTimeout(() => {
+        if (isLeftSide) {
+          isRewinding = true;
+          contentDiv.querySelector('.backward-badge').style.display = 'flex';
+          media.pause(); 
+          rewindInterval = setInterval(() => {
+            if (media.currentTime <= 0.1) {
+              media.currentTime = 0;
+              stopFastForward(contentDiv);
+            } else {
+              media.currentTime -= 0.3; // Slightly faster rewind for better feel
+            }
+          }, 50);
+        } else {
+          isFastForwarding = true;
+          media.playbackRate = 2.5; 
+          contentDiv.querySelector('.forward-badge').style.display = 'flex';
+        }
+      }, 350); 
+    };
+
+    window.togglePlay = function(contentDiv) {
+      // If we were scrubbing, the 'click' event should do nothing
+      if (isFastForwarding || isRewinding) {
+        // Force reset just in case a mouseup/touchend was missed
+        stopFastForward(contentDiv);
+        return; 
+      }
+      
+      const wrapper = contentDiv.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      
+      // If we play it once, ensure sound is on
+      if (media) {
+        if (media.paused) {
+          media.muted = false;
+          media.play();
+          wrapper.classList.remove('is-paused');
+        } else {
+          media.pause();
+          wrapper.classList.add('is-paused');
+        }
+      }
+    };
+
+    window.startFirstReel = function(overlay) {
+        const wrapper = overlay.closest('.reel-wrapper');
+        const media = wrapper.querySelector('video, audio');
+        if (media) {
+            media.muted = false;
+            media.play().then(() => {
+                overlay.style.display = 'none';
+                wrapper.classList.remove('is-paused');
+            });
+        }
+    };
+
+    window.toggleLike = async function(btn, postId) {
+      if (!IS_LOGGED_IN) {
+        showLoginPrompt();
+        return;
+      }
+      const icon = btn.querySelector('i');
+      const countSpan = btn.querySelector('.likes-count');
+      let count = parseInt(countSpan.textContent) || 0;
+      
+      const isLiked = btn.classList.contains('liked');
+      const newState = !isLiked;
+      
+      if (newState) {
+        btn.classList.add('liked');
+        icon.className = 'bi bi-heart-fill';
+        count++;
+      } else {
+        btn.classList.remove('liked');
+        icon.className = 'bi bi-heart';
+        count = Math.max(0, count - 1);
+      }
+      countSpan.textContent = count;
+      
+      icon.style.animation = 'heartBeat 0.5s ease';
+      setTimeout(() => icon.style.animation = '', 500);
+
+      try {
+        const res = await fetch(`/posts/${postId}/like`, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    window.shareReel = async function(postId) {
+      // Direct link to the reel in the reels feed
+      const url = `${window.location.origin}/reels?id=${postId}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'Rapira Reel', url: url });
+        } catch (err) {}
+      } else {
+        navigator.clipboard.writeText(url);
+        showToast('Link copied to clipboard!', 'info');
+      }
+    };
+
+    let activePostId = null;
+
+    window.openComments = async function(postId) {
+      if (!IS_LOGGED_IN) {
+        showLoginPrompt();
+        return;
+      }
+      activePostId = postId;
+      const modal = new bootstrap.Modal(document.getElementById('commentModal'));
+      modal.show();
+      
+      // Load comments
+      loadModalComments(postId);
+    };
+
+    async function loadModalComments(postId, isRefresh = false) {
+      const container = document.getElementById('commentList');
+      const loader = document.getElementById('commentLoading');
+      
+      if (!isRefresh) {
+        container.innerHTML = '';
+        if (loader) loader.classList.remove('d-none');
+      }
+
+      try {
+        const res = await fetch(`/posts/${postId}/comments`);
+        const data = await res.json();
+        
+        if (loader) loader.classList.add('d-none');
+        
+        if (data.success && data.comments && data.comments.length > 0) {
+          const newHtml = data.comments.map(c => createCommentElement(c)).join('');
+          container.innerHTML = newHtml;
+        } else {
+          if (!isRefresh || (data.comments && data.comments.length === 0)) {
+            container.innerHTML = '<div class="text-center py-5 text-muted">No comments yet.</div>';
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        if (loader) loader.classList.add('d-none');
+        if (!isRefresh) {
+          container.innerHTML = '<div class="text-center py-5 text-danger">Failed to load comments.</div>';
+        }
+      }
+    }
+
+    function createCommentElement(c) {
+      const date = new Date(c.createdAt).toLocaleDateString();
+      let repliesHtml = '';
+      if (c.replies && c.replies.length > 0) {
+        repliesHtml = `
+          <div class="reply-list">
+            ${c.replies.map(r => `
+              <div class="comment-item">
+                <img src="${r.user && r.user.profileImage ? r.user.profileImage : '/images/default-profile.svg'}">
+                <div class="comment-content">
+                  <div class="comment-text">
+                    <span class="comment-user">${r.user ? r.user.name : 'Anonymous'}</span>
+                    ${r.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                  </div>
+                  <div class="comment-meta">
+                    <span>${new Date(r.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      return `
+        <div class="comment-item" id="comment-${c._id}">
+          <img src="${c.user && c.user.profileImage ? c.user.profileImage : '/images/default-profile.svg'}">
+          <div class="comment-content">
+            <div class="comment-text">
+              <span class="comment-user">${c.user ? c.user.name : 'Anonymous'}</span>
+              ${c.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+            </div>
+            <div class="comment-meta">
+              <span>${date}</span>
+              <span style="cursor: pointer;" onclick="prepareReply('${c._id}', '${c.user ? c.user.name : 'User'}')">Reply</span>
+            </div>
+            ${repliesHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    // Input handling
+    const commInput = document.getElementById('modalCommentInput');
+    const postBtn = document.getElementById('modalPostCommentBtn');
+    
+    commInput.addEventListener('input', () => {
+      postBtn.disabled = !commInput.value.trim();
+    });
+
+    let replyToId = null;
+
+    window.prepareReply = function(commentId, userName) {
+      replyToId = commentId;
+      commInput.value = `@${userName} `;
+      commInput.focus();
+    };
+
+    window.submitModalComment = async function() {
+      if (!activePostId || !commInput.value.trim()) return;
+      
+      const text = commInput.value.trim();
+      postBtn.disabled = true;
+      postBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      
+      // OPTIMISTIC UPDATE: Add comment to UI immediately
+      const commentContainer = document.getElementById('commentList');
+      const noCommentsMsg = commentContainer.querySelector('.text-muted');
+      if (noCommentsMsg) noCommentsMsg.remove();
+
+      // Get current user profile for optimistic comment
+      const userImg = document.getElementById('modalUserImg').src;
+      const userName = '<%= (typeof currentUser !== "undefined" && currentUser) ? currentUser.name : "You" %>';
+      
+      const optimisticHtml = `
+        <div class="comment-item" style="opacity: 0.7;" id="optimistic-comment">
+          <img src="${userImg}">
+          <div class="comment-content">
+            <div class="comment-text">
+              <span class="comment-user">${userName}</span>
+              ${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+            </div>
+            <div class="comment-meta">
+              <span>Just now</span>
+            </div>
+          </div>
+        </div>
+      `;
+      commentContainer.insertAdjacentHTML('afterbegin', optimisticHtml);
+
+      try {
+        let url = `/posts/${activePostId}/comments`;
+        let body = { text };
+        
+        if (replyToId && text.startsWith('@')) {
+          url = `/posts/${activePostId}/comments/${replyToId}/replies`;
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+          commInput.value = '';
+          replyToId = null;
+          // Background refresh to sync with server without flickering
+          loadModalComments(activePostId, true);
+        } else {
+          showToast(data.message || 'Failed to post comment', 'error');
+          const opt = document.getElementById('optimistic-comment');
+          if (opt) opt.remove();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error posting comment', 'error');
+        const opt = document.getElementById('optimistic-comment');
+        if (opt) opt.remove();
+      } finally {
+        postBtn.disabled = false;
+        postBtn.innerHTML = 'Post';
+      }
+    };
+
+    window.goToPost = function(postId) {
+      window.location.href = `/posts/view/${postId}`;
+    };
+
+    window.toggleCaption = function(btn) {
+      const caption = btn.previousElementSibling;
+      if (caption.classList.contains('is-truncated')) {
+        caption.classList.remove('is-truncated');
+        btn.textContent = 'less';
+      } else {
+        caption.classList.add('is-truncated');
+        btn.textContent = '...more';
+      }
+    };
+
+    // Volume Control for Reels
+    window.updateReelVolume = function(slider, index) {
+      const wrapper = slider.closest('.reel-wrapper');
+      const media = wrapper.querySelector('video, audio');
+      if (media) {
+        const val = slider.value / 100;
+        media.volume = val;
+        
+        // Update icon based on volume
+        const icon = slider.previousElementSibling;
+        if (val === 0) icon.className = 'bi bi-volume-mute text-white';
+        else if (val < 0.5) icon.className = 'bi bi-volume-down text-white';
+        else icon.className = 'bi bi-volume-up text-white';
+      }
+    };
+  </script>
+</body>
+</html>

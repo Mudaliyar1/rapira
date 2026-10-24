@@ -50,8 +50,8 @@
               </div>
               
               <div class="col-md-4">
-                <label for="pincode" class="form-label">Pincode</label>
-                <input type="text" class="form-control" id="pincode" name="pincode" 
+                <label for="pincode" class="form-label">Pincode <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="pincode" name="pincode" required 
                        placeholder="Enter pincode">
               </div>
             </div>
@@ -76,8 +76,8 @@
               </div>
               
               <div class="col-md-6">
-                <label for="capacity" class="form-label">Capacity (Optional)</label>
-                <input type="number" class="form-control" id="capacity" name="capacity" 
+                <label for="capacity" class="form-label">Capacity <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="capacity" name="capacity" required 
                        placeholder="Maximum capacity" min="1">
               </div>
               
@@ -107,11 +107,11 @@
                       <% for(let i = 1; i <= 12; i++) { %>
                         <div class="row g-2 mb-2">
                           <div class="col-md-2">
-                            <label class="form-label small">Hour <%= i %></label>
+                            <label class="form-label small">Hour <%= i %> <%- i === 1 ? '<span class="text-danger">*</span>' : '' %></label>
                           </div>
                           <div class="col-md-4">
                             <input type="number" class="form-control form-control-sm" 
-                                   name="hourlyRate_<%= i %>" placeholder="0" min="0" step="100">
+                                   name="hourlyRate_<%= i %>" placeholder="0" min="0" step="any" <%= i === 1 ? 'required' : '' %>>
                           </div>
                           <% if(i + 12 <= 24) { %>
                             <div class="col-md-2">
@@ -119,7 +119,7 @@
                             </div>
                             <div class="col-md-4">
                               <input type="number" class="form-control form-control-sm" 
-                                     name="hourlyRate_<%= i + 12 %>" placeholder="0" min="0" step="100">
+                                     name="hourlyRate_<%= i + 12 %>" placeholder="0" min="0" step="any">
                             </div>
                           <% } %>
                         </div>
@@ -135,8 +135,8 @@
               </div>
 
               <div class="col-md-12">
-                <label for="minimumHours" class="form-label">Minimum Booking Hours</label>
-                <input type="number" class="form-control" id="minimumHours" name="minimumHours" 
+                <label for="minimumHours" class="form-label">Minimum Booking Hours <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="minimumHours" name="minimumHours" required 
                        min="1" max="24" value="1" placeholder="e.g., 4">
                 <small class="text-muted">Minimum hours required for booking this venue</small>
               </div>
@@ -145,20 +145,20 @@
               <div class="col-md-6">
                 <label for="minimumTicketPrice" class="form-label">Minimum Ticket Price (₹)</label>
                 <input type="number" class="form-control" id="minimumTicketPrice" name="minimumTicketPrice" 
-                       step="1" placeholder="e.g., 100 (any amount)">
+                       step="any" placeholder="e.g., 100 (any amount)">
                 <small class="text-muted">Set any minimum ticket price</small>
               </div>
 
               <div class="col-md-6">
                 <label for="suggestedTicketPrice" class="form-label">Suggested Ticket Price (₹)</label>
                 <input type="number" class="form-control" id="suggestedTicketPrice" name="suggestedTicketPrice" 
-                       step="1" placeholder="e.g., 500 (any amount)">
+                       step="any" placeholder="e.g., 500 (any amount)">
                 <small class="text-muted">Recommended ticket price for artists</small>
               </div>
               
               <div class="col-md-12">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3" 
+                <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="3" required 
                           placeholder="Describe the venue, its features, and any important details"></textarea>
               </div>
             </div>
@@ -234,20 +234,20 @@
             
             <div class="row g-3 mb-4">
               <div class="col-md-4">
-                <label for="contactName" class="form-label">Contact Person Name</label>
-                <input type="text" class="form-control" id="contactName" name="contactName" 
+                <label for="contactName" class="form-label">Contact Person Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="contactName" name="contactName" required 
                        placeholder="Contact person name">
               </div>
               
               <div class="col-md-4">
-                <label for="contactPhone" class="form-label">Contact Phone</label>
-                <input type="tel" class="form-control" id="contactPhone" name="contactPhone" 
+                <label for="contactPhone" class="form-label">Contact Phone <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="contactPhone" name="contactPhone" required 
                        placeholder="Contact phone number">
               </div>
               
               <div class="col-md-4">
-                <label for="contactEmail" class="form-label">Contact Email</label>
-                <input type="email" class="form-control" id="contactEmail" name="contactEmail" 
+                <label for="contactEmail" class="form-label">Contact Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="contactEmail" name="contactEmail" required 
                        placeholder="Contact email address">
               </div>
             </div>
@@ -257,8 +257,8 @@
             
             <div class="row g-3 mb-4">
               <div class="col-md-6">
-                <label for="googleMapsLink" class="form-label">Google Maps Link</label>
-                <input type="url" class="form-control" id="googleMapsLink" name="googleMapsLink" 
+                <label for="googleMapsLink" class="form-label">Google Maps Link <span class="text-danger">*</span></label>
+                <input type="url" class="form-control" id="googleMapsLink" name="googleMapsLink" required 
                        placeholder="https://maps.google.com/...">
                 <small class="text-muted">Share your venue's Google Maps location</small>
               </div>
@@ -275,8 +275,8 @@
             <h5 class="card-title mb-3">Venue Images</h5>
             <div class="row g-3 mb-4">
               <div class="col-md-12">
-                <label for="images" class="form-label">Upload Images (Max 5)</label>
-                <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                <label for="images" class="form-label">Upload Images (Max 5) <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" required>
                 <small class="text-muted">Upload clear photos of your venue (JPG, PNG, GIF). Maximum 5 images, 5MB each.</small>
               </div>
             </div>
@@ -284,7 +284,7 @@
             <!-- Submit Button -->
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
               <a href="/users/venue-requests" class="btn btn-outline-secondary me-md-2">Cancel</a>
-              <button type="submit" class="btn btn-primary btn-lg">
+              <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                 <i class="bi bi-send me-1"></i> Submit Venue Request
               </button>
             </div>
@@ -294,3 +294,30 @@
     </div>
   </div>
 </div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+  // Check if at least one hourly rate is entered
+  const rateInputs = document.querySelectorAll('input[name^="hourlyRate_"]');
+  let hasRate = false;
+  rateInputs.forEach(input => {
+    if (input.value && parseFloat(input.value) > 0) {
+      hasRate = true;
+    }
+  });
+
+  if (!hasRate) {
+    e.preventDefault();
+    alert('Please enter at least one hourly rate in the Pricing Structure.');
+    return false;
+  }
+
+  // Check if at least one facility is checked
+  const facilityChecks = document.querySelectorAll('input[name="facilities"]:checked');
+  if (facilityChecks.length === 0) {
+    e.preventDefault();
+    alert('Please select at least one facility.');
+    return false;
+  }
+});
+</script>

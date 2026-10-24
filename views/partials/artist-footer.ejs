@@ -12,6 +12,465 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- Custom JS -->
   <script src="/js/main.js"></script>
+
+  <style>
+    .sidebar-tour-highlight {
+      position: relative;
+      z-index: 1061;
+      border-radius: 10px;
+      box-shadow: 0 0 0 2px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55);
+      animation: sidebarTourPulse 1.5s infinite;
+    }
+
+    .sidebar-tour-page-highlight {
+      position: relative;
+      z-index: 1059;
+      border-radius: 10px;
+      box-shadow: 0 0 0 2px #38bdf8, 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .sidebar-tour-step-badge {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      z-index: 1066;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      pointer-events: none;
+    }
+
+    .sidebar-tour-step-badge.sidebar-badge {
+      background: #facc15;
+      color: #111827;
+    }
+
+    .sidebar-tour-step-badge.page-badge {
+      background: #38bdf8;
+      color: #082f49;
+    }
+
+    @keyframes sidebarTourPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 2px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55);
+      }
+      50% {
+        box-shadow: 0 0 0 4px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55);
+      }
+    }
+
+    .sidebar-tour-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1063;
+      pointer-events: none;
+      padding: 12px;
+    }
+
+    .sidebar-tour-overlay.show {
+      display: flex;
+    }
+
+    .sidebar-tour-card {
+      width: min(520px, calc(100vw - 24px));
+      max-height: 50vh;
+      overflow-y: auto;
+      background: #101418;
+      border: 1px solid #2a3340;
+      border-radius: 12px;
+      color: #fff;
+      pointer-events: auto;
+      z-index: 1064;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+      padding: 14px;
+    }
+
+    @media (max-width: 576px) {
+      .sidebar-tour-card {
+        width: calc(100vw - 16px);
+        max-height: 46vh;
+        padding: 12px;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const url = new URL(window.location.href);
+      const isSidebarFlow = url.searchParams.get('tutorialFlow') === '1';
+      if (!isSidebarFlow) {
+        return;
+      }
+
+      const sidebar = document.getElementById('artistSidebar');
+      if (!sidebar) {
+        return;
+      }
+
+      window.tutorialMode = true;
+
+      const allSteps = [
+        {
+          selector: '#tutorialSidebarManageContent',
+          path: '/artists/manage-content',
+          pageTargets: ['#contentSearchForm', '#statsSection', '.section-title'],
+          title: 'Step 1: Manage Content',
+          text: 'This page helps you search, filter, and manage your uploaded content from the main content table.'
+        },
+        {
+          selector: '#tutorialSidebarDistributionHub',
+          path: '/artist-distribution/distributors',
+          pageTargets: ['#filterForm', '.distributor-card', 'h1.h2'],
+          title: 'Step 2: Music Distribution Hub',
+          text: 'Use this page to filter distributors and select packages for music distribution.'
+        },
+        {
+          selector: '#tutorialSidebarDistributionHistory',
+          path: '/artist-distribution/history',
+          pageTargets: ['form[action="/artist-distribution/history"]', '.table-responsive', 'h1.h2'],
+          title: 'Step 3: Distribution History',
+          text: 'This page shows your distribution logs, bill numbers, payment status, and request history.'
+        },
+        {
+          selector: '#tutorialSidebarBeats',
+          path: '/artists/beats',
+          pageTargets: ['.marketplace-hero', '.protected-media-container', '.card.bg-dark.border-secondary'],
+          title: 'Step 4: Beats Marketplace',
+          text: 'Browse beats, apply producer filters, preview media, and choose beats to purchase here.'
+        },
+        {
+          selector: '#tutorialSidebarLibrary',
+          path: '/artists/library',
+          pageTargets: ['.card.bg-dark.border-secondary.mb-4', '.row.g-4.mb-5'],
+          title: 'Step 5: Beat Library',
+          text: 'Your library page stores purchased/free beats for playback, downloads, and receipt access.'
+        },
+        {
+          selector: '#tutorialSidebarReceipts',
+          path: '/artists/beat-purchases',
+          pageTargets: ['.card.bg-dark.border-secondary.mb-4', '.table-responsive'],
+          title: 'Step 6: My Receipts',
+          text: 'Use this page to review transaction history and open/download your purchase receipts.'
+        },
+        {
+          selector: '#tutorialSidebarManagePosts',
+          path: '/artists/manage-posts',
+          pageTargets: ['#postForm', '#postsList', '.card.mb-4'],
+          title: 'Step 7: Manage Posts',
+          text: 'Create new posts, upload media, and manage your existing post feed from this page.'
+        },
+        {
+          selector: '#tutorialSidebarManageConcerts',
+          path: '/artists/manage-concerts',
+          pageTargets: ['#concertSearchForm', '#statsSection', '.section-title'],
+          title: 'Step 8: Manage Concerts',
+          text: 'Filter concerts, review statuses, and manage concert records and actions here.'
+        },
+        {
+          selector: '#tutorialSidebarManageTickets',
+          path: '/artists/manage-tickets',
+          pageTargets: ['#ticketSearchForm', '.table-responsive', '.section-title'],
+          title: 'Step 9: Manage Tickets',
+          text: 'This page helps you search ticket sales and inspect purchaser and event details.'
+        },
+        {
+          selector: '#tutorialSidebarProducerMessages',
+          path: '/artists/messages',
+          pageTargets: ['.card.bg-dark.border-secondary', '.btn.btn-primary'],
+          title: 'Step 10: Producer Messages',
+          text: 'Open producer conversations and jump to inbox/find pages directly from this section.'
+        },
+        {
+          selector: '#tutorialSidebarEditProfile',
+          path: '/artists/edit-profile',
+          pageTargets: ['form[action="/artists/update-profile"]', '.card .card-body'],
+          title: 'Step 11: Edit Profile',
+          text: 'Update your profile data, banner, and achievements, then save your changes here.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#tutorialQuickActions', '#tutorialStatsCards', '.admin-content'],
+          title: 'Step 12: Dashboard',
+          text: 'Return to dashboard for overview cards, quick actions, and activity summaries.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#post-story', '#tutorialQuickActions', '#tutorialStatsCards'],
+          title: 'Step 13: Post a Story',
+          text: 'Use this area to upload a new story and keep followers updated quickly.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#tutorialMyStories', '#post-story'],
+          title: 'Step 14: My Active Stories',
+          text: 'Manage your active stories, watch engagement, and remove old items here.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#tutorialUpcomingConcerts', '#tutorialPendingConcerts'],
+          title: 'Step 15: Upcoming Concerts',
+          text: 'Track your upcoming concerts and take quick actions from this section.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#tutorialPendingConcerts', '#tutorialUpcomingConcerts'],
+          title: 'Step 16: Pending Approvals',
+          text: 'Review concerts waiting for approval and monitor their status here.'
+        },
+        {
+          selector: '#tutorialSidebarDashboard',
+          path: '/artists/dashboard',
+          pageTargets: ['#tutorialRecentContent', '#tutorialQuickActions'],
+          title: 'Step 17: Recent Content',
+          text: 'Use this block to review your latest uploads and jump to full content management.'
+        }
+      ];
+
+      const steps = allSteps.filter(function (step) {
+        return !!document.querySelector(step.selector);
+      });
+
+      if (!steps.length) {
+        return;
+      }
+
+      let stepIndex = parseInt(url.searchParams.get('step') || '0', 10);
+      if (Number.isNaN(stepIndex) || stepIndex < 0) {
+        stepIndex = 0;
+      }
+      if (stepIndex >= steps.length) {
+        stepIndex = steps.length - 1;
+      }
+
+      function keepSidebarOpen() {
+        if (window.innerWidth < 992) {
+          sidebar.classList.remove('collapsed');
+          sidebar.classList.add('show');
+          document.body.classList.add('sidebar-open');
+          const mobileOverlay = document.querySelector('.sidebar-overlay');
+          if (mobileOverlay) {
+            mobileOverlay.style.setProperty('display', 'none', 'important');
+          }
+        }
+      }
+
+      keepSidebarOpen();
+      setTimeout(keepSidebarOpen, 50);
+      setTimeout(keepSidebarOpen, 200);
+
+      const step = steps[stepIndex];
+      const stepEl = document.querySelector(step.selector);
+      let pageTargetEl = null;
+
+      function addStepBadge(targetEl, badgeClass) {
+        if (!targetEl) {
+          return;
+        }
+        const prevPosition = window.getComputedStyle(targetEl).position;
+        if (prevPosition === 'static' || !prevPosition) {
+          targetEl.style.position = 'relative';
+        }
+        const existingBadge = targetEl.querySelector('.sidebar-tour-step-badge.' + badgeClass);
+        if (existingBadge) {
+          existingBadge.remove();
+        }
+        const badge = document.createElement('span');
+        badge.className = 'sidebar-tour-step-badge ' + badgeClass;
+        badge.textContent = String(stepIndex + 1);
+        targetEl.appendChild(badge);
+      }
+
+      if (stepEl) {
+        stepEl.classList.add('sidebar-tour-highlight');
+        stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        addStepBadge(stepEl, 'sidebar-badge');
+      }
+
+      const pageCandidates = (step.pageTargets || []).concat([
+        '.admin-content .card',
+        '.admin-content h1',
+        '.admin-content h2'
+      ]);
+      for (let i = 0; i < pageCandidates.length; i += 1) {
+        const found = document.querySelector(pageCandidates[i]);
+        if (found) {
+          pageTargetEl = found;
+          break;
+        }
+      }
+      if (pageTargetEl) {
+        pageTargetEl.classList.add('sidebar-tour-page-highlight');
+        addStepBadge(pageTargetEl, 'page-badge');
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'sidebar-tour-overlay show';
+      overlay.setAttribute('aria-hidden', 'false');
+      overlay.innerHTML = [
+        '<div class="sidebar-tour-card">',
+        '  <div class="d-flex justify-content-between align-items-start mb-2">',
+        '    <div>',
+        '      <h5 class="mb-1" id="sidebarTourTitle"></h5>',
+        '      <small class="text-muted" id="sidebarTourCounter"></small>',
+        '    </div>',
+        '    <button type="button" class="btn btn-sm btn-outline-light" id="sidebarTourClose">Skip</button>',
+        '  </div>',
+        '  <p class="mb-3 text-white-50" id="sidebarTourText"></p>',
+        '  <div class="d-flex justify-content-between gap-2">',
+        '    <button type="button" class="btn btn-outline-light" id="sidebarTourBack">Back</button>',
+        '    <div class="d-flex gap-2">',
+        '      <button type="button" class="btn btn-secondary" id="sidebarTourSkip">Skip Tour</button>',
+        '      <button type="button" class="btn btn-primary" id="sidebarTourNext">Next</button>',
+        '    </div>',
+        '  </div>',
+        '</div>'
+      ].join('');
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#sidebarTourTitle').textContent = step.title;
+      overlay.querySelector('#sidebarTourText').textContent = step.text;
+      overlay.querySelector('#sidebarTourCounter').textContent = 'Step ' + (stepIndex + 1) + ' of ' + steps.length;
+
+      const backBtn = overlay.querySelector('#sidebarTourBack');
+      const nextBtn = overlay.querySelector('#sidebarTourNext');
+      const skipBtn = overlay.querySelector('#sidebarTourSkip');
+      const closeBtn = overlay.querySelector('#sidebarTourClose');
+
+      backBtn.disabled = stepIndex === 0;
+      nextBtn.textContent = stepIndex === steps.length - 1 ? 'Finish' : 'Next';
+
+      function goToStep(newIndex) {
+        if (newIndex < 0 || newIndex >= steps.length) {
+          return;
+        }
+        const target = steps[newIndex];
+        const nextUrl = new URL(window.location.origin + target.path);
+        nextUrl.searchParams.set('tutorialFlow', '1');
+        nextUrl.searchParams.set('step', String(newIndex));
+        window.location.assign(nextUrl.toString());
+      }
+
+      function finishTour(action) {
+        window.tutorialMode = false;
+        fetch('/artists/dashboard/tutorial-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ action: action })
+        }).catch(function () { return null; }).finally(function () {
+          const clean = new URL(window.location.href);
+          clean.searchParams.delete('tutorialFlow');
+          clean.searchParams.delete('step');
+          window.location.assign(clean.pathname + (clean.search ? clean.search : '') + clean.hash);
+        });
+      }
+
+      backBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        goToStep(stepIndex - 1);
+      });
+
+      nextBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (stepIndex >= steps.length - 1) {
+          finishTour('complete');
+          return;
+        }
+        goToStep(stepIndex + 1);
+      });
+
+      skipBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishTour('skip');
+      });
+
+      closeBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishTour('skip');
+      });
+
+      window.addEventListener('resize', keepSidebarOpen);
+    })();
+  </script>
+
+  <!-- Global Date Utilities -->
+  <script>
+    (function() {
+      const IST_TIMEZONE = 'Asia/Kolkata';
+      
+      window.toISTDateString = function(date) {
+        if (!date) return 'N/A';
+        try {
+          return new Date(date).toLocaleDateString('en-IN', {
+            timeZone: IST_TIMEZONE,
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+          });
+        } catch (e) {
+          console.error('Error formatting IST date:', e);
+          return date;
+        }
+      };
+      
+      window.toISTLocaleString = function(date) {
+        if (!date) return 'N/A';
+        try {
+          return new Date(date).toLocaleString('en-IN', {
+            timeZone: IST_TIMEZONE,
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        } catch (e) {
+          console.error('Error formatting IST locale string:', e);
+          return date;
+        }
+      };
+      
+      window.toISTTimeString = function(date) {
+        if (!date) return 'N/A';
+        try {
+          return new Date(date).toLocaleTimeString('en-IN', {
+            timeZone: IST_TIMEZONE,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+        } catch (e) {
+          console.error('Error formatting IST time string:', e);
+          return date;
+        }
+      };
+    })();
+  </script>
   <% if (typeof extraScripts !== 'undefined') { %>
     <%- extraScripts %>
   <% } %>

@@ -21,15 +21,15 @@
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Concert:</div>
-                <div class="col-md-8 text-white"><%= ticket.concert.title %></div>
+                <div class="col-md-8 text-white"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable (Deleted)' %></div>
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Date:</div>
-                <div class="col-md-8 text-white"><%= new Date(ticket.concert.date).toLocaleDateString() %></div>
+                <div class="col-md-8 text-white"><%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></div>
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Venue:</div>
-                <div class="col-md-8 text-white"><%= ticket.concert.venue %></div>
+                <div class="col-md-8 text-white"><%= ticket.concert ? (ticket.concert.venue && ticket.concert.venue.name ? ticket.concert.venue.name : (ticket.concert.venueName || 'Venue')) : 'N/A' %></div>
               </div>
               <div class="row mb-2">
                 <div class="col-md-4 text-white-50">Quantity:</div>

@@ -48,7 +48,7 @@
                   </li>
                   <li class="list-group-item d-flex justify-content-between">
                     <span class="fw-bold" style="color: #000000 !important;">Date:</span>
-                    <span style="color: #000000 !important;"><%= new Date(request.createdAt).toLocaleDateString() %></span>
+                    <span style="color: #000000 !important;"><%= toISTDateString(request.createdAt) %></span>
                   </li>
                 </ul>
               </div>

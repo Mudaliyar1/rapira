@@ -1,0 +1,56 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/admin/producers/<%= producer._id %>" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i> Back to Producer
+    </a>
+    <div>
+      <h2 class="fw-bold mb-1">Revoke Producer Role</h2>
+      <p class="text-muted mb-0">Remove producer access for this user</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+      <h5 class="fw-bold mb-0">Confirm Action</h5>
+    </div>
+    <div class="card-body">
+      <div class="alert" style="background-color: #000 !important; border: 1px solid #222 !important; color: #fff !important;">
+        <h5 class="alert-heading">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Warning
+        </h5>
+        <p class="mb-0">Are you sure you want to revoke the producer role for <strong><%= producer.name %></strong>?</p>
+        <p class="mb-0">This action removes producer access and cannot be undone.</p>
+      </div>
+
+      <div class="border rounded p-3 mb-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">Name</div>
+            <div class="fw-500"><%= producer.name %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Email</div>
+            <div class="fw-500"><%= producer.email %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">Phone</div>
+            <div class="fw-500"><%= producer.phone || 'N/A' %></div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">City</div>
+            <div class="fw-500"><%= producer.city || 'N/A' %></div>
+          </div>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/producers/<%= producer._id %>/revoke" class="d-flex justify-content-end gap-2">
+        <a href="/admin/producers/<%= producer._id %>" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash me-1"></i> Revoke Role
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

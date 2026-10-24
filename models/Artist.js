@@ -31,6 +31,42 @@ const ArtistSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  blockReason: {
+    type: String,
+    default: ''
+  },
+  blockedAt: {
+    type: Date
+  },
+  blockedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  blockHistory: [{
+    blockedAt: {
+      type: Date,
+      required: true
+    },
+    blockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    blockReason: {
+      type: String,
+      default: ''
+    },
+    unblockedAt: {
+      type: Date
+    },
+    unblockedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
   about: {
     type: String,
     default: ''
@@ -45,6 +81,10 @@ const ArtistSchema = new mongoose.Schema({
     ref: 'Media'
   },
   aadharCard: {
+    type: String,
+    default: ''
+  },
+  panCard: {
     type: String,
     default: ''
   },
@@ -75,6 +115,17 @@ const ArtistSchema = new mongoose.Schema({
   completedLearning: {
     type: Boolean,
     default: false
+  },
+  dashboardTutorialSeen: {
+    type: Boolean,
+    default: false
+  },
+  dashboardTutorialSeenAt: {
+    type: Date
+  },
+  dashboardTutorialSkipped: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 
@@ -96,12 +147,36 @@ ArtistSchema.virtual('artistFollowers').get(function() {
 // Method to populate follower counts
 ArtistSchema.methods.populateFollowerCounts = async function() {
   const Follow = require('./Follow');
+  const ArtistModel = this.model('Artist');
   
-  const [totalFollowers, userFollowers, artistFollowers] = await Promise.all([
-    Follow.countDocuments({ followingId: this.user }),
-    Follow.countDocuments({ followingId: this.user, roleOfFollower: 'user' }),
-    Follow.countDocuments({ followingId: this.user, roleOfFollower: 'artist' })
-  ]);
+  const followsRaw = await Follow.find({ followingId: this.user })
+    .populate('followerId', 'role isBlocked');
+
+  const validFollows = followsRaw.filter(follow => follow.followerId && !follow.followerId.isBlocked);
+  const artistFollowerIds = validFollows
+    .filter(follow => follow.followerId.role === 'artist')
+    .map(follow => follow.followerId._id);
+  const blockedArtistUsers = artistFollowerIds.length
+    ? await ArtistModel.find({ user: { $in: artistFollowerIds }, isBlocked: true }).select('user')
+    : [];
+  const blockedArtistUserIds = new Set(blockedArtistUsers.map(item => item.user.toString()));
+  const activeFollows = validFollows.filter(follow => {
+    if (follow.followerId.role !== 'artist') return true;
+    return !blockedArtistUserIds.has(follow.followerId._id.toString());
+  });
+
+  const uniqueFollowers = new Map();
+  activeFollows.forEach(follow => {
+    const followerId = follow.followerId._id.toString();
+    if (!uniqueFollowers.has(followerId)) {
+      uniqueFollowers.set(followerId, follow);
+    }
+  });
+
+  const uniqueFollows = Array.from(uniqueFollowers.values());
+  const totalFollowers = uniqueFollows.length;
+  const userFollowers = uniqueFollows.filter(follow => follow.roleOfFollower === 'user').length;
+  const artistFollowers = uniqueFollows.filter(follow => follow.roleOfFollower === 'artist').length;
   
   this._totalFollowers = totalFollowers;
   this._userFollowers = userFollowers;

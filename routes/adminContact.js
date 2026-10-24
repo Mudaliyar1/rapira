@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const Contact = require('../models/Contact');
 
 // Get all contact messages
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     // Get search parameters
     const { search, status, dateRange, sortBy, sortOrder } = req.query;
@@ -59,9 +59,9 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const messageText = (message.message || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               email.includes(searchTerm) ||
-               subject.includes(searchTerm) ||
-               messageText.includes(searchTerm);
+          email.includes(searchTerm) ||
+          subject.includes(searchTerm) ||
+          messageText.includes(searchTerm);
       });
     }
 
@@ -101,7 +101,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export contact messages to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, status, dateRange, sortBy, sortOrder } = req.query;
@@ -154,9 +154,9 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const messageText = (message.message || '').toLowerCase();
 
         return name.includes(searchTerm) ||
-               email.includes(searchTerm) ||
-               subject.includes(searchTerm) ||
-               messageText.includes(searchTerm);
+          email.includes(searchTerm) ||
+          subject.includes(searchTerm) ||
+          messageText.includes(searchTerm);
       });
     }
 
@@ -191,21 +191,21 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // View a single message
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     const message = await Contact.findById(req.params.id);
-    
+
     if (!message) {
       req.flash('error', 'Message not found');
       return res.redirect('/admin/contact-messages');
     }
-    
+
     // If message is new, mark it as read
     if (message.status === 'new') {
       message.status = 'read';
       await message.save();
     }
-    
+
     res.render('admin/contact-message-detail', {
       layout: 'admin',
       title: 'Message Details',
@@ -220,17 +220,17 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Update message status
-router.post('/:id/status', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/status', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     const { status } = req.body;
-    
+
     if (!['new', 'read', 'replied', 'archived'].includes(status)) {
       req.flash('error', 'Invalid status');
       return res.redirect('/admin/contact-messages');
     }
-    
+
     await Contact.findByIdAndUpdate(req.params.id, { status });
-    
+
     req.flash('success', 'Message status updated');
     res.redirect(`/admin/contact-messages/${req.params.id}`);
   } catch (error) {
@@ -241,7 +241,7 @@ router.post('/:id/status', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete Contact Message Confirmation Page
-router.get('/delete/:id/confirm', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/delete/:id/confirm', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     const message = await Contact.findById(req.params.id);
 
@@ -264,7 +264,7 @@ router.get('/delete/:id/confirm', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete a message (POST route)
-router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/delete/:id', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     const message = await Contact.findById(req.params.id);
 
@@ -289,7 +289,7 @@ router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Bulk Delete Contact Messages
-router.post('/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/bulk-delete', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     const { messageIds } = req.body;
 
@@ -314,7 +314,7 @@ router.post('/bulk-delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete a message (legacy DELETE route - keeping for compatibility)
-router.delete('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/:id', isLoggedIn, hasAdminPermission('manage_contact_messages'), async (req, res) => {
   try {
     await Contact.findByIdAndDelete(req.params.id);
 

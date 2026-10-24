@@ -27,15 +27,15 @@
           <div class="card-body">
             <div class="row">
               <div class="col-md-8">
-                <h4 class="text-white mb-3"><%= activeSubscription.plan.name %></h4>
+                <h4 class="text-white mb-3"><%= activeSubscription.plan ? activeSubscription.plan.name : 'Unknown Plan (Deleted)' %></h4>
                 <ul class="list-group list-group-flush mb-4">
                   <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                     <span>Purchase Date:</span>
-                    <span><%= new Date(activeSubscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    <span><%= toISTDateString(activeSubscription.purchaseDate) %></span>
                   </li>
                   <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                     <span>Expiry Date:</span>
-                    <span><%= new Date(activeSubscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    <span><%= toISTDateString(activeSubscription.expiryDate) %></span>
                   </li>
                   <li class="list-group-item bg-transparent text-white-50 border-secondary">
                     <div class="mb-2 d-flex align-items-center">
@@ -63,11 +63,11 @@
 
                       // Calculate remaining time in the original duration unit
                       let unitRemaining;
-                      if (activeSubscription.plan.durationUnit === 'seconds') {
+                      if (activeSubscription.plan && activeSubscription.plan.durationUnit === 'seconds') {
                         unitRemaining = Math.ceil(timeRemaining / 1000);
                       } else if (activeSubscription.plan.durationUnit === 'minutes') {
                         unitRemaining = Math.ceil(timeRemaining / (1000 * 60));
-                      } else if (activeSubscription.plan.durationUnit === 'hours') {
+                      } else if (activeSubscription.plan && activeSubscription.plan.durationUnit === 'hours') {
                         unitRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60));
                       } else {
                         unitRemaining = daysRemaining;
@@ -83,8 +83,8 @@
                     <div id="countdown-container"
                          class="d-flex justify-content-between mt-2"
                          data-expiry="<%= activeSubscription.expiryDate %>"
-                         data-unit="<%= activeSubscription.plan.durationUnit %>"
-                         data-original-duration="<%= activeSubscription.plan.duration %>">
+                         data-unit="<%= activeSubscription.plan ? activeSubscription.plan.durationUnit : 'days' %>"
+                         data-original-duration="<%= activeSubscription.plan ? activeSubscription.plan.duration : 0 %>">
 
                       <!-- Days -->
                       <div class="countdown-box">
@@ -111,17 +111,17 @@
                       </div>
                     </div>
                   </li>
-                  <% if (activeSubscription.plan.discountPercentage > 0) { %>
+                  <% if (activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) { %>
                     <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
                       <span>Ticket Discount:</span>
-                      <span class="text-success"><%= activeSubscription.plan.discountPercentage %>%</span>
+                      <span class="text-success"><%= activeSubscription.plan ? activeSubscription.plan.discountPercentage : 0 %>%</span>
                     </li>
                   <% } %>
                 </ul>
 
                 <div class="mb-4">
                   <h5 class="text-white">Benefits:</h5>
-                  <p class="text-white-50"><%= activeSubscription.plan.benefits %></p>
+                  <p class="text-white-50"><%= activeSubscription.plan ? activeSubscription.plan.benefits : 'No benefits information available' %></p>
                 </div>
               </div>
               <div class="col-md-4">
@@ -134,14 +134,16 @@
             <%
               // Show renewal button if less than 7 days remaining or less than 20% of original duration for other units
               let showRenewal = false;
-              if (activeSubscription.plan.durationUnit === 'days') {
-                showRenewal = initialDays < 7;
-              } else if (activeSubscription.plan.durationUnit === 'hours') {
-                showRenewal = initialHours < (activeSubscription.plan.duration * 0.2);
-              } else if (activeSubscription.plan.durationUnit === 'minutes') {
-                showRenewal = initialMinutes < (activeSubscription.plan.duration * 0.2);
-              } else if (activeSubscription.plan.durationUnit === 'seconds') {
-                showRenewal = initialSeconds < (activeSubscription.plan.duration * 0.2);
+              if (activeSubscription.plan) {
+                if (activeSubscription.plan.durationUnit === 'days') {
+                  showRenewal = initialDays < 7;
+                } else if (activeSubscription.plan.durationUnit === 'hours') {
+                  showRenewal = initialHours < (activeSubscription.plan.duration * 0.2);
+                } else if (activeSubscription.plan.durationUnit === 'minutes') {
+                  showRenewal = initialMinutes < (activeSubscription.plan.duration * 0.2);
+                } else if (activeSubscription.plan.durationUnit === 'seconds') {
+                  showRenewal = initialSeconds < (activeSubscription.plan.duration * 0.2);
+                }
               }
             %>
             <% if (showRenewal) { %>
@@ -187,9 +189,9 @@
                 <tbody>
                   <% subscriptionHistory.forEach(subscription => { %>
                     <tr>
-                      <td><%= subscription.plan.name %></td>
-                      <td><%= new Date(subscription.purchaseDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
-                      <td><%= new Date(subscription.expiryDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                      <td><%= subscription.plan ? subscription.plan.name : 'Unknown Plan (Deleted)' %></td>
+                      <td><%= toISTDateString(subscription.purchaseDate) %></td>
+                      <td><%= toISTDateString(subscription.expiryDate) %></td>
                       <td>
                         <% if (subscription.status === 'active' && new Date(subscription.expiryDate) > new Date()) { %>
                           <span class="badge bg-success">Active</span>

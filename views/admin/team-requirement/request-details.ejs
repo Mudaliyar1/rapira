@@ -30,7 +30,7 @@
               <p><strong>Email:</strong> <a href="mailto:<%= request.email %>"><%= request.email %></a></p>
               <p><strong>Phone:</strong> <a href="tel:<%= request.phone %>"><%= request.phone %></a></p>
               <p><strong>Location:</strong> <%= request.city %>, <%= request.state %></p>
-              <p><strong>Submitted:</strong> <%= new Date(request.createdAt).toLocaleString() %></p>
+              <p><strong>Submitted:</strong> <%= toISTLocaleString(request.createdAt) %></p>
             </div>
             <div class="col-md-6">
               <% if (request.isBulkRequest) { %>
@@ -94,7 +94,7 @@
                 </span>
               </p>
               <p><strong>Reviewed By:</strong> <%= request.reviewedBy ? request.reviewedBy.name : 'Unknown' %></p>
-              <p><strong>Reviewed On:</strong> <%= request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Unknown' %></p>
+              <p><strong>Reviewed On:</strong> <%= request.reviewedAt ? toISTLocaleString(request.reviewedAt) : 'Unknown' %></p>
               <% if (request.adminNotes) { %>
                 <p><strong>Admin Notes:</strong></p>
                 <div class="p-3 bg-light rounded" style="color: #000000;">

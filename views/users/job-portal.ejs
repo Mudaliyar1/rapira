@@ -1,0 +1,187 @@
+<div class="container py-5">
+  <div class="row mb-4 animate__animated animate__fadeIn">
+    <div class="col-12 text-center">
+      <h1 class="display-4 fw-bold text-gradient">Career & Opportunities Hub</h1>
+      <p class="text-secondary fs-5">Empower your dreams by applying for various roles and registrations.</p>
+      <hr class="w-25 mx-auto border-3 border-primary opacity-50">
+    </div>
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <!-- Artist Section -->
+    <div class="col animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+      <div class="card h-100 border-0 shadow-lg job-card">
+        <div class="card-body p-4 text-center">
+          <div class="icon-box-purple mb-4 mx-auto">
+            <i class="bi bi-music-note-beamed fs-1"></i>
+          </div>
+          <h3 class="card-title fw-bold" style="color: white !important;">Artist</h3>
+          <p class="card-text text-secondary mb-4" style="color: white !important;">
+            Showcase your talent and reach thousands of fans on our platform!
+          </p>
+          
+          <% if (isArtist) { %>
+            <div class="alert alert-success d-flex align-items-center justify-content-center py-2">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span>Already an Artist</span>
+            </div>
+          <% } else if (pendingArtistApplication) { %>
+            <a href="/artist-applications/status" class="btn btn-outline-info w-100 py-2">
+              <i class="bi bi-hourglass-split me-2"></i> Application Status
+            </a>
+          <% } else { %>
+            <a href="/artist-applications/select-level" class="btn btn-purple-force w-100 py-2" style="background-color: #6f42c1 !important; color: white !important; border-color: #6f42c1 !important;">
+              <i class="bi bi-person-plus me-2"></i> Apply Now
+            </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Producer Section -->
+    <div class="col animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+      <div class="card h-100 border-0 shadow-lg job-card">
+        <div class="card-body p-4 text-center">
+          <div class="icon-box-dark mb-4 mx-auto">
+            <i class="bi bi-mic fs-1 text-white"></i>
+          </div>
+          <h3 class="card-title fw-bold" style="color: white !important;">Producer</h3>
+          <p class="card-text text-secondary mb-4" style="color: white !important;">
+            Create, produce, and collaborate. Join as a Producer to monetize your talent.
+          </p>
+
+          <% if (hasProducerRole) { %>
+            <div class="alert alert-success d-flex align-items-center justify-content-center py-2">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span>Already a Producer</span>
+            </div>
+          <% } else if (pendingProducerApplication) { %>
+            <a href="/producer-applications/status" class="btn btn-outline-info w-100 py-2">
+              <i class="bi bi-hourglass-split me-2"></i> Application Status
+            </a>
+          <% } else { %>
+            <a href="/producer-applications/apply" class="btn btn-purple-force w-100 py-2" style="background-color: #6f42c1 !important; color: white !important; border-color: #6f42c1 !important;">
+              <i class="bi bi-plus-circle me-2"></i> Apply Now
+            </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Music Distributor Section -->
+    <div class="col animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+      <div class="card h-100 border-0 shadow-lg job-card">
+        <div class="card-body p-4 text-center">
+          <div class="icon-box-purple mb-4 mx-auto" style="background: #eef2ff; color: #4338ca;">
+            <i class="bi bi-broadcast fs-1"></i>
+          </div>
+          <h3 class="card-title fw-bold" style="color: white !important;">Distributor</h3>
+          <p class="card-text text-secondary mb-4" style="color: white !important;">
+            Distribute music to Spotify, Apple Music, and more. Set your packages and manage artists.
+          </p>
+
+          <% if (hasDistributorRole) { %>
+            <div class="alert alert-success d-flex align-items-center justify-content-center py-2">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span>Already a Distributor</span>
+            </div>
+          <% } else if (pendingDistributorApplication) { %>
+            <a href="/distributor-applications/status" class="btn btn-outline-info w-100 py-2">
+              <i class="bi bi-hourglass-split me-2"></i> Application Status
+            </a>
+          <% } else { %>
+            <a href="/distributor-applications/apply" class="btn btn-purple-force w-100 py-2" style="background-color: #6f42c1 !important; color: white !important; border-color: #6f42c1 !important;">
+              <i class="bi bi-plus-circle me-2"></i> Apply Now
+            </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-5 text-center">
+    <a href="/users/profile" class="btn btn-link text-decoration-none">
+      <i class="bi bi-arrow-left me-1"></i> Back to Profile
+    </a>
+  </div>
+</div>
+
+<style>
+  .text-gradient {
+    background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .job-card {
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(33, 37, 41, 0.85);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+  }
+
+  .job-card h3, 
+  .job-card p {
+    color: white !important;
+  }
+
+  .job-card .btn-primary,
+  .job-card .btn-dark,
+  .btn-purple-force {
+    background-color: #6f42c1 !important;
+    border-color: #6f42c1 !important;
+    color: white !important;
+  }
+
+  .job-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 1.5rem 4rem rgba(111, 66, 193, 0.2) !important;
+  }
+
+  .icon-box-purple {
+    width: 80px;
+    height: 80px;
+    background: #f3effb;
+    color: #6f42c1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+  }
+
+  .icon-box-dark {
+    width: 80px;
+    height: 80px;
+    background: #212529;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+  }
+
+  .icon-box-gray {
+    width: 80px;
+    height: 80px;
+    background: #f8f9fa;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+  }
+
+  .border-dashed {
+    border: 2px dashed #dee2e6 !important;
+    background: transparent !important;
+  }
+
+  .animate__fadeInUp {
+    animation-duration: 0.8s;
+  }
+
+  .text-secondary {
+    color: #6c757d !important;
+  }
+</style>

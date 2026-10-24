@@ -35,8 +35,8 @@
             <h3 class="mb-1"><%= venueRequest.name %></h3>
             <p class="text-muted mb-2"><%= venueRequest.fullAddress %></p>
             <p class="mb-0">
-              <strong>Submitted by:</strong> <%= venueRequest.user.name %> 
-              (<%= venueRequest.user.email %>)
+              <strong>Submitted by:</strong> <%= venueRequest.user ? venueRequest.user.name : 'Unknown User' %> 
+              (<%= venueRequest.user ? venueRequest.user.email : 'N/A' %>)
             </p>
           </div>
           <div class="text-end">
@@ -243,7 +243,7 @@
                     minute: '2-digit'
                 }) %>
               </small>
-              <br><small class="text-muted">By: <%= venueRequest.user.name %></small>
+              <br><small class="text-muted">By: <%= venueRequest.user ? venueRequest.user.name : 'Unknown User' %></small>
             </div>
           </div>
           
@@ -329,7 +329,7 @@
               <p><%= venueRequest.cancelReason %></p>
             <% } %>
             <% if (venueRequest.cancelledAt) { %>
-              <p class="text-muted mb-0">Cancelled on <%= new Date(venueRequest.cancelledAt).toLocaleString() %></p>
+              <p class="text-muted mb-0">Cancelled on <%= toISTLocaleString(venueRequest.cancelledAt) %></p>
             <% } %>
           <% } %>
         </div>
@@ -350,11 +350,11 @@
             <i class="bi bi-person-fill text-white"></i>
           </div>
           <div>
-            <h6 class="mb-1"><%= venueRequest.user.name %></h6>
-            <small class="text-muted"><%= venueRequest.user.email %></small>
+            <h6 class="mb-1"><%= venueRequest.user ? venueRequest.user.name : 'Unknown User' %></h6>
+            <small class="text-muted"><%= venueRequest.user ? venueRequest.user.email : 'N/A' %></small>
           </div>
         </div>
-        <% if (venueRequest.user.phone) { %>
+        <% if (venueRequest.user && venueRequest.user.phone) { %>
           <p class="mb-2">
             <i class="bi bi-phone me-2"></i><%= venueRequest.user.phone %>
           </p>

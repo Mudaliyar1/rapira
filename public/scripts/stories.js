@@ -1,14 +1,16 @@
 async function loadStories() {
   try {
-    const res = await fetch('/stories/feed');
+    const res = await fetch('/stories/feed', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
     const json = await res.json();
     if (!json.success) return;
     const bar = document.getElementById('stories-bar');
     if (!bar) return;
-    
+
     // Store all groups for navigation
     allStoryGroups = json.data;
-    
+
     bar.innerHTML = '';
     json.data.forEach(group => {
       const unseen = group.stories.some(s => !s.seen);
@@ -65,17 +67,17 @@ function openStoryGroup(group) {
   // Set artist name and image
   document.getElementById('story-artist-name').textContent = group.artist.name;
   document.getElementById('story-artist-img').src = (group.artist.profileImage && group.artist.profileImage !== '/images/default-profile.svg') ? group.artist.profileImage : `https://ui-avatars.com/api/?name=${encodeURIComponent(group.artist.name.charAt(0).toUpperCase())}&background=4ECDC4&color=fff&bold=true&size=200`;
-  
+
   // Create progress bars
   const container = document.getElementById('story-progress-container');
   if (!container) {
     console.error('Progress container not found!');
     return;
   }
-  
+
   container.innerHTML = '';
   console.log(`[Story] Creating ${group.stories.length} progress bars`);
-  
+
   group.stories.forEach((s, idx) => {
     const bar = document.createElement('div');
     bar.className = `story-progress-bar ${idx < currentIndex ? 'viewed' : ''} ${idx === 0 ? 'active' : ''}`;
@@ -86,7 +88,7 @@ function openStoryGroup(group) {
     bar.style.borderRadius = '3px';
     bar.style.overflow = 'hidden';
     bar.style.position = 'relative';
-    
+
     const fill = document.createElement('div');
     fill.className = 'story-progress-fill';
     fill.style.height = '100%';
@@ -99,24 +101,24 @@ function openStoryGroup(group) {
     bar.appendChild(fill);
     container.appendChild(bar);
   });
-  
+
   console.log(`[Story] Progress bars created. Container children: ${container.children.length}`);
-  
+
   showStory(group.stories[currentIndex]);
   const modal = new bootstrap.Modal(document.getElementById('story-viewer'));
   modal.show();
 }
 
 async function markViewed(id) {
-  try { await fetch(`/stories/${id}/view`, { method: 'POST' }); } catch {}
+  try { await fetch(`/stories/${id}/view`, { method: 'POST' }); } catch { }
 }
 
 async function updateLikeUI(story) {
   const likeBtn = document.getElementById('like-story-btn');
   const likeIcon = document.getElementById('like-icon');
-  
+
   if (!likeBtn || !likeIcon) return;
-  
+
   // Check if current user liked this story (from story data)
   const isLiked = story.isLiked || false;
   likeIcon.className = isLiked ? 'bi bi-heart-fill text-danger' : 'bi bi-heart';
@@ -128,7 +130,7 @@ async function toggleLike(storyId) {
     console.log('[STORIES.JS] Skipping - on post detail page');
     return;
   }
-  
+
   try {
     const res = await fetch(`/stories/${storyId}/like`, { method: 'POST' });
     const data = await res.json();
@@ -147,9 +149,17 @@ async function toggleLike(storyId) {
 }
 
 function showStory(s) {
+  console.log('[Stories] Rendering story:', s);
+  if (!s || !s.mediaUrl) {
+    console.error('[Stories] Invalid story data:', s);
+    return;
+  }
+
   const holder = document.getElementById('story-media');
   const caption = document.getElementById('story-caption');
   const timeEl = document.getElementById('story-time-ago');
+
+  if (!holder) return;
   holder.innerHTML = '';
   caption.textContent = s.caption || '';
   if (timeEl) {
@@ -157,83 +167,158 @@ function showStory(s) {
   }
   clearTimeout(timer);
 
+  // Auto-detect audio
+  const url = (s.mediaUrl || '').toLowerCase();
+  const isAudio = s.mediaType === 'audio' ||
+    url.endsWith('.mp3') || url.endsWith('.wav') ||
+    url.endsWith('.m4a') || url.includes('/audio/');
+
   if (s.mediaType === 'image') {
     const img = document.createElement('img');
     img.src = s.mediaUrl;
     img.style.maxWidth = '100%';
     img.style.maxHeight = '70vh';
+    img.style.objectFit = 'contain';
     holder.appendChild(img);
-    
-    // For images, use standard 5 second duration
-    const bars = document.querySelectorAll('.story-progress-bar');
-    bars.forEach((bar, idx) => {
-      bar.classList.remove('active', 'viewed');
-      if (idx < currentIndex) {
-        bar.classList.add('viewed');
-      } else if (idx === currentIndex) {
-        bar.classList.add('active');
-        const fill = bar.querySelector('.story-progress-fill');
-        if (fill) {
-          void fill.offsetWidth;
-          fill.style.animation = 'fillProgress 5s linear forwards';
-        }
-      }
-    });
-    
+
+    updateProgressBars(5000);
     markViewed(s._id || s.id);
     updateLikeUI(s);
     timer = setTimeout(nextStory, 5000);
+  } else if (isAudio) {
+    // Custom Audio View
+    const audioContainer = document.createElement('div');
+    audioContainer.className = 'w-100 h-100 d-flex flex-column align-items-center justify-content-center p-5';
+    audioContainer.style.background = 'linear-gradient(135deg, #2a2a3c, #5a293c)';
+    audioContainer.style.minHeight = '450px';
+    audioContainer.style.borderRadius = '15px';
+
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-music-note-list text-primary mb-4';
+    icon.style.fontSize = '5rem';
+
+    // Visualizer Bars
+    const viz = document.createElement('div');
+    viz.className = 'd-flex gap-2 mb-5 align-items-end';
+    viz.style.height = '60px';
+    for (let i = 0; i < 15; i++) {
+      const bar = document.createElement('div');
+      bar.style.width = '6px';
+      bar.style.height = '20px';
+      bar.style.background = '#8b45ff';
+      bar.style.border = '1px solid #fff';
+      bar.style.animation = `audioPulse ${0.5 + i * 0.1}s ease-in-out infinite alternate`;
+      viz.appendChild(bar);
+    }
+
+    const audio = document.createElement('audio');
+    audio.src = s.mediaUrl;
+    audio.autoplay = true;
+
+    const controls = document.createElement('div');
+    controls.className = 'd-flex gap-4 align-items-center mt-3';
+    controls.style.zIndex = '1000';
+
+    const pBtn = document.createElement('button');
+    pBtn.className = 'btn btn-primary rounded-circle d-flex align-items-center justify-content-center';
+    pBtn.style.width = '60px';
+    pBtn.style.height = '60px';
+    pBtn.innerHTML = '<i class="bi bi-pause-fill fs-2"></i>';
+    pBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (audio.paused) {
+        audio.play();
+        pBtn.innerHTML = '<i class="bi bi-pause-fill fs-2"></i>';
+      } else {
+        audio.pause();
+        pBtn.innerHTML = '<i class="bi bi-play-fill fs-2"></i>';
+      }
+    };
+
+    const sBtn = document.createElement('button');
+    sBtn.className = 'btn btn-outline-light rounded-pill px-3';
+    sBtn.textContent = '1x';
+    sBtn.onclick = (e) => {
+      e.stopPropagation();
+      audio.playbackRate = audio.playbackRate === 1 ? 2 : 1;
+      sBtn.textContent = audio.playbackRate + 'x';
+    };
+
+    controls.appendChild(pBtn);
+    controls.appendChild(sBtn);
+    audioContainer.appendChild(icon);
+    audioContainer.appendChild(viz);
+    audioContainer.appendChild(controls);
+    audioContainer.appendChild(audio); // CRITICAL: Ensure audio is in the DOM
+    holder.appendChild(audioContainer);
+
+    audio.onloadedmetadata = () => {
+      const dur = (audio.duration * 1000) / audio.playbackRate;
+      updateProgressBars(dur);
+      clearTimeout(timer);
+      timer = setTimeout(nextStory, dur);
+    };
+
+    audio.onratechange = () => {
+      const rem = (audio.duration - audio.currentTime) * 1000 / audio.playbackRate;
+      clearTimeout(timer);
+      timer = setTimeout(nextStory, rem);
+      updateProgressBars((audio.duration * 1000) / audio.playbackRate);
+    };
+
+    // Fallback if metadata fails
+    setTimeout(() => {
+      if (!timer) {
+        updateProgressBars(10000);
+        timer = setTimeout(nextStory, 10000);
+      }
+    }, 3000);
+
+    markViewed(s._id || s.id);
+    updateLikeUI(s);
   } else {
+    // Video
     const video = document.createElement('video');
     video.src = s.mediaUrl;
     video.autoplay = true;
     video.controls = false;
+    video.style.width = '100%';
+    video.style.height = '100%';
     video.style.maxWidth = '100%';
     video.style.maxHeight = '70vh';
+    video.style.objectFit = 'contain';
     holder.appendChild(video);
-    
-    // Wait for video metadata to get duration
-    video.addEventListener('loadedmetadata', function() {
-      const videoDuration = video.duration * 1000; // Convert to ms
-      const progressFill = document.querySelector('.story-progress-fill');
-      
-      // Update progress bar animation to match video duration
-      if (progressFill) {
-        void progressFill.offsetWidth; // Trigger reflow
-        progressFill.style.animation = `fillProgress ${video.duration}s linear forwards`;
-      }
-      
-      // Set timer to move to next story based on video duration
+
+    video.onloadedmetadata = () => {
+      const dur = video.duration * 1000;
+      updateProgressBars(dur);
       clearTimeout(timer);
-      timer = setTimeout(nextStory, videoDuration);
-    }, { once: true });
-    
-    // Fallback if metadata doesn't load
-    setTimeout(() => {
-      if (!timer) {
-        timer = setTimeout(nextStory, Math.min(video.duration ? video.duration * 1000 : 5000, 30000));
-      }
-    }, 1000);
-    
-    // Update progress bars
-    const bars = document.querySelectorAll('.story-progress-bar');
-    bars.forEach((bar, idx) => {
-      bar.classList.remove('active', 'viewed');
-      if (idx < currentIndex) {
-        bar.classList.add('viewed');
-      } else if (idx === currentIndex) {
-        bar.classList.add('active');
-        const fill = bar.querySelector('.story-progress-fill');
-        if (fill) {
-          void fill.offsetWidth;
-          fill.style.animation = 'fillProgress 5s linear forwards'; // Will be updated when metadata loads
-        }
-      }
-    });
-    
+      timer = setTimeout(nextStory, dur);
+    };
+
+    setTimeout(() => { if (!timer) timer = setTimeout(nextStory, 10000); }, 3000);
+
     markViewed(s._id || s.id);
     updateLikeUI(s);
   }
+}
+
+function updateProgressBars(durationMs, startMs = 0) {
+  const bars = document.querySelectorAll('.story-progress-bar');
+  bars.forEach((bar, idx) => {
+    bar.classList.remove('active', 'viewed');
+    if (idx < currentIndex) {
+      bar.classList.add('viewed');
+    } else if (idx === currentIndex) {
+      bar.classList.add('active');
+      const fill = bar.querySelector('.story-progress-fill');
+      if (fill) {
+        void fill.offsetWidth;
+        fill.style.animation = `fillProgress ${durationMs / 1000}s linear forwards`;
+        // Handle seek if startMs > 0 (not fully implemented here but structured)
+      }
+    }
+  });
 }
 
 function nextStory() {
@@ -252,13 +337,13 @@ function nextStory() {
     const media = document.getElementById('story-media');
     media.classList.remove('transition-in');
     media.classList.add('transition-out');
-    
+
     setTimeout(() => {
       currentGroup = allStoryGroups[currentGroupIndex];
       currentIndex = 0;
       document.getElementById('story-artist-name').textContent = currentGroup.artist.name;
       document.getElementById('story-artist-img').src = (currentGroup.artist.profileImage && currentGroup.artist.profileImage !== '/images/default-profile.svg') ? currentGroup.artist.profileImage : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentGroup.artist.name.charAt(0).toUpperCase())}&background=4ECDC4&color=fff&bold=true&size=200`;
-      
+
       // Recreate progress bars for new artist
       const container = document.getElementById('story-progress-container');
       container.innerHTML = '';
@@ -273,7 +358,7 @@ function nextStory() {
         bar.style.borderRadius = '3px';
         bar.style.overflow = 'hidden';
         bar.style.position = 'relative';
-        
+
         const fill = document.createElement('div');
         fill.className = 'story-progress-fill';
         fill.style.height = '100%';
@@ -286,7 +371,7 @@ function nextStory() {
         bar.appendChild(fill);
         container.appendChild(bar);
       });
-      
+
       showStory(currentGroup.stories[currentIndex]);
       media.classList.remove('transition-out');
       media.classList.add('transition-in');
@@ -312,13 +397,13 @@ function prevStory() {
     const media = document.getElementById('story-media');
     media.classList.remove('transition-in');
     media.classList.add('transition-out');
-    
+
     setTimeout(() => {
       currentGroup = allStoryGroups[currentGroupIndex];
       currentIndex = currentGroup.stories.length - 1;
       document.getElementById('story-artist-name').textContent = currentGroup.artist.name;
       document.getElementById('story-artist-img').src = (currentGroup.artist.profileImage && currentGroup.artist.profileImage !== '/images/default-profile.svg') ? currentGroup.artist.profileImage : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentGroup.artist.name.charAt(0).toUpperCase())}&background=4ECDC4&color=fff&bold=true&size=200`;
-      
+
       // Recreate progress bars for new artist
       const container = document.getElementById('story-progress-container');
       container.innerHTML = '';
@@ -333,7 +418,7 @@ function prevStory() {
         bar.style.borderRadius = '3px';
         bar.style.overflow = 'hidden';
         bar.style.position = 'relative';
-        
+
         const fill = document.createElement('div');
         fill.className = 'story-progress-fill';
         fill.style.height = '100%';
@@ -346,7 +431,7 @@ function prevStory() {
         bar.appendChild(fill);
         container.appendChild(bar);
       });
-      
+
       showStory(currentGroup.stories[currentIndex]);
       media.classList.remove('transition-out');
       media.classList.add('transition-in');
@@ -364,9 +449,16 @@ document.addEventListener('DOMContentLoaded', () => {
       from { width: 0%; }
       to { width: 100%; }
     }
+    @keyframes audioPulse {
+      0%, 100% { height: 20px; opacity: 0.5; }
+      50% { height: 60px; opacity: 1; }
+    }
+    .v-bar {
+      transition: height 0.2s ease;
+    }
   `;
   document.head.appendChild(style);
-  
+
   loadStories();
   const prevBtn = document.getElementById('prev-story');
   const nextBtn = document.getElementById('next-story');
@@ -383,25 +475,32 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-  
+
   // Stop video/audio when story modal closes
   const storyModal = document.getElementById('story-viewer');
   if (storyModal) {
-    storyModal.addEventListener('hidden.bs.modal', function() {
+    storyModal.addEventListener('hidden.bs.modal', function () {
       // Stop any playing video
       const video = document.querySelector('#story-media video');
       if (video) {
         video.pause();
         video.currentTime = 0;
       }
-      
+
+      // Stop any playing audio
+      const audio = document.querySelector('#story-media audio');
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+
       // Clear timer
       if (timer) {
         clearTimeout(timer);
         timer = null;
       }
-      
-      console.log('[Stories] Modal closed, video stopped');
+
+      console.log('[Stories] Modal closed, media stopped');
     });
   }
 });

@@ -60,7 +60,7 @@
                         <% if (ticket.concert) { %>
                           <div class="d-flex flex-column">
                             <span class="fw-medium"><%= ticket.concert.title %></span>
-                            <span class="small text-muted"><%= new Date(ticket.concert.date).toLocaleDateString() %></span>
+                            <span class="small text-muted"><%= toISTDateString(ticket.concert.date) %></span>
                           </div>
                         <% } else { %>
                           <span class="text-muted">Concert not found</span>
@@ -83,7 +83,7 @@
                           <span class="badge bg-secondary"><%= ticket.paymentStatus %></span>
                         <% } %>
                       </td>
-                      <td><%= new Date(ticket.createdAt).toLocaleString() %></td>
+                      <td><%= toISTLocaleString(ticket.createdAt) %></td>
                       <td>
                         <a href="/admin/tickets/<%= ticket._id %>" class="btn btn-sm btn-outline-primary">
                           <i class="bi bi-eye"></i> View

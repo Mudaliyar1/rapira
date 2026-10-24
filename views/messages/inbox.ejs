@@ -52,7 +52,7 @@
                         <%= conversation.lastMessage.content %>
                       </div>
                       <small class="text-muted">
-                        <%= new Date(conversation.lastMessage.createdAt).toLocaleString() %>
+                        <%= toISTLocaleString(conversation.lastMessage.createdAt) %>
                       </small>
                     </a>
                   <% } %>

@@ -22,96 +22,131 @@
             <h2 class="card-title mb-0 text-white"><%= level %> Artist Application</h2>
           </div>
           <div class="card-body p-4">
-            <p class="text-white-75 mb-4">Please fill out the form below to apply as a <%= level %> Artist. All fields are required.</p>
+            <p class="text-white-75 mb-4">Please fill out the form below to apply as a <%= level %> Artist.</p>
 
             <form action="/artist-applications/apply" method="POST" enctype="multipart/form-data">
               <input type="hidden" name="artistLevel" value="<%= level %>">
 
               <div class="mb-4">
-                <label for="aadharCard" class="form-label text-white">Aadhaar Card Number</label>
-                <input type="text" class="form-control" id="aadharCard" name="aadharCard" required
-                       pattern="[0-9]{12}" maxlength="12" title="Please enter a valid 12-digit Aadhaar number">
-                <div class="form-text">Enter your 12-digit Aadhaar Card number without spaces</div>
+                <label for="stageName" class="form-label text-white">Stage Name</label>
+                <input type="text" class="form-control" id="stageName" name="stageName" required maxlength="60"
+                       placeholder="Your artist name"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.stageName ? savedFormData.stageName : '' %>">
+                <div class="form-text">This is the name you perform with. It can be different from your legal name.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="genre" class="form-label text-white">Genre</label>
+                <input type="text" class="form-control" id="genre" name="genre" required maxlength="60"
+                       placeholder="Hip Hop, Rap, Trap, Drill..."
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.genre ? savedFormData.genre : '' %>">
+                <div class="form-text">Enter your main music style or genre.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="instagramId" class="form-label text-white">Instagram ID</label>
+                <input type="text" class="form-control" id="instagramId" name="instagramId" required maxlength="100"
+                       placeholder="@yourhandle or https://instagram.com/yourhandle"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.instagramId ? savedFormData.instagramId : '' %>">
+                <div class="form-text">Enter your Instagram handle or profile link.</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="panCard" class="form-label text-white">PAN Card Number</label>
+                  <input type="text" class="form-control" id="panCard" name="panCard" required
+                    style="text-transform: uppercase;"
+                    autocapitalize="characters" autocorrect="off" spellcheck="false"
+                    pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" maxlength="10" title="Please enter a valid PAN number (example: ABCDE1234F)"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.panCard ? savedFormData.panCard : '' %>">
+                  <div class="form-text">Enter your 10-character PAN number (example: ABCDE1234F)</div>
               </div>
 
               <div class="mb-4">
                 <label for="state" class="form-label text-white">State</label>
                 <select class="form-select" id="state" name="state" required>
 
-                  <option value="" selected disabled>Select your state</option>
-                  <option value="Andhra Pradesh">Andhra Pradesh</option>
-                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                  <option value="Assam">Assam</option>
-                  <option value="Bihar">Bihar</option>
-                  <option value="Chhattisgarh">Chhattisgarh</option>
-                  <option value="Goa">Goa</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Haryana">Haryana</option>
-                  <option value="Himachal Pradesh">Himachal Pradesh</option>
-                  <option value="Jharkhand">Jharkhand</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Kerala">Kerala</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Manipur">Manipur</option>
-                  <option value="Meghalaya">Meghalaya</option>
-                  <option value="Mizoram">Mizoram</option>
-                  <option value="Nagaland">Nagaland</option>
-                  <option value="Odisha">Odisha</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Rajasthan">Rajasthan</option>
-                  <option value="Sikkim">Sikkim</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Tripura">Tripura</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Uttarakhand">Uttarakhand</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
-                  <option value="Chandigarh">Chandigarh</option>
-                  <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                  <option value="Ladakh">Ladakh</option>
-                  <option value="Lakshadweep">Lakshadweep</option>
-                  <option value="Puducherry">Puducherry</option>
+                  <option value="" <%= (typeof savedFormData === 'undefined' || !savedFormData.state) ? 'selected disabled' : 'disabled' %>>Select your state</option>
+                  <option value="Andhra Pradesh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Andhra Pradesh') ? 'selected' : '' %>>Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Arunachal Pradesh') ? 'selected' : '' %>>Arunachal Pradesh</option>
+                  <option value="Assam" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Assam') ? 'selected' : '' %>>Assam</option>
+                  <option value="Bihar" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Bihar') ? 'selected' : '' %>>Bihar</option>
+                  <option value="Chhattisgarh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Chhattisgarh') ? 'selected' : '' %>>Chhattisgarh</option>
+                  <option value="Goa" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Goa') ? 'selected' : '' %>>Goa</option>
+                  <option value="Gujarat" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Gujarat') ? 'selected' : '' %>>Gujarat</option>
+                  <option value="Haryana" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Haryana') ? 'selected' : '' %>>Haryana</option>
+                  <option value="Himachal Pradesh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Himachal Pradesh') ? 'selected' : '' %>>Himachal Pradesh</option>
+                  <option value="Jharkhand" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Jharkhand') ? 'selected' : '' %>>Jharkhand</option>
+                  <option value="Karnataka" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Karnataka') ? 'selected' : '' %>>Karnataka</option>
+                  <option value="Kerala" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Kerala') ? 'selected' : '' %>>Kerala</option>
+                  <option value="Madhya Pradesh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Madhya Pradesh') ? 'selected' : '' %>>Madhya Pradesh</option>
+                  <option value="Maharashtra" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Maharashtra') ? 'selected' : '' %>>Maharashtra</option>
+                  <option value="Manipur" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Manipur') ? 'selected' : '' %>>Manipur</option>
+                  <option value="Meghalaya" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Meghalaya') ? 'selected' : '' %>>Meghalaya</option>
+                  <option value="Mizoram" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Mizoram') ? 'selected' : '' %>>Mizoram</option>
+                  <option value="Nagaland" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Nagaland') ? 'selected' : '' %>>Nagaland</option>
+                  <option value="Odisha" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Odisha') ? 'selected' : '' %>>Odisha</option>
+                  <option value="Punjab" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Punjab') ? 'selected' : '' %>>Punjab</option>
+                  <option value="Rajasthan" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Rajasthan') ? 'selected' : '' %>>Rajasthan</option>
+                  <option value="Sikkim" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Sikkim') ? 'selected' : '' %>>Sikkim</option>
+                  <option value="Tamil Nadu" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Tamil Nadu') ? 'selected' : '' %>>Tamil Nadu</option>
+                  <option value="Telangana" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Telangana') ? 'selected' : '' %>>Telangana</option>
+                  <option value="Tripura" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Tripura') ? 'selected' : '' %>>Tripura</option>
+                  <option value="Uttar Pradesh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Uttar Pradesh') ? 'selected' : '' %>>Uttar Pradesh</option>
+                  <option value="Uttarakhand" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Uttarakhand') ? 'selected' : '' %>>Uttarakhand</option>
+                  <option value="West Bengal" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'West Bengal') ? 'selected' : '' %>>West Bengal</option>
+                  <option value="Andaman and Nicobar Islands" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Andaman and Nicobar Islands') ? 'selected' : '' %>>Andaman and Nicobar Islands</option>
+                  <option value="Chandigarh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Chandigarh') ? 'selected' : '' %>>Chandigarh</option>
+                  <option value="Dadra and Nagar Haveli and Daman and Diu" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Dadra and Nagar Haveli and Daman and Diu') ? 'selected' : '' %>>Dadra and Nagar Haveli and Daman and Diu</option>
+                  <option value="Delhi" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Delhi') ? 'selected' : '' %>>Delhi</option>
+                  <option value="Jammu and Kashmir" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Jammu and Kashmir') ? 'selected' : '' %>>Jammu and Kashmir</option>
+                  <option value="Ladakh" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Ladakh') ? 'selected' : '' %>>Ladakh</option>
+                  <option value="Lakshadweep" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Lakshadweep') ? 'selected' : '' %>>Lakshadweep</option>
+                  <option value="Puducherry" <%= (typeof savedFormData !== 'undefined' && savedFormData.state === 'Puducherry') ? 'selected' : '' %>>Puducherry</option>
                 </select>
               </div>
 
               <div class="mb-4">
                 <label for="city" class="form-label text-white">City</label>
-                <input type="text" class="form-control" id="city" name="city" required>
+                <input type="text" class="form-control" id="city" name="city" required
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.city ? savedFormData.city : '' %>">
               </div>
 
               <div class="mb-4">
                 <label for="age" class="form-label text-white">Age</label>
-                <input type="number" class="form-control" id="age" name="age" min="18" max="120" required>
+                <input type="number" class="form-control" id="age" name="age" min="18" max="120" required
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.age ? savedFormData.age : '' %>">
                 <div class="form-text">You must be at least 18 years old to apply</div>
               </div>
 
               <div class="mb-4">
                 <label for="phoneNumber" class="form-label text-white">Phone Number</label>
                 <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" required
-                       pattern="[0-9]{10}" maxlength="10" title="Please enter a valid 10-digit phone number">
+                       pattern="[0-9]{10}" maxlength="10" title="Please enter a valid 10-digit phone number"
+                       value="<%= typeof savedFormData !== 'undefined' && savedFormData.phoneNumber ? savedFormData.phoneNumber : '' %>">
                 <div class="form-text">Enter your 10-digit phone number without spaces or special characters</div>
               </div>
 
               <div class="mb-4">
                 <label for="proofPhoto" class="form-label text-white">Proof Photo Upload</label>
-                <input type="file" class="form-control" id="proofPhoto" name="proofPhoto" accept="image/jpeg,image/png,image/jpg,application/pdf" required>
-                <div class="form-text">Upload a photo of your ID proof or any document that verifies your identity. Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)</div>
+                <input type="file" class="form-control" id="proofPhoto" name="proofPhoto" accept="image/jpeg,image/png,image/jpg" required>
+                <div class="form-text">Upload a photo of your ID proof or any document that verifies your identity. Accepted formats: JPG, JPEG, PNG (Max size: 5MB)</div>
                 <div class="invalid-feedback" id="fileError"></div>
               </div>
 
               <div class="alert alert-info mb-4">
                 <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i> Important Information</h5>
-                <p class="mb-0">By submitting this application, you agree to our <a href="/terms-of-service" class="alert-link">Terms of Service</a> and <a href="/privacy-policy" class="alert-link">Privacy Policy</a>. Your application will be reviewed by our team, and you will be notified of the decision via email.</p>
+                <p class="mb-0">By submitting this application, you agree to our <a href="/terms-of-service" class="alert-link">Terms of Service</a> and <a href="/privacy-policy" class="alert-link">Privacy Policy</a>. Before uploading any document or ID number, please review our <a href="/document-id-policy" class="alert-link">Document and ID Protection Policy</a>. Your application will be reviewed by our team, and you will be notified of the decision via email.</p>
               </div>
 
               <div class="d-grid gap-2">
-                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                <% const artistFee = (websiteSettings && websiteSettings.registrationFees && websiteSettings.registrationFees.artistRegistrationFee > 0) ? websiteSettings.registrationFees.artistRegistrationFee : 0; %>
+                <button type="submit" id="submitBtn" class="btn <%= artistFee > 0 ? 'btn-primary' : 'btn-success' %> btn-lg">
                   <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner" role="status" aria-hidden="true"></span>
-                  <span id="submitText">Submit Application</span>
+                  <% if (artistFee > 0) { %>
+                    <i class="bi bi-credit-card me-2"></i><span id="submitText">Pay ₹<%= artistFee %> & Submit Application</span>
+                  <% } else { %>
+                    <i class="bi bi-check-circle me-2"></i><span id="submitText">Submit Application (Free)</span>
+                  <% } %>
                 </button>
                 <a href="/artist-applications/select-level" class="btn btn-outline-light" id="backBtn">Go Back</a>
               </div>
@@ -126,19 +161,6 @@
 <script>
   // Form validation and submission handling
   document.addEventListener('DOMContentLoaded', function() {
-    // Aadhaar card validation
-    const aadharInput = document.getElementById('aadharCard');
-
-    aadharInput.addEventListener('input', function() {
-      // Remove any non-numeric characters
-      this.value = this.value.replace(/\D/g, '');
-
-      // Limit to 12 digits
-      if (this.value.length > 12) {
-        this.value = this.value.slice(0, 12);
-      }
-    });
-
     // Phone number validation
     const phoneInput = document.getElementById('phoneNumber');
 
@@ -169,18 +191,16 @@
         if (file.size > maxFileSize) {
           fileInput.classList.add('is-invalid');
           fileError.textContent = 'File size exceeds 5MB limit. Please choose a smaller file.';
-          this.value = ''; // Clear the file input
           return;
         }
 
         // Check file type
         const fileType = file.type;
-        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 
         if (!validTypes.includes(fileType)) {
           fileInput.classList.add('is-invalid');
-          fileError.textContent = 'Invalid file type. Please upload a JPG, JPEG, PNG, or PDF file.';
-          this.value = ''; // Clear the file input
+          fileError.textContent = 'Invalid file type. Please upload a JPG, JPEG, or PNG file.';
           return;
         }
       }
@@ -207,13 +227,23 @@
       // Prevent default submission to do validation
       e.preventDefault();
 
+      // Explicit check for file size right before submission
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (file.size > maxFileSize) {
+          alert('Your Proof Photo file size exceeds the 5MB limit. Please select a smaller image before submitting.');
+          fileInput.focus();
+          return; // Stop form submission, preserving all form data
+        }
+      }
+
       // Check form validity
       if (form.checkValidity()) {
         // Show loading state on button
         submitBtn.disabled = true;
         backBtn.classList.add('disabled');
         submitSpinner.classList.remove('d-none');
-        submitText.textContent = 'Submitting...';
+        submitText.textContent = 'Processing...';
 
         // Show loading overlay
         loadingOverlay.classList.remove('d-none');

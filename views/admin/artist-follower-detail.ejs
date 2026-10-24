@@ -149,9 +149,9 @@ function getChartColor(index) {
                     </td>
                     <td>
                       <small class="text-white-50">
-                        <%= new Date(follower.createdAt).toLocaleDateString() %>
+                        <%= toISTDateString(follower.createdAt) %>
                         <br>
-                        <%= new Date(follower.createdAt).toLocaleTimeString() %>
+                        <%= toISTTimeString(follower.createdAt) %>
                       </small>
                     </td>
                   </tr>

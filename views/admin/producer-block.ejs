@@ -1,0 +1,117 @@
+<%- contentFor('body') %>
+
+<script>
+  console.log('Block page loaded for producer:', '<%= producer._id %>', '<%= producer.name %>');
+</script>
+
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/admin/producers/<%= producer._id %>" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i> Back to Producer
+    </a>
+    <div>
+      <h2 class="fw-bold mb-1 text-danger">Block Producer</h2>
+      <p class="text-muted mb-0">This action will prevent the producer from using platform features</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <!-- Warning Alert -->
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Action Required Confirmation</strong>
+        <p class="mb-0">You are about to block <strong><%= producer.name %></strong> from the platform. This action can be undone later.</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+
+      <!-- Producer Info Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-bottom">
+          <h5 class="fw-bold mb-0">Producer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-3">
+                <img src="<%= producer.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(producer.name.charAt(0)) %>"
+                     alt="<%= producer.name %>"
+                     class="rounded-circle"
+                     width="70" height="70"
+                     style="object-fit: cover;">
+                <div>
+                  <h5 class="fw-bold mb-1"><%= producer.name %></h5>
+                  <p class="mb-1"><i class="bi bi-envelope me-2"></i><%= producer.email %></p>
+                  <p class="mb-0"><i class="bi bi-telephone me-2"></i><%= producer.phone || 'Not provided' %></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Account Status</label>
+              <p class="form-control-plaintext fw-500">
+                <span class="badge bg-success">ACTIVE</span>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted fw-bold mb-2">Username</label>
+              <p class="form-control-plaintext fw-500"><%= producer.username || 'Not provided' %></p>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-muted fw-bold mb-2">Account Created</label>
+              <p class="form-control-plaintext fw-500">
+                <%= new Date(producer.createdAt).toLocaleDateString('en-IN') %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Block Form -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-bottom">
+          <h5 class="fw-bold mb-0">Block Reason</h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/admin/producers/<%= producer._id %>/block">
+            <div class="mb-4">
+              <label class="form-label fw-bold">Reason for Blocking *</label>
+              <textarea name="blockReason" class="form-control" rows="5" placeholder="Provide a detailed reason for blocking this producer..." required></textarea>
+              <small class="text-muted">This reason will be stored in the system for reference. Be specific about the violation or reason.</small>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="confirmBlock" required>
+                <label class="form-check-label" for="confirmBlock">
+                  I confirm that I want to block <strong><%= producer.name %></strong> from the platform
+                </label>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-danger btn-lg">
+                <i class="bi bi-lock-fill me-2"></i> Block Producer
+              </button>
+              <a href="/admin/producers/<%= producer._id %>" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="alert alert-info mt-4">
+        <h6 class="fw-bold mb-2">What happens when a producer is blocked?</h6>
+        <ul class="mb-0 small">
+          <li>The producer cannot log in or access their dashboard</li>
+          <li>Their profile will not be visible to other users</li>
+          <li>They can submit an unblock request</li>
+          <li>Admins can review unblock requests and take action</li>
+          <li>The block can be reversed at any time</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

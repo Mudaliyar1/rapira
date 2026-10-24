@@ -5,9 +5,27 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Venue = require('../models/Venue');
 const Concert = require('../models/Concert');
+const Ticket = require('../models/Ticket');
+const VenueRequest = require('../models/VenueRequest');
+const VenueEditRequest = require('../models/VenueEditRequest');
+const VenueExternalBooking = require('../models/VenueExternalBooking');
 const Media = require('../models/Media');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
+
+async function cascadeDeleteVenueById(venueId) {
+  const concertIds = await Concert.find({ venue: venueId }).distinct('_id');
+
+  if (concertIds.length) {
+    await Ticket.deleteMany({ concert: { $in: concertIds } });
+    await Concert.deleteMany({ _id: { $in: concertIds } });
+  }
+
+  await VenueExternalBooking.deleteMany({ venue: venueId });
+  await VenueEditRequest.deleteMany({ venue: venueId });
+  await VenueRequest.deleteMany({ createdVenue: venueId });
+  await Venue.deleteOne({ _id: venueId });
+}
 
 // Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
@@ -29,7 +47,7 @@ const upload = multer({
 });
 
 // GET /admin/venues - List all venues
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     // Get search parameters
     const { search, city, state, type, active, verified, sortBy, sortOrder } = req.query;
@@ -92,6 +110,17 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       .limit(limit)
       .lean();
 
+    // If any venue owner account is deleted, remove that orphaned venue immediately.
+    const orphanedVenues = venues.filter(v => !v.createdBy);
+    if (orphanedVenues.length) {
+      for (const orphanVenue of orphanedVenues) {
+        await cascadeDeleteVenueById(orphanVenue._id);
+      }
+      console.log(`Removed ${orphanedVenues.length} orphaned venues during admin list load`);
+    }
+
+    const visibleVenues = venues.filter(v => v.createdBy);
+
     // Get total count for pagination
     const totalVenues = await Venue.countDocuments(filter);
     const totalPages = Math.ceil(totalVenues / limit);
@@ -105,8 +134,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
     const allCities = await Venue.distinct('city');
     const allStates = await Venue.distinct('state');
 
-    console.log('Venues found for admin:', venues.length);
-    venues.forEach((venue, index) => {
+    console.log('Venues found for admin:', visibleVenues.length);
+    visibleVenues.forEach((venue, index) => {
       console.log(`Venue ${index + 1}:`, {
         id: venue._id,
         name: venue.name,
@@ -119,7 +148,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       layout: 'admin',
       currentPath: '/admin/venues',
       title: 'Venue Management',
-      venues,
+      venues: visibleVenues,
       pagination: {
         current: page,
         total: totalPages,
@@ -158,7 +187,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venues/add - Add venue form
-router.get('/add', isLoggedIn, isAdmin, (req, res) => {
+router.get('/add', isLoggedIn, hasAdminPermission('manage_venues'), (req, res) => {
   res.render('admin/venues/add', {
     layout: 'admin',
     currentPath: '/admin/venues',
@@ -167,7 +196,7 @@ router.get('/add', isLoggedIn, isAdmin, (req, res) => {
 });
 
 // POST /admin/venues/add - Create new venue
-router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, res) => {
+router.post('/add', isLoggedIn, hasAdminPermission('manage_venues'), upload.array('images', 5), async (req, res) => {
   try {
     const {
       name, address, city, state, pincode, capacity, venueType,
@@ -222,13 +251,13 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
       const commissionKey = `commissionPercentage_${i}`;
       const rate = req.body[rateKey];
       const commissionPercentage = req.body[commissionKey];
-      
+
       // Only add if both rate and commission are provided
       if (rate && parseFloat(rate) > 0 && commissionPercentage && parseFloat(commissionPercentage) >= 0) {
         const rateValue = parseFloat(rate);
         const commissionValue = parseFloat(commissionPercentage);
         const commissionAmount = (rateValue * commissionValue) / 100;
-        
+
         hourlyRates.push({
           hours: i,
           rate: rateValue,
@@ -284,7 +313,7 @@ router.post('/add', isLoggedIn, isAdmin, upload.array('images', 5), async (req, 
 });
 
 // GET /admin/venues/:id/details - View venue details
-router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/details', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id)
       .populate('createdBy', 'name email')
@@ -295,15 +324,29 @@ router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
       return res.redirect('/admin/venues');
     }
 
+    if (!venue.createdBy) {
+      await cascadeDeleteVenueById(venue._id);
+      req.flash('success', 'Orphaned venue was automatically removed because its owner account was deleted.');
+      return res.redirect('/admin/venues');
+    }
+
     // Get concert count for this venue
     const concertCount = await Concert.countDocuments({ venue: venue._id });
+    const hostedConcerts = await Concert.find({ venue: venue._id })
+      .populate({
+        path: 'artist',
+        select: 'stageName user',
+        populate: { path: 'user', select: 'name email' }
+      })
+      .sort({ date: -1, createdAt: -1 });
 
     res.render('admin/venues/details', {
       layout: 'admin',
       currentPath: '/admin/venues',
       title: `${venue.name} - Details`,
       venue,
-      concertCount
+      concertCount,
+      hostedConcerts
     });
   } catch (error) {
     console.error('View venue details error:', error);
@@ -313,7 +356,7 @@ router.get('/:id/details', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venues/:id/gallery - View venue image gallery
-router.get('/:id/gallery', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/gallery', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
 
@@ -339,7 +382,7 @@ router.get('/:id/gallery', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venues/:id/edit - Edit venue form
-router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id/edit', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const WebsiteSettings = require('../models/WebsiteSettings');
     const venue = await Venue.findById(req.params.id);
@@ -370,7 +413,7 @@ router.get('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venues/:id/edit - Update venue
-router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (req, res) => {
+router.post('/:id/edit', isLoggedIn, hasAdminPermission('manage_venues'), upload.array('images', 5), async (req, res) => {
   console.log('=== VENUE EDIT REQUEST START ===');
   console.log('Request method:', req.method);
   console.log('Request URL:', req.originalUrl);
@@ -384,7 +427,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     hourlyRate2: req.body.hourlyRate2,
     hourlyRate3: req.body.hourlyRate3
   });
-  
+
   try {
     const WebsiteSettings = require('../models/WebsiteSettings');
     const venue = await Venue.findById(req.params.id);
@@ -408,7 +451,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
       name, address, city, state, pincode, capacity, venueType,
       facilities, contactName, contactPhone, contactEmail,
       priceRange, description, googleMapsLink, website, removeImages,
-      minimumHours, commissionPercentage, advanceAmount, 
+      minimumHours, commissionPercentage, advanceAmount,
       minTicketPrice, suggestedTicketPrice
     } = req.body;
 
@@ -418,7 +461,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
       req.flash('error', 'Please fill in all required fields');
       return res.redirect(`/admin/venues/${req.params.id}/edit`);
     }
-    
+
     console.log('Validation passed for venue edit');
 
     // Process facilities (convert to array if it's a string)
@@ -434,24 +477,24 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     // Process hourly rates with commission for hours 1-24
     const hourlyRatesArray = [];
     let hasAnyRates = false;
-    
+
     for (let i = 1; i <= 24; i++) {
       // Try both possible field name formats for robustness
       const hourlyRateValue = req.body[`hourlyRate${i}`] || req.body[`hourlyRate_${i}`];
       let commissionValue = req.body[`commissionPercentage${i}`] || req.body[`commissionPercentage_${i}`];
-      
+
       // If user commission edit is disabled, use admin default
       if (!allowUserCommissionEdit) {
         commissionValue = defaultCommissionPercentage;
       }
-      
+
       // Only add if rate is provided (commission will always be provided now)
-      if (hourlyRateValue && parseFloat(hourlyRateValue) > 0 && 
-          commissionValue && parseFloat(commissionValue) >= 0) {
+      if (hourlyRateValue && parseFloat(hourlyRateValue) > 0 &&
+        commissionValue && parseFloat(commissionValue) >= 0) {
         const rateVal = parseFloat(hourlyRateValue);
         const commissionVal = parseFloat(commissionValue);
         const commissionAmount = (rateVal * commissionVal) / 100;
-        
+
         hourlyRatesArray.push({
           hours: i,
           rate: rateVal,
@@ -462,7 +505,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
         console.log(`Found hourly rate for hour ${i}: ₹${hourlyRateValue}, Commission: ${commissionValue}%`);
       }
     }
-    
+
     console.log(`Processing ${hourlyRatesArray.length} hourly rates, hasAnyRates: ${hasAnyRates}`);
 
     // Handle image removal
@@ -524,29 +567,29 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     venue.priceRange = priceRange || 'Mid-Range';
     venue.images = currentImages;
     venue.imageMedia = currentImageMedia;
-    
+
     // Update pricing structure with new format
     const existingPricing = venue.pricing || {};
-    
+
     // Update venue pricing
     if (!venue.pricing) {
       venue.pricing = {};
     }
-    
+
     venue.pricing.hourlyRates = hasAnyRates ? hourlyRatesArray : (existingPricing.hourlyRates || []);
     venue.pricing.minimumHours = minimumHours ? parseInt(minimumHours) : (existingPricing.minimumHours || 1);
     venue.pricing.currency = 'INR';
-    
+
     // Update ticket pricing
     if (!venue.pricing.ticketPricing) {
       venue.pricing.ticketPricing = {};
     }
     venue.pricing.ticketPricing.minimumPrice = minTicketPrice ? parseFloat(minTicketPrice) : (existingPricing.ticketPricing?.minimumPrice || 0);
     venue.pricing.ticketPricing.suggestedPrice = suggestedTicketPrice ? parseFloat(suggestedTicketPrice) : (existingPricing.ticketPricing?.suggestedPrice || 100);
-    
+
     // Keep legacy hourlyRate for backward compatibility
     venue.pricing.hourlyRate = existingPricing.hourlyRate || (hourlyRatesArray.length > 0 ? hourlyRatesArray[0].rate : 0);
-    
+
     venue.description = description ? description.trim() : '';
     venue.images = currentImages;
     venue.googleMapsLink = googleMapsLink ? googleMapsLink.trim() : '';
@@ -587,8 +630,8 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
     const savedVenue = await Venue.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { 
-        new: true, 
+      {
+        new: true,
         runValidators: true,
         context: 'query' // This helps with some validation issues
       }
@@ -616,7 +659,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, upload.array('images', 5), async (
 });
 
 // POST /admin/venues/:id/toggle-active - Toggle venue active status
-router.post('/:id/toggle-active', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/toggle-active', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     console.log('Toggle active route hit for venue ID:', req.params.id);
     const venue = await Venue.findById(req.params.id);
@@ -629,18 +672,18 @@ router.post('/:id/toggle-active', isLoggedIn, isAdmin, async (req, res) => {
 
     const oldStatus = venue.isActive;
     const newStatus = !venue.isActive;
-    
+
     console.log(`Venue ${venue.name} status changing from ${oldStatus} to ${newStatus}`);
-    
+
     // Use updateOne to avoid full document validation
     await Venue.updateOne(
       { _id: req.params.id },
-      { 
+      {
         isActive: newStatus,
-        lastUpdatedBy: req.session.user.id 
+        lastUpdatedBy: req.session.user.id
       }
     );
-    
+
     console.log('Venue status updated successfully');
 
     req.flash('success', `Venue ${newStatus ? 'activated' : 'deactivated'} successfully`);
@@ -653,7 +696,7 @@ router.post('/:id/toggle-active', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venues/:id/toggle-verified - Toggle venue verified status
-router.post('/:id/toggle-verified', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/toggle-verified', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
 
@@ -663,13 +706,13 @@ router.post('/:id/toggle-verified', isLoggedIn, isAdmin, async (req, res) => {
     }
 
     const newVerifiedStatus = !venue.isVerified;
-    
+
     // Use updateOne to avoid full document validation
     await Venue.updateOne(
       { _id: req.params.id },
-      { 
+      {
         isVerified: newVerifiedStatus,
-        lastUpdatedBy: req.session.user.id 
+        lastUpdatedBy: req.session.user.id
       }
     );
 
@@ -683,7 +726,7 @@ router.post('/:id/toggle-verified', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/venues/:id/delete - Delete venue
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venue = await Venue.findById(req.params.id);
 
@@ -712,7 +755,7 @@ router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/venues/export - Export venues to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_venues'), async (req, res) => {
   try {
     const venues = await Venue.find()
       .populate('createdBy', 'name email')

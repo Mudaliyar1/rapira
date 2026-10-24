@@ -395,7 +395,7 @@ class RapiraChatbot {
     }
 
     if (message.includes('policy') || message.includes('terms') || message.includes('privacy')) {
-      return 'RAPIRA has several policies: <a href="/privacy-policy" target="_blank">Privacy Policy</a> (data protection), <a href="/terms-of-service" target="_blank">Terms of Service</a> (usage rules), <a href="/refund-policy" target="_blank">Refund Policy</a> (ticket refunds), <a href="/subscription-policy" target="_blank">Subscription Policy</a> (subscription terms), and <a href="/shopping-policy" target="_blank">Shopping Policy</a> (merchandise policies). You can find all policies in the Help & Support menu.';
+      return 'RAPIRA has several policies: <a href="/privacy-policy" target="_blank">Privacy Policy</a> (data protection), <a href="/terms-of-service" target="_blank">Terms of Service</a> (usage rules), <a href="/refund-policy" target="_blank">Refund Policy</a> (ticket refunds), <a href="/subscription-policy" target="_blank">Subscription Policy</a> (subscription terms), <a href="/shopping-policy" target="_blank">Shopping Policy</a> (merchandise policies), and <a href="/event-attending-policy" target="_blank">Event Attending Policy</a> (event attendance rules). You can find all policies in the Help & Support menu.';
     }
 
     if (message.includes('how does') || message.includes('how it works') || message.includes('explain')) {

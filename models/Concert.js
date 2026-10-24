@@ -123,6 +123,26 @@ const ConcertSchema = new mongoose.Schema({
       type: Date // Timestamp when payment was completed
     }
   },
+  artistPayout: {
+    amount: {
+      type: Number,
+      default: 0
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'paid', 'partial'],
+      default: 'pending'
+    },
+    payoutDate: {
+      type: Date
+    },
+    transactionId: {
+      type: String
+    },
+    notes: {
+      type: String
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now

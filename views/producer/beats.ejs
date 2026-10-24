@@ -1,0 +1,206 @@
+<%- include('../partials/producer-header') %>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="text-white mb-2">My Beats</h5>
+        <p class="text-white-50 mb-0">Upload and manage your exclusive beats for artists (Audio/Video).</p>
+      </div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadBeatModal">
+        <i class="bi bi-cloud-upload me-1"></i> Upload Beat
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Beat Modal -->
+<div class="modal fade" id="uploadBeatModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <form action="/producer-dashboard/beats" method="POST" enctype="multipart/form-data">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title">Upload New Beat</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-white">Beat Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control bg-dark text-white border-secondary" required maxlength="100">
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-white">Media Type <span class="text-danger">*</span></label>
+            <select name="mediaType" class="form-select bg-dark text-white border-secondary" required>
+              <option value="audio">Audio</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-white">Media File <span class="text-danger">*</span></label>
+            <input type="file" name="mediaFile" class="form-control bg-dark text-white border-secondary" accept="audio/*,video/*" required>
+            <small class="text-white-50">Audio (.mp3, .wav) or Video (.mp4). Max 100MB.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-white">Price (₹) <span class="text-danger">*</span></label>
+            <input type="number" name="price" class="form-control bg-dark text-white border-secondary" min="0" step="1" required>
+            <small class="text-warning">Artists will pay your set price plus platform commission.</small>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" onclick="if(this.form.checkValidity()){ this.innerHTML='<i class=\'bi bi-arrow-repeat spin\'></i> Uploading...'; this.style.pointerEvents='none'; } else { this.form.reportValidity(); }">Upload Beat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Beats Grid -->
+<div class="card bg-dark border-secondary">
+  <div class="card-header border-secondary">
+    <h5 class="mb-0 text-white">Your Uploaded Beats</h5>
+  </div>
+  <div class="card-body">
+    <% if (beats && beats.length > 0) { %>
+      <div class="row g-4">
+        <% beats.forEach(beat => { %>
+          <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="glass-card-dark h-100">
+              <div class="card-body d-flex flex-column p-3">
+                
+                <h6 class="card-title text-white mb-3 text-truncate" title="<%= beat.title %>"><%= beat.title %></h6>
+                
+                <!-- Media Player -->
+                <div class="mb-3">
+                  <% if (beat.mediaType === 'video') { %>
+                    <video controls controlsList="nodownload" style="width: 100%; border-radius: 8px; max-height: 120px; background: #000;">
+                      <source src="<%= beat.mediaUrl %>">
+                      Your browser does not support the video tag.
+                    </video>
+                  <% } else { %>
+                    <audio controls controlsList="nodownload" style="width: 100%;">
+                      <source src="<%= beat.mediaUrl %>">
+                      Your browser does not support the audio element.
+                    </audio>
+                  <% } %>
+                </div>
+
+                <!-- Beat Info -->
+                <div class="d-flex justify-content-between mb-1 small text-white-50">
+                  <span>Type: <strong class="text-white text-capitalize"><%= beat.mediaType %></strong></span>
+                  <span>Price: <strong class="text-white"><%= beat.price === 0 ? 'Free' : '₹' + beat.price %></strong></span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2 small text-white-50">
+                  <span>Sales: <strong class="text-white"><%= beat.purchasesCount %></strong></span>
+                  <span>Views: <strong class="text-white"><%= beat.viewsCount %></strong></span>
+                </div>
+                
+                <div class="mb-3">
+                  <% if (beat.isActive) { %>
+                    <span class="badge bg-success" style="font-size: 0.7rem;">Active</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">Disabled</span>
+                  <% } %>
+
+                  <% if (beat.isBanned) { %>
+                    <span class="badge bg-danger ms-1" style="font-size: 0.7rem;"><i class="bi bi-exclamation-triangle-fill"></i> Banned</span>
+                  <% } %>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 mt-auto">
+                  <button type="button" class="btn btn-outline-primary btn-xs flex-grow-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" data-bs-toggle="modal" data-bs-target="#editBeatModal<%= beat._id %>">
+                    <i class="bi bi-pencil"></i> Edit
+                  </button>
+                  <form action="/producer-dashboard/beats/<%= beat._id %>/delete" method="POST" class="flex-grow-1" onsubmit="return confirm('Are you sure you want to delete this beat?');">
+                    <button type="submit" class="btn btn-outline-danger btn-xs w-100" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="bi bi-music-note-list text-white-50" style="font-size: 3rem;"></i>
+        <p class="text-white-50 mt-3 mb-0">You haven't uploaded any beats yet.</p>
+        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#uploadBeatModal">
+          Upload Your First Beat
+        </button>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Render Edit Modals outside of the main structure to Prevent Z-Index Backdrop Document Blur Issues -->
+<% if (beats && beats.length > 0) { %>
+  <% beats.forEach(beat => { %>
+    <!-- Edit Beat Modal -->
+    <div class="modal fade" id="editBeatModal<%= beat._id %>" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white border-secondary">
+          <form action="/producer-dashboard/beats/<%= beat._id %>/edit" method="POST" enctype="multipart/form-data">
+            <div class="modal-header border-secondary">
+              <h5 class="modal-title">Edit Beat</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label text-white">Beat Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control bg-dark text-white border-secondary" value="<%= beat.title %>" required maxlength="100">
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white">Media Type</label>
+                <select name="mediaType" class="form-select bg-dark text-white border-secondary">
+                  <option value="audio" <%= beat.mediaType === 'audio' ? 'selected' : '' %>>Audio</option>
+                  <option value="video" <%= beat.mediaType === 'video' ? 'selected' : '' %>>Video</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white">Replace Media File</label>
+                <input type="file" name="mediaFile" class="form-control bg-dark text-white border-secondary" accept="audio/*,video/*">
+                <small class="text-white-50">Leave blank to keep the current media.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white">Price (₹) <span class="text-danger">*</span></label>
+                <input type="number" name="price" class="form-control bg-dark text-white border-secondary" value="<%= beat.price %>" min="0" step="1" required>
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" name="isActive" class="form-check-input" id="isActive<%= beat._id %>" <%= beat.isActive ? 'checked' : '' %>>
+                <label class="form-check-label text-white" for="isActive<%= beat._id %>">Active (Visible to artists)</label>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary" onclick="if(this.form.checkValidity()){ this.innerHTML='<i class=\'bi bi-arrow-repeat spin\'></i> Updating...'; this.style.pointerEvents='none'; } else { this.form.reportValidity(); }">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+
+
+<%- include('../partials/producer-footer') %>

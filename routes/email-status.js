@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 const {
   sendTestEmail,
   sendWelcomeEmail,
@@ -15,7 +15,7 @@ const {
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 // Email status dashboard - admin only
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_email_status'), async (req, res) => {
   res.render('admin/email-status', {
     layout: 'admin',
     currentPath: '/email-status',
@@ -24,7 +24,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Direct test email (for debugging)
-router.post('/direct-test', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/direct-test', isLoggedIn, hasAdminPermission('manage_email_status'), async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -98,7 +98,7 @@ router.post('/direct-test', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Test all email types
-router.post('/test-all', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/test-all', isLoggedIn, hasAdminPermission('manage_email_status'), async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -232,7 +232,7 @@ router.post('/test-all', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Check Brevo API status
-router.get('/api-status', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/api-status', isLoggedIn, hasAdminPermission('manage_email_status'), async (req, res) => {
   try {
     const axios = require('axios');
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -284,7 +284,7 @@ router.get('/api-status', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Check if IP is authorized in Brevo
-router.get('/check-ip-auth', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/check-ip-auth', isLoggedIn, hasAdminPermission('manage_email_status'), async (req, res) => {
   try {
     // Get client IP address
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -322,9 +322,9 @@ router.get('/check-ip-auth', isLoggedIn, isAdmin, async (req, res) => {
     } catch (error) {
       // Check if this is an IP authorization error
       const isIPAuthError = error.response &&
-                          error.response.data &&
-                          error.response.data.message &&
-                          error.response.data.message.includes('unrecognised IP address');
+        error.response.data &&
+        error.response.data.message &&
+        error.response.data.message.includes('unrecognised IP address');
 
       if (isIPAuthError) {
         return res.json({

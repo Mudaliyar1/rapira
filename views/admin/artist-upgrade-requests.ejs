@@ -197,7 +197,7 @@
                   <span class="badge bg-primary"><%= request.requestedLevel %></span>
                 </td>
                 <td class="text-white">
-                  <%= new Date(request.createdAt).toLocaleDateString() %>
+                  <%= toISTDateString(request.createdAt) %>
                 </td>
                 <td>
                   <% if (request.status === 'pending') { %>

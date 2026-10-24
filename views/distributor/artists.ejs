@@ -1,0 +1,89 @@
+<%- include('../partials/distributor-header') %>
+
+<h2 class="fw-bold mb-1 text-white">Discover Artists</h2>
+<p class="text-white-50 mb-4">Find and connect with artists across the platform.</p>
+
+<div class="mb-4">
+  <button class="btn btn-outline-light rounded-pill px-4" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+    <i class="bi bi-funnel me-2"></i>Filter Artists
+  </button>
+</div>
+
+<div class="collapse mb-5" id="filterCollapse">
+  <div class="glass-card-dark p-4">
+    <form action="/distributor-dashboard/artists" method="GET" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label text-white-75">Search by Email</label>
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-envelope"></i></span>
+          <input type="text" name="email" class="form-control bg-dark border-secondary text-white" placeholder="artist@example.com" value="<%= typeof searchEmail !== 'undefined' ? searchEmail : '' %>">
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-white-75">Filter by State/City</label>
+        <select name="state" class="form-select bg-dark border-secondary text-white">
+          <option value="">All Locations</option>
+          <% if (typeof statesList !== 'undefined' && statesList.length > 0) { %>
+            <% statesList.forEach(s => { %>
+              <option value="<%= s %>" <%= typeof searchState !== 'undefined' && searchState.toLowerCase() === s.toLowerCase() ? 'selected' : '' %>><%= s %></option>
+            <% }); %>
+          <% } %>
+        </select>
+      </div>
+      <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+        <a href="/distributor-dashboard/artists" class="btn btn-outline-secondary px-4">Clear</a>
+        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-search me-2"></i> Apply Filters</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="glass-card-dark">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Artist Name</th>
+            <th>Location</th>
+            <th>Joined Date</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (artists && artists.length > 0) { %>
+            <% artists.forEach(artist => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= (artist.user && artist.user.profileImage && artist.user.profileImage !== '/images/default-profile.svg') ? artist.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(artist.user.name.charAt(0).toUpperCase()) + '&background=random&color=fff&bold=true') %>" 
+                         class="rounded-circle me-3" width="45" height="45" style="object-fit: cover;">
+                    <div>
+                      <div class="fw-bold text-white"><%= artist.user ? artist.user.name : 'Unknown' %></div>
+                      <div class="text-white-50 small"><%= artist.user ? artist.user.email : '' %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= artist.state || 'India' %></td>
+                <td><%= new Date(artist.createdAt).toLocaleDateString() %></td>
+                <td class="text-end">
+                  <a href="/distributor-dashboard/artists/<%= artist._id %>" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Content</a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="4" class="text-center py-5">
+                <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+                <h5 class="text-white">No Artists Found</h5>
+                <p class="text-white-50 mb-0">Try adjusting your filters or check back later.</p>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/distributor-footer') %>

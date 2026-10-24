@@ -12,14 +12,41 @@ const ArtistApplicationSchema = new mongoose.Schema({
     enum: ['Beginner', 'Intermediate', 'Established'],
     required: true
   },
+  stageName: {
+    type: String,
+    default: ''
+  },
+  genre: {
+    type: String,
+    default: ''
+  },
+  instagramId: {
+    type: String,
+    default: ''
+  },
   aadharCard: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
     validate: {
-      validator: function(v) {
+      validator: function (v) {
+        if (!v) return true;
         return /^\d{12}$/.test(v);
       },
       message: props => `${props.value} is not a valid Aadhaar number! Must be exactly 12 digits.`
+    }
+  },
+  panCard: {
+    type: String,
+    required: false,
+    default: '',
+    uppercase: true,
+    validate: {
+      validator: function (v) {
+        if (!v) return true;
+        return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v);
+      },
+      message: props => `${props.value} is not a valid PAN number! Format must be ABCDE1234F.`
     }
   },
   state: {
@@ -38,7 +65,7 @@ const ArtistApplicationSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         return /^\d{10}$/.test(v);
       },
       message: props => `${props.value} is not a valid phone number! Must be exactly 10 digits.`
@@ -59,10 +86,29 @@ const ArtistApplicationSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed', 'n/a'],
+    default: 'n/a'
+  },
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
+  registrationFee: {
+    type: Number,
+    default: 0
+  },
   adminComments: {
     type: String,
     default: ''
   }
 }, { timestamps: true });
 
+// Indexes for fast admin queries - WITHOUT these, every query does a full collection scan
+ArtistApplicationSchema.index({ status: 1, createdAt: -1 });   // most common admin filter
+ArtistApplicationSchema.index({ user: 1 });                     // check user's application
+ArtistApplicationSchema.index({ artistLevel: 1 });              // level filter
+ArtistApplicationSchema.index({ state: 1 });                    // state filter
+ArtistApplicationSchema.index({ createdAt: -1 });               // default sort
+
 module.exports = mongoose.model('ArtistApplication', ArtistApplicationSchema);
+

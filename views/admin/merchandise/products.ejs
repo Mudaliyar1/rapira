@@ -175,11 +175,7 @@
               </td>
               <td>
                 <small class="text-muted">
-                  <%= new Date(product.createdAt).toLocaleDateString('en-IN', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric'
-                  }) %>
+                  <%= toISTDateString(product.createdAt) %>
                 </small>
                 <% if (product.createdBy) { %>
                   <br><small class="text-muted">by <%= product.createdBy.name %></small>

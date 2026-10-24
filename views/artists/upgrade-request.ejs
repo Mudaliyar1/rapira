@@ -1,12 +1,10 @@
-<%- contentFor('head') %>
+<%- include('../partials/artist-header') %>
 <style>
   .completed-module {
     background-color: rgba(25, 135, 84, 0.1);
     border-left: 4px solid #198754;
   }
 </style>
-
-<%- contentFor('body') %>
 
 <section class="py-5">
   <div class="container">
@@ -37,7 +35,7 @@
                       <div class="d-flex justify-content-between align-items-center">
                         <div>
                           <h6 class="mb-1"><%= module.title %></h6>
-                          <small class="text-muted">Completed on <%= new Date(module.progress.completedAt).toLocaleDateString() %></small>
+                          <small class="text-muted">Completed on <%= toISTDateString(module.progress.completedAt) %></small>
                         </div>
                         <span class="badge bg-success">
                           <i class="bi bi-check-circle-fill"></i>
@@ -67,3 +65,5 @@
     </div>
   </div>
 </section>
+
+<%- include('../partials/artist-footer') %>
