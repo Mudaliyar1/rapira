@@ -3,54 +3,172 @@
 
 <!-- Main Slider Section -->
 <section class="main-slider-section">
-  <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
-    <div class="carousel-indicators">
-      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-      <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
-    </div>
+  <% 
+    const currentYear = new Date().getFullYear();
+    const heroCarouselConfig = (typeof heroCarouselSettings !== 'undefined' && heroCarouselSettings)
+      ? heroCarouselSettings
+      : ((typeof websiteSettings !== 'undefined' && websiteSettings && websiteSettings.heroCarouselSettings)
+        ? websiteSettings.heroCarouselSettings
+        : null);
+    const heroSlides = heroCarouselConfig && Array.isArray(heroCarouselConfig.slides)
+      ? heroCarouselConfig.slides.filter(slide => slide && slide.isActive !== false && slide.imageUrl)
+      : [];
+    const carouselInterval = heroCarouselConfig && heroCarouselConfig.intervalMs ? heroCarouselConfig.intervalMs : 5000;
+    const carouselRide = heroCarouselConfig && heroCarouselConfig.autoplay === false ? 'false' : 'carousel';
+  %>
+  <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="<%= carouselRide %>" data-bs-interval="<%= carouselInterval %>">
+    <% if (heroSlides.length > 0) { %>
+      <div class="carousel-indicators">
+        <% heroSlides.forEach((slide, index) => { %>
+          <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" <%= index === 0 ? 'aria-current="true"' : '' %> aria-label="Slide <%= index + 1 %>"></button>
+        <% }); %>
+      </div>
 
-    <div class="carousel-inner">
-      <!-- Slide 1 - Main Hero -->
-      <div class="carousel-item active">
-        <div class="carousel-overlay"></div>
-        <div class="carousel-bg bg-dark" style="height: 80vh; min-height: 500px;">
-          <div class="carousel-pattern pattern-dots"></div>
-        </div>
-        <div class="carousel-caption">
-          <div class="container">
-            <div class="row justify-content-center">
-              <div class="col-lg-8 text-center">
-                <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInDown">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
-                <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">Discover artists, book concerts, and connect with the hip-hop community</p>
-                <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                  <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
-                  <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
+      <div class="carousel-inner">
+        <% heroSlides.forEach((slide, index) => { 
+             const targetLink = slide.linkUrl || '/';
+             const isExternal = /^https?:\/\//i.test(targetLink);
+        %>
+          <div class="carousel-item hero-image-slide <%= index === 0 ? 'active' : '' %>">
+            <a href="<%= targetLink %>" class="text-decoration-none text-white d-block" <%= isExternal ? 'target="_blank" rel="noopener noreferrer"' : '' %>>
+              <div class="carousel-overlay"></div>
+              <div class="hero-svg-overlay hero-svg-theme-<%= (index % 7) + 1 %>" aria-hidden="true">
+                <svg class="hero-svg hero-svg-top" viewBox="0 0 1200 200" preserveAspectRatio="none">
+                  <path d="M0,120 C220,40 420,190 620,120 C820,50 980,170 1200,100 L1200,0 L0,0 Z"></path>
+                </svg>
+                <svg class="hero-svg hero-svg-mid" viewBox="0 0 1200 300" preserveAspectRatio="none">
+                  <circle cx="180" cy="160" r="60"></circle>
+                  <circle cx="520" cy="90" r="35"></circle>
+                  <circle cx="860" cy="180" r="70"></circle>
+                  <circle cx="1080" cy="110" r="45"></circle>
+                </svg>
+                <svg class="hero-svg hero-svg-bottom" viewBox="0 0 1200 220" preserveAspectRatio="none">
+                  <path d="M0,140 C260,210 420,20 660,90 C900,160 1040,60 1200,130 L1200,220 L0,220 Z"></path>
+                </svg>
+              </div>
+              <div class="carousel-bg" style="height: 80vh; min-height: 500px; width: 100%;">
+                <img src="<%= slide.imageUrl %>" alt="" style="display: block; width: 100%; height: 100%; object-fit: contain; object-position: center;">
+              </div>
+              <div class="carousel-caption">
+                <div class="container">
+                  <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                      <% if (slide.badge) { %>
+                        <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown"><%= slide.badge %></div>
+                      <% } %>
+                      <% if (slide.title) { %>
+                        <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown"><%= slide.title %></h2>
+                      <% } %>
+                      <% if (slide.description) { %>
+                        <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s"><%= slide.description %></p>
+                      <% } %>
+                      <% if (slide.buttonText || slide.dateText) { %>
+                        <div class="d-flex justify-content-center align-items-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                          <% if (slide.buttonText) { %>
+                            <span class="btn btn-glass btn-lg"><%= slide.buttonText %></span>
+                          <% } %>
+                          <% if (slide.dateText) { %>
+                            <div class="d-flex align-items-center"><i class="bi bi-calendar-event me-2"></i><%= slide.dateText %></div>
+                          <% } %>
+                        </div>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+      </div>
+
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-bg bg-dark" style="height: 80vh; min-height: 500px;">
+            <div class="carousel-pattern pattern-dots"></div>
+          </div>
+          <div class="carousel-caption">
+            <div class="container">
+              <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                  <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInDown">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
+                  <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">Discover artists, book concerts, and connect with the hip-hop community</p>
+                  <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
+                    <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Slide 2 - Featured Concert -->
-      <div class="carousel-item">
-        <div class="carousel-overlay"></div>
-        <div class="carousel-bg bg-primary" style="height: 80vh; min-height: 500px;">
-          <div class="carousel-pattern pattern-waves"></div>
+        <div class="carousel-item">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-bg bg-primary" style="height: 80vh; min-height: 500px;">
+            <div class="carousel-pattern pattern-waves"></div>
+          </div>
+          <div class="carousel-caption">
+            <div class="container">
+              <div class="row justify-content-start">
+                <div class="col-lg-6 text-start">
+                  <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown">FEATURED EVENT</div>
+                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Summer Rap Festival <%= currentYear %></h2>
+                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Join the biggest hip-hop event of the year with top artists performing live!</p>
+                  <div class="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="/concerts" class="btn btn-danger btn-lg">Book Now</a>
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-calendar-event me-2"></i> June 14-16, <%= currentYear %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="carousel-caption">
-          <div class="container">
-            <div class="row justify-content-start">
-              <div class="col-lg-6 text-start">
-                <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown">FEATURED EVENT</div>
-                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Summer Rap Festival 2023</h2>
-                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Join the biggest hip-hop event of the year with top artists performing live!</p>
-                <div class="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                  <a href="/concerts" class="btn btn-danger btn-lg">Book Now</a>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-calendar-event me-2"></i> June 15-17, 2023
+
+        <div class="carousel-item">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-bg bg-warning" style="height: 80vh; min-height: 500px;">
+            <div class="carousel-pattern pattern-grid"></div>
+          </div>
+          <div class="carousel-caption">
+            <div class="container">
+              <div class="row justify-content-end">
+                <div class="col-lg-6 text-end">
+                  <div class="badge bg-warning text-dark mb-3 animate__animated animate__fadeInDown">NEW FEATURE</div>
+                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Go Premium</h2>
+                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Get exclusive access to VIP tickets, backstage passes, and special discounts!</p>
+                  <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="/subscriptions" class="btn btn-warning btn-lg text-dark">Upgrade Now</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="carousel-item">
+          <div class="carousel-overlay"></div>
+          <div class="carousel-bg bg-info" style="height: 80vh; min-height: 500px;">
+            <div class="carousel-pattern pattern-circles"></div>
+          </div>
+          <div class="carousel-caption">
+            <div class="container">
+              <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                  <div class="badge bg-info mb-3 animate__animated animate__fadeInDown">ARTIST SPOTLIGHT</div>
+                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Become a Featured Artist</h2>
+                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Showcase your talent and reach thousands of fans on our platform!</p>
+                  <div class="animate__animated animate__fadeInUp animate__delay-2s">
+                    <a href="/artists/register" class="btn btn-info btn-lg">Join as Artist</a>
                   </div>
                 </div>
               </div>
@@ -58,51 +176,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Slide 3 - Premium Subscription -->
-      <div class="carousel-item">
-        <div class="carousel-overlay"></div>
-        <div class="carousel-bg bg-warning" style="height: 80vh; min-height: 500px;">
-          <div class="carousel-pattern pattern-grid"></div>
-        </div>
-        <div class="carousel-caption">
-          <div class="container">
-            <div class="row justify-content-end">
-              <div class="col-lg-6 text-end">
-                <div class="badge bg-warning text-dark mb-3 animate__animated animate__fadeInDown">NEW FEATURE</div>
-                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Go Premium</h2>
-                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Get exclusive access to VIP tickets, backstage passes, and special discounts!</p>
-                <div class="animate__animated animate__fadeInUp animate__delay-2s">
-                  <a href="/subscriptions" class="btn btn-warning btn-lg text-dark">Upgrade Now</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Slide 4 - Artist Spotlight -->
-      <div class="carousel-item">
-        <div class="carousel-overlay"></div>
-        <div class="carousel-bg bg-info" style="height: 80vh; min-height: 500px;">
-          <div class="carousel-pattern pattern-circles"></div>
-        </div>
-        <div class="carousel-caption">
-          <div class="container">
-            <div class="row justify-content-center">
-              <div class="col-lg-8 text-center">
-                <div class="badge bg-info mb-3 animate__animated animate__fadeInDown">ARTIST SPOTLIGHT</div>
-                <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Become a Featured Artist</h2>
-                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Showcase your talent and reach thousands of fans on our platform!</p>
-                <div class="animate__animated animate__fadeInUp animate__delay-2s">
-                  <a href="/artists/register" class="btn btn-info btn-lg">Join as Artist</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <% } %>
 
     <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
       <span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -272,6 +346,78 @@
     </div>
   </div>
 </section>
+
+<!-- Trending Reels Section -->
+<section class="py-5 bg-dark position-relative overflow-hidden">
+  <!-- Subtle Background Pattern -->
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.1) 0%, rgba(0, 0, 0, 0) 70%); z-index: 0;"></div>
+  
+  <div class="container position-relative" style="z-index: 1;">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
+      <div>
+        <h2 class="fw-bold text-white mb-1"><i class="bi bi-camera-reels me-2 text-danger"></i>Trending Reels</h2>
+        <p class="text-muted small mb-0">Short music and video clips from our artists</p>
+      </div>
+      <a href="/reels" class="btn btn-outline-danger btn-sm rounded-pill px-3">Open Reels <i class="bi bi-play-circle ms-1"></i></a>
+    </div>
+
+    <div class="reels-scroll-container d-flex gap-3 overflow-auto pb-3" style="scrollbar-width: none; -ms-overflow-style: none;">
+      <% if (typeof homeReels !== 'undefined' && homeReels && homeReels.length > 0) { %>
+        <% homeReels.forEach((reel, index) => { %>
+          <div class="home-reel-card flex-shrink-0" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>" onclick="window.location.href='/reels?id=<%= reel._id %>'">
+            <div class="reel-thumb-wrapper overflow-hidden rounded-4 position-relative" style="width: 180px; height: 320px; cursor: pointer;">
+              <% if (reel.media.mediaType === 'video') { %>
+                <video src="<%= reel.media.url %>" class="w-100 h-100 object-fit-cover" muted loop onmouseover="this.play()" onmouseout="this.pause(); this.currentTime = 0;"></video>
+                <div class="reel-type-icon position-absolute top-2 end-2 p-1 bg-dark bg-opacity-50 rounded-circle">
+                    <i class="bi bi-camera-video-fill text-white" style="font-size: 0.8rem;"></i>
+                </div>
+              <% } else { %>
+                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-gradient-purple">
+                  <i class="bi bi-music-note-beamed text-white display-4"></i>
+                </div>
+                <div class="reel-type-icon position-absolute top-2 end-2 p-1 bg-dark bg-opacity-50 rounded-circle">
+                    <i class="bi bi-music-note text-white" style="font-size: 0.8rem;"></i>
+                </div>
+              <% } %>
+              
+              <!-- Overlay with artist info -->
+              <div class="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient-to-t from-black to-transparent">
+                <div class="d-flex align-items-center gap-2">
+                  <img src="<%= reel.artist.profileImage %>" class="rounded-circle border border-white" style="width: 24px; height: 24px; object-fit: cover;">
+                  <span class="text-white small fw-bold text-truncate" style="max-width: 120px;">@<%= reel.artist.stageName %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="col-12 text-center py-4">
+          <p class="text-muted">Discover artistic reels soon!</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reels-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+  .home-reel-card {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .home-reel-card:hover {
+    transform: translateY(-10px) scale(1.05);
+  }
+  .bg-gradient-to-t {
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  }
+  .bg-gradient-purple {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  }
+  .top-2 { top: 10px; }
+  .end-2 { right: 10px; }
+</style>
 
 <!-- Featured Merchandise Section -->
 <section class="py-5">

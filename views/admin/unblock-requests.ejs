@@ -3,6 +3,11 @@
     <h4 class="text-white mb-0">
       <i class="bi bi-unlock-fill"></i> Artist Unblock Requests
     </h4>
+    <form method="POST" action="/admin/unblock-requests/delete-history" onsubmit="return confirm('Delete all approved/rejected history? Pending requests will remain.');">
+      <button type="submit" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-trash"></i> Delete History
+      </button>
+    </form>
   </div>
 
   <!-- Statistics Cards -->
@@ -170,13 +175,23 @@
                       <button type="button" class="btn btn-sm btn-success me-1" onclick="showApproveModal('<%= request._id %>', '<%= request.artist ? request.artist.stageName : '' %>')">
                         <i class="bi bi-check-circle"></i> Approve
                       </button>
-                      <button type="button" class="btn btn-sm btn-danger" onclick="showRejectModal('<%= request._id %>', '<%= request.artist ? request.artist.stageName : '' %>')">
+                      <button type="button" class="btn btn-sm btn-danger me-1" onclick="showRejectModal('<%= request._id %>', '<%= request.artist ? request.artist.stageName : '' %>')">
                         <i class="bi bi-x-circle"></i> Reject
                       </button>
+                      <form method="POST" action="/admin/unblock-requests/<%= request._id %>/delete" class="d-inline" onsubmit="return confirm('Delete this request? This cannot be undone.');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </form>
                     <% } else { %>
-                      <span class="text-white-50 small">
+                      <span class="text-white-50 small me-2">
                         <%= request.reviewedBy ? 'By ' + request.reviewedBy.name : '' %>
                       </span>
+                      <form method="POST" action="/admin/unblock-requests/<%= request._id %>/delete" class="d-inline" onsubmit="return confirm('Delete this request history? This cannot be undone.');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </form>
                     <% } %>
                   </td>
                 </tr>

@@ -5,7 +5,7 @@ const path = require('path');
 const TeamMember = require('../models/TeamMember');
 const Media = require('../models/Media');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // Configure multer for team member image uploads (memory storage → Cloudinary)
 const upload = multer({
@@ -24,7 +24,7 @@ const upload = multer({
 
 // Apply middleware to all routes
 router.use(isLoggedIn);
-router.use(isAdmin);
+router.use(hasAdminPermission('manage_website_settings'));
 
 // List all team members
 router.get('/', async (req, res) => {

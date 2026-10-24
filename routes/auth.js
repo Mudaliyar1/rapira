@@ -94,6 +94,23 @@ router.get('/session-check', (req, res) => {
 
 // Login page
 router.get('/login', isNotLoggedIn, require('../middleware/auth').clearLoginError, (req, res) => {
+  let returnTo = '';
+
+  if (typeof req.query.returnTo === 'string' && req.query.returnTo) {
+    returnTo = req.query.returnTo;
+  } else if (req.headers.referer) {
+    try {
+      const refUrl = new URL(req.headers.referer);
+      returnTo = `${refUrl.pathname}${refUrl.search || ''}`;
+    } catch (error) {
+      returnTo = '';
+    }
+  }
+
+  if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/auth')) {
+    req.session.returnTo = returnTo;
+  }
+
   res.render('auth/login');
 });
 
@@ -131,7 +148,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
     user.currentPage = 'Home'; // Reset to home on fresh login
     user.lastPageUpdate = new Date();
     await user.save();
-    
+
     // Log successful login
     await ActivityLogger.logLogin(user._id, req, true);
 
@@ -141,6 +158,8 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString()
     };
@@ -164,8 +183,12 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
       console.log('User in session:', req.session.user ? 'Yes' : 'No');
       console.log('Environment:', process.env.NODE_ENV);
 
+      const returnTo = req.session.returnTo;
+      delete req.session.returnTo;
+      const safeReturnTo = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/auth') ? returnTo : '/';
+
       req.flash('success', 'You are now logged in');
-      return res.redirect('/');
+      return res.redirect(safeReturnTo);
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -228,6 +251,8 @@ router.post('/maintenance-login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: user.isSuperAdmin || false,
+      adminPermissions: user.adminPermissions || [],
       profileImage: user.profileImage,
       loginTime: new Date().toISOString(),
       maintenanceLogin: true // Flag to indicate this was a maintenance login
@@ -424,7 +449,7 @@ router.get('/logout', async (req, res) => {
   // Mark user as offline in database
   if (userId) {
     try {
-      await User.findByIdAndUpdate(userId, { 
+      await User.findByIdAndUpdate(userId, {
         isOnline: false,
         currentPage: null,
         lastPageUpdate: new Date()

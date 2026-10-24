@@ -1,5 +1,81 @@
 const mongoose = require('mongoose');
 
+const getDefaultHeroCarouselSlides = () => {
+  const currentYear = new Date().getFullYear();
+  return [
+    {
+      title: 'Experience the Best of Indian Rap',
+      description: 'Discover artists, book concerts, and connect with the hip-hop community',
+      badge: 'LIVE CULTURE',
+      dateText: `${currentYear} • RAPIRA`,
+      buttonText: 'Explore Concerts',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1571266028243-100ffcfb6f4f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: `Summer Rap Festival ${currentYear}`,
+      description: 'Join the biggest hip-hop event of the year with top artists performing live!',
+      badge: 'FEATURED EVENT',
+      dateText: `June 15-17, ${currentYear}`,
+      buttonText: 'Book Now',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Go Premium',
+      description: 'Get exclusive access to VIP tickets, backstage passes, and special discounts!',
+      badge: 'NEW FEATURE',
+      dateText: `Premium Access • ${currentYear}`,
+      buttonText: 'Upgrade Now',
+      linkUrl: '/subscriptions',
+      imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Become a Featured Artist',
+      description: 'Showcase your talent and reach thousands of fans on our platform!',
+      badge: 'ARTIST SPOTLIGHT',
+      dateText: `Applications Open • ${currentYear}`,
+      buttonText: 'Join as Artist',
+      linkUrl: '/artists/register',
+      imageUrl: 'https://images.unsplash.com/photo-1521335629791-ce4aec67dd53?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Reels-Ready Cypher Nights',
+      description: 'Shoot viral moments, tag your crew, and perform in camera-first live sessions.',
+      badge: 'TRENDING NOW',
+      dateText: `Friday Nights • ${currentYear}`,
+      buttonText: 'See Lineup',
+      linkUrl: '/concerts',
+      imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Streetwear Drop Live',
+      description: 'Limited-edition rap merch drops with creator collabs and early access.',
+      badge: 'LIMITED DROP',
+      dateText: `Fresh Drop • ${currentYear}`,
+      buttonText: 'Shop Drop',
+      linkUrl: '/shop',
+      imageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    },
+    {
+      title: 'Creator Collab Rooms',
+      description: 'Match with rappers, producers, and videographers to create your next hit.',
+      badge: 'FOR CREATORS',
+      dateText: `Collab Season • ${currentYear}`,
+      buttonText: 'Start Collab',
+      linkUrl: '/find-my-artist',
+      imageUrl: 'https://images.unsplash.com/photo-1470229538611-16ba8c7ffbd7?auto=format&fit=crop&w=1600&q=80',
+      isActive: true
+    }
+  ];
+};
+
 const WebsiteSettingsSchema = new mongoose.Schema({
   // Header/Branding Settings
   headerSettings: {
@@ -95,6 +171,36 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Home Hero Carousel Settings
+  heroCarouselSettings: {
+    autoplay: {
+      type: Boolean,
+      default: true
+    },
+    intervalMs: {
+      type: Number,
+      default: 5000,
+      min: 2000,
+      max: 20000
+    },
+    slides: {
+      type: [
+        {
+          title: { type: String, default: '' },
+          description: { type: String, default: '' },
+          badge: { type: String, default: '' },
+          dateText: { type: String, default: '' },
+          buttonText: { type: String, default: '' },
+          linkUrl: { type: String, default: '/' },
+          imageUrl: { type: String, default: '' },
+          imageMedia: { type: mongoose.Schema.Types.ObjectId, ref: 'Media' },
+          isActive: { type: Boolean, default: true }
+        }
+      ],
+      default: getDefaultHeroCarouselSlides
+    }
+  },
+
   // Admin Development Settings
   adminSettings: {
     showDummyData: {
@@ -162,19 +268,91 @@ const WebsiteSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Producer Beat Commission Settings
+  producerBeatCommissionSettings: {
+    percentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 4
+    }
+  },
+
+  // Distributor Service Commission Settings
+  distributorCommissionSettings: {
+    percentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 5
+    }
+  },
+
+  // Registration Fee Settings
+  registrationFees: {
+    artistRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    producerRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    },
+    distributorRegistrationFee: {
+      type: Number,
+      min: 0,
+      default: 0
+    }
+  },
+
+  // Email link overrides — admin can change button/link URLs in outgoing emails
+  emailLinks: {
+    baseDomain: { type: String, default: '' },
+    loginUrl: { type: String, default: '' },
+    accountReactivationUrl: { type: String, default: '' },
+    artistDashboardUrl: { type: String, default: '' },
+    artistApplicationReviewUrl: { type: String, default: '' },
+    concertViewUrl: { type: String, default: '' },
+    ticketViewUrl: { type: String, default: '' },
+    subscriptionViewUrl: { type: String, default: '' },
+    refundViewUrl: { type: String, default: '' },
+    learningUrl: { type: String, default: '' },
+    teamReviewUrl: { type: String, default: '' },
+    termsUrl: { type: String, default: '' },
+    privacyUrl: { type: String, default: '' }
+  },
+
+  // Admin-controlled fake post view labels (e.g. 12K, 2.5M)
+  viewIncreaser: {
+    entries: {
+      type: [
+        {
+          postId: { type: mongoose.Schema.Types.ObjectId, ref: 'ArtistPost' },
+          postLink: { type: String, default: '' },
+          viewsLabel: { type: String, default: '' },
+          fakeLikesLabel: { type: String, default: '' },
+          updatedAt: { type: Date, default: Date.now }
+        }
+      ],
+      default: []
+    }
+  },
+
   // Last updated info
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }
-}, { 
+}, {
   timestamps: true,
   // Ensure only one settings document exists
   collection: 'websitesettings'
 });
 
 // Static method to get or create settings
-WebsiteSettingsSchema.statics.getSettings = async function() {
+WebsiteSettingsSchema.statics.getSettings = async function () {
   let settings = await this.findOne();
   if (!settings) {
     settings = await this.create({});
@@ -183,39 +361,39 @@ WebsiteSettingsSchema.statics.getSettings = async function() {
 };
 
 // Instance method to calculate maintenance end time
-WebsiteSettingsSchema.methods.getMaintenanceEndTime = function() {
+WebsiteSettingsSchema.methods.getMaintenanceEndTime = function () {
   if (!this.siteSettings.maintenanceMode || !this.siteSettings.maintenanceStartTime) {
     return null;
   }
-  
+
   const startTime = new Date(this.siteSettings.maintenanceStartTime);
   const durationInMinutes = this.siteSettings.maintenanceDuration || 60; // default to 60 minutes
-  
+
   // Add duration in minutes to start time
   const endTime = new Date(startTime.getTime() + (durationInMinutes * 60000));
   return endTime;
 };
 
 // Instance method to check if maintenance mode is expired
-WebsiteSettingsSchema.methods.isMaintenanceExpired = function() {
+WebsiteSettingsSchema.methods.isMaintenanceExpired = function () {
   const endTime = this.getMaintenanceEndTime();
   if (!endTime) {
     return false;
   }
-  
+
   return new Date() > endTime;
 };
 
 // Instance method to check if maintenance mode is active
-WebsiteSettingsSchema.methods.isMaintenanceActive = function() {
+WebsiteSettingsSchema.methods.isMaintenanceActive = function () {
   if (!this.siteSettings.maintenanceMode) {
     return false;
   }
-  
+
   if (this.isMaintenanceExpired()) {
     return false;
   }
-  
+
   return true;
 };
 

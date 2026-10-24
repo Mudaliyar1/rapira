@@ -8,8 +8,8 @@ console.log('DNS servers configured to use Google DNS (8.8.8.8, 8.8.4.4)');
 
 const express = require('express');
 const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const cookieParser = require('cookie-parser');
+const mongooseSession = require('./middleware/mongoSession');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
@@ -41,10 +41,10 @@ app.use(helmet({
       // By default, allow resources from the same origin
       // This is a fallback for any directive not explicitly set
       defaultSrc: ["'self'"],
-      
+
       // Style sources - Allow stylesheets from self and CDNs needed for Bootstrap, AOS, and Bootstrap Icons
       styleSrc: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap and dynamic styling)
         "https://fonts.googleapis.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -52,10 +52,10 @@ app.use(helmet({
         "https://cdnjs.cloudflare.com",  // Alternative CDN
         "https://checkout.razorpay.com"  // For Razorpay checkout styling
       ],
-      
+
       // Style element sources - Specifically for <style> elements and @import
       styleSrcElem: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline styles (needed for Bootstrap)
         "https://fonts.googleapis.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -63,10 +63,10 @@ app.use(helmet({
         "https://cdnjs.cloudflare.com",  // Alternative CDN
         "https://checkout.razorpay.com"  // For Razorpay checkout styling
       ],
-      
+
       // Script sources - Allow scripts from self and trusted CDNs
       scriptSrc: [
-        "'self'", 
+        "'self'",
         "'unsafe-inline'",  // Allow inline scripts (needed for EJS templates and event handlers)
         "'unsafe-eval'",    // Allow eval() for certain client-side templating (needed by some libraries)
         "https://cdn.jsdelivr.net",  // Bootstrap, AOS
@@ -79,13 +79,13 @@ app.use(helmet({
         "https://rzp.io",  // For shortened URLs
         "https://maps.googleapis.com"  // For Google Maps API
       ],
-      
+
       // Script attribute sources - Specifically for inline event handlers (onclick, onsubmit, etc.)
       scriptSrcAttr: [
         "'self'",
         "'unsafe-inline'"  // Allow inline event handlers (onclick, onsubmit, etc.)
       ],
-      
+
       // Allow connections to self and specific APIs
       connectSrc: [
         "'self'",
@@ -100,11 +100,10 @@ app.use(helmet({
         "https://maps.googleapis.com",  // For Google Maps API
         "https://maps.gstatic.com"   // For Google Maps static assets
       ],
-      
-      // Allow images from self, data URIs, and CDNs
+
       imgSrc: [
-        "'self'", 
-        "data:", 
+        "'self'",
+        "data:",
         "https://res.cloudinary.com",  // For Cloudinary images
         "https://images.unsplash.com",  // For Unsplash images
         "https://cdn.jsdelivr.net",  // For images loaded from CDN
@@ -116,18 +115,20 @@ app.use(helmet({
         "https://api.razorpay.com",  // For Razorpay API images
         "https://api.qrserver.com",  // For QR code generation
         "https://maps.googleapis.com",  // For Google Maps images
-        "https://maps.gstatic.com"   // For Google Maps static images
+        "https://maps.gstatic.com",  // For Google Maps static images
+        "https://img.youtube.com",  // For YouTube video thumbnails
+        "https://i.ytimg.com"  // For YouTube image CDN
       ],
-      
+
       // Allow fonts from self and CDNs
       fontSrc: [
-        "'self'", 
+        "'self'",
         "https://fonts.gstatic.com",  // Google Fonts
         "https://cdn.jsdelivr.net",  // Bootstrap Icons fonts
         "https://unpkg.com",  // Bootstrap Icons fonts
         "https://cdnjs.cloudflare.com"  // Alternative CDN
       ],
-      
+
       // Allow frames from self and specific sources
       frameSrc: [
         "'self'",
@@ -139,27 +140,33 @@ app.use(helmet({
         "https://maps.gstatic.com",  // For Google Maps static assets
         "https://checkout.razorpay.com",  // For payment processing
         "https://api.razorpay.com",  // For Razorpay API frames
-        "https://rzp.io"  // For shortened URLs
+        "https://rzp.io",  // For shortened URLs
+        "https://www.youtube.com",  // For YouTube embedded videos
+        "https://youtube.com",  // For YouTube embedded videos
+        "https://www.youtube-nocookie.com"  // For YouTube privacy-enhanced mode
       ],
-      
+
       // Allow media from self and Cloudinary
       mediaSrc: [
         "'self'",
         "https://res.cloudinary.com",  // For Cloudinary videos/audio
         "https://*.cloudinary.com"  // Wildcard for Cloudinary subdomains
       ],
-      
+
       // Object sources from self
       objectSrc: ["'none'"],
-      
+
       // Child sources (for iframes)
       childSrc: [
         "'self'",
         "https://checkout.razorpay.com",
         "https://api.razorpay.com",
-        "https://rzp.io"
+        "https://rzp.io",
+        "https://www.youtube.com",  // For YouTube embedded videos
+        "https://youtube.com",
+        "https://www.youtube-nocookie.com"
       ],
-      
+
       // Upgrade insecure requests
       upgradeInsecureRequests: [],
     }
@@ -236,13 +243,13 @@ app.use('/api', apiLimiter);
 app.use((req, res, next) => {
   // Permissions Policy (newer spec replacing Feature Policy)
   res.setHeader('Permissions-Policy', "fullscreen=(self), geolocation=(), microphone=(), camera=(self), payment=(self)");
-  
+
   // Expect-CT - Require Certificate Transparency
   res.setHeader('Expect-CT', 'enforce, max-age=86400');
-  
+
   // X-DNS-Prefetch-Control - Disable DNS prefetching
   res.setHeader('X-DNS-Prefetch-Control', 'off');
-  
+
   next();
 });
 
@@ -280,24 +287,24 @@ const connectWithRetry = () => {
     autoIndex: true, // Build indexes
     directConnection: false // Use replica set discovery
   })
-  .then(() => {
-    console.log('MongoDB Connected Successfully');
-  })
-  .catch(err => {
-    console.error('MongoDB Connection Error:', err);
+    .then(() => {
+      console.log('MongoDB Connected Successfully');
+    })
+    .catch(err => {
+      console.error('MongoDB Connection Error:', err);
 
-    // Check for specific error types and provide more helpful messages
-    if (err.name === 'MongoServerSelectionError') {
-      if (err.message.includes('getaddrinfo ENOTFOUND')) {
-        console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
-      } else if (err.message.includes('connection timed out')) {
-        console.error('Connection timed out. Check your firewall settings or MongoDB Atlas network access list.');
+      // Check for specific error types and provide more helpful messages
+      if (err.name === 'MongoServerSelectionError') {
+        if (err.message.includes('getaddrinfo ENOTFOUND')) {
+          console.error('DNS resolution failed. Check your internet connection or MongoDB Atlas hostname.');
+        } else if (err.message.includes('connection timed out')) {
+          console.error('Connection timed out. Check your firewall settings or MongoDB Atlas network access list.');
+        }
       }
-    }
 
-    console.log('Retrying connection in 5 seconds...');
-    setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
-  });
+      console.log('Retrying connection in 5 seconds...');
+      setTimeout(connectWithRetry, 5000); // Retry after 5 seconds
+    });
 };
 
 // Initial connection
@@ -357,9 +364,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     // Add headers for media files
     if (filePath.endsWith('.mp3') || filePath.endsWith('.mp4') ||
-        filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
-        filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
-        filePath.endsWith('.png') || filePath.endsWith('.gif')) {
+      filePath.endsWith('.pdf') || filePath.endsWith('.wav') ||
+      filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ||
+      filePath.endsWith('.png') || filePath.endsWith('.gif')) {
 
       // Add content type header if missing
       if (!res.getHeader('Content-Type')) {
@@ -398,114 +405,17 @@ const isProduction = process.env.NODE_ENV === 'production';
 console.log(`Running in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
 console.log(`BASE_URL: ${process.env.BASE_URL}`);
 
-// Configure session options based on environment
-const sessionOptions = {
-  secret: process.env.SESSION_SECRET || 'rapira-secret-key',
-  resave: false,
-  saveUninitialized: true, // Ensure session is always created
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    ttl: 14 * 24 * 60 * 60, // 14 days
-    touchAfter: 24 * 3600, // Only update the session once per 24 hours unless data changes
-    autoRemove: 'native', // Use MongoDB's TTL collection feature
-    stringify: true, // Better compatibility
-    collectionName: 'sessions', // Use a specific collection name
-    autoReconnect: true, // Automatically reconnect to MongoDB if connection is lost
-    mongoOptions: {
-      serverSelectionTimeoutMS: 10000, // Timeout for server selection
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    }
-  }),
-  cookie: {
-    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days in milliseconds
-    httpOnly: true
-  }
-};
+// Parse cookies (required for reading the session cookie)
+app.use(cookieParser(process.env.SESSION_SECRET || 'rapira-secret-key'));
 
-// Set environment-specific cookie options
-if (isProduction) {
-  console.log('Using PRODUCTION session settings for Render hosting');
-  // Production cookie settings optimized for Render
-  sessionOptions.cookie.secure = true; // Always true for HTTPS
-  sessionOptions.cookie.sameSite = 'lax'; // More compatible than 'none'
-
-  // Don't set domain for Render - let browser handle it automatically
-  // This prevents cross-domain cookie issues
-  console.log('Production: Not setting cookie domain (auto-detect)');
-
-  // Additional production settings for Render
-  sessionOptions.proxy = true; // Trust proxy headers
-  sessionOptions.cookie.httpOnly = true; // Security
-  sessionOptions.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours instead of 14 days
-
-} else {
-  console.log('Using DEVELOPMENT session settings');
-  // Development cookie settings
-  sessionOptions.cookie.secure = false; // HTTP for localhost
-  sessionOptions.cookie.sameSite = 'lax';
-
-  // Don't set domain for localhost
-  console.log('Development: Not setting cookie domain for localhost');
-}
-
-// If no domain is set yet, try to extract it from BASE_URL
-if (!sessionOptions.cookie.domain) {
-  const baseUrl = process.env.BASE_URL || '';
-  try {
-    // Extract domain from BASE_URL if it exists
-    if (baseUrl) {
-      const url = new URL(baseUrl);
-      // Only set domain for non-localhost domains
-      if (!url.hostname.includes('localhost') && !url.hostname.includes('127.0.0.1')) {
-        console.log(`Setting cookie domain from BASE_URL to: ${url.hostname}`);
-        sessionOptions.cookie.domain = url.hostname;
-      }
-    }
-  } catch (e) {
-    console.error('Error parsing BASE_URL for cookie domain:', e);
-  }
-}
-
-// Log session configuration for debugging
-console.log('Session configuration:', {
-  mode: isProduction ? 'PRODUCTION' : 'DEVELOPMENT',
-  cookie: {
-    secure: sessionOptions.cookie.secure,
-    sameSite: sessionOptions.cookie.sameSite,
-    domain: sessionOptions.cookie.domain || 'not set',
-    maxAge: sessionOptions.cookie.maxAge / (1000 * 60 * 60 * 24) + ' days',
-    httpOnly: sessionOptions.cookie.httpOnly
-  },
-  session: {
-    secret: sessionOptions.secret ? 'configured' : 'missing',
-    resave: sessionOptions.resave,
-    saveUninitialized: sessionOptions.saveUninitialized
-  },
-  mongoStore: {
-    url: process.env.MONGODB_URI ? 'configured' : 'missing',
-    ttl: sessionOptions.store.options.ttl / (60 * 60 * 24) + ' days',
-    collection: sessionOptions.store.options.collectionName
-  },
-  environment: {
-    baseUrl: process.env.BASE_URL || 'not set',
-    nodeEnv: process.env.NODE_ENV || 'not set',
-    prodCookieSecure: process.env.PROD_SESSION_COOKIE_SECURE || 'not set',
-    prodCookieSameSite: process.env.PROD_SESSION_COOKIE_SAMESITE || 'not set',
-    prodCookieDomain: process.env.PROD_SESSION_COOKIE_DOMAIN || 'not set',
-    devCookieSecure: process.env.DEV_SESSION_COOKIE_SECURE || 'not set',
-    devCookieSameSite: process.env.DEV_SESSION_COOKIE_SAMESITE || 'not set',
-    devCookieDomain: process.env.DEV_SESSION_COOKIE_DOMAIN || 'not set'
-  }
-});
-
-app.use(session(sessionOptions));
-
-// We've already cleared sessions using the clear-sessions.js script
-console.log('Using new session configuration. Previous sessions have been cleared.');
-
+// Pure Mongoose session — NO express-session, NO connect-mongo
+// Sessions stored directly in MongoDB 'sessions' collection via Mongoose model
+app.use(mongooseSession());
+console.log('Session: using pure Mongoose MongoDB session middleware');
 
 // Flash messages
 app.use(flash());
+
 
 // Import middleware
 const { isLoggedIn, isAdmin } = require('./middleware/auth');
@@ -539,6 +449,61 @@ const Role = require('./models/Role');
 const cartMiddleware = require('./middleware/cart');
 app.use(cartMiddleware);
 
+// Check if logged-in user still exists (account deleted check)
+app.use(async (req, res, next) => {
+  try {
+    const sessionUser = req.session && req.session.user ? req.session.user : null;
+
+    // If user is logged in, verify the account still exists
+    if (sessionUser && sessionUser.id) {
+      const User = require('./models/User');
+      const userExists = await User.findById(sessionUser.id);
+
+      // If user account was deleted
+      if (!userExists) {
+        console.log(`[ACCOUNT CHECK] User ${sessionUser.id} session found but account deleted`);
+
+        // Store message before destroying session
+        const accountDeletedMessage = 'Your account has been deleted by the website administrator. If you believe this is an error, please contact support.';
+
+        // Destroy session before responding. Middleware handles cookie cleanup.
+        await new Promise((resolve) => {
+          req.session.destroy((err) => {
+            if (err) {
+              console.error('Session destruction error:', err);
+            }
+            resolve();
+          });
+        });
+
+        // Redirect to a special page showing the message
+        return res.render('error/account-deleted', {
+          currentUser: null,
+          isAdmin: false,
+          isArtist: false,
+          isSuperAdmin: false,
+          message: accountDeletedMessage,
+          path: req.path,
+          title: 'Account Deleted - Rapira',
+          success: [],
+          error: []
+        });
+      }
+
+      // Sync user session data to keep privileges fast and fresh
+      req.session.user.role = userExists.role;
+      req.session.user.isSuperAdmin = userExists.isSuperAdmin;
+      req.session.user.adminPermissions = userExists.adminPermissions;
+      req.session.user.adminTitle = userExists.adminTitle;
+    }
+
+    next();
+  } catch (error) {
+    console.error('[ACCOUNT CHECK] Error checking user account:', error);
+    next(); // Continue even if check fails
+  }
+});
+
 // Global variables
 app.use(async (req, res, next) => {
   try {
@@ -549,11 +514,31 @@ app.use(async (req, res, next) => {
     res.locals.currentUser = user;
     res.locals.isAdmin = user && user.role === 'admin';
     res.locals.isArtist = user && user.role === 'artist';
-    res.locals.isSuperAdmin = user && user.role === 'superAdmin';
+    res.locals.isSuperAdmin = user && user.isSuperAdmin === true;
     res.locals.hasRoles = false;
     res.locals.userRoles = [];
     res.locals.success = req.flash ? req.flash('success') : [];
     res.locals.error = req.flash ? req.flash('error') : [];
+    res.locals.warning = req.flash ? req.flash('warning') : [];
+    res.locals.info = req.flash ? req.flash('info') : [];
+
+    // Clear "must be logged in" message for public pages
+    // This prevents the message from showing on public pages after being redirected from protected pages
+    const publicPaths = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password',
+      '/about', '/contact', '/faq', '/artists', '/concerts', '/shop', '/pages', '/content', '/demo',
+      '/privacy-policy', '/terms-of-service', '/refund-policy', '/subscription-policy',
+      '/shopping-policy', '/event-attending-policy', '/document-id-policy', '/temp-email-policy', '/account-reactivation',
+      '/tickets/validate', '/find-my-artist', '/team-requirement'];
+    const isPublicPage = publicPaths.some(path => req.path === path || req.path.startsWith(path + '/'));
+
+    if (isPublicPage && res.locals.error) {
+      if (Array.isArray(res.locals.error)) {
+        res.locals.error = res.locals.error.filter(msg => msg !== 'You must be logged in to access this page');
+      } else if (res.locals.error === 'You must be logged in to access this page') {
+        res.locals.error = [];
+      }
+    }
+
     res.locals.path = req.path; // Add current path to all views
 
     // Make the getImageUrl function available to all views
@@ -628,6 +613,8 @@ app.use(async (req, res, next) => {
     res.locals.userRoles = [];
     res.locals.success = [];
     res.locals.error = [];
+    res.locals.warning = [];
+    res.locals.info = [];
     res.locals.path = req.path;
     res.locals.adminPagePermissions = {};
   }
@@ -694,6 +681,15 @@ const userVenuesRoutes = require('./routes/userVenues');
 const venueDashboardRoutes = require('./routes/venueDashboard');
 const postsRoutes = require('./routes/posts');
 const adminMediaRoutes = require('./routes/adminMedia');
+const adminProducersRoutes = require('./routes/adminProducers');
+const producerApplicationRoutes = require('./routes/producerApplications');
+const producerDashboardRoutes = require('./routes/producerDashboard');
+const distributorDashboardRoutes = require('./routes/distributorDashboard');
+const distributorApplicationRoutes = require('./routes/distributorApplications');
+const artistDistributionRoutes = require('./routes/artistDistribution');
+const adminBeatPurchasesRoutes = require('./routes/admin-beat-purchases');
+const razorpayTestRoutes = require('./routes/razorpayTest');
+const reelsRoutes = require('./routes/reels');
 
 const { cleanupPendingTickets, cleanupOrphanedArtists } = require('./utils/cleanupService');
 const { checkExpiredSubscriptions } = require('./utils/subscriptionService');
@@ -714,6 +710,34 @@ app.use('/uploads', createMediaMiddleware(path.join(__dirname, 'public/uploads')
 app.head('/ping', (req, res) => res.sendStatus(204));
 app.get('/ping', (req, res) => res.sendStatus(204));
 
+// Account status check - for real-time account deletion detection
+app.get('/api/account-status', async (req, res) => {
+  try {
+    // If no user session, return not logged in
+    if (!req.session || !req.session.user || !req.session.user.id) {
+      return res.json({ loggedIn: false });
+    }
+
+    const User = require('./models/User');
+    const userExists = await User.findById(req.session.user.id);
+
+    // If user no longer exists, account was deleted
+    if (!userExists) {
+      return res.json({
+        loggedIn: false,
+        accountDeleted: true,
+        message: 'Your account has been deleted by the website administrator.'
+      });
+    }
+
+    // User exists and is logged in
+    return res.json({ loggedIn: true, accountDeleted: false });
+  } catch (error) {
+    console.error('[ACCOUNT STATUS CHECK] Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Use routes
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
@@ -729,6 +753,10 @@ app.use('/', ticketValidationRoutes);
 app.use('/tickets', ticketRoutes);
 // Mount admin ticket routes BEFORE admin routes to avoid conflicts
 app.use('/admin/tickets', adminTicketsRoutes);
+// Mount admin payments routes
+app.use('/admin/payments', require('./routes/adminPayments'));
+// Mount super admin routes BEFORE admin routes
+app.use('/admin/super', require('./routes/adminSuper'));
 app.use('/admin', adminRoutes);
 app.use('/admin/merchandise', adminMerchandiseRoutes);
 app.use('/payments', paymentRoutes);
@@ -738,6 +766,11 @@ app.use('/shop', shopRoutes);
 app.use('/orders', orderRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/artist-applications', artistApplicationRoutes);
+app.use('/producer-applications', producerApplicationRoutes);
+app.use('/producer-dashboard', producerDashboardRoutes);
+app.use('/distributor-applications', distributorApplicationRoutes);
+app.use('/distributor-dashboard', distributorDashboardRoutes);
+app.use('/artist-distribution', artistDistributionRoutes);
 app.use('/roles', roleRoutes);
 app.use('/learning', learningRoutes);
 app.use('/messages', messageRoutes);
@@ -766,6 +799,9 @@ app.use('/admin/notifications', notificationRoutes);
 
 // Mount admin compose email routes
 app.use('/admin/compose-email', adminComposeEmailRoutes);
+
+// Razorpay test page
+app.use('/razorpay-test', razorpayTestRoutes);
 
 // Mount admin simple email routes
 // app.use('/admin/simple-email', adminSimpleEmailRoutes); // REMOVED: Not needed as we have compose and basic email pages
@@ -815,6 +851,9 @@ app.use('/admin/venues', adminVenuesRoutes);
 // Mount admin media management routes
 app.use('/admin/media', adminMediaRoutes);
 
+// Mount admin producers routes
+app.use('/admin/producers', adminProducersRoutes);
+
 // Mount admin venue requests routes
 app.use('/admin/venue-requests', adminVenueRequestRoutes);
 
@@ -824,8 +863,14 @@ app.use('/admin/venue-edit-requests', adminVenueEditRequestRoutes);
 // Mount admin concert edit requests routes
 app.use('/admin/concert-edit-requests', adminConcertEditRequestRoutes);
 
+// Mount admin beat purchases routes
+app.use('/admin/artist-beat-purchases', adminBeatPurchasesRoutes);
+
 // Mount follow routes
 app.use('/follows', followRoutes);
+
+// Mount reels route
+app.use('/reels', reelsRoutes);
 
 // Load admin page permissions middleware
 const AdminPage = require('./models/AdminPage');
@@ -842,7 +887,7 @@ app.use('/admin*', async (req, res, next) => {
     // For super admins, create a proxy that returns true for any page
     if (req.session.user.role === 'superAdmin') {
       res.locals.adminPagePermissions = new Proxy({}, {
-        get: function(target, prop) {
+        get: function (target, prop) {
           return { hasPermission: true };
         }
       });
@@ -949,7 +994,7 @@ const server = app.listen(PORT, async () => {
     } catch (error) {
       console.error('Error initializing cron jobs:', error);
     }
-    
+
     // Start maintenance service
     try {
       maintenanceService.startPeriodicCheck();

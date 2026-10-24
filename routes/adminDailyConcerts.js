@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const DailyConcert = require('../models/DailyConcert');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // GET /admin/daily-concerts - Admin: List all daily concerts
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     // Get search parameters
     const { search, visible, dateRange, city, state, bookingType, sortBy, sortOrder } = req.query;
@@ -93,13 +93,13 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const state = (concert.eventState || '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               roleName.includes(searchTerm) ||
-               organizerName.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm);
+          description.includes(searchTerm) ||
+          artistName.includes(searchTerm) ||
+          stageName.includes(searchTerm) ||
+          roleName.includes(searchTerm) ||
+          organizerName.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm);
       });
     }
 
@@ -150,7 +150,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export daily concerts to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, visible, dateRange, city, state, bookingType, sortBy, sortOrder } = req.query;
@@ -229,13 +229,13 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const state = (concert.eventState || '').toLowerCase();
 
         return title.includes(searchTerm) ||
-               description.includes(searchTerm) ||
-               artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               roleName.includes(searchTerm) ||
-               organizerName.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm);
+          description.includes(searchTerm) ||
+          artistName.includes(searchTerm) ||
+          stageName.includes(searchTerm) ||
+          roleName.includes(searchTerm) ||
+          organizerName.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm);
       });
     }
 
@@ -283,13 +283,13 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // GET /admin/daily-concerts/:id - Admin: View a specific daily concert
-router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/:id', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     const dailyConcert = await DailyConcert.findById(req.params.id)
       .populate([
-        { 
-          path: 'artist', 
-          populate: { path: 'user', select: 'name email profileImage' } 
+        {
+          path: 'artist',
+          populate: { path: 'user', select: 'name email profileImage' }
         },
         { path: 'roleSlot' },
         { path: 'bookingRequest' },
@@ -315,7 +315,7 @@ router.get('/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/daily-concerts/:id/toggle-visibility - Admin: Toggle visibility
-router.post('/:id/toggle-visibility', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/toggle-visibility', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     const dailyConcert = await DailyConcert.findById(req.params.id);
 
@@ -338,10 +338,10 @@ router.post('/:id/toggle-visibility', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/daily-concerts/:id/edit - Admin: Edit daily concert
-router.post('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/edit', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     const { title, description, eventTime, eventDate } = req.body;
-    
+
     const dailyConcert = await DailyConcert.findById(req.params.id);
 
     if (!dailyConcert) {
@@ -369,7 +369,7 @@ router.post('/:id/edit', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/daily-concerts/:id/delete - Admin: Delete daily concert
-router.post('/:id/delete', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/delete', isLoggedIn, hasAdminPermission('manage_daily_concerts'), async (req, res) => {
   try {
     await DailyConcert.findByIdAndDelete(req.params.id);
 

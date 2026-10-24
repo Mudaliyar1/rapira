@@ -1,0 +1,156 @@
+<div class="container-fluid py-4" style="background-color: #121212; min-height: 100vh; color: white;">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0" style="background: linear-gradient(135deg, #1e1e2d 0%, #151521 100%);">
+        <div class="card-body p-4 d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-1 fw-bold text-white">Active Distributors</h4>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin" class="text-primary text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item active text-white-50">Distributors</li>
+              </ol>
+            </nav>
+          </div>
+          <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-outline-light border-secondary btn-sm px-3" type="button" data-bs-toggle="collapse" data-bs-target="#filterSection">
+              <i class="bi bi-funnel me-1"></i> Filters
+            </button>
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 p-2 px-3 fw-bold">
+              <%= distributors.length %> Active Distributors
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Section (Collapse) -->
+  <div class="collapse mb-4 <%= (filters.search || filters.city || filters.state) ? 'show' : '' %>" id="filterSection">
+    <div class="card border-0 shadow-sm" style="background-color: #1e1e2d;">
+      <div class="card-body p-4">
+        <form action="/distributor-applications/admin/list" method="GET" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">Search</label>
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-search"></i></span>
+              <input type="text" name="search" class="form-control bg-dark border-secondary text-white" placeholder="Name, Email, or Company..." value="<%= filters.search %>">
+            </div>
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">City</label>
+            <select name="city" class="form-select bg-dark border-secondary text-white">
+              <option value="">All Cities</option>
+              <% uniqueCities.forEach(city => { %>
+                <option value="<%= city %>" <%= filters.city === city ? 'selected' : '' %>><%= city %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label text-white-50 small fw-bold text-uppercase">State</label>
+            <select name="state" class="form-select bg-dark border-secondary text-white">
+              <option value="">All States</option>
+              <% uniqueStates.forEach(state => { %>
+                <option value="<%= state %>" <%= filters.state === state ? 'selected' : '' %>><%= state %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div class="col-md-2 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-filter me-1"></i> Apply</button>
+            <a href="/distributor-applications/admin/list" class="btn btn-outline-light border-secondary w-100 fw-bold">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distributors Table -->
+  <div class="card border-0 shadow-sm" style="background-color: #1a1a27;">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0" style="--bs-table-bg: transparent; --bs-table-hover-bg: rgba(255,255,255,0.03);">
+          <thead style="background-color: rgba(255,255,255,0.02);">
+            <tr>
+              <th class="ps-4 border-0 py-3 text-white-50 small text-uppercase fw-bold">Distributor & Company</th>
+              <th class="border-0 py-3 text-white-50 small text-uppercase fw-bold">Contact Info</th>
+              <th class="border-0 py-3 text-white-50 small text-uppercase fw-bold text-center">Location</th>
+              <th class="border-0 py-3 text-white-50 small text-uppercase fw-bold text-center">Membership</th>
+              <th class="text-end pe-4 border-0 py-3 text-white-50 small text-uppercase fw-bold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="border-top border-secondary border-opacity-25">
+            <% if (distributors.length > 0) { %>
+              <% distributors.forEach(dist => { %>
+                <tr>
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center">
+                      <div class="position-relative me-3">
+                        <img src="<%= (dist.profileImage && dist.profileImage !== '/images/default-profile.svg') ? dist.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(dist.name.charAt(0).toUpperCase()) + '&background=6366f1&color=fff&bold=true&size=200') %>"
+                             class="rounded-circle border border-secondary border-opacity-50" width="45" height="45" style="object-fit: cover;">
+                        <span class="position-absolute bottom-0 end-0 bg-success border border-dark rounded-circle" style="width: 12px; height: 12px;"></span>
+                      </div>
+                      <div>
+                        <div class="fw-bold text-white"><%= dist.name %></div>
+                        <% if (dist.application && dist.application.companyName) { %>
+                          <div class="text-primary small fw-bold"><i class="bi bi-briefcase me-1"></i><%= dist.application.companyName %></div>
+                        <% } else { %>
+                          <div class="text-white-50 small">Individual Distributor</div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="small">
+                      <div class="text-white"><i class="bi bi-envelope text-white-50 me-2"></i><%= dist.email %></div>
+                      <% if (dist.application && dist.application.mobileNumber) { %>
+                        <div class="text-white-50 pt-1"><i class="bi bi-phone me-2"></i><%= dist.application.mobileNumber %></div>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="text-center py-3">
+                    <span class="badge bg-dark border border-secondary text-white-50 fw-normal">
+                      <i class="bi bi-geo-alt me-1"></i><%= (dist.application && dist.application.location) ? dist.application.location : (dist.city || 'India') %>
+                    </span>
+                  </td>
+                  <td class="text-center py-3 text-nowrap">
+                    <div class="small text-white-50 mb-1">Joined</div>
+                    <div class="small fw-bold text-white"><%= toISTDateString(dist.createdAt) %></div>
+                  </td>
+                  <td class="text-end pe-4 py-3">
+                    <div class="d-flex justify-content-end gap-2 text-nowrap">
+                      <a href="<%= dist.detailsUrl %>" class="btn btn-primary px-4 shadow-sm fw-bold">
+                        <i class="bi bi-person-lines-fill me-1"></i> View Full Details
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <div class="text-white-50">
+                    <i class="bi bi-broadcast fs-1 mb-3 d-block text-secondary opacity-25"></i>
+                    <p class="mb-0">No active distributors found matching your criteria.</p>
+                    <a href="/distributor-applications/admin/list" class="btn btn-link text-primary mt-2">Clear all filters</a>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .btn-primary:hover { background-color: #4f46e5 !important; transform: translateY(-1px); }
+  .table-hover tbody tr:hover { background-color: rgba(255, 255, 255, 0.05) !important; }
+  .form-control:focus, .form-select:focus { background-color: #151521 !important; border-color: #6366f1 !important; box-shadow: none !important; color: white !important; }
+  .input-group-text { border-right: none !important; }
+  .form-control { border-left: none !important; }
+</style>

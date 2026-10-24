@@ -1,0 +1,343 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4" style="background-color: #000; min-height: 100vh;">
+  <!-- Header & Stats Section -->
+  <div class="glass-card-dark border border-secondary mb-4 p-4">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h4 class="mb-1 fw-bold text-white">Distributor Applications</h4>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/admin" class="text-primary text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item active text-white-50">Distributor Applications</li>
+          </ol>
+        </nav>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
+          <div class="text-center px-3 border-end border-secondary">
+            <h5 class="text-info mb-0 fw-bold"><%= stats.total %></h5>
+            <small class="text-white-50">Total</small>
+          </div>
+          <div class="text-center px-3 border-end border-secondary">
+            <h5 class="text-warning mb-0 fw-bold"><%= stats.pending %></h5>
+            <small class="text-white-50">Pending</small>
+          </div>
+          <div class="text-center px-3">
+            <h5 class="text-success mb-0 fw-bold"><%= stats.approved %></h5>
+            <small class="text-white-50">Approved</small>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Card -->
+  <div class="glass-card-dark border border-secondary mb-4">
+    <div class="card-header border-bottom border-secondary bg-transparent py-3 d-flex justify-content-between align-items-center">
+      <h5 class="card-title mb-0 text-white"><i class="bi bi-filter-left me-2"></i>Management Panel</h5>
+      <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3" id="toggleStats">
+        <i class="bi bi-bar-chart me-1"></i> Show Stats
+      </button>
+    </div>
+    
+    <!-- Togglable Stats Section -->
+    <div id="statsSection" style="display: none;" class="p-4 border-bottom border-secondary">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="text-center p-3 rounded bg-dark border border-secondary">
+            <h4 class="text-info mb-1 fw-bold"><%= stats.total %></h4>
+            <small class="text-white-50">Total Applications</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center p-3 rounded bg-dark border border-secondary">
+            <h4 class="text-warning mb-1 fw-bold"><%= stats.pending %></h4>
+            <small class="text-white-50">Pending Review</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center p-3 rounded bg-dark border border-secondary">
+            <h4 class="text-success mb-1 fw-bold"><%= stats.approved %></h4>
+            <small class="text-white-50">Approved</small>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="text-center p-3 rounded bg-dark border border-secondary">
+            <h4 class="text-danger mb-1 fw-bold"><%= stats.rejected %></h4>
+            <small class="text-white-50">Rejected</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+        <form action="/distributor-applications/admin" method="GET" id="applicationFilterForm">
+        <div class="row g-2">
+          <!-- Search -->
+          <div class="col-md-3">
+            <label class="form-label text-white-50 small fw-bold">SEARCH</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-search"></i></span>
+              <input type="text" name="search" class="form-control bg-dark border-secondary text-white" placeholder="Company, Name, Email" value="<%= filters.search %>">
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold">STATUS</label>
+            <select name="status" class="form-select form-select-sm bg-dark border-secondary text-white">
+              <option value="all" <%= selectedStatus === 'all' ? 'selected' : '' %>>All Status</option>
+              <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+              <option value="approved" <%= selectedStatus === 'approved' ? 'selected' : '' %>>Approved</option>
+              <option value="rejected" <%= selectedStatus === 'rejected' ? 'selected' : '' %>>Rejected</option>
+            </select>
+          </div>
+
+          <!-- State -->
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold">STATE</label>
+            <select name="state" class="form-select form-select-sm bg-dark border-secondary text-white">
+              <option value="">All States</option>
+              <% uniqueStates.forEach(s => { %>
+                <option value="<%= s %>" <%= filters.state === s ? 'selected' : '' %>><%= s %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <!-- City -->
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold">CITY</label>
+            <select name="city" class="form-select form-select-sm bg-dark border-secondary text-white">
+              <option value="">All Cities</option>
+              <% uniqueCities.forEach(c => { %>
+                <option value="<%= c %>" <%= filters.city === c ? 'selected' : '' %>><%= c %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <!-- Date -->
+          <div class="col-md-2">
+            <label class="form-label text-white-50 small fw-bold">DATE</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-dark border-secondary text-white-50"><i class="bi bi-calendar3"></i></span>
+              <input type="date" name="date" class="form-control bg-dark border-secondary text-white" value="<%= filters.date %>">
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="col-md-1 d-flex align-items-end gap-1">
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" title="Filter">
+              <i class="bi bi-funnel"></i>
+            </button>
+            <a href="/distributor-applications/admin" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Applications Table Card -->
+  <div class="glass-card-dark border border-secondary">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-white">
+          <thead class="bg-dark text-white-50">
+            <tr>
+              <th class="ps-4 border-secondary py-3">Distributor</th>
+              <th class="border-secondary py-3">Details</th>
+              <th class="border-secondary py-3">Platforms</th>
+              <th class="border-secondary py-3">Payment</th>
+              <th class="border-secondary py-3">Status</th>
+              <th class="border-secondary py-3">Submitted</th>
+              <th class="text-end pe-4 border-secondary py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="border-top-0">
+            <% if (applications.length > 0) { %>
+              <% applications.forEach(app => { %>
+                <tr class="border-secondary">
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center">
+                      <% if (app.user) { %>
+                        <img src="<%= (app.user.profileImage && app.user.profileImage !== '/images/default-profile.svg') ? app.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(app.user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
+                             class="rounded-circle me-3 border border-secondary" width="45" height="45">
+                      <% } else { %>
+                        <img src="/images/default-profile.svg" class="rounded-circle me-3 border border-secondary" width="45" height="45">
+                      <% } %>
+                      <div>
+                        <div class="fw-bold text-white"><%= app.companyName %></div>
+                        <% if (app.user) { %>
+                          <div class="text-white-50 small"><%= app.user.name %></div>
+                          <div class="text-primary small" style="font-size: 0.75rem;"><%= app.user.email %></div>
+                        <% } else { %>
+                          <div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i> User account deleted</div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="small">
+                      <div class="text-white"><i class="bi bi-geo-alt me-1 text-primary"></i><%= app.location %></div>
+                      <div class="text-white-50"><i class="bi bi-telephone me-1 text-primary"></i><%= app.mobileNumber %></div>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="d-flex flex-wrap gap-1">
+                      <% app.platforms.forEach(plat => { %>
+                        <span class="badge bg-dark text-white-50 border border-secondary fw-normal"><%= plat %></span>
+                      <% }); %>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="d-flex flex-column">
+                      <span class="badge w-fit <%= app.paymentStatus === 'paid' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-warning bg-opacity-10 text-warning border border-warning' %>" style="width: fit-content;">
+                        <%= app.paymentStatus.toUpperCase() %>
+                      </span>
+                      <% if (app.registrationFee > 0) { %>
+                        <span class="small text-white-50 mt-1">₹<%= app.registrationFee %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <span class="badge rounded-pill <%= app.status === 'approved' ? 'bg-success' : app.status === 'rejected' ? 'bg-danger' : 'bg-warning text-dark' %>">
+                      <%= app.status.toUpperCase() %>
+                    </span>
+                  </td>
+                  <td class="py-3">
+                    <div class="small text-white-50">
+                      <%= new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                    </div>
+                  </td>
+                  <td class="text-end pe-4 py-3">
+                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                      <a href="/distributor-applications/admin/<%= app._id %>" class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                        <i class="bi bi-eye me-1"></i> View Details
+                      </a>
+                      <form action="/distributor-applications/admin/<%= app._id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Delete this distributor application record from admin history? This cannot be undone.');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger px-3 rounded-pill">
+                          <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="text-center py-5 border-secondary">
+                  <div class="text-white-50 mb-3"><i class="bi bi-inbox fs-1"></i></div>
+                  <div class="text-white">No distributor applications found matching your filters.</div>
+                  <a href="/distributor-applications/admin" class="btn btn-link text-primary mt-2">Clear All Filters</a>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .glass-card-dark {
+    background: #0a0a0a;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .breadcrumb-item + .breadcrumb-item::before {
+    color: #666;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  .form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .form-control:focus, .form-select:focus {
+    background-color: #000 !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  }
+
+  .input-group-text {
+    border-color: #333;
+  }
+
+  .badge {
+    border-radius: 4px;
+    padding: 0.4em 0.6em;
+  }
+
+  .w-fit {
+    width: fit-content;
+  }
+
+  /* Custom Scrollbar */
+  .table-responsive::-webkit-scrollbar {
+    height: 8px;
+  }
+  .table-responsive::-webkit-scrollbar-track {
+    background: #111;
+  }
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #444;
+  }
+</style>
+
+<%- contentFor('scripts') %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle stats
+  const toggleBtn = document.getElementById('toggleStats');
+  const statsSec = document.getElementById('statsSection');
+  
+  if (toggleBtn && statsSec) {
+    toggleBtn.addEventListener('click', function() {
+      if (statsSec.style.display === 'none') {
+        statsSec.style.display = 'block';
+        toggleBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Hide Stats';
+        toggleBtn.classList.replace('btn-outline-info', 'btn-info');
+        toggleBtn.classList.add('text-dark');
+      } else {
+        statsSec.style.display = 'none';
+        toggleBtn.innerHTML = '<i class="bi bi-bar-chart me-1"></i> Show Stats';
+        toggleBtn.classList.replace('btn-info', 'btn-outline-info');
+        toggleBtn.classList.remove('text-dark');
+      }
+    });
+  }
+
+  // Highlight search terms
+  const searchTerm = '<%= filters.search %>';
+  if (searchTerm) {
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+      const nameCell = row.querySelector('.fw-bold.text-white');
+      const emailCell = row.querySelector('.text-primary.small');
+      
+      [nameCell, emailCell].forEach(cell => {
+        if (cell) {
+          const original = cell.textContent;
+          if (regex.test(original)) {
+            cell.innerHTML = original.replace(regex, '<mark class="bg-warning text-dark rounded px-1" style="padding: 1px 4px;">$1</mark>');
+          }
+        }
+      });
+    });
+  }
+});
+</script>

@@ -12,13 +12,16 @@ const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService')
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|mp4|webm|ogg/;
-    const extname = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowed.test(file.mimetype);
-    if (extname && mimetype) return cb(null, true);
-    cb(new Error('Only image/video files are allowed'));
+    const isImage = file.mimetype.startsWith('image/');
+    const isVideo = file.mimetype.startsWith('video/');
+    const isAudio = file.mimetype.startsWith('audio/');
+
+    if (isImage || isVideo || isAudio) {
+      return cb(null, true);
+    }
+    cb(new Error('Only photo, video, and audio files are allowed for stories'));
   }
 });
 
@@ -37,7 +40,15 @@ async function canPostStory(artistId) {
 }
 
 // Upload a new story (artist only)
-router.post('/artists/stories', isLoggedIn, upload.single('media'), async (req, res) => {
+router.post('/artists/stories', isLoggedIn, (req, res, next) => {
+  upload.single('media')(req, res, (err) => {
+    if (err) {
+      req.flash('error', err.message);
+      return res.redirect('/artists/dashboard');
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.session.user || req.session.user.role !== 'artist') {
       req.flash('error', 'Only artists can post stories');
@@ -55,10 +66,12 @@ router.post('/artists/stories', isLoggedIn, upload.single('media'), async (req, 
       return res.redirect('/artists/dashboard');
     }
 
-    const allowedImage = req.file.mimetype.startsWith('image/');
-    const allowedVideo = req.file.mimetype.startsWith('video/');
-    if (!allowedImage && !allowedVideo) {
-      req.flash('error', 'Unsupported file type');
+    const isImage = req.file.mimetype.startsWith('image/');
+    const isVideo = req.file.mimetype.startsWith('video/');
+    const isAudio = req.file.mimetype.startsWith('audio/');
+
+    if (!isImage && !isVideo && !isAudio) {
+      req.flash('error', 'Only photo, video, and audio files are allowed for stories');
       return res.redirect('/artists/dashboard');
     }
 
@@ -80,18 +93,24 @@ router.post('/artists/stories', isLoggedIn, upload.single('media'), async (req, 
       artist: artist._id,
       mediaUrl: media.secure_url,
       mediaPublicId: media.public_id,
-      mediaType: allowedImage ? 'image' : 'video',
+      mediaType: isImage ? 'image' : (isVideo ? 'video' : 'audio'),
       caption: req.body.caption || '',
-      durationMs: allowedImage ? 5000 : 8000,
+      durationMs: isImage ? 5000 : 10000,
       isActive: true,
       createdAt: new Date(),
       expiresAt: storyExpiresAt()
     });
 
     req.flash('success', 'Story posted');
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.json({ success: true, message: 'Story posted' });
+    }
     res.redirect('/artists/dashboard');
   } catch (err) {
     console.error('Post story error:', err);
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.status(500).json({ success: false, error: 'Failed to post story' });
+    }
     req.flash('error', 'Failed to post story');
     res.redirect('/artists/dashboard');
   }
@@ -101,11 +120,11 @@ router.post('/artists/stories', isLoggedIn, upload.single('media'), async (req, 
 router.get('/stories/feed', isLoggedIn, async (req, res) => {
   try {
     const now = new Date();
-    
+
     // Get list of artist user IDs that the current user follows
-    const followedArtists = await Follow.find({ 
-      followerId: req.session.user.id, 
-      roleOfFollowing: 'artist' 
+    const followedArtists = await Follow.find({
+      followerId: req.session.user.id,
+      roleOfFollowing: 'artist'
     }).distinct('followingId');
 
     // Get all artists with those user IDs
@@ -113,8 +132,8 @@ router.get('/stories/feed', isLoggedIn, async (req, res) => {
     const artistIds = artists.map(a => a._id);
 
     // Only fetch stories from followed artists
-    const stories = await ArtistStory.find({ 
-      isActive: true, 
+    const stories = await ArtistStory.find({
+      isActive: true,
       expiresAt: { $gt: now },
       artist: { $in: artistIds }
     })
@@ -184,18 +203,18 @@ router.post('/stories/:id/view', isLoggedIn, async (req, res) => {
 router.post('/stories/:id/like', isLoggedIn, async (req, res) => {
   try {
     const storyId = req.params.id;
-    
+
     // Validate ID
     if (!storyId || storyId === 'undefined' || storyId === 'null') {
       console.error('[STORY LIKE ERROR] Invalid story ID received:', storyId);
       console.error('[STORY LIKE ERROR] Request URL:', req.originalUrl);
       console.error('[STORY LIKE ERROR] Referer:', req.get('Referer'));
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid story ID. Are you trying to like a post instead of a story?' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid story ID. Are you trying to like a post instead of a story?'
       });
     }
-    
+
     const story = await ArtistStory.findById(storyId);
     if (!story || !story.isActive) return res.status(404).json({ success: false, message: 'Story not found' });
 
@@ -238,7 +257,7 @@ router.get('/artists/stories/:id/likes', isLoggedIn, async (req, res) => {
         path: 'likes',
         select: 'name email profileImage role'
       });
-    
+
     if (!story) {
       return res.status(404).json({ success: false, message: 'Story not found' });
     }
@@ -248,8 +267,8 @@ router.get('/artists/stories/:id/likes', isLoggedIn, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You can only view likes of your own stories' });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       likes: story.likes.map(user => ({
         id: user._id,
         name: user.name,
@@ -282,7 +301,7 @@ router.get('/artists/stories/:id/viewers', isLoggedIn, async (req, res) => {
         path: 'viewers',
         select: 'name email profileImage role'
       });
-    
+
     if (!story) {
       return res.status(404).json({ success: false, message: 'Story not found' });
     }
@@ -292,8 +311,8 @@ router.get('/artists/stories/:id/viewers', isLoggedIn, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You can only view viewers of your own stories' });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       viewers: story.viewers.map(viewer => ({
         id: viewer._id,
         name: viewer.name,
@@ -348,6 +367,57 @@ router.delete('/artists/stories/:id', isLoggedIn, async (req, res) => {
   } catch (err) {
     console.error('Delete story error:', err);
     res.status(500).json({ success: false, message: 'Failed to delete story' });
+  }
+});
+
+// Get story details (artist only)
+router.get('/artists/stories/:id/details', isLoggedIn, async (req, res) => {
+  try {
+    if (!req.session.user || req.session.user.role !== 'artist') {
+      return res.status(403).json({ success: false, message: 'Only artists can view story details' });
+    }
+
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) return res.status(404).json({ success: false, message: 'Artist profile not found' });
+
+    const story = await ArtistStory.findById(req.params.id);
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' });
+
+    if (story.artist.toString() !== artist._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You can only view details of your own stories' });
+    }
+
+    res.json({ success: true, story });
+  } catch (err) {
+    console.error('Get story details error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch details' });
+  }
+});
+
+// Update story caption (artist only)
+router.put('/artists/stories/:id', isLoggedIn, async (req, res) => {
+  try {
+    if (!req.session.user || req.session.user.role !== 'artist') {
+      return res.status(403).json({ success: false, message: 'Only artists can update stories' });
+    }
+
+    const artist = await Artist.findOne({ user: req.session.user.id });
+    if (!artist) return res.status(404).json({ success: false, message: 'Artist profile not found' });
+
+    const story = await ArtistStory.findById(req.params.id);
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' });
+
+    if (story.artist.toString() !== artist._id.toString()) {
+      return res.status(403).json({ success: false, message: 'You can only edit your own stories' });
+    }
+
+    story.caption = req.body.caption || '';
+    await story.save();
+
+    res.json({ success: true, message: 'Story updated successfully' });
+  } catch (err) {
+    console.error('Update story error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update story' });
   }
 });
 

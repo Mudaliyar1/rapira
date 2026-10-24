@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const VenueRequest = require('../models/VenueRequest');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const { isLoggedIn } = require('../middleware/auth');
@@ -55,7 +56,7 @@ router.get('/create', isLoggedIn, async (req, res) => {
     });
 
     if (pendingRequest) {
-      req.flash('info', 'You already have a pending venue request. Please wait for admin approval before submitting another.');
+      req.flash('info', 'You already have a pending venue request. You cannot request for a new one until the pending request is accepted or rejected.');
       return res.redirect('/users/venue-requests');
     }
 
@@ -83,7 +84,7 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
     });
 
     if (pendingRequest) {
-      req.flash('error', 'You already have a pending venue request. Please wait for admin approval.');
+      req.flash('error', 'You already have a pending venue request. You cannot request for a new one until the pending request is accepted or rejected.');
       return res.redirect('/users/venue-requests');
     }
 
@@ -141,12 +142,12 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
     for (let i = 1; i <= 24; i++) {
       const rateKey = `hourlyRate_${i}`;
       const rate = req.body[rateKey];
-      
+
       // Only add if rate is provided
       if (rate && parseFloat(rate) > 0) {
         const rateValue = parseFloat(rate);
         const commissionAmount = (rateValue * defaultCommission) / 100;
-        
+
         hourlyRates.push({
           hours: i,
           rate: rateValue,
@@ -200,15 +201,25 @@ router.post('/create', isLoggedIn, upload.array('images', 5), async (req, res) =
   }
 });
 
+// GET /users/venue-requests/register - Redirect legacy/incorrect links to create
+router.get('/register', isLoggedIn, (req, res) => {
+  res.redirect('/users/venue-requests/create');
+});
+
 // GET /users/venue-requests/:id - View specific venue request details
 router.get('/:id', isLoggedIn, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      req.flash('error', 'Invalid Venue Request ID format');
+      return res.redirect('/users/venue-requests');
+    }
+
     const venueRequest = await VenueRequest.findOne({
       _id: req.params.id,
       user: req.session.user.id // Ensure user can only view their own requests
     })
-    .populate('reviewedBy', 'name email')
-    .populate('createdVenue', 'name isActive');
+      .populate('reviewedBy', 'name email')
+      .populate('createdVenue', 'name isActive');
 
     if (!venueRequest) {
       req.flash('error', 'Venue request not found');

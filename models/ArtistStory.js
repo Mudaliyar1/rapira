@@ -4,7 +4,7 @@ const ArtistStorySchema = new mongoose.Schema({
   artist: { type: mongoose.Schema.Types.ObjectId, ref: 'Artist', required: true },
   mediaUrl: { type: String, required: true },
   mediaPublicId: { type: String },
-  mediaType: { type: String, enum: ['image', 'video'], required: true },
+  mediaType: { type: String, enum: ['image', 'video', 'audio'], required: true },
   caption: { type: String, default: '' },
   durationMs: { type: Number, default: 5000 },
   thumbnailUrl: { type: String },

@@ -197,9 +197,15 @@
                     <a href="/admin/concerts/<%= concert._id %>/details" class="btn btn-sm btn-outline-primary me-1">
                       <i class="bi bi-eye"></i> Details
                     </a>
-                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<%= concert._id %>">
-                      <i class="bi bi-trash"></i> Delete
-                    </button>
+                    <% if ((concert.status === 'completed') || (new Date(concert.date) < new Date())) { %>
+                      <a href="/admin/concerts/<%= concert._id %>/delete-confirm" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                      </a>
+                    <% } else { %>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Only completed or ended concerts can be deleted">
+                        <i class="bi bi-lock"></i> Delete Disabled
+                      </button>
+                    <% } %>
                   </div>
                 </td>
               </tr>
@@ -215,31 +221,7 @@
   </div>
 </div>
 
-<!-- Delete Modals -->
-<% if (concerts && concerts.length > 0) { %>
-  <% concerts.forEach(concert => { %>
-    <div class="modal fade" id="deleteModal<%= concert._id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= concert._id %>" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-white" id="deleteModalLabel<%= concert._id %>">Confirm Delete</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p class="text-white">Are you sure you want to delete the concert <strong><%= concert.title %></strong>?</p>
-            <p class="text-danger mb-0">This action cannot be undone. All associated tickets will also be deleted.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <form action="/admin/concerts/<%= concert._id %>/delete" method="POST">
-              <button type="submit" class="btn btn-danger">Delete Concert</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  <% }); %>
-<% } %>
+<!-- Delete Modals Removed - Using Dedicated Confirmation Pages -->
 
 <%- contentFor('title') %>Manage Concerts
 

@@ -13,15 +13,13 @@
   <link rel="stylesheet" href="/css/profile-images.css">
   <!-- Admin Alerts CSS -->
   <link rel="stylesheet" href="/css/admin-alerts.css">
-  <!-- Loading Spinner CSS -->
-  <link rel="stylesheet" href="/css/loading-spinner.css">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <% if (typeof extraStyles !== 'undefined') { %>
     <%- extraStyles %>
   <% } %>
 </head>
-<body>
+<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
   <div class="admin-layout">
     <!-- Sidebar -->
     <%- include('../partials/admin-sidebar', { path: typeof currentPath !== 'undefined' ? currentPath : '/' }) %>
@@ -73,7 +71,6 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- Custom JS -->
   <script src="/js/main.js"></script>
-  <script src="/js/loading-spinner.js"></script>
   <script src="/js/profile-image-handler.js"></script>
 
   <!-- Notification Badge Update Script -->
@@ -112,6 +109,9 @@
 
   <!-- Network Status Monitor -->
   <script src="/js/network-status.js"></script>
+  
+  <!-- Account Monitor (Real-time Deletion Detection) -->
+  <script src="/js/account-monitor.js"></script>
 
   <% if (typeof extraScripts !== 'undefined') { %>
     <%- extraScripts %>

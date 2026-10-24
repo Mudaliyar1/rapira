@@ -258,15 +258,61 @@
             </div>
           </div>
 
+          <div class="card mb-3 bg-dark border-info bg-opacity-25 venue-filter-card">
+            <div class="card-body p-3">
+              <h6 class="mb-3 text-info d-flex align-items-center">
+                <i class="bi bi-funnel me-2"></i> Find Your Perfect Venue
+                <span class="ms-auto badge bg-info text-dark" id="venueCountBadge">0 venues</span>
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">State</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="stateFilter">
+                    <option value="">All States</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">City</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="cityFilter">
+                    <option value="">All Cities</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small mb-1 text-info opacity-75">Budget</label>
+                  <select class="form-select form-select-sm bg-dark text-white border-info opacity-75" id="budgetFilter">
+                    <option value="">All Budgets</option>
+                    <option value="Budget">Budget (< ₹1k/hr)</option>
+                    <option value="Mid-Range">Mid-Range (₹1k-5k/hr)</option>
+                    <option value="Premium">Premium (₹5k-15k/hr)</option>
+                    <option value="Luxury">Luxury (> ₹15k/hr)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mt-2">
+                <button type="button" class="btn btn-link btn-sm text-info p-0 text-decoration-none" id="resetFilters">
+                  <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="mb-3">
-            <label for="venue" class="form-label">Venue <span class="text-danger">*</span></label>
-            <select class="form-control" id="venue" name="venue" required>
+            <label class="form-label d-flex justify-content-between align-items-center">
+              <span>Select Venue <span class="text-danger">*</span></span>
+              <small class="text-info opacity-75" id="venueSearchStatus">Filter to find venues</small>
+            </label>
+            
+            <!-- Hidden original select to maintain compatibility with existing JS -->
+            <select class="form-control d-none" id="venue" name="venue" required>
               <option value="">Select a venue</option>
               <% if (venues && venues.length > 0) { %>
                 <% venues.forEach(venue => { %>
                     <option value="<%= venue._id %>" 
                           data-city="<%= venue.city %>"
+                          data-state="<%= venue.state %>"
+                          data-price-range="<%= venue.priceRange || 'Mid-Range' %>"
                           data-capacity="<%= venue.capacity || 0 %>"
+                          data-city-full="<%= venue.city %>, <%= venue.state %>"
                           data-hourly-rates='<%- JSON.stringify(venue.pricing && venue.pricing.hourlyRates ? venue.pricing.hourlyRates : []) %>'
                           data-minimum-hours="<%= venue.pricing && venue.pricing.minimumHours ? venue.pricing.minimumHours : 1 %>"
                           data-min-ticket-price="<%= venue.pricing && venue.pricing.ticketPricing && venue.pricing.ticketPricing.minimumPrice ? venue.pricing.ticketPricing.minimumPrice : 0 %>"
@@ -278,14 +324,21 @@
                           data-description="<%= venue.description || '' %>"
                           data-google-maps-link="<%= venue.googleMapsLink || '' %>"
                           data-images='<%- JSON.stringify(venue.images || []) %>'>
-                    <%= venue.name %> - <%= venue.city %> (<%= venue.venueType || 'Venue' %>) - Capacity: <%= venue.capacity || 'Unlimited' %>
+                    <%= venue.name %>
                   </option>
                 <% }); %>
-              <% } else { %>
-                <option disabled>No venues available</option>
               <% } %>
             </select>
-            <div class="form-text">Select from admin-approved venues only</div>
+
+            <!-- Visual list container -->
+            <div id="venueSelectionList" class="venue-cards-container custom-scrollbar mb-2" style="max-height: 400px; overflow-y: auto;">
+              <!-- Venue cards will be injected here via JS -->
+              <div class="text-center p-5 opacity-50 bg-dark rounded border border-info border-opacity-25">
+                <i class="bi bi-search fs-1"></i>
+                <p class="mt-2">Use the filters above to find venues</p>
+              </div>
+            </div>
+            <div class="form-text">Tap on a venue card above to select it</div>
           </div>
 
           <!-- Venue Availability Status -->
@@ -531,9 +584,7 @@
           <hr>
           <div class="d-flex justify-content-end gap-2">
             <a href="/artists/dashboard" class="btn btn-outline-secondary">Cancel</a>
-            <button type="button" class="btn btn-info" id="demoPaymentBtn" title="Demo Payment Animation">
-              <i class="bi bi-play-circle me-1"></i> Demo Animation
-            </button>
+
             <button type="button" class="btn btn-success" id="payAndSubmitBtn" disabled>
               <i class="bi bi-credit-card me-1"></i> Pay ₹<span id="payButtonAmount">0</span> & Submit Concert
             </button>
@@ -548,6 +599,39 @@
 <div id="serverData" data-commission="<%= currentCommissionPercentage || 10 %>" style="display: none;"></div>
 
 <script>
+  const IST_TIMEZONE = 'Asia/Kolkata';
+
+  function toISTDateString(date) {
+    if (!date) return 'Not set';
+    try {
+      return new Date(date).toLocaleDateString('en-IN', {
+        timeZone: IST_TIMEZONE,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return date;
+    }
+  }
+
+  function toISTLocaleString(date) {
+    if (!date) return 'Not set';
+    try {
+      return new Date(date).toLocaleString('en-IN', {
+        timeZone: IST_TIMEZONE,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return date;
+    }
+  }
+
   // Add visual feedback styles
   const styles = `
     <style>
@@ -2059,6 +2143,209 @@ Please select a different date or time.`);
       payAndSubmitBtn.disabled = false;
     }
     
+    // Venue filtering logic
+    const stateFilter = document.getElementById('stateFilter');
+    const cityFilter = document.getElementById('cityFilter');
+    const budgetFilter = document.getElementById('budgetFilter');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    const venueCountBadge = document.getElementById('venueCountBadge');
+    // venueSelect is already defined at top of DOMContentLoaded
+    const venueOptions = Array.from(venueSelect.options).slice(1); // Skip placeholder
+
+    function initFilters() {
+      const states = new Set();
+      venueOptions.forEach(opt => {
+        if (opt.dataset.state) states.add(opt.dataset.state);
+      });
+
+      Array.from(states).sort().forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateFilter.appendChild(option);
+      });
+
+      updateCityOptions();
+      updateVenueCount(venueOptions.length);
+    }
+
+    function updateCityOptions() {
+      const selectedState = stateFilter.value;
+      const currentCity = cityFilter.value;
+      cityFilter.innerHTML = '<option value="">All Cities</option>';
+      
+      const cities = new Set();
+      venueOptions.forEach(opt => {
+        if (!selectedState || opt.dataset.state === selectedState) {
+          if (opt.dataset.city) cities.add(opt.dataset.city);
+        }
+      });
+
+      Array.from(cities).sort().forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        cityFilter.appendChild(option);
+      });
+
+      if (Array.from(cities).includes(currentCity)) {
+        cityFilter.value = currentCity;
+      }
+    }
+
+    // Venue selection list logic
+    const venueSelectionList = document.getElementById('venueSelectionList');
+
+    function applyVenueFilters() {
+      const selectedState = stateFilter.value;
+      const selectedCity = cityFilter.value;
+      const selectedBudget = budgetFilter.value;
+      
+      const filteredOptions = venueOptions.filter(opt => {
+        const stateMatch = !selectedState || opt.dataset.state === selectedState;
+        const cityMatch = !selectedCity || opt.dataset.city === selectedCity;
+        const budgetMatch = !selectedBudget || opt.dataset.priceRange === selectedBudget;
+        return stateMatch && cityMatch && budgetMatch;
+      });
+
+      renderVenueCards(filteredOptions);
+      updateVenueCount(filteredOptions.length);
+      
+      // If current selection is no longer in filtered list, reset it
+      if (venueSelect.value && !filteredOptions.some(opt => opt.value === venueSelect.value)) {
+        venueSelect.value = '';
+        if (typeof updateVenuePricing === 'function') updateVenuePricing();
+      }
+    }
+
+    function renderVenueCards(options) {
+      if (!venueSelectionList) return;
+      
+      if (options.length === 0) {
+        venueSelectionList.innerHTML = `
+          <div class="text-center p-5 opacity-50 bg-dark rounded border border-danger border-opacity-25">
+            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+            <p class="mt-2">No venues match your filters</p>
+          </div>
+        `;
+        return;
+      }
+
+      venueSelectionList.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.className = 'row g-3 p-1';
+      
+      options.forEach(opt => {
+        const isSelected = venueSelect.value === opt.value;
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+        
+        col.innerHTML = `
+          <div class="card h-100 venue-tap-card ${isSelected ? 'border-info bg-info bg-opacity-10' : 'bg-dark border-secondary border-opacity-50'}" 
+               data-venue-id="${opt.value}" style="cursor: pointer; transition: all 0.2s ease;">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 text-truncate" style="max-width: 150px;">${opt.dataset.venueName}</h6>
+                <span class="badge ${isSelected ? 'bg-info text-dark' : 'bg-secondary'} rounded-pill">
+                  ${isSelected ? '<i class="bi bi-check-lg"></i>' : opt.dataset.priceRange}
+                </span>
+              </div>
+              <p class="small text-muted mb-2">
+                <i class="bi bi-geo-alt me-1"></i>${opt.dataset.cityFull}
+              </p>
+              <div class="d-flex gap-2">
+                <span class="badge bg-dark border border-secondary text-info opacity-75 small">
+                  <i class="bi bi-people me-1"></i>${opt.dataset.capacity}
+                </span>
+                <span class="badge bg-dark border border-secondary text-warning opacity-75 small text-truncate" style="max-width: 80px;">
+                  <i class="bi bi-building me-1"></i>${opt.dataset.venueType}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        col.querySelector('.venue-tap-card').addEventListener('click', function() {
+          // Deselect previous
+          document.querySelectorAll('.venue-tap-card').forEach(c => {
+            c.classList.remove('border-info', 'bg-info', 'bg-opacity-10');
+            c.classList.add('bg-dark', 'border-secondary', 'border-opacity-50');
+            const b = c.querySelector('.badge.rounded-pill');
+            if (b) {
+                b.className = 'badge bg-secondary rounded-pill';
+                const originalBudget = venueOptions.find(o => o.value === c.dataset.venueId).dataset.priceRange;
+                b.textContent = originalBudget;
+            }
+          });
+
+          // Select current
+          this.classList.add('border-info', 'bg-info', 'bg-opacity-10');
+          this.classList.remove('bg-dark', 'border-secondary', 'border-opacity-50');
+          const badge = this.querySelector('.badge.rounded-pill');
+          if (badge) {
+              badge.className = 'badge bg-info text-dark rounded-pill';
+              badge.innerHTML = '<i class="bi bi-check-lg"></i>';
+          }
+
+          // Update real select and trigger events
+          venueSelect.value = this.dataset.venueId;
+          venueSelect.dispatchEvent(new Event('change'));
+          
+          // feedback
+          if (typeof showSelectionFeedback === 'function') {
+            showSelectionFeedback(`Selected ${opt.dataset.venueName}`);
+          }
+        });
+
+        grid.appendChild(col);
+      });
+
+      venueSelectionList.appendChild(grid);
+    }
+
+    function updateVenueCount(count) {
+      if (venueCountBadge) {
+        venueCountBadge.textContent = `${count} venue${count !== 1 ? 's' : ''} available`;
+        venueCountBadge.className = count > 0 ? 'ms-auto badge bg-info text-dark' : 'ms-auto badge bg-danger text-white';
+      }
+    }
+
+    if (stateFilter) {
+      stateFilter.addEventListener('change', () => {
+        updateCityOptions();
+        applyVenueFilters();
+      });
+    }
+
+    if (cityFilter) cityFilter.addEventListener('change', applyVenueFilters);
+    if (budgetFilter) budgetFilter.addEventListener('change', applyVenueFilters);
+
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', () => {
+        stateFilter.value = '';
+        updateCityOptions();
+        budgetFilter.value = '';
+        applyVenueFilters();
+      });
+    }
+
+    // Initialize filters
+    initFilters();
+
+    // Visual feedback for selection
+    function showSelectionFeedback(message) {
+      const feedback = document.createElement('div');
+      feedback.className = 'selection-feedback';
+      feedback.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> ${message}`;
+      document.body.appendChild(feedback);
+      
+      setTimeout(() => feedback.classList.add('show'), 10);
+      setTimeout(() => {
+        feedback.classList.remove('show');
+        setTimeout(() => feedback.remove(), 300);
+      }, 3000);
+    }
+    
     // Initial auto-check when form loads (if fields are pre-filled)
     setTimeout(() => {
       if (venueSelect.value || dateInput.value || timeInput.value || bookingHours.value) {
@@ -2429,10 +2716,62 @@ Please select a different date or time.`);
     color: #000000 !important;
   }
 
-  /* Also force conflict warning text to be black */
+  /* Force conflict warning text to be black */
   .alert-warning strong,
   .alert-warning span {
     color: #000000 !important;
+  }
+
+  .venue-filter-card {
+    transition: all 0.3s ease;
+    border-style: dashed !important;
+  }
+
+  .venue-tap-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(13, 202, 240, 0.2);
+    border-color: rgba(13, 202, 240, 0.5) !important;
+  }
+
+  /* Custom scrollbar for venue list */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(13, 202, 240, 0.3);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(13, 202, 240, 0.5);
+  }
+
+  .venue-tap-card.border-info {
+    box-shadow: 0 0 15px rgba(13, 202, 240, 0.15);
+  }
+
+  .selection-feedback {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #0dcaf0;
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(13, 202, 240, 0.3);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    transform: translateY(100px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+  }
+  .selection-feedback.show {
+    transform: translateY(0);
+    opacity: 1;
   }
 </style>
 

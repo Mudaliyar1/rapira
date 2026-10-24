@@ -1,0 +1,160 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="h3 mb-0 text-white">Manage Producer Beats</h2>
+    <p class="text-white-50 mb-0">View, ban, or delete beats uploaded by producers.</p>
+  </div>
+</div>
+
+<!-- Flash Messages -->
+<% if (success && success.length > 0) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= success %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= error %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+<% } %>
+
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body">
+    <form action="/admin/producers/beats" method="GET" class="row g-3">
+      <div class="col-md-8">
+        <label for="search" class="form-label text-white-50">Filter by Producer Name or Email</label>
+        <div class="input-group">
+          <span class="input-group-text bg-dark border-secondary text-white-50">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" class="form-control bg-dark border-secondary text-white" id="search" name="search" value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>" placeholder="Enter name or email...">
+        </div>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100 me-2">Search</button>
+        <% if (typeof searchQuery !== 'undefined' && searchQuery) { %>
+          <a href="/admin/producers/beats" class="btn btn-outline-secondary w-100">Clear</a>
+        <% } %>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card bg-dark border-secondary">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Producer</th>
+            <th>Beat Title</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Stats</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (beats && beats.length > 0) { %>
+            <% beats.forEach(beat => { %>
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <% if (beat.producer) { %>
+                      <img src="<%= beat.producer.profileImage || '/images/default-profile.svg' %>" alt="" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                      <div>
+                        <div class="text-white"><%= beat.producer.name %></div>
+                        <small class="text-white-50"><%= beat.producer.email %></small>
+                      </div>
+                    <% } else { %>
+                      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 14px;">
+                        <i class="bi bi-person-slash"></i>
+                      </div>
+                      <div>
+                        <div class="text-white">Unknown Producer</div>
+                        <small class="text-danger">Profile Deleted</small>
+                      </div>
+                    <% } %>
+                  </div>
+                </td>
+                <td>
+                  <div class="fw-bold text-white"><%= beat.title %></div>
+                  <small class="text-white-50"><a href="<%= beat.mediaUrl %>" target="_blank" class="text-info">Listen/Watch <i class="bi bi-box-arrow-up-right"></i></a></small>
+                </td>
+                <td><span class="badge bg-secondary text-capitalize"><%= beat.mediaType %></span></td>
+                <td>₹<%= beat.price %></td>
+                <td>
+                  <% if (beat.isBanned) { %>
+                    <span class="badge bg-danger">Banned</span>
+                    <small class="d-block text-white-50 mt-1" title="<%= beat.banReason %>">Hover for Reason</small>
+                  <% } else { %>
+                    <span class="badge bg-success">Active</span>
+                  <% } %>
+                </td>
+                <td>
+                  <div class="small">
+                    <div class="text-success"><i class="bi bi-cart me-1"></i><%= beat.purchasesCount %> Sales</div>
+                    <div class="text-info"><i class="bi bi-eye me-1"></i><%= beat.viewsCount %> Views</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a href="/admin/producers/beats/<%= beat._id %>/sales" class="btn btn-sm btn-outline-info">
+                      <i class="bi bi-eye"></i> View Sales
+                    </a>
+                    <form action="/admin/producers/beats/<%= beat._id %>/toggle-ban" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Are you sure you want to <%= beat.isBanned ? 'unban' : 'ban' %> this beat?');">
+                        <i class="bi bi-<%= beat.isBanned ? 'shield-check' : 'slash-circle' %>"></i>
+                        <%= beat.isBanned ? 'Unban' : 'Ban' %>
+                      </button>
+                    </form>
+                    <form action="/admin/producers/beats/<%= beat._id %>/delete" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to permanently delete this beat?');">
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center py-4 text-white-50">
+                No beats uploaded by producers yet.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="d-flex justify-content-between align-items-center mt-3 border-top border-secondary pt-3">
+        <small class="text-white-50">Showing page <%= currentPage %> of <%= totalPages %></small>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <% if (currentPage > 1) { %>
+              <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" href="?page=<%= currentPage - 1 %>">Previous</a>
+              </li>
+            <% } %>
+            <% for(let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                <a class="page-link <%= currentPage === i ? 'bg-primary border-primary' : 'bg-dark text-white border-secondary' %>" href="?page=<%= i %>"><%= i %></a>
+              </li>
+            <% } %>
+            <% if (currentPage < totalPages) { %>
+              <li class="page-item">
+                <a class="page-link bg-dark text-white border-secondary" href="?page=<%= currentPage + 1 %>">Next</a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      </div>
+    <% } %>
+  </div>
+</div>

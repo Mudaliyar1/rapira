@@ -6,6 +6,58 @@
       <!-- Close Button - Positioned at top right of modal content -->
       <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 15px; right: 15px; z-index: 1060;"></button>
       
+      <style>
+        .audio-visualizer-modal {
+          width: 100%;
+          height: 100%;
+          min-height: 250px;
+          background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 20px;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .audio-visualizer-modal::after {
+          content: "RAPIRA AUDIO";
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: rgba(0, 212, 255, 0.4);
+          font-size: 0.8rem;
+          font-weight: bold;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+        }
+
+        .visualizer-bar-modal {
+          width: 8px;
+          height: 30px;
+          background: #00d4ff;
+          border-radius: 4px;
+          animation: bar-pulse-modal 1.2s infinite ease-in-out;
+          box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+        }
+
+        @keyframes bar-pulse-modal {
+          0%, 100% { height: 20px; background: #00d4ff; }
+          50% { height: 80px; background: #7c4dff; }
+        }
+
+        .visualizer-bar-modal:nth-child(1) { animation-delay: -1.1s; }
+        .visualizer-bar-modal:nth-child(2) { animation-delay: -0.9s; }
+        .visualizer-bar-modal:nth-child(3) { animation-delay: -0.7s; }
+        .visualizer-bar-modal:nth-child(4) { animation-delay: -0.5s; }
+        .visualizer-bar-modal:nth-child(5) { animation-delay: -0.3s; }
+        .visualizer-bar-modal:nth-child(6) { animation-delay: -0.1s; }
+        .visualizer-bar-modal:nth-child(7) { animation-delay: -0.4s; }
+        .visualizer-bar-modal:nth-child(8) { animation-delay: -0.8s; }
+      </style>
+
       <div class="modal-body p-0" style="max-height: 90vh; overflow-y: auto;">
         
         <!-- Post Card -->
@@ -44,20 +96,48 @@
                 <strong id="post-views-count" style="display: block; font-size: 1.3rem; color: #00d4ff;">0</strong>
                 <small style="color: #999;">Views</small>
               </div>
+              <div style="text-align: center; cursor: pointer;" onclick="openPostViewerComments()">
+                <strong id="post-comments-count" style="display: block; font-size: 1.3rem; color: #10b981;">0</strong>
+                <small style="color: #999;">Comments</small>
+              </div>
+              <div style="text-align: center; cursor: pointer; display: none;" onclick="openPostViewerReport()">
+                <strong id="post-reports-count" style="display: block; font-size: 1.3rem; color: #ef4444;">0</strong>
+                <small style="color: #999;">Reports</small>
+              </div>
             </div>
             
-            <!-- Action Buttons -->
-            <div class="action-buttons" style="display: flex; gap: 15px; align-items: center; justify-content: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
-              <!-- Like Button -->
-              <button id="post-modal-like-btn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-heart" style="font-size: 1.6rem; color: #fff; pointer-events: none;"></i>
-              </button>
-              
-              <!-- Share Button -->
-              <button id="post-modal-share-btn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi bi-share" style="font-size: 1.6rem; color: #00d4ff; pointer-events: none;"></i>
-              </button>
-            </div>
+            <!-- Action Buttons - Only for logged-in users -->
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+              <div class="action-buttons" style="display: flex; gap: 15px; align-items: center; justify-content: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
+                <!-- Like Button -->
+                <button id="post-modal-like-btn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-heart" style="font-size: 1.6rem; color: #fff; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Share Button -->
+                <button id="post-modal-share-btn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-share" style="font-size: 1.6rem; color: #00d4ff; pointer-events: none;"></i>
+                </button>
+
+                <!-- Comments Button -->
+                <button onclick="openPostViewerComments()" id="post-modal-comments-btn" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-chat-dots" style="font-size: 1.6rem; color: #10b981; pointer-events: none;"></i>
+                </button>
+                
+                <!-- Report Button -->
+                <button onclick="openPostViewerReport()" id="post-modal-report-btn" style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-flag" style="font-size: 1.6rem; color: #ef4444; pointer-events: none;"></i>
+                </button>
+              </div>
+            <% } else { %>
+              <!-- Login message for non-logged-in users -->
+              <div style="text-align: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
+                <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                  <i class="bi bi-lock me-2"></i>
+                  <a href="/auth/login" class="text-decoration-none text-primary fw-bold">Login to like and share</a>
+                </p>
+              </div>
+            <% } %>
             
             <!-- Caption with Read More -->
             <div style="margin-bottom: 15px;">
@@ -74,6 +154,29 @@
             <div id="post-login-message" class="login-message text-center" style="display: none;">
               <p class="mb-0 text-muted">Please log in to like and share posts</p>
             </div>
+
+            <!-- Inline Comments Section -->
+            <div id="post-inline-comments-section" style="margin-top: 25px; border-top: 1px solid #333; padding-top: 20px;">
+              <h6 class="text-white mb-3"><i class="bi bi-chat-dots text-success me-2"></i> Comments (<span id="post-inline-comments-count">0</span>)</h6>
+              
+              <!-- Comments List -->
+              <div id="post-inline-comments-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding-right: 10px;">
+                <!-- Filled dynamically -->
+                <div class="text-center text-muted py-3">Loading comments...</div>
+              </div>
+
+              <!-- Add Comment Input -->
+              <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                <div class="d-flex gap-2">
+                  <input type="text" id="postViewerNewComment" class="form-control bg-dark text-white border-secondary" placeholder="Add a comment..." style="border-radius: 8px;">
+                  <button class="btn btn-success" id="submitPostViewerCommentBtn" style="border-radius: 8px;"><i class="bi bi-send"></i></button>
+                </div>
+              <% } else { %>
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                  <a href="/auth/login" class="text-info text-decoration-none">Login to add a comment</a>
+                </div>
+              <% } %>
+            </div>
             
           </div>
         </div>
@@ -82,3 +185,28 @@
     </div>
   </div>
 </div>
+
+<script>
+  window.currentUserId = "<%= (typeof currentUser !== 'undefined' && currentUser && (currentUser._id || currentUser.id)) ? (currentUser._id || currentUser.id).toString() : '' %>";
+</script>
+
+<!-- Report Modal -->
+<div class="modal fade" id="postViewerReportModal" tabindex="-1" style="z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white"><i class="bi bi-flag text-danger"></i> Report Post</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-white">Please tell us why you are reporting this post:</p>
+        <textarea id="postViewerReportReason" class="form-control bg-dark text-white border-secondary" rows="4" placeholder="Reason..."></textarea>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="submitPostViewerReportBtn">Submit Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+

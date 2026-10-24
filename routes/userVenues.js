@@ -11,6 +11,18 @@ const fs = require('fs');
 const { isLoggedIn } = require('../middleware/auth');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
 
+const getSessionUserId = (req) => {
+  if (!req || !req.session || !req.session.user) return null;
+  return String(req.session.user.id || req.session.user._id || '').trim() || null;
+};
+
+const isVenueOwnedBySessionUser = (venueDoc, req) => {
+  const sessionUserId = getSessionUserId(req);
+  if (!sessionUserId || !venueDoc) return false;
+  const ownerId = venueDoc.createdBy && (venueDoc.createdBy._id || venueDoc.createdBy);
+  return ownerId ? String(ownerId) === sessionUserId : false;
+};
+
 // Configure multer for venue image uploads (memory → Cloudinary)
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -37,13 +49,13 @@ router.get('/', isLoggedIn, async (req, res) => {
     // Get booking statistics for each venue
     const venuesWithStats = await Promise.all(venues.map(async (venue) => {
       const totalBookings = await Concert.countDocuments({ venue: venue._id });
-      const activeBookings = await Concert.countDocuments({ 
-        venue: venue._id, 
+      const activeBookings = await Concert.countDocuments({
+        venue: venue._id,
         status: 'approved',
         date: { $gte: new Date() }
       });
-      const pendingBookings = await Concert.countDocuments({ 
-        venue: venue._id, 
+      const pendingBookings = await Concert.countDocuments({
+        venue: venue._id,
         status: 'pending'
       });
 
@@ -199,12 +211,12 @@ router.get('/:id/bookings', isLoggedIn, async (req, res) => {
     const bookings = await Concert.find({
       venue: venue._id
     })
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name email' }
-    })
-    .sort({ date: 1, time: 1 })
-    .lean();
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email' }
+      })
+      .sort({ date: 1, time: 1 })
+      .lean();
 
     console.log('Found bookings:', bookings.length);
     if (bookings.length > 0) {
@@ -231,11 +243,11 @@ router.get('/:id/bookings', isLoggedIn, async (req, res) => {
 router.get('/:id/edit', async (req, res) => {
   try {
     const WebsiteSettings = require('../models/WebsiteSettings');
-    const venue = await Venue.findOne({ 
-      _id: req.params.id, 
-      owner: req.session.user._id 
+    const venue = await Venue.findOne({
+      _id: req.params.id,
+      owner: req.session.user._id
     });
-    
+
     if (!venue) {
       req.flash('error', 'Venue not found or you do not have permission to edit it');
       return res.redirect('/users/venues');
@@ -278,11 +290,11 @@ router.get('/:id/edit', async (req, res) => {
 router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
   try {
     const WebsiteSettings = require('../models/WebsiteSettings');
-    const venue = await Venue.findOne({ 
-      _id: req.params.id, 
-      owner: req.session.user._id 
+    const venue = await Venue.findOne({
+      _id: req.params.id,
+      owner: req.session.user._id
     });
-    
+
     if (!venue) {
       req.flash('error', 'Venue not found or you do not have permission to edit it');
       return res.redirect('/users/venues');
@@ -320,7 +332,7 @@ router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
           // Use admin default if user edit is disabled
           const commissionToUse = allowUserCommissionEdit ? (parseFloat(hourData.commissionPercentage) || defaultCommission) : defaultCommission;
           const commissionAmount = (rateValue * commissionToUse) / 100;
-          
+
           hourlyRatesArray.push({
             hours: parseInt(hourData.hours) || (i + 1),
             rate: rateValue,
@@ -333,10 +345,10 @@ router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
 
     // Process pricing data
     // Commission percentage: use submitted value if allowed, otherwise use admin default
-    const commissionPercentage = allowUserCommissionEdit 
-      ? (parseFloat(pricing.adminCommission?.percentage) || defaultCommission) 
+    const commissionPercentage = allowUserCommissionEdit
+      ? (parseFloat(pricing.adminCommission?.percentage) || defaultCommission)
       : defaultCommission;
-    
+
     const pricingData = {
       hourlyRates: hourlyRatesArray,
       minimumHours: parseInt(pricing.minimumHours) || 1,
@@ -474,7 +486,7 @@ router.post('/:id/edit', upload.array('newImages', 10), async (req, res) => {
 router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
   try {
     const { venueId, bookingId } = req.params;
-    
+
     // Verify venue ownership
     const venue = await Venue.findOne({
       _id: venueId,
@@ -491,11 +503,11 @@ router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
       _id: bookingId,
       venue: venueId
     })
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name email phone createdAt' }
-    })
-    .lean();
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email phone createdAt' }
+      })
+      .lean();
 
     if (!booking) {
       req.flash('error', 'Booking not found');
@@ -509,8 +521,8 @@ router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
     const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
       ? storedCommission
       : (booking.venueBooking?.isPaid && commissionPercentage > 0
-          ? (totalCost * commissionPercentage) / 100
-          : 0);
+        ? (totalCost * commissionPercentage) / 100
+        : 0);
     const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
     const totalArtistPaid = artistPaidDirect + commissionPaid;
     // Calculate total expected payment (venue cost + commission)
@@ -542,7 +554,111 @@ router.get('/:venueId/bookings/:bookingId', isLoggedIn, async (req, res) => {
   }
 });
 
-// PUT /users/venues/bookings/:id/status - Update booking status
+// GET /users/venues/:venueId/bookings/:bookingId/decide - Show specific booking decision page
+router.get('/:venueId/bookings/:bookingId/decide', isLoggedIn, async (req, res) => {
+  try {
+    const { venueId, bookingId } = req.params;
+
+    // Verify venue ownership
+    const venue = await Venue.findOne({
+      _id: venueId,
+      createdBy: req.session.user.id
+    });
+
+    if (!venue) {
+      req.flash('error', 'Venue not found or you do not have access to it');
+      return res.redirect('/users/venues');
+    }
+
+    // Get the specific booking
+    const booking = await Concert.findOne({
+      _id: bookingId,
+      venue: venueId
+    })
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email phone createdAt' }
+      })
+      .lean();
+
+    if (!booking) {
+      req.flash('error', 'Booking not found');
+      return res.redirect(`/users/venues/${venueId}/bookings`);
+    }
+
+    // Only allow decisions for pending bookings
+    if (booking.status !== 'pending') {
+      req.flash('info', `This booking is already ${booking.status}`);
+      return res.redirect(`/users/venues/${venueId}/bookings/${bookingId}`);
+    }
+
+    res.render('users/venues/booking-decision', {
+      layout: 'layouts/venue',
+      title: `Booking Decision - ${booking.title || 'Event'}`,
+      currentPath: '/users/venues',
+      currentUser: req.session.user,
+      venue,
+      booking,
+      user: req.session.user,
+      action: req.query.action || null
+    });
+  } catch (error) {
+    console.error('Error loading booking decision page:', error);
+    req.flash('error', 'Failed to load booking decision page');
+    res.redirect(`/users/venues/${req.params.venueId}/bookings/${req.params.bookingId}`);
+  }
+});
+
+// POST /users/venues/:venueId/bookings/:bookingId/decide - Handle booking decision
+router.post('/:venueId/bookings/:bookingId/decide', isLoggedIn, async (req, res) => {
+  try {
+    const { venueId, bookingId } = req.params;
+    const { action, reason } = req.body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      req.flash('error', 'Invalid action');
+      return res.redirect(`/users/venues/${venueId}/bookings/${bookingId}/decide`);
+    }
+
+    // Find the booking and verify venue ownership
+    const booking = await Concert.findById(bookingId).populate('venue');
+
+    if (!booking) {
+      req.flash('error', 'Booking not found');
+      return res.redirect(`/users/venues/${venueId}/bookings`);
+    }
+
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
+      req.flash('error', 'You do not have permission to update this booking');
+      return res.redirect('/users/venues');
+    }
+
+    if (booking.status !== 'pending') {
+      req.flash('error', 'This booking has already been processed');
+      return res.redirect(`/users/venues/${venueId}/bookings/${bookingId}`);
+    }
+
+    // Update status
+    if (action === 'approve') {
+      booking.status = 'approved';
+    } else {
+      booking.status = 'rejected';
+      booking.rejectionReason = reason || 'Venue owner declined the booking.';
+    }
+
+    booking.venueApprovedAt = new Date();
+    booking.venueApprovedBy = req.session.user.id;
+
+    await booking.save();
+
+    req.flash('success', `Booking has been ${action}ed successfully!`);
+    res.redirect(`/users/venues/${venueId}/bookings/${bookingId}`);
+  } catch (error) {
+    console.error('Error processing booking decision:', error);
+    req.flash('error', 'Failed to process booking decision');
+    res.redirect(`/users/venues/${req.params.venueId}/bookings/${req.params.bookingId}/decide`);
+  }
+});
 router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
   try {
     const { status } = req.body;
@@ -558,7 +674,7 @@ router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
 
     // Find the booking and verify ownership
     const booking = await Concert.findById(bookingId).populate('venue');
-    
+
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -567,7 +683,7 @@ router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
     }
 
     // Check if user owns the venue
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to update this booking'
@@ -586,7 +702,12 @@ router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
     booking.status = status;
     booking.venueApprovedAt = new Date();
     booking.venueApprovedBy = req.session.user.id;
-    
+
+    // Add rejection reason if provided
+    if (status === 'rejected' && req.body.rejectionReason) {
+      booking.rejectionReason = req.body.rejectionReason;
+    }
+
     await booking.save();
 
     res.json({
@@ -595,7 +716,8 @@ router.put('/bookings/:id/status', isLoggedIn, async (req, res) => {
       booking: {
         id: booking._id,
         status: booking.status,
-        venueApprovedAt: booking.venueApprovedAt
+        venueApprovedAt: booking.venueApprovedAt,
+        rejectionReason: booking.rejectionReason
       }
     });
   } catch (error) {
@@ -619,14 +741,14 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
         path: 'artist',
         populate: { path: 'user', select: 'name email' }
       });
-    
+
     if (!booking) {
       req.flash('error', 'Booking not found');
       return res.redirect('back');
     }
 
     // Check if user owns the venue
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to access this booking');
       return res.redirect('back');
     }
@@ -641,19 +763,19 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
     const totalVenueCost = booking.venueBooking?.totalVenueCost || 0;
     const commissionPercentage = booking.venueBooking?.adminCommission?.percentage || 0;
     const commissionAmount = (totalVenueCost * commissionPercentage) / 100;
-    
+
     // Get actual commission paid from database
     const storedCommission = booking.venueBooking?.adminCommission?.advanceAmount;
-    const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0 
-      ? storedCommission 
+    const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
+      ? storedCommission
       : 0;
-    
+
     // Get actual artist direct payment from database
     const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
-    
+
     // Total paid by artist (commission + direct payment)
     const totalArtistPaid = commissionPaid + artistPaidDirect;
-    
+
     // Remaining is the total cost minus total paid
     const remainingBalance = Math.max(totalVenueCost - totalArtistPaid, 0);
 
@@ -862,7 +984,7 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
                 </div>
                 <div class="info-item">
                   <div class="info-label">Event Date</div>
-                  <div class="info-value"><strong>${new Date(booking.date).toLocaleDateString('en-IN', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</strong></div>
+                  <div class="info-value"><strong>${new Date(booking.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong></div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Event Time</div>
@@ -949,15 +1071,15 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
                   </tr>
                   <tr style="background: #e3f2fd;">
                     <td><strong>Commission Amount (Paid by Artist)</strong></td>
-                    <td style="text-align: right; color: #1976d2; font-weight: bold;">✓ ₹${commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #1976d2; font-weight: bold;">✓ ₹${commissionPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
                   <tr style="background: #fff3e0;">
                     <td><strong>Additional Artist Payment</strong></td>
-                    <td style="text-align: right; color: #e65100; font-weight: bold;">₹${artistPaidDirect.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #e65100; font-weight: bold;">₹${artistPaidDirect.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
                   <tr style="background: #f3e5f5;">
                     <td><strong>Remaining Balance (To Venue Owner)</strong></td>
-                    <td style="text-align: right; color: #7b1fa2; font-weight: bold;">₹${remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #7b1fa2; font-weight: bold;">₹${remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   </tr>
                 </tbody>
               </table>
@@ -969,19 +1091,19 @@ router.get('/bookings/:id/receipt', isLoggedIn, async (req, res) => {
                 </div>
                 <div class="summary-row">
                   <span>Commission % Paid:</span>
-                  <span class="amount">✓ ₹${commissionPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                  <span class="amount">✓ ₹${commissionPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div class="summary-row">
                   <span>Additional Artist Payment:</span>
-                  <span class="amount">₹${artistPaidDirect.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                  <span class="amount">₹${artistPaidDirect.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div class="summary-row">
                   <span>Total Paid by Artist:</span>
-                  <span class="amount">₹${totalArtistPaid.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                  <span class="amount">₹${totalArtistPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div class="summary-row">
                   <span>Remaining Balance:</span>
-                  <span class="amount">₹${remainingBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                  <span class="amount">₹${remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -1100,12 +1222,12 @@ router.get('/:venueId/revenue-analytics', isLoggedIn, async (req, res) => {
       venue: venue._id,
       status: { $in: ['approved', 'confirmed'] }
     })
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name email' }
-    })
-    .sort({ date: -1 })
-    .lean();
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email' }
+      })
+      .sort({ date: -1 })
+      .lean();
 
     // Apply filters in-memory for consistency with populated data
     const filteredBookings = allBookings.filter(booking => {
@@ -1142,8 +1264,8 @@ router.get('/:venueId/revenue-analytics', isLoggedIn, async (req, res) => {
       const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
         ? storedCommission
         : (booking.venueBooking?.isPaid && commissionPercentage > 0
-            ? (totalCost * commissionPercentage) / 100
-            : 0);
+          ? (totalCost * commissionPercentage) / 100
+          : 0);
 
       const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
       const artistPaidTotal = artistPaidDirect + commissionPaid;
@@ -1210,7 +1332,7 @@ router.get('/bookings/:id/edit-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
@@ -1221,8 +1343,8 @@ router.get('/bookings/:id/edit-payment', isLoggedIn, async (req, res) => {
     const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
       ? storedCommission
       : (booking.venueBooking?.isPaid && commissionPercentage > 0
-          ? (totalCost * commissionPercentage) / 100
-          : 0);
+        ? (totalCost * commissionPercentage) / 100
+        : 0);
 
     const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
     const artistPaidTotal = artistPaidDirect + commissionPaid;
@@ -1279,7 +1401,7 @@ router.get('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
@@ -1290,14 +1412,14 @@ router.get('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
     const commissionPaid = Number.isFinite(storedCommission) && storedCommission > 0
       ? storedCommission
       : (booking.venueBooking?.isPaid && commissionPercentage > 0
-          ? (totalCost * commissionPercentage) / 100
-          : 0);
+        ? (totalCost * commissionPercentage) / 100
+        : 0);
 
     const artistPaidDirect = booking.venueBooking?.amountPaidByArtist || 0;
-    
+
     // Validation: amount cannot exceed total cost
     if (newAmount > totalCost) {
-      req.flash('error', `Amount cannot exceed total venue cost of ₹${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+      req.flash('error', `Amount cannot exceed total venue cost of ₹${totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
       return res.redirect(`/users/venues/bookings/${booking._id}/edit-payment?returnTo=${encodeURIComponent(returnTo)}`);
     }
 
@@ -1348,19 +1470,19 @@ router.post('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
       return res.redirect('/users/venues');
     }
 
-    if (booking.venue?.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       req.flash('error', 'You do not have permission to edit this booking payment');
       return res.redirect('/users/venues');
     }
 
     const totalCost = booking.venueBooking?.totalVenueCost || 0;
-    
+
     // Validation: amount cannot exceed total cost
     if (amount > totalCost) {
-      req.flash('error', `Amount cannot exceed total venue cost of ₹${totalCost.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+      req.flash('error', `Amount cannot exceed total venue cost of ₹${totalCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
       return res.redirect(`/users/venues/bookings/${booking._id}/edit-payment?returnTo=${encodeURIComponent(returnTo)}`);
     }
-    
+
     booking.venueBooking.amountPaidByArtist = Math.min(amount, totalCost);
 
     const commissionPct = booking.venueBooking?.adminCommission?.percentage || 0;
@@ -1368,8 +1490,8 @@ router.post('/bookings/:id/confirm-payment', isLoggedIn, async (req, res) => {
     const commissionPaid = Number.isFinite(existingAdvance) && existingAdvance > 0
       ? existingAdvance
       : (booking.venueBooking?.isPaid && commissionPct > 0
-          ? (totalCost * commissionPct) / 100
-          : 0);
+        ? (totalCost * commissionPct) / 100
+        : 0);
 
     if (booking.venueBooking?.adminCommission) {
       booking.venueBooking.adminCommission.advanceAmount = commissionPaid;
@@ -1410,7 +1532,7 @@ router.put('/bookings/:id/update-payment', isLoggedIn, async (req, res) => {
     }
 
     // Verify venue ownership
-    if (booking.venue.createdBy.toString() !== req.session.user.id) {
+    if (!isVenueOwnedBySessionUser(booking.venue, req)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to update this booking'
@@ -1426,8 +1548,8 @@ router.put('/bookings/:id/update-payment', isLoggedIn, async (req, res) => {
     const commissionPaid = Number.isFinite(existingAdvance) && existingAdvance > 0
       ? existingAdvance
       : (booking.venueBooking?.isPaid && commissionPct > 0
-          ? (totalCost * commissionPct) / 100
-          : 0);
+        ? (totalCost * commissionPct) / 100
+        : 0);
 
     // Persist derived commission so future analytics stay consistent
     if (booking.venueBooking?.adminCommission) {

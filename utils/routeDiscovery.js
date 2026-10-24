@@ -12,7 +12,8 @@ const STATIC_ROUTES = {
     concerts: { path: '/concerts', name: 'Concerts', icon: 'bi-music-note-beamed' },
     daily_concerts: { path: '/daily-concerts', name: 'Daily Concerts', icon: 'bi-calendar-event' },
     artists: { path: '/artists', name: 'Artists', icon: 'bi-people' },
-    learning: { path: '/learning', name: 'Learning', icon: 'bi-book' }
+    learning: { path: '/learning', name: 'Learning', icon: 'bi-book' },
+    job_portal: { path: '/users/job-portal', name: 'Job Portal', icon: 'bi-briefcase' }
   },
 
   // Services Menu
@@ -38,7 +39,9 @@ const STATIC_ROUTES = {
     subscription_policy: { path: '/subscription-policy', name: 'Subscription Policy', icon: 'bi-file-earmark-text' },
     shopping_policy: { path: '/shopping-policy', name: 'Shopping Policy', icon: 'bi-cart-check' },
     event_attending_policy: { path: '/event-attending-policy', name: 'Event Attending Policy', icon: 'bi-ticket-perforated' },
-    account_reactivation: { path: '/account-reactivation', name: 'Account Reactivation', icon: 'bi-person-plus' }
+    temp_email_policy: { path: '/temp-email-policy', name: 'Temp Email Policy', icon: 'bi-envelope-exclamation' },
+    account_reactivation: { path: '/account-reactivation', name: 'Account Reactivation', icon: 'bi-person-plus' },
+    faq: { path: '/faq', name: 'FAQ', icon: 'bi-question-circle' }
   }
 };
 
@@ -152,7 +155,8 @@ function getNavbarMenuSettings(menuSettings) {
         concerts: items.concerts || false,
         dailyConcerts: items.daily_concerts || false, // Map daily_concerts -> dailyConcerts
         artists: items.artists || false,
-        learning: items.learning || false
+        learning: items.learning || false,
+        jobPortal: items.job_portal || false // Map job_portal -> jobPortal
       };
     }
 
@@ -187,7 +191,9 @@ function getNavbarMenuSettings(menuSettings) {
         subscriptionPolicy: items.subscription_policy || false, // Map subscription_policy -> subscriptionPolicy
         shoppingPolicy: items.shopping_policy || false, // Map shopping_policy -> shoppingPolicy
         eventAttendingPolicy: items.event_attending_policy || false, // Map event_attending_policy -> eventAttendingPolicy
-        accountReactivation: items.account_reactivation || false // Map account_reactivation -> accountReactivation
+        tempEmailPolicy: items.temp_email_policy || false, // Map temp_email_policy -> tempEmailPolicy
+        accountReactivation: items.account_reactivation || false, // Map account_reactivation -> accountReactivation
+        faq: items.faq || false // Map faq -> faq
       };
     }
 

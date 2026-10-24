@@ -1,0 +1,233 @@
+<%- contentFor('body') %>
+
+<div class="container-fluid py-4">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-4">
+      <li class="breadcrumb-item"><a href="/users/venues">My Venues</a></li>
+      <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>"><%= venue.name %></a></li>
+      <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>/bookings">Bookings</a></li>
+      <li class="breadcrumb-item"><a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>">Booking Details</a></li>
+      <li class="breadcrumb-item active">Decision</li>
+    </ol>
+  </nav>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-dark text-white p-4">
+          <div class="d-flex align-items-center">
+            <div class="bg-primary rounded-circle p-3 me-3">
+              <i class="bi bi-shield-check fs-3 text-white"></i>
+            </div>
+            <div>
+              <h2 class="h4 fw-bold mb-0">Booking Decision Panel</h2>
+              <p class="text-white-50 small mb-0">Review and decide on the proposed concert event</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Summary Box -->
+          <div class="bg-light rounded-4 p-4 mb-4 border" style="color: #000000 !important;">
+            <div class="row">
+              <div class="col-md-6 border-end">
+                <h6 class="text-uppercase fw-bold mb-3" style="color: #666666 !important;">Event Details</h6>
+                <div class="mb-3">
+                  <h5 class="fw-bold mb-1" style="color: #000000 !important;"><%= booking.title || 'Untitled Event' %></h5>
+                  <p class="mb-0" style="color: #333333 !important;"><%= booking.eventType || 'Live Concert' %></p>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <i class="bi bi-calendar-event me-2 text-primary"></i>
+                  <span style="color: #000000 !important;"><%= toISTDateString(booking.date) %></span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-clock me-2 text-primary"></i>
+                  <span style="color: #000000 !important;"><%= booking.time %> (<%= booking.venueBooking?.bookingHours %> hours)</span>
+                </div>
+              </div>
+              <div class="col-md-6 ps-md-4">
+                <h6 class="text-uppercase fw-bold mb-3" style="color: #666666 !important;">Artist Information</h6>
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-info bg-opacity-10 text-info rounded-circle p-2 me-2">
+                    <i class="bi bi-person-fill"></i>
+                  </div>
+                  <div>
+                    <p class="fw-bold mb-0" style="color: #000000 !important;"><%= booking.artist?.stageName || 'Artist Name' %></p>
+                    <p class="small mb-0" style="color: #555555 !important;"><%= booking.artist?.genre || 'Genre not specified' %></p>
+                  </div>
+                </div>
+                <% if (booking.artist?.user) { %>
+                  <p class="small mb-1" style="color: #000000 !important;"><i class="bi bi-envelope me-2 text-primary"></i><%= booking.artist.user.email %></p>
+                  <p class="small mb-0" style="color: #000000 !important;"><i class="bi bi-telephone me-2 text-primary"></i><%= booking.artist.user.phone || 'No phone provided' %></p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <form action="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>/decide" method="POST" id="decisionForm">
+            <input type="hidden" name="action" id="decisionAction" value="<%= action || '' %>">
+            
+            <% if (!action) { %>
+              <!-- Main Action Buttons (Only shown if no action specified in URL) -->
+              <div id="mainActions" class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <button type="button" class="btn btn-outline-success w-100 py-4 rounded-4 shadow-sm action-btn-large" onclick="showSection('approve')">
+                    <i class="bi bi-check-circle fs-2 d-block mb-2"></i>
+                    <span class="fw-bold fs-5">Accept Booking</span>
+                  </button>
+                </div>
+                <div class="col-md-6">
+                  <button type="button" class="btn btn-outline-danger w-100 py-4 rounded-4 shadow-sm action-btn-large" onclick="showSection('reject')">
+                    <i class="bi bi-x-circle fs-2 d-block mb-2"></i>
+                    <span class="fw-bold fs-5">Reject Booking</span>
+                  </button>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- Approval Confirmation View -->
+            <div id="approvalSection" class="<%= action === 'approve' ? '' : 'd-none' %>">
+              <div class="card border-success bg-success bg-opacity-10 rounded-4 mb-4 text-center">
+                <div class="card-body p-5">
+                  <div class="bg-success text-white rounded-circle d-inline-flex p-3 mb-4">
+                    <i class="bi bi-check-lg fs-1"></i>
+                  </div>
+                  <h3 class="fw-bold text-success mb-3">Approve Booking?</h3>
+                  <p class="text-dark mb-5 fs-5">You are approving the booking for <strong><%= booking.title %></strong>.<br>This will establish a confirmed agreement with the artist.</p>
+                  
+                  <div class="d-grid gap-3">
+                    <button type="submit" class="btn btn-success btn-lg rounded-pill py-3 fw-bold fs-4 shadow" onclick="setAction('approve')">
+                      Confirm Approval
+                    </button>
+                    <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>" class="btn btn-link text-secondary text-decoration-none mt-3">
+                      Cancel and Go Back
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rejection Reason View -->
+            <div id="rejectionSection" class="<%= action === 'reject' ? '' : 'd-none' %>">
+              <div class="card border-danger bg-danger bg-opacity-10 rounded-4 mb-4">
+                <div class="card-body p-4">
+                  <div class="d-flex align-items-center mb-4">
+                    <div class="bg-danger text-white rounded-circle p-2 me-3">
+                      <i class="bi bi-x-lg fs-4"></i>
+                    </div>
+                    <h4 class="fw-bold text-danger mb-0">Reject Booking</h4>
+                  </div>
+                  
+                  <div class="mb-4">
+                    <label for="reason" class="form-label fw-bold text-danger fs-5">Please state the reason for rejection</label>
+                    <textarea class="form-control border-danger-subtle rounded-3 p-3" 
+                              name="reason" id="reason" rows="4" 
+                              placeholder="e.g., Venue already booked, Maintenance scheduled, etc." 
+                              <%= action === 'reject' ? 'required' : '' %>></textarea>
+                    <div class="form-text text-danger-emphasis mt-2">The artist will receive this reason.</div>
+                  </div>
+
+                  <div class="d-grid gap-3">
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill py-3 fw-bold fs-5 shadow" onclick="setAction('reject')">
+                      Send Rejection
+                    </button>
+                    <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>" class="btn btn-link text-secondary text-decoration-none text-center">
+                      Cancel and Go Back
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <% if (!action) { %>
+              <div class="text-center mt-3" id="cancelLink">
+                <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>" class="btn btn-link text-secondary text-decoration-none">
+                  Back to Details
+                </a>
+              </div>
+            <% } %>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const mainActions = document.getElementById('mainActions');
+  const approvalSection = document.getElementById('approvalSection');
+  const rejectionSection = document.getElementById('rejectionSection');
+  const decisionAction = document.getElementById('decisionAction');
+  const reasonInput = document.getElementById('reason');
+  const cancelLink = document.getElementById('cancelLink');
+
+  const form = document.getElementById('decisionForm');
+
+  window.showSection = function(action) {
+    document.getElementById('mainActions').classList.add('d-none');
+    document.getElementById('cancelLink').classList.add('d-none');
+    
+    if (action === 'approve') {
+      document.getElementById('approvalSection').classList.remove('d-none');
+      decisionAction.value = 'approve';
+    } else {
+      document.getElementById('rejectionSection').classList.remove('d-none');
+      decisionAction.value = 'reject';
+      reasonInput.required = true;
+    }
+  };
+
+  window.setAction = function(action) {
+    decisionAction.value = action;
+  };
+
+  form.addEventListener('submit', function(e) {
+    if (decisionAction.value === 'reject' && !reasonInput.value.trim()) {
+      alert('Please provide a reason for rejection.');
+      e.preventDefault();
+      return;
+    }
+    
+    const btn = e.submitter;
+    if (btn) {
+      btn.disabled = true;
+    }
+  });
+});
+</script>
+
+<style>
+.action-btn {
+  color: #333333 !important;
+  opacity: 0.7;
+}
+.action-btn:hover {
+  color: #000000 !important;
+  opacity: 1;
+}
+.btn-outline-success.action-btn {
+  color: #198754 !important;
+}
+.btn-outline-danger.action-btn {
+  color: #dc3545 !important;
+}
+.btn-check:checked + .btn-outline-success.action-btn {
+  background-color: #198754 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 15px rgba(25, 135, 84, 0.4);
+}
+.btn-check:checked + .btn-outline-danger.action-btn {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+.rounded-4 { border-radius: 1rem !important; }
+.card { transition: all 0.3s ease; }
+.btn-group .btn { 
+  transition: all 0.2s ease;
+}
+</style>

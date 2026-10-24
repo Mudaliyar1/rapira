@@ -49,7 +49,11 @@
         } else if (booking.status === 'rejected') {
           alertClass = 'danger';
           statusIcon = 'x-circle';
-          statusMessage = 'This booking has been rejected';
+          statusMessage = 'This booking has been rejected' + (booking.rejectionReason ? `: ${booking.rejectionReason}` : '');
+        } else if (booking.status === 'cancelled') {
+          alertClass = 'secondary';
+          statusIcon = 'dash-circle';
+          statusMessage = 'This booking has been cancelled' + (booking.rejectionReason ? `: ${booking.rejectionReason}` : '');
         }
       %>
       <div class="alert alert-<%= alertClass %> d-flex align-items-center">
@@ -369,17 +373,21 @@
         </div>
         <div class="card-body">
           <% if (booking.status === 'pending') { %>
-            <div class="d-grid gap-2 mb-3">
-              <button class="btn btn-success" onclick="updateBookingStatus('<%= booking._id %>', 'approved')">
-                <i class="bi bi-check-lg me-1"></i>Approve Booking
-              </button>
-              <button class="btn btn-danger" onclick="updateBookingStatus('<%= booking._id %>', 'rejected')">
-                <i class="bi bi-x-lg me-1"></i>Reject Booking
-              </button>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>/decide?action=approve" class="btn btn-success w-100 rounded-pill py-3">
+                  <i class="bi bi-check-lg me-1"></i>Approve
+                </a>
+              </div>
+              <div class="col-6">
+                <a href="/users/venues/<%= venue._id %>/bookings/<%= booking._id %>/decide?action=reject" class="btn btn-danger w-100 rounded-pill py-3">
+                  <i class="bi bi-x-lg me-1"></i>Reject
+                </a>
+              </div>
             </div>
           <% } else if (booking.status === 'approved') { %>
             <div class="d-grid gap-2 mb-3">
-              <a href="/users/venues/bookings/<%= booking._id %>/receipt" class="btn btn-outline-primary">
+              <a href="/users/venues/bookings/<%= booking._id %>/receipt" class="btn btn-outline-primary rounded-pill">
                 <i class="bi bi-download me-1"></i>Download Receipt
               </a>
             </div>
@@ -402,51 +410,7 @@
   </div>
 </div>
 
-<!-- Status Update Script -->
-<script>
-function updateBookingStatus(bookingId, newStatus) {
-  const statusText = newStatus === 'approved' ? 'approve' : newStatus === 'rejected' ? 'reject' : 'cancel';
-  
-  if (confirm(`Are you sure you want to ${statusText} this booking?`)) {
-    // Show loading state
-    const buttons = document.querySelectorAll(`button[onclick*="${bookingId}"]`);
-    buttons.forEach(btn => {
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-    });
 
-    fetch(`/users/venues/bookings/${bookingId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Show success message and reload
-        alert(`Booking has been ${statusText}ed successfully!`);
-        window.location.reload();
-      } else {
-        alert('Error updating booking status: ' + (data.message || 'Unknown error'));
-        // Restore buttons
-        buttons.forEach(btn => {
-          btn.disabled = false;
-        });
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error updating booking status. Please try again.');
-      // Restore buttons
-      buttons.forEach(btn => {
-        btn.disabled = false;
-      });
-    });
-  }
-}
-</script>
 
 <style>
 .card {
@@ -545,7 +509,6 @@ function savePaymentUpdate() {
 
   const btn = event.target;
   btn.disabled = true;
-  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
 
   fetch(`/users/venues/bookings/${currentBookingId}/update-payment`, {
     method: 'PUT',
@@ -577,14 +540,15 @@ function savePaymentUpdate() {
     } else {
       alert('Error: ' + data.message);
       btn.disabled = false;
-      btn.innerHTML = 'Update Payment';
     }
   })
   .catch(error => {
     console.error('Error:', error);
     alert('Failed to update payment');
     btn.disabled = false;
-    btn.innerHTML = 'Update Payment';
   });
 }
+// Finalize payment update script remains here
 </script>
+
+

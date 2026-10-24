@@ -1,0 +1,296 @@
+<%- include('../partials/artist-header') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/artist-distribution/distributors" class="text-primary text-decoration-none">Distributors</a></li>
+          <li class="breadcrumb-item active text-white-50" aria-current="page">Package Details</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Package Details Card -->
+    <div class="col-lg-5">
+      <div class="card bg-dark border-secondary shadow-lg h-100">
+        <div class="card-header border-secondary p-4 text-center">
+            <h4 class="fw-bold text-white mb-2"><%= cartPackage.name %></h4>
+            <div class="text-white-50 small mb-3">Distributor: <%= cartPackage.distributor.name %></div>
+            <h2 class="text-primary display-6 fw-bold mb-0">₹<%= cartPackage.price %></h2>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-white-50"><%= cartPackage.description || 'No description provided.' %></p>
+            
+            <h6 class="text-white fw-bold mb-2">Target Platforms:</h6>
+            <div class="d-flex flex-wrap gap-1 mb-4">
+              <% cartPackage.platforms.forEach(plat => { %>
+                <span class="badge bg-secondary text-white border border-secondary"><%= plat %></span>
+              <% }); %>
+            </div>
+
+            <h6 class="text-white fw-bold mb-2">File Upload Limits:</h6>
+            <ul class="list-unstyled text-white-50 small mb-4">
+                <li class="mb-1"><i class="bi bi-info-circle me-2 text-primary"></i>Allowed Content: <strong class="text-white">Audio Only</strong></li>
+                <li class="mb-1"><i class="bi bi-music-note-beamed me-2 text-primary"></i>Max Audio Files: <strong class="text-white"><%= cartPackage.maxAudioFiles || 0 %></strong></li>
+            </ul>
+
+            <h6 class="text-white fw-bold mb-2">Package Features:</h6>
+            <ul class="list-unstyled text-white-50 small">
+              <% cartPackage.features.forEach(feat => { %>
+                <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i><%= feat %></li>
+              <% }); %>
+            </ul>
+        </div>
+        <div class="card-footer border-secondary p-4 bg-transparent">
+            <div class="d-flex justify-content-between text-white-50 small mb-1">
+                <span>Base Price:</span>
+                <span>₹<%= cartPackage.price.toFixed(2) %></span>
+            </div>
+            <% if (cartPackage.price > 0) { %>
+            <div class="d-flex justify-content-between text-white-50 small mb-3">
+                <span>Platform Fee (<%= commissionPerc %>%):</span>
+                <span>₹<%= ((cartPackage.price * commissionPerc) / 100).toFixed(2) %></span>
+            </div>
+            <% } %>
+            <div class="d-flex justify-content-between text-white fw-bold fs-5 pt-3 border-top border-secondary">
+                <span>Total Payable:</span>
+                <% if (cartPackage.price > 0) { %>
+                  <span class="text-success">₹<%= (cartPackage.price + ((cartPackage.price * commissionPerc) / 100)).toFixed(2) %></span>
+                <% } else { %>
+                  <span class="text-success text-uppercase fw-bolder">FREE</span>
+                <% } %>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Form Card -->
+    <div class="col-lg-7">
+      <div class="card bg-dark border-secondary shadow-lg h-100">
+        <div class="card-header border-secondary p-4">
+          <h5 class="fw-bold text-white mb-0"><i class="bi bi-cloud-arrow-up me-2"></i>Submit Your Content</h5>
+        </div>
+        <div class="card-body p-4">
+          <% if (success && success.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <%= success %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+          <% if (error && error.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <%= error %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% } %>
+          
+          <form action="/artist-distribution/request/<%= cartPackage._id %>" method="POST" enctype="multipart/form-data" id="distributionForm">
+            <div class="row g-3 mb-4">
+              <div class="col-md-12">
+                <label class="form-label text-white fw-bold">Release Title *</label>
+                <input type="text" name="contentTitle" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Midnight Vibes EP" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Primary Artist(s) *</label>
+                <input type="text" name="primaryArtist" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Jane Doe" required>
+              </div>
+              
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Featured Artist(s) (Optional)</label>
+                <input type="text" name="featuredArtists" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., John Smith, DJ Khaled">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Genre *</label>
+                <input type="text" name="genre" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Hip Hop / Rap" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Language</label>
+                <input type="text" name="language" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., English, Hindi" value="English">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label text-white fw-bold">Release Date *</label>
+                <input type="date" name="releaseDate" class="form-control bg-dark border-secondary text-white py-2" required>
+              </div>
+              
+              <div class="col-md-6 d-flex align-items-center">
+                <div class="form-check form-switch mt-4">
+                  <input class="form-check-input" type="checkbox" name="explicitContent" id="explicitContentCheck">
+                  <label class="form-check-label text-white fw-bold" for="explicitContentCheck">Explicit Content (Contains profanity)</label>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Record Label (Optional)</label>
+                <input type="text" name="recordLabel" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Independent">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Copyright Year</label>
+                <input type="number" name="copyrightYear" class="form-control bg-dark border-secondary text-white py-2" value="<%= new Date().getFullYear() %>">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label text-white fw-bold">Copyright Owner</label>
+                <input type="text" name="copyrightOwner" class="form-control bg-dark border-secondary text-white py-2" placeholder="e.g., Jane Doe">
+              </div>
+            </div>
+
+            <div class="mb-4 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
+              <label class="form-label text-white fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-music-note-beamed me-2 text-info"></i>Audio Files</span>
+                <span class="badge bg-secondary">Max <%= cartPackage.maxAudioFiles %></span>
+              </label>
+              <input type="file" name="audioFiles" class="form-control bg-dark border-secondary text-white" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg,.aac,.wma,.aiff,.alac,.mpeg,.mp4a,.3gp,.mid,.midi,.x-vlc-plugin" multiple id="audioInput">
+              <div class="form-text text-white-50 small mt-2">Hold Ctrl/Cmd to select multiple files. Allowed: MP3, WAV, FLAC, M4A, OGG, AAC, WMA, AIFF, ALAC, MPEG, MP4A, 3GP, MID. Virtually any audio format is supported.</div>
+              <div id="audioError" class="text-danger small mt-1 d-none">You selected more audio files than the package allows!</div>
+            </div>
+
+
+
+            <div class="mb-5 p-3 border border-secondary rounded-3" style="background: rgba(255,255,255,0.02);">
+              <label class="form-label text-white fw-bold"><i class="bi bi-image me-2 text-warning"></i>Cover Art / Poster (Optional)</label>
+              <input type="file" name="posterImage" class="form-control bg-dark border-secondary text-white" accept="image/*">
+              <div class="form-text text-white-50 small mt-2">Recommended: 3000x3000px JPG/PNG. Represents your release globally.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold" id="submitBtn">
+              <i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? 'Confirm Upload & Proceed to Payment' : 'Confirm Free Upload' %>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const maxAudios = parseInt('<%= cartPackage.maxAudioFiles || 0 %>');
+  const maxVideos = parseInt('<%= cartPackage.maxVideoFiles || 0 %>');
+  
+  const form = document.getElementById('distributionForm');
+  const audioInput = document.getElementById('audioInput');
+  const videoInput = document.getElementById('videoInput');
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (audioInput) {
+      audioInput.addEventListener('change', function() {
+          const count = this.files.length;
+          const error = document.getElementById('audioError');
+          if (count > maxAudios) {
+              error.classList.remove('d-none');
+              this.value = ''; // Reset
+          } else {
+              error.classList.add('d-none');
+          }
+      });
+  }
+
+  form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Validate at least one file is selected
+      let hasAudio = audioInput && audioInput.files.length > 0;
+      
+      if (!hasAudio) {
+          alert('You must upload at least one music file to use this package.');
+          return false;
+      }
+      
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading Files... Please stay on this page.';
+
+      try {
+          const formData = new FormData(form);
+          const res = await fetch(form.action, {
+              method: 'POST',
+              body: formData
+          });
+          const data = await res.json();
+          
+          if (!data.success) {
+              alert(data.message || 'Error submitting distribution request');
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+              return;
+          }
+
+          // If FREE distribution
+          if (data.isFree) {
+              alert('Files uploaded successfully! Your distribution request is now with the distributor.');
+              window.location.href = '/artist-distribution/history';
+              return;
+          }
+
+          // If PAID - open Razorpay automatically
+          if (data.order && data.razorpayKeyId) {
+              const options = {
+                  key: data.razorpayKeyId,
+                  amount: data.amount,
+                  currency: "INR",
+                  name: "Rapira Music Platform",
+                  description: "Distribution Upload & Payment",
+                  order_id: data.order.id,
+                  handler: async function(response) {
+                      try {
+                          const verifyRes = await fetch('/artist-distribution/verify-payment/' + data.requestId, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  razorpay_payment_id: response.razorpay_payment_id,
+                                  razorpay_order_id: response.razorpay_order_id,
+                                  razorpay_signature: response.razorpay_signature
+                              })
+                          });
+                          const verifyData = await verifyRes.json();
+                          if (verifyData.success) {
+                              alert('Payment successful! Your distribution request is now with the distributor.');
+                              // Ensure redirect happens with a small delay for mobile compatibility
+                              setTimeout(function() {
+                                  window.location.href = '/artist-distribution/history';
+                              }, 500);
+                          } else {
+                              alert(verifyData.message || 'Payment verification failed');
+                              submitBtn.disabled = false;
+                              submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+                          }
+                      } catch(err) {
+                          console.error('Verify error:', err);
+                          alert('Error verifying payment.');
+                          submitBtn.disabled = false;
+                          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+                      }
+                  },
+                  prefill: {
+                      name: "<%= currentUser.name %>",
+                      email: "<%= currentUser.email %>"
+                  },
+                  theme: { color: "#6f42c1" },
+                  modal: {
+                      ondismiss: function() {
+                          submitBtn.disabled = false;
+                          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> Confirm Upload & Proceed to Payment';
+                      }
+                  }
+              };
+              
+              const rzp = new Razorpay(options);
+              rzp.open();
+          }
+      } catch(error) {
+          console.error('Submit error:', error);
+          alert('Error uploading files. Please try again.');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-rocket-takeoff me-2"></i> <%= cartPackage.price > 0 ? "Confirm Upload & Proceed to Payment" : "Confirm Free Upload" %>';
+      }
+  });
+</script>
+
+<%- include('../partials/artist-footer') %>

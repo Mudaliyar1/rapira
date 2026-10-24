@@ -1,4 +1,5 @@
 const axios = require('axios');
+const WebsiteSettings = require('../models/WebsiteSettings');
 
 // Get Brevo API key from environment variables
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -10,6 +11,115 @@ if (!BREVO_API_KEY) {
 
 // Determine if we're in production mode
 const isProduction = process.env.NODE_ENV === 'production';
+
+let _cachedEmailLinks = null;
+let _emailLinksCacheExpiry = 0;
+
+function normalizeBaseDomain(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, '');
+}
+
+async function loadEmailLinks() {
+  const now = Date.now();
+  if (_cachedEmailLinks && now <= _emailLinksCacheExpiry) {
+    return _cachedEmailLinks;
+  }
+
+  const settings = await WebsiteSettings.getSettings();
+  _cachedEmailLinks = (settings && settings.emailLinks)
+    ? (settings.emailLinks.toObject ? settings.emailLinks.toObject() : settings.emailLinks)
+    : {};
+  _emailLinksCacheExpiry = now + 60000;
+  return _cachedEmailLinks;
+}
+
+function clearBrevoEmailLinksCache() {
+  _cachedEmailLinks = null;
+  _emailLinksCacheExpiry = 0;
+}
+
+function replaceKnownBaseDomains(content, baseDomain) {
+  if (!content || !baseDomain) return content;
+
+  const knownBases = [
+    process.env.BASE_URL,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ]
+    .filter(Boolean)
+    .map(v => String(v).trim().replace(/\/+$/, ''));
+
+  let result = content;
+  for (const base of [...new Set(knownBases)]) {
+    result = result.split(base).join(baseDomain);
+  }
+  return result;
+}
+
+const STATIC_LINK_MAP = [
+  ['/auth/login', 'loginUrl'],
+  ['/account-reactivation', 'accountReactivationUrl'],
+  ['/artists/dashboard', 'artistDashboardUrl'],
+  ['/artist-applications/admin', 'artistApplicationReviewUrl'],
+  ['/subscriptions/my-subscriptions', 'subscriptionViewUrl'],
+  ['/learning', 'learningUrl'],
+  ['/terms-of-service', 'termsUrl'],
+  ['/privacy-policy', 'privacyUrl']
+];
+
+async function applyEmailOverrides(htmlContent, textContent) {
+  const emailLinks = await loadEmailLinks();
+  const baseDomain = normalizeBaseDomain(emailLinks.baseDomain);
+
+  let html = htmlContent || '';
+  let text = textContent || '';
+
+  // Domain-only override keeps routes predefined, including dynamic routes like /tickets/:id
+  html = replaceKnownBaseDomains(html, baseDomain);
+  text = replaceKnownBaseDomains(text, baseDomain);
+
+  const baseCandidates = [
+    normalizeBaseDomain(process.env.BASE_URL),
+    baseDomain,
+    'http://localhost:3000',
+    'https://rapiraa.onrender.com',
+    'https://rapira.officialbac.in',
+    'https://rapira.in'
+  ].filter(Boolean);
+
+  for (const [path, key] of STATIC_LINK_MAP) {
+    const override = String(emailLinks[key] || '').trim();
+    if (!override) continue;
+
+    const normalizedOverride = normalizeBaseDomain(override) || override;
+    for (const base of [...new Set(baseCandidates)]) {
+      const original = `${base}${path}`;
+      if (normalizedOverride !== original) {
+        html = html.split(original).join(normalizedOverride);
+        text = text.split(original).join(normalizedOverride);
+      }
+    }
+  }
+
+  return { html, text };
+}
+
+async function postToBrevo(url, payload, config) {
+  const body = { ...(payload || {}) };
+
+  if (typeof body.htmlContent === 'string' || typeof body.textContent === 'string') {
+    const { html, text } = await applyEmailOverrides(body.htmlContent, body.textContent);
+    body.htmlContent = html;
+    body.textContent = text;
+  }
+
+  return await axios.request({ method: 'post', url, data: body, ...(config || {}) });
+}
 
 /**
  * Send an email using Brevo API
@@ -33,7 +143,7 @@ const sendEmail = async (options) => {
 
   try {
     // Try to send email via Brevo API
-    const response = await axios.post(
+    const response = await postToBrevo(
       'https://api.sendinblue.com/v3/smtp/email',
       {
         sender: {
@@ -659,7 +769,7 @@ const sendArtistBookingRequestEmail = async (request) => {
     console.log('Sending artist booking request notification to all admins:', recipients.map(r => r.email).join(', '));
 
     // Send direct email
-    const response = await axios.post(
+    const response = await postToBrevo(
       'https://api.sendinblue.com/v3/smtp/email',
       directEmailPayload,
       {
@@ -898,9 +1008,14 @@ const crypto = require('crypto');
  * @returns {Promise} - A promise that resolves when the email is sent
  */
 const sendAccountDeletionNotification = async (user, recoveryToken) => {
-  // Use the primary domain as specified by the user
-  const baseUrl = 'https://rapiraa.onrender.com';
-  const recoveryUrl = `${baseUrl}/users/recover-account/${recoveryToken}`;
+  const WebsiteSettings = require('../models/WebsiteSettings');
+  const settings = await WebsiteSettings.getSettings();
+
+  const baseUrl = process.env.BASE_URL || 'https://rapiraa.onrender.com';
+  const accountReactivationUrl =
+    (settings && settings.emailLinks && settings.emailLinks.accountReactivationUrl
+      ? settings.emailLinks.accountReactivationUrl
+      : '') || `${baseUrl}/account-reactivation`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -984,15 +1099,11 @@ const sendAccountDeletionNotification = async (user, recoveryToken) => {
             <p><strong>Account Type:</strong> ${user.role || 'User'}</p>
           </div>
           
-          <p>If you wish to recover your account within the next 30 days, please follow these steps:</p>
-          
-          <ol>
-            <li>Visit our website at <a href="https://rapiraa.onrender.com" style="color: #6366f1;">https://rapiraa.onrender.com</a> or <a href="https://rapira.officialbac.in" style="color: #6366f1;">https://rapira.officialbac.in</a></li>
-            <li>Go to the Account Reactivation page at <a href="https://rapiraa.onrender.com/account-reactivation" style="color: #6366f1;">https://rapiraa.onrender.com/account-reactivation</a> or <a href="https://rapira.officialbac.in/account-reactivation" style="color: #6366f1;">https://rapira.officialbac.in/account-reactivation</a></li>
-            <li>Enter your email address (<strong>${user.email}</strong>) to initiate reactivation</li>
-            <li>Check your email for an OTP (One-Time Password)</li>
-            <li>Enter the OTP and set a new password to complete reactivation</li>
-          </ol>
+          <p>If you want to recover your account, use the button below to open the Account Reactivation page.</p>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a class="button" href="${accountReactivationUrl}">Recover My Account</a>
+          </div>
           
           <p><strong>Important:</strong> Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.</p>
           
@@ -1023,13 +1134,8 @@ const sendAccountDeletionNotification = async (user, recoveryToken) => {
     Email: ${user.email}
     Account Type: ${user.role || 'User'}
 
-    If you wish to recover your account within the next 30 days, please follow these steps:
-
-    1. Visit our website at https://rapiraa.onrender.com or https://rapira.officialbac.in
-    2. Go to the Account Reactivation page at https://rapiraa.onrender.com/account-reactivation or https://rapira.officialbac.in/account-reactivation
-    3. Enter your email address (${user.email}) to initiate reactivation
-    4. Check your email for an OTP (One-Time Password)
-    5. Enter the OTP and set a new password to complete reactivation
+    Recover your account here:
+    ${accountReactivationUrl}
 
     Important: Account reactivation is available for 30 days from the time of account deletion. After this period, your account and all associated data will be permanently deleted and cannot be recovered.
 
@@ -1054,6 +1160,7 @@ const sendAccountDeletionNotification = async (user, recoveryToken) => {
 };
 
 module.exports = {
+  clearBrevoEmailLinksCache,
   sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
@@ -1062,3 +1169,4 @@ module.exports = {
   sendOrderConfirmationEmail,
   sendAccountDeletionNotification
 };
+

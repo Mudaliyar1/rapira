@@ -35,6 +35,11 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="carousel-tab" data-bs-toggle="tab" data-bs-target="#carousel" type="button" role="tab">
+          <i class="bi bi-images me-2"></i>Hero Carousel
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link text-white" id="theme-tab" data-bs-toggle="tab" data-bs-target="#theme" type="button" role="tab">
           <i class="bi bi-palette me-2"></i>Theme Colors
         </button>
@@ -57,6 +62,26 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link text-white" id="ticket-commission-tab" data-bs-toggle="tab" data-bs-target="#ticket-commission" type="button" role="tab">
           <i class="bi bi-currency-rupee me-2"></i>Ticket Commission
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="producer-beat-commission-tab" data-bs-toggle="tab" data-bs-target="#producer-beat-commission" type="button" role="tab">
+          <i class="bi bi-music-note-beamed me-2"></i>Beat Commission
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="registration-fees-tab" data-bs-toggle="tab" data-bs-target="#registration-fees" type="button" role="tab">
+          <i class="bi bi-credit-card-2-front me-2"></i>Application Fees
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="email-links-tab" data-bs-toggle="tab" data-bs-target="#email-links" type="button" role="tab">
+          <i class="bi bi-envelope-at me-2"></i>Email Links
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-white" id="view-increaser-tab" data-bs-toggle="tab" data-bs-target="#view-increaser" type="button" role="tab">
+          <i class="bi bi-graph-up-arrow me-2"></i>View Increaser
         </button>
       </li>
     </ul>
@@ -434,6 +459,151 @@
             </button>
           </div>
         </form>
+      </div>
+
+      <!-- Theme Colors Tab -->
+      <div class="tab-pane fade" id="carousel" role="tabpanel">
+        <form id="carouselForm" action="/admin/website-settings/carousel" method="POST" enctype="multipart/form-data">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Home Hero Carousel</h5>
+
+              <div class="mb-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" name="autoplay" id="autoplay"
+                         <%= settings.heroCarouselSettings && settings.heroCarouselSettings.autoplay ? 'checked' : '' %>>
+                  <label class="form-check-label text-white" for="autoplay">Enable Autoplay</label>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label text-white">Slide Interval (milliseconds)</label>
+                <input type="number" class="form-control bg-dark text-white border-secondary" name="intervalMs"
+                       value="<%= settings.heroCarouselSettings && settings.heroCarouselSettings.intervalMs ? settings.heroCarouselSettings.intervalMs : 5000 %>"
+                       min="2000" max="20000" step="500">
+              </div>
+
+              <h6 class="text-white mb-3">Existing Slides</h6>
+              <div id="slidesContainer">
+              <% if (settings.heroCarouselSettings && settings.heroCarouselSettings.slides && settings.heroCarouselSettings.slides.length > 0) { %>
+                <% settings.heroCarouselSettings.slides.forEach((slide, index) => { %>
+                  <div class="border border-secondary rounded p-3 mb-3 bg-dark bg-opacity-50">
+                    <div class="row g-3">
+                      <div class="col-md-4">
+                        <img src="<%= slide.imageUrl %>" alt="Slide <%= index + 1 %>" class="img-fluid rounded" style="height: 120px; width: 100%; object-fit: contain; background: #111;">
+                        <input type="hidden" name="existingImageUrl" value="<%= slide.imageUrl %>">
+                        <input type="hidden" name="existingImageMediaId" value="<%= slide.imageMedia ? slide.imageMedia : '' %>">
+                        <label class="form-label text-white small mt-2">Replace Image</label>
+                        <input type="file" class="form-control bg-dark text-white border-secondary form-control-sm" name="existingSlideImage_<%= index %>" accept="image/*">
+                      </div>
+                      <div class="col-md-8">
+                        <div class="row g-2">
+                          <div class="col-md-6">
+                            <label class="form-label text-white small">Title</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingTitle" value="<%= slide.title || '' %>">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label text-white small">Badge</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingBadge" value="<%= slide.badge || '' %>">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label text-white small">Description</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingDescription" value="<%= slide.description || '' %>">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label text-white small">Date Text</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingDateText" value="<%= slide.dateText || '' %>">
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label text-white small">Button Text</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingButtonText" value="<%= slide.buttonText || '' %>">
+                          </div>
+                          <div class="col-12">
+                            <label class="form-label text-white small">Click Link</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" name="existingLinkUrl" value="<%= slide.linkUrl || '/' %>" placeholder="/concerts or https://example.com">
+                          </div>
+                          <div class="col-12 d-flex align-items-center gap-3 mt-2">
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" name="existingIsActive" id="existingIsActive_<%= index %>" value="<%= index %>" <%= slide.isActive !== false ? 'checked' : '' %>>
+                              <label class="form-check-label text-white" for="existingIsActive_<%= index %>">Active</label>
+                            </div>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" name="removeSlideIndices" id="removeSlide_<%= index %>" value="<%= index %>">
+                              <label class="form-check-label text-danger" for="removeSlide_<%= index %>">Remove</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <div class="alert alert-secondary">No slides configured yet.</div>
+              <% } %>
+              </div>
+
+              <h6 class="text-white mb-3 mt-4">Add New Slide</h6>
+              <div class="border border-secondary rounded p-3 bg-dark bg-opacity-50">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Slide Image</label>
+                    <input type="file" class="form-control bg-dark text-white border-secondary" name="newSlideImage" accept="image/*">
+                    <small class="text-muted">Upload JPG/PNG/GIF/SVG (max 5MB)</small>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Click Link</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newLinkUrl" placeholder="/concerts or https://example.com">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Title</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newTitle">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Badge</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newBadge" placeholder="FEATURED EVENT">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label text-white">Description</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newDescription">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Date Text</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newDateText" placeholder="June 14-16, 2026">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-white">Button Text</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" name="newButtonText" placeholder="Open">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>Carousel Notes</h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Clicking a slide opens its configured link</li>
+                    <li class="mb-2">Use absolute URL or internal path like <code>/concerts</code></li>
+                    <li class="mb-2">You can disable slides without deleting them</li>
+                    <li class="mb-2">You can replace each existing slide image directly</li>
+                    <li class="mb-2">Slides display in the order they appear on this page</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Hero Carousel Settings
+            </button>
+          </div>
+        </form>
+
+        <script>
+          // No reordering functionality
+        </script>
       </div>
 
       <!-- Theme Colors Tab -->
@@ -914,26 +1084,372 @@
         </form>
       </div>
 
+      <!-- Producer Beat Commission Tab -->
+      <div class="tab-pane fade" id="producer-beat-commission" role="tabpanel">
+        <form action="/admin/website-settings/producer-beat-commission" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Producer Beat Commission Settings</h5>
+
+              <div class="mb-4">
+                <label for="producerBeatCommissionPercentage" class="form-label text-white fw-bold">Commission Percentage</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="producerBeatCommissionPercentage" 
+                         name="producerBeatCommissionPercentage" 
+                         value="<%= settings.producerBeatCommissionSettings ? settings.producerBeatCommissionSettings.percentage : 4 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">
+                  This commission percentage will be added to the beat price during checkout by artists.
+                  <br><strong>Example:</strong> A ₹100 beat with 4% commission = ₹100 beat price + ₹4 platform fee = ₹104 total for the artist to pay.
+                </small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Commission Information
+                  </h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Commission is calculated on top of the beat price</li>
+                    <li class="mb-2">Artists will pay the price + commission</li>
+                    <li class="mb-2">Producers will receive the base price in their wallet</li>
+                    <li class="mb-2"><strong class="text-info">Changes apply immediately to all beat purchases</strong></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Beat Commission Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Registration Fees Tab -->
+      <div class="tab-pane fade" id="registration-fees" role="tabpanel">
+        <form action="/admin/website-settings/registration-fees" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-3">Registration Fee Settings</h5>
+              <p class="text-muted">Set the one-time registration fees for artists and producers. Set to 0 to disable fees.</p>
+
+              <div class="mb-4">
+                <label for="artistRegistrationFee" class="form-label text-white fw-bold">Artist Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="artistRegistrationFee" 
+                         name="artistRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.artistRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become an Artist. Set 0 for free.</small>
+              </div>
+
+              <div class="mb-4">
+                <label for="producerRegistrationFee" class="form-label text-white fw-bold">Producer Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="producerRegistrationFee" 
+                         name="producerRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.producerRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become a Producer. Set 0 for free.</small>
+              </div>
+
+              <div class="mb-4">
+                <label for="distributorRegistrationFee" class="form-label text-white fw-bold">Distributor Registration Fee (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-dark text-white border-secondary">₹</span>
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="distributorRegistrationFee" 
+                         name="distributorRegistrationFee" 
+                         value="<%= settings.registrationFees ? settings.registrationFees.distributorRegistrationFee : 0 %>"
+                         min="0" step="1" required>
+                </div>
+                <small class="text-muted">Fee charged when a user applies to become a Distributor. Set 0 for free.</small>
+              </div>
+
+              <hr class="border-secondary my-4">
+              <h5 class="text-white mb-3">Distribution Commissions</h5>
+              <div class="mb-4">
+                <label for="distributorCommission" class="form-label text-white fw-bold">Platform Commission on Distribution (%)</label>
+                <div class="input-group">
+                  <input type="number" class="form-control bg-dark text-white border-secondary" id="distributorCommission" 
+                         name="distributorCommission" 
+                         value="<%= settings.distributorCommissionSettings ? settings.distributorCommissionSettings.percentage : 0 %>"
+                         min="0" max="100" step="0.1" required>
+                  <span class="input-group-text bg-dark text-white border-secondary">%</span>
+                </div>
+                <small class="text-muted">Percentage commission the platform takes on artist distribution payments. Set 0 for no commission.</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>How it works</h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">If fee > 0, user is redirected to a payment page after form submission.</li>
+                    <li class="mb-2">Razorpay opens automatically on the payment page.</li>
+                    <li class="mb-2">If fee = 0, application submits without payment.</li>
+                    <li class="mb-2">Payments go to your linked Razorpay account.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Fee Settings
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Email Links Tab -->
+      <div class="tab-pane fade" id="email-links" role="tabpanel">
+        <form action="/admin/website-settings/email-links" method="POST">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-1">Email Button Link Overrides</h5>
+              <p class="text-muted mb-4">Override the URL used in email buttons/links sent from this platform. Leave blank to use the default <code class="text-info">BASE_URL + path</code>. Changes apply to all future emails instantly.</p>
+
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-person me-1"></i> User Emails</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Email Links Base Domain (Domain only)</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" name="baseDomain"
+                       value="<%= settings.emailLinks && settings.emailLinks.baseDomain ? settings.emailLinks.baseDomain : '' %>"
+                       placeholder="rapira.in or https://rapira.in">
+                <small class="text-muted">Only domain changes. Routes stay fixed automatically, e.g. <em>/auth/login</em>, <em>/account-reactivation</em>, <em>/tickets/{ticketId}</em>.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Predefined Ticket Route (Fixed)</label>
+                <input type="text" class="form-control bg-dark text-white border-secondary" value="/tickets/{ticketId}" readonly>
+                <small class="text-muted">Ticket email buttons always use this route; only the domain above is replaced.</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Login Button URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="loginUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.loginUrl ? settings.emailLinks.loginUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/auth/login' %>">
+                <small class="text-muted">Button: <em>Login to Your Account</em> — in welcome &amp; general emails</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Account Reactivation Page URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="accountReactivationUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.accountReactivationUrl ? settings.emailLinks.accountReactivationUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/account-reactivation' %>">
+                <small class="text-muted">Used in account deletion/reactivation emails for the reactivation button/page link</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Terms of Service URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="termsUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.termsUrl ? settings.emailLinks.termsUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/terms-of-service' %>">
+                <small class="text-muted">Footer link in all emails</small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Privacy Policy URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="privacyUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.privacyUrl ? settings.emailLinks.privacyUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/privacy-policy' %>">
+                <small class="text-muted">Footer link in all emails</small>
+              </div>
+
+              <hr class="border-secondary">
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-music-note me-1"></i> Artist Emails</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">Artist Dashboard Button URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="artistDashboardUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.artistDashboardUrl ? settings.emailLinks.artistDashboardUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/artists/dashboard' %>">
+                <small class="text-muted">Button: <em>Go to Artist Dashboard</em> / <em>Go to Dashboard</em></small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Artist Application Review URL (Admin)</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="artistApplicationReviewUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.artistApplicationReviewUrl ? settings.emailLinks.artistApplicationReviewUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/artist-applications/admin' %>">
+                <small class="text-muted">Button: <em>Review Application</em> — sent to admins when a new application arrives</small>
+              </div>
+
+              <hr class="border-secondary">
+              <h6 class="text-white-50 text-uppercase small mb-3"><i class="bi bi-bag me-1"></i> Subscription &amp; Learning</h6>
+              <div class="mb-3">
+                <label class="form-label text-white fw-semibold">View My Subscription URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="subscriptionViewUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.subscriptionViewUrl ? settings.emailLinks.subscriptionViewUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/subscriptions/my-subscriptions' %>">
+                <small class="text-muted">Button: <em>View My Subscription</em></small>
+              </div>
+              <div class="mb-4">
+                <label class="form-label text-white fw-semibold">Learning / Start Learning URL</label>
+                <input type="url" class="form-control bg-dark text-white border-secondary" name="learningUrl"
+                       value="<%= settings.emailLinks && settings.emailLinks.learningUrl ? settings.emailLinks.learningUrl : '' %>"
+                       placeholder="<%= (process.env.BASE_URL || 'https://yourdomain.com') + '/learning' %>">
+                <small class="text-muted">Button: <em>Start Learning</em> — in artist approval emails</small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>How it works</h6>
+                  <ul class="text-muted small mb-4">
+                    <li class="mb-2">Leave a field blank to keep the default link (your site's BASE URL + path).</li>
+                    <li class="mb-2">Enter a full URL (including <code>https://</code>) to override that button in all matching emails.</li>
+                    <li class="mb-2">Overrides apply immediately — no restart needed.</li>
+                    <li class="mb-2">Dynamic links (ticket/concert/refund IDs) are not overridable here as they include unique IDs per email.</li>
+                  </ul>
+                  <div class="alert alert-dark border border-secondary p-2">
+                    <small class="text-white-50"><i class="bi bi-lightbulb me-1 text-warning"></i>
+                      Useful when you change your domain or want a different landing page for a button without editing code.
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save Email Links
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- View Increaser Tab -->
+      <div class="tab-pane fade" id="view-increaser" role="tabpanel">
+        <form action="/admin/website-settings/view-increaser" method="POST" onsubmit="window.location.hash='#view-increaser'; return true;">
+          <% const viewIncreaserEntries = (settings.viewIncreaser && Array.isArray(settings.viewIncreaser.entries)) ? settings.viewIncreaser.entries : []; %>
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="text-white mb-1">Artist Post View Increaser</h5>
+              <p class="text-muted mb-4">Add an artist post link and set the display views (for example: <code>12K</code>, <code>3.5M</code>, <code>1T</code>). This only changes what users see as view count on that post.</p>
+
+              <div id="viewIncreaserRows" class="d-flex flex-column gap-3">
+                <% if (viewIncreaserEntries.length > 0) { %>
+                  <% viewIncreaserEntries.forEach((entry, idx) => { %>
+                    <div class="border border-secondary rounded p-3 bg-dark bg-opacity-50 view-increaser-row">
+                      <div class="row g-3 align-items-end">
+                        <input type="hidden" name="rowPostId" value="<%= entry.postId ? entry.postId : '' %>">
+                        <div class="col-md-8">
+                          <label class="form-label text-white">Artist Post Link</label>
+                          <input type="text" class="form-control bg-dark text-white border-secondary" name="postLink" value="<%= entry.postLink || '' %>" placeholder="https://yourdomain.com/posts/POST_ID or just POST_ID">
+                        </div>
+                        <div class="col-md-2">
+                          <label class="form-label text-white">View Display</label>
+                          <input type="text" class="form-control bg-dark text-white border-secondary" name="viewsLabel" value="<%= entry.viewsLabel || '' %>" placeholder="12K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                        </div>
+                        <div class="col-md-1">
+                          <label class="form-label text-white">Likes (opt.)</label>
+                          <input type="text" class="form-control bg-dark text-white border-secondary" name="likesLabel" value="<%= entry.fakeLikesLabel || '' %>" placeholder="3K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                        </div>
+                        <div class="col-md-1 d-grid">
+                          <button type="button" class="btn btn-outline-danger remove-view-row" title="Remove row" onclick="(function(btn){var c=document.getElementById('viewIncreaserRows');if(!c)return;var r=btn.closest('.view-increaser-row');if(!r)return;var rows=c.querySelectorAll('.view-increaser-row');if(rows.length<=1){var a=r.querySelector('input[name=&quot;postLink&quot;]');var b=r.querySelector('input[name=&quot;viewsLabel&quot;]');if(a)a.value='';if(b)b.value='';return;}r.remove();})(this); return false;">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="border border-secondary rounded p-3 bg-dark bg-opacity-50 view-increaser-row">
+                    <div class="row g-3 align-items-end">
+                      <input type="hidden" name="rowPostId" value="">
+                      <div class="col-md-8">
+                        <label class="form-label text-white">Artist Post Link</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" name="postLink" value="" placeholder="https://yourdomain.com/posts/POST_ID or just POST_ID">
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label text-white">View Display</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" name="viewsLabel" value="" placeholder="12K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                      </div>
+                      <div class="col-md-1">
+                        <label class="form-label text-white">Likes (opt.)</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" name="likesLabel" value="" placeholder="3K" pattern="^\d+(\.\d+)?[kKmMbBtT]?$">
+                      </div>
+                      <div class="col-md-1 d-grid">
+                        <button type="button" class="btn btn-outline-danger remove-view-row" title="Remove row" onclick="(function(btn){var c=document.getElementById('viewIncreaserRows');if(!c)return;var r=btn.closest('.view-increaser-row');if(!r)return;var rows=c.querySelectorAll('.view-increaser-row');if(rows.length<=1){var a=r.querySelector('input[name=&quot;postLink&quot;]');var b=r.querySelector('input[name=&quot;viewsLabel&quot;]');if(a)a.value='';if(b)b.value='';return;}r.remove();})(this); return false;">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="mt-3 d-flex gap-2">
+                <button type="button" class="btn btn-outline-info" id="addViewIncreaserRowBtn" onclick="(function(){var c=document.getElementById('viewIncreaserRows');if(!c)return;var first=c.querySelector('.view-increaser-row');if(!first)return;var n=first.cloneNode(true);var ins=n.querySelectorAll('input');for(var i=0;i<ins.length;i++){ins[i].value='';}c.appendChild(n);})(); return false;">
+                  <i class="bi bi-plus-lg me-1"></i>Add Row
+                </button>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="glass-card-dark h-100">
+                <div class="card-body">
+                  <h6 class="text-white mb-3"><i class="bi bi-info-circle me-2"></i>Rules</h6>
+                  <ul class="text-muted small mb-0">
+                    <li class="mb-2">Use a valid post link (or paste only the 24-char post ID).</li>
+                    <li class="mb-2">View format: number with optional suffix <code>K</code>, <code>M</code>, <code>B</code>, <code>T</code>.</li>
+                    <li class="mb-2">Examples: <code>900</code>, <code>12K</code>, <code>2.5M</code>, <code>1T</code>.</li>
+                    <li class="mb-2">Deleting a row and saving removes fake views for that post.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Save View Increaser
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
     </div>
   </div>
 </div>
 
 <script>
 // Handle maintenance mode toggle
-document.getElementById('maintenanceMode').addEventListener('change', function() {
-  const maintenanceSettings = document.getElementById('maintenanceSettings');
-  if (this.checked) {
-    maintenanceSettings.style.display = 'block';
-  } else {
-    maintenanceSettings.style.display = 'none';
-  }
-});
+const maintenanceModeElement = document.getElementById('maintenanceMode');
+if (maintenanceModeElement) {
+  maintenanceModeElement.addEventListener('change', function() {
+    const maintenanceSettings = document.getElementById('maintenanceSettings');
+    if (!maintenanceSettings) return;
+    if (this.checked) {
+      maintenanceSettings.style.display = 'block';
+    } else {
+      maintenanceSettings.style.display = 'none';
+    }
+  });
+}
 
 // Update duration summary when maintenance duration changes
-document.getElementById('maintenanceDuration').addEventListener('input', function() {
-  const duration = parseInt(this.value) || 0;
-  document.getElementById('durationSummary').textContent = formatDuration(duration);
-});
+const maintenanceDurationElement = document.getElementById('maintenanceDuration');
+if (maintenanceDurationElement) {
+  maintenanceDurationElement.addEventListener('input', function() {
+    const duration = parseInt(this.value) || 0;
+    const durationSummary = document.getElementById('durationSummary');
+    if (durationSummary) {
+      durationSummary.textContent = formatDuration(duration);
+    }
+  });
+}
 
 // Helper function to format duration in human-readable format
 function formatDuration(minutes) {
@@ -958,35 +1474,86 @@ function formatDuration(minutes) {
   }
 }
 
-// Handle brand type changes
-document.getElementById('brandType').addEventListener('change', function() {
-  const brandType = this.value;
-  const brandTextGroup = document.getElementById('brandTextGroup');
-  const logoGroup = document.getElementById('logoGroup');
-  const logoHeightGroup = document.getElementById('logoHeightGroup');
-  const showBrandTextGroup = document.getElementById('showBrandTextGroup');
+function removeViewIncreaserRow(button) {
+  const rowsContainer = document.getElementById('viewIncreaserRows');
+  if (!rowsContainer || !button) return;
 
-  // Show/hide elements based on brand type
-  if (brandType === 'text') {
-    brandTextGroup.style.display = 'block';
-    logoGroup.style.display = 'none';
-    logoHeightGroup.style.display = 'none';
-    showBrandTextGroup.style.display = 'none';
-  } else if (brandType === 'logo') {
-    brandTextGroup.style.display = 'none';
-    logoGroup.style.display = 'block';
-    logoHeightGroup.style.display = 'block';
-    showBrandTextGroup.style.display = 'none';
-  } else if (brandType === 'both') {
-    brandTextGroup.style.display = 'block';
-    logoGroup.style.display = 'block';
-    logoHeightGroup.style.display = 'block';
-    showBrandTextGroup.style.display = 'block';
+  const row = button.closest('.view-increaser-row');
+  if (!row) return;
+
+  if (rowsContainer.querySelectorAll('.view-increaser-row').length <= 1) {
+    const linkInput = row.querySelector('input[name="postLink"]');
+    const viewsInput = row.querySelector('input[name="viewsLabel"]');
+    if (linkInput) linkInput.value = '';
+    if (viewsInput) viewsInput.value = '';
+    return;
   }
-});
 
-// Initialize on page load
-document.getElementById('brandType').dispatchEvent(new Event('change'));
+  row.remove();
+}
+
+function addViewIncreaserRow() {
+  const rowsContainer = document.getElementById('viewIncreaserRows');
+  if (!rowsContainer) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'border border-secondary rounded p-3 bg-dark bg-opacity-50 view-increaser-row';
+  wrapper.innerHTML = `
+    <div class="row g-3 align-items-end">
+      <div class="col-md-8">
+        <label class="form-label text-white">Artist Post Link</label>
+        <input type="text" class="form-control bg-dark text-white border-secondary" name="postLink" value="" placeholder="https://yourdomain.com/posts/POST_ID or just POST_ID">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label text-white">View Display</label>
+        <input type="text" class="form-control bg-dark text-white border-secondary" name="viewsLabel" value="" placeholder="12K" pattern="^\\d+(\\.\\d+)?[kKmMbBtT]?$">
+      </div>
+      <div class="col-md-1 d-grid">
+        <button type="button" class="btn btn-outline-danger remove-view-row" title="Remove row" onclick="removeViewIncreaserRow(this); return false;">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  `;
+  rowsContainer.appendChild(wrapper);
+}
+
+// Handle brand type changes
+const brandTypeElement = document.getElementById('brandType');
+if (brandTypeElement) {
+  brandTypeElement.addEventListener('change', function() {
+    const brandType = this.value;
+    const brandTextGroup = document.getElementById('brandTextGroup');
+    const logoGroup = document.getElementById('logoGroup');
+    const logoHeightGroup = document.getElementById('logoHeightGroup');
+    const showBrandTextGroup = document.getElementById('showBrandTextGroup');
+
+    if (!brandTextGroup || !logoGroup || !logoHeightGroup || !showBrandTextGroup) {
+      return;
+    }
+
+    // Show/hide elements based on brand type
+    if (brandType === 'text') {
+      brandTextGroup.style.display = 'block';
+      logoGroup.style.display = 'none';
+      logoHeightGroup.style.display = 'none';
+      showBrandTextGroup.style.display = 'none';
+    } else if (brandType === 'logo') {
+      brandTextGroup.style.display = 'none';
+      logoGroup.style.display = 'block';
+      logoHeightGroup.style.display = 'block';
+      showBrandTextGroup.style.display = 'none';
+    } else if (brandType === 'both') {
+      brandTextGroup.style.display = 'block';
+      logoGroup.style.display = 'block';
+      logoHeightGroup.style.display = 'block';
+      showBrandTextGroup.style.display = 'block';
+    }
+  });
+
+  // Initialize on page load
+  brandTypeElement.dispatchEvent(new Event('change'));
+}
 
 // Remove logo function
 function removeLogo() {
@@ -1054,21 +1621,34 @@ function resetThemeColors() {
 }
 
 // Admin settings functionality
-document.getElementById('showDummyData').addEventListener('change', function() {
-  const dummyDataCountGroup = document.getElementById('dummyDataCountGroup');
-  if (this.checked) {
-    dummyDataCountGroup.style.display = 'block';
-  } else {
-    dummyDataCountGroup.style.display = 'none';
-  }
-});
+const showDummyDataElement = document.getElementById('showDummyData');
+if (showDummyDataElement) {
+  showDummyDataElement.addEventListener('change', function() {
+    const dummyDataCountGroup = document.getElementById('dummyDataCountGroup');
+    if (!dummyDataCountGroup) return;
+    if (this.checked) {
+      dummyDataCountGroup.style.display = 'block';
+    } else {
+      dummyDataCountGroup.style.display = 'none';
+    }
+  });
+}
 
 // Initialize admin settings on page load
 document.addEventListener('DOMContentLoaded', function() {
+  if (window.location.hash) {
+    const trigger = document.querySelector(`[data-bs-target="${window.location.hash}"]`);
+    if (trigger) {
+      bootstrap.Tab.getOrCreateInstance(trigger).show();
+    }
+  }
+
   const showDummyDataCheckbox = document.getElementById('showDummyData');
   if (showDummyDataCheckbox) {
     showDummyDataCheckbox.dispatchEvent(new Event('change'));
   }
+
+  // View increaser add/remove is handled by direct onclick handlers.
 });
 
 // Preview dummy data function

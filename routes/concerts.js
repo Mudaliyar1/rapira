@@ -8,6 +8,8 @@ const Ticket = require('../models/Ticket');
 const ConcertEditRequest = require('../models/ConcertEditRequest');
 const WebsiteSettings = require('../models/WebsiteSettings');
 const Media = require('../models/Media');
+const Transaction = require('../models/Transaction');
+const Venue = require('../models/Venue');
 const { isLoggedIn, isArtist, canCreateConcert } = require('../middleware/auth');
 const { sendConcertSubmissionEmail } = require('../utils/emailService');
 const { applySubscriptionDiscount } = require('../middleware/subscription');
@@ -22,6 +24,57 @@ const { createOrder, verifyPayment } = require('../utils/paymentService');
 // Import upload helper and media service
 const { getFileUrl } = require('../utils/fileHelper');
 const { uploadFileToCloudinary, deleteMedia } = require('../utils/mediaService');
+
+const getConcertStartDateTime = (concert) => {
+  if (!concert || !concert.date) return null;
+
+  const baseDate = new Date(concert.date);
+  if (Number.isNaN(baseDate.getTime())) return null;
+
+  const startDateTime = new Date(baseDate);
+  const timeRaw = String(concert.time || '').trim();
+  if (!timeRaw) {
+    startDateTime.setHours(0, 0, 0, 0);
+    return startDateTime;
+  }
+
+  let hours = 0;
+  let minutes = 0;
+
+  const amPmMatch = timeRaw.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (amPmMatch) {
+    hours = parseInt(amPmMatch[1], 10);
+    minutes = parseInt(amPmMatch[2], 10);
+    const period = amPmMatch[3].toUpperCase();
+
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+  } else {
+    const twentyFourHourMatch = timeRaw.match(/^(\d{1,2}):(\d{2})$/);
+    if (twentyFourHourMatch) {
+      hours = parseInt(twentyFourHourMatch[1], 10);
+      minutes = parseInt(twentyFourHourMatch[2], 10);
+    } else {
+      startDateTime.setHours(0, 0, 0, 0);
+      return startDateTime;
+    }
+  }
+
+  startDateTime.setHours(hours, minutes, 0, 0);
+  return startDateTime;
+};
+
+const isConcertStarted = (concert) => {
+  const startDateTime = getConcertStartDateTime(concert);
+  if (!startDateTime) return false;
+  return startDateTime <= new Date();
+};
+
+const isConcertOverForDelete = (concert) => {
+  if (!concert) return false;
+  if (concert.status === 'completed') return true;
+  return isConcertStarted(concert);
+};
 
 // Configure multer for concert image uploads (memory → Cloudinary)
 const upload = multer({
@@ -56,7 +109,7 @@ router.get('/', async (req, res) => {
     // Only include upcoming concerts by default (hide past concerts)
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     // If no specific date is selected, only show upcoming concerts
     if (!date) {
       filter.date = { $gte: today };
@@ -223,7 +276,7 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
     // More detailed validation logging
     console.log('Extracted fields:', {
       title: title || 'MISSING',
-      description: description || 'MISSING', 
+      description: description || 'MISSING',
       date: date || 'MISSING',
       time: time || 'MISSING',
       venue: venue || 'MISSING',
@@ -296,10 +349,10 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       const concertEnd = new Date(concertStart);
       concertEnd.setTime(concertEnd.getTime() + (duration * 60 * 60 * 1000));
-      
+
       return concertEnd;
     };
 
@@ -308,7 +361,7 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       return concertStart;
     };
 
@@ -320,7 +373,7 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
       if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
         const existingBookingDate = new Date(booking.date);
         const existingDuration = booking.venueBooking.bookingHours;
-        
+
         const existingStartTime = getConcertStartTime(existingBookingDate, booking.time);
         const existingEndTime = getConcertEndTime(existingBookingDate, booking.time, existingDuration);
 
@@ -365,8 +418,8 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
     if (conflicts.length > 0) {
       const conflictDetails = conflicts.map(c => `${c.title} (${c.time} for ${c.duration}h - ${c.status})`).join(', ');
       console.log('Venue booking conflict detected:', conflictDetails);
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: 'Venue booking conflict detected',
         message: `This time slot conflicts with existing bookings: ${conflictDetails}`,
         conflicts: conflicts
@@ -388,9 +441,9 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
     const websiteSettings = await WebsiteSettings.getSettings();
     const useUserCommission = websiteSettings.venueSettings?.allowUserCommissionEdit || false;
     const defaultAdminCommission = parseFloat(websiteSettings.venueSettings?.defaultCommissionPercentage) || 10;
-    
+
     let validCommissionPercentage = defaultAdminCommission; // Default to admin commission
-    
+
     // If user commission is allowed, use venue-specific commission data
     if (useUserCommission) {
       // Use venue-specific commission percentage
@@ -439,20 +492,20 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
 
     if (!orderResult.success) {
       console.error('Failed to create payment order:', orderResult.error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Failed to create payment order. Please try again.' 
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create payment order. Please try again.'
       });
     }
 
     // Store concert data in session for completion after payment
     req.session.pendingConcert = {
-      title, description, date, time, venue, 
+      title, description, date, time, venue,
       city: finalCity,
-      isPaid, 
-      price: finalTicketPrice, 
-      maxTickets, 
-      bookingHours, 
+      isPaid,
+      price: finalTicketPrice,
+      maxTickets,
+      bookingHours,
       ticketPrice: finalTicketPrice,
       venueBooking: {
         bookingHours: hours,
@@ -466,7 +519,7 @@ router.post('/create-payment-order', isLoggedIn, canCreateConcert, (req, res, ne
       orderId: orderResult.data.id,
       receipt: receipt
     };
-    
+
     console.log('Stored pending concert in session:', req.session.pendingConcert);
 
     res.json({
@@ -508,7 +561,7 @@ const multerErrorHandler = (err, req, res, next) => {
     req.flash('error', `File upload error: ${err.message}`);
     return res.redirect('/concerts/create');
   }
-  
+
   if (err) {
     console.error('Upload error:', err);
     req.flash('error', 'An error occurred during file upload.');
@@ -543,7 +596,7 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
     console.log('Checking for pending concert in session...');
     console.log('Session data:', req.session);
     console.log('Pending concert in session:', req.session.pendingConcert);
-    
+
     if (!req.session.pendingConcert) {
       req.flash('error', 'No pending concert found');
       return res.redirect('/concerts/create');
@@ -609,10 +662,10 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       const concertEnd = new Date(concertStart);
       concertEnd.setTime(concertEnd.getTime() + (duration * 60 * 60 * 1000));
-      
+
       return concertEnd;
     };
 
@@ -621,7 +674,7 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       const concertStart = new Date(startDate);
       const [hours, minutes] = startTime.split(':').map(Number);
       concertStart.setHours(hours, minutes, 0, 0);
-      
+
       return concertStart;
     };
 
@@ -633,7 +686,7 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
       if (booking.time && booking.venueBooking && booking.venueBooking.bookingHours) {
         const existingBookingDate = new Date(booking.date);
         const existingDuration = booking.venueBooking.bookingHours;
-        
+
         const existingStartTime = getConcertStartTime(existingBookingDate, booking.time);
         const existingEndTime = getConcertEndTime(existingBookingDate, booking.time, existingDuration);
 
@@ -646,8 +699,8 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
         const timeBetweenConcerts1 = Math.abs(requestedStartTime - existingEndTime) / (1000 * 60 * 60); // Gap from existing end to requested start
         const timeBetweenConcerts2 = Math.abs(existingStartTime - requestedEndTime) / (1000 * 60 * 60); // Gap from requested end to existing start
 
-        if ((timeBetweenConcerts1 < MINIMUM_GAP_HOURS && timeBetweenConcerts1 >= 0) || 
-            (timeBetweenConcerts2 < MINIMUM_GAP_HOURS && timeBetweenConcerts2 >= 0)) {
+        if ((timeBetweenConcerts1 < MINIMUM_GAP_HOURS && timeBetweenConcerts1 >= 0) ||
+          (timeBetweenConcerts2 < MINIMUM_GAP_HOURS && timeBetweenConcerts2 >= 0)) {
           hasConflict = true;
         }
       }
@@ -662,6 +715,13 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
     }
 
     console.log('Final conflict check passed, creating concert...');
+
+    // Fetch venue for transaction and description
+    const selectedVenue = await Venue.findById(concertData.venue);
+    if (!selectedVenue) {
+      req.flash('error', 'Venue not found');
+      return res.redirect('/concerts/create');
+    }
 
     // Create concert
     const newConcert = new Concert({
@@ -687,26 +747,53 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
     });
 
     // Upload poster image to Cloudinary if provided
-    if (req.files && req.files['posterImage'] && req.files['posterImage'][0]) {
-      try {
-        const posterFile = req.files['posterImage'][0];
-        const { media } = await uploadFileToCloudinary(posterFile, {
-          module: 'concertPoster',
-          ownerType: 'artist',
-          ownerId: artist._id,
-          folder: 'rapira/concerts/posters'
-        });
-        newConcert.posterImage = media.secure_url;
-        newConcert.posterMedia = media._id;
-      } catch (err) {
-        console.error('Poster image upload error:', err);
-        req.flash('warning', 'Concert created, but poster image upload failed.');
+    if (req.files && req.files.length > 0) {
+      const posterFile = req.files.find(f => f.fieldname === 'posterImage');
+      if (posterFile) {
+        try {
+          const { media } = await uploadFileToCloudinary(posterFile, {
+            module: 'concertPoster',
+            ownerType: 'artist',
+            ownerId: artist._id,
+            folder: 'rapira/concerts/posters'
+          });
+          newConcert.posterImage = media.secure_url;
+          newConcert.posterMedia = media._id;
+        } catch (err) {
+          console.error('Poster image upload error:', err);
+          req.flash('warning', 'Concert created, but poster image upload failed.');
+        }
       }
     }
 
     console.log('Saving new concert:', newConcert);
     await newConcert.save();
     console.log('Concert saved successfully with ID:', newConcert._id);
+
+    // Create Transaction record for the admin dashboard
+    try {
+      const commissionAmount = concertData.venueBooking?.adminCommission?.advanceAmount || 0;
+      const newTx = new Transaction({
+        user: req.session.user.id,
+        type: 'venue_commission',
+        amount: commissionAmount,
+        platformFee: commissionAmount,
+        netAmount: 0, // Artist pays commission to platform
+        payee: selectedVenue.createdBy, // Use the venue owner as payee (for tracking)
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        status: 'success',
+        payoutStatus: 'not_applicable', // Commission is paid to platform, no payout to artist/venue owner from THIS amount
+        sourceModel: 'Concert',
+        sourceId: newConcert._id,
+        description: `Venue Commission: ${newConcert.title} at ${selectedVenue.name}`
+      });
+      await newTx.save();
+      console.log('Venue commission transaction recorded:', newTx._id);
+    } catch (txError) {
+      console.error('Error creating venue commission transaction:', txError);
+      // Don't fail the whole process if transaction record fails
+    }
 
     // Clear pending concert from session
     delete req.session.pendingConcert;
@@ -722,16 +809,16 @@ router.post('/verify-payment', isLoggedIn, canCreateConcert, (req, res, next) =>
     }
 
     req.flash('success', 'Payment successful! Your concert has been submitted for approval.');
-    
+
     // For AJAX requests, send JSON response instead of redirect
     if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: 'Payment successful! Your concert has been submitted for approval.',
         redirectUrl: '/artists/manage-concerts'
       });
     }
-    
+
     // For regular form submissions, use redirect
     res.redirect('/artists/manage-concerts');
 
@@ -746,7 +833,7 @@ router.post('/create', isLoggedIn, canCreateConcert, async (req, res) => {
   try {
     // This route now just validates and redirects to payment
     // The actual concert creation happens in /verify-payment after successful payment
-    
+
     const {
       title, description, date, time, venue, city,
       isPaid, price, maxTickets, bookingHours, ticketPrice
@@ -796,9 +883,9 @@ router.get('/edit-requests', isLoggedIn, isArtist, async (req, res) => {
       })
       .sort({ requestedAt: -1 });
 
-    res.render('artist/edit-requests', { 
+    res.render('artist/edit-requests', {
       layout: false,
-      title: 'My Edit Requests', 
+      title: 'My Edit Requests',
       editRequests,
       artist,
       user: req.session.user,
@@ -816,25 +903,25 @@ router.get('/edit-request/:requestId/details', isLoggedIn, isArtist, async (req,
   try {
     const { requestId } = req.params;
     const artist = await Artist.findOne({ user: req.session.user.id });
-    
+
     if (!artist) {
       return res.json({ success: false, message: 'Artist profile not found' });
     }
 
-    const editRequest = await ConcertEditRequest.findOne({ 
-      _id: requestId, 
-      artist: artist._id 
+    const editRequest = await ConcertEditRequest.findOne({
+      _id: requestId,
+      artist: artist._id
     })
-    .populate('concert')
-    .populate({
-      path: 'concert',
-      populate: { path: 'venue' }
-    })
-    .populate('artist')
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name email' }
-    });
+      .populate('concert')
+      .populate({
+        path: 'concert',
+        populate: { path: 'venue' }
+      })
+      .populate('artist')
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name email' }
+      });
 
     if (!editRequest) {
       return res.json({ success: false, message: 'Edit request not found' });
@@ -847,10 +934,10 @@ router.get('/edit-request/:requestId/details', isLoggedIn, isArtist, async (req,
       requestedVenue = await Venue.findById(editRequest.requestedChanges.venue);
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       request: editRequest,
-      requestedVenue 
+      requestedVenue
     });
   } catch (error) {
     console.error('Error fetching edit request details:', error);
@@ -866,7 +953,7 @@ router.get('/:id', async (req, res) => {
       req.flash('error', 'Invalid concert ID');
       return res.redirect('/concerts');
     }
-    
+
     let concert = await Concert.findById(req.params.id)
       .populate({
         path: 'artist',
@@ -886,8 +973,8 @@ router.get('/:id', async (req, res) => {
 
     // Check if concert is approved
     if (concert.status !== 'approved' &&
-        (!req.session.user ||
-         (req.session.user.role !== 'admin' &&
+      (!req.session.user ||
+        (req.session.user.role !== 'admin' &&
           (!concert.artist || !concert.artist.user || concert.artist.user._id.toString() !== req.session.user.id)))) {
       req.flash('error', 'This concert is not available');
       return res.redirect('/concerts');
@@ -1044,12 +1131,12 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
 
     // Get selected quantity from query parameter (default to 1)
     const selectedQuantity = parseInt(req.query.quantity) || 1;
-    
+
     // Validate quantity
     const maxAllowedTickets = concert.maxTickets > 0
       ? Math.min(10, concert.maxTickets - concert.ticketsSold)
       : 10;
-    
+
     if (selectedQuantity < 1 || selectedQuantity > maxAllowedTickets) {
       req.flash('error', 'Invalid ticket quantity selected');
       return res.redirect(`/concerts/${concert._id}`);
@@ -1099,9 +1186,14 @@ router.get('/:id/edit', isLoggedIn, isArtist, async (req, res) => {
       return res.redirect('/artists/dashboard');
     }
 
+    if (isConcertStarted(concert)) {
+      req.flash('error', "You can't edit this concert because it is ongoing or already passed.");
+      return res.redirect('/artists/manage-concerts');
+    }
+
     // Allow editing if concert is pending, rejected, or an upcoming approved concert
     if (concert.status !== 'pending' && concert.status !== 'rejected' &&
-        !(concert.status === 'approved' && new Date(concert.date) >= new Date())) {
+      !(concert.status === 'approved' && new Date(concert.date) >= new Date())) {
       req.flash('error', 'You can only edit pending, rejected, or upcoming approved concerts');
       return res.redirect('/artists/dashboard');
     }
@@ -1161,6 +1253,11 @@ router.post('/:id/edit', isLoggedIn, isArtist, (req, res, next) => {
     if (!concert) {
       req.flash('error', 'Concert not found or you do not have permission to edit it');
       return res.redirect('/artists/dashboard');
+    }
+
+    if (isConcertStarted(concert)) {
+      req.flash('error', "You can't edit this concert because it is ongoing or already passed.");
+      return res.redirect('/artists/manage-concerts');
     }
 
     // Prevent editing of approved concerts - they need to use edit request system
@@ -1306,6 +1403,44 @@ router.post('/:id/cancel', isLoggedIn, isArtist, async (req, res) => {
   }
 });
 
+// Delete concert (artist)
+// Completed or already-ended concerts can be deleted.
+router.post('/:id/delete', isLoggedIn, isArtist, async (req, res) => {
+  try {
+    const artist = await Artist.findOne({ user: req.session.user.id });
+
+    if (!artist) {
+      req.flash('error', 'Artist profile not found');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    const concert = await Concert.findOne({
+      _id: req.params.id,
+      artist: artist._id
+    });
+
+    if (!concert) {
+      req.flash('error', 'Concert not found or you do not have permission to delete it');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    if (!isConcertOverForDelete(concert)) {
+      req.flash('error', 'You cannot delete upcoming or ongoing concerts. Please cancel the concert instead. You can delete concerts after they are over.');
+      return res.redirect('/artists/manage-concerts');
+    }
+
+    await Ticket.deleteMany({ concert: concert._id });
+    await Concert.findByIdAndDelete(concert._id);
+
+    req.flash('success', 'Completed concert deleted successfully');
+    return res.redirect('/artists/manage-concerts');
+  } catch (error) {
+    console.error('Delete concert error:', error);
+    req.flash('error', 'Failed to delete concert');
+    return res.redirect('/artists/manage-concerts');
+  }
+});
+
 // Concert Edit Request Routes for Approved Concerts
 
 // Submit edit request for approved concert
@@ -1331,7 +1466,7 @@ router.post('/:id/request-edit', isLoggedIn, isArtist, (req, res, next) => {
 
     // Find the artist first
     const artist = await Artist.findOne({ user: req.session.user.id });
-    
+
     if (!artist) {
       req.flash('error', 'Artist profile not found');
       return res.redirect('/artists/dashboard');
@@ -1339,7 +1474,7 @@ router.post('/:id/request-edit', isLoggedIn, isArtist, (req, res, next) => {
 
     // Find the concert
     const concert = await Concert.findById(concertId).populate('venue');
-    
+
     if (!concert) {
       req.flash('error', 'Concert not found');
       return res.redirect('/artists/dashboard');
@@ -1370,7 +1505,7 @@ router.post('/:id/request-edit', isLoggedIn, isArtist, (req, res, next) => {
 
     // Prepare requested changes object (only include changed fields)
     const requestedChanges = {};
-    
+
     if (title && title !== concert.title) requestedChanges.title = title;
     if (description && description !== concert.description) requestedChanges.description = description;
     if (date && date !== concert.date.toISOString().split('T')[0]) requestedChanges.date = new Date(date);

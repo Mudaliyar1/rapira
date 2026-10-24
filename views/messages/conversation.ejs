@@ -59,39 +59,53 @@
             <div class="chat-messages p-3 scrollarea" style="flex: 1; overflow-y: auto; max-height: 400px;">
               <% if (messages && messages.length > 0) { %>
                 <% messages.forEach(message => { %>
-                  <%
-                    // Ensure both IDs are strings for comparison
-                    const isCurrentUser = message.sender.toString() === user.id.toString();
-                  %>
                   <div class="row mb-3">
                     <% if (isCurrentUser) { %>
                       <!-- Outgoing message - align right -->
                       <div class="col-2"></div>
                       <div class="col-10">
                         <div class="d-flex justify-content-end">
-                          <div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">
-                            <%= message.content %>
-                            <div class="message-time text-end mt-1">
-                              <small class="opacity-75">
-                                <%= toISTLocaleString(message.createdAt) %>
-                                <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
-                              </small>
+                          <% if (message.content && message.content.startsWith('⚠️ [SYSTEM_ADVISORY:')) { %>
+                            <div class="advisory-bubble rounded-3 p-3 border border-danger bg-danger bg-opacity-10 text-white small" style="max-width: 85%;">
+                              <i class="bi bi-shield-lock-fill me-2 text-danger"></i><%= message.content %>
+                              <div class="message-time text-end mt-1">
+                                <small class="text-white-50"><%= toISTLocaleString(message.createdAt) %></small>
+                              </div>
                             </div>
-                          </div>
+                          <% } else { %>
+                            <div class="message-bubble bg-primary text-white rounded-3 p-3" style="max-width: 85%;">
+                              <%= message.content %>
+                              <div class="message-time text-end mt-1">
+                                <small class="opacity-75">
+                                  <%= toISTLocaleString(message.createdAt) %>
+                                  <i class="bi <%= message.isRead ? 'bi-check-all' : 'bi-check' %> ms-1"></i>
+                                </small>
+                              </div>
+                            </div>
+                          <% } %>
                         </div>
                       </div>
                     <% } else { %>
                       <!-- Incoming message - align left -->
                       <div class="col-10">
                         <div class="d-flex justify-content-start">
-                          <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
-                            <%= message.content %>
-                            <div class="message-time mt-1">
-                              <small class="opacity-75">
-                                <%= toISTLocaleString(message.createdAt) %>
-                              </small>
+                          <% if (message.content && message.content.startsWith('⚠️ [SYSTEM_ADVISORY:')) { %>
+                            <div class="advisory-bubble rounded-3 p-3 border border-danger bg-danger bg-opacity-10 text-white small" style="max-width: 85%;">
+                              <i class="bi bi-shield-lock-fill me-2 text-danger"></i><%= message.content %>
+                              <div class="message-time mt-1">
+                                <small class="text-white-50"><%= toISTLocaleString(message.createdAt) %></small>
+                              </div>
                             </div>
-                          </div>
+                          <% } else { %>
+                            <div class="message-bubble bg-secondary text-white rounded-3 p-3" style="max-width: 85%;">
+                              <%= message.content %>
+                              <div class="message-time mt-1">
+                                <small class="opacity-75">
+                                  <%= toISTLocaleString(message.createdAt) %>
+                                </small>
+                              </div>
+                            </div>
+                          <% } %>
                         </div>
                       </div>
                       <div class="col-2"></div>
@@ -165,6 +179,37 @@
   .message-time {
     font-size: 0.75rem;
   }
+
+  .advisory-bubble {
+    border: 2px solid !important;
+    border-style: double !important;
+    background: rgba(220, 53, 69, 0.05) !important;
+    color: #ffb8b8 !important;
+    font-style: italic;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.1);
+    animation: rapira-pulse 3s infinite ease-in-out;
+  }
+
+  .rapira-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-right: 8px;
+    font-style: normal;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  @keyframes rapira-pulse {
+    0% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
+    50% { border-color: rgba(220, 53, 69, 1); box-shadow: 0 0 20px rgba(220, 53, 69, 0.3); }
+    100% { border-color: rgba(220, 53, 69, 0.4); box-shadow: 0 0 5px rgba(220, 53, 69, 0.1); }
+  }
   
   .scrollarea {
     scrollbar-width: thin;
@@ -183,137 +228,302 @@
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
   }
+
+  .typing-indicator {
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: fit-content;
+    margin: 10px 0 20px 0;
+    display: none;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background-color: #fff;
+    display: block;
+    border-radius: 50%;
+    margin-right: 5px;
+    opacity: 0.4;
+    animation: typing-dots 1s infinite ease-in-out;
+  }
+  .typing-indicator span:nth-of-type(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-of-type(2) { animation-delay: 0.2s; margin-right: 5px; }
+  .typing-indicator span:nth-of-type(3) { animation-delay: 0.4s; margin-right: 0; }
+  
+  @keyframes typing-dots {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
 </style>
 
 <script>
-  // Robust chat scroll management
   (function() {
     'use strict';
 
-    let chatMessages;
-    let messageForm;
-    let messageInput;
-    let isUserAtBottom = true;
+    const currentUserId = '<%= user.id %>';
+    const otherUserId = '<%= otherUser._id %>';
+    const chatMessages = document.querySelector('.chat-messages');
+    const messageForm = document.querySelector('form[action="/messages/send"]');
+    const messageInput = document.querySelector('input[name="content"]');
+    let isUserNearBottom = true;
+    let lastTypingSent = 0;
+    let selectedMessages = new Set();
 
-    // Function to force scroll to bottom with multiple fallbacks
-    function forceScrollToBottom() {
-      if (!chatMessages) return;
-
-      // Method 1: Direct scroll
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      // Method 2: Smooth scroll (fallback)
-      setTimeout(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 10);
-
-      // Method 3: Force with requestAnimationFrame
-      requestAnimationFrame(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
-
-      // Method 4: Final fallback
-      setTimeout(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 100);
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value || '';
+      return div.innerHTML;
     }
 
-    // Check if user is at bottom of chat
-    function checkIfAtBottom() {
-      if (!chatMessages) return true;
-      const threshold = 50; // pixels from bottom
-      return chatMessages.scrollTop >= (chatMessages.scrollHeight - chatMessages.clientHeight - threshold);
+    function statusIcon(message) {
+      if (message.readAt || message.isRead) return '<i class="bi bi-check-all ms-1 text-info"></i>';
+      if (message.deliveredAt) return '<i class="bi bi-check-all ms-1"></i>';
+      return '<i class="bi bi-check ms-1"></i>';
     }
 
-    // Initialize chat
-    function initializeChat() {
-      chatMessages = document.querySelector('.chat-messages');
-      messageForm = document.querySelector('form[action="/messages/send"]');
-      messageInput = document.querySelector('input[name="content"]');
+    async function deleteMessage(messageId, deleteFor = 'me') {
+      try {
+        const response = await fetch(`/messages/api/delete/${messageId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ deleteFor })
+        });
 
-      if (!chatMessages) {
-        console.warn('Chat messages container not found');
+        const data = await response.json();
+        if (data.success) {
+          await fetchConversation();
+        } else {
+          alert('Failed to delete message');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('Error deleting message');
+      }
+    }
+
+    async function editMessage(messageId, newContent) {
+      try {
+        const response = await fetch(`/messages/api/edit/${messageId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ content: newContent })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          await fetchConversation();
+        } else {
+          alert('Failed to edit message');
+        }
+      } catch (error) {
+        console.error('Edit error:', error);
+        alert('Error editing message');
+      }
+    }
+
+    function renderMessages(messages, isTyping) {
+      const shouldStickToBottom = isUserNearBottom;
+      chatMessages.innerHTML = '';
+
+      if (!messages.length) {
+        chatMessages.innerHTML = `
+          <div class="text-center py-5">
+            <i class="bi bi-chat display-1 text-muted mb-3"></i>
+            <h3 class="text-white">No Messages Yet</h3>
+            <p class="text-white-75">Send a message to start the conversation.</p>
+          </div>
+        `;
         return;
       }
 
-      // Always scroll to bottom on page load
-      forceScrollToBottom();
+      messages.forEach((message) => {
+        const outgoing = String(message.sender) === String(currentUserId);
+        const time = new Date(message.createdAt).toLocaleString('en-IN', { hour12: true });
+        const isDeleted = message.isDeleted || !message.content;
+        const isAdvisory = message.content && (message.content.includes('[SYSTEM_ADVISORY:') || message.content.includes('🛡️ [RAPIRA Shield:'));
+        const editedText = message.isEdited ? ' <small class="text-muted">(edited)</small>' : '';
+        
+        let messageText = '';
+        if (isDeleted) {
+          messageText = '<em class="text-muted">This message was deleted</em>';
+        } else if (isAdvisory) {
+          messageText = `<div class="mb-1"><span class="rapira-badge"><i class="bi bi-shield-lock-fill me-1"></i>RAPIRA</span></div><div class="small">${escapeHtml(message.content.replace('🛡️ [RAPIRA Shield:', '').replace('[SYSTEM_ADVISORY:', '').replace(']', ''))}</div>`;
+        } else {
+          messageText = escapeHtml(message.content) + editedText;
+        }
 
-      // Set up scroll listener
-      chatMessages.addEventListener('scroll', () => {
-        isUserAtBottom = checkIfAtBottom();
+        const bubbleClass = isAdvisory ? 'advisory-bubble bg-transparent' : (outgoing ? 'bg-primary text-white' : 'bg-secondary text-white');
+        
+        const actionButtons = outgoing && !isDeleted && !isAdvisory ? `
+          <div class="message-actions ms-2" style="position: absolute; top: 0; right: -40px; display: none;">
+            <a href="#" onclick="window.editMessageClick('${message._id}'); return false;" class="btn btn-sm btn-info text-white" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <div class="dropdown d-inline">
+              <a href="#" class="btn btn-sm btn-danger text-white dropdown-toggle" data-bs-toggle="dropdown" title="Delete">
+                <i class="bi bi-trash"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="window.deleteMessageClick('${message._id}', 'me'); return false;">Delete for me</a></li>
+                <li><a class="dropdown-item" href="#" onclick="window.deleteMessageClick('${message._id}', 'everyone'); return false;">Delete for everyone</a></li>
+              </ul>
+            </div>
+          </div>
+        ` : '';
+
+        const bubble = outgoing
+          ? `
+            <div class="row mb-3">
+              <div class="col-2"></div>
+              <div class="col-10">
+                <div class="d-flex justify-content-end">
+                  <div class="message-bubble ${bubbleClass} rounded-3 p-3 position-relative" style="max-width: 85%;" onmouseover="this.querySelector('.message-actions')?.style.setProperty('display','block')" onmouseout="this.querySelector('.message-actions')?.style.setProperty('display','none')">
+                    ${messageText}
+                    <div class="message-time text-end mt-1">
+                      <small class="opacity-75">${time} ${!isAdvisory ? statusIcon(message) : ''}</small>
+                    </div>
+                    ${actionButtons}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+          : `
+            <div class="row mb-3">
+              <div class="col-10">
+                <div class="d-flex justify-content-start">
+                  <div class="message-bubble ${bubbleClass} rounded-3 p-3" style="max-width: 85%;">
+                    ${messageText}
+                    <div class="message-time mt-1">
+                      <small class="opacity-75">${time}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-2"></div>
+            </div>
+          `;
+        chatMessages.insertAdjacentHTML('beforeend', bubble);
       });
 
-      // Handle form submission
-      if (messageForm) {
-        messageForm.addEventListener('submit', function(e) {
-          if (!messageInput || messageInput.value.trim() === '') {
-            e.preventDefault();
-            return false;
-          }
-
-          // Mark that we should scroll to bottom after page reload
-          localStorage.setItem('chatScrollToBottom', 'true');
-          localStorage.setItem('chatScrollTimestamp', Date.now().toString());
-        });
+      // Add typing indicator at the end
+      if (isTyping) {
+        chatMessages.insertAdjacentHTML('beforeend', `
+          <div class="row mb-3 typing-row">
+            <div class="col-10">
+              <div class="d-flex justify-content-start">
+                <div class="typing-indicator d-flex">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `);
       }
 
-      // Auto-focus message input
-      if (messageInput) {
-        messageInput.focus();
-
-        // Handle Enter key
-        messageInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            if (messageInput.value.trim() !== '') {
-              messageForm.submit();
-            }
-          }
-        });
+      if (shouldStickToBottom) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
+    }
 
-      // Check if we need to scroll after form submission
-      const shouldScroll = localStorage.getItem('chatScrollToBottom');
-      const scrollTimestamp = localStorage.getItem('chatScrollTimestamp');
+    window.deleteMessageClick = deleteMessage;
+    window.editMessageClick = async (messageId) => {
+      const newContent = prompt('Edit message:');
+      if (newContent && newContent.trim()) {
+        await editMessage(messageId, newContent);
+      }
+    };
 
-      if (shouldScroll === 'true') {
-        // Only scroll if the timestamp is recent (within 5 seconds)
-        const now = Date.now();
-        const timestamp = parseInt(scrollTimestamp) || 0;
-
-        if (now - timestamp < 5000) {
-          // Clear the flags
-          localStorage.removeItem('chatScrollToBottom');
-          localStorage.removeItem('chatScrollTimestamp');
-
-          // Force scroll to bottom with multiple attempts
-          forceScrollToBottom();
-          setTimeout(forceScrollToBottom, 50);
-          setTimeout(forceScrollToBottom, 200);
-          setTimeout(forceScrollToBottom, 500);
+    async function fetchConversation() {
+      try {
+        const response = await fetch(`/messages/api/conversation/${otherUserId}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success && Array.isArray(data.messages)) {
+          renderMessages(data.messages, data.isTyping);
         }
+      } catch (error) {
+        console.error('Failed to fetch conversation:', error);
       }
     }
 
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeChat);
-    } else {
-      initializeChat();
+    async function sendMessage(content) {
+      const response = await fetch('/messages/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          recipientId: otherUserId,
+          content
+        })
+      });
+
+      return response.ok;
     }
 
-    // Also initialize on window load as a fallback
-    window.addEventListener('load', () => {
-      setTimeout(forceScrollToBottom, 100);
-    });
+    async function sendTypingStatus(isTyping) {
+      const now = Date.now();
+      if (isTyping && now - lastTypingSent < 3000) return; // Debounce typing pings
+      if (isTyping) lastTypingSent = now;
 
-    // Handle page visibility change (when user returns to tab)
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && isUserAtBottom) {
-        setTimeout(forceScrollToBottom, 100);
+      try {
+        await fetch(`/messages/api/typing/${otherUserId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isTyping })
+        });
+      } catch (error) {
+        console.error('Typing status error:', error);
       }
-    });
+    }
 
+    function setupListeners() {
+      if (!chatMessages || !messageForm || !messageInput) return;
+
+      chatMessages.addEventListener('scroll', () => {
+        const threshold = 80;
+        isUserNearBottom = (chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight) < threshold;
+      });
+
+      messageInput.addEventListener('input', () => {
+        if (messageInput.value.trim().length > 0) {
+          sendTypingStatus(true);
+        }
+      });
+
+      messageForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        messageInput.disabled = true;
+        const sent = await sendMessage(content);
+        messageInput.disabled = false;
+
+        if (sent) {
+          messageInput.value = '';
+          isUserNearBottom = true;
+          sendTypingStatus(false);
+          await fetchConversation();
+          messageInput.focus();
+        }
+      });
+    }
+
+    setupListeners();
+    fetchConversation();
+    setInterval(fetchConversation, 3000);
   })();
 </script>

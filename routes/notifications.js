@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, hasAdminPermission } = require('../middleware/auth');
 
 // Notification utility function to create notifications
 const createNotification = async (module, requestId, modelRef, description, link) => {
@@ -24,7 +24,7 @@ const createNotification = async (module, requestId, modelRef, description, link
 };
 
 // Get all notifications for admin dashboard
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     // Get query parameters for filtering
     const { status, module, read } = req.query;
@@ -97,7 +97,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Mark notification as read
-router.post('/mark-read/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/mark-read/:id', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -125,7 +125,7 @@ router.post('/mark-read/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Mark all notifications as read
-router.post('/mark-all-read', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/mark-all-read', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     await Notification.updateMany(
       { isRead: false },
@@ -146,7 +146,7 @@ router.post('/mark-all-read', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Get unread notification count (for AJAX requests)
-router.get('/unread-count', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/unread-count', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     const count = await Notification.countDocuments({ isRead: false });
 
@@ -164,7 +164,7 @@ router.get('/unread-count', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Get notification counts by module (for dashboard)
-router.get('/module-counts', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/module-counts', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     // Get all pending notifications
     const notifications = await Notification.find({ status: 'Pending' });
@@ -194,7 +194,7 @@ router.get('/module-counts', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete a notification - POST route for direct form submissions
-router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/delete/:id', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -215,7 +215,7 @@ router.post('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete a notification (supports both DELETE and POST with _method=DELETE)
-router.delete('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/delete/:id', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -257,7 +257,7 @@ router.delete('/delete/:id', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete all notifications - POST route for direct form submissions
-router.post('/delete-all', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/delete-all', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     // Get filter parameters
     const { status, module, read } = req.body;
@@ -293,7 +293,7 @@ router.post('/delete-all', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Delete all notifications (supports both DELETE and POST with _method=DELETE)
-router.delete('/delete-all', isLoggedIn, isAdmin, async (req, res) => {
+router.delete('/delete-all', isLoggedIn, hasAdminPermission('manage_notifications'), async (req, res) => {
   try {
     // Get filter parameters
     const { status, module, read } = req.body;

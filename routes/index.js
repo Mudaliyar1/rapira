@@ -1,11 +1,80 @@
 const express = require('express');
 const router = express.Router();
+const http = require('http');
+const https = require('https');
+const path = require('path');
 const Concert = require('../models/Concert');
 const Artist = require('../models/Artist');
 const Content = require('../models/Content');
 const Page = require('../models/Page');
 const ArtistPost = require('../models/ArtistPost');
 const { sendTestEmail, sendConcertSubmissionEmail } = require('../utils/emailService');
+const Media = require('../models/Media');
+const { deleteMedia } = require('../utils/mediaService');
+const { extractYoutubeId, isYoutubeVideoAvailable } = require('../utils/youtube');
+
+const POLICY_LAST_UPDATED = '12 Apr 2026';
+
+const getViewsDisplay = (item) => {
+  const fake = String(item?.fakeViewsLabel || '').trim();
+  if (fake) return fake;
+  return String(item?.views || 0);
+};
+
+const getLikesDisplay = (item) => {
+  const fake = String(item?.fakeLikesLabel || '').trim();
+  if (fake) return fake;
+  return String(item?.likesCount || (Array.isArray(item?.likes) ? item.likes.length : 0));
+};
+
+const sanitizeFilename = (value) => {
+  const safe = String(value || 'download')
+    .trim()
+    .replace(/[^a-z0-9\-_]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+  return safe || 'download';
+};
+
+const getExtensionFromUrl = (mediaUrl) => {
+  try {
+    const parsedUrl = new URL(mediaUrl);
+    const ext = path.extname(parsedUrl.pathname || '');
+    return ext || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+const streamRemoteFile = (mediaUrl, res) => {
+  const parsedUrl = new URL(mediaUrl);
+  const client = parsedUrl.protocol === 'http:' ? http : https;
+
+  const request = client.get(parsedUrl, (remoteRes) => {
+    if (remoteRes.statusCode >= 300 && remoteRes.statusCode < 400 && remoteRes.headers.location) {
+      return streamRemoteFile(remoteRes.headers.location, res);
+    }
+
+    if (remoteRes.statusCode !== 200) {
+      res.status(502).send('Unable to download file');
+      remoteRes.resume();
+      return;
+    }
+
+    if (remoteRes.headers['content-type']) {
+      res.setHeader('Content-Type', remoteRes.headers['content-type']);
+    }
+
+    remoteRes.pipe(res);
+  });
+
+  request.on('error', () => {
+    if (!res.headersSent) {
+      res.status(502).send('Unable to download file');
+    } else {
+      res.end();
+    }
+  });
+};
 
 // Home page
 router.get('/', async (req, res) => {
@@ -15,13 +84,13 @@ router.get('/', async (req, res) => {
       status: 'approved',
       date: { $gte: new Date() }
     })
-    .sort({ date: 1 })
-    .limit(3)
-    .populate({
-      path: 'artist',
-      populate: { path: 'user', select: 'name profileImage' }
-    })
-    .populate('venue', 'name address city');
+      .sort({ date: 1 })
+      .limit(3)
+      .populate({
+        path: 'artist',
+        populate: { path: 'user', select: 'name profileImage' }
+      })
+      .populate('venue', 'name address city');
 
     // Get featured artists - limit to 4
     const featuredArtists = await Artist.find({ featuredArtist: true })
@@ -47,6 +116,45 @@ router.get('/', async (req, res) => {
       .limit(4)
       .lean();
 
+    // Get 6 random reels for homepage attraction
+    const homeReels = await ArtistPost.aggregate([
+      {
+        $match: {
+          isActive: true,
+          isApproved: true,
+          'media.mediaType': { $in: ['video', 'audio'] }
+        }
+      },
+      { $sample: { size: 6 } },
+      {
+        $lookup: {
+          from: 'artists',
+          localField: 'artist',
+          foreignField: '_id',
+          as: 'artistData'
+        }
+      },
+      { $unwind: '$artistData' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'artistData.user',
+          foreignField: '_id',
+          as: 'artistUser'
+        }
+      },
+      { $unwind: { path: '$artistUser', preserveNullAndEmptyArrays: true } }
+    ]);
+
+    const formattedReels = homeReels.map(reel => ({
+      _id: reel._id,
+      media: reel.media,
+      artist: {
+        stageName: reel.artistData.stageName,
+        profileImage: reel.artistUser ? reel.artistUser.profileImage : '/images/default-profile.svg'
+      }
+    }));
+
     // Get current user data
     const currentUser = req.session.user || null;
 
@@ -55,6 +163,7 @@ router.get('/', async (req, res) => {
       featuredArtists,
       latestContent,
       featuredProducts,
+      homeReels: formattedReels,
       user: currentUser
     });
   } catch (error) {
@@ -159,7 +268,8 @@ router.get('/privacy-policy', (req, res) => {
     currentUser,
     path: '/privacy-policy',
     title: 'Privacy Policy - Rapira',
-    description: 'Rapira privacy policy details how we collect, use, and protect your personal information.'
+    description: 'Rapira privacy policy details how we collect, use, and protect your personal information.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -170,7 +280,8 @@ router.get('/terms-of-service', (req, res) => {
     currentUser,
     path: '/terms-of-service',
     title: 'Terms of Service - Rapira',
-    description: 'Rapira terms of service outline the rules and guidelines for using our platform.'
+    description: 'Rapira terms of service outline the rules and guidelines for using our platform.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -181,7 +292,8 @@ router.get('/refund-policy', (req, res) => {
     currentUser,
     path: '/refund-policy',
     title: 'Refund Policy - Rapira',
-    description: 'Rapira refund policy details our procedures for ticket refunds and cancellations.'
+    description: 'Rapira refund policy details our procedures for ticket refunds and cancellations.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -192,7 +304,8 @@ router.get('/subscription-policy', (req, res) => {
     currentUser,
     path: '/subscription-policy',
     title: 'Subscription Policy - Rapira',
-    description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.'
+    description: 'Rapira subscription policy outlines the terms and conditions for our subscription services.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -203,7 +316,20 @@ router.get('/shopping-policy', (req, res) => {
     currentUser,
     path: '/shopping-policy',
     title: 'Shopping Policy - Rapira',
-    description: 'RAPIRA shopping policy covers merchandise purchases, returns, exchanges, shipping, and customer support.'
+    description: 'RAPIRA shopping policy covers merchandise purchases, returns, exchanges, shipping, and customer support.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
+  });
+});
+
+// Document and ID protection policy
+router.get('/document-id-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('document-id-policy', {
+    currentUser,
+    path: '/document-id-policy',
+    title: 'Document and ID Protection Policy - Rapira',
+    description: 'Rapira document and ID protection policy explains how we collect, store, and protect uploaded identity documents and ID numbers.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -214,7 +340,20 @@ router.get('/event-attending-policy', (req, res) => {
     currentUser,
     path: '/event-attending-policy',
     title: 'Event Attending Policy - Rapira',
-    description: 'Rapira event attending policy outlines the rules and conditions applicable to attendees of events and concerts.'
+    description: 'Rapira event attending policy outlines the rules and conditions applicable to attendees of events and concerts.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
+  });
+});
+
+// Temporary email policy
+router.get('/temp-email-policy', (req, res) => {
+  const currentUser = req.session.user || null;
+  res.render('temp-email-policy', {
+    currentUser,
+    path: '/temp-email-policy',
+    title: 'Temporary Email Policy - Rapira',
+    description: 'Rapira temporary email policy explains why disposable emails are not allowed and what types of email addresses are acceptable.',
+    lastUpdatedDate: POLICY_LAST_UPDATED
   });
 });
 
@@ -243,74 +382,138 @@ router.get('/faq', (req, res) => {
 // Content library page
 router.get('/content', async (req, res) => {
   try {
-    // Get filter parameters with proper defaults
     const { mediaType = '', artist = '', sort = 'latest' } = req.query;
 
-    // Build post filter object for artist posts
-    const postFilter = { isApproved: true, isActive: true };
+    // --- Build Filters ---
+    const contentFilter = {};
+    const postFilter = { isActive: true, isApproved: true };
 
-    // Media type filter for artist posts (images/videos/audio)
-    if (mediaType && ['image', 'video', 'audio'].includes(mediaType)) {
-      postFilter['media.mediaType'] = mediaType;
-    }
-
-    // Artist filter
-    if (artist && artist !== '') {
+    if (artist) {
+      contentFilter.artist = artist;
       postFilter.artist = artist;
     }
 
-    // Build sort object
-    let sortOption = { createdAt: -1 }; // Default: latest first
-    switch (sort) {
-      case 'oldest':
-        sortOption = { createdAt: 1 };
-        break;
-      case 'popular':
-        sortOption = { views: -1, createdAt: -1 };
-        break;
-      case 'latest':
-      default:
-        sortOption = { createdAt: -1 };
-        break;
-    }
-
-    // Get all artists for filter dropdown (only those with posts)
-    const artistsWithPosts = await ArtistPost.find({ isApproved: true, isActive: true }).distinct('artist');
-    const artists = await Artist.find({ _id: { $in: artistsWithPosts } })
+    // --- Fetch Artists for Sidebar ---
+    const [artistsWithContent, artistsWithPosts] = await Promise.all([
+      Content.distinct('artist'),
+      ArtistPost.find({ isActive: true, isApproved: true }).distinct('artist')
+    ]);
+    const allArtistIds = [...new Set([...artistsWithContent, ...artistsWithPosts])];
+    const artists = await Artist.find({ _id: { $in: allArtistIds } })
       .populate('user', 'name')
       .sort({ 'user.name': 1 });
+    const validArtists = artists.filter(a => a.user);
 
-    // Filter out artists with no user
-    const validArtists = artists.filter(artist => artist.user);
+    // --- Query Both Collections ---
+    const [rawContent, rawPosts] = await Promise.all([
+      Content.find(contentFilter).populate({ path: 'artist', populate: { path: 'user', select: 'name' } }).lean(),
+      ArtistPost.find(postFilter).populate({ path: 'artist', populate: { path: 'user', select: 'name' } }).lean()
+    ]);
 
-    // Get artist posts with pagination
+    const cleanedContent = [];
+    for (const item of rawContent) {
+      const isYoutubeContent = item.isYoutubeLink || item.youtubeId || /(?:youtube\.com|youtu\.be)/i.test(String(item.fileUrl || ''));
+      if (isYoutubeContent) {
+        const youtubeId = item.youtubeId || extractYoutubeId(item.fileUrl);
+        const available = await isYoutubeVideoAvailable(youtubeId || item.fileUrl);
+        if (!available) {
+          try {
+            if (item.thumbnailMedia) {
+              const thumbnailMedia = await Media.findById(item.thumbnailMedia);
+              if (thumbnailMedia) await deleteMedia(thumbnailMedia);
+            }
+            if (item.fileMedia) {
+              const fileMedia = await Media.findById(item.fileMedia);
+              if (fileMedia) await deleteMedia(fileMedia);
+            }
+          } catch (cleanupError) {
+            console.error('Failed to cleanup deleted YouTube content from library:', cleanupError.message);
+          }
+
+          await Content.deleteOne({ _id: item._id });
+          continue;
+        }
+      }
+
+      cleanedContent.push(item);
+    }
+
+    // --- Standardize Data Formats ---
+    let unifiedList = [
+      ...cleanedContent.map(item => {
+        const ytId = item.isYoutubeLink ? item.youtubeId : extractYoutubeId(item.fileUrl);
+        return {
+          _id: item._id,
+          title: item.title,
+          description: item.description,
+          artist: item.artist,
+          createdAt: item.createdAt,
+          views: item.views || 0,
+          viewsDisplay: String(item.views || 0),
+          likesCount: item.likes || 0,
+          media: {
+            url: item.fileUrl,
+            mediaType: item.type === 'song' ? 'audio' : 'video',
+            thumbnailUrl: item.thumbnailUrl || ''
+          },
+          isYoutube: !!ytId || item.isYoutubeLink,
+          youtubeId: ytId || item.youtubeId,
+          youtubeThumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : (item.thumbnailUrl || null),
+          sourceModel: 'Content'
+        };
+      }),
+      ...rawPosts.map(post => {
+        const ytId = extractYoutubeId(post.media?.url);
+        return {
+          ...post,
+          title: post.title || post.caption || 'Artist Post',
+          viewsDisplay: getViewsDisplay(post),
+          likesDisplay: getLikesDisplay(post),
+          likesCount: post.likesCount || (post.likes ? post.likes.length : 0),
+          isYoutube: !!ytId,
+          youtubeId: ytId,
+          youtubeThumbnail: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null,
+          sourceModel: 'ArtistPost'
+        };
+      })
+    ];
+
+    // --- Apply Media Type Filtering on Unified List ---
+    if (mediaType) {
+      unifiedList = unifiedList.filter(item => {
+        if (mediaType === 'youtube_video') return item.isYoutube && item.media.mediaType === 'video';
+        if (mediaType === 'youtube_audio') return item.isYoutube && item.media.mediaType === 'audio';
+        return item.media.mediaType === mediaType;
+      });
+    }
+
+    // --- Apply Sorting ---
+    unifiedList.sort((a, b) => {
+      if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+      if (sort === 'popular') return (b.views + b.likesCount) - (a.views + a.likesCount);
+      return new Date(b.createdAt) - new Date(a.createdAt); // latest
+    });
+
+    // --- Pagination ---
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const skip = (page - 1) * limit;
+    const paginatedList = unifiedList.slice(skip, skip + limit);
+    const totalPages = Math.ceil(unifiedList.length / limit);
 
-    // Count total posts for pagination
-    const totalPosts = await ArtistPost.countDocuments(postFilter);
-    const totalPages = Math.ceil(totalPosts / limit);
-
-    // Get posts
-    const posts = await ArtistPost.find(postFilter)
-      .sort(sortOption)
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: 'artist', populate: { path: 'user', select: 'name' } })
-      .lean();
-
-    // Get statistics
+    // --- Statistics ---
     const stats = {
-      total: await ArtistPost.countDocuments({ isApproved: true, isActive: true }),
-      images: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'image' }),
-      videos: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'video' }),
-      audio: await ArtistPost.countDocuments({ isApproved: true, isActive: true, 'media.mediaType': 'audio' }),
-      filtered: totalPosts
+      total: unifiedList.length,
+      images: unifiedList.filter(i => i.media.mediaType === 'image').length,
+      videos: unifiedList.filter(i => i.media.mediaType === 'video' && !i.isYoutube).length,
+      audio: unifiedList.filter(i => i.media.mediaType === 'audio' && !i.isYoutube).length,
+      youtubeVideos: unifiedList.filter(i => i.media.mediaType === 'video' && i.isYoutube).length,
+      youtubeAudios: unifiedList.filter(i => i.media.mediaType === 'audio' && i.isYoutube).length,
+      filtered: unifiedList.length
     };
 
     res.render('content-library', {
-      posts,
+      posts: paginatedList,
       artists: validArtists,
       currentFilters: {
         mediaType: mediaType || '',
@@ -331,6 +534,54 @@ router.get('/content', async (req, res) => {
     res.redirect('/');
   }
 });
+
+router.get('/content/download', async (req, res) => {
+  try {
+    const { sourceModel, id } = req.query;
+
+    if (!sourceModel || !id) {
+      return res.status(400).send('Missing download parameters');
+    }
+
+    let item = null;
+    if (sourceModel === 'Content') {
+      item = await Content.findById(id).lean();
+    } else if (sourceModel === 'ArtistPost') {
+      item = await ArtistPost.findById(id).lean();
+    }
+
+    if (!item) {
+      return res.status(404).send('Content not found');
+    }
+
+    const mediaUrl = sourceModel === 'Content'
+      ? item.fileUrl
+      : item.media && item.media.url;
+
+    if (!mediaUrl) {
+      return res.status(404).send('Media not available for download');
+    }
+
+    if (String(mediaUrl).includes('youtube.com') || String(mediaUrl).includes('youtu.be')) {
+      return res.status(400).send('YouTube media cannot be downloaded from here');
+    }
+
+    const baseName = sourceModel === 'Content'
+      ? item.title
+      : (item.title || item.caption || 'artist-post');
+    const fileName = `${sanitizeFilename(baseName)}${getExtensionFromUrl(mediaUrl) || ''}`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    return streamRemoteFile(mediaUrl, res);
+  } catch (error) {
+    console.error('Content download error:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Failed to download file');
+    }
+  }
+});
+
+
 
 // Dynamic pages
 router.get('/page/:slug', async (req, res) => {

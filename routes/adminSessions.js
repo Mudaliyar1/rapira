@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { isAdmin } = require('../middleware/auth');
+const { isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // Get the sessions collection directly from MongoDB
 const getSessionsCollection = async () => {
@@ -16,7 +16,7 @@ const getSessionsCollection = async () => {
 };
 
 // Session management dashboard
-router.get('/', isAdmin, async (req, res) => {
+router.get('/', hasAdminPermission('manage_session_management'), async (req, res) => {
   try {
     const sessionsCollection = await getSessionsCollection();
 
@@ -104,7 +104,7 @@ router.get('/', isAdmin, async (req, res) => {
 });
 
 // Clear all sessions
-router.post('/clear-all', isAdmin, async (req, res) => {
+router.post('/clear-all', hasAdminPermission('manage_session_management'), async (req, res) => {
   try {
     const sessionsCollection = await getSessionsCollection();
 
@@ -161,7 +161,7 @@ router.post('/clear-all', isAdmin, async (req, res) => {
 });
 
 // Clear inactive sessions (expired)
-router.post('/clear-expired', isAdmin, async (req, res) => {
+router.post('/clear-expired', hasAdminPermission('manage_session_management'), async (req, res) => {
   try {
     const sessionsCollection = await getSessionsCollection();
 
@@ -182,7 +182,7 @@ router.post('/clear-expired', isAdmin, async (req, res) => {
 });
 
 // Clear sessions by user role
-router.post('/clear-by-role', isAdmin, async (req, res) => {
+router.post('/clear-by-role', hasAdminPermission('manage_session_management'), async (req, res) => {
   try {
     const { role } = req.body;
 
@@ -252,7 +252,7 @@ router.post('/clear-by-role', isAdmin, async (req, res) => {
 });
 
 // Force cookie refresh - clear all sessions and invalidate cookies
-router.post('/force-cookie-refresh', isAdmin, async (req, res) => {
+router.post('/force-cookie-refresh', hasAdminPermission('manage_session_management'), async (req, res) => {
   try {
     console.log('🚀 Force cookie refresh initiated by admin:', req.session.user.email);
     console.log('🔒 Current admin session ID:', req.sessionID);

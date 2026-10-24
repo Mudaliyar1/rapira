@@ -4,6 +4,18 @@ const { isLoggedIn } = require('../middleware/auth');
 const { getPaymentDetails } = require('../utils/paymentService');
 const Ticket = require('../models/Ticket');
 
+const getSessionUserId = (req) => {
+  if (!req || !req.session || !req.session.user) return null;
+  return String(req.session.user.id || req.session.user._id || '').trim() || null;
+};
+
+const isTicketOwnedBySessionUser = (ticketDoc, req) => {
+  const sessionUserId = getSessionUserId(req);
+  if (!sessionUserId || !ticketDoc) return false;
+  const ticketUserId = ticketDoc.user && (ticketDoc.user._id || ticketDoc.user);
+  return ticketUserId ? String(ticketUserId) === sessionUserId : false;
+};
+
 // Payment success page
 router.get('/success', isLoggedIn, async (req, res) => {
   try {
@@ -24,7 +36,7 @@ router.get('/success', isLoggedIn, async (req, res) => {
     }
     
     // Check if user owns the ticket
-    if (ticket.user._id.toString() !== req.session.user.id) {
+    if (!isTicketOwnedBySessionUser(ticket, req)) {
       req.flash('error', 'You do not have permission to view this ticket');
       return res.redirect('/users/profile');
     }
@@ -64,7 +76,7 @@ router.get('/details/:paymentId', isLoggedIn, async (req, res) => {
     }
     
     // Check if user owns the ticket or is admin
-    if (ticket.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
+    if (!isTicketOwnedBySessionUser(ticket, req) && req.session.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'You do not have permission to view this payment' });
     }
     

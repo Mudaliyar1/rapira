@@ -3,10 +3,10 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Artist = require('../models/Artist');
 const FeaturedArtist = require('../models/FeaturedArtist');
-const { isLoggedIn, isAdmin } = require('../middleware/auth');
+const { isLoggedIn, isAdmin, hasAdminPermission } = require('../middleware/auth');
 
 // GET /admin/find-my-artist/featured-artists - Manage featured artists
-router.get('/', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/', isLoggedIn, hasAdminPermission('manage_featured_artists'), async (req, res) => {
   try {
     // Get search parameters
     const { search, genre, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -82,11 +82,11 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
         const description = (fa.customDescription || '').toLowerCase();
 
         return artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               genre.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               description.includes(searchTerm);
+          stageName.includes(searchTerm) ||
+          genre.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          description.includes(searchTerm);
       });
     }
 
@@ -96,8 +96,8 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
       _id: { $nin: featuredArtistIds },
       verified: true
     })
-    .populate('user', 'name')
-    .sort({ 'user.name': 1 });
+      .populate('user', 'name')
+      .sort({ 'user.name': 1 });
 
     // Get filter options
     const allGenres = await Artist.distinct('genre', { verified: true });
@@ -140,7 +140,7 @@ router.get('/', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // Export featured artists to CSV
-router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
+router.get('/export', isLoggedIn, hasAdminPermission('manage_featured_artists'), async (req, res) => {
   try {
     // Get search parameters (same as main route)
     const { search, genre, city, state, dateRange, sortBy, sortOrder } = req.query;
@@ -214,11 +214,11 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
         const description = (fa.customDescription || '').toLowerCase();
 
         return artistName.includes(searchTerm) ||
-               stageName.includes(searchTerm) ||
-               genre.includes(searchTerm) ||
-               city.includes(searchTerm) ||
-               state.includes(searchTerm) ||
-               description.includes(searchTerm);
+          stageName.includes(searchTerm) ||
+          genre.includes(searchTerm) ||
+          city.includes(searchTerm) ||
+          state.includes(searchTerm) ||
+          description.includes(searchTerm);
       });
     }
 
@@ -255,7 +255,7 @@ router.get('/export', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/featured-artists/add - Add a featured artist
-router.post('/add', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/add', isLoggedIn, hasAdminPermission('manage_featured_artists'), async (req, res) => {
   try {
     const { artistId, customDescription } = req.body;
 
@@ -303,7 +303,7 @@ router.post('/add', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/featured-artists/:id/remove - Remove a featured artist
-router.post('/:id/remove', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/:id/remove', isLoggedIn, hasAdminPermission('manage_featured_artists'), async (req, res) => {
   try {
     await FeaturedArtist.findByIdAndDelete(req.params.id);
 
@@ -317,7 +317,7 @@ router.post('/:id/remove', isLoggedIn, isAdmin, async (req, res) => {
 });
 
 // POST /admin/find-my-artist/featured-artists/update-order - Update display order
-router.post('/update-order', isLoggedIn, isAdmin, async (req, res) => {
+router.post('/update-order', isLoggedIn, hasAdminPermission('manage_featured_artists'), async (req, res) => {
   try {
     const { orders } = req.body;
 

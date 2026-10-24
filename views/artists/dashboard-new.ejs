@@ -1,7 +1,7 @@
 <%- include('../partials/artist-header') %>
 
 <!-- Stats Cards -->
-<div class="row g-4 mb-5">
+<div class="row g-4 mb-5" id="tutorialStatsCards">
   <div class="col-md-4">
     <div class="card bg-dark p-3">
       <div class="d-flex align-items-center">
@@ -64,7 +64,7 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="card mb-5">
+<div class="card mb-5" id="tutorialQuickActions">
   <div class="card-body" style="background-color: #333;">
     <h5 class="card-title fw-bold mb-4" style="color: white !important;">Quick Actions</h5>
     <div class="row g-3">
@@ -112,6 +112,12 @@
           Post Story
         </a>
       </div>
+      <div class="col-md-3">
+        <a href="/artist-distribution/distributors" class="btn btn-dark w-100 py-3 text-white" style="background-color: #6f42c1;">
+          <i class="bi bi-cloud-arrow-up fs-4 d-block mb-2"></i>
+          Music Distribution
+        </a>
+      </div>
       <div class="col-md-<%= (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') ? '3' : '3' %>">
         <a href="/messages/find" class="btn btn-info w-100 py-3 text-white">
           <i class="bi bi-chat-dots fs-4 d-block mb-2"></i>
@@ -125,27 +131,103 @@
 <div class="card mb-5" id="post-story">
   <div class="card-body" style="background-color: #333;">
     <h5 class="card-title fw-bold mb-4" style="color: white !important;">Post a Story</h5>
-    <form action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
+    <form id="storyUploadForm" action="/artists/stories" method="POST" enctype="multipart/form-data" class="row g-3">
       <div class="col-md-6">
-        <label class="form-label" style="color: #fff;">Media (image or short video)</label>
-        <input type="file" name="media" accept="image/*,video/*" class="form-control" required />
+        <label class="form-label" style="color: #fff;">Media (image, video, or audio)</label>
+        <input type="file" name="media" accept="image/*,video/*,audio/*" class="form-control" required />
       </div>
       <div class="col-md-6">
         <label class="form-label" style="color: #fff;">Caption (optional)</label>
         <input type="text" name="caption" maxlength="120" class="form-control" placeholder="Say something..." />
       </div>
       <div class="col-12">
-        <button type="submit" class="btn btn-primary">Post Story</button>
-        <span class="text-muted ms-2" style="color:#ccc !important;">Max 20 stories per 24 hours; up to 20MB.</span>
+        <div id="uploadProgressContainer" class="progress mb-3 d-none" style="height: 25px; border-radius: 12px; background-color: #444;">
+          <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <div id="uploadStatus" class="small mb-3 d-none" style="color: #ccc;"></div>
+        <button type="submit" id="storySubmitBtn" class="btn btn-primary d-flex align-items-center gap-2">
+           <i class="bi bi-cloud-upload"></i> Post Story
+        </button>
+        <span class="text-muted ms-2" style="color:#ccc !important;">Max 20 stories per 24 hours; up to 100MB.</span>
       </div>
     </form>
   </div>
-  
 </div>
+
+<script>
+document.getElementById('storyUploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const form = this;
+  const formData = new FormData(form);
+  const btn = document.getElementById('storySubmitBtn');
+  const progressBar = document.getElementById('uploadProgressBar');
+  const container = document.getElementById('uploadProgressContainer');
+  const status = document.getElementById('uploadStatus');
+  
+  // Disable button
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+  
+  // Show progress bar
+  container.classList.remove('d-none');
+  status.classList.remove('d-none');
+  status.textContent = 'Preparing upload...';
+  
+  const xhr = new XMLHttpRequest();
+  
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percentComplete = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = percentComplete + '%';
+      progressBar.setAttribute('aria-valuenow', percentComplete);
+      progressBar.textContent = percentComplete + '%';
+      
+      if (percentComplete < 100) {
+        status.textContent = `Uploading: ${percentComplete}% (${(e.loaded / (1024 * 1024)).toFixed(2)} MB / ${(e.total / (1024 * 1024)).toFixed(2)} MB)`;
+      } else {
+        status.textContent = 'Upload complete! Processing media on server... (may take a moment)';
+        progressBar.classList.add('bg-success');
+      }
+    }
+  });
+
+  xhr.addEventListener('load', function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      status.style.color = '#28a745';
+      status.textContent = 'Story posted successfully! Reloading...';
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      let errorMsg = 'Upload failed. Please try again.';
+      try {
+        const resp = JSON.parse(xhr.responseText);
+        errorMsg = resp.error || errorMsg;
+      } catch (err) {}
+      status.style.color = '#dc3545';
+      status.textContent = 'Error: ' + errorMsg;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+      progressBar.classList.remove('bg-success');
+      progressBar.classList.add('bg-danger');
+    }
+  });
+
+  xhr.addEventListener('error', function() {
+    status.style.color = '#dc3545';
+    status.textContent = 'A network error occurred.';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-cloud-upload"></i> Post Story';
+  });
+
+  xhr.open('POST', form.action, true);
+  xhr.setRequestHeader('Accept', 'application/json'); // Tell server we want JSON
+  xhr.send(formData);
+});
+</script>
 
 <!-- My Stories -->
 <% if (stories && stories.length > 0) { %>
-<div class="card mb-5">
+<div class="card mb-5" id="tutorialMyStories">
   <div class="card-body" style="background-color: #333;">
     <h5 class="card-title fw-bold mb-4" style="color: white !important;">My Active Stories (<%= stories.length %>)</h5>
     <div class="row g-3">
@@ -155,11 +237,17 @@
           <div class="position-relative">
             <% if (story.mediaType === 'image') { %>
               <img src="<%= story.mediaUrl %>" class="card-img-top" style="height: 200px; object-fit: cover;" alt="Story">
-            <% } else { %>
+            <% } else if (story.mediaType === 'video') { %>
               <video src="<%= story.mediaUrl %>" class="card-img-top" style="height: 200px; object-fit: cover;" muted></video>
+            <% } else { %>
+              <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                <i class="bi bi-music-note-beamed fs-1 text-white"></i>
+              </div>
             <% } %>
             <div class="position-absolute top-0 end-0 p-2">
-              <span class="badge bg-dark"><%= story.mediaType === 'image' ? 'Photo' : 'Video' %></span>
+              <span class="badge bg-dark">
+                <%= story.mediaType === 'image' ? 'Photo' : (story.mediaType === 'video' ? 'Video' : 'Audio') %>
+              </span>
             </div>
           </div>
           <div class="card-body">
@@ -177,9 +265,14 @@
                 <i class="bi bi-clock"></i> <%= Math.round((new Date(story.expiresAt) - new Date()) / (1000 * 60 * 60)) %>h left
               </small>
             </div>
-            <button class="btn btn-danger btn-sm w-100" onclick="deleteStory('<%= story._id %>')">
-              <i class="bi bi-trash"></i> Delete Story
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm flex-grow-1" onclick="viewStoryDetails('<%= story._id %>')">
+                <i class="bi bi-info-circle"></i> Details
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="deleteStory('<%= story._id %>')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -203,6 +296,26 @@
         <div class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Story Details Modal -->
+<div class="modal fade" id="storyDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white">Story Resource Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="storyDetailsContent">
+          <!-- Loading state -->
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
           </div>
         </div>
       </div>
@@ -384,10 +497,128 @@ function viewStoryLikes(storyId) {
       `;
     });
 }
+function viewStoryDetails(storyId) {
+  const modal = new bootstrap.Modal(document.getElementById('storyDetailsModal'));
+  modal.show();
+  
+  const container = document.getElementById('storyDetailsContent');
+  container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+  
+  fetch(`/artists/stories/${storyId}/details`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) throw new Error(data.message);
+      const story = data.story;
+      
+      let mediaHtml = '';
+      if (story.mediaType === 'image') {
+        mediaHtml = `<img src="${story.mediaUrl}" class="img-fluid rounded shadow w-100" style="max-height: 400px; object-fit: contain;">`;
+      } else if (story.mediaType === 'video') {
+        mediaHtml = `<video src="${story.mediaUrl}" class="w-100 rounded shadow" style="max-height: 400px; background: #000;" controls></video>`;
+      } else {
+        mediaHtml = `
+          <div class="p-5 rounded shadow d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #2a2a3c, #5a293c);">
+            <i class="bi bi-music-note-beamed text-primary mb-3" style="font-size: 4rem;"></i>
+            <audio src="${story.mediaUrl}" controls class="w-100"></audio>
+          </div>`;
+      }
+      
+      container.innerHTML = `
+        <div class="row g-4">
+          <div class="col-md-7">
+            <div class="media-preview mb-3">
+              ${mediaHtml}
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card bg-secondary text-white border-0 h-100">
+              <div class="card-body">
+                <h6 class="text-uppercase small fw-bold mb-3 text-primary">Edit Caption</h6>
+                <form id="editStoryForm" onsubmit="updateStory(event, '${story._id}')">
+                  <div class="mb-3">
+                    <textarea name="caption" class="form-control bg-dark text-white border-secondary" rows="4">${story.caption || ''}</textarea>
+                    <small class="text-muted mt-1 d-block">Max 120 characters</small>
+                  </div>
+                  <button type="submit" id="updateStoryBtn" class="btn btn-primary w-100">
+                    Save Changes
+                  </button>
+                </form>
+                
+                <hr class="border-secondary my-4">
+                
+                <div class="story-info">
+                  <p class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Type:</span>
+                    <span class="badge bg-dark">${story.mediaType.toUpperCase()}</span>
+                  </p>
+                  <p class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Views:</span>
+                    <span>${story.viewsCount || 0}</span>
+                  </p>
+                  <p class="mb-0 d-flex justify-content-between">
+                    <span class="text-muted">Likes:</span>
+                    <span>${story.likesCount || 0}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .catch(err => {
+      container.innerHTML = `<div class="alert alert-danger">${err.message || 'Error loading details'}</div>`;
+    });
+}
+
+function updateStory(e, storyId) {
+  e.preventDefault();
+  const btn = document.getElementById('updateStoryBtn');
+  const caption = e.target.caption.value;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+  
+  fetch(`/artists/stories/${storyId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caption })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert('Caption updated!');
+      window.location.reload();
+    } else {
+      alert(data.message || 'Update failed');
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Network error');
+    btn.disabled = false;
+    btn.textContent = 'Save Changes';
+  });
+}
+
+// Stop playback when detail modal is closed
+document.getElementById('storyDetailsModal').addEventListener('hidden.bs.modal', function () {
+  const container = document.getElementById('storyDetailsContent');
+  const mediaElements = container.querySelectorAll('video, audio');
+  mediaElements.forEach(media => {
+    media.pause();
+    media.src = "";
+    media.load();
+    media.remove();
+  });
+  container.innerHTML = '';
+});
 </script>
 
 <!-- Upcoming Concerts -->
-<div class="card mb-5">
+<div class="card mb-5" id="tutorialUpcomingConcerts">
   <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
     <h5 class="card-title fw-bold mb-0" style="color: white !important;">Upcoming Concerts</h5>
     <% if (artist.artistLevel === 'Intermediate' || artist.artistLevel === 'Established') { %>
@@ -483,7 +714,7 @@ function viewStoryLikes(storyId) {
 </div>
 
 <!-- Pending Concerts -->
-<div class="card mb-5">
+<div class="card mb-5" id="tutorialPendingConcerts">
   <div class="card-header bg-dark text-white py-3">
     <h5 class="card-title fw-bold mb-0" style="color: white !important;">Pending Approval</h5>
   </div>
@@ -539,7 +770,7 @@ function viewStoryLikes(storyId) {
 </div>
 
 <!-- Recent Content -->
-<div class="card">
+<div class="card" id="tutorialRecentContent">
   <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
     <h5 class="card-title fw-bold mb-0" style="color: white !important;">Recent Content</h5>
     <div>
@@ -701,6 +932,521 @@ function viewStoryLikes(storyId) {
     background: linear-gradient(to right, #6366f1, #8b5cf6) !important;
     border-radius: 8px;
   }
+
+  .tutorial-highlight {
+    position: relative;
+    z-index: 1061;
+    border-radius: 12px;
+    box-shadow: 0 0 0 3px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 30px rgba(250, 204, 21, 0.6);
+    animation: tutorialPulse 2s infinite;
+    transition: none !important;
+  }
+
+  @keyframes tutorialPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 3px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 30px rgba(250, 204, 21, 0.6);
+    }
+    50% {
+      box-shadow: 0 0 0 6px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 50px rgba(250, 204, 21, 0.8);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .tutorial-highlight {
+      box-shadow: 0 0 0 2px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(250, 204, 21, 0.5);
+    }
+
+    @keyframes tutorialPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 2px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(250, 204, 21, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 0 4px #facc15, 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(250, 204, 21, 0.7);
+      }
+    }
+  }
+
+  .tutorial-arrow {
+    position: fixed;
+    z-index: 1064;
+    width: 40px;
+    height: 40px;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: arrowBounce 1.5s infinite;
+  }
+
+  @keyframes arrowBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(10px);
+    }
+  }
+
+  .tutorial-arrow i {
+    font-size: 28px;
+    color: #facc15;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+  }
+
+  .dashboard-tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1063;
+    pointer-events: none;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .dashboard-tutorial-overlay.show {
+    display: flex;
+  }
+
+  @media (max-width: 576px) {
+    .dashboard-tutorial-overlay {
+      align-items: flex-end;
+      justify-content: center;
+      padding: 8px;
+    }
+  }
+
+  .dashboard-tutorial-card {
+    width: min(560px, 100%);
+    background: #101418;
+    border: 1px solid #2a3340;
+    border-radius: 12px;
+    color: #fff;
+    pointer-events: auto;
+    position: relative;
+    z-index: 1064;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 576px) {
+    .dashboard-tutorial-card {
+      width: min(420px, calc(100vw - 16px));
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 48vh;
+    }
+
+    .dashboard-tutorial-card .btn {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+
+    .dashboard-tutorial-card h5 {
+      font-size: 16px;
+    }
+
+    .dashboard-tutorial-card p {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .tutorial-arrow {
+      display: none !important;
+    }
+  }
 </style>
+
+<div id="dashboardTutorialOverlay" class="dashboard-tutorial-overlay" aria-hidden="true">
+  <div class="dashboard-tutorial-card p-3 p-md-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+      <div>
+        <h5 id="tutorialStepTitle" class="mb-1">Welcome to your dashboard</h5>
+        <small id="tutorialStepCounter" class="text-muted"></small>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-light" id="tutorialCloseBtn">Skip</button>
+    </div>
+    <p id="tutorialStepText" class="mb-3 text-white-50"></p>
+    <div class="d-flex justify-content-between">
+      <button type="button" class="btn btn-outline-light" id="tutorialPrevBtn">Back</button>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-secondary" id="tutorialSkipBtn">Skip Tutorial</button>
+        <button type="button" class="btn btn-primary" id="tutorialNextBtn">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const shouldShowTutorial = <%= showDashboardTutorial ? 'true' : 'false' %>;
+    const isTutorialReplay = <%= typeof isTutorialReplay !== 'undefined' && isTutorialReplay ? 'true' : 'false' %>;
+    if (!shouldShowTutorial) {
+      return;
+    }
+
+    // Avoid refresh loops after manual replay (?tutorial=1).
+    if (isTutorialReplay && window.history && window.history.replaceState) {
+      const replayUrl = new URL(window.location.href);
+      replayUrl.searchParams.delete('tutorial');
+      const cleaned = replayUrl.pathname + (replayUrl.search ? replayUrl.search : '') + replayUrl.hash;
+      window.history.replaceState({}, '', cleaned);
+    }
+
+    // Set tutorial mode flag to prevent sidebar from closing
+    window.tutorialMode = true;
+    
+    // Hide sidebar overlay during tutorial
+    const existingOverlay = document.querySelector('.sidebar-overlay');
+    if (existingOverlay) {
+      existingOverlay.style.setProperty('display', 'none', 'important');
+    }
+
+    const overlay = document.getElementById('dashboardTutorialOverlay');
+    const titleEl = document.getElementById('tutorialStepTitle');
+    const textEl = document.getElementById('tutorialStepText');
+    const counterEl = document.getElementById('tutorialStepCounter');
+    const prevBtn = document.getElementById('tutorialPrevBtn');
+    const nextBtn = document.getElementById('tutorialNextBtn');
+    const skipBtn = document.getElementById('tutorialSkipBtn');
+    const closeBtn = document.getElementById('tutorialCloseBtn');
+    const isMobile = window.innerWidth < 768;
+
+    const steps = [
+      {
+        selector: '#artistSidebar',
+        title: 'Step 1: Sidebar Overview',
+        text: 'This is your main control panel. Now we will walk through each sidebar menu item one by one.'
+      },
+      {
+        selector: '#tutorialSidebarDashboard',
+        title: 'Step 2: Dashboard',
+        text: 'Use this to return to your full artist dashboard overview anytime.'
+      },
+      {
+        selector: '#tutorialSidebarManageContent',
+        title: 'Step 3: Manage Content',
+        text: 'Open your content manager to edit or remove uploaded songs, videos, or posts.'
+      },
+      {
+        selector: '#tutorialSidebarDistributionHub',
+        title: 'Step 4: Music Distribution Hub',
+        text: 'Submit and manage distribution requests for music release platforms.'
+      },
+      {
+        selector: '#tutorialSidebarDistributionHistory',
+        title: 'Step 5: Distribution History',
+        text: 'Track your previous distribution requests and statuses here.'
+      },
+      {
+        selector: '#tutorialSidebarBeats',
+        title: 'Step 6: Beats Marketplace',
+        text: 'Browse and purchase beats from producers in the marketplace.'
+      },
+      {
+        selector: '#tutorialSidebarLibrary',
+        title: 'Step 7: Beat Library',
+        text: 'Access your saved and purchased beats from your personal beat library.'
+      },
+      {
+        selector: '#tutorialSidebarReceipts',
+        title: 'Step 8: My Receipts',
+        text: 'View purchase receipts and transaction records for your beat orders.'
+      },
+      {
+        selector: '#tutorialSidebarManagePosts',
+        title: 'Step 9: Manage Posts',
+        text: 'Create, edit, and moderate your artist feed posts from here.'
+      },
+      {
+        selector: '#tutorialSidebarManageConcerts',
+        title: 'Step 10: Manage Concerts',
+        text: 'Control your concert listings, updates, and event details.'
+      },
+      {
+        selector: '#tutorialSidebarManageTickets',
+        title: 'Step 11: Manage Tickets',
+        text: 'Handle ticketing operations and attendee access from this section.'
+      },
+      {
+        selector: '#tutorialSidebarEditRequests',
+        title: 'Step 12: Edit Requests',
+        text: 'Review and track your concert edit requests submitted for approval.'
+      },
+      {
+        selector: '#tutorialSidebarCreateConcert',
+        title: 'Step 13: Create Concert',
+        text: 'Eligible artists can create a new concert directly from this menu item.'
+      },
+      {
+        selector: '#tutorialSidebarLearning',
+        title: 'Step 14: Learning Modules',
+        text: 'Complete learning paths to unlock growth and level progression.'
+      },
+      {
+        selector: '#tutorialSidebarMessages',
+        title: 'Step 15: Messages',
+        text: 'Open your conversations and respond to users from here.'
+      },
+      {
+        selector: '#tutorialSidebarProducerMessages',
+        title: 'Step 16: Producer Messages',
+        text: 'View dedicated communication related to producer workflows.'
+      },
+      {
+        selector: '#tutorialSidebarConnect',
+        title: 'Step 17: Connect with Others',
+        text: 'Discover users and artists to grow your network and collaborations.'
+      },
+      {
+        selector: '#tutorialSidebarEditProfile',
+        title: 'Step 18: Edit Profile',
+        text: 'Update your artist profile details, media, and personal branding.'
+      },
+      {
+        selector: '#tutorialSidebarPublicProfile',
+        title: 'Step 19: View Public Profile',
+        text: 'Preview how your profile appears publicly to other users.'
+      },
+      {
+        selector: '#tutorialSidebarBackToSite',
+        title: 'Step 20: Back to Site',
+        text: 'Return to the main website home and other non-dashboard sections.'
+      },
+      {
+        selector: '#tutorialSidebarReplay',
+        title: 'Step 21: Help Tour',
+        text: 'Use this link any time in future to reopen this walkthrough.'
+      },
+      {
+        selector: '#tutorialSidebarLogout',
+        title: 'Step 22: Logout',
+        text: 'Securely sign out from your artist account here.'
+      },
+      {
+        selector: '#tutorialStatsCards',
+        title: 'Step 23: Dashboard Overview Cards',
+        text: 'These cards show concerts, uploads, pending approvals, and follower totals at a glance.'
+      },
+      {
+        selector: '#tutorialQuickActions',
+        title: 'Step 24: Quick Actions',
+        text: 'Use quick actions for common tasks like creating content, managing concerts, and profile updates.'
+      },
+      {
+        selector: '#post-story',
+        title: 'Step 25: Post a Story',
+        text: 'Upload image, video, or audio stories to engage followers instantly.'
+      },
+      {
+        selector: '#tutorialMyStories',
+        title: 'Step 26: My Active Stories',
+        text: 'Track active stories, engagement, and manage story content here.'
+      },
+      {
+        selector: '#tutorialUpcomingConcerts',
+        title: 'Step 27: Upcoming Concerts',
+        text: 'Monitor upcoming concerts and manage their actions from this table.'
+      },
+      {
+        selector: '#tutorialPendingConcerts',
+        title: 'Step 28: Pending Approvals',
+        text: 'See concerts waiting for approval and monitor their review state.'
+      },
+      {
+        selector: '#tutorialRecentContent',
+        title: 'Step 29: Recent Content',
+        text: 'Review your latest uploads and jump to full content management when needed.'
+      }
+    ].filter(step => !!document.querySelector(step.selector));
+
+    if (!steps.length) {
+      return;
+    }
+
+    let currentStep = 0;
+    let highlightedElement = null;
+    let sidebarKeepOpenTimer = null;
+
+    function clearHighlight() {
+      if (highlightedElement) {
+        highlightedElement.classList.remove('tutorial-highlight');
+        highlightedElement = null;
+      }
+      const arrow = document.getElementById('tutorial-arrow-element');
+      if (arrow) {
+        arrow.remove();
+      }
+    }
+
+    function saveTutorialStatus(action) {
+      return fetch('/artists/dashboard/tutorial-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ action: action })
+      }).catch(() => null);
+    }
+
+    function handleSidebarForMobile() {
+      if (isMobile) {
+        const sidebar = document.getElementById('artistSidebar');
+        if (sidebar) {
+          sidebar.classList.remove('collapsed');
+          sidebar.classList.add('show');
+          document.body.classList.add('sidebar-open');
+
+          const sidebarOverlay = document.querySelector('.sidebar-overlay');
+          if (sidebarOverlay) {
+            sidebarOverlay.style.setProperty('display', 'none', 'important');
+          }
+        }
+      }
+    }
+
+    function keepSidebarOpenBurst() {
+      handleSidebarForMobile();
+      setTimeout(handleSidebarForMobile, 50);
+      setTimeout(handleSidebarForMobile, 150);
+      setTimeout(handleSidebarForMobile, 300);
+
+      if (sidebarKeepOpenTimer) {
+        clearTimeout(sidebarKeepOpenTimer);
+      }
+      sidebarKeepOpenTimer = setTimeout(handleSidebarForMobile, 500);
+    }
+
+    function createArrow() {
+      const existingArrow = document.getElementById('tutorial-arrow-element');
+      if (existingArrow) {
+        existingArrow.remove();
+      }
+
+      const arrow = document.createElement('div');
+      arrow.id = 'tutorial-arrow-element';
+      arrow.className = 'tutorial-arrow';
+      arrow.innerHTML = '<i class="fas fa-arrow-down"></i>';
+      document.body.appendChild(arrow);
+      return arrow;
+    }
+
+    function positionArrow() {
+      const arrow = document.getElementById('tutorial-arrow-element');
+      if (!arrow) return;
+
+      const step = steps[currentStep];
+      const target = document.querySelector(step.selector);
+      const card = document.querySelector('.dashboard-tutorial-card');
+
+      if (!target || !card) {
+        arrow.style.display = 'none';
+        return;
+      }
+
+      const targetRect = target.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+
+      const arrowX = targetRect.left + targetRect.width / 2 - 20;
+      const arrowY = cardRect.top - 50;
+
+      arrow.style.left = Math.max(20, Math.min(window.innerWidth - 60, arrowX)) + 'px';
+      arrow.style.top = Math.max(20, arrowY) + 'px';
+      arrow.style.display = 'flex';
+
+      if (cardRect.top > targetRect.bottom) {
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    function renderStep() {
+      clearHighlight();
+      keepSidebarOpenBurst();
+
+      const step = steps[currentStep];
+      const target = document.querySelector(step.selector);
+      if (target) {
+        highlightedElement = target;
+        target.classList.add('tutorial-highlight');
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+
+      titleEl.textContent = step.title;
+      textEl.textContent = step.text;
+      counterEl.textContent = 'Step ' + (currentStep + 1) + ' of ' + steps.length;
+      prevBtn.disabled = currentStep === 0;
+      nextBtn.textContent = currentStep === steps.length - 1 ? 'Finish' : 'Next';
+
+      setTimeout(() => {
+        createArrow();
+        positionArrow();
+      }, 100);
+    }
+
+    function endTutorial(action) {
+      clearHighlight();
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+      window.tutorialMode = false;
+
+      if (sidebarKeepOpenTimer) {
+        clearTimeout(sidebarKeepOpenTimer);
+        sidebarKeepOpenTimer = null;
+      }
+      
+      const sidebarOverlay = document.querySelector('.sidebar-overlay');
+      if (sidebarOverlay) {
+        const sidebar = document.getElementById('artistSidebar');
+        if (sidebar && sidebar.classList.contains('show')) {
+          sidebarOverlay.style.display = 'block';
+        }
+      }
+      
+      saveTutorialStatus(action);
+    }
+
+    prevBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      if (currentStep > 0) {
+        currentStep -= 1;
+        renderStep();
+        keepSidebarOpenBurst();
+      }
+    });
+
+    nextBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      if (currentStep >= steps.length - 1) {
+        endTutorial('complete');
+        return;
+      }
+      currentStep += 1;
+      renderStep();
+      keepSidebarOpenBurst();
+    });
+
+    skipBtn.addEventListener('click', function () {
+      endTutorial('skip');
+    });
+
+    closeBtn.addEventListener('click', function () {
+      endTutorial('skip');
+    });
+
+    window.addEventListener('resize', function () {
+      positionArrow();
+    });
+
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    renderStep();
+  })();
+</script>
 
 <%- include('../partials/artist-footer') %>

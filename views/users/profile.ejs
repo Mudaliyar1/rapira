@@ -79,11 +79,28 @@
                 <i class="bi bi-music-note-beamed me-1"></i> Become an Artist
               </a>
             <% } %>
+
+            <a href="/users/job-portal" class="btn btn-info text-white">
+              <i class="bi bi-briefcase me-1"></i> Job Portal
+            </a>
+
             <% if (pendingApplication) { %>
               <a href="/artist-applications/status" class="btn btn-info text-white">
-                <i class="bi bi-hourglass-split me-1"></i> View Application Status
+                <i class="bi bi-hourglass-split me-1"></i> View Artist status
               </a>
             <% } %>
+            <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
+              <a href="/producer-dashboard" class="btn btn-dark">
+                <i class="bi bi-mic-fill me-1"></i> Producer Dashboard
+              </a>
+            <% } %>
+
+            <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'distributor')) { %>
+              <a href="/distributor-dashboard" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
+                <i class="bi bi-broadcast me-1"></i> Distributor Dashboard
+              </a>
+            <% } %>
+
             <a href="/users/confirm-delete-account" class="btn btn-danger mt-3">
               <i class="bi bi-trash me-1"></i> Delete Account
             </a>
@@ -190,7 +207,7 @@
           <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
             <div class="d-flex align-items-center mb-3">
               <div class="badge bg-success me-2">Active</div>
-              <div class="fw-bold"><%= activeSubscription.plan.name %> Plan</div>
+              <div class="fw-bold"><%= activeSubscription.plan ? activeSubscription.plan.name : 'Unknown' %> Plan</div>
             </div>
 
             <%
@@ -205,7 +222,7 @@
               </span>
             </p>
 
-            <% if (activeSubscription.plan.discountPercentage > 0) { %>
+            <% if (activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) { %>
               <p class="mb-2 text-success">
                 <i class="bi bi-tag-fill me-1"></i>
                 <strong><%= activeSubscription.plan.discountPercentage %>% discount</strong> on all ticket purchases

@@ -1,5 +1,24 @@
 <%- contentFor('body') %>
 
+<style>
+  .gradient-purple-btn {
+    background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
+    background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
+    border: 0 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;
+  }
+
+  .gradient-purple-btn:hover,
+  .gradient-purple-btn:focus {
+    background: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
+    background-image: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 12px 28px rgba(109, 40, 217, 0.35) !important;
+  }
+</style>
+
 <!-- Hero Section -->
 <section class="py-5 bg-gradient-primary text-white">
   <div class="container">
@@ -43,6 +62,8 @@
                 <option value="image" <%= currentFilters.mediaType === 'image' ? 'selected' : '' %>>Images</option>
                 <option value="video" <%= currentFilters.mediaType === 'video' ? 'selected' : '' %>>Videos</option>
                 <option value="audio" <%= currentFilters.mediaType === 'audio' ? 'selected' : '' %>>Audio</option>
+                <option value="youtube_video" <%= currentFilters.mediaType === 'youtube_video' ? 'selected' : '' %>>YouTube Video</option>
+                <option value="youtube_audio" <%= currentFilters.mediaType === 'youtube_audio' ? 'selected' : '' %>>YouTube Audio</option>
               </select>
             </div>
 
@@ -105,26 +126,47 @@
           <div class="col-md-6 col-lg-4 col-xl-3">
             <div class="card h-100 shadow-sm content-card">
               <div class="position-relative">
-                <% if (item.media && item.media.mediaType === 'audio') { %>
+                <% if (item.isYoutube && item.youtubeThumbnail) { %>
+                  <%/* YouTube post — show thumbnail with red play button overlay */%>
+                  <div class="position-relative" style="height:200px;overflow:hidden;background:#000;">
+                    <img src="<%= item.youtubeThumbnail %>" alt="<%= item.title || 'YouTube' %>" class="w-100 h-100" style="object-fit:cover;">
+                    <div class="position-absolute top-50 start-50 translate-middle" style="pointer-events:none;">
+                      <div style="width:56px;height:56px;background:rgba(255,0,0,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+                        <i class="bi bi-play-fill text-white" style="font-size:1.6rem;margin-left:4px;"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <span class="badge content-type-badge" style="background:rgba(255,0,0,0.9);color:#fff;">
+                    <i class="bi bi-youtube"></i>
+                    <%= item.media && item.media.mediaType === 'audio' ? 'YT Audio' : 'YT Video' %>
+                  </span>
+                <% } else if (item.media && item.media.thumbnailUrl && (item.media.mediaType === 'audio' || item.media.mediaType === 'video')) { %>
+                  <img src="<%= item.media.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
+                  <span class="badge <%= item.media.mediaType === 'audio' ? 'bg-success' : 'bg-danger' %> content-type-badge">
+                    <i class="bi <%= item.media.mediaType === 'audio' ? 'bi-music-note-beamed' : 'bi-camera-video' %>"></i>
+                    <%= item.media.mediaType === 'audio' ? 'Audio' : 'Video' %>
+                  </span>
+                <% } else if (item.media && item.media.mediaType === 'audio') { %>
                   <div class="card-img-top content-thumbnail d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                     <i class="bi bi-music-note-beamed text-white" style="font-size: 4rem;"></i>
                   </div>
+                  <span class="badge bg-success content-type-badge"><i class="bi bi-music-note-beamed"></i> Audio</span>
                 <% } else if (item.media && item.media.mediaType === 'video') { %>
                   <video class="card-img-top content-thumbnail" preload="metadata" muted playsinline>
                     <source src="<%= item.media && item.media.url ? item.media.url : '' %>#t=0.1">
                   </video>
+                  <span class="badge bg-danger content-type-badge"><i class="bi bi-camera-video"></i> Video</span>
                 <% } else { %>
                   <img src="<%= item.media && item.media.url ? item.media.url : '/images/placeholder.jpg' %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
-                <% } %>
-                <% if (item.media && item.media.mediaType) { %>
-                  <span class="badge <%= item.media.mediaType === 'image' ? 'bg-primary' : item.media.mediaType === 'video' ? 'bg-danger' : 'bg-success' %> content-type-badge">
-                    <i class="bi <%= item.media.mediaType === 'image' ? 'bi-image' : item.media.mediaType === 'video' ? 'bi-camera-video' : 'bi-music-note-beamed' %>"></i>
-                    <%= item.media.mediaType.charAt(0).toUpperCase() + item.media.mediaType.slice(1) %>
-                  </span>
+                  <% if (item.media && item.media.mediaType) { %>
+                    <span class="badge bg-primary content-type-badge"><i class="bi bi-image"></i> Image</span>
+                  <% } %>
                 <% } %>
               </div>
               <div class="card-body">
-                <h5 class="card-title" style="color:#fff !important;"><%= item.title %></h5>
+                <h5 class="card-title text-truncate-2" style="color:#fff !important;" title="<%= item.title %>">
+                  <%= item.title.length > 50 ? item.title.substring(0, 50) + '...' : item.title %>
+                </h5>
                 <p class="card-text text-muted small">
                   <% if (item.artist && item.artist.user) { %>
                     By <a href="/artists/<%= item.artist._id %>" class="text-decoration-none">
@@ -135,23 +177,61 @@
                   <% } %>
                 </p>
                 <% if (item.description) { %>
-                  <p class="card-text"><%= item.description.length > 100 ? item.description.substring(0, 100) + '...' : item.description %></p>
+                  <p class="card-text text-truncate-3 m-0" style="font-size: 0.9rem;">
+                    <%= item.description.length > 80 ? item.description.substring(0, 80) + '...' : item.description %>
+                  </p>
                 <% } %>
                 <p class="card-text">
                   <small class="text-muted">
                     <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
-                    <span class="ms-2"><i class="bi bi-eye"></i> <%= item.views || 0 %> views</span>
-                    <% if (item.likes && item.likes.length > 0) { %>
-                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likes.length %> likes</span>
+                    <span class="ms-2"><i class="bi bi-eye"></i> <%= item.viewsDisplay || item.views || 0 %> views</span>
+                    <% if ((item.likesDisplay && String(item.likesDisplay).trim()) || item.likesCount || (item.likes && item.likes.length > 0)) { %>
+                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likesDisplay || item.likesCount || (item.likes ? item.likes.length : 0) %> likes</span>
                     <% } %>
                   </small>
                 </p>
               </div>
               <div class="card-footer bg-white border-top-0">
-                <button onclick="viewPost('<%= item._id %>')"
-                   class="btn btn-outline-primary w-100">
-                  <%= (item.media && item.media.mediaType === 'video') ? 'Watch' : (item.media && item.media.mediaType === 'audio') ? 'Listen' : (item.media && item.media.mediaType === 'image') ? 'View' : 'Open' %>
-                </button>
+                <div class="d-grid gap-2">
+                  <% if (item.sourceModel === 'Content' || item.isYoutube) { %>
+                      <a href="<%= item.sourceModel === 'Content' ? '/content/' + item._id : '/posts/view/' + item._id %>" 
+                        class="btn"
+                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <% if (item.isYoutube) { %>
+                        <i class="bi bi-youtube me-1" style="color:#f00;"></i> Watch on YouTube
+                      <% } else if (item.media && item.media.mediaType === 'video') { %>
+                        <i class="bi bi-play-circle me-1"></i> Watch
+                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
+                        <i class="bi bi-headphones me-1"></i> Listen
+                      <% } else if (item.media && item.media.mediaType === 'image') { %>
+                        <i class="bi bi-eye me-1"></i> View
+                      <% } else { %>
+                        Open
+                      <% } %>
+                    </a>
+                  <% } else { %>
+                      <button onclick="viewPost('<%= item._id %>', '<%= item.sourceModel %>')"
+                        class="btn"
+                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <% if (item.media && item.media.mediaType === 'video') { %>
+                        <i class="bi bi-play-circle me-1"></i> Watch
+                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
+                        <i class="bi bi-headphones me-1"></i> Listen
+                      <% } else if (item.media && item.media.mediaType === 'image') { %>
+                        <i class="bi bi-eye me-1"></i> View
+                      <% } else { %>
+                        Open
+                      <% } %>
+                    </button>
+                  <% } %>
+
+                  <% if (!item.isYoutube && item.media && item.media.url) { %>
+                    <a href="/content/download?sourceModel=<%= item.sourceModel %>&id=<%= item._id %>" class="btn"
+                      style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
+                      <i class="bi bi-download me-1"></i> Download
+                    </a>
+                  <% } %>
+                </div>
               </div>
             </div>
           </div>
@@ -255,8 +335,8 @@
                   <small class="text-muted">
                     <i class="bi bi-clock-history"></i>
                     <%= toISTDateString(p.createdAt) %>
-                    <span class="ms-2"><i class="bi bi-eye"></i> <%= p.views || 0 %> views</span>
-                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesCount || 0 %></span>
+                    <span class="ms-2"><i class="bi bi-eye"></i> <%= p.viewsDisplay || p.views || 0 %> views</span>
+                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesDisplay || p.likesCount || 0 %></span>
                     <span class="ms-2"><i class="bi bi-share"></i> <%= p.shares || 0 %></span>
                   </small>
                 </p>
@@ -388,51 +468,34 @@ document.addEventListener('DOMContentLoaded', function() {
       filterToggleIcon.classList.add('bi-chevron-down');
     });
   }
-  
-  // Handle post viewing from content library
-  window.viewPost = function(postId) {
-    // Show loading indicator immediately
-    const loadingIndicator = `
-      <div id="loadingModal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
-            <div class="modal-body text-center py-5">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-              <p class="mt-3 text-white">Loading post...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Add loading modal to DOM if not already present
-    if (!document.getElementById('loadingModal')) {
-      document.body.insertAdjacentHTML('beforeend', loadingIndicator);
-    }
-    
-    // Show loading modal immediately
-    const loadingModalEl = document.getElementById('loadingModal');
-    const loadingModal = new bootstrap.Modal(loadingModalEl);
-    loadingModal.show();
-    
-    // Try to use the post viewer if available
-    if (typeof window.viewPost === 'function') {
-      // Hide loading modal and show actual post
-      loadingModal.hide();
-      window.viewPost(postId);
-    } else {
-      // Fallback: redirect to post detail page
-      window.location.href = `/posts/view/${postId}`;
-    }
-  };
 });
 </script>
 
 <style>
+/* Multi-line truncation */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.8em; /* Fixed height for 2 lines */
+  line-height: 1.4em;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 4.2em; /* Fixed height for 3 lines */
+  line-height: 1.4em;
+}
+
 /* Enhanced styles for content library */
 .content-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   transition: all 0.3s ease;
   border: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
