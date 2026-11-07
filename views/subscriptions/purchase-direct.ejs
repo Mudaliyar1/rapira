@@ -1,80 +1,204 @@
 <%- contentFor('body') %>
 
-<div class="container py-5">
-  <h1 class="text-center mb-4">Purchase Subscription</h1>
+<div class="rapira-subscriptions-page rh-sub-purchase-page">
+  <!-- Warm Wave Background Overlay -->
+  <div class="rh-sub-bg-wave" aria-hidden="true"></div>
 
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card glass-card-dark border border-secondary mb-4">
-        <div class="card-header bg-primary text-white">
-          <h3 class="mb-0"><%= plan.name %> Subscription</h3>
-        </div>
+  <div class="container rh-sub-container py-4 py-md-5">
+    
+    <!-- Hero Header -->
+    <div class="rh-sub-hero mb-4 mb-md-5">
+      <div class="rh-sub-crown-icon" aria-hidden="true">
+        <svg width="42" height="34" viewBox="0 0 24 20" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 18h20v2H2v-2z"/>
+          <path d="M4 18l-2-12 6 4 4-7 4 7 6-4-2 12H4z"/>
+          <circle cx="12" cy="13" r="1.5" fill="#9F190E"/>
+        </svg>
+      </div>
+      <h1 class="rh-sub-hero-title">Purchase Subscription</h1>
+      
+      <!-- Clean Breadcrumb -->
+      <nav class="my-subscriptions-breadcrumb mt-3" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="my-subscriptions-breadcrumb-sep">/</span>
+        <a href="/users/profile">My Profile</a>
+        <span class="my-subscriptions-breadcrumb-sep">/</span>
+        <a href="/subscriptions">Subscriptions</a>
+        <span class="my-subscriptions-breadcrumb-sep">/</span>
+        <span class="my-subscriptions-breadcrumb-active">Purchase</span>
+      </nav>
+    </div>
 
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h5 class="text-white">Subscription Details</h5>
-              <ul class="list-group list-group-flush mb-4">
-                <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
-                  <span>Price:</span>
-                  <span class="fw-bold text-white">₹<%= plan.price %></span>
-                </li>
-                <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
-                  <span>Duration:</span>
-                  <span>
-                    <%= plan.duration %> <%= plan.durationUnit %>
-                    <% if (plan.durationUnit === 'days' && plan.duration >= 30) { %>
-                      (<%= Math.floor(plan.duration / 30) %> month<%= Math.floor(plan.duration / 30) > 1 ? 's' : '' %>)
-                    <% } %>
-                  </span>
-                </li>
-                <% if (plan.discountPercentage > 0) { %>
-                  <li class="list-group-item bg-transparent text-white-50 border-secondary d-flex justify-content-between">
-                    <span>Ticket Discount:</span>
-                    <span class="text-success"><%= plan.discountPercentage %>%</span>
-                  </li>
-                <% } %>
-              </ul>
-            </div>
-
-            <div class="col-md-6">
-              <h5 class="text-white">Benefits</h5>
-              <p class="text-white-50"><%= plan.benefits %></p>
-
-              <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <span style="color: black;">Your subscription will be active immediately after successful payment.</span>
-              </div>
-            </div>
-          </div>
-
-          <hr class="border-secondary">
-
-          <div class="text-center">
-            <h4 class="text-white mb-3">Total Amount: ₹<%= plan.price %></h4>
-
-            <form action="/subscriptions/create-order/<%= plan._id %>" method="POST">
-              <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-credit-card me-2"></i>
-                Pay Now
-              </button>
-            </form>
-
-            <p class="mt-3 small text-white-50">
-              <i class="bi bi-shield-lock me-1"></i>
-              Secure payment powered by Razorpay
+    <!-- Active Subscription Warning (if user already has one) -->
+    <% if (typeof existingSubscription !== 'undefined' && existingSubscription && existingSubscription.plan) { %>
+      <div class="rh-sub-existing-alert mb-4">
+        <div class="d-flex align-items-start gap-3">
+          <i class="bi bi-exclamation-triangle-fill rh-sub-alert-icon"></i>
+          <div>
+            <h5 class="rh-sub-alert-title mb-1">Active Subscription in Effect</h5>
+            <p class="rh-sub-alert-text mb-0">
+              You currently have an active <strong><%= existingSubscription.plan.name %></strong> subscription valid until <%= toISTDateString(existingSubscription.expiryDate) %>. Purchasing this new plan will upgrade and replace your current access.
             </p>
           </div>
         </div>
       </div>
+    <% } %>
 
-      <div class="text-center">
-        <a href="/subscriptions" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left me-1"></i> Back to Subscriptions
-        </a>
+    <!-- Centered Checkout Summary Card -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+        
+        <div class="rh-sub-purchase-card">
+          <!-- Card Header with Crimson Wave Banner -->
+          <div class="rh-sub-card-header">
+            <span class="rh-sub-order-pill">
+              <i class="bi bi-shield-check"></i> Order Summary
+            </span>
+            <h2 class="rh-sub-plan-name mt-1 mb-0"><%= plan.name %> Subscription</h2>
+            <svg class="rh-sub-header-wave" viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0,0 L400,0 L400,8 C280,20 120,20 0,8 Z" fill="#9F190E"/>
+            </svg>
+          </div>
+
+          <!-- Card Body -->
+          <div class="rh-sub-purchase-body">
+            
+            <!-- Plan Highlights / Price Header -->
+            <div class="rh-sub-purchase-highlight-row">
+              <div>
+                <span class="rh-sub-purchase-label d-block">Plan Price</span>
+                <div class="rh-sub-purchase-price-wrap">
+                  <span class="rh-sub-currency">₹</span>
+                  <span class="rh-sub-price"><%= plan.price %></span>
+                </div>
+              </div>
+              
+              <%
+                let durationLabel = '';
+                if (plan.durationUnit === 'days' && plan.duration >= 30) {
+                  const months = Math.floor(plan.duration / 30);
+                  durationLabel = `${plan.duration} days (${months} month${months > 1 ? 's' : ''})`;
+                } else {
+                  durationLabel = `${plan.duration} ${plan.durationUnit}`;
+                }
+              %>
+              <div class="text-end">
+                <span class="rh-sub-purchase-label d-block">Access Period</span>
+                <span class="rh-sub-purchase-duration"><%= durationLabel %></span>
+              </div>
+            </div>
+
+            <!-- Details List -->
+            <div class="rh-sub-purchase-section mt-4">
+              <h3 class="rh-sub-purchase-section-title">
+                <i class="bi bi-stars text-danger me-1"></i> Included Benefits &amp; Perks
+              </h3>
+              
+              <%
+                let benefitsList = [];
+                if (plan.benefits && plan.benefits.trim()) {
+                  if (plan.benefits.includes('\n')) {
+                    benefitsList = plan.benefits.split('\n').map(b => b.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+                  } else if (plan.benefits.includes(',')) {
+                    benefitsList = plan.benefits.split(',').map(b => b.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+                  } else {
+                    benefitsList = [plan.benefits.trim().replace(/^[-*•]\s*/, '')];
+                  }
+                }
+              %>
+
+              <ul class="rh-sub-purchase-benefits-list mb-0">
+                <% if (benefitsList.length === 0) { %>
+                  <li class="rh-sub-purchase-benefit-item">
+                    <span class="rh-sub-check-icon"><i class="bi bi-check-lg"></i></span>
+                    <span>All standard platform benefits and features included.</span>
+                  </li>
+                <% } else { %>
+                  <% benefitsList.forEach(benefit => { %>
+                    <li class="rh-sub-purchase-benefit-item">
+                      <span class="rh-sub-check-icon"><i class="bi bi-check-lg"></i></span>
+                      <span><%= benefit %></span>
+                    </li>
+                  <% }); %>
+                <% } %>
+
+                <% if (plan.discountPercentage > 0) { %>
+                  <li class="rh-sub-purchase-benefit-item highlight">
+                    <span class="rh-sub-check-icon"><i class="bi bi-percent"></i></span>
+                    <span><strong><%= plan.discountPercentage %>% Discount</strong> on all concert ticket purchases</span>
+                  </li>
+                <% } %>
+                <li class="rh-sub-purchase-benefit-item">
+                  <span class="rh-sub-check-icon"><i class="bi bi-calendar-check"></i></span>
+                  <span><%= plan.duration %> <%= plan.durationUnit %> of full VIP access</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Payment Timing Notice (Warm Cream/Peach styling - NO bright blue) -->
+            <div class="rh-sub-purchase-info-box mt-4">
+              <i class="bi bi-info-circle-fill rh-sub-info-icon" aria-hidden="true"></i>
+              <div class="rh-sub-info-text">
+                Your subscription will become active immediately once your payment is confirmed by Razorpay.
+              </div>
+            </div>
+
+            <!-- Total Amount Bar -->
+            <div class="rh-sub-purchase-total-box mt-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <span class="rh-sub-total-label">Total Payable Amount</span>
+                  <small class="d-block text-muted">Inclusive of all applicable taxes</small>
+                </div>
+                <div class="rh-sub-total-amount">
+                  <span>₹</span><%= plan.price %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Form & Actions -->
+            <div class="rh-sub-purchase-actions mt-4">
+              <form id="purchaseForm" action="/subscriptions/create-order/<%= plan._id %>" method="POST" onsubmit="handleFormSubmit(event)">
+                <button type="submit" id="payNowBtn" class="rh-sub-btn-primary w-100 py-3">
+                  <i class="bi bi-credit-card-fill me-2"></i>
+                  <span id="payBtnText">Pay Now • ₹<%= plan.price %></span>
+                </button>
+              </form>
+
+              <!-- Razorpay Trust Badge -->
+              <div class="rh-sub-razorpay-badge mt-3 text-center">
+                <i class="bi bi-shield-lock-fill text-danger me-1"></i>
+                <span>100% Secure Payment Powered by Razorpay</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Back to Subscriptions Link -->
+        <div class="text-center mt-4">
+          <a href="/subscriptions" class="rh-sub-btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i> Back to Subscription Plans
+          </a>
+        </div>
+
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- No JavaScript needed for form submission approach -->
+<script>
+  function handleFormSubmit(e) {
+    const btn = document.getElementById('payNowBtn');
+    const text = document.getElementById('payBtnText');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.85';
+      btn.style.cursor = 'not-allowed';
+      if (text) {
+        text.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing Order...';
+      }
+    }
+  }
+</script>

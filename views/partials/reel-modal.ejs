@@ -1,0 +1,171 @@
+<!-- Dedicated RAPIRA Shared Reel Viewer (Homepage & Discover -> Reels) -->
+<div id="rhReelModal" class="rh-reel-modal" role="dialog" aria-modal="true" aria-label="Reel Viewer" style="display: none;">
+  <!-- Backdrop Click to Close (Desktop) -->
+  <div class="rh-reel-modal-backdrop" onclick="window.closeRapiraReelModal()" data-no-loader="true"></div>
+  
+  <div class="rh-reel-modal-dialog">
+    <!-- Top Bar: Branding, Sound Toggle, Play/Pause Toggle, and Accessible Close Button -->
+    <div class="rh-reel-top-bar">
+      <div class="rh-reel-top-left">
+        <span class="rh-reel-brand-pill"><i class="bi bi-camera-reels me-1"></i> Reels</span>
+        <!-- Sound Mute/Unmute Toggle -->
+        <button type="button" class="rh-reel-sound-btn" id="rhReelSoundToggle" onclick="window.toggleReelMute()" aria-label="Toggle Sound" data-no-loader="true" title="Mute / Unmute">
+          <i class="bi bi-volume-up-fill" id="rhReelSoundIcon"></i>
+        </button>
+        <!-- Explicit Play/Pause Header Control -->
+        <button type="button" class="rh-reel-play-btn-ctrl" id="rhReelPlayToggle" onclick="window.toggleReelPlayPause()" aria-label="Toggle Play/Pause" data-no-loader="true" title="Play / Pause">
+          <i class="bi bi-pause-fill" id="rhReelPlayPauseIcon"></i>
+        </button>
+      </div>
+      <button type="button" class="rh-reel-modal-close" id="rhReelCloseBtn" onclick="window.closeRapiraReelModal()" aria-label="Close Reel" data-no-loader="true" title="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <!-- Media Stage -->
+    <div class="rh-reel-stage" id="rhReelStage">
+      <!-- Tap Gesture Handler Overlay (Tap to Play/Pause, Double Tap to Like) -->
+      <div class="rh-reel-tap-zone" id="rhReelTapZone"></div>
+      
+      <!-- Big Center Feedback Flash (Temporary flash on toggle) -->
+      <div class="rh-reel-center-feedback" id="rhReelCenterFeedback">
+        <i class="bi bi-play-fill" id="rhReelFeedbackIcon"></i>
+      </div>
+
+      <!-- Persistent Center Play Indicator (Visible whenever video is paused) -->
+      <div class="rh-reel-play-paused-indicator" id="rhReelPausedIndicator" onclick="window.toggleReelPlayPause()" aria-label="Play video" role="button" tabindex="0" title="Play">
+        <i class="bi bi-play-fill"></i>
+      </div>
+
+      <!-- Big Double-Tap Heart Feedback -->
+      <div class="rh-reel-doubletap-heart" id="rhReelDoubleTapHeart">
+        <i class="bi bi-heart-fill"></i>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div id="rhReelLoading" class="rh-reel-loader">
+        <div class="spinner-border text-danger" role="status">
+          <span class="visually-hidden">Loading reel...</span>
+        </div>
+      </div>
+      
+      <!-- Video Player -->
+      <video id="rhReelVideo" class="rh-reel-video" playsinline loop preload="auto" style="display: none;"></video>
+      
+      <!-- Audio Stage (For Audio-Only Reels) -->
+      <div id="rhReelAudioStage" class="rh-reel-audio-stage" style="display: none;">
+        <div class="rh-reel-audio-card">
+          <div class="rh-reel-audio-cover-wrap">
+            <img id="rhReelAudioThumb" src="/images/default-thumbnail.jpg" alt="Audio cover" class="rh-reel-audio-thumb">
+            <div class="rh-audio-waveform-bars">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+          <div class="rh-audio-ctrl-wrap mt-3 w-100">
+            <audio id="rhReelAudio" class="w-100" controls></audio>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Fallback -->
+      <div id="rhReelError" class="rh-reel-error" style="display: none;">
+        <i class="bi bi-exclamation-circle text-danger fs-1 mb-2"></i>
+        <p class="text-white small mb-3">Unable to play this reel.</p>
+        <button type="button" onclick="window.navReel(1)" class="rh-btn-outline-pill">Next Reel &rarr;</button>
+      </div>
+
+      <!-- Ambient Bottom Gradient Behind Creator and Caption -->
+      <div class="rh-reel-bottom-gradient"></div>
+
+      <!-- Lower-Left: Creator Information and Caption -->
+      <div class="rh-reel-info-col">
+        <div class="rh-reel-author-row mb-2">
+          <a href="#" id="rhReelAuthorLink" class="text-decoration-none d-flex align-items-center gap-2">
+            <img id="rhReelAuthorImg" src="/images/default-profile.svg" alt="Artist avatar" class="rh-reel-author-img">
+            <span id="rhReelAuthorName" class="rh-reel-author-name">@Artist</span>
+            <span id="rhReelVerifiedBadge" class="rh-verified-badge" style="display: none;">
+              <i class="bi bi-patch-check-fill"></i>
+            </span>
+          </a>
+        </div>
+        
+        <div class="rh-reel-caption-wrap">
+          <p id="rhReelCaption" class="rh-reel-caption mb-1"></p>
+          <button type="button" class="rh-reel-more-btn" id="rhReelMoreBtn" onclick="window.toggleReelCaption()" style="display: none;" data-no-loader="true">more</button>
+        </div>
+
+        <div class="rh-reel-music-row">
+          <i class="bi bi-music-note-beamed"></i>
+          <span class="rh-music-ticker" id="rhReelMusicTitle">Original Audio &bull; Rapira Music</span>
+        </div>
+      </div>
+
+      <!-- Right-Side Vertical Action Rail (Instagram Reels Style) -->
+      <div class="rh-reel-action-rail">
+        <!-- 1. Like Action -->
+        <div class="rh-reel-rail-item">
+          <button class="rh-reel-rail-btn" id="rhReelLikeBtn" onclick="window.toggleCurrentReelLike()" aria-label="Like Reel" data-no-loader="true">
+            <i class="bi bi-heart" id="rhReelLikeIcon"></i>
+          </button>
+          <span class="rh-reel-rail-count" id="rhReelLikeCount">0</span>
+        </div>
+
+        <!-- 2. Comment Action -->
+        <div class="rh-reel-rail-item">
+          <button class="rh-reel-rail-btn" id="rhReelCommentBtn" onclick="window.toggleReelComments()" aria-label="View Comments" data-no-loader="true">
+            <i class="bi bi-chat-dots-fill"></i>
+          </button>
+          <span class="rh-reel-rail-count" id="rhReelCommentCount">0</span>
+        </div>
+
+        <!-- 3. Share Action -->
+        <div class="rh-reel-rail-item">
+          <button class="rh-reel-rail-btn" onclick="window.shareCurrentReel()" aria-label="Share Reel" data-no-loader="true">
+            <i class="bi bi-send-fill"></i>
+          </button>
+          <span class="rh-reel-rail-count">Share</span>
+        </div>
+
+        <!-- 4. Open in Reels / Feed -->
+        <div class="rh-reel-rail-item">
+          <a class="rh-reel-rail-btn text-decoration-none" id="rhReelExternalLink" href="/reels" title="Open in full screen reels feed" aria-label="Open Full Reels Feed">
+            <i class="bi bi-play-btn-fill"></i>
+          </a>
+          <span class="rh-reel-rail-count">Feed</span>
+        </div>
+      </div>
+
+      <!-- Desktop Vertical Navigation Chevrons -->
+      <div class="rh-reel-nav-controls d-none d-md-flex">
+        <button type="button" class="rh-reel-vnav-btn rh-reel-vnav-prev" onclick="window.navReel(-1)" aria-label="Previous Reel" data-no-loader="true" title="Previous Reel (Up Arrow)">
+          <i class="bi bi-chevron-up"></i>
+        </button>
+        <button type="button" class="rh-reel-vnav-btn rh-reel-vnav-next" onclick="window.navReel(1)" aria-label="Next Reel" data-no-loader="true" title="Next Reel (Down Arrow)">
+          <i class="bi bi-chevron-down"></i>
+        </button>
+      </div>
+
+      <!-- Slide-Up Comment Drawer -->
+      <div class="rh-reel-comments-drawer" id="rhReelCommentsDrawer">
+        <div class="rh-comments-drawer-header">
+          <span class="fw-bold text-white fs-6">Comments (<span id="rhDrawerCommentCount">0</span>)</span>
+          <button type="button" class="rh-comments-drawer-close" onclick="window.toggleReelComments()" aria-label="Close Comments">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        
+        <div class="rh-comments-drawer-body" id="rhDrawerCommentsList">
+          <div class="text-center py-4 text-white-50 small">No comments yet. Start the conversation!</div>
+        </div>
+        
+        <form class="rh-comments-drawer-footer" id="rhCommentForm" onsubmit="window.submitReelComment(event)">
+          <input type="text" class="rh-comment-input" id="rhCommentInput" placeholder="Add a comment..." maxlength="280" autocomplete="off">
+          <button type="submit" class="rh-comment-send-btn" aria-label="Send Comment">
+            <i class="bi bi-arrow-up-circle-fill"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

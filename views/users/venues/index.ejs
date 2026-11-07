@@ -1,174 +1,144 @@
-<%- contentFor('body') %>
+<div class="rapira-profile-page">
+  <div class="container">
+    <div class="rh-subpage-container" style="max-width: 1040px;">
+      
+      <!-- Page Navigation Header -->
+      <div class="rh-page-header-nav">
+        <div class="rh-page-header-left">
+          <a href="/users/profile" class="rh-back-circle-btn" title="Back to Profile">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+          <h1 class="rh-page-title">My Venues</h1>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/venue-dashboard" class="rh-btn-secondary">
+            <i class="bi bi-kanban me-1"></i> Venue Dashboard
+          </a>
+          <a href="/users/venue-requests/create" class="rh-btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Request New Venue
+          </a>
+        </div>
+      </div>
 
-<!-- My Registered Venues Page -->
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold">My Registered Venues</h1>
-    <div class="d-flex gap-2">
-      <a href="/venue-dashboard" class="btn btn-success">
-        <i class="bi bi-kanban me-1"></i> All Dashboards
-      </a>
-      <a href="/users/profile" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Profile
-      </a>
-      <a href="/users/venue-requests/create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Request New Venue
-      </a>
-    </div>
-  </div>
+      <%
+        const totalVenues = venues ? venues.length : 0;
+        const activeVenues = venues ? venues.filter(venue => venue.isActive).length : 0;
+        const inactiveVenues = venues ? venues.filter(venue => !venue.isActive).length : 0;
+        const totalBookings = venues ? venues.reduce((sum, venue) => sum + (venue.stats ? venue.stats.totalBookings : 0), 0) : 0;
+      %>
 
-  <!-- Stats Cards -->
-  <div class="row mb-4">
-    <%
-      const totalVenues = venues.length;
-      const activeVenues = venues.filter(venue => venue.isActive).length;
-      const inactiveVenues = venues.filter(venue => !venue.isActive).length;
-      const totalBookings = venues.reduce((sum, venue) => sum + venue.stats.totalBookings, 0);
-    %>
-    <div class="col-md-3 mb-3">
-      <div class="card border-info h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-building display-4 text-info mb-2"></i>
-          <h3 class="fw-bold text-info"><%= totalVenues %></h3>
-          <p class="text-muted mb-0">Total Venues</p>
+      <!-- Stats Pills Row -->
+      <div class="rh-stats-pills-row">
+        <div class="rh-stats-pill">
+          <i class="bi bi-building text-danger"></i>
+          <span>Total: <strong class="rh-stats-pill-num"><%= totalVenues %></strong></span>
+        </div>
+        <div class="rh-stats-pill">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>Active: <strong class="rh-stats-pill-num" style="color: #0F7A4D;"><%= activeVenues %></strong></span>
+        </div>
+        <% if (inactiveVenues > 0) { %>
+          <div class="rh-stats-pill">
+            <i class="bi bi-pause-circle-fill text-warning"></i>
+            <span>Inactive: <strong class="rh-stats-pill-num" style="color: #B76E00;"><%= inactiveVenues %></strong></span>
+          </div>
+        <% } %>
+        <div class="rh-stats-pill">
+          <i class="bi bi-calendar-event text-danger"></i>
+          <span>Bookings: <strong class="rh-stats-pill-num"><%= totalBookings %></strong></span>
         </div>
       </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card border-success h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-check-circle display-4 text-success mb-2"></i>
-          <h3 class="fw-bold text-success"><%= activeVenues %></h3>
-          <p class="text-muted mb-0">Active Venues</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card border-warning h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-pause-circle display-4 text-warning mb-2"></i>
-          <h3 class="fw-bold text-warning"><%= inactiveVenues %></h3>
-          <p class="text-muted mb-0">Inactive Venues</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card border-primary h-100">
-        <div class="card-body text-center">
-          <i class="bi bi-calendar-event display-4 text-primary mb-2"></i>
-          <h3 class="fw-bold text-primary"><%= totalBookings %></h3>
-          <p class="text-muted mb-0">Total Bookings</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Venues List -->
-  <div class="card">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">
-        <i class="bi bi-list-ul me-2"></i>Your Registered Venues
-      </h5>
-    </div>
-    <div class="card-body">
+      <!-- Venues Grid -->
       <% if (venues && venues.length > 0) { %>
-        <div class="row">
+        <div class="row g-4">
           <% venues.forEach(venue => { %>
-            <div class="col-lg-6 col-xl-4 mb-4">
-              <div class="card h-100 venue-card">
-                <% if (venue.images && venue.images.length > 0) { %>
-                  <img src="<%= venue.images[0] %>" alt="<%= venue.name %>" 
-                       class="card-img-top" style="height: 200px; object-fit: cover;">
-                <% } else { %>
-                  <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                       style="height: 200px;">
-                    <i class="bi bi-building display-1 text-muted"></i>
-                  </div>
-                <% } %>
+            <div class="col-md-6 col-lg-4">
+              <div class="rh-profile-card h-100 d-flex flex-column mb-0">
                 
-                <div class="card-body d-flex flex-column">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title mb-0"><%= venue.name %></h5>
-                    <span class="badge <%= venue.isActive ? 'bg-success' : 'bg-warning' %>">
-                      <%= venue.isActive ? 'Active' : 'Inactive' %>
-                    </span>
+                <!-- Venue Image Banner -->
+                <div class="position-relative overflow-hidden" style="height: 180px; background-color: #FAF2EC;">
+                  <% if (venue.images && venue.images.length > 0) { %>
+                    <img src="<%= venue.images[0] %>" alt="<%= venue.name %>" class="w-100 h-100" style="object-fit: cover;">
+                  <% } else { %>
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted">
+                      <i class="bi bi-building display-4"></i>
+                    </div>
+                  <% } %>
+
+                  <div class="position-absolute top-0 end-0 m-2">
+                    <% if (venue.isActive) { %>
+                      <span class="rh-badge-completed">Active</span>
+                    <% } else { %>
+                      <span class="rh-badge-pending">Inactive</span>
+                    <% } %>
                   </div>
-                  
-                  <p class="text-muted small mb-2">
-                    <i class="bi bi-geo-alt me-1"></i><%= venue.city %>, <%= venue.state %>
-                  </p>
-                  
-                  <div class="mb-3">
-                    <span class="badge bg-secondary me-1"><%= venue.venueType %></span>
-                    <span class="badge bg-info"><%= venue.priceRange %></span>
+                </div>
+
+                <!-- Venue Body -->
+                <div class="rh-profile-card-body flex-grow-1 p-3">
+                  <h3 class="fs-5 fw-bold text-dark mb-1"><%= venue.name %></h3>
+                  <div class="text-muted small mb-2">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i><%= venue.city %>, <%= venue.state %>
                   </div>
-                  
+
+                  <div class="d-flex gap-2 mb-3">
+                    <span class="badge bg-light text-dark border"><%= venue.venueType || 'Concert Hall' %></span>
+                    <% if (venue.priceRange) { %>
+                      <span class="badge bg-light text-dark border"><%= venue.priceRange %></span>
+                    <% } %>
+                  </div>
+
                   <!-- Booking Stats -->
-                  <div class="row text-center mb-3">
+                  <div class="row g-2 text-center p-2 rounded-3 bg-light border mb-3">
                     <div class="col-4">
-                      <div class="border-end">
-                        <h6 class="mb-0 text-primary"><%= venue.stats.totalBookings %></h6>
-                        <small class="text-muted">Total</small>
-                      </div>
+                      <div class="small fw-bold text-dark"><%= venue.stats ? venue.stats.totalBookings : 0 %></div>
+                      <div style="font-size: 0.72rem;" class="text-muted">Total</div>
+                    </div>
+                    <div class="col-4 border-start border-end">
+                      <div class="small fw-bold text-success"><%= venue.stats ? venue.stats.activeBookings : 0 %></div>
+                      <div style="font-size: 0.72rem;" class="text-muted">Upcoming</div>
                     </div>
                     <div class="col-4">
-                      <div class="border-end">
-                        <h6 class="mb-0 text-success"><%= venue.stats.activeBookings %></h6>
-                        <small class="text-muted">Upcoming</small>
-                      </div>
-                    </div>
-                    <div class="col-4">
-                      <h6 class="mb-0 text-warning"><%= venue.stats.pendingBookings %></h6>
-                      <small class="text-muted">Pending</small>
+                      <div class="small fw-bold text-warning"><%= venue.stats ? venue.stats.pendingBookings : 0 %></div>
+                      <div style="font-size: 0.72rem;" class="text-muted">Pending</div>
                     </div>
                   </div>
-                  
-                  <div class="mt-auto">
-                    <div class="d-grid gap-2">
-                      <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="btn btn-success btn-sm">
-                        <i class="bi bi-kanban me-1"></i> Venue Dashboard
+
+                  <!-- Actions -->
+                  <div class="d-flex flex-column gap-2 mt-auto">
+                    <a href="/venue-dashboard/<%= venue._id %>/dashboard" class="rh-btn-primary py-2 text-center" style="font-size: 0.85rem;">
+                      <i class="bi bi-speedometer2 me-1"></i> Venue Dashboard
+                    </a>
+                    <div class="d-flex gap-2">
+                      <a href="/users/venues/<%= venue._id %>" class="rh-btn-secondary flex-grow-1 py-1 text-center" style="font-size: 0.82rem;">
+                        <i class="bi bi-eye me-1"></i> Details
                       </a>
-                      <a href="/users/venues/<%= venue._id %>" class="btn btn-primary btn-sm">
-                        <i class="bi bi-eye me-1"></i> View Details & Bookings
+                      <a href="/users/venues/<%= venue._id %>/bookings" class="rh-btn-secondary flex-grow-1 py-1 text-center" style="font-size: 0.82rem;">
+                        <i class="bi bi-calendar me-1"></i> Bookings
                       </a>
-                      <div class="btn-group" role="group">
-                        <a href="/users/venues/<%= venue._id %>/bookings" class="btn btn-outline-info btn-sm">
-                          <i class="bi bi-calendar me-1"></i> Calendar
-                        </a>
-                        <% if (venue.googleMapsLink) { %>
-                          <a href="<%= venue.googleMapsLink %>" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-geo-alt me-1"></i> Location
-                          </a>
-                        <% } %>
-                      </div>
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
           <% }); %>
         </div>
       <% } else { %>
-        <div class="text-center py-5">
-          <i class="bi bi-building display-1 text-muted mb-3"></i>
-          <h4>No Venues Registered Yet</h4>
-          <p class="text-muted mb-4">You haven't registered any venues yet. Start by submitting a venue registration request.</p>
-          <a href="/users/venue-requests/create" class="btn btn-primary">
+        <!-- Empty State -->
+        <div class="rh-form-card text-center py-5">
+          <div class="rh-sub-sketch-icon mb-3" aria-hidden="true">
+            <i class="bi bi-building text-danger display-4"></i>
+          </div>
+          <h2 class="fs-4 fw-bold text-dark mb-2">No Venues Registered Yet</h2>
+          <p class="text-muted mb-4">You haven't registered any venues yet. Submit a venue registration request to start hosting concerts.</p>
+          <a href="/users/venue-requests/create" class="rh-btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Register Your First Venue
           </a>
         </div>
       <% } %>
+
     </div>
   </div>
 </div>
-
-<style>
-.venue-card {
-  transition: transform 0.2s;
-}
-
-.venue-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-</style>

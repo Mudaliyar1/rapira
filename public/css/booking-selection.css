@@ -1,0 +1,1466 @@
+/* ========================================================
+   RAPIRA - Complete Vehicle & Seat Selection Stylesheet
+   Warm Cream: #FCF0E4 | Deep Crimson: #9F190E | Soft Peach: #EAC8B7
+   Typography: 'Titan One' (Headings), 'Poppins' (Body & UI)
+   ======================================================== */
+
+body:has(.rapira-booking-page),
+body.has-booking-bar {
+  overflow-x: hidden !important;
+}
+
+.rapira-booking-page {
+  background-color: #FCF0E4 !important;
+  color: #25211F;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: calc(100vh - 80px);
+  padding: 1.5rem 0 4rem 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* ========================================================
+   1. BOOKING HEADER & BREADCRUMB STEPPER
+   ======================================================== */
+.rapira-booking-header {
+  border-bottom: 1.5px solid #EAC8B7;
+  padding-bottom: 1.35rem;
+  margin-bottom: 2rem;
+  background: transparent;
+}
+
+.rapira-booking-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.rapira-booking-back-row {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rapira-booking-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #FFFDF9;
+  border: 1.5px solid #EAC8B7;
+  color: #9F190E;
+  font-size: 1.25rem;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(159, 25, 14, 0.04);
+  flex-shrink: 0;
+}
+
+.rapira-booking-back-btn:hover {
+  background-color: #9F190E;
+  border-color: #9F190E;
+  color: #FFFFFF;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 14px rgba(159, 25, 14, 0.2);
+}
+
+.rapira-booking-details-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rapira-booking-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1.5px solid #EAC8B7;
+  flex-shrink: 0;
+}
+
+.rapira-booking-text-wrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.rapira-booking-concert-title {
+  font-family: 'Titan One', 'Impact', sans-serif;
+  color: #9F190E;
+  font-size: 1.85rem;
+  line-height: 1.15;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
+}
+
+.rapira-booking-concert-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #735649;
+}
+
+.rapira-booking-meta-artist {
+  color: #5C4B43;
+  font-weight: 600;
+}
+
+.rapira-meta-bullet-desktop {
+  color: #CBB0A2;
+  font-size: 0.8rem;
+  margin: 0 0.15rem;
+}
+
+.rapira-booking-meta-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #735649;
+}
+
+.rapira-booking-meta-location i {
+  color: #9F190E;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.rapira-booking-meta-datetime {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #735649;
+}
+
+.rapira-booking-meta-datetime i {
+  color: #9F190E;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.rapira-meta-sep {
+  color: #B59E92;
+  margin: 0 0.15rem;
+  font-weight: 700;
+}
+
+/* Stepper Progress Bar */
+.rapira-booking-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rapira-stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #8C756B;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.rapira-stepper-step.is-clickable {
+  cursor: pointer;
+}
+
+.rapira-stepper-step.is-clickable:hover {
+  color: #9F190E;
+}
+
+.rapira-stepper-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #FFFDF9;
+  border: 1.5px solid #EAC8B7;
+  color: #8C756B;
+  font-weight: 700;
+  font-size: 0.8rem;
+  transition: all 0.25s ease;
+}
+
+.rapira-stepper-step.active .rapira-stepper-num {
+  background-color: #9F190E;
+  border-color: #9F190E;
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(159, 25, 14, 0.28);
+}
+
+.rapira-stepper-step.active .rapira-stepper-label {
+  color: #25211F;
+  font-weight: 700;
+}
+
+.rapira-stepper-step.completed .rapira-stepper-num {
+  background-color: #198754;
+  border-color: #198754;
+  color: #FFFFFF;
+}
+
+.rapira-stepper-step.completed .rapira-stepper-label {
+  color: #198754;
+}
+
+.rapira-stepper-line {
+  width: 32px;
+  height: 1.5px;
+  background-color: #EAC8B7;
+}
+
+/* ========================================================
+   2. VEHICLE SELECTION SCREEN (STEP 1)
+   ======================================================== */
+.rapira-vehicle-selection-card {
+  background-color: #FFFDF9;
+  border: 1px solid #EAC8B7;
+  border-radius: 24px;
+  box-shadow: 0 10px 32px rgba(159, 25, 14, 0.05);
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.rapira-vehicle-card-header {
+  margin-bottom: 2rem;
+}
+
+.rapira-vehicle-heading {
+  font-family: 'Titan One', 'Impact', sans-serif;
+  color: #9F190E;
+  font-size: 1.85rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.01em;
+}
+
+.rapira-vehicle-subtitle {
+  color: #735649;
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+/* 5-Card Grid */
+.rapira-vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.15rem;
+  margin-bottom: 2.25rem;
+}
+
+.rapira-vehicle-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.75rem 1rem 1.4rem 1rem;
+  background-color: #FFFDF9;
+  border: 1.5px solid #EAC8B7;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(159, 25, 14, 0.03);
+  outline: none;
+  width: 100%;
+}
+
+.rapira-vehicle-btn:hover {
+  transform: translateY(-4px);
+  border-color: #9F190E;
+  box-shadow: 0 8px 22px rgba(159, 25, 14, 0.12);
+}
+
+.rapira-vehicle-btn.active {
+  background-color: #9F190E !important;
+  border-color: #9F190E !important;
+  box-shadow: 0 10px 28px rgba(159, 25, 14, 0.28);
+  transform: translateY(-2px);
+}
+
+.rapira-vehicle-icon {
+  width: 52px;
+  height: 48px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  transition: transform 0.25s ease;
+}
+
+.rapira-vehicle-btn:hover .rapira-vehicle-icon {
+  transform: scale(1.08);
+}
+
+.rapira-vehicle-btn.active .rapira-vehicle-icon {
+  filter: brightness(0) invert(1);
+}
+
+.rapira-vehicle-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #25211F;
+  margin-bottom: 0.2rem;
+  transition: color 0.2s ease;
+}
+
+.rapira-vehicle-btn.active .rapira-vehicle-title {
+  color: #FFFFFF !important;
+}
+
+.rapira-vehicle-ticket-badge {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #735649;
+  transition: color 0.2s ease;
+}
+
+.rapira-vehicle-btn.active .rapira-vehicle-ticket-badge {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Selection Indicator Badge */
+.rapira-vehicle-check-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  color: #9F190E;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.rapira-vehicle-btn.active .rapira-vehicle-check-badge {
+  display: flex;
+}
+
+/* Ticket Quantity Selector Control Strip Below Cards */
+.rapira-vehicle-qty-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #FCF0E4;
+  border: 1.5px solid #EAC8B7;
+  border-radius: 18px;
+  padding: 1.15rem 1.75rem;
+  margin-bottom: 2.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.rapira-qty-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rapira-qty-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #25211F;
+  margin-bottom: 0;
+}
+
+.rapira-qty-sublabel {
+  font-size: 0.85rem;
+  color: #735649;
+}
+
+.rapira-stepper-box {
+  display: inline-flex;
+  align-items: center;
+  background-color: #FFFDF9;
+  border: 1.5px solid #EAC8B7;
+  border-radius: 9999px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(159, 25, 14, 0.04);
+}
+
+.rapira-stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #9F190E;
+  font-size: 1.35rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.rapira-stepper-btn:hover:not(:disabled) {
+  background-color: #9F190E;
+  color: #FFFFFF;
+}
+
+.rapira-stepper-btn:disabled {
+  color: #D1B8AC;
+  cursor: not-allowed;
+}
+
+.rapira-stepper-num-val {
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #9F190E;
+}
+
+/* Vehicle Continue CTA */
+.rapira-vehicle-continue-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.rapira-btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  background-color: #9F190E;
+  color: #FFFFFF !important;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  padding: 0.95rem 2.5rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 20px rgba(159, 25, 14, 0.28);
+}
+
+.rapira-btn-primary-action:hover {
+  background-color: #801209;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(159, 25, 14, 0.35);
+  color: #FFFFFF !important;
+}
+
+.rapira-btn-primary-action:disabled,
+.rapira-btn-primary-action.disabled {
+  background-color: #CDB9AD !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* ========================================================
+   3. SEAT SELECTION SCREEN (STEP 2)
+   ======================================================== */
+.rapira-seat-map-card {
+  position: relative;
+  background-color: #FFFDF9;
+  border: 1px solid #EAC8B7;
+  border-radius: 24px;
+  box-shadow: 0 10px 32px rgba(159, 25, 14, 0.05);
+  padding: 2.25rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.rapira-seat-map-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.rapira-seat-map-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rapira-seat-map-icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background-color: #FAF0E6;
+  border: 1.5px solid #EAC8B7;
+  color: #9F190E;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.rapira-seat-map-title {
+  font-family: 'Titan One', 'Impact', sans-serif;
+  color: #9F190E;
+  font-size: 1.45rem;
+  margin-bottom: 0.2rem;
+  letter-spacing: -0.01em;
+}
+
+.rapira-seat-map-subtitle {
+  color: #735649;
+  font-size: 0.88rem;
+  margin-bottom: 0;
+}
+
+.rapira-change-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1.5px solid #9F190E;
+  color: #9F190E;
+  border-radius: 9999px;
+  padding: 0.45rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rapira-change-step-btn:hover {
+  background-color: #9F190E;
+  color: #FFFFFF;
+}
+
+/* Floating Zoom Toolbar */
+.rapira-zoom-toolbar {
+  position: absolute;
+  top: 6.5rem;
+  left: 2.25rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  background-color: #FFFDF9;
+  border: 1.5px solid #EAC8B7;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(159, 25, 14, 0.08);
+  overflow: hidden;
+}
+
+.rapira-zoom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #F0D9CC;
+  color: #25211F;
+  font-weight: 700;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rapira-zoom-btn:last-child {
+  border-bottom: none;
+  font-size: 0.95rem;
+}
+
+.rapira-zoom-btn:hover {
+  background-color: #FAF0E6;
+  color: #9F190E;
+}
+
+/* Stage Indicator Curve */
+.rapira-stage-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.rapira-stage-curve {
+  width: 80%;
+  max-width: 440px;
+  padding: 0.65rem 0;
+  background: linear-gradient(180deg, #F9DFD2 0%, #FAF0E8 100%);
+  border-bottom-left-radius: 120px;
+  border-bottom-right-radius: 120px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid #EAC8B7;
+  border-top: none;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(159, 25, 14, 0.04);
+}
+
+.rapira-stage-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.45em;
+  color: #9F190E;
+  text-transform: uppercase;
+}
+
+/* Seat Map Content & Rows Viewport */
+.rapira-seat-map-viewport {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+  overscroll-behavior-x: contain !important;
+  scrollbar-width: thin;
+  scrollbar-color: #EAC8B7 transparent;
+}
+
+.rapira-seat-map-viewport::-webkit-scrollbar {
+  height: 6px;
+}
+.rapira-seat-map-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rapira-seat-map-viewport::-webkit-scrollbar-thumb {
+  background: #EAC8B7;
+  border-radius: 9999px;
+}
+
+.rapira-seat-map-content {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2rem;
+  width: max-content !important;
+  min-width: 100% !important;
+  margin: 0 auto !important;
+  transform-origin: top center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box !important;
+}
+
+.rapira-seat-category-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rapira-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px dashed #EAC8B7;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #25211F;
+}
+
+.rapira-category-price {
+  color: #9F190E;
+  font-weight: 800;
+}
+
+.rapira-category-info-icon {
+  color: #735649;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.rapira-category-info-icon:hover {
+  color: #9F190E;
+}
+
+/* Row & Seat Buttons */
+.rapira-seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.rapira-row-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #735649;
+  flex-shrink: 0;
+}
+
+.rapira-seat-block {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.rapira-seat-aisle {
+  width: 26px;
+  flex-shrink: 0;
+}
+
+.rapira-seat {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  border: 1.5px solid #198754;
+  background-color: #FFFDF9;
+  color: #198754;
+}
+
+.rapira-seat:hover:not(.is-sold) {
+  transform: translateY(-2px);
+  background-color: #E8F5E9;
+  box-shadow: 0 4px 10px rgba(25, 135, 84, 0.2);
+}
+
+/* Sold State */
+.rapira-seat.is-sold {
+  background-color: #E5E7EB !important;
+  border-color: #E5E7EB !important;
+  color: #9CA3AF !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Bestseller State */
+.rapira-seat.is-bestseller {
+  border-color: #D97706 !important;
+  color: #D97706 !important;
+}
+
+.rapira-seat.is-bestseller:hover {
+  background-color: #FEF3C7 !important;
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+}
+
+/* Selected State */
+.rapira-seat.is-selected {
+  background-color: #198754 !important;
+  border-color: #198754 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.38) !important;
+  transform: translateY(-2px);
+}
+
+/* Bottom Legend Strip (Cream, NOT black!) */
+.rapira-seat-legend {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2rem !important;
+  background-color: #FAF0E6 !important;
+  background: #FAF0E6 !important;
+  border: 1.5px solid #EAC8B7 !important;
+  border-radius: 14px !important;
+  padding: 0.85rem 1.5rem !important;
+  flex-wrap: wrap !important;
+  margin-top: 2rem !important;
+}
+
+.rapira-seat-legend::before {
+  display: none !important;
+}
+
+.rapira-legend-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #25211F !important;
+}
+
+.rapira-legend-box {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.rapira-legend-box.box-available {
+  background-color: #FFFDF9;
+  border: 1.5px solid #198754;
+}
+
+.rapira-legend-box.box-sold {
+  background-color: #E5E7EB;
+  border: 1.5px solid #E5E7EB;
+}
+
+.rapira-legend-box.box-bestseller {
+  background-color: #FFFDF9;
+  border: 1.5px solid #D97706;
+}
+
+.rapira-legend-box.box-selected {
+  background-color: #198754;
+  border: 1.5px solid #198754;
+}
+
+/* ========================================================
+   4. YOUR SELECTION SUMMARY CARD (RIGHT COLUMN)
+   ======================================================== */
+.rapira-selection-card {
+  background-color: #FFFDF9;
+  border: 1px solid #EAC8B7;
+  border-radius: 24px;
+  box-shadow: 0 10px 32px rgba(159, 25, 14, 0.05);
+  padding: 2rem;
+}
+
+.rapira-selection-title {
+  font-family: 'Titan One', 'Impact', sans-serif;
+  color: #9F190E;
+  font-size: 1.45rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.rapira-selection-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #F0D9CC;
+}
+
+.rapira-selection-stat-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #735649;
+  display: block;
+}
+
+.rapira-selection-vehicle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #25211F;
+}
+
+.rapira-selection-vehicle-wrap img {
+  width: 24px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.rapira-selected-seats-badge-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  margin-bottom: 1.5rem;
+  min-height: 38px;
+}
+
+.rapira-seat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #FAF0E6;
+  border: 1.5px solid #EAC8B7;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #9F190E;
+  box-shadow: 0 2px 6px rgba(159, 25, 14, 0.04);
+}
+
+.rapira-seat-chip i {
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: #735649;
+  transition: color 0.15s ease;
+}
+
+.rapira-seat-chip i:hover {
+  color: #9F190E;
+}
+
+.rapira-selection-price-divider {
+  height: 1px;
+  border-top: 1px dashed #EAC8B7;
+  margin: 1.25rem 0;
+}
+
+.rapira-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: #735649;
+  margin-bottom: 0.45rem;
+}
+
+.rapira-price-row.total-row {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1.5px solid #EAC8B7;
+  color: #25211F;
+}
+
+.rapira-total-label {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.rapira-total-amount {
+  font-weight: 800;
+  font-size: 1.45rem;
+  color: #9F190E;
+}
+
+.rapira-checkout-btn {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.95rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+}
+
+/* ========================================================
+   5. MOBILE STICKY BOTTOM BAR (<992px)
+   ======================================================== */
+.rapira-mobile-checkout-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  z-index: 1030;
+  background-color: #FFFDF9;
+  border-top: 1.5px solid #EAC8B7;
+  padding: 0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom, 0px)) 1.25rem;
+  box-shadow: 0 -8px 24px rgba(159, 25, 14, 0.08);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rapira-mobile-summary-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.rapira-mobile-summary-vehicle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #735649;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.rapira-mobile-summary-vehicle img {
+  width: 20px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.rapira-mobile-summary-total {
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #9F190E;
+  line-height: 1.15;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.rapira-mobile-checkout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #9F190E;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(159, 25, 14, 0.25);
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1;
+}
+
+.rapira-mobile-checkout-btn:hover:not(:disabled) {
+  background-color: #83140B;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(159, 25, 14, 0.35);
+  color: #FFFFFF !important;
+}
+
+.rapira-mobile-checkout-btn:disabled {
+  background-color: #D6C2B4 !important;
+  color: #8C7569 !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+/* ========================================================
+   6. RESPONSIVE BREAKPOINTS (320px to 1920px)
+   ======================================================== */
+@media (max-width: 991.98px) {
+  .rapira-mobile-checkout-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Elevate chatbot button above sticky mobile bar so it never overlaps checkout */
+  body:has(.rapira-booking-page) #chatbot-toggle,
+  body:has(.rapira-booking-page) .chatbot-toggle,
+  body:has(.rapira-booking-page) #rapira-chatbot-btn,
+  body.has-seats-checkout-bar #chatbot-toggle,
+  body.has-seats-checkout-bar .chatbot-toggle,
+  body.has-seats-checkout-bar #rapira-chatbot-btn,
+  #chatbot-toggle,
+  .chatbot-toggle,
+  #rapira-chatbot-btn {
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+    right: 16px !important;
+    z-index: 1040 !important;
+  }
+
+  /* Prevent sticky checkout bar from obscuring booking content or footer text */
+  .rapira-booking-page {
+    padding-bottom: calc(95px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body:has(.rapira-booking-page) footer.rapira-site-footer,
+  body.has-seats-checkout-bar footer.rapira-site-footer {
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .rapira-vehicle-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .rapira-zoom-toolbar {
+    position: static !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    margin-bottom: 1.25rem !important;
+    border-radius: 9999px !important;
+    align-self: flex-start;
+    border: 1.5px solid #EAC8B7 !important;
+    box-shadow: 0 4px 14px rgba(159, 25, 14, 0.06) !important;
+    background-color: #FFFDF9 !important;
+  }
+
+  .rapira-zoom-btn {
+    border-bottom: none !important;
+    border-right: 1.5px solid #F0D9CC !important;
+    width: 46px !important;
+    height: 44px !important;
+    min-width: 46px !important;
+    min-height: 44px !important;
+    font-size: 1.25rem !important;
+    touch-action: manipulation !important;
+  }
+
+  .rapira-zoom-btn:last-child {
+    border-right: none !important;
+    font-size: 0.95rem !important;
+  }
+
+  .rapira-seat-map-card,
+  .rapira-vehicle-selection-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .rapira-booking-page {
+    padding: 1rem 0 6rem 0 !important;
+  }
+
+  .rapira-booking-page > .container-xl {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Booking Header Hierarchy */
+  .rapira-booking-header {
+    border-bottom: 1.5px solid #EAC8B7 !important;
+    padding-bottom: 1.25rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-top: 0 !important;
+  }
+
+  .rapira-booking-header-inner {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  /* Row 1: Back button aligned left on its own row */
+  .rapira-booking-back-row {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .rapira-booking-back-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1.15rem !important;
+    background-color: #FFFDF9 !important;
+    border: 1.5px solid #EAC8B7 !important;
+    color: #9F190E !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 6px rgba(159, 25, 14, 0.04) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Row 2: Event Details Wrap Full Width */
+  .rapira-booking-details-wrap {
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .rapira-booking-text-wrap {
+    width: 100% !important;
+  }
+
+  /* Event Title Prominently Displayed */
+  .rapira-booking-concert-title {
+    font-family: 'Titan One', 'Impact', sans-serif !important;
+    color: #9F190E !important;
+    font-size: 1.65rem !important;
+    line-height: 1.15 !important;
+    margin: 0 0 0.35rem 0 !important;
+    letter-spacing: -0.01em !important;
+    word-break: break-word !important;
+    text-align: left !important;
+  }
+
+  /* Event Metadata Hierarchy */
+  .rapira-booking-concert-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+  }
+
+  /* Artist Name directly below title */
+  .rapira-booking-meta-artist {
+    color: #5C4B43 !important;
+    font-size: 0.96rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.15rem !important;
+    display: block !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Location on its own readable line */
+  .rapira-booking-meta-location {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.45rem !important;
+    color: #735649 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  .rapira-booking-meta-location i {
+    color: #9F190E !important;
+    font-size: 0.92rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Date and time neatly displayed on their own line */
+  .rapira-booking-meta-datetime {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+    color: #735649 !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    line-height: 1.35 !important;
+  }
+
+  .rapira-booking-meta-datetime i {
+    color: #9F190E !important;
+    font-size: 0.88rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .rapira-meta-sep {
+    color: #B59E92 !important;
+    margin: 0 0.15rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Vehicle and Seat Selection Cards */
+  .rapira-vehicle-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+
+  .rapira-vehicle-heading {
+    font-size: 1.5rem;
+  }
+
+  .rapira-seat-map-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .rapira-seat-map-subtitle {
+    font-size: 0.82rem !important;
+  }
+
+  .rapira-change-step-btn {
+    padding: 0.4rem 1rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  .rapira-vehicle-btn {
+    padding: 1.25rem 0.75rem 1rem 0.75rem;
+  }
+
+  .rapira-vehicle-icon {
+    width: 44px;
+    height: 40px;
+    margin-bottom: 0.65rem;
+  }
+
+  .rapira-vehicle-title {
+    font-size: 0.95rem;
+  }
+
+  .rapira-vehicle-qty-strip {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .rapira-qty-label-wrap {
+    justify-content: center;
+  }
+
+  .rapira-stepper-box {
+    margin: 0 auto;
+  }
+
+  .rapira-vehicle-continue-wrap {
+    justify-content: stretch;
+  }
+
+  .rapira-btn-primary-action {
+    width: 100%;
+  }
+
+  .rapira-seat-map-card,
+  .rapira-vehicle-selection-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 20px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .rapira-seat-legend {
+    gap: 0.85rem !important;
+    padding: 0.75rem 0.85rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .rapira-booking-concert-title {
+    font-size: 1.52rem !important;
+  }
+
+  .rapira-mobile-checkout-bar {
+    padding: 0.65rem 0.95rem calc(0.65rem + env(safe-area-inset-bottom, 0px)) 0.95rem;
+    gap: 0.65rem;
+  }
+
+  .rapira-mobile-summary-vehicle {
+    font-size: 0.8rem;
+  }
+
+  .rapira-mobile-summary-total {
+    font-size: 1.25rem;
+  }
+
+  .rapira-mobile-checkout-btn {
+    padding: 0.65rem 1.15rem;
+    font-size: 0.86rem;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .rapira-booking-header {
+    margin-bottom: 1.25rem !important;
+  }
+
+  .rapira-booking-concert-title {
+    font-size: 1.38rem !important;
+  }
+
+  .rapira-booking-meta-artist {
+    font-size: 0.92rem !important;
+  }
+
+  .rapira-booking-meta-location,
+  .rapira-booking-meta-datetime {
+    font-size: 0.84rem !important;
+  }
+
+  .rapira-vehicle-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .rapira-vehicle-btn {
+    padding: 1rem 0.5rem 0.75rem 0.5rem;
+  }
+
+  .rapira-vehicle-icon {
+    width: 38px;
+    height: 34px;
+    margin-bottom: 0.45rem;
+  }
+
+  .rapira-vehicle-title {
+    font-size: 0.88rem;
+  }
+
+  .rapira-vehicle-ticket-badge {
+    font-size: 0.75rem;
+  }
+
+  .rapira-mobile-checkout-bar {
+    padding: 0.6rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom, 0px)) 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .rapira-mobile-summary-vehicle {
+    font-size: 0.76rem;
+  }
+
+  .rapira-mobile-summary-total {
+    font-size: 1.15rem;
+  }
+
+  .rapira-mobile-checkout-btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .rapira-booking-concert-title {
+    font-size: 1.25rem !important;
+  }
+
+  .rapira-booking-meta-location,
+  .rapira-booking-meta-datetime {
+    font-size: 0.8rem !important;
+  }
+
+  .rapira-mobile-checkout-bar {
+    padding: 0.5rem 0.6rem calc(0.5rem + env(safe-area-inset-bottom, 0px)) 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .rapira-mobile-summary-vehicle {
+    font-size: 0.72rem;
+  }
+
+  .rapira-mobile-summary-vehicle img {
+    width: 16px;
+    height: 14px;
+  }
+
+  .rapira-mobile-summary-total {
+    font-size: 1.05rem;
+  }
+
+  .rapira-mobile-checkout-btn {
+    padding: 0.5rem 0.68rem;
+    font-size: 0.74rem;
+    gap: 0.25rem;
+  }
+}

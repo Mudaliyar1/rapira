@@ -1,186 +1,160 @@
-<!-- Post Viewer Modal (Centered, Not Fullscreen) -->
-<div class="modal fade" id="post-viewer" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content" style="background: #1a1a2e; border: 1px solid #333; border-radius: 16px; overflow: hidden;">
+<!-- RAPIRA Post Viewer Modal (Redesigned Editorial Cream & Crimson) -->
+<div class="modal fade rh-viewer-modal" id="post-viewer" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+  <div class="modal-dialog modal-dialog-centered rh-viewer-dialog">
+    <div class="modal-content rh-viewer-content">
       
-      <!-- Close Button - Positioned at top right of modal content -->
-      <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 15px; right: 15px; z-index: 1060;"></button>
-      
-      <style>
-        .audio-visualizer-modal {
-          width: 100%;
-          height: 100%;
-          min-height: 250px;
-          background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 20px;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .audio-visualizer-modal::after {
-          content: "RAPIRA AUDIO";
-          position: absolute;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          color: rgba(0, 212, 255, 0.4);
-          font-size: 0.8rem;
-          font-weight: bold;
-          letter-spacing: 4px;
-          text-transform: uppercase;
-        }
+      <!-- Close Button -->
+      <button type="button" class="rh-viewer-close-btn" data-bs-dismiss="modal" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
 
-        .visualizer-bar-modal {
-          width: 8px;
-          height: 30px;
-          background: #00d4ff;
-          border-radius: 4px;
-          animation: bar-pulse-modal 1.2s infinite ease-in-out;
-          box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
-        }
-
-        @keyframes bar-pulse-modal {
-          0%, 100% { height: 20px; background: #00d4ff; }
-          50% { height: 80px; background: #7c4dff; }
-        }
-
-        .visualizer-bar-modal:nth-child(1) { animation-delay: -1.1s; }
-        .visualizer-bar-modal:nth-child(2) { animation-delay: -0.9s; }
-        .visualizer-bar-modal:nth-child(3) { animation-delay: -0.7s; }
-        .visualizer-bar-modal:nth-child(4) { animation-delay: -0.5s; }
-        .visualizer-bar-modal:nth-child(5) { animation-delay: -0.3s; }
-        .visualizer-bar-modal:nth-child(6) { animation-delay: -0.1s; }
-        .visualizer-bar-modal:nth-child(7) { animation-delay: -0.4s; }
-        .visualizer-bar-modal:nth-child(8) { animation-delay: -0.8s; }
-      </style>
-
-      <div class="modal-body p-0" style="max-height: 90vh; overflow-y: auto;">
-        
-        <!-- Post Card -->
-        <div id="post-modal-content" class="post-container">
+      <div class="modal-body p-0 rh-viewer-body">
+        <div id="post-modal-content" class="rh-viewer-layout">
           
-          <!-- Post Header -->
-          <div class="post-header" style="display: flex; align-items: center; gap: 15px; padding: 20px; border-bottom: 1px solid #333;">
-            <img id="post-artist-img" src="" alt="Artist" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #00d4ff; cursor: pointer;">
-            <div class="artist-info">
-              <a id="post-artist-link" href="#" style="text-decoration: none;">
-                <h6 id="post-artist-name" class="mb-0 text-white" style="font-weight: 600; cursor: pointer; transition: color 0.2s;">Artist Name</h6>
-              </a>
-              <p id="post-created-at" class="mb-0 text-muted" style="font-size: 0.9rem;">Just now</p>
+          <!-- LEFT / TOP: Media Container Panel -->
+          <div class="rh-viewer-media-panel">
+            <!-- Mobile Compact Artist Header (visible on < 992px) -->
+            <div class="rh-viewer-mobile-header d-lg-none">
+              <div class="rh-viewer-artist-meta">
+                <img id="post-artist-img-mobile" src="/images/default-profile.svg" alt="Artist" class="rh-viewer-artist-avatar">
+                <div class="rh-viewer-artist-info">
+                  <a id="post-artist-link-mobile" href="#" class="rh-viewer-artist-link">
+                    <span id="post-artist-name-mobile" class="rh-viewer-artist-name">Artist Name</span>
+                  </a>
+                  <span id="post-created-at-mobile" class="rh-viewer-post-date">Just now</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Media Container -->
+            <div id="post-media-container" class="rh-viewer-media-viewport">
+              <!-- Dynamically populated: Audio visualizer, video player, or responsive image -->
+              <div class="rh-viewer-loading">
+                <div class="spinner-border text-danger" role="status">
+                  <span class="visually-hidden">Loading media...</span>
+                </div>
+              </div>
             </div>
           </div>
           
-          <!-- Post Media -->
-          <div id="post-media-container" style="background: #000; display: flex; align-items: center; justify-content: center; width: 100%; max-height: 500px; overflow: hidden; position: relative;">
-            <!-- Image or Video will be inserted here -->
-          </div>
-          
-          <!-- Post Info -->
-          <div class="post-info" style="padding: 20px;">
+          <!-- RIGHT: Content Information & Engagement Sidebar -->
+          <div class="rh-viewer-info-panel">
             
-            <!-- Stats -->
-            <div class="post-stats" style="display: flex; gap: 30px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333; justify-content: space-around;">
-              <div style="text-align: center;">
-                <strong id="post-likes-count" style="display: block; font-size: 1.3rem; color: #00d4ff;">0</strong>
-                <small style="color: #999;">Likes</small>
-              </div>
-              <div style="text-align: center;">
-                <strong id="post-shares-count" style="display: block; font-size: 1.3rem; color: #00d4ff;">0</strong>
-                <small style="color: #999;">Shares</small>
-              </div>
-              <div style="text-align: center;">
-                <strong id="post-views-count" style="display: block; font-size: 1.3rem; color: #00d4ff;">0</strong>
-                <small style="color: #999;">Views</small>
-              </div>
-              <div style="text-align: center; cursor: pointer;" onclick="openPostViewerComments()">
-                <strong id="post-comments-count" style="display: block; font-size: 1.3rem; color: #10b981;">0</strong>
-                <small style="color: #999;">Comments</small>
-              </div>
-              <div style="text-align: center; cursor: pointer; display: none;" onclick="openPostViewerReport()">
-                <strong id="post-reports-count" style="display: block; font-size: 1.3rem; color: #ef4444;">0</strong>
-                <small style="color: #999;">Reports</small>
+            <!-- Desktop Artist Header (visible on >= 992px) -->
+            <div class="rh-viewer-desktop-header d-none d-lg-flex">
+              <img id="post-artist-img" src="/images/default-profile.svg" alt="Artist" class="rh-viewer-artist-avatar">
+              <div class="rh-viewer-artist-info">
+                <a id="post-artist-link" href="#" class="rh-viewer-artist-link">
+                  <h6 id="post-artist-name" class="rh-viewer-artist-name mb-0">Artist Name</h6>
+                </a>
+                <span id="post-created-at" class="rh-viewer-post-date">Just now</span>
               </div>
             </div>
-            
-            <!-- Action Buttons - Only for logged-in users -->
+
+            <!-- Scrollable Content Details -->
+            <div class="rh-viewer-scrollable-body">
+              <!-- Caption & Read More -->
+              <div class="rh-viewer-caption-block">
+                <p id="post-caption" class="rh-viewer-caption"></p>
+                <button id="read-more-btn" onclick="toggleReadMore()" class="rh-viewer-read-more" type="button" style="display: none;">Read More</button>
+              </div>
+              
+              <!-- Hashtags -->
+              <div id="post-hashtags" class="rh-viewer-hashtags"></div>
+
+              <!-- Engagement Statistics Row -->
+              <div class="rh-viewer-stats-grid">
+                <div class="rh-viewer-stat-card">
+                  <span class="rh-viewer-stat-val" id="post-likes-count">0</span>
+                  <span class="rh-viewer-stat-lbl">Likes</span>
+                </div>
+                <div class="rh-viewer-stat-card">
+                  <span class="rh-viewer-stat-val" id="post-shares-count">0</span>
+                  <span class="rh-viewer-stat-lbl">Shares</span>
+                </div>
+                <div class="rh-viewer-stat-card">
+                  <span class="rh-viewer-stat-val" id="post-views-count">0</span>
+                  <span class="rh-viewer-stat-lbl">Views</span>
+                </div>
+                <div class="rh-viewer-stat-card clickable" onclick="openPostViewerComments()">
+                  <span class="rh-viewer-stat-val" id="post-comments-count">0</span>
+                  <span class="rh-viewer-stat-lbl">Comments</span>
+                </div>
+                <div class="rh-viewer-stat-card clickable d-none" id="post-reports-stat" onclick="openPostViewerReport()">
+                  <span class="rh-viewer-stat-val text-danger" id="post-reports-count">0</span>
+                  <span class="rh-viewer-stat-lbl">Reports</span>
+                </div>
+              </div>
+
+              <!-- Engagement Action Buttons -->
+              <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                <div class="rh-viewer-actions-row">
+                  <!-- Like Button -->
+                  <button id="post-modal-like-btn" class="rh-viewer-action-btn rh-viewer-like-btn" title="Like Post" type="button">
+                    <i class="bi bi-heart"></i>
+                    <span class="rh-viewer-action-label">Like</span>
+                  </button>
+                  
+                  <!-- Share Button -->
+                  <button id="post-modal-share-btn" class="rh-viewer-action-btn" title="Share Post" type="button">
+                    <i class="bi bi-share"></i>
+                    <span class="rh-viewer-action-label">Share</span>
+                  </button>
+
+                  <!-- Comments Button -->
+                  <button onclick="openPostViewerComments()" id="post-modal-comments-btn" class="rh-viewer-action-btn" title="Comments" type="button">
+                    <i class="bi bi-chat-dots"></i>
+                    <span class="rh-viewer-action-label">Comment</span>
+                  </button>
+                  
+                  <!-- Report Button -->
+                  <button onclick="openPostViewerReport()" id="post-modal-report-btn" class="rh-viewer-action-btn" title="Report Post" type="button">
+                    <i class="bi bi-flag"></i>
+                    <span class="rh-viewer-action-label">Report</span>
+                  </button>
+                </div>
+              <% } else { %>
+                <div class="rh-viewer-login-prompt">
+                  <i class="bi bi-lock me-1"></i>
+                  <a href="/auth/login" class="rh-viewer-login-link">Log in to like, share, and comment</a>
+                </div>
+              <% } %>
+
+              <!-- Login message container fallback -->
+              <div id="post-login-message" class="login-message text-center" style="display: none;">
+                <p class="mb-0 text-muted">Please log in to like and share posts</p>
+              </div>
+
+              <!-- Inline Comments Section -->
+              <div id="post-inline-comments-section" class="rh-viewer-comments-section">
+                <div class="rh-viewer-comments-header">
+                  <i class="bi bi-chat-dots-fill text-danger me-2"></i>
+                  <span class="fw-bold">Comments (<span id="post-inline-comments-count">0</span>)</span>
+                </div>
+                
+                <!-- Comments List -->
+                <div id="post-inline-comments-list" class="rh-viewer-comments-list">
+                  <div class="text-center text-muted py-3">Loading comments...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Comment Input (Pinned at Bottom of Info Panel) -->
             <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-              <div class="action-buttons" style="display: flex; gap: 15px; align-items: center; justify-content: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
-                <!-- Like Button -->
-                <button id="post-modal-like-btn" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                  <i class="bi bi-heart" style="font-size: 1.6rem; color: #fff; pointer-events: none;"></i>
-                </button>
-                
-                <!-- Share Button -->
-                <button id="post-modal-share-btn" style="background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                  <i class="bi bi-share" style="font-size: 1.6rem; color: #00d4ff; pointer-events: none;"></i>
-                </button>
-
-                <!-- Comments Button -->
-                <button onclick="openPostViewerComments()" id="post-modal-comments-btn" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                  <i class="bi bi-chat-dots" style="font-size: 1.6rem; color: #10b981; pointer-events: none;"></i>
-                </button>
-                
-                <!-- Report Button -->
-                <button onclick="openPostViewerReport()" id="post-modal-report-btn" style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); cursor: pointer; padding: 12px; transition: all 0.3s ease; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;">
-                  <i class="bi bi-flag" style="font-size: 1.6rem; color: #ef4444; pointer-events: none;"></i>
+              <div class="rh-viewer-comment-input-wrap">
+                <input type="text" id="postViewerNewComment" class="form-control rh-viewer-comment-input" placeholder="Add a comment...">
+                <button class="btn rh-viewer-comment-submit-btn" id="submitPostViewerCommentBtn" type="button" aria-label="Send Comment">
+                  <i class="bi bi-send-fill"></i>
                 </button>
               </div>
             <% } else { %>
-              <!-- Login message for non-logged-in users -->
-              <div style="text-align: center; padding: 15px 0; margin-bottom: 15px; border-bottom: 1px solid #333;">
-                <p class="mb-0 text-muted" style="font-size: 0.95rem;">
-                  <i class="bi bi-lock me-2"></i>
-                  <a href="/auth/login" class="text-decoration-none text-primary fw-bold">Login to like and share</a>
-                </p>
+              <div class="rh-viewer-comment-login-msg">
+                <a href="/auth/login">Log in to join the conversation</a>
               </div>
             <% } %>
             
-            <!-- Caption with Read More -->
-            <div style="margin-bottom: 15px;">
-              <p id="post-caption" class="post-caption" style="font-size: 1rem; margin-bottom: 8px; line-height: 1.6; color: #fff; word-wrap: break-word; overflow-wrap: break-word;"></p>
-              <button id="read-more-btn" onclick="toggleReadMore()" style="display: none; background: none; border: none; color: #00d4ff; cursor: pointer; padding: 0; font-size: 0.9rem; font-weight: 600; text-decoration: underline;">Read More</button>
-            </div>
-            
-            <!-- Hashtags -->
-            <div id="post-hashtags" class="post-hashtags" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px;">
-              <!-- Hashtags will be inserted here -->
-            </div>
-            
-            <!-- Login Message -->
-            <div id="post-login-message" class="login-message text-center" style="display: none;">
-              <p class="mb-0 text-muted">Please log in to like and share posts</p>
-            </div>
-
-            <!-- Inline Comments Section -->
-            <div id="post-inline-comments-section" style="margin-top: 25px; border-top: 1px solid #333; padding-top: 20px;">
-              <h6 class="text-white mb-3"><i class="bi bi-chat-dots text-success me-2"></i> Comments (<span id="post-inline-comments-count">0</span>)</h6>
-              
-              <!-- Comments List -->
-              <div id="post-inline-comments-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding-right: 10px;">
-                <!-- Filled dynamically -->
-                <div class="text-center text-muted py-3">Loading comments...</div>
-              </div>
-
-              <!-- Add Comment Input -->
-              <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-                <div class="d-flex gap-2">
-                  <input type="text" id="postViewerNewComment" class="form-control bg-dark text-white border-secondary" placeholder="Add a comment..." style="border-radius: 8px;">
-                  <button class="btn btn-success" id="submitPostViewerCommentBtn" style="border-radius: 8px;"><i class="bi bi-send"></i></button>
-                </div>
-              <% } else { %>
-                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
-                  <a href="/auth/login" class="text-info text-decoration-none">Login to add a comment</a>
-                </div>
-              <% } %>
-            </div>
-            
           </div>
         </div>
-        
       </div>
     </div>
   </div>
@@ -190,23 +164,24 @@
   window.currentUserId = "<%= (typeof currentUser !== 'undefined' && currentUser && (currentUser._id || currentUser.id)) ? (currentUser._id || currentUser.id).toString() : '' %>";
 </script>
 
-<!-- Report Modal -->
-<div class="modal fade" id="postViewerReportModal" tabindex="-1" style="z-index: 1060;">
+<!-- Report Modal (Cream & Crimson) -->
+<div class="modal fade" id="postViewerReportModal" tabindex="-1" style="z-index: 1070;">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#0f0f1e; border:1px solid #333;">
-      <div class="modal-header border-secondary">
-        <h5 class="modal-title text-white"><i class="bi bi-flag text-danger"></i> Report Post</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal-content rh-report-modal-content">
+      <div class="modal-header rh-report-modal-header">
+        <h5 class="modal-title" style="color: #9F190E; font-family: 'Titan One', sans-serif;">
+          <i class="bi bi-flag-fill me-2"></i>Report Post
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p class="text-white">Please tell us why you are reporting this post:</p>
-        <textarea id="postViewerReportReason" class="form-control bg-dark text-white border-secondary" rows="4" placeholder="Reason..."></textarea>
+      <div class="modal-body p-4">
+        <p style="color: #25211F; font-size: 0.95rem; margin-bottom: 12px;">Please let us know why you are reporting this content:</p>
+        <textarea id="postViewerReportReason" class="form-control rh-report-textarea" rows="4" placeholder="Describe the issue..."></textarea>
       </div>
-      <div class="modal-footer border-secondary">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="submitPostViewerReportBtn">Submit Report</button>
+      <div class="modal-footer rh-report-modal-footer">
+        <button type="button" class="btn rh-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn rh-btn-submit" id="submitPostViewerReportBtn">Submit Report</button>
       </div>
     </div>
   </div>
 </div>
-

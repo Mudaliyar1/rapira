@@ -1,162 +1,322 @@
 <%- contentFor('title') %>About Us - Rapira
 
 <%- contentFor('body') %>
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <!-- Hero Section -->
-      <div class="text-center mb-5">
-        <h1 class="display-4 fw-bold mb-4">About <span class="gradient-text-purple">Rapira</span></h1>
-        <p class="lead text-muted">The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.</p>
-      </div>
+<div class="rapira-about-page">
+  <div class="container rh-about-container">
+    
+    <!-- ========================================================
+         SECTION A: HERO – OUR STORY / ABOUT RAPIRA
+         ======================================================== -->
+    <section class="rh-about-hero-section">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6 col-12 rh-about-hero-text-col">
+          <div class="rh-eyebrow-wrap">
+            <span class="rh-eyebrow-text">OUR STORY</span>
+            <svg class="rh-eyebrow-stroke" width="68" height="10" viewBox="0 0 68 10" fill="none" aria-hidden="true">
+              <path d="M2 7.5C20 2.5 48 2.5 66 7.5" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          
+          <div class="rh-hero-title-wrap">
+            <h1 class="rh-about-main-heading">
+              ABOUT<br>RAPIRA
+            </h1>
+            <svg class="rh-doodle-crown" width="46" height="34" viewBox="0 0 46 34" fill="none" aria-hidden="true">
+              <path d="M3 26L7 10L17 21L23 5L29 21L39 10L43 26H3Z" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="7" cy="7" r="1.8" fill="#9F190E"/>
+              <circle cx="23" cy="3" r="1.8" fill="#9F190E"/>
+              <circle cx="39" cy="7" r="1.8" fill="#9F190E"/>
+            </svg>
+          </div>
 
-      <!-- Mission Section -->
-      <div class="glass-card-dark mb-5">
-        <div class="card-body p-4 p-md-5">
-          <h2 class="fw-bold mb-4 gradient-text-blue">Our Mission</h2>
-          <p class="mb-4">
-            Rapira is dedicated to empowering the Indian rap and hip-hop community by providing a comprehensive platform 
-            where artists can showcase their talent, connect with fans, and build their careers. We believe in the power 
-            of music to bring people together and create meaningful experiences.
+          <p class="rh-about-lead-text">
+            The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.
           </p>
-          <p class="mb-0">
-            Our mission is to bridge the gap between emerging artists and music lovers, creating opportunities for 
-            discovery, collaboration, and growth within the vibrant Indian rap scene.
-          </p>
+
+          <div class="rh-hero-flourish-wrap">
+            <svg class="rh-flourish-stroke" width="140" height="18" viewBox="0 0 140 18" fill="none" aria-hidden="true">
+              <path d="M4 12C38 3 98 4 136 11M28 15C56 9 96 10 118 14" stroke="#9F190E" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="col-lg-6 col-12 rh-about-hero-media-col">
+          <div class="rh-hero-media-card">
+            <picture class="rh-media-picture">
+              <source srcset="/images/about/our-story.webp" type="image/webp">
+              <img src="/images/about/our-story.jpg" alt="Indian hip-hop live concert performance on RAPIRA" class="rh-hero-img" loading="eager">
+            </picture>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Features Section -->
-      <div class="glass-card-dark mb-5">
-        <div class="card-body p-4 p-md-5">
-          <h2 class="fw-bold mb-4 gradient-text-green">What We Offer</h2>
-          <div class="row g-4">
-            <div class="col-md-6">
-              <div class="d-flex align-items-start">
-                <div class="flex-shrink-0 me-3">
-                  <div class="bg-gradient-purple rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="bi bi-person-badge text-white"></i>
-                  </div>
-                </div>
-                <div>
-                  <h5 class="fw-bold">Artist Profiles</h5>
-                  <p class="text-muted mb-0">Create comprehensive profiles to showcase your music, style, and journey as an artist.</p>
-                </div>
-              </div>
+    <!-- ========================================================
+         SECTION B: OUR MISSION
+         ======================================================== -->
+    <section class="rh-about-mission-section">
+      <div class="rh-mission-card">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-5 col-12 rh-mission-media-col">
+            <div class="rh-mission-media-card">
+              <picture class="rh-media-picture">
+                <source srcset="/images/about/our-mission.webp" type="image/webp">
+                <img src="/images/about/our-mission.jpg" alt="Indian music creators and producers collaborating in recording studio" class="rh-mission-img" loading="lazy">
+              </picture>
             </div>
-            <div class="col-md-6">
-              <div class="d-flex align-items-start">
-                <div class="flex-shrink-0 me-3">
-                  <div class="bg-gradient-blue rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="bi bi-calendar-event text-white"></i>
-                  </div>
-                </div>
-                <div>
-                  <h5 class="fw-bold">Concert Management</h5>
-                  <p class="text-muted mb-0">Organize and promote your concerts with our integrated event management system.</p>
-                </div>
-              </div>
+          </div>
+
+          <div class="col-lg-7 col-12 rh-mission-content-col">
+            <div class="rh-mission-title-wrap">
+              <h2 class="rh-mission-heading">OUR MISSION</h2>
+              <svg class="rh-doodle-sparks" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+                <path d="M5 15H1M15 5V1M8 8L4 4M22 8L26 4M25 15H29" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
             </div>
-            <div class="col-md-6">
-              <div class="d-flex align-items-start">
-                <div class="flex-shrink-0 me-3">
-                  <div class="bg-gradient-orange rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="bi bi-ticket-perforated text-white"></i>
-                  </div>
-                </div>
-                <div>
-                  <h5 class="fw-bold">Ticket Sales</h5>
-                  <p class="text-muted mb-0">Seamless ticket purchasing experience for fans with secure payment processing.</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="d-flex align-items-start">
-                <div class="flex-shrink-0 me-3">
-                  <div class="bg-gradient-green rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="bi bi-music-note-beamed text-white"></i>
-                  </div>
-                </div>
-                <div>
-                  <h5 class="fw-bold">Content Sharing</h5>
-                  <p class="text-muted mb-0">Share your music, videos, and creative content with a growing community of fans.</p>
-                </div>
-              </div>
+
+            <div class="rh-mission-text-wrap">
+              <p class="rh-mission-paragraph">
+                Rapira is dedicated to empowering the Indian rap and hip-hop community by providing a comprehensive platform where artists can showcase their talent, connect with fans, and build their careers.
+              </p>
+              <p class="rh-mission-paragraph mb-0">
+                Our mission is to bridge the gap between emerging artists and music lovers, creating opportunities for discovery, collaboration, and growth within the vibrant Indian rap scene.
+              </p>
             </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Team Section -->
-      <div class="glass-card-dark mb-5">
-        <div class="card-body p-4 p-md-5">
-          <h2 class="fw-bold mb-4 gradient-text-orange">Our Team</h2>
-          <p class="mb-4">
-            Rapira is built by a passionate team of music enthusiasts, developers, and industry professionals
-            who understand the unique challenges and opportunities in the Indian rap scene.
-          </p>
-        </div>
+    <!-- ========================================================
+         SECTION C: WHAT WE OFFER
+         ======================================================== -->
+    <section class="rh-about-offers-section">
+      <div class="rh-section-header-wrap text-center">
+        <span class="rh-header-divider-line"></span>
+        <h2 class="rh-section-heading">WHAT WE OFFER</h2>
+        <span class="rh-header-divider-line"></span>
       </div>
 
-      <% if (typeof teamMembers !== 'undefined' && teamMembers && teamMembers.length > 0) { %>
-        <!-- Team Members Grid -->
-        <div class="row g-4 mb-5">
-          <% teamMembers.forEach(member => { %>
-            <div class="col-lg-4 col-md-6">
-              <div class="glass-card-dark">
-                <div class="card-body p-4 text-center">
-                  <img src="<%= member.image || '/images/default-profile.svg' %>"
-                       alt="<%= member.name %>"
-                       class="rounded-circle mb-3"
-                       style="width: 150px; height: 150px; object-fit: cover;"
-                       onerror="this.onerror=null; this.src='/images/default-profile.svg';">
-                  <h5 class="fw-bold text-white mb-1"><%= member.name %></h5>
-                  <p class="text-primary mb-3"><%= member.position %></p>
-                  <% if (member.bio && member.bio.trim()) { %>
-                    <p class="text-muted mb-3"><%= member.bio %></p>
-                  <% } %>
+      <div class="row g-3 g-lg-4 rh-offers-grid">
+        <!-- 1. Artist Profiles -->
+        <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+          <div class="rh-offer-card">
+            <div class="rh-offer-header">
+              <div class="rh-offer-icon-badge">
+                <i class="bi bi-person-badge"></i>
+              </div>
+              <h3 class="rh-offer-title">Artist Profiles</h3>
+            </div>
+            <p class="rh-offer-desc">
+              Create comprehensive profiles to showcase your music, style, and journey as an artist.
+            </p>
+          </div>
+        </div>
 
-                  <!-- Social Links -->
-                  <% if (member.socialLinks.linkedin || member.socialLinks.twitter || member.socialLinks.instagram || member.socialLinks.email) { %>
-                    <div class="d-flex justify-content-center gap-2 mt-auto">
-                      <% if (member.socialLinks.linkedin) { %>
-                        <a href="<%= member.socialLinks.linkedin %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                          <i class="bi bi-linkedin"></i>
-                        </a>
-                      <% } %>
-                      <% if (member.socialLinks.twitter) { %>
-                        <a href="<%= member.socialLinks.twitter %>" target="_blank" class="btn btn-sm btn-outline-info">
-                          <i class="bi bi-twitter"></i>
-                        </a>
-                      <% } %>
-                      <% if (member.socialLinks.instagram) { %>
-                        <a href="<%= member.socialLinks.instagram %>" target="_blank" class="btn btn-sm btn-outline-danger">
-                          <i class="bi bi-instagram"></i>
-                        </a>
-                      <% } %>
-                      <% if (member.socialLinks.email) { %>
-                        <a href="mailto:<%= member.socialLinks.email %>" class="btn btn-sm btn-outline-success">
-                          <i class="bi bi-envelope"></i>
-                        </a>
-                      <% } %>
-                    </div>
+        <!-- 2. Concert Management -->
+        <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+          <div class="rh-offer-card">
+            <div class="rh-offer-header">
+              <div class="rh-offer-icon-badge">
+                <i class="bi bi-calendar-event"></i>
+              </div>
+              <h3 class="rh-offer-title">Concert Management</h3>
+            </div>
+            <p class="rh-offer-desc">
+              Organize and promote your concerts with our integrated event management system.
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Ticket Sales -->
+        <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+          <div class="rh-offer-card">
+            <div class="rh-offer-header">
+              <div class="rh-offer-icon-badge">
+                <i class="bi bi-ticket-perforated"></i>
+              </div>
+              <h3 class="rh-offer-title">Ticket Sales</h3>
+            </div>
+            <p class="rh-offer-desc">
+              Seamless ticket purchasing experience for fans with secure payment processing.
+            </p>
+          </div>
+        </div>
+
+        <!-- 4. Content Sharing -->
+        <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+          <div class="rh-offer-card">
+            <div class="rh-offer-header">
+              <div class="rh-offer-icon-badge">
+                <i class="bi bi-music-note-beamed"></i>
+              </div>
+              <h3 class="rh-offer-title">Content Sharing</h3>
+            </div>
+            <p class="rh-offer-desc">
+              Share your music, videos, and creative content with a growing community of fans.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION D: THE PEOPLE BEHIND RAPIRA
+         ======================================================== -->
+    <section class="rh-about-team-section">
+      <div class="rh-section-header-wrap text-center">
+        <span class="rh-header-divider-line"></span>
+        <h2 class="rh-section-heading">THE PEOPLE BEHIND RAPIRA</h2>
+        <span class="rh-header-divider-line"></span>
+      </div>
+
+      <% 
+        const defaultTeam = [
+          {
+            name: 'Vijay Mudaliyar',
+            position: 'Developer',
+            bio: 'Developer at RAPIRA responsible for building and improving the platform to create a smooth experience for artists and users.',
+            image: 'https://res.cloudinary.com/dlbwyl1ci/image/upload/v1773375023/rapira/admin/team/file_hjpock.jpg',
+            socialLinks: {}
+          },
+          {
+            name: 'Sovan Talukdar',
+            position: 'Video Editor',
+            bio: 'Sovan Talukdar is responsible for editing and producing video content for RAPIRA.',
+            image: null,
+            socialLinks: {}
+          },
+          {
+            name: 'Abhinandan Mishra',
+            position: 'Distributor',
+            bio: 'Abhinandan Mishra manages distribution support on the RAPIRA platform.',
+            image: null,
+            socialLinks: {}
+          },
+          {
+            name: 'Anshika Gupta',
+            position: 'Communications',
+            bio: 'Anshika Gupta manages artist coordination and handles queries on the platform.',
+            image: null,
+            socialLinks: {}
+          }
+        ];
+        const displayTeam = (typeof teamMembers !== 'undefined' && Array.isArray(teamMembers) && teamMembers.length > 0)
+          ? teamMembers
+          : defaultTeam;
+      %>
+
+      <div class="row g-3 g-lg-4 rh-team-grid">
+        <% displayTeam.forEach(member => { 
+          const hasImage = Boolean(member.image && member.image !== '/images/default-profile.jpg' && member.image !== '/images/default-profile.svg' && !member.image.includes('default-profile'));
+          const memberBio = (member.bio && member.bio.trim()) ? member.bio.trim() : '';
+        %>
+          <div class="col-xl-3 col-lg-3 col-md-6 col-12">
+            <div class="rh-team-card">
+              <div class="rh-team-avatar-container">
+                <% if (hasImage) { %>
+                  <img src="<%= member.image %>"
+                       alt="<%= member.name %>"
+                       class="rh-team-photo"
+                       onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling){this.nextElementSibling.style.display='flex';}">
+                  <div class="rh-neutral-avatar-placeholder" style="display: none;">
+                    <svg class="rh-avatar-person-icon" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#9F190E" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                <% } else { %>
+                  <div class="rh-neutral-avatar-placeholder">
+                    <svg class="rh-avatar-person-icon" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#9F190E" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                <% } %>
+              </div>
+
+              <h3 class="rh-team-name"><%= member.name %></h3>
+              <p class="rh-team-role"><%= member.position %></p>
+
+              <% if (memberBio) { %>
+                <p class="rh-team-bio"><%= memberBio %></p>
+              <% } %>
+
+              <% if (member.socialLinks && (member.socialLinks.linkedin || member.socialLinks.twitter || member.socialLinks.instagram || member.socialLinks.email)) { %>
+                <div class="rh-team-social-links mt-auto">
+                  <% if (member.socialLinks.linkedin) { %>
+                    <a href="<%= member.socialLinks.linkedin %>" target="_blank" rel="noopener noreferrer" class="rh-social-btn" aria-label="LinkedIn">
+                      <i class="bi bi-linkedin"></i>
+                    </a>
+                  <% } %>
+                  <% if (member.socialLinks.twitter) { %>
+                    <a href="<%= member.socialLinks.twitter %>" target="_blank" rel="noopener noreferrer" class="rh-social-btn" aria-label="Twitter">
+                      <i class="bi bi-twitter-x"></i>
+                    </a>
+                  <% } %>
+                  <% if (member.socialLinks.instagram) { %>
+                    <a href="<%= member.socialLinks.instagram %>" target="_blank" rel="noopener noreferrer" class="rh-social-btn" aria-label="Instagram">
+                      <i class="bi bi-instagram"></i>
+                    </a>
+                  <% } %>
+                  <% if (member.socialLinks.email) { %>
+                    <a href="mailto:<%= member.socialLinks.email %>" class="rh-social-btn" aria-label="Email">
+                      <i class="bi bi-envelope"></i>
+                    </a>
                   <% } %>
                 </div>
-              </div>
+              <% } %>
             </div>
-          <% }); %>
-        </div>
-      <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </section>
 
-      <!-- Contact CTA -->
-      <div class="text-center">
-        <h3 class="fw-bold mb-3">Ready to Join the Community?</h3>
-        <p class="text-muted mb-4">Whether you're an artist looking to share your music or a fan eager to discover new talent, Rapira is here for you.</p>
-        <div class="d-flex justify-content-center gap-3 flex-wrap">
-          <a href="/auth/register" class="btn btn-gradient-purple btn-lg">Get Started</a>
-          <a href="/contact" class="btn btn-outline-light btn-lg">Contact Us</a>
+    <!-- ========================================================
+         SECTION E: COMMUNITY CTA
+         ======================================================== -->
+    <section class="rh-about-cta-section">
+      <div class="rh-cta-banner-card">
+        <!-- Retro Headphones Doodle on Left -->
+        <div class="rh-cta-doodle-left" aria-hidden="true">
+          <svg class="rh-headphones-svg" width="130" height="130" viewBox="0 0 100 100" fill="none">
+            <path d="M22 60 C18 35 32 18 50 18 C68 18 82 35 78 60" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M26 56 C23 38 34 22 50 22 C66 22 77 38 74 56" stroke="#9F190E" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3"/>
+            <rect x="14" y="52" width="16" height="26" rx="8" stroke="#9F190E" stroke-width="2.5" fill="#FAECDF"/>
+            <path d="M18 58 V72" stroke="#9F190E" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M22 56 V74" stroke="#9F190E" stroke-width="1.8" stroke-linecap="round"/>
+            <rect x="70" y="52" width="16" height="26" rx="8" stroke="#9F190E" stroke-width="2.5" fill="#FAECDF"/>
+            <path d="M78 58 V72" stroke="#9F190E" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M82 56 V74" stroke="#9F190E" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M22 78 C22 88 30 86 32 94 C34 98 42 96 46 100" stroke="#9F190E" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Crown & Cheering Crowd Silhouette Doodle on Right -->
+        <div class="rh-cta-doodle-right" aria-hidden="true">
+          <svg class="rh-cta-crown-svg" width="56" height="42" viewBox="0 0 46 34" fill="none">
+            <path d="M3 26L7 10L17 21L23 5L29 21L39 10L43 26H3Z" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="7" cy="7" r="1.8" fill="#9F190E"/>
+            <circle cx="23" cy="3" r="1.8" fill="#9F190E"/>
+            <circle cx="39" cy="7" r="1.8" fill="#9F190E"/>
+          </svg>
+          <svg class="rh-crowd-silhouette" width="180" height="70" viewBox="0 0 180 70" fill="none">
+            <path d="M0 70 L180 70 L180 35 C175 32 173 22 170 12 C168 6 164 12 162 20 C158 14 154 4 150 12 C146 20 144 32 140 36 C136 28 133 16 130 10 C127 5 124 10 122 18 C118 26 116 38 112 42 C108 34 104 22 100 16 C96 10 93 16 91 26 C87 35 84 48 80 50 C76 42 72 28 68 22 C64 16 61 22 60 32 C56 42 54 54 48 58 C42 50 38 38 35 34 C31 30 28 36 27 46 C25 54 22 62 16 65 C10 60 5 62 0 70 Z" fill="#9F190E" fill-opacity="0.25"/>
+          </svg>
+        </div>
+
+        <div class="rh-cta-content text-center">
+          <h2 class="rh-cta-heading">READY TO JOIN THE COMMUNITY?</h2>
+          <p class="rh-cta-subtitle">
+            Whether you're an artist looking to share your music or a fan eager to discover new talent, Rapira is here for you.
+          </p>
+          <div class="rh-cta-actions d-flex justify-content-center align-items-center gap-3 flex-wrap">
+            <a href="/auth/register" class="btn btn-rh-cta-primary">Explore RAPIRA &rarr;</a>
+            <a href="/contact" class="btn btn-rh-cta-secondary">Contact Us</a>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
+
   </div>
 </div>

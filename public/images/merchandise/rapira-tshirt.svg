@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+  <defs>
+    <filter id="teeShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#3d1d16" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="teeBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2928"/>
+      <stop offset="50%" stop-color="#1E1A19"/>
+      <stop offset="100%" stop-color="#12100F"/>
+    </linearGradient>
+    <linearGradient id="teeFold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#383331"/>
+      <stop offset="100%" stop-color="#171413"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tee shape -->
+  <g filter="url(#teeShadow)">
+    <!-- Main Body & Sleeves -->
+    <path d="M125 70 
+             L75 125 L115 160 L135 130 
+             L135 345 Q135 360 150 360 L250 360 Q265 360 265 345 
+             L265 130 L285 160 L325 125 
+             L275 70 
+             Q235 90 200 90 Q165 90 125 70 Z" 
+          fill="url(#teeBody)"/>
+    <!-- Collar -->
+    <path d="M150 70 Q200 105 250 70 Q230 85 200 85 Q170 85 150 70 Z" fill="url(#teeFold)" stroke="#110E0E" stroke-width="2"/>
+    <!-- Sleeve folds -->
+    <path d="M75 125 L115 160" stroke="#383331" stroke-width="2"/>
+    <path d="M325 125 L285 160" stroke="#383331" stroke-width="2"/>
+    <!-- Bottom Hem -->
+    <line x1="135" y1="350" x2="265" y2="350" stroke="#252120" stroke-width="2" stroke-dasharray="3 2"/>
+
+    <!-- Front Graphic: RAPIRA Logo + Soundwave -->
+    <!-- RAPIRA Brand Name -->
+    <text x="200" y="175" font-family="'Titan One', 'Montserrat', Arial Black, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">RAPIRA</text>
+    
+    <!-- Soundwave Graphic -->
+    <g transform="translate(162, 190)">
+      <rect x="0" y="7" width="4" height="12" rx="2" fill="#9F190E"/>
+      <rect x="8" y="3" width="4" height="20" rx="2" fill="#B82216"/>
+      <rect x="16" y="8" width="4" height="10" rx="2" fill="#EAC8B7"/>
+      <rect x="24" y="0" width="4" height="26" rx="2" fill="#9F190E"/>
+      <rect x="32" y="5" width="4" height="16" rx="2" fill="#FFFFFF"/>
+      <rect x="40" y="2" width="4" height="22" rx="2" fill="#B82216"/>
+      <rect x="48" y="0" width="4" height="26" rx="2" fill="#EAC8B7"/>
+      <rect x="56" y="8" width="4" height="10" rx="2" fill="#9F190E"/>
+      <rect x="64" y="4" width="4" height="18" rx="2" fill="#B82216"/>
+      <rect x="72" y="7" width="4" height="12" rx="2" fill="#FFFFFF"/>
+    </g>
+  </g>
+</svg>
+

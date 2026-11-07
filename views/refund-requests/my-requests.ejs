@@ -1,87 +1,94 @@
-<section class="py-5">
+<div class="rapira-profile-page">
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h1 class="fw-bold text-white">My Refund Requests</h1>
-          <a href="/users/profile" class="btn btn-outline-light">
-            <i class="bi bi-arrow-left me-1"></i> Back to Profile
+    <div class="rh-subpage-container" style="max-width: 920px;">
+      
+      <!-- Page Navigation Header -->
+      <div class="rh-page-header-nav">
+        <div class="rh-page-header-left">
+          <a href="/users/profile" class="rh-back-circle-btn" title="Back to Profile">
+            <i class="bi bi-arrow-left"></i>
           </a>
+          <h1 class="rh-page-title">My Refund Requests</h1>
         </div>
+        <a href="/tickets" class="rh-btn-secondary">
+          <i class="bi bi-ticket-perforated me-1"></i> View My Tickets
+        </a>
+      </div>
 
-        <% if (refundRequests && refundRequests.length > 0) { %>
-          <div class="row justify-content-center">
-            <% refundRequests.forEach(request => { %>
-              <div class="col-md-6 col-lg-4 mb-4">
-                <div class="glass-card-dark h-100" style="overflow: visible; min-width: 280px; border-radius: 10px;">
-                  <div class="card-header bg-dark p-3 border-bottom border-secondary d-flex justify-content-between align-items-center" style="border-top-left-radius: 10px; border-top-right-radius: 10px;">
-                    <h6 class="fw-bold mb-0 text-white">Request #<%= request._id.toString().slice(-6).toUpperCase() %></h6>
-                    <span class="badge <%= request.status === 'pending' ? 'bg-warning' : (request.status === 'approved' ? 'bg-success' : 'bg-danger') %>">
-                      <%= request.status.charAt(0).toUpperCase() + request.status.slice(1) %>
-                    </span>
+      <% if (refundRequests && refundRequests.length > 0) { %>
+        <div class="d-flex flex-column gap-3">
+          <% refundRequests.forEach(request => { %>
+            <div class="rh-list-item-card mb-0">
+              <div class="rh-list-item-left">
+                <div class="rh-list-item-icon-box">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </div>
+                <div>
+                  <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                    <h3 class="rh-list-item-title mb-0 font-monospace">Refund #<%= request._id.toString().slice(-6).toUpperCase() %></h3>
+                    <span class="badge bg-light text-dark border">₹<%= request.amount %></span>
                   </div>
-                  <div class="card-body p-3" style="border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
-                    <div class="mb-2">
-                      <p class="text-white-50 mb-0" style="font-size: 0.85rem;">Concert:</p>
-                      <p class="text-white fw-medium mb-1" style="font-size: 0.95rem;"><%= request.concert.title %></p>
-                    </div>
-                    <div class="mb-2">
-                      <p class="text-white-50 mb-0" style="font-size: 0.85rem;">Ticket Number:</p>
-                      <p class="text-white fw-medium mb-1" style="font-size: 0.95rem;"><%= request.ticket.ticketNumber %></p>
-                    </div>
-                    <div class="mb-2">
-                      <p class="text-white-50 mb-0" style="font-size: 0.85rem;">Amount:</p>
-                      <p class="text-white fw-medium mb-1" style="font-size: 0.95rem;">₹<%= request.amount %></p>
-                    </div>
-                    <div class="mb-3">
-                      <p class="text-white-50 mb-0" style="font-size: 0.85rem;">Requested On:</p>
-                      <p class="text-white mb-1" style="font-size: 0.95rem;"><%= toISTDateString(request.createdAt) %></p>
-                    </div>
 
-                    <% if (request.status === 'approved') { %>
-                      <div class="p-2 mb-3" style="background-color: rgba(25, 135, 84, 0.3); border-radius: 4px; border: 1px solid rgba(25, 135, 84, 0.4);">
-                        <h6 class="mb-0 text-white" style="font-size: 0.95rem;">Refund Approved</h6>
-                        <p class="mb-0 text-white small" style="font-size: 0.85rem;">Processed: <%= request.refundedAt ? toISTDateString(request.refundedAt) : 'Processing' %></p>
-                      </div>
-                    <% } else if (request.status === 'rejected') { %>
-                      <div class="p-2 mb-3" style="background-color: rgba(220, 53, 69, 0.3); border-radius: 4px; border: 1px solid rgba(220, 53, 69, 0.4);">
-                        <h6 class="mb-0 text-white" style="font-size: 0.95rem;">Refund Rejected</h6>
-                        <% if (request.adminNotes) { %>
-                          <p class="mb-0 text-white small" style="font-size: 0.85rem;">Reason: <%= request.adminNotes %></p>
-                        <% } %>
-                      </div>
-                    <% } else { %>
-                      <div class="p-2 mb-3" style="background-color: rgba(255, 193, 7, 0.3); border-radius: 4px; border: 1px solid rgba(255, 193, 7, 0.4);">
-                        <h6 class="mb-0 text-white" style="font-size: 0.95rem;">Refund Pending</h6>
-                      </div>
+                  <div class="rh-list-item-sub">
+                    <span class="fw-semibold text-dark"><%= request.concert ? request.concert.title : 'Concert' %></span>
+                    <% if (request.ticket && request.ticket.ticketNumber) { %>
+                      <span class="mx-2">&bull;</span>
+                      <span>Ticket: <%= request.ticket.ticketNumber %></span>
                     <% } %>
+                  </div>
 
-                    <div class="d-flex gap-2 mt-2">
-                      <a href="/refund-requests/view/<%= request._id %>" class="btn btn-outline-primary flex-grow-1" style="font-size: 0.9rem; padding: 0.4rem 0.5rem;">
-                        <i class="bi bi-eye me-1"></i> Details
-                      </a>
-                      <% if (request.status === 'approved') { %>
-                        <a href="/tickets/<%= request.ticket._id %>/download" class="btn btn-success" style="font-size: 0.9rem; padding: 0.4rem 0.5rem; width: 50px;" title="Download PDF">
-                          <i class="bi bi-download"></i>
-                        </a>
-                      <% } %>
-                    </div>
+                  <div class="small text-muted mt-1">
+                    Requested on: <%= toISTDateString(request.createdAt) %>
+                    <% if (request.status === 'approved' && request.refundedAt) { %>
+                      <span class="text-success ms-2">(Processed: <%= toISTDateString(request.refundedAt) %>)</span>
+                    <% } %>
+                    <% if (request.status === 'rejected' && request.adminNotes) { %>
+                      <span class="text-danger ms-2">(Reason: <%= request.adminNotes %>)</span>
+                    <% } %>
                   </div>
                 </div>
               </div>
-            <% }); %>
-          </div>
-        <% } else { %>
-          <div class="glass-card-dark text-center py-5" style="border-radius: 10px;">
-            <div class="py-4">
-              <i class="bi bi-inbox text-muted display-1 mb-3"></i>
-              <h3 class="text-white">No Refund Requests</h3>
-              <p class="text-white-50">You haven't made any refund requests yet.</p>
-              <a href="/tickets" class="btn btn-primary mt-3">View My Tickets</a>
+
+              <div class="rh-list-item-right flex-wrap">
+                <% if (request.status === 'pending') { %>
+                  <span class="rh-badge-pending">
+                    <i class="bi bi-clock-fill"></i> Processing
+                  </span>
+                <% } else if (request.status === 'approved') { %>
+                  <span class="rh-badge-completed">
+                    <i class="bi bi-check-circle-fill"></i> Approved
+                  </span>
+                <% } else if (request.status === 'rejected') { %>
+                  <span class="rh-badge-rejected">
+                    <i class="bi bi-x-circle-fill"></i> Rejected
+                  </span>
+                <% } %>
+
+                <a href="/refund-requests/view/<%= request._id %>" class="rh-btn-outline-view">
+                  <i class="bi bi-eye"></i> Details
+                </a>
+
+                <% if (request.status === 'approved' && request.ticket) { %>
+                  <a href="/tickets/<%= request.ticket._id %>/download" class="rh-btn-secondary py-1 px-3 small" title="Download PDF Receipt">
+                    <i class="bi bi-download"></i>
+                  </a>
+                <% } %>
+              </div>
             </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <!-- Empty State -->
+        <div class="rh-form-card text-center py-5">
+          <div class="rh-sub-sketch-icon mb-3" aria-hidden="true">
+            <i class="bi bi-inbox text-danger display-4"></i>
           </div>
-        <% } %>
-      </div>
+          <h2 class="fs-4 fw-bold text-dark mb-2">No Refund Requests</h2>
+          <p class="text-muted mb-4">You haven't submitted any ticket refund requests.</p>
+          <a href="/tickets" class="rh-btn-primary">View My Tickets</a>
+        </div>
+      <% } %>
+
     </div>
   </div>
-</section>
+</div>

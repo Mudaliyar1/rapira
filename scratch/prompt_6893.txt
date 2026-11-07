@@ -1,0 +1,120 @@
+<USER_REQUEST>
+# RAPIRA Content Library: Filter Dropdown, Media Viewer & Download UI Redesign
+
+Redesign three areas of the existing Content Library page:
+1. Search and Filter dropdowns.
+2. Listen / View content experience.
+3. Download experience and progress UI.
+
+Use the attached screenshots as references for the problems that need fixing, NOT as the desired final design.
+
+## 1. Overall design direction
+
+Follow RAPIRA's existing cream and crimson visual identity.
+
+- Background: #FCF0E4
+- Primary crimson: #9F190E
+- Peach borders: #EAC8B7
+- Text: dark charcoal
+- Cards: warm cream/white surfaces
+- Subtle shadows and refined borders.
+
+The design should feel like a premium music and artist platform.
+
+Avoid:
+- Default browser dropdown appearance.
+- Purple/blue gradients.
+- Oversized dark modal boxes.
+- Generic AI-looking glass effects.
+- Unnecessary animations.
+- Inconsistent colours between the filter, viewer and download components.
+
+## 2. Search and Filter dropdown redesign
+
+The current dropdowns for:
+- All Types
+- Latest
+- Oldest
+- Most Popular
+
+look like native browser select menus.
+
+Replace their visual presentation with custom, accessible dropdown components.
+
+Requirements:
+- Rounded dropdown trigger matching the search bar.
+- Small appropriate icon.
+- Smooth opening and closing.
+- Cream dropdown surface.
+- Crimson hover and selected states.
+- Clear selected option indicator.
+- Proper spacing and typography.
+- Dropdown must appear above content cards and must not be clipped by parent containers.
+- Position intelligently when there is limited screen space.
+- Close on outside click and Escape.
+- Support keyboard navigation and touch.
+- Keep the currently selected filter visible.
+
+IMPORTANT: Do not use a native select menu if it produces the browser's default styling. Preserve the existing filter values, query parameters and sorting logic.
+
+On mobile:
+- Dropdown should fit within the viewport.
+- Options should have comfortable touch targets.
+- Never allow the menu to overflow horizontally.
+- Consider a compact bott
+<truncated 3789 bytes>
+
+## 6. Preserve existing functionality
+
+Before editing, inspect the current Content Library templates, JavaScript, CSS, routes and media handling.
+
+Do not modify:
+- Database schemas unnecessarily.
+- Existing media URLs.
+- Upload functionality.
+- Download authorization.
+- Likes and comments logic.
+- Share and view tracking.
+- Sorting and filtering logic.
+- User permissions.
+- Authentication.
+
+Keep the existing Node.js, Express, EJS, Bootstrap and Vanilla JavaScript architecture.
+
+Do not migrate to React or introduce a new UI framework.
+
+Scope all new styles to the Content Library components. Do not damage other RAPIRA pages.
+
+## 7. Final testing
+
+Test all content types:
+- Audio
+- Video
+- Image
+
+Test all filter options and all download states.
+
+Provide screenshots of:
+1. Desktop filter dropdown open.
+2. Mobile filter dropdown open.
+3. Desktop media viewer.
+4. Mobile media viewer.
+5. Download progress.
+6. Download completed state.
+
+Provide a short QA report listing modified files, tests performed and any remaining issues.
+
+Do not commit, push or deploy anything.
+
+**Final goal:** Every interaction should feel like it belongs to one polished RAPIRA music platform. The dropdown, media viewer and download experience must look intentionally designed, not like default browser controls or generic popups.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-06T11:36:37+05:30.
+
+The user has uploaded 4 image(s):
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945164899_b9e5dee2.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945169000_f565e385.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945173108_7a351783.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945175312_a18ffeb2.jpg
+You can embed these images in an artifact if you need the USER to review them.
+</ADDITIONAL_METADATA>

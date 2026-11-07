@@ -1,3 +1,31 @@
+/* ========================================================
+   TITAN ONE FONT (Google Fonts / SIL Open Font License 1.1)
+   Designed by Rodrigo Fuenzalida
+   Official Selected Display Typeface for RAPIRA
+   ======================================================== */
+@font-face {
+  font-family: 'Titan One';
+  src: url('/fonts/titan-one.woff2') format('woff2'),
+       url('/fonts/titan-one.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Global Display Typography Classes for Editorial Page Titles */
+.font-display,
+.display-font,
+.page-title,
+.section-title,
+.display-1,
+.display-2,
+.display-3,
+.display-4 {
+  font-family: 'Titan One', 'Impact', 'Arial Black', sans-serif !important;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
 @import url('/css/ticket-details.css');
 
 /* Theme Variables */
@@ -44,8 +72,8 @@
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px #FCF0E4;
+  --shadow-lg: 0 10px 15px #FCF0E4;
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
 
   /* Transitions */
@@ -133,7 +161,7 @@
 
 .light-theme .dropdown-menu {
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid #FCF0E4;
 }
 
 .light-theme .dropdown-item {
@@ -256,7 +284,7 @@ h5.card-title.text-white,
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px #FCF0E4;
 }
 
 .glass-dark {
@@ -465,7 +493,7 @@ h5.card-title.text-white,
   border-radius: var(--radius-full);
   transition: all var(--transition-normal);
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px #FCF0E4;
   border: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
@@ -646,7 +674,7 @@ h5.card-title.text-white,
   padding: 0.35rem 0.75rem;
   border-radius: var(--radius-full);
   transition: all var(--transition-normal);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px #FCF0E4;
   border: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
   min-width: auto;
@@ -709,7 +737,7 @@ h5.card-title.text-white,
 }
 
 .light-theme .btn-outline-light:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: #FCF0E4;
   color: var(--dark-bg);
 }
 
@@ -799,7 +827,7 @@ h5.card-title.text-white,
 
 .light-theme .navbar-glass {
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px #FCF0E4;
 }
 
 .light-theme .navbar-dark .navbar-nav .nav-link {
@@ -1466,35 +1494,43 @@ h5.card-title.text-white,
 
 /* Concert card specific styles */
 .card-concert {
-  background-color: rgba(25, 25, 25, 0.95);
-  /* Darker background for concert cards */
+  background-color: #FAF3EA;
+  border: 1px solid #EAC8B7;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-concert:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(159, 25, 14, 0.08);
 }
 
 .card-concert .card-img-top {
   height: 180px;
+  object-fit: cover;
 }
 
 .card-concert .card-title {
+  font-family: 'Titan One', cursive, sans-serif !important;
   font-size: 1.25rem;
-  color: #ffffff !important;
-  /* Force white color */
-  font-weight: 700;
+  color: #9F190E !important;
+  font-weight: 400;
   margin-bottom: 0.75rem;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  /* Add text shadow for better readability */
+  text-shadow: none;
 }
 
 .card-concert .card-text {
-  color: rgba(255, 255, 255, 0.9);
+  color: #555555;
   margin-bottom: 0.5rem;
 }
 
 .card-concert .text-muted {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: #777777 !important;
 }
 
 .card-concert .bi {
-  color: var(--primary-light);
+  color: #9F190E;
   margin-right: 0.5rem;
 }
 
@@ -1518,12 +1554,12 @@ h5.card-title.text-white,
 /* Light theme card improvements */
 .light-theme .card {
   background-color: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid #FCF0E4;
 }
 
 .light-theme .card:hover {
   background-color: #ffffff;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px #FCF0E4;
 }
 
 .light-theme .card-title {
@@ -1553,7 +1589,7 @@ h5.card-title.text-white,
 
 .light-theme .card-footer {
   background-color: rgba(0, 0, 0, 0.03);
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid #FCF0E4;
 }
 
 /* Button Styles */
@@ -1613,7 +1649,7 @@ h5.card-title.text-white,
 .btn-primary:hover,
 .btn-primary:focus {
   background: var(--gradient-primary);
-  box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 5px 15px #EAC8B7;
   transform: translateY(-3px);
 }
 
@@ -1667,7 +1703,7 @@ h5.card-title.text-white,
   background: var(--gradient-primary);
   border-color: transparent;
   color: white;
-  box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 5px 15px #EAC8B7;
   transform: translateY(-3px);
 }
 
@@ -2136,13 +2172,13 @@ footer .social-icons a:hover {
     margin-bottom: 0.75rem;
   }
 
-  .d-flex.align-items-center.gap-2 {
+  .admin-content .d-flex.align-items-center.gap-2 {
     flex-direction: column;
     align-items: stretch !important;
     gap: 0.5rem !important;
   }
 
-  .d-flex.align-items-center.gap-2 .btn {
+  .admin-content .d-flex.align-items-center.gap-2 .btn {
     width: 100%;
   }
 }
@@ -2239,7 +2275,7 @@ footer .social-icons a:hover {
 }
 
 .light-theme .sidebar-heading {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #FCF0E4;
   color: #6c757d;
 }
 
@@ -2931,7 +2967,7 @@ thead.table-light th,
   background-color: white;
   border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px #FCF0E4;
 }
 
 .ticket-header {
@@ -3013,7 +3049,7 @@ thead.table-light th,
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   border: none;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px #FCF0E4;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
@@ -3079,7 +3115,7 @@ thead.table-light th,
   border-radius: 50%;
   background-color: var(--primary);
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px #FCF0E4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3575,7 +3611,7 @@ a:hover {
   -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px #FCF0E4;
   transition: all var(--transition-normal);
   color: var(--dark-text);
 }
@@ -3619,7 +3655,7 @@ a:hover {
 }
 
 .glass-card-dark .card-footer {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: #FCF0E4;
   border-top: 1px solid var(--border);
   color: var(--dark-text);
 }
@@ -3900,7 +3936,7 @@ a:hover {
   background-clip: text;
   color: transparent;
   display: inline-block;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px #FCF0E4;
   font-weight: 700;
 }
 
@@ -3910,7 +3946,7 @@ a:hover {
   background-clip: text;
   color: transparent;
   display: inline-block;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px #FCF0E4;
   font-weight: 700;
 }
 
@@ -3920,7 +3956,7 @@ a:hover {
   background-clip: text;
   color: transparent;
   display: inline-block;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px #FCF0E4;
   font-weight: 700;
 }
 
@@ -3930,7 +3966,7 @@ a:hover {
   background-clip: text;
   color: transparent;
   display: inline-block;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px #FCF0E4;
   font-weight: 700;
 }
 
@@ -3973,16 +4009,16 @@ a:hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: #FCF0E4;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.5);
+  background: #9F190E;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.7);
+  background: #82140B;
 }
 
 /* Custom scrollbar for tables */
@@ -3997,12 +4033,12 @@ a:hover {
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.4);
+  background: #EAC8B7;
   border-radius: 3px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.6);
+  background: #9F190E;
 }
 
 /* Media Player Styles */
@@ -5311,7 +5347,7 @@ body.offline-lock {
   flex-shrink: 0;
   accent-color: #6366f1;
   background-color: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(99, 102, 241, 0.5);
+  border: 2px solid #9F190E;
   border-radius: 4px;
   transition: all 0.3s ease;
 }

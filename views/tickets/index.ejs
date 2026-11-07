@@ -1,84 +1,170 @@
-<!-- My Tickets Page -->
-<section class="py-4">
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        <h1 class="fw-bold mb-4">My Tickets</h1>
+<div class="my-tickets-page">
+  <div class="container my-tickets-container">
 
-        <% if (tickets && tickets.length > 0) { %>
-          <div class="row g-4">
-            <% tickets.forEach(ticket => { %>
-              <div class="col-md-6 col-lg-4">
-                <div class="glass-card-dark h-100">
-                  <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0 fw-bold text-white">Ticket #<%= ticket._id.toString().slice(-6).toUpperCase() %></h5>
-                    <span class="badge <%= ticket.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
-                      <%= ticket.paymentStatus === 'completed' ? 'Paid' : 'Pending' %>
-                    </span>
-                  </div>
-                  <div class="card-body">
-                    <% if (ticket.concert) { %>
-                      <h6 class="fw-bold mb-2 text-white"><%= ticket.concert.title %></h6>
-                      <p class="text-white-50 mb-1">
-                        <i class="bi bi-calendar3 me-2 text-primary"></i> <%= toISTDateString(ticket.concert.date) %>
-                      </p>
-                      <p class="text-white-50 mb-1">
-                        <i class="bi bi-clock me-2 text-primary"></i> <%= ticket.concert.time %>
-                      </p>
-                      <p class="text-white-50 mb-3">
-                        <i class="bi bi-geo-alt me-2 text-primary"></i> <%= ticket.concert.venue && ticket.concert.venue.name ? ticket.concert.venue.name : ticket.concert.venue %>, <%= ticket.concert.city %>
-                      </p>
-                    <% } else { %>
-                      <h6 class="fw-bold mb-2 text-white">Concert Unavailable</h6>
-                      <p class="text-white-50 mb-3">
-                        <i class="bi bi-exclamation-triangle me-2 text-warning"></i> This concert has been removed
-                      </p>
-                    <% } %>
+    <!-- Page Heading (Exact Reference Match) -->
+    <header class="my-tickets-header">
+      <h1 class="my-tickets-title">My Tickets</h1>
+    </header>
 
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="fw-medium text-white">Quantity:</span>
-                      <span class="text-white-50"><%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %></span>
-                    </div>
+    <%
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formatEventDate = (d) => {
+        if (!d) return 'TBA';
+        const date = new Date(d);
+        if (isNaN(date)) return 'TBA';
+        return `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
+      };
 
-                    <% if (ticket.totalAmount > 0) { %>
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-medium text-white">Amount:</span>
-                        <span class="text-white-50">₹<%= ticket.totalAmount %></span>
-                      </div>
-                      <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fw-medium text-success">Discount:</span>
-                        <span class="text-success"><%= ticket.discountPercentage %>% off</span>
-                      </div>
-                      <% } %>
-                    <% } %>
+      const formatPurchaseDate = (d) => {
+        if (!d) return 'N/A';
+        const date = new Date(d);
+        if (isNaN(date)) return 'N/A';
+        return `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
+      };
 
-                    <div class="d-flex justify-content-between align-items-center">
-                      <span class="fw-medium text-white">Purchase Date:</span>
-                      <span class="text-white-50"><%= toISTDateString(ticket.createdAt) %></span>
-                    </div>
-                  </div>
-                  <div class="card-footer border-top border-secondary pt-3">
-                    <a href="/tickets/<%= ticket._id %>" class="btn btn-primary w-100 mb-2">View Details</a>
-                    <% if (ticket.concert && ticket.isPastConcert) { %>
-                      <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-outline-danger w-100" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')">Delete Ticket</a>
-                    <% } %>
-                  </div>
+      const formatAmount = (amt) => {
+        if (amt == null) return '0';
+        const num = parseFloat(amt);
+        return isNaN(num) ? amt : (num % 1 !== 0 ? num.toFixed(2) : num.toString());
+      };
+    %>
+
+    <% if (tickets && tickets.length > 0) { %>
+      <div class="my-tickets-grid">
+        <% tickets.forEach(ticket => { %>
+          <%
+            let venueLocationText = 'Venue Unavailable';
+            if (ticket.concert) {
+              let vName = '';
+              if (ticket.concert.venue && ticket.concert.venue.name) {
+                vName = ticket.concert.venue.name;
+              } else if (typeof ticket.concert.venue === 'string') {
+                vName = ticket.concert.venue;
+              }
+              const city = ticket.concert.city || '';
+              if (vName && city) {
+                venueLocationText = `${vName}, ${city}`;
+              } else if (vName) {
+                venueLocationText = vName;
+              } else if (city) {
+                venueLocationText = city;
+              }
+            }
+          %>
+
+          <article class="my-tickets-card" aria-labelledby="ticket-title-<%= ticket._id %>">
+            <!-- Crimson Ticket Header -->
+            <div class="my-tickets-card-header">
+              <span class="my-tickets-card-id">Ticket #<%= ticket._id.toString().slice(-6).toUpperCase() %></span>
+              <% if (ticket.paymentStatus === 'completed' || ticket.paymentStatus === 'paid') { %>
+                <span class="my-tickets-status-badge paid">
+                  <i class="bi bi-check-circle-fill"></i> Paid
+                </span>
+              <% } else if (ticket.paymentStatus === 'pending') { %>
+                <span class="my-tickets-status-badge pending">
+                  <i class="bi bi-hourglass-split"></i> Pending
+                </span>
+              <% } else if (ticket.paymentStatus === 'refunded') { %>
+                <span class="my-tickets-status-badge refunded">
+                  <i class="bi bi-arrow-counterclockwise"></i> Refunded
+                </span>
+              <% } else { %>
+                <span class="my-tickets-status-badge failed">
+                  <i class="bi bi-x-circle-fill"></i> <%= ticket.paymentStatus ? (ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1)) : 'Failed' %>
+                </span>
+              <% } %>
+            </div>
+
+            <!-- Semicircular Ticket Notches + Perforation Line -->
+            <div class="my-tickets-notch-divider" aria-hidden="true">
+              <div class="my-tickets-notch my-tickets-notch-left"></div>
+              <div class="my-tickets-notch-line"></div>
+              <div class="my-tickets-notch-right"></div>
+            </div>
+
+            <!-- Main Details Body -->
+            <div class="my-tickets-card-body">
+              <h3 id="ticket-title-<%= ticket._id %>" class="my-tickets-concert-title">
+                <%= ticket.concert ? ticket.concert.title.trim() : 'Concert Unavailable' %>
+              </h3>
+
+              <div class="my-tickets-event-meta">
+                <div class="my-tickets-meta-row">
+                  <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                  <span><%= formatEventDate(ticket.concert ? ticket.concert.date : null) %></span>
+                </div>
+                <div class="my-tickets-meta-row">
+                  <i class="bi bi-clock" aria-hidden="true"></i>
+                  <span><%= (ticket.concert && ticket.concert.time) ? ticket.concert.time : 'TBA' %></span>
+                </div>
+                <div class="my-tickets-meta-row">
+                  <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                  <span><%= venueLocationText %></span>
                 </div>
               </div>
-            <% }); %>
-          </div>
-        <% } else { %>
-          <div class="text-center py-5">
-            <div class="mb-4">
-              <i class="bi bi-ticket-perforated display-1 text-muted"></i>
+
+              <!-- Purchase Details Rows -->
+              <div class="my-tickets-purchase-details">
+                <div class="my-tickets-purchase-row">
+                  <span class="my-tickets-purchase-label">
+                    <i class="bi bi-ticket-perforated" aria-hidden="true"></i> Quantity:
+                  </span>
+                  <span class="my-tickets-purchase-value">
+                    <%= ticket.quantity %> ticket<%= ticket.quantity > 1 ? 's' : '' %>
+                  </span>
+                </div>
+
+                <div class="my-tickets-purchase-row">
+                  <span class="my-tickets-purchase-label">
+                    <i class="bi bi-cash-stack" aria-hidden="true"></i> Amount:
+                  </span>
+                  <span class="my-tickets-purchase-value">
+                    ₹<%= formatAmount(ticket.totalAmount) %>
+                  </span>
+                </div>
+
+                <div class="my-tickets-purchase-row">
+                  <span class="my-tickets-purchase-label">
+                    <i class="bi bi-calendar-check" aria-hidden="true"></i> Purchase Date:
+                  </span>
+                  <span class="my-tickets-purchase-value">
+                    <%= formatPurchaseDate(ticket.createdAt) %>
+                  </span>
+                </div>
+              </div>
             </div>
-            <h3>No Tickets Found</h3>
-            <p class="text-muted mb-4">You haven't booked any tickets yet.</p>
-            <a href="/concerts" class="btn btn-primary">Explore Concerts</a>
-          </div>
-        <% } %>
+
+            <!-- Card Footer -->
+            <div class="my-tickets-card-footer">
+              <a href="/tickets/<%= ticket._id %>" class="my-tickets-btn-view">
+                <i class="bi bi-ticket-perforated" aria-hidden="true"></i> View Details
+              </a>
+              <% if (ticket.concert && ticket.isPastConcert) { %>
+                <a href="/tickets/<%= ticket._id %>/delete" class="my-tickets-btn-delete" onclick="return confirm('You must download the ticket as a backup before deletion. Do you want to proceed to the delete confirmation page?')" title="Delete Ticket">
+                  <i class="bi bi-trash3" aria-hidden="true"></i>
+                </a>
+              <% } %>
+            </div>
+          </article>
+        <% }); %>
       </div>
-    </div>
+    <% } else { %>
+      <!-- Empty State Card -->
+      <div class="my-tickets-empty-card">
+        <div class="my-tickets-empty-icon" aria-hidden="true">
+          <svg width="74" height="48" viewBox="0 0 74 48" fill="none" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 18C10 18 13 15 13 11C13 7 10 4 6 4H68C64 4 61 7 61 11C61 15 64 18 68 18V38C64 38 61 41 61 44H6C10 44 13 41 13 38C13 34 10 31 6 31V18Z" fill="#FFFDFB"/>
+            <line x1="26" y1="8" x2="26" y2="40" stroke-dasharray="3 3"/>
+            <path d="M42 16L44 22L50 23L45 27L47 33L42 29L37 33L39 27L34 23L40 22L42 16Z" fill="#9F190E"/>
+          </svg>
+        </div>
+        <h2 class="my-tickets-empty-title">No Tickets Found</h2>
+        <p class="my-tickets-empty-desc">You haven't booked any concert tickets yet.</p>
+        <a href="/concerts" class="my-tickets-btn-view" style="display: inline-flex; width: auto; padding: 12px 28px; border-radius: 9999px;">
+          <i class="bi bi-compass me-1" aria-hidden="true"></i> Explore Upcoming Concerts
+        </a>
+      </div>
+    <% } %>
+
   </div>
-</section>
+</div>

@@ -80,6 +80,7 @@ router.get('/', async (req, res) => {
                 artist: {
                     _id: post.artistData._id,
                     stageName: post.artistData.stageName,
+                    verified: Boolean(post.artistData.verified),
                     profileImage: post.artistUser ? post.artistUser.profileImage : '/images/default-profile.svg'
                 },
                 liked: isLiked

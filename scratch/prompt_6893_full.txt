@@ -1,0 +1,231 @@
+<USER_REQUEST>
+# RAPIRA Content Library: Filter Dropdown, Media Viewer & Download UI Redesign
+
+Redesign three areas of the existing Content Library page:
+1. Search and Filter dropdowns.
+2. Listen / View content experience.
+3. Download experience and progress UI.
+
+Use the attached screenshots as references for the problems that need fixing, NOT as the desired final design.
+
+## 1. Overall design direction
+
+Follow RAPIRA's existing cream and crimson visual identity.
+
+- Background: #FCF0E4
+- Primary crimson: #9F190E
+- Peach borders: #EAC8B7
+- Text: dark charcoal
+- Cards: warm cream/white surfaces
+- Subtle shadows and refined borders.
+
+The design should feel like a premium music and artist platform.
+
+Avoid:
+- Default browser dropdown appearance.
+- Purple/blue gradients.
+- Oversized dark modal boxes.
+- Generic AI-looking glass effects.
+- Unnecessary animations.
+- Inconsistent colours between the filter, viewer and download components.
+
+## 2. Search and Filter dropdown redesign
+
+The current dropdowns for:
+- All Types
+- Latest
+- Oldest
+- Most Popular
+
+look like native browser select menus.
+
+Replace their visual presentation with custom, accessible dropdown components.
+
+Requirements:
+- Rounded dropdown trigger matching the search bar.
+- Small appropriate icon.
+- Smooth opening and closing.
+- Cream dropdown surface.
+- Crimson hover and selected states.
+- Clear selected option indicator.
+- Proper spacing and typography.
+- Dropdown must appear above content cards and must not be clipped by parent containers.
+- Position intelligently when there is limited screen space.
+- Close on outside click and Escape.
+- Support keyboard navigation and touch.
+- Keep the currently selected filter visible.
+
+IMPORTANT: Do not use a native select menu if it produces the browser's default styling. Preserve the existing filter values, query parameters and sorting logic.
+
+On mobile:
+- Dropdown should fit within the viewport.
+- Options should have comfortable touch targets.
+- Never allow the menu to overflow horizontally.
+- Consider a compact bottom-sheet selector if that gives a better mobile experience.
+
+## 3. Listen / View content experience
+
+Completely redesign the current content preview modal.
+
+The current viewer is oversized on mobile, has awkward scrolling and places controls and content in an unbalanced layout.
+
+### Desktop layout
+
+Create a refined centered media viewer with:
+- Clear artist header and profile image.
+- Artist name and upload date.
+- Close button.
+- Large media preview.
+- Properly styled audio/video controls.
+- Content title and description.
+- Likes, shares, views and comments.
+- Like, share, comment and report actions.
+- Comments section.
+
+Use a balanced two-column layout where appropriate:
+- Main area: media player.
+- Secondary area: content information and engagement.
+
+For portrait artwork, use a contained layout that does not crop important content.
+
+### Mobile layout
+
+Create a dedicated mobile viewer.
+
+- Use a near-fullscreen viewer or bottom-sheet style.
+- Keep a compact header with artist name and close button.
+- Media must fit within the viewport without unwanted cropping.
+- Audio controls must remain accessible.
+- Put engagement statistics in a clean horizontal layout.
+- Put action buttons in a consistent row.
+- Content description should be readable.
+- Comments should appear below the description.
+- Avoid multiple nested scrollbars.
+- Allow the viewer itself to scroll naturally when necessary.
+- Respect mobile safe areas.
+- Prevent the background page from scrolling while the viewer is open.
+
+The viewer must adapt to audio, image and video content types.
+
+### Media handling
+
+Do not replace existing media files or change their URLs.
+
+- Audio must play using the existing audio source.
+- Video must play using the existing video source.
+- Images must preserve their aspect ratio.
+- Use appropriate object-fit behaviour.
+- Keep playback controls accessible.
+- Stop audio/video playback when the viewer closes.
+- Preserve existing likes, shares, views, comments and reporting functionality.
+
+If using custom audio controls, ensure play/pause, current time, duration, seeking and volume actually work. Do not display fake playback progress.
+
+## 4. Download experience redesign
+
+The current download popup is visually poor and blocks the content with an oversized dark overlay.
+
+Replace it with a premium, lightweight download experience.
+
+### Download states
+
+**Starting:**
+Show a small, polished download panel with the content title and download icon.
+
+**Downloading:**
+- Display a clean progress bar.
+- Show the real percentage only when actual download progress is available.
+- Show downloaded size if available.
+- Keep the UI compact.
+- Do not block the entire screen.
+- Allow the user to continue browsing where safe.
+
+**Completed:**
+Show a subtle success state with a check icon and "Download complete".
+
+**Failed:**
+Show a clear error state and a retry action.
+
+### Important download rules
+
+- Preserve existing download routes and authorization.
+- Preserve original filenames where supported.
+- Do not fake download percentages.
+- Do not claim success before the browser confirms the download.
+- Handle failed and interrupted downloads.
+- Prevent duplicate download triggers from repeated clicks.
+
+On mobile, use a compact bottom notification or small bottom sheet. It must not cover the entire content card.
+
+## 5. Responsive requirements
+
+Test the following widths:
+
+320px, 360px, 375px, 390px, 414px, 430px, 768px, 1024px, 1366px and 1440px.
+
+Verify:
+- No horizontal overflow.
+- No clipped dropdowns.
+- No content hidden behind modal edges.
+- No overlapping controls.
+- No broken image aspect ratios.
+- No nested scrollbar problems.
+- Touch targets are comfortable.
+- Viewer closes correctly.
+- Audio/video stops on close.
+- Download works on desktop and mobile.
+
+## 6. Preserve existing functionality
+
+Before editing, inspect the current Content Library templates, JavaScript, CSS, routes and media handling.
+
+Do not modify:
+- Database schemas unnecessarily.
+- Existing media URLs.
+- Upload functionality.
+- Download authorization.
+- Likes and comments logic.
+- Share and view tracking.
+- Sorting and filtering logic.
+- User permissions.
+- Authentication.
+
+Keep the existing Node.js, Express, EJS, Bootstrap and Vanilla JavaScript architecture.
+
+Do not migrate to React or introduce a new UI framework.
+
+Scope all new styles to the Content Library components. Do not damage other RAPIRA pages.
+
+## 7. Final testing
+
+Test all content types:
+- Audio
+- Video
+- Image
+
+Test all filter options and all download states.
+
+Provide screenshots of:
+1. Desktop filter dropdown open.
+2. Mobile filter dropdown open.
+3. Desktop media viewer.
+4. Mobile media viewer.
+5. Download progress.
+6. Download completed state.
+
+Provide a short QA report listing modified files, tests performed and any remaining issues.
+
+Do not commit, push or deploy anything.
+
+**Final goal:** Every interaction should feel like it belongs to one polished RAPIRA music platform. The dropdown, media viewer and download experience must look intentionally designed, not like default browser controls or generic popups.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-06T11:36:37+05:30.
+
+The user has uploaded 4 image(s):
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945164899_b9e5dee2.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945169000_f565e385.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945173108_7a351783.jpg
+- C:/Users/abc/.gemini/antigravity/brain/97005936-a5e5-495e-bea8-18c87a610b4d/.user_uploaded/media_1793945175312_a18ffeb2.jpg
+You can embed these images in an artifact if you need the USER to review them.
+</ADDITIONAL_METADATA>

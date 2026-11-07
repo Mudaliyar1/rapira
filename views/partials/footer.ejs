@@ -1,90 +1,86 @@
-<footer class="text-white py-5 mt-5" style="background-color: #000;">
+<% 
+  const footerPath = (typeof path !== 'undefined' && path) || '';
+  const isCreamFooter = !footerPath.startsWith('/admin');
+%>
+<footer class="rapira-site-footer <%= isCreamFooter ? 'rapira-homepage-footer rapira-auth-footer rapira-about-footer rapira-content-footer' : 'text-white' %> py-5 <%= isCreamFooter ? 'mt-0' : 'mt-5' %>" style="<%= isCreamFooter ? 'background-color: #FCF0E4 !important;' : 'background-color: #000;' %>">
   <div class="container">
-    <div class="row mb-4">
-      <div class="col-12 mb-4">
-        <div class="social-icons d-flex gap-3 justify-content-center">
-          <a href="#" aria-label="Instagram" class="text-white"><i class="bi bi-instagram"></i></a>
-          <a href="#" aria-label="Twitter" class="text-white"><i class="bi bi-twitter-x"></i></a>
-          <a href="#" aria-label="YouTube" class="text-white"><i class="bi bi-youtube"></i></a>
-          <a href="#" aria-label="Spotify" class="text-white"><i class="bi bi-spotify"></i></a>
+    <div class="row g-4 justify-content-between rapira-footer-row">
+      <!-- Column 1: Brand & Platform Mission -->
+      <div class="col-12 col-lg-3 col-md-6 mb-3 rapira-footer-col">
+        <a class="navbar-brand d-inline-block mb-2 text-decoration-none" href="/">
+          <span class="fs-2 fw-bold footer-brand">RAPIRA</span>
+        </a>
+        <p class="small footer-tagline mb-3">
+          A dynamic platform for Indian rap artists and fans to connect, discover, and experience hip-hop culture.
+        </p>
+        <div class="social-icons d-flex gap-2 mb-2">
+          <a href="#" aria-label="Instagram" class="social-icon-pill" title="Instagram"><i class="bi bi-instagram"></i></a>
+          <a href="#" aria-label="Twitter" class="social-icon-pill" title="Twitter / X"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" aria-label="YouTube" class="social-icon-pill" title="YouTube"><i class="bi bi-youtube"></i></a>
+          <a href="#" aria-label="Spotify" class="social-icon-pill" title="Spotify"><i class="bi bi-spotify"></i></a>
         </div>
       </div>
-    </div>
 
-    <div class="row">
-      <div class="col-6 col-md-3 mb-3">
+      <!-- Column 2: Discover -->
+      <div class="col-12 col-md-3 col-lg-2 mb-3 rapira-footer-col">
+        <h6 class="footer-heading mb-3">Discover</h6>
         <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.home !== false)) { %>
-          <a href="/" class="text-decoration-none text-white-50 small d-block mb-2">Home</a>
+          <a href="/" class="footer-link small mb-2">Home</a>
         <% } %>
         <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.concerts !== false)) { %>
-          <a href="/concerts" class="text-decoration-none text-white-50 small d-block mb-2">Concerts</a>
+          <a href="/concerts" class="footer-link small mb-2">Concerts</a>
         <% } %>
         <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.artists !== false)) { %>
-          <a href="/artists" class="text-decoration-none text-white-50 small d-block mb-2">Artists</a>
+          <a href="/artists" class="footer-link small mb-2">Artists</a>
         <% } %>
         <% if (!menuSettings || (menuSettings.discoverMenu && menuSettings.discoverMenu.items.about !== false)) { %>
-          <a href="/about" class="text-decoration-none text-white-50 small d-block mb-2">About Us</a>
+          <a href="/about" class="footer-link small mb-2">About Us</a>
         <% } %>
         <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.contact !== false)) { %>
-          <a href="/contact" class="text-decoration-none text-white-50 small d-block mb-2">Contact</a>
+          <a href="/contact" class="footer-link small mb-2">Contact</a>
         <% } %>
       </div>
 
-      <div class="col-6 col-md-3 mb-3">
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.demo !== false)) { %>
-          <a href="/demo" class="text-decoration-none text-white-50 small d-block mb-2">Demo Home</a>
-          <a href="/demo/artist" class="text-decoration-none text-white-50 small d-block mb-2">Artist Demo</a>
-          <a href="/demo/concert" class="text-decoration-none text-white-50 small d-block mb-2">Concert Demo</a>
-          <a href="/demo/ticket" class="text-decoration-none text-white-50 small d-block mb-2">Ticket Demo</a>
-          <a href="/demo/content" class="text-decoration-none text-white-50 small d-block mb-2">Content Demo</a>
-        <% } %>
+      <!-- Column 3: Services & Demos -->
+      <div class="col-12 col-md-3 col-lg-2 mb-3 rapira-footer-col">
+        <h6 class="footer-heading mb-3">Services</h6>
+        <a href="/demo/artist" class="footer-link small mb-2">Artist Demo</a>
+        <a href="/demo/concert" class="footer-link small mb-2">Concert Demo</a>
+        <a href="/demo/ticket" class="footer-link small mb-2">Ticket Demo</a>
+        <a href="/demo/content" class="footer-link small mb-2">Content Demo</a>
+        <a href="/demo/subscription" class="footer-link small mb-2">Subscription Demo</a>
       </div>
 
-      <div class="col-6 col-md-3 mb-3">
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.demo !== false)) { %>
-          <a href="/demo/subscription" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Demo</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.termsOfService !== false)) { %>
-          <a href="/terms-of-service" class="text-decoration-none text-white-50 small d-block mb-2">Terms of Service</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.privacyPolicy !== false)) { %>
-          <a href="/privacy-policy" class="text-decoration-none text-white-50 small d-block mb-2">Privacy Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.documentIdPolicy !== false)) { %>
-          <a href="/document-id-policy" class="text-decoration-none text-white-50 small d-block mb-2">Document and ID Protection Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.refundPolicy !== false)) { %>
-          <a href="/refund-policy" class="text-decoration-none text-white-50 small d-block mb-2">Refund Policy</a>
-        <% } %>
+      <!-- Column 4: Shop & Policies -->
+      <div class="col-12 col-md-3 col-lg-2 mb-3 rapira-footer-col">
+        <h6 class="footer-heading mb-3">Shop & Policies</h6>
+        <a href="/shop" class="footer-link small mb-2">Explore Shop</a>
+        <a href="/shopping-policy" class="footer-link small mb-2">Shopping Policy</a>
+        <a href="/refund-policy" class="footer-link small mb-2">Refund Policy</a>
+        <a href="/subscription-policy" class="footer-link small mb-2">Subscription Policy</a>
       </div>
 
-      <div class="col-6 col-md-3 mb-3">
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.subscriptionPolicy !== false)) { %>
-          <a href="/subscription-policy" class="text-decoration-none text-white-50 small d-block mb-2">Subscription Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.shoppingPolicy !== false)) { %>
-          <a href="/shopping-policy" class="text-decoration-none text-white-50 small d-block mb-2">Shopping Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.eventAttendingPolicy !== false)) { %>
-          <a href="/event-attending-policy" class="text-decoration-none text-white-50 small d-block mb-2">Event Attending Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.tempEmailPolicy !== false)) { %>
-          <a href="/temp-email-policy" class="text-decoration-none text-white-50 small d-block mb-2">Temp Email Policy</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.accountReactivation !== false)) { %>
-          <a href="/account-reactivation" class="text-decoration-none text-white-50 small d-block mb-2">Account Reactivation</a>
-        <% } %>
-        <% if (!menuSettings || (menuSettings.helpSupportMenu && menuSettings.helpSupportMenu.items.faq !== false)) { %>
-          <a href="/faq" class="text-decoration-none text-white-50 small d-block mb-2">FAQ</a>
-        <% } %>
+      <!-- Column 5: Support & Legal -->
+      <div class="col-12 col-md-6 col-lg-3 mb-3 rapira-footer-col">
+        <h6 class="footer-heading mb-3">Help & Support</h6>
+        <a href="/demo" class="footer-link small mb-2">Help Center</a>
+        <a href="/faq" class="footer-link small mb-2">FAQ</a>
+        <a href="/terms-of-service" class="footer-link small mb-2">Terms of Service</a>
+        <a href="/privacy-policy" class="footer-link small mb-2">Privacy Policy</a>
+        <a href="/document-id-policy" class="footer-link small mb-2">Document & ID Policy</a>
+        <a href="/event-attending-policy" class="footer-link small mb-2">Event Attending Policy</a>
       </div>
     </div>
 
-    <div class="row mt-4">
-      <div class="col-12 text-center">
-        <p class="mb-0 text-white-50 small">&copy; <%= new Date().getFullYear() %> Rapira. All rights reserved.</p>
-        <p class="mb-0 text-white-50 small">Business Name / Billing Name: Vijaykumar Mudaliyar</p>
-        <p class="mb-0 text-white-50 small">Created and Developed by Vijaykumar Mudaliyar</p>
+    <!-- Bottom Bar: Dividers & Legal Credits -->
+    <div class="footer-bottom-bar mt-4 pt-4 border-top">
+      <div class="row align-items-center">
+        <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+          <p class="mb-0 small footer-copy-line">&copy; <%= new Date().getFullYear() %> Rapira. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-center text-md-end">
+          <p class="mb-0 small footer-copy-line">Business: Vijaykumar Mudaliyar | Developed with &hearts; for Indian Hip-Hop</p>
+        </div>
       </div>
     </div>
   </div>

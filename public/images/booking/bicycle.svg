@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <filter id="bike-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#9F190E" flood-opacity="0.12" />
+    </filter>
+    <linearGradient id="bike-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5A623" />
+      <stop offset="100%" stop-color="#9F190E" />
+    </linearGradient>
+    <linearGradient id="bike-wheel-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4A4A4F" />
+      <stop offset="100%" stop-color="#25211F" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse cx="160" cy="172" rx="110" ry="9" fill="#EAC8B7" opacity="0.6" />
+
+  <g filter="url(#bike-shadow)">
+    <!-- Back Wheel -->
+    <g transform="translate(75, 130)">
+      <!-- Outer tire -->
+      <circle cx="0" cy="0" r="38" fill="none" stroke="#25211F" stroke-width="6" />
+      <!-- Inner rim -->
+      <circle cx="0" cy="0" r="34" fill="none" stroke="#EAC8B7" stroke-width="2" />
+      <!-- Spokes -->
+      <line x1="-34" y1="0" x2="34" y2="0" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="0" y1="-34" x2="0" y2="34" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="-24" y1="-24" x2="24" y2="24" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="-24" y1="24" x2="24" y2="-24" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <!-- Hub -->
+      <circle cx="0" cy="0" r="7" fill="#F5A623" stroke="#9F190E" stroke-width="2" />
+      <!-- Rear Fender -->
+      <path d="M -39 5 A 41 41 0 0 1 12 -38" fill="none" stroke="#9F190E" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+
+    <!-- Front Wheel -->
+    <g transform="translate(245, 130)">
+      <!-- Outer tire -->
+      <circle cx="0" cy="0" r="38" fill="none" stroke="#25211F" stroke-width="6" />
+      <!-- Inner rim -->
+      <circle cx="0" cy="0" r="34" fill="none" stroke="#EAC8B7" stroke-width="2" />
+      <!-- Spokes -->
+      <line x1="-34" y1="0" x2="34" y2="0" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="0" y1="-34" x2="0" y2="34" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="-24" y1="-24" x2="24" y2="24" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <line x1="-24" y1="24" x2="24" y2="-24" stroke="#8E8580" stroke-width="1.2" opacity="0.7" />
+      <!-- Hub -->
+      <circle cx="0" cy="0" r="7" fill="#F5A623" stroke="#9F190E" stroke-width="2" />
+      <!-- Front Fender -->
+      <path d="M -15 -38 A 41 41 0 0 1 39 5" fill="none" stroke="#9F190E" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+
+    <!-- Bicycle Frame (Diamond / Commuter) -->
+    <!-- Bottom bracket -->
+    <circle cx="145" cy="130" r="10" fill="#25211F" stroke="#F5A623" stroke-width="2" />
+
+    <!-- Chainstay: Back wheel hub to bottom bracket -->
+    <line x1="75" y1="130" x2="145" y2="130" stroke="#4A4A4F" stroke-width="4" stroke-linecap="round" />
+    <!-- Chain ring and chain -->
+    <circle cx="145" cy="130" r="14" fill="none" stroke="#F5A623" stroke-width="2" stroke-dasharray="2 2" />
+
+    <!-- Seatstay: Back wheel hub to seat post junction (125, 78) -->
+    <line x1="75" y1="130" x2="125" y2="78" stroke="url(#bike-frame)" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Seat tube: Bottom bracket to seat post junction (125, 78) -->
+    <line x1="145" y1="130" x2="125" y2="78" stroke="url(#bike-frame)" stroke-width="5.5" stroke-linecap="round" />
+
+    <!-- Down tube: Bottom bracket to head tube junction (215, 75) -->
+    <line x1="145" y1="130" x2="215" y2="75" stroke="url(#bike-frame)" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Top tube: Seat post junction to head tube junction -->
+    <path d="M 125 78 Q 170 85 215 75" fill="none" stroke="url(#bike-frame)" stroke-width="5.5" stroke-linecap="round" />
+
+    <!-- Head tube: From fork to handlebar stem -->
+    <line x1="210" y1="88" x2="220" y2="60" stroke="#25211F" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Front fork: Head tube to front wheel hub -->
+    <line x1="212" y1="83" x2="245" y2="130" stroke="url(#bike-frame)" stroke-width="4.5" stroke-linecap="round" />
+
+    <!-- Seat post and Saddle -->
+    <line x1="125" y1="78" x2="120" y2="60" stroke="#25211F" stroke-width="4" />
+    <!-- Leather saddle -->
+    <path d="M 102 58 C 102 54, 118 52, 138 56 C 144 58, 142 63, 134 63 C 120 63, 106 63, 102 58 Z" fill="#6B3724" stroke="#4A2315" stroke-width="1.5" />
+    <!-- Rear rack -->
+    <path d="M 78 126 L 85 88 L 120 86" fill="none" stroke="#68615D" stroke-width="3" stroke-linecap="round" />
+    <line x1="75" y1="88" x2="122" y2="86" stroke="#68615D" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Handlebars and Stem -->
+    <path d="M 220 60 L 222 48 L 210 44 L 198 48" fill="none" stroke="#25211F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Handlebar grip -->
+    <rect x="194" y="45" width="10" height="6" rx="2" fill="#6B3724" />
+
+    <!-- Front Bell / Light -->
+    <circle cx="218" cy="42" r="5" fill="#F5A623" stroke="#9F190E" stroke-width="1.5" />
+    <!-- Headlight beam -->
+    <path d="M 235 56 L 275 48 L 275 68 Z" fill="#F5A623" opacity="0.25" />
+    <circle cx="232" cy="58" r="6" fill="#F5A623" stroke="#25211F" stroke-width="1.5" />
+
+    <!-- Pedals -->
+    <line x1="145" y1="130" x2="137" y2="148" stroke="#25211F" stroke-width="3" stroke-linecap="round" />
+    <rect x="130" y="146" width="14" height="4" rx="2" fill="#9F190E" />
+  </g>
+
+  <!-- Fun floating musical notes / solo breeze -->
+  <path d="M 60 48 Q 65 40 72 45" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" opacity="0.6" />
+  <circle cx="60" cy="48" r="2.5" fill="#9F190E" opacity="0.7" />
+  <path d="M 280 40 Q 288 32 296 38" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+  <circle cx="280" cy="40" r="2.5" fill="#F5A623" opacity="0.8" />
+</svg>

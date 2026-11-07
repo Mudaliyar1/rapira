@@ -153,7 +153,7 @@ class RapiraChatbot {
       // Default responses
       'default': 'I can help you with questions about RAPIRA website features, pages, policies, and how to use the platform. Please ask about specific topics like registration, booking tickets, artist features, shopping, or policies.',
 
-      'greeting': 'Hello! I\'m the RAPIRA assistant. I can help you with questions about our platform, features, and how to use the website. What would you like to know?',
+      'greeting': 'Hello! I\'m the RAPIRA Assistant. I can help you explore our platform, discover features, book tickets and learn how to use RAPIRA. What would you like to know?',
 
       'goodbye': 'Thank you for using RAPIRA! If you have more questions about our platform, feel free to ask anytime or contact our support team.',
 
@@ -164,46 +164,51 @@ class RapiraChatbot {
   createChatbotHTML() {
     const chatbotHTML = `
       <!-- Chatbot Toggle Button -->
-      <div id="chatbot-toggle" class="chatbot-toggle">
-        <i class="bi bi-chat-dots"></i>
+      <div id="chatbot-toggle" class="chatbot-toggle" title="Open RAPIRA Assistant" aria-label="Open RAPIRA Assistant">
+        <i class="bi bi-chat-dots-fill"></i>
       </div>
 
       <!-- Chatbot Container -->
-      <div id="chatbot-container" class="chatbot-container">
+      <div id="chatbot-container" class="chatbot-container" role="dialog" aria-label="RAPIRA Assistant">
         <div class="chatbot-header">
           <div class="chatbot-title">
-            <i class="bi bi-robot me-2"></i>
-            RAPIRA Assistant
+            <span class="chatbot-status-dot" aria-hidden="true"></span>
+            <i class="bi bi-robot"></i>
+            <span>RAPIRA Assistant</span>
           </div>
-          <button id="chatbot-close" class="chatbot-close">
-            <i class="bi bi-x"></i>
+          <button id="chatbot-close" class="chatbot-close" type="button" aria-label="Close Assistant">
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
         
         <div id="chatbot-messages" class="chatbot-messages">
           <div class="message bot-message">
             <div class="message-content">
-              Hello! I'm the RAPIRA assistant. I can help you with questions about our platform, features, and how to use the website. What would you like to know?
+              <p class="greeting-lead">Hello! I'm the RAPIRA Assistant.</p>
+              <p class="greeting-body">I can help you explore our platform, discover features, book tickets and learn how to use RAPIRA. What would you like to know?</p>
             </div>
+          </div>
+        </div>
+
+        <div class="chatbot-suggestions">
+          <div class="suggestions-title">Quick Questions</div>
+          <div class="suggestions-chips-grid">
+            <button type="button" class="suggestion-btn" data-question="what is rapira">What is RAPIRA?</button>
+            <button type="button" class="suggestion-btn" data-question="how to book tickets">Book tickets</button>
+            <button type="button" class="suggestion-btn" data-question="become artist">Become artist</button>
+            <button type="button" class="suggestion-btn" data-question="main pages">Main pages</button>
+            <button type="button" class="suggestion-btn" data-question="how to shop">How to shop</button>
+            <button type="button" class="suggestion-btn" data-question="contact support">Contact support</button>
+            <button type="button" class="suggestion-btn" data-question="refund policy">Refund policy</button>
+            <button type="button" class="suggestion-btn" data-question="demo">Try demo</button>
           </div>
         </div>
         
         <div class="chatbot-input-container">
-          <input type="text" id="chatbot-input" placeholder="Ask about RAPIRA features..." maxlength="200">
-          <button id="chatbot-send">
-            <i class="bi bi-send"></i>
+          <input type="text" id="chatbot-input" placeholder="Ask anything about RAPIRA..." maxlength="200" autocomplete="off">
+          <button id="chatbot-send" type="button" aria-label="Send message">
+            <i class="bi bi-send-fill"></i>
           </button>
-        </div>
-        
-        <div class="chatbot-suggestions">
-          <button class="suggestion-btn" data-question="what is rapira">What is RAPIRA?</button>
-          <button class="suggestion-btn" data-question="how to book tickets">Book tickets</button>
-          <button class="suggestion-btn" data-question="become artist">Become artist</button>
-          <button class="suggestion-btn" data-question="main pages">Main pages</button>
-          <button class="suggestion-btn" data-question="how to shop">How to shop</button>
-          <button class="suggestion-btn" data-question="contact support">Contact support</button>
-          <button class="suggestion-btn" data-question="refund policy">Refund policy</button>
-          <button class="suggestion-btn" data-question="demo">Try demo</button>
         </div>
       </div>
     `;

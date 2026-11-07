@@ -134,12 +134,18 @@ router.get('/', async (req, res) => {
     // Add search functionality
     if (search && search.trim()) {
       const searchRegex = new RegExp(search.trim(), 'i');
-      filter.$or = [
+      const matchingVenues = await Venue.find({ name: searchRegex }).select('_id');
+      const venueIds = matchingVenues.map(v => v._id);
+
+      const orConditions = [
         { title: searchRegex },
-        { venue: searchRegex },
         { city: searchRegex },
         { description: searchRegex }
       ];
+      if (venueIds.length > 0) {
+        orConditions.push({ venue: { $in: venueIds } });
+      }
+      filter.$or = orConditions;
     }
 
     // Build sort object
@@ -1051,10 +1057,37 @@ router.get('/:id/select-quantity', isLoggedIn, async (req, res) => {
       ? Math.min(10, concert.maxTickets - concert.ticketsSold)
       : 10;
 
+    // Check if user has an active subscription and apply discount if applicable
+    let originalPrice = concert.price;
+    let discountedPrice = originalPrice;
+    let subscriptionDiscount = 0;
+
+    if (concert.isPaid && res.locals.hasActiveSubscription && res.locals.activeSubscription) {
+      const subscription = res.locals.activeSubscription;
+      if (subscription.plan && subscription.plan.discountPercentage > 0) {
+        subscriptionDiscount = subscription.plan.discountPercentage;
+        discountedPrice = applyDiscount(originalPrice, subscription);
+      }
+    }
+
+    // Get website settings for ticket commission
+    const WebsiteSettings = require('../models/WebsiteSettings');
+    const settings = await WebsiteSettings.getSettings();
+    const ticketCommissionEnabled = settings.ticketCommissionSettings?.enabled || false;
+    const ticketCommissionPercentage = settings.ticketCommissionSettings?.percentage || 0;
+
     res.render('concerts/select-quantity', {
       concert,
       ticketsRemaining,
-      maxTicketsPerBooking
+      maxTicketsPerBooking,
+      originalPrice,
+      discountedPrice,
+      subscriptionDiscount,
+      ticketCommissionEnabled,
+      ticketCommissionPercentage,
+      initialStep: req.query.step || 'vehicle',
+      initialQuantity: parseInt(req.query.quantity) || 2,
+      initialVehicle: req.query.vehicle || 'scooter'
     });
   } catch (error) {
     console.error('Select quantity error:', error);
@@ -1150,6 +1183,8 @@ router.get('/:id/book', isLoggedIn, async (req, res) => {
       concert,
       ticketsRemaining,
       selectedQuantity,
+      selectedSeats: req.query.seats || '',
+      selectedVehicle: req.query.vehicle || '',
       maxTicketsPerBooking: maxAllowedTickets,
       extraScripts: extraScripts,
       originalPrice,

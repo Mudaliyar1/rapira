@@ -1,436 +1,516 @@
-<!-- Hero Section -->
-<section class="text-white py-5 mb-4 position-relative overflow-hidden">
-  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: var(--gradient-purple-pink); z-index: -2;"></div>
-  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-lg-8" data-aos="fade-up">
-        <h1 class="fw-bold mb-3 display-4">Discover <span class="gradient-text-blue">Artists</span></h1>
-        <p class="lead mb-0">Explore the best rap artists from across India</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Filter Section -->
-<section class="py-4" style="background-color: var(--bg);">
-  <div class="container">
-    <!-- Search and Filter Form -->
-    <div class="card border-0 shadow-lg mb-4 glass-card-dark">
-      <div class="card-header bg-primary text-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-funnel me-2"></i>Search & Filter Artists
-          </h5>
-          <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
-            <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
-            <span class="d-none d-md-inline ms-1">Toggle Filters</span>
-          </button>
+<div class="rapira-discover-artists-page">
+  <!-- Hero Section -->
+  <section class="rh-da-hero">
+    <div class="container">
+      <div class="rh-da-hero-inner">
+        <div class="rh-da-hero-text">
+          <div class="rh-da-title-wrap">
+            <h1 class="rh-da-title">Discover Artists</h1>
+            <!-- Audio Waveform (Mobile inline) -->
+            <div class="rh-da-waveform rh-da-waveform-mobile d-md-none" aria-hidden="true">
+              <span class="rh-da-bar" style="height: 10px;"></span>
+              <span class="rh-da-bar" style="height: 18px;"></span>
+              <span class="rh-da-bar" style="height: 12px;"></span>
+              <span class="rh-da-bar" style="height: 24px;"></span>
+              <span class="rh-da-bar" style="height: 30px;"></span>
+              <span class="rh-da-bar" style="height: 18px;"></span>
+              <span class="rh-da-bar" style="height: 24px;"></span>
+              <span class="rh-da-bar" style="height: 14px;"></span>
+            </div>
+          </div>
+          <p class="rh-da-subtitle">Explore the best rap artists from across India</p>
+        </div>
+        <!-- Audio Waveform (Desktop Right Aligned) -->
+        <div class="rh-da-waveform rh-da-waveform-desktop d-none d-md-flex" aria-hidden="true">
+          <span class="rh-da-bar" style="height: 12px;"></span>
+          <span class="rh-da-bar" style="height: 22px;"></span>
+          <span class="rh-da-bar" style="height: 16px;"></span>
+          <span class="rh-da-bar" style="height: 32px;"></span>
+          <span class="rh-da-bar" style="height: 42px;"></span>
+          <span class="rh-da-bar" style="height: 26px;"></span>
+          <span class="rh-da-bar" style="height: 36px;"></span>
+          <span class="rh-da-bar" style="height: 18px;"></span>
+          <span class="rh-da-bar" style="height: 28px;"></span>
+          <span class="rh-da-bar" style="height: 12px;"></span>
         </div>
       </div>
-      <div class="collapse" id="filterCollapse">
-        <div class="card-body">
-        <form action="/artists" method="GET" id="artistFilterForm">
-          <div class="row g-3">
-            <!-- Search Input -->
-            <div class="col-md-4">
-              <label for="searchInput" class="form-label fw-semibold">Search Artists</label>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-end-0">
-                  <i class="bi bi-search text-primary"></i>
-                </span>
-                <input type="text" class="form-control border-start-0" id="searchInput" name="search"
-                       placeholder="Search by name, stage name, or bio..."
-                       value="<%= filters.search || '' %>">
+    </div>
+  </section>
+
+  <!-- Filter & Content Container -->
+  <div class="container">
+    <%
+      // Extract unique locations dynamically from artists
+      const uniqueLocations = (artists && artists.length > 0)
+        ? [...new Set(artists.map(a => [a.city?.trim(), a.state?.trim()].filter(Boolean).join(', ')).filter(Boolean))].sort()
+        : [];
+      
+      const hasActiveFilters = Boolean(
+        (filters.search && filters.search.trim()) ||
+        (filters.genre && filters.genre.trim()) ||
+        (filters.verified && filters.verified !== 'all') ||
+        (filters.sort && filters.sort !== 'oldest' && filters.sort !== 'newest')
+      );
+    %>
+
+    <!-- Search & Filter Card -->
+    <div class="rh-da-filter-card">
+      <div class="rh-da-filter-header" id="rhDaFilterHeader">
+        <div class="rh-da-filter-header-left">
+          <h2 class="rh-da-filter-title">
+            <svg class="rh-da-filter-icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .39.812l-4.89 5.868V12.5a.5.5 0 0 1-.223.416l-2.5 1.667A.5.5 0 0 1 6 14.167V7.68L1.11 1.812A.5.5 0 0 1 1.5 1.5z"/>
+            </svg>
+            <span>Search &amp; Filter Artists</span>
+          </h2>
+          <a href="/artists" class="rh-da-active-pill" id="rhDaActivePill" style="<%= hasActiveFilters ? '' : 'display: none;' %>">
+            <span>Filters Active • <span id="rhDaActiveCount">1</span></span>
+            <span aria-hidden="true">&times;</span>
+          </a>
+        </div>
+        <button type="button" class="rh-da-toggle-btn collapsed" id="rhDaFilterToggleBtn" data-bs-toggle="collapse" data-bs-target="#rhDaFilterCollapse" aria-expanded="false" aria-controls="rhDaFilterCollapse" aria-label="Toggle Filters">
+          <span id="rhDaToggleText">Show Filters</span>
+          <i class="bi bi-chevron-down ms-1" id="rhDaToggleIcon"></i>
+        </button>
+      </div>
+
+      <!-- Collapsible Filter Form Body (Collapsed by default, expandable via button) -->
+      <div class="collapse" id="rhDaFilterCollapse">
+        <div class="rh-da-filter-body" id="rhDaFilterBody">
+          <form action="/artists" method="GET" id="artistFilterForm">
+          <div class="rh-da-filter-grid">
+            <!-- Search Artists Input -->
+            <div class="rh-da-field">
+              <label for="searchInput" class="rh-da-label">Search Artists</label>
+              <div class="rh-da-input-wrap">
+                <svg class="rh-da-input-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+                <input type="text" class="rh-da-input" id="searchInput" name="search"
+                       placeholder="Search by artist name..."
+                       value="<%= filters.search || '' %>" autocomplete="off">
               </div>
             </div>
 
-            <!-- Genre Filter -->
-            <div class="col-md-2">
-              <label for="genreFilter" class="form-label fw-semibold">Genre</label>
-              <select class="form-select" id="genreFilter" name="genre">
-                <option value="">All Genres</option>
-                <% if (genres && genres.length > 0) { %>
-                  <% genres.forEach(genre => { %>
-                    <option value="<%= genre %>" <%= filters.genre === genre ? 'selected' : '' %>><%= genre %></option>
+            <!-- Genre Dropdown -->
+            <div class="rh-da-field">
+              <label for="genreFilter" class="rh-da-label">Genre</label>
+              <div class="rh-da-select-wrap">
+                <select class="rh-da-select" id="genreFilter" name="genre">
+                  <option value="">All Genres</option>
+                  <% if (genres && genres.length > 0) { %>
+                    <% genres.forEach(g => { %>
+                      <option value="<%= g %>" <%= filters.genre === g ? 'selected' : '' %>><%= g %></option>
+                    <% }); %>
+                  <% } %>
+                </select>
+                <svg class="rh-da-select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Location Dropdown -->
+            <div class="rh-da-field">
+              <label for="locationFilter" class="rh-da-label">Location</label>
+              <div class="rh-da-select-wrap">
+                <select class="rh-da-select" id="locationFilter" name="location">
+                  <option value="">All Locations</option>
+                  <% uniqueLocations.forEach(loc => { %>
+                    <option value="<%= loc %>"><%= loc %></option>
                   <% }); %>
-                <% } %>
-              </select>
+                </select>
+                <svg class="rh-da-select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </div>
             </div>
 
-            <!-- Verified Filter -->
-            <div class="col-md-2">
-              <label for="verifiedFilter" class="form-label fw-semibold">Status</label>
-              <select class="form-select" id="verifiedFilter" name="verified">
-                <option value="all" <%= filters.verified === 'all' ? 'selected' : '' %>>All Artists</option>
-                <option value="true" <%= filters.verified === 'true' ? 'selected' : '' %>>Verified</option>
-                <option value="false" <%= filters.verified === 'false' ? 'selected' : '' %>>Unverified</option>
-              </select>
+            <!-- Verification Filter -->
+            <div class="rh-da-field">
+              <label for="verifiedFilter" class="rh-da-label">Verification</label>
+              <div class="rh-da-select-wrap">
+                <select class="rh-da-select" id="verifiedFilter" name="verified">
+                  <option value="all" <%= filters.verified === 'all' ? 'selected' : '' %>>All Artists</option>
+                  <option value="true" <%= filters.verified === 'true' ? 'selected' : '' %>>Verified</option>
+                  <option value="false" <%= filters.verified === 'false' ? 'selected' : '' %>>Unverified</option>
+                </select>
+                <svg class="rh-da-select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </div>
             </div>
 
-            <!-- Sort Filter -->
-            <div class="col-md-4">
-              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
-              <select class="form-select" id="sortFilter" name="sort">
-                <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-                <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-                <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name (A-Z)</option>
-                <option value="genre" <%= filters.sort === 'genre' ? 'selected' : '' %>>Genre</option>
-                <option value="verified" <%= filters.sort === 'verified' ? 'selected' : '' %>>Verified First</option>
-              </select>
+            <!-- Sort By Dropdown -->
+            <div class="rh-da-field">
+              <label for="sortFilter" class="rh-da-label">Sort By</label>
+              <div class="rh-da-select-wrap">
+                <select class="rh-da-select" id="sortFilter" name="sort">
+                  <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                  <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                  <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name (A-Z)</option>
+                  <option value="genre" <%= filters.sort === 'genre' ? 'selected' : '' %>>Genre</option>
+                  <option value="verified" <%= filters.sort === 'verified' ? 'selected' : '' %>>Verified First</option>
+                </select>
+                <svg class="rh-da-select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </div>
             </div>
           </div>
 
           <!-- Action Buttons -->
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="d-flex flex-wrap gap-2">
-                <button type="submit" class="btn btn-primary px-4">
-                  <i class="bi bi-search me-1"></i> Search
-                </button>
-                <a href="/artists" class="btn btn-outline-secondary px-4">
-                  <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
-                </a>
-              </div>
-            </div>
+          <div class="rh-da-filter-actions">
+            <button type="submit" class="rh-da-btn-primary">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+              </svg>
+              <span>Search</span>
+            </button>
+            <a href="/artists" class="rh-da-btn-outline">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+              </svg>
+              <span>Reset</span>
+            </a>
           </div>
         </form>
-        </div>
       </div>
     </div>
   </div>
-</section>
 
-<!-- Artists List -->
-<section class="py-5">
-  <div class="container">
-    <div class="row g-4">
-      <% if (artists && artists.length > 0) { %>
-        <% artists.forEach((artist, index) => { %>
-          <div class="col-md-6 col-lg-3">
-            <div class="card artist-card h-100">
-              <div class="position-relative overflow-hidden">
-                <img src="<%= (artist.user.profileImage && artist.user.profileImage !== '/images/default-profile.svg') ? artist.user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(artist.user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>" class="card-img-top artist-thumbnail" alt="<%= artist.user.name %>">
-                <% if (artist.verified) { %>
-                  <div class="position-absolute top-0 end-0 m-3">
-                    <span class="badge bg-success px-3 py-2">
-                      <i class="bi bi-patch-check-fill me-1"></i> Verified
-                    </span>
-                  </div>
+    <!-- Artists Grid (Desktop & Mobile) -->
+    <% if (artists && artists.length > 0) { %>
+      <div class="rh-da-grid" id="rhDaArtistsGrid">
+        <% artists.forEach(artist => { %>
+          <%
+            const hasCustomDP = Boolean(
+              artist.user && 
+              artist.user.profileImage && 
+              artist.user.profileImage !== '/images/default-profile.svg' && 
+              !artist.user.profileImage.includes('default-profile')
+            );
+            const userInitial = (artist.user && artist.user.name && artist.user.name.trim()) 
+              ? artist.user.name.trim().charAt(0).toUpperCase() 
+              : 'A';
+            const locationStr = [artist.city?.trim(), artist.state?.trim()].filter(Boolean).join(', ') || 'India';
+            const isVerified = Boolean(artist.verified);
+            const showStageName = Boolean(
+              artist.stageName && 
+              artist.stageName.trim() && 
+              artist.stageName.trim().toLowerCase() !== (artist.user?.name || '').trim().toLowerCase()
+            );
+          %>
+          <a href="/artists/<%= artist._id %>" 
+             class="rh-da-card"
+             data-name="<%= (artist.user?.name || '').toLowerCase() %>"
+             data-stagename="<%= (artist.stageName || '').toLowerCase() %>"
+             data-genre="<%= (artist.genre || '').toLowerCase() %>"
+             data-location="<%= locationStr.toLowerCase() %>"
+             data-verified="<%= isVerified %>">
+            
+            <!-- Top Image Box (Desktop: Top Card Frame; Mobile: Circular DP) -->
+            <div class="rh-da-img-box">
+              <% if (hasCustomDP) { %>
+                <img src="<%= artist.user.profileImage %>" 
+                     alt="<%= artist.user.name %>" 
+                     class="rh-da-card-img" 
+                     loading="lazy"
+                     onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                <div class="rh-da-fallback-avatar" style="display: none;">
+                  <span class="rh-da-fallback-letter"><%= userInitial %></span>
+                </div>
+              <% } else { %>
+                <div class="rh-da-fallback-avatar">
+                  <span class="rh-da-fallback-letter"><%= userInitial %></span>
+                </div>
+              <% } %>
+
+              <!-- Verified Pill (Identical to Homepage Artist Cards) -->
+              <% if (isVerified) { %>
+                <div class="rh-verified-pill" title="Verified Artist">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.875-.195a2.89 2.89 0 0 0-3.411 2.478l-.117.887-.723.523a2.89 2.89 0 0 0 0 4.208l.723.523.117.887a2.89 2.89 0 0 0 3.411 2.478l.875-.195.622.638a2.89 2.89 0 0 0 4.134 0l.622-.638.875.195a2.89 2.89 0 0 0 3.411-2.478l.117-.887.723-.523a2.89 2.89 0 0 0 0-4.208l-.723-.523-.117-.887a2.89 2.89 0 0 0-3.411-2.478l-.875.195-.622-.638zm-1.07 9.872l-3.25-3.25 1.06-1.06 2.19 2.19 4.38-4.38 1.06 1.06-5.44 5.44z"/>
+                  </svg>
+                  <span>Verified</span>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Card Content Body -->
+            <div class="rh-da-card-body">
+              <div class="rh-da-name-row">
+                <h3 class="rh-da-card-title"><%= artist.user.name %></h3>
+                <!-- Mobile Inline Verified Badge -->
+                <% if (isVerified) { %>
+                  <span class="rh-da-verified-badge-mobile" title="Verified Artist">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.875-.195a2.89 2.89 0 0 0-3.411 2.478l-.117.887-.723.523a2.89 2.89 0 0 0 0 4.208l.723.523.117.887a2.89 2.89 0 0 0 3.411 2.478l.875-.195.622.638a2.89 2.89 0 0 0 4.134 0l.622-.638.875.195a2.89 2.89 0 0 0 3.411-2.478l.117-.887.723-.523a2.89 2.89 0 0 0 0-4.208l-.723-.523-.117-.887a2.89 2.89 0 0 0-3.411-2.478l-.875.195-.622-.638zm-1.07 9.872l-3.25-3.25 1.06-1.06 2.19 2.19 4.38-4.38 1.06 1.06-5.44 5.44z"/>
+                    </svg>
+                  </span>
                 <% } %>
               </div>
-              <div class="card-body text-center">
-                <h5 class="card-title mb-2 text-primary"><%= artist.user.name %></h5>
-                <% if (artist.stageName && artist.stageName !== artist.user.name) { %>
-                  <p class="card-text text-muted mb-1"><strong>"<%= artist.stageName %>"</strong></p>
-                <% } %>
-                <p class="card-text text-muted mb-3">
-                  <i class="bi bi-music-note me-1"></i><%= artist.genre || 'Hip-Hop' %>
-                </p>
-                <% if (artist.bio) { %>
-                  <p class="card-text small text-muted mb-3">
-                    <%= artist.bio.length > 80 ? artist.bio.substring(0, 80) + '...' : artist.bio %>
-                  </p>
-                <% } %>
+
+              <% if (showStageName) { %>
+                <div class="rh-da-stage-name">"<%= artist.stageName.trim() %>"</div>
+              <% } %>
+
+              <!-- Genre Row -->
+              <div class="rh-da-meta-row">
+                <svg class="rh-da-meta-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M9 13c0 1.105-1.12 2-2.5 2S4 14.105 4 13s1.12-2 2.5-2 2.5.895 2.5 2z"/>
+                  <path fill-rule="evenodd" d="M9 3v10H8V3h1z"/>
+                  <path d="M8 2.82a1 1 0 0 1 .804-.98l3-.6A1 1 0 0 1 13 2.22V4L8 5V2.82z"/>
+                </svg>
+                <span><%= artist.genre || 'Hip-Hop' %></span>
               </div>
-              <div class="card-footer text-center">
-                <a href="/artists/<%= artist._id %>" class="btn btn-primary w-100">
-                  <i class="bi bi-person me-1"></i>View Profile
-                </a>
+
+              <!-- Location Row -->
+              <div class="rh-da-meta-row">
+                <svg class="rh-da-meta-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+                </svg>
+                <span><%= locationStr %></span>
               </div>
             </div>
-          </div>
+          </a>
         <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5">
-          <div class="py-5">
-            <i class="bi bi-music-note-beamed display-1 text-muted"></i>
-            <h3 class="mt-4">No Artists Found</h3>
-            <p class="text-muted mb-4">There are no artists matching your filters.</p>
-            <a href="/artists" class="btn btn-primary">Clear Filters</a>
-          </div>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
+      </div>
+    <% } %>
 
-<!-- Join as Artist CTA - Only show if user is not an artist -->
-<% if (!user || user.role !== 'artist') { %>
-<section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
-  <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-blue" style="z-index: -1;"></div>
-  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
-  <div class="container py-4">
-    <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
-    <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
-    <% if (!user) { %>
-      <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
-    <% } else { %>
-      <a href="/artist-applications/select-level" class="btn btn-glass-dark btn-lg px-5">Apply to Become Artist</a>
+    <!-- Empty State -->
+    <div class="rh-da-empty-card" id="rhDaEmptyState" style="<%= (artists && artists.length > 0) ? 'display: none;' : '' %>">
+      <div class="rh-da-empty-icon-wrap">
+        <svg width="34" height="34" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+        </svg>
+      </div>
+      <h3 class="rh-da-empty-title">No Artists Found</h3>
+      <p class="rh-da-empty-desc">We couldn't find any artists matching your search or filters. Try adjusting your query or resetting filters.</p>
+      <a href="/artists" class="rh-da-btn-primary">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        </svg>
+        <span>Reset All Filters</span>
+      </a>
+    </div>
+
+    <!-- Join as Artist CTA Section -->
+    <% if (!user || user.role !== 'artist') { %>
+      <div class="rh-da-cta-card">
+        <h2 class="rh-da-cta-title">Are You an Artist?</h2>
+        <p class="rh-da-cta-desc">Join RAPIRA to showcase your music, organize concerts, and connect with fans across India.</p>
+        <% if (!user) { %>
+          <a href="/auth/register" class="rh-da-cta-btn">
+            <span>Join as Artist</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+            </svg>
+          </a>
+        <% } else { %>
+          <a href="/artist-applications/select-level" class="rh-da-cta-btn">
+            <span>Apply to Become Artist</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+            </svg>
+          </a>
+        <% } %>
+      </div>
     <% } %>
   </div>
-</section>
-<% } %>
+</div>
 
-<!-- JavaScript for Enhanced Functionality -->
+<!-- Discover Artists Client Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Enhanced form handling with auto-submit for filters
   const form = document.getElementById('artistFilterForm');
   const searchInput = document.getElementById('searchInput');
   const genreFilter = document.getElementById('genreFilter');
+  const locationFilter = document.getElementById('locationFilter');
   const verifiedFilter = document.getElementById('verifiedFilter');
   const sortFilter = document.getElementById('sortFilter');
 
-  let searchTimeout;
+  const filterToggleBtn = document.getElementById('rhDaFilterToggleBtn');
+  const filterHeader = document.getElementById('rhDaFilterHeader');
+  const filterBody = document.getElementById('rhDaFilterBody');
+  const filterToggleIcon = document.getElementById('rhDaToggleIcon');
+  const filterToggleText = document.getElementById('rhDaToggleText');
 
-  // Debounced search input
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        form.submit();
-      }, 800); // 800ms delay for better UX
+  const activePill = document.getElementById('rhDaActivePill');
+  const activeCountSpan = document.getElementById('rhDaActiveCount');
+  const grid = document.getElementById('rhDaArtistsGrid');
+  const emptyState = document.getElementById('rhDaEmptyState');
+
+  // URL parameters handling
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramLocation = urlParams.get('location') || '';
+
+  if (paramLocation && locationFilter) {
+    locationFilter.value = paramLocation;
+  }
+
+  // Calculate & update active filters count badge
+  function updateActiveFilterBadge() {
+    let count = 0;
+    if (searchInput && searchInput.value.trim()) count++;
+    if (genreFilter && genreFilter.value.trim()) count++;
+    if (locationFilter && locationFilter.value.trim()) count++;
+    if (verifiedFilter && verifiedFilter.value !== 'all') count++;
+    if (sortFilter && sortFilter.value !== 'oldest' && sortFilter.value !== 'newest') count++;
+
+    if (activePill && activeCountSpan) {
+      if (count > 0) {
+        activeCountSpan.textContent = count;
+        activePill.style.display = 'inline-flex';
+      } else {
+        activePill.style.display = 'none';
+      }
+    }
+  }
+
+  // Client-side location filtering
+  function applyLocationFilter(loc) {
+    const cards = document.querySelectorAll('.rh-da-card');
+    if (!cards || cards.length === 0) return;
+
+    let visibleCount = 0;
+    cards.forEach(card => {
+      const cardLoc = (card.getAttribute('data-location') || '').toLowerCase();
+      if (!loc || cardLoc.includes(loc.toLowerCase())) {
+        card.style.display = '';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
     });
 
-    // Immediate search on Enter key
+    if (visibleCount === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      if (grid) grid.style.display = 'none';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (grid) grid.style.display = '';
+    }
+
+    updateActiveFilterBadge();
+  }
+
+  // Initial location filter run
+  if (paramLocation) {
+    applyLocationFilter(paramLocation);
+  } else {
+    updateActiveFilterBadge();
+  }
+
+  // Location filter change event
+  if (locationFilter) {
+    locationFilter.addEventListener('change', function() {
+      applyLocationFilter(this.value);
+      // Synchronize location into URL without page reload
+      const newUrl = new URL(window.location);
+      if (this.value) {
+        newUrl.searchParams.set('location', this.value);
+      } else {
+        newUrl.searchParams.delete('location');
+      }
+      window.history.replaceState({}, '', newUrl);
+    });
+  }
+
+  // Filter Collapse Toggle
+  const filterCollapse = document.getElementById('rhDaFilterCollapse');
+
+  if (filterCollapse && filterToggleIcon) {
+    // Explicitly guarantee initial collapsed state on fresh load
+    filterCollapse.classList.remove('show');
+    filterToggleIcon.classList.remove('bi-chevron-up');
+    filterToggleIcon.classList.add('bi-chevron-down');
+    if (filterToggleText) filterToggleText.textContent = 'Show Filters';
+    if (filterToggleBtn) {
+      filterToggleBtn.setAttribute('aria-expanded', 'false');
+      filterToggleBtn.classList.add('collapsed');
+    }
+
+    // Bootstrap collapse events (smooth animated transition)
+    filterCollapse.addEventListener('show.bs.collapse', function() {
+      filterToggleIcon.classList.remove('bi-chevron-down');
+      filterToggleIcon.classList.add('bi-chevron-up');
+      if (filterToggleText) filterToggleText.textContent = 'Hide Filters';
+      if (filterToggleBtn) {
+        filterToggleBtn.setAttribute('aria-expanded', 'true');
+        filterToggleBtn.classList.remove('collapsed');
+      }
+    });
+
+    filterCollapse.addEventListener('hide.bs.collapse', function() {
+      filterToggleIcon.classList.remove('bi-chevron-up');
+      filterToggleIcon.classList.add('bi-chevron-down');
+      if (filterToggleText) filterToggleText.textContent = 'Show Filters';
+      if (filterToggleBtn) {
+        filterToggleBtn.setAttribute('aria-expanded', 'false');
+        filterToggleBtn.classList.add('collapsed');
+      }
+    });
+
+    // Fallback toggle in case Bootstrap Collapse is not initialized
+    if (filterToggleBtn) {
+      filterToggleBtn.addEventListener('click', function(e) {
+        if (typeof bootstrap === 'undefined' || !bootstrap.Collapse) {
+          e.preventDefault();
+          const isCurrentlyOpen = filterCollapse.classList.contains('show');
+          if (isCurrentlyOpen) {
+            filterCollapse.classList.remove('show');
+            filterCollapse.style.display = 'none';
+            filterToggleIcon.classList.remove('bi-chevron-up');
+            filterToggleIcon.classList.add('bi-chevron-down');
+            if (filterToggleText) filterToggleText.textContent = 'Show Filters';
+            filterToggleBtn.setAttribute('aria-expanded', 'false');
+            filterToggleBtn.classList.add('collapsed');
+          } else {
+            filterCollapse.classList.add('show');
+            filterCollapse.style.display = 'block';
+            filterToggleIcon.classList.remove('bi-chevron-down');
+            filterToggleIcon.classList.add('bi-chevron-up');
+            if (filterToggleText) filterToggleText.textContent = 'Hide Filters';
+            filterToggleBtn.setAttribute('aria-expanded', 'true');
+            filterToggleBtn.classList.remove('collapsed');
+          }
+        }
+      });
+    }
+
+    // Header click trigger (mobile / desktop convenience, excluding direct pill or button clicks)
+    if (filterHeader) {
+      filterHeader.addEventListener('click', function(e) {
+        if (e.target.closest('#rhDaActivePill') || e.target.closest('#rhDaFilterToggleBtn')) {
+          return;
+        }
+        if (filterToggleBtn) {
+          filterToggleBtn.click();
+        }
+      });
+    }
+  }
+
+  // Auto-submit search on Enter key
+  if (searchInput && form) {
     searchInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        clearTimeout(searchTimeout);
         form.submit();
       }
     });
   }
 
-  // Auto-submit on filter changes
-  [genreFilter, verifiedFilter, sortFilter].forEach(filter => {
-    if (filter) {
-      filter.addEventListener('change', function() {
-        clearTimeout(searchTimeout);
+  // Auto-submit on server-backed dropdown changes
+  [genreFilter, verifiedFilter, sortFilter].forEach(selectEl => {
+    if (selectEl && form) {
+      selectEl.addEventListener('change', function() {
         form.submit();
       });
     }
   });
-
-  // Enhanced form submission with loading state
-  if (form) {
-    form.addEventListener('submit', function() {
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
-        submitBtn.disabled = true;
-        submitBtn.classList.add('loading');
-
-        // Re-enable after a delay (in case of errors)
-        setTimeout(() => {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-          submitBtn.classList.remove('loading');
-        }, 5000);
-      }
-    });
-  }
-
-  // Highlight search terms in results
-  const searchTerm = '<%= filters.search || "" %>';
-  if (searchTerm.trim()) {
-    highlightSearchTerms(searchTerm.trim());
-  }
-
-  // Function to highlight search terms
-  function highlightSearchTerms(term) {
-    if (!term) return;
-
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const artistCards = document.querySelectorAll('.artist-card');
-
-    artistCards.forEach(card => {
-      const title = card.querySelector('.card-title');
-      const details = card.querySelectorAll('.card-text');
-
-      if (title && !title.querySelector('mark')) {
-        const originalText = title.textContent;
-        if (regex.test(originalText)) {
-          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
-        }
-      }
-
-      details.forEach(detail => {
-        if (detail && !detail.querySelector('mark')) {
-          const originalText = detail.textContent;
-          if (regex.test(originalText)) {
-            detail.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
-          }
-        }
-      });
-    });
-  }
-
-  // Show active filter indicators
-  function updateFilterIndicators() {
-    const hasFilters = '<%= filters.search || filters.genre || filters.verified !== "all" || filters.sort !== "oldest" %>';
-
-    if (hasFilters) {
-      const filterHeader = document.querySelector('.card-header h5');
-      if (filterHeader && !filterHeader.querySelector('.badge')) {
-        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
-      }
-    }
-  }
-
-  updateFilterIndicators();
-
-  // Handle filter toggle icon rotation
-  const filterCollapse = document.getElementById('filterCollapse');
-  const filterToggleIcon = document.getElementById('filterToggleIcon');
-
-  if (filterCollapse && filterToggleIcon) {
-    filterCollapse.addEventListener('show.bs.collapse', function () {
-      filterToggleIcon.classList.remove('bi-chevron-down');
-      filterToggleIcon.classList.add('bi-chevron-up');
-    });
-
-    filterCollapse.addEventListener('hide.bs.collapse', function () {
-      filterToggleIcon.classList.remove('bi-chevron-up');
-      filterToggleIcon.classList.add('bi-chevron-down');
-    });
-  }
 });
 </script>
-
-<style>
-/* Enhanced styles for artists page */
-.artist-card {
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.artist-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.artist-thumbnail {
-  height: 200px;
-  object-fit: cover;
-  transition: all 0.3s ease;
-}
-
-.artist-card:hover .artist-thumbnail {
-  transform: scale(1.05);
-}
-
-/* Enhanced form styling */
-.form-control:focus, .form-select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-}
-
-.input-group-text {
-  border-color: #dee2e6;
-}
-
-.form-label {
-  color: #495057;
-  margin-bottom: 0.5rem;
-}
-
-/* Button enhancements */
-.btn {
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
-}
-
-/* Card enhancements */
-.card {
-  transition: all 0.3s ease;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.card-header {
-  border-radius: 12px 12px 0 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Badge styling */
-.badge {
-  font-size: 0.75em;
-  padding: 0.5em 0.75em;
-  border-radius: 6px;
-}
-
-/* Search highlighting */
-mark {
-  padding: 0.1em 0.3em;
-  border-radius: 4px;
-  background-color: #fff3cd;
-  color: #856404;
-  font-weight: 500;
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-.loading {
-  animation: pulse 1.5s infinite;
-}
-
-/* Filter indicator */
-.badge.bg-light {
-  color: #6366f1 !important;
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .artist-card {
-    margin-bottom: 1.5rem;
-  }
-
-  .artist-thumbnail {
-    height: 150px;
-  }
-
-  .btn {
-    margin-bottom: 0.5rem;
-  }
-
-  .d-flex.flex-wrap.gap-2 {
-    justify-content: center;
-  }
-}
-
-/* Smooth transitions for all interactive elements */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-</style>

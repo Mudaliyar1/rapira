@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+  <defs>
+    <filter id="pinShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#3d1d16" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#pinShadow)">
+    <!-- Backing Card -->
+    <rect x="80" y="70" width="240" height="260" rx="16" fill="#FFFDF8" stroke="#EAC8B7" stroke-width="2.5"/>
+    <text x="200" y="110" font-family="'Titan One', sans-serif" font-size="16" fill="#9F190E" text-anchor="middle" letter-spacing="2">RAPIRA</text>
+    <text x="200" y="125" font-family="sans-serif" font-size="9" font-weight="bold" fill="#776e65" text-anchor="middle" letter-spacing="1.5">COLLECTOR ENAMEL PINS</text>
+    
+    <!-- Pin 1: Mic -->
+    <circle cx="145" cy="180" r="34" fill="#9F190E" stroke="#EAC8B7" stroke-width="3"/>
+    <path d="M145 160 L145 195" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="145" cy="165" r="9" fill="#FFFFFF"/>
+
+    <!-- Pin 2: Boombox / Tape -->
+    <rect x="215" y="155" width="55" height="42" rx="8" fill="#24201F" stroke="#EAC8B7" stroke-width="3"/>
+    <circle cx="230" cy="176" r="7" fill="#9F190E"/>
+    <circle cx="255" cy="176" r="7" fill="#9F190E"/>
+
+    <!-- Pin 3: Soundwave -->
+    <rect x="130" y="240" width="140" height="45" rx="10" fill="#9F190E" stroke="#EAC8B7" stroke-width="3"/>
+    <g transform="translate(150, 252)">
+      <rect x="0" y="4" width="4" height="12" rx="2" fill="#FFFFFF"/>
+      <rect x="10" y="1" width="4" height="18" rx="2" fill="#EAC8B7"/>
+      <rect x="20" y="6" width="4" height="8" rx="2" fill="#FFFFFF"/>
+      <rect x="30" y="0" width="4" height="20" rx="2" fill="#FCF0E4"/>
+      <rect x="40" y="4" width="4" height="12" rx="2" fill="#FFFFFF"/>
+      <rect x="50" y="1" width="4" height="18" rx="2" fill="#EAC8B7"/>
+      <rect x="60" y="6" width="4" height="8" rx="2" fill="#FFFFFF"/>
+      <rect x="70" y="2" width="4" height="16" rx="2" fill="#FCF0E4"/>
+      <rect x="80" y="4" width="4" height="12" rx="2" fill="#FFFFFF"/>
+      <rect x="90" y="7" width="4" height="6" rx="2" fill="#EAC8B7"/>
+    </g>
+  </g>
+</svg>

@@ -149,8 +149,13 @@ router.get('/', async (req, res) => {
     const formattedReels = homeReels.map(reel => ({
       _id: reel._id,
       media: reel.media,
+      caption: reel.caption || '',
+      likesCount: reel.likesCount || (reel.likes ? reel.likes.length : 0),
+      commentsCount: reel.comments ? reel.comments.length : 0,
       artist: {
-        stageName: reel.artistData.stageName,
+        _id: reel.artistData ? reel.artistData._id : '',
+        stageName: reel.artistData ? reel.artistData.stageName : 'Artist',
+        verified: reel.artistData ? (reel.artistData.verified || false) : false,
         profileImage: reel.artistUser ? reel.artistUser.profileImage : '/images/default-profile.svg'
       }
     }));

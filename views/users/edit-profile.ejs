@@ -1,152 +1,216 @@
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card">
-        <div class="card-header bg-white py-3">
-          <h3 class="card-title fw-bold mb-0">Edit Profile</h3>
+<div class="rapira-profile-page">
+  <div class="container">
+    <div class="rh-subpage-container">
+      
+      <!-- Page Navigation Header -->
+      <div class="rh-page-header-nav">
+        <div class="rh-page-header-left">
+          <a href="/users/profile" class="rh-back-circle-btn" title="Back to Profile">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+          <h1 class="rh-page-title">Edit Profile</h1>
         </div>
-        <div class="card-body p-4">
-          <form action="/users/update-profile" method="POST" enctype="multipart/form-data">
-            <div class="row g-4">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="name" class="form-label">Full Name</label>
-                  <input type="text" class="form-control" id="name" name="name" value="<%= user.name %>" required>
-                </div>
-                
-                <div class="mb-3">
-                  <label for="bio" class="form-label">Bio</label>
-                  <textarea class="form-control" id="bio" name="bio" rows="4"><%= user.bio %></textarea>
-                </div>
-                
-                <div class="mb-3">
-                  <label for="city" class="form-label">City</label>
-                  <input type="text" class="form-control" id="city" name="city" value="<%= user.city %>">
-                </div>
+      </div>
 
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label for="age" class="form-label">Age (optional)</label>
-                    <input type="number" class="form-control" id="age" name="age" min="0" max="120" value="<%= user.age || '' %>" placeholder="Enter your age">
-                  </div>
-                  <div class="col-md-6">
-                    <label for="heardFrom" class="form-label">How did you hear about us? (optional)</label>
-                    <input type="text" class="form-control" id="heardFrom" name="heardFrom" value="<%= user.heardFrom || '' %>" placeholder="Friend, Instagram, ad, etc.">
-                  </div>
-                </div>
-              </div>
-              
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label for="profileImage" class="form-label">Profile Image</label>
-                  <input type="file" class="form-control" id="profileImage" name="profileImage">
-                  <div class="form-text">Recommended size: 400x400px (square). JPG, PNG, GIF (max 5MB)</div>
-                  
-                  <% if (user.profileImage) { %>
-                    <div class="mt-2">
-                      <img src="<%= user.profileImage %>" alt="Current Profile Image" class="img-thumbnail" width="100">
-                      <small class="d-block text-muted">Current profile image</small>
-                    </div>
-                  <% } else { %>
-                    <div class="mt-2">
-                      <img src="<%= user.displayProfileImage %>" alt="Default avatar" class="img-thumbnail rounded-circle" width="100" height="100">
-                      <small class="d-block text-muted">Current default avatar</small>
-                    </div>
-                  <% } %>
-                </div>
-                
-                <div class="mb-3">
-                  <label class="form-label">Social Media Links</label>
-                  <div class="input-group mb-2">
-                    <span class="input-group-text"><i class="bi bi-instagram"></i></span>
-                    <input type="text" class="form-control" id="instagram" name="instagram" placeholder="Instagram URL" value="<%= user.socialLinks ? user.socialLinks.instagram : '' %>">
-                  </div>
-                  <div class="input-group mb-2">
-                    <span class="input-group-text"><i class="bi bi-twitter-x"></i></span>
-                    <input type="text" class="form-control" id="twitter" name="twitter" placeholder="Twitter URL" value="<%= user.socialLinks ? user.socialLinks.twitter : '' %>">
-                  </div>
-                  <div class="input-group mb-2">
-                    <span class="input-group-text"><i class="bi bi-youtube"></i></span>
-                    <input type="text" class="form-control" id="youtube" name="youtube" placeholder="YouTube URL" value="<%= user.socialLinks ? user.socialLinks.youtube : '' %>">
-                  </div>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-spotify"></i></span>
-                    <input type="text" class="form-control" id="spotify" name="spotify" placeholder="Spotify URL" value="<%= user.socialLinks ? user.socialLinks.spotify : '' %>">
-                  </div>
-                </div>
-              </div>
-              
-              <% if (user.role === 'artist' && artist) { %>
-                <div class="col-12">
-                  <hr class="my-4">
-                  <h4 class="fw-bold mb-3">Artist Information</h4>
-                  
-                  <div class="row g-4">
-                    <div class="col-md-6">
-                      <div class="mb-3">
-                        <label for="stageName" class="form-label">Stage Name</label>
-                        <input type="text" class="form-control" id="stageName" name="stageName" value="<%= artist.stageName %>">
-                      </div>
-                      
-                      <div class="mb-3">
-                        <label for="genre" class="form-label">Genre</label>
-                        <input type="text" class="form-control" id="genre" name="genre" value="<%= artist.genre %>">
-                      </div>
-                      
-                      <div class="mb-3">
-                        <label for="yearsActive" class="form-label">Years Active</label>
-                        <input type="number" class="form-control" id="yearsActive" name="yearsActive" value="<%= artist.yearsActive %>" min="0">
-                      </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                      <div class="mb-3">
-                        <label for="about" class="form-label">About (Artist Bio)</label>
-                        <textarea class="form-control" id="about" name="about" rows="4"><%= artist.about %></textarea>
-                      </div>
-                      
-                      <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill me-2"></i> For more artist profile settings, please visit the <a href="/artists/edit-profile" class="alert-link">Artist Dashboard</a>.
-                      </div>
-                    </div>
-                  </div>
+      <!-- Main Form Card -->
+      <div class="rh-form-card">
+        <form action="/users/update-profile" method="POST" enctype="multipart/form-data">
+          
+          <!-- Avatar Preview & Upload -->
+          <div class="d-flex align-items-center gap-4 mb-4 pb-3 border-bottom flex-wrap">
+            <div class="position-relative">
+              <%
+                const hasValidDP = user.profileImage && 
+                                   user.profileImage !== '/images/default-profile.svg' && 
+                                   !user.profileImage.includes('default-profile');
+                const userInitial = (user.name && user.name.trim()) ? user.name.trim().charAt(0).toUpperCase() : 'U';
+              %>
+              <% if (hasValidDP) { %>
+                <img src="<%= user.profileImage %>" 
+                     alt="Current Profile Image" 
+                     id="avatarPreviewImg"
+                     class="rounded-circle border" 
+                     style="width: 88px; height: 88px; object-fit: cover; border: 3px solid var(--rh-peach, #EAC8B7) !important;">
+              <% } else { %>
+                <div id="avatarFallbackBox" 
+                     class="rounded-circle border d-flex align-items-center justify-content-center text-white fw-bold fs-2" 
+                     style="width: 88px; height: 88px; background: linear-gradient(135deg, #4ECDC4 0%, #2EB8AD 100%); border: 3px solid var(--rh-peach, #EAC8B7) !important;">
+                  <%= userInitial %>
                 </div>
               <% } %>
-              
-              <div class="col-12">
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                  <a href="/users/profile" class="btn btn-outline-secondary">Cancel</a>
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+
+            <div class="flex-grow-1" style="min-width: 200px;">
+              <label for="profileImage" class="rh-form-label">Profile Photo</label>
+              <input type="file" class="rh-form-control" id="profileImage" name="profileImage" accept="image/*" onchange="previewAvatar(this)">
+              <div class="rh-form-helper">Recommended: 400x400px square (JPG, PNG, GIF, max 5MB)</div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <!-- Full Name -->
+            <div class="col-md-6">
+              <label for="name" class="rh-form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="rh-form-control" id="name" name="name" value="<%= user.name %>" required placeholder="Your full name">
+            </div>
+
+            <!-- Email (Read-only in profile form; managed via OTP below) -->
+            <div class="col-md-6">
+              <label class="rh-form-label">Email Address</label>
+              <input type="email" class="rh-form-control bg-light text-muted" value="<%= user.email %>" readonly>
+            </div>
+
+            <!-- Bio -->
+            <div class="col-12">
+              <label for="bio" class="rh-form-label">Bio</label>
+              <textarea class="rh-form-control" id="bio" name="bio" rows="3" placeholder="Tell the RAPIRA community a bit about yourself..."><%= user.bio %></textarea>
+            </div>
+
+            <!-- City -->
+            <div class="col-md-4">
+              <label for="city" class="rh-form-label">City</label>
+              <input type="text" class="rh-form-control" id="city" name="city" value="<%= user.city || '' %>" placeholder="e.g. Mumbai, Delhi">
+            </div>
+
+            <!-- Age -->
+            <div class="col-md-4">
+              <label for="age" class="rh-form-label">Age (Optional)</label>
+              <input type="number" class="rh-form-control" id="age" name="age" min="0" max="120" value="<%= user.age || '' %>" placeholder="Your age">
+            </div>
+
+            <!-- Where did you hear about us? -->
+            <div class="col-md-4">
+              <label for="heardFrom" class="rh-form-label">Heard About Us? (Optional)</label>
+              <select class="rh-form-select" id="heardFrom" name="heardFrom">
+                <option value="" <%= !user.heardFrom ? 'selected' : '' %>>Select an option</option>
+                <option value="Instagram" <%= user.heardFrom === 'Instagram' ? 'selected' : '' %>>Instagram</option>
+                <option value="Friend or Colleague" <%= user.heardFrom === 'Friend or Colleague' ? 'selected' : '' %>>Friend or Colleague</option>
+                <option value="Concert or Live Event" <%= user.heardFrom === 'Concert or Live Event' ? 'selected' : '' %>>Concert or Live Event</option>
+                <option value="YouTube" <%= user.heardFrom === 'YouTube' ? 'selected' : '' %>>YouTube</option>
+                <option value="Spotify" <%= user.heardFrom === 'Spotify' ? 'selected' : '' %>>Spotify</option>
+                <option value="Google Search" <%= user.heardFrom === 'Google Search' ? 'selected' : '' %>>Google Search</option>
+                <option value="Other" <%= (user.heardFrom && !['Instagram','Friend or Colleague','Concert or Live Event','YouTube','Spotify','Google Search'].includes(user.heardFrom)) ? 'selected' : '' %>>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Social Media Links -->
+          <div class="mb-4 pt-3 border-top">
+            <h5 class="fw-bold text-dark mb-3">Social Media Links</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="rh-form-label small">Instagram</label>
+                <div class="rh-input-group">
+                  <span class="rh-input-group-prefix"><i class="bi bi-instagram"></i></span>
+                  <input type="text" class="rh-form-control" id="instagram" name="instagram" placeholder="https://instagram.com/yourhandle" value="<%= user.socialLinks ? (user.socialLinks.instagram || '') : '' %>">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="rh-form-label small">Twitter / X</label>
+                <div class="rh-input-group">
+                  <span class="rh-input-group-prefix"><i class="bi bi-twitter-x"></i></span>
+                  <input type="text" class="rh-form-control" id="twitter" name="twitter" placeholder="https://twitter.com/yourhandle" value="<%= user.socialLinks ? (user.socialLinks.twitter || '') : '' %>">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="rh-form-label small">YouTube</label>
+                <div class="rh-input-group">
+                  <span class="rh-input-group-prefix"><i class="bi bi-youtube"></i></span>
+                  <input type="text" class="rh-form-control" id="youtube" name="youtube" placeholder="https://youtube.com/@yourchannel" value="<%= user.socialLinks ? (user.socialLinks.youtube || '') : '' %>">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="rh-form-label small">Spotify</label>
+                <div class="rh-input-group">
+                  <span class="rh-input-group-prefix"><i class="bi bi-spotify"></i></span>
+                  <input type="text" class="rh-form-control" id="spotify" name="spotify" placeholder="https://open.spotify.com/artist/..." value="<%= user.socialLinks ? (user.socialLinks.spotify || '') : '' %>">
                 </div>
               </div>
             </div>
-          </form>
-
-          <!-- Email change section -->
-          <div class="mt-5">
-            <h4 class="fw-bold mb-3">Change Email</h4>
-            <p class="text-muted mb-3">Step 1: Send OTP to your current email. Step 2: Enter OTP and new email on the next page.</p>
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Current Email</label>
-                <input type="email" class="form-control" value="<%= user.email %>" readonly>
-              </div>
-            </div>
-
-            <!-- Request OTP form (no new email here) -->
-            <form action="/users/email-change/request-otp" method="POST" class="row g-3 mt-3">
-              <div class="col-md-12 d-flex justify-content-end">
-                <button type="submit" class="btn btn-outline-primary">Send OTP to current email</button>
-              </div>
-            </form>
-
-            <div class="mt-2 text-muted" style="font-size: 0.95rem;">
-              After sending the OTP, proceed to the verification page to enter the code and your new email.
-            </div>
           </div>
+
+          <!-- Artist Details (If applicable) -->
+          <% if (user.role === 'artist' && artist) { %>
+            <div class="mb-4 pt-3 border-top">
+              <h5 class="fw-bold text-dark mb-3">Artist Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="stageName" class="rh-form-label">Stage Name</label>
+                  <input type="text" class="rh-form-control" id="stageName" name="stageName" value="<%= artist.stageName || '' %>" placeholder="Artist performing name">
+                </div>
+                <div class="col-md-6">
+                  <label for="genre" class="rh-form-label">Genre</label>
+                  <input type="text" class="rh-form-control" id="genre" name="genre" value="<%= artist.genre || '' %>" placeholder="Hip Hop, Trap, Drill...">
+                </div>
+                <div class="col-md-6">
+                  <label for="yearsActive" class="rh-form-label">Years Active</label>
+                  <input type="number" class="rh-form-control" id="yearsActive" name="yearsActive" value="<%= artist.yearsActive || '' %>" min="0">
+                </div>
+                <div class="col-md-6">
+                  <label for="about" class="rh-form-label">Artist Bio</label>
+                  <textarea class="rh-form-control" id="about" name="about" rows="3" placeholder="Tell fans about your journey..."><%= artist.about || '' %></textarea>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Form Action Buttons -->
+          <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+            <a href="/users/profile" class="rh-btn-secondary">Cancel</a>
+            <button type="submit" class="rh-btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+
+        <!-- Change Email Section (Preserved logic) -->
+        <div class="mt-5 pt-4 border-top">
+          <h5 class="fw-bold text-dark mb-2">Change Email</h5>
+          <p class="text-muted small mb-3">
+            To update your email, send a one-time verification code (OTP) to your registered email address.
+          </p>
+
+          <form action="/users/email-change/request-otp" method="POST" class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="flex-grow-1" style="min-width: 240px;">
+              <input type="email" class="rh-form-control bg-light text-muted" value="<%= user.email %>" readonly>
+            </div>
+            <button type="submit" class="rh-btn-secondary">
+              <i class="bi bi-envelope-arrow-up me-1"></i> Send OTP to Email
+            </button>
+          </form>
         </div>
+
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        let preview = document.getElementById('avatarPreviewImg');
+        const fallback = document.getElementById('avatarFallbackBox');
+        if (!preview) {
+          preview = document.createElement('img');
+          preview.id = 'avatarPreviewImg';
+          preview.className = 'rounded-circle border';
+          preview.style.width = '88px';
+          preview.style.height = '88px';
+          preview.style.objectFit = 'cover';
+          preview.style.border = '3px solid var(--rh-peach, #EAC8B7)';
+          if (fallback) {
+            fallback.parentNode.replaceChild(preview, fallback);
+          }
+        }
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>

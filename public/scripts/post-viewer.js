@@ -89,13 +89,36 @@ async function viewPost(postId) {
     const artistImg = document.getElementById('post-artist-img');
     const artistProfileUrl = `/artists/${currentPost.artist._id}`;
 
-    document.getElementById('post-artist-name').textContent = currentPost.artist.stageName || 'Artist';
-    artistLink.href = artistProfileUrl;
-    artistImg.src = currentPost.artist.profileImage || '/images/default-profile.svg';
-    artistImg.style.cursor = 'pointer';
-    artistImg.onclick = () => window.location.href = artistProfileUrl;
+    const stageName = currentPost.artist.stageName || 'Artist';
+    const profileImg = currentPost.artist.profileImage || '/images/default-profile.svg';
+    const timeAgo = formatTimeAgo(currentPost.createdAt);
 
-    document.getElementById('post-created-at').textContent = formatTimeAgo(currentPost.createdAt);
+    if (document.getElementById('post-artist-name')) {
+      document.getElementById('post-artist-name').textContent = stageName;
+    }
+    if (artistLink) artistLink.href = artistProfileUrl;
+    if (artistImg) {
+      artistImg.src = profileImg;
+      artistImg.style.cursor = 'pointer';
+      artistImg.onclick = () => window.location.href = artistProfileUrl;
+    }
+
+    // Populate mobile header elements if present
+    const mobileArtistName = document.getElementById('post-artist-name-mobile');
+    const mobileArtistLink = document.getElementById('post-artist-link-mobile');
+    const mobileArtistImg = document.getElementById('post-artist-img-mobile');
+    const mobileCreatedAt = document.getElementById('post-created-at-mobile');
+    if (mobileArtistName) mobileArtistName.textContent = stageName;
+    if (mobileArtistLink) mobileArtistLink.href = artistProfileUrl;
+    if (mobileArtistImg) {
+      mobileArtistImg.src = profileImg;
+      mobileArtistImg.onclick = () => window.location.href = artistProfileUrl;
+    }
+    if (mobileCreatedAt) mobileCreatedAt.textContent = timeAgo;
+
+    if (document.getElementById('post-created-at')) {
+      document.getElementById('post-created-at').textContent = timeAgo;
+    }
     document.getElementById('post-likes-count').textContent = currentPost.likesDisplay || currentPost.fakeLikesLabel || currentPost.likesCount || 0;
     document.getElementById('post-shares-count').textContent = currentPost.shares || 0;
     document.getElementById('post-views-count').textContent = currentPost.fakeViewsLabel || currentPost.viewsDisplay || currentPost.views || 0;
@@ -144,9 +167,16 @@ async function viewPost(postId) {
       currentPost.hashtags.forEach(tag => {
         const span = document.createElement('span');
         span.textContent = tag.startsWith('#') ? tag : `#${tag}`;
-        span.style.color = '#00d4ff';
-        span.style.fontSize = '0.95rem';
-        span.style.marginRight = '8px';
+        span.style.color = '#9F190E';
+        span.style.fontSize = '0.85rem';
+        span.style.fontWeight = '600';
+        span.style.background = '#FCF0E4';
+        span.style.border = '1px solid #EAC8B7';
+        span.style.borderRadius = '999px';
+        span.style.padding = '3px 10px';
+        span.style.marginRight = '6px';
+        span.style.marginBottom = '6px';
+        span.style.display = 'inline-block';
         hashtagsContainer.appendChild(span);
       });
       console.log('[POST VIEWER] Showing separate hashtags section');
@@ -177,65 +207,64 @@ async function viewPost(postId) {
     });
 
     if (isAudio) {
-      // AUDIO BLOCK - (Show animated visualizer)
-      // Create audio player container (Premium Rapira design)
+      // AUDIO BLOCK - (Show animated visualizer in Rapira Crimson & Cream)
       const audioContainer = document.createElement('div');
       audioContainer.className = 'audio-visualizer-modal';
-      audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
+      audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #181413 0%, #2A1D1A 100%);';
 
       const audioThumbnailUrl = (currentPost.media && currentPost.media.thumbnailUrl) ? currentPost.media.thumbnailUrl : '';
       const hasAudioThumbnail = !!audioThumbnailUrl;
 
       if (hasAudioThumbnail) {
-        audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: #000;';
+        audioContainer.style.cssText = 'width: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: #181413;';
         const cover = document.createElement('img');
         cover.src = audioThumbnailUrl;
         cover.alt = 'Audio thumbnail';
-        cover.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;';
+        cover.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));';
         cover.onerror = function () { this.onerror = null; this.src = '/images/default-thumbnail.jpg'; };
         audioContainer.appendChild(cover);
       }
 
-      // Inline SVG Visualizer (Guaranteed to animate)
+      // Inline SVG Visualizer in Rapira Crimson & Peach
       const svgHtml = `
-        <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
-          <rect x="10" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+        <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(159, 25, 14, 0.5));">
+          <rect x="10" y="40" width="12" height="40" rx="6" fill="#9F190E">
             <animate attributeName="height" values="20;80;20" dur="1s" repeatCount="indefinite" />
             <animate attributeName="y" values="50;20;50" dur="1s" repeatCount="indefinite" />
           </rect>
-          <rect x="35" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+          <rect x="35" y="40" width="12" height="40" rx="6" fill="#C43224">
             <animate attributeName="height" values="30;100;30" dur="0.8s" repeatCount="indefinite" />
             <animate attributeName="y" values="45;10;45" dur="0.8s" repeatCount="indefinite" />
           </rect>
-          <rect x="60" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+          <rect x="60" y="40" width="12" height="40" rx="6" fill="#EAC8B7">
             <animate attributeName="height" values="25;90;25" dur="1.2s" repeatCount="indefinite" />
             <animate attributeName="y" values="47.5;15;47.5" dur="1.2s" repeatCount="indefinite" />
           </rect>
-          <rect x="85" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+          <rect x="85" y="40" width="12" height="40" rx="6" fill="#9F190E">
             <animate attributeName="height" values="40;110;40" dur="0.7s" repeatCount="indefinite" />
             <animate attributeName="y" values="40;5;40" dur="0.7s" repeatCount="indefinite" />
           </rect>
-          <rect x="110" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+          <rect x="110" y="40" width="12" height="40" rx="6" fill="#EAC8B7">
             <animate attributeName="height" values="20;70;20" dur="1.5s" repeatCount="indefinite" />
             <animate attributeName="y" values="50;25;50" dur="1.5s" repeatCount="indefinite" />
           </rect>
-          <rect x="135" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+          <rect x="135" y="40" width="12" height="40" rx="6" fill="#C43224">
             <animate attributeName="height" values="35;95;35" dur="0.9s" repeatCount="indefinite" />
             <animate attributeName="y" values="42.5;12.5;42.5" dur="0.9s" repeatCount="indefinite" />
           </rect>
-          <rect x="160" y="40" width="12" height="40" rx="6" fill="#7c4dff">
+          <rect x="160" y="40" width="12" height="40" rx="6" fill="#EAC8B7">
             <animate attributeName="height" values="25;85;25" dur="1.1s" repeatCount="indefinite" />
             <animate attributeName="y" values="47.5;17.5;47.5" dur="1.1s" repeatCount="indefinite" />
           </rect>
-          <rect x="185" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+          <rect x="185" y="40" width="12" height="40" rx="6" fill="#9F190E">
             <animate attributeName="height" values="30;105;30" dur="0.75s" repeatCount="indefinite" />
             <animate attributeName="y" values="45;7.5;45" dur="0.75s" repeatCount="indefinite" />
           </rect>
-          <rect x="210" y="40" width="12" height="40" rx="6" fill="#00d4ff">
+          <rect x="210" y="40" width="12" height="40" rx="6" fill="#C43224">
             <animate attributeName="height" values="20;100;20" dur="1.3s" repeatCount="indefinite" />
             <animate attributeName="y" values="50;10;50" dur="1.3s" repeatCount="indefinite" />
           </rect>
-          <text x="50%" y="120" text-anchor="middle" fill="rgba(0, 212, 255, 0.4)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA AUDIO</text>
+          <text x="50%" y="120" text-anchor="middle" fill="rgba(234, 200, 183, 0.7)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA MUSIC</text>
         </svg>
       `;
 
@@ -245,45 +274,53 @@ async function viewPost(postId) {
         audioContainer.appendChild(vizContainer);
       }
 
-      // Audio player (hidden)
+      // Audio element (hidden, no unexpected autoplay)
       const audio = document.createElement('audio');
       audio.src = currentPost.media.url;
+      audio.preload = 'metadata';
       audio.style.cssText = 'display: none;';
       audioContainer.appendChild(audio);
 
-      // Autoplay handler with fallback
-      const attemptPlay = () => {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.log('[POST VIEWER] Auto-play blocked by browser. User interaction required.');
-            // Add a visual "Click to Play" overlay if needed, 
-            // but the Play button in playerContainer already serves this purpose.
-            playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-          });
-        }
-      };
-
-      // Attempt play on load
-      attemptPlay();
-
-      // Minimal player container (Spotify style)
+      // Minimal player container (Rapira Cream & Crimson style)
       const playerContainer = document.createElement('div');
       playerContainer.style.cssText = hasAudioThumbnail
-        ? 'display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); max-width: 680px; background: rgba(0, 0, 0, 0.58); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0, 212, 255, 0.25); backdrop-filter: blur(10px); z-index: 12; position: absolute; left: 10px; right: 10px; bottom: 10px;'
-        : 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
+        ? 'display: flex; align-items: center; gap: 12px; width: calc(100% - 24px); max-width: 640px; background: rgba(255, 253, 248, 0.94); padding: 10px 16px; border-radius: 9999px; border: 1.5px solid #EAC8B7; backdrop-filter: blur(12px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); z-index: 12; position: absolute; left: 12px; right: 12px; bottom: 12px;'
+        : 'display: flex; align-items: center; gap: 14px; width: 100%; max-width: 480px; background: #FFFDF8; padding: 12px 20px; border-radius: 9999px; border: 1.5px solid #EAC8B7; box-shadow: 0 8px 24px rgba(159, 25, 14, 0.08); z-index: 10;';
 
-      // Play/Pause button - circular
+      // Play/Pause button - circular crimson (starts with Play icon)
       const playBtn = document.createElement('button');
-      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-      playBtn.style.cssText = 'background: #00d4ff; border: none; color: #000; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 1.4rem; box-shadow: 0 0 15px rgba(0,212,255,0.4);';
+      playBtn.setAttribute('type', 'button');
+      playBtn.setAttribute('aria-label', 'Play audio');
+      playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+      playBtn.style.cssText = 'background: #9F190E; border: none; color: #FFFFFF; cursor: pointer; width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(159, 25, 14, 0.35);';
 
-      playBtn.addEventListener('click', function () {
-        if (audio.paused) audio.play(); else audio.pause();
+      playBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (audio.paused) {
+          audio.play().catch(err => {
+            console.warn('[POST VIEWER] Audio play error:', err);
+            showToast('Unable to start audio playback', 'error');
+          });
+        } else {
+          audio.pause();
+        }
       });
 
-      audio.addEventListener('play', () => playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>');
-      audio.addEventListener('pause', () => playBtn.innerHTML = '<i class="bi bi-play-fill"></i>');
+      audio.addEventListener('play', () => {
+        playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+        playBtn.setAttribute('aria-label', 'Pause audio');
+      });
+      audio.addEventListener('pause', () => {
+        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        playBtn.setAttribute('aria-label', 'Play audio');
+      });
+      audio.addEventListener('ended', () => {
+        playBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+        playBtn.setAttribute('aria-label', 'Play audio');
+        audio.currentTime = 0;
+        if (progress) progress.style.width = '0%';
+        if (currentTimeSpan) currentTimeSpan.textContent = '0:00';
+      });
 
       playerContainer.appendChild(playBtn);
 
@@ -293,28 +330,35 @@ async function viewPost(postId) {
 
       // Progress bar
       const progressBar = document.createElement('div');
-      progressBar.style.cssText = 'height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative;';
+      progressBar.style.cssText = 'height: 6px; background: #EAC8B7; border-radius: 999px; cursor: pointer; position: relative; overflow: hidden;';
 
       const progress = document.createElement('div');
-      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 2px; width: 0%; box-shadow: 0 0 8px rgba(0,212,255,0.6); transition: width 0.1s linear;';
+      progress.style.cssText = 'height: 100%; background: #9F190E; border-radius: 999px; width: 0%; transition: width 0.1s linear;';
       progressBar.appendChild(progress);
 
       audio.addEventListener('timeupdate', () => {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progress.style.width = percent + '%';
+        if (audio.duration && !isNaN(audio.duration)) {
+          const percent = (audio.currentTime / audio.duration) * 100;
+          progress.style.width = percent + '%';
+        }
+        currentTimeSpan.textContent = formatT(audio.currentTime);
       });
 
       progressBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!audio.duration || isNaN(audio.duration) || !isFinite(audio.duration)) return;
         const rect = progressBar.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
+        const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         audio.currentTime = percent * audio.duration;
+        progress.style.width = (percent * 100) + '%';
+        currentTimeSpan.textContent = formatT(audio.currentTime);
       });
 
       progressWrapper.appendChild(progressBar);
 
       // Time display
       const timeDisplay = document.createElement('div');
-      timeDisplay.style.cssText = 'display: flex; justify-content: space-between; color: rgba(255,255,255,0.5); font-size: 0.75rem; font-family: monospace;';
+      timeDisplay.style.cssText = 'display: flex; justify-content: space-between; color: #7A6F68; font-size: 0.75rem; font-family: "Poppins", sans-serif; font-weight: 600;';
 
       const currentTimeSpan = document.createElement('span');
       currentTimeSpan.textContent = '0:00';
@@ -325,21 +369,34 @@ async function viewPost(postId) {
       timeDisplay.appendChild(durationSpan);
 
       const formatT = (s) => {
-        if (isNaN(s)) return '0:00';
+        if (isNaN(s) || !isFinite(s) || s < 0) return '0:00';
         const m = Math.floor(s / 60);
         const sc = Math.floor(s % 60);
         return m + ':' + (sc < 10 ? '0' : '') + sc;
       };
 
-      audio.addEventListener('timeupdate', () => currentTimeSpan.textContent = formatT(audio.currentTime));
-      audio.addEventListener('loadedmetadata', () => durationSpan.textContent = formatT(audio.duration));
+      const updateDuration = () => {
+        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+          durationSpan.textContent = formatT(audio.duration);
+        }
+      };
+
+      audio.addEventListener('loadedmetadata', updateDuration);
+      audio.addEventListener('durationchange', updateDuration);
+      audio.addEventListener('canplay', updateDuration);
+      audio.addEventListener('error', (e) => {
+        console.warn('[POST VIEWER] Audio source error:', e);
+        durationSpan.textContent = '--:--';
+      });
 
       progressWrapper.appendChild(timeDisplay);
       playerContainer.appendChild(progressWrapper);
 
+      // Volume control
       const volIcon = document.createElement('i');
       volIcon.className = 'bi bi-volume-up ms-2';
-      volIcon.style.cssText = 'color: #00d4ff; opacity: 0.8; cursor: pointer;';
+      volIcon.style.cssText = 'color: #9F190E; opacity: 0.85; cursor: pointer; font-size: 1.1rem;';
+      volIcon.setAttribute('title', 'Mute / Unmute');
 
       const volSlider = document.createElement('input');
       volSlider.type = 'range';
@@ -347,34 +404,44 @@ async function viewPost(postId) {
       volSlider.max = '100';
       volSlider.value = '80';
       audio.volume = 0.8;
-      volSlider.style.cssText = 'width: 70px; height: 4px; cursor: pointer; -webkit-appearance: none; background: rgba(0, 212, 255, 0.2); border-radius: 2px; outline: none; margin-left: 8px; flex-shrink: 0;';
+      let prevVolume = 0.8;
+      volSlider.style.cssText = 'width: 64px; height: 5px; cursor: pointer; -webkit-appearance: none; background: #EAC8B7; border-radius: 999px; outline: none; margin-left: 8px; flex-shrink: 0;';
 
-      // Reuse slider thumb styling for audio controls if needed.
+      // Slider thumb styling for audio controls
       if (!document.getElementById('rapira-audio-thumb-style')) {
         const styleTag = document.createElement('style');
         styleTag.id = 'rapira-audio-thumb-style';
         styleTag.textContent = `
-          input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,212,255,0.6); border: none; }
-          input[type=range]::-moz-range-thumb { height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0,212,255,0.6); }
+          input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 13px; width: 13px; border-radius: 50%; background: #9F190E; cursor: pointer; box-shadow: 0 0 6px rgba(159,25,14,0.5); border: none; }
+          input[type=range]::-moz-range-thumb { height: 13px; width: 13px; border-radius: 50%; background: #9F190E; cursor: pointer; border: none; box-shadow: 0 0 6px rgba(159,25,14,0.5); }
         `;
         document.head.appendChild(styleTag);
       }
 
-      volSlider.addEventListener('input', (e) => {
-        const val = e.target.value / 100;
-        audio.volume = val;
+      const updateVolIcon = (val) => {
         volIcon.className = val === 0 ? 'bi bi-volume-mute ms-2' : val < 0.5 ? 'bi bi-volume-down ms-2' : 'bi bi-volume-up ms-2';
+      };
+
+      volSlider.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const val = parseFloat(e.target.value) / 100;
+        audio.volume = val;
+        if (val > 0) prevVolume = val;
+        updateVolIcon(val);
       });
 
-      volIcon.addEventListener('click', () => {
+      volIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (audio.volume > 0) {
+          prevVolume = audio.volume;
           audio.volume = 0;
           volSlider.value = '0';
-          volIcon.className = 'bi bi-volume-mute ms-2';
+          updateVolIcon(0);
         } else {
-          audio.volume = 0.8;
-          volSlider.value = '80';
-          volIcon.className = 'bi bi-volume-up ms-2';
+          const restore = prevVolume > 0 ? prevVolume : 0.8;
+          audio.volume = restore;
+          volSlider.value = String(Math.round(restore * 100));
+          updateVolIcon(restore);
         }
       });
 
@@ -406,7 +473,7 @@ async function viewPost(postId) {
             const unmuteOverlay = document.createElement('div');
             unmuteOverlay.id = 'video-unmute-overlay';
             unmuteOverlay.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 15px 25px; border-radius: 40px; cursor: pointer; z-index: 101; display: flex; align-items: center; gap: 10px; font-weight: 600; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2);';
-            unmuteOverlay.innerHTML = '<i class="bi bi-play-circle-fill" style="font-size: 1.5rem; color: #00d4ff;"></i> TAP TO PLAY';
+            unmuteOverlay.innerHTML = '<i class="bi bi-play-circle-fill" style="font-size: 1.5rem; color: #9F190E;"></i> TAP TO PLAY';
 
             unmuteOverlay.onclick = () => {
               video.play();
@@ -427,7 +494,7 @@ async function viewPost(postId) {
       // Play/Pause button
       const playBtn = document.createElement('button');
       playBtn.innerHTML = '<i class="bi bi-pause-fill" style="font-size: 1.2rem;"></i>';
-      playBtn.style.cssText = 'background: white; border: none; color: #333; cursor: pointer; padding: 6px 10px; border-radius: 6px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s;';
+      playBtn.style.cssText = 'background: #9F190E; border: none; color: #FFFFFF; cursor: pointer; padding: 6px 10px; border-radius: 6px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s;';
       playBtn.onmouseover = () => playBtn.style.transform = 'scale(1.1)';
       playBtn.onmouseout = () => playBtn.style.transform = 'scale(1)';
 
@@ -458,7 +525,7 @@ async function viewPost(postId) {
       progressBar.style.cssText = 'flex: 1; height: 6px; background: rgba(255,255,255,0.25); border-radius: 3px; cursor: pointer; position: relative;';
 
       const progress = document.createElement('div');
-      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 3px; width: 0%;';
+      progress.style.cssText = 'height: 100%; background: #9F190E; border-radius: 3px; width: 0%;';
       progressBar.appendChild(progress);
 
       // Update progress bar
@@ -535,205 +602,11 @@ async function viewPost(postId) {
       videoContainer.appendChild(controlsContainer);
       mediaContainer.appendChild(videoContainer);
       console.log('[POST VIEWER] Video loaded with overlay controls');
-    } else if (currentPost.media.mediaType === 'audio') {
-      // Create audio player container (Premium Rapira design)
-      const audioContainer = document.createElement('div');
-      audioContainer.className = 'audio-visualizer-modal';
-      audioContainer.style.cssText = 'width: 100%; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #050510 0%, #1a1a2e 100%);';
-
-      const audioThumbnailUrl = (currentPost.media && currentPost.media.thumbnailUrl) ? currentPost.media.thumbnailUrl : '';
-      const hasAudioThumbnail = !!audioThumbnailUrl;
-
-      if (hasAudioThumbnail) {
-        audioContainer.style.cssText = 'width: 100%; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 20px; padding: 20px; position: relative; overflow: hidden; background: #000;';
-        const cover = document.createElement('img');
-        cover.src = audioThumbnailUrl;
-        cover.alt = 'Audio thumbnail';
-        cover.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1;';
-        cover.onerror = function () { this.onerror = null; this.src = '/images/default-thumbnail.jpg'; };
-        audioContainer.appendChild(cover);
-      }
-
-      // Inline SVG Visualizer (Guaranteed to animate)
-      const svgHtml = `
-        <svg width="240" height="120" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));">
-          <rect x="10" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="20;80;20" dur="1s" repeatCount="indefinite" />
-            <animate attributeName="y" values="50;20;50" dur="1s" repeatCount="indefinite" />
-          </rect>
-          <rect x="35" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="30;100;30" dur="0.8s" repeatCount="indefinite" />
-            <animate attributeName="y" values="45;10;45" dur="0.8s" repeatCount="indefinite" />
-          </rect>
-          <rect x="60" y="40" width="12" height="40" rx="6" fill="#7c4dff">
-            <animate attributeName="height" values="25;90;25" dur="1.2s" repeatCount="indefinite" />
-            <animate attributeName="y" values="47.5;15;47.5" dur="1.2s" repeatCount="indefinite" />
-          </rect>
-          <rect x="85" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="40;110;40" dur="0.7s" repeatCount="indefinite" />
-            <animate attributeName="y" values="40;5;40" dur="0.7s" repeatCount="indefinite" />
-          </rect>
-          <rect x="110" y="40" width="12" height="40" rx="6" fill="#7c4dff">
-            <animate attributeName="height" values="20;70;20" dur="1.5s" repeatCount="indefinite" />
-            <animate attributeName="y" values="50;25;50" dur="1.5s" repeatCount="indefinite" />
-          </rect>
-          <rect x="135" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="35;95;35" dur="0.9s" repeatCount="indefinite" />
-            <animate attributeName="y" values="42.5;12.5;42.5" dur="0.9s" repeatCount="indefinite" />
-          </rect>
-          <rect x="160" y="40" width="12" height="40" rx="6" fill="#7c4dff">
-            <animate attributeName="height" values="25;85;25" dur="1.1s" repeatCount="indefinite" />
-            <animate attributeName="y" values="47.5;17.5;47.5" dur="1.1s" repeatCount="indefinite" />
-          </rect>
-          <rect x="185" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="30;105;30" dur="0.75s" repeatCount="indefinite" />
-            <animate attributeName="y" values="45;7.5;45" dur="0.75s" repeatCount="indefinite" />
-          </rect>
-          <rect x="210" y="40" width="12" height="40" rx="6" fill="#00d4ff">
-            <animate attributeName="height" values="20;100;20" dur="1.3s" repeatCount="indefinite" />
-            <animate attributeName="y" values="50;10;50" dur="1.3s" repeatCount="indefinite" />
-          </rect>
-          <text x="50%" y="120" text-anchor="middle" fill="rgba(0, 212, 255, 0.4)" font-size="10" font-weight="bold" letter-spacing="3" style="text-transform: uppercase;">RAPIRA AUDIO</text>
-        </svg>
-      `;
-
-      if (!hasAudioThumbnail) {
-        const vizContainer = document.createElement('div');
-        vizContainer.innerHTML = svgHtml;
-        audioContainer.appendChild(vizContainer);
-      }
-
-      // Audio player (hidden)
-      const audio = document.createElement('audio');
-      audio.src = currentPost.media.url;
-      audio.style.cssText = 'display: none;';
-      audioContainer.appendChild(audio);
-
-      // Attempt playback
-      const audioPlayPromise = audio.play();
-      if (audioPlayPromise !== undefined) {
-        audioPlayPromise.catch(() => {
-          console.log('[POST VIEWER] Audio playback blocked.');
-          // Button will show play icon automatically due to pause listener
-        });
-      }
-      audioContainer.appendChild(audio);
-
-      // Minimal player container (Spotify style)
-      const playerContainer = document.createElement('div');
-      playerContainer.style.cssText = hasAudioThumbnail
-        ? 'display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); max-width: 680px; background: rgba(0, 0, 0, 0.58); padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0, 212, 255, 0.25); backdrop-filter: blur(10px); z-index: 12; position: absolute; left: 10px; right: 10px; bottom: 10px;'
-        : 'display: flex; align-items: center; gap: 15px; width: 100%; max-width: 480px; background: rgba(0, 0, 0, 0.4); padding: 12px 20px; border-radius: 50px; border: 1px solid rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); z-index: 10;';
-
-      // Play/Pause button - circular
-      const playBtn = document.createElement('button');
-      playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-      playBtn.style.cssText = 'background: #00d4ff; border: none; color: #000; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; font-size: 1.4rem; box-shadow: 0 0 15px rgba(0,212,255,0.4);';
-
-      playBtn.addEventListener('click', function () {
-        if (audio.paused) audio.play(); else audio.pause();
-      });
-
-      audio.addEventListener('play', () => playBtn.innerHTML = '<i class="bi bi-pause-fill"></i>');
-      audio.addEventListener('pause', () => playBtn.innerHTML = '<i class="bi bi-play-fill"></i>');
-
-      playerContainer.appendChild(playBtn);
-
-      // Progress bar container
-      const progressWrapper = document.createElement('div');
-      progressWrapper.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
-
-      // Progress bar
-      const progressBar = document.createElement('div');
-      progressBar.style.cssText = 'height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative;';
-
-      const progress = document.createElement('div');
-      progress.style.cssText = 'height: 100%; background: #00d4ff; border-radius: 2px; width: 0%; box-shadow: 0 0 8px rgba(0,212,255,0.6); transition: width 0.1s linear;';
-      progressBar.appendChild(progress);
-
-      audio.addEventListener('timeupdate', () => {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progress.style.width = percent + '%';
-      });
-
-      progressBar.addEventListener('click', (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        audio.currentTime = percent * audio.duration;
-      });
-
-      progressWrapper.appendChild(progressBar);
-
-      // Time display
-      const timeDisplay = document.createElement('div');
-      timeDisplay.style.cssText = 'display: flex; justify-content: space-between; color: rgba(255,255,255,0.5); font-size: 0.75rem; font-family: monospace;';
-
-      const currentTimeSpan = document.createElement('span');
-      currentTimeSpan.textContent = '0:00';
-      const durationSpan = document.createElement('span');
-      durationSpan.textContent = '0:00';
-
-      timeDisplay.appendChild(currentTimeSpan);
-      timeDisplay.appendChild(durationSpan);
-
-      function formatT(s) {
-        if (isNaN(s)) return '0:00';
-        const m = Math.floor(s / 60);
-        const sc = Math.floor(s % 60);
-        return m + ':' + (sc < 10 ? '0' : '') + sc;
-      }
-
-      audio.addEventListener('timeupdate', () => {
-        currentTimeSpan.textContent = formatT(audio.currentTime);
-      });
-      audio.addEventListener('loadedmetadata', () => {
-        durationSpan.textContent = formatT(audio.duration);
-      });
-
-      progressWrapper.appendChild(timeDisplay);
-      playerContainer.appendChild(progressWrapper);
-
-      // Volume control
-      const volIcon = document.createElement('i');
-      volIcon.className = 'bi bi-volume-up ms-2';
-      volIcon.style.cssText = 'color: #00d4ff; opacity: 0.8; cursor: pointer; font-size: 1.1rem;';
-
-      const volSlider = document.createElement('input');
-      volSlider.type = 'range';
-      volSlider.min = '0';
-      volSlider.max = '100';
-      volSlider.value = '80'; // Default volume
-      audio.volume = 0.8;
-      volSlider.style.cssText = 'width: 70px; height: 4px; cursor: pointer; -webkit-appearance: none; background: rgba(0, 212, 255, 0.2); border-radius: 2px; outline: none; margin-left: 8px; flex-shrink: 0;';
-
-      // Inject slider thumb styles if not present
-      if (!document.getElementById('rapira-audio-thumb-style')) {
-        const styleTag = document.createElement('style');
-        styleTag.id = 'rapira-audio-thumb-style';
-        styleTag.textContent = `
-          input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; box-shadow: 0 0 8px rgba(0,212,255,0.6); border: none; }
-          input[type=range]::-moz-range-thumb { height: 12px; width: 12px; border-radius: 50%; background: #00d4ff; cursor: pointer; border: none; box-shadow: 0 0 8px rgba(0,212,255,0.6); }
-        `;
-        document.head.appendChild(styleTag);
-      }
-
-      volSlider.addEventListener('input', (e) => {
-        const val = e.target.value / 100;
-        audio.volume = val;
-        volIcon.className = val === 0 ? 'bi bi-volume-mute ms-2' : val < 0.5 ? 'bi bi-volume-down ms-2' : 'bi bi-volume-up ms-2';
-      });
-
-      playerContainer.appendChild(volIcon);
-      playerContainer.appendChild(volSlider);
-
-      audioContainer.appendChild(playerContainer);
-      mediaContainer.appendChild(audioContainer);
-      console.log('[POST VIEWER] Audio media loaded with minimal player');
     } else {
       const img = document.createElement('img');
       img.src = currentPost.media.url;
       img.alt = 'post';
-      img.style.cssText = 'max-width: 100%; max-height: 500px; width: 100%; height: auto; object-fit: contain; display: block;';
+      img.style.cssText = 'max-width: 100%; max-height: 500px; width: 100%; height: auto; object-fit: contain; display: block; border-radius: 8px;';
       mediaContainer.appendChild(img);
     }
 
@@ -764,14 +637,14 @@ function updateLikeButton(isLiked) {
 
   if (isLiked) {
     likeIcon.className = 'bi bi-heart-fill';
-    likeIcon.style.color = '#ff1744';
-    likeBtn.style.background = 'rgba(255, 23, 68, 0.15)';
-    likeBtn.style.borderColor = '#ff1744';
+    likeIcon.style.color = '#9F190E';
+    likeBtn.style.background = '#FCF0E4';
+    likeBtn.style.borderColor = '#9F190E';
   } else {
     likeIcon.className = 'bi bi-heart';
-    likeIcon.style.color = '#fff';
-    likeBtn.style.background = 'rgba(255, 255, 255, 0.05)';
-    likeBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    likeIcon.style.color = '#9F190E';
+    likeBtn.style.background = '#FFFDF8';
+    likeBtn.style.borderColor = '#EAC8B7';
   }
 }
 
@@ -941,11 +814,15 @@ const escapeHtmlViewer = (unsafe) => {
     .replace(/'/g, "&#039;");
 };
 
-// Remove openComments action button since comments are now inline
+// Smoothly scrolls to comments and focuses comment input
 window.openPostViewerComments = function () {
   const container = document.getElementById('post-inline-comments-section');
+  const input = document.getElementById('postViewerNewComment');
   if (container) {
-    container.scrollIntoView({ behavior: 'smooth' });
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  if (input) {
+    setTimeout(() => input.focus(), 250);
   }
 };
 
@@ -961,183 +838,87 @@ async function loadPostViewerComments() {
       document.getElementById('post-inline-comments-count').textContent = data.comments.length;
       document.getElementById('post-comments-count').textContent = data.comments.length;
 
-      // Separate into comments to display and remaining
-      const visibleComments = data.comments.slice(0, 3);
-      const remainingComments = data.comments.slice(3);
+      const currentUID = document.body.getAttribute('data-user-id');
 
-      let contentHtml = visibleComments.map(c => {
-        const currentUID = document.body.getAttribute('data-user-id');
+      const renderReply = (r, c) => {
+        const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
+        return `
+          <div class="reply-card d-flex align-items-start mt-2 ps-3 ms-2" style="display: flex;">
+            <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+            <div class="flex-grow-1">
+              <strong class="rh-viewer-reply-author">${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
+              <small class="rh-viewer-reply-date ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
+              <p class="rh-viewer-reply-text mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
+              
+              ${isReplyOwner ? `
+                  <div class="d-flex gap-2">
+                     <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
+                     <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
+                  </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      };
+
+      const renderComment = (c, isHidden = false) => {
         const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
-
         let repliesHtml = '';
         if (c.replies && c.replies.length > 0) {
           const visibleReplies = c.replies.slice(0, 3);
           const remainingReplies = c.replies.slice(3);
 
-          repliesHtml = visibleReplies.map(r => {
-            const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
-            return `
-                 <div class="reply-card d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: flex;">
-                   <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-                   <div class="flex-grow-1">
-                     <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
-                     <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
-                     <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
-                     
-                     ${isReplyOwner ? `
-                         <div class="d-flex gap-2">
-                            <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
-                            <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
-                         </div>
-                     ` : ''}
-                   </div>
-                 </div>
-                 `;
-          }).join('');
+          repliesHtml = visibleReplies.map(r => renderReply(r, c)).join('');
 
-          // Append remaining hidden replies if they exist
           if (remainingReplies.length > 0) {
-            repliesHtml += remainingReplies.map(r => {
-              const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
-              return `
-                 <div class="reply-card hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none;">
-                   <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-                   <div class="flex-grow-1">
-                     <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
-                     <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
-                     <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
-                     
-                     ${isReplyOwner ? `
-                         <div class="d-flex gap-2">
-                            <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
-                            <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
-                         </div>
-                     ` : ''}
-                   </div>
-                 </div>
-                 `;
-            }).join('');
-            repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
+            repliesHtml += remainingReplies.map(r => `
+              <div class="hidden-reply-${c._id}" style="display: none;">
+                ${renderReply(r, c)}
+              </div>
+            `).join('');
+            repliesHtml += `<div class="mt-2 ps-3 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.82rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
           }
         }
 
         return `
-         <div class="comment-card d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}">
-           <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
-           <div class="flex-grow-1 w-100 pr-2">
-             <strong>${c.user && c.user.name ? escapeHtmlViewer(c.user.name) : 'Anonymous'}</strong> 
-             ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
-             <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
-             <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${escapeHtmlViewer(c.text)}</p>
-             
-             <div class="d-flex gap-3 mb-2 align-items-center">
-               ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
-               ${isOwner ? `
-                  <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
-                  <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
-               ` : ''}
-             </div>
- 
-             <!-- Reply Box (Hidden by default) -->
-             <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
-                <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
-                <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
-             </div>
- 
-             <!-- Nested Replies -->
-             ${repliesHtml}
-           </div>
-         </div>
-       `;
-      }).join('');
+          <div class="comment-card d-flex align-items-start ${isHidden ? 'hidden-comment' : ''} ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}" ${isHidden ? 'style="display: none !important;"' : ''}>
+            <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+            <div class="flex-grow-1 w-100 pr-2">
+              <strong class="rh-viewer-comment-author">${c.user && c.user.name ? escapeHtmlViewer(c.user.name) : 'Anonymous'}</strong> 
+              ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
+              <small class="rh-viewer-comment-date ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
+              <p class="rh-viewer-comment-text mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${escapeHtmlViewer(c.text)}</p>
+              
+              <div class="d-flex gap-3 mb-2 align-items-center">
+                ${currentUID ? `<button class="btn btn-link rh-viewer-reply-action-btn p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
+                ${isOwner ? `
+                   <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
+                   <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
+                ` : ''}
+              </div>
+
+              <!-- Reply Box (Hidden by default) -->
+              <div id="reply-box-${c._id}" class="rh-viewer-reply-box d-none mt-2 d-flex gap-2">
+                 <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm rh-viewer-reply-input" placeholder="Write a reply..." onkeydown="handleReplyKeydown(event, '${c._id}')">
+                 <button class="btn btn-sm rh-viewer-reply-btn" id="reply-submit-btn-${c._id}" onclick="submitReplyViewer('${c._id}')" aria-label="Send reply"><i class="bi bi-send-fill"></i></button>
+              </div>
+
+              <!-- Nested Replies -->
+              ${repliesHtml}
+            </div>
+          </div>
+        `;
+      };
+
+      // Separate into comments to display and remaining
+      const visibleComments = data.comments.slice(0, 3);
+      const remainingComments = data.comments.slice(3);
+
+      let contentHtml = visibleComments.map(c => renderComment(c, false)).join('');
 
       // Mount all other comments underneath invisible by default
       if (remainingComments.length > 0) {
-        contentHtml += remainingComments.map(c => {
-          const currentUID = document.body.getAttribute('data-user-id');
-          const isOwner = currentUID && currentUID === (c.user && c.user._id ? c.user._id : c.user);
-
-          let repliesHtml = '';
-          if (c.replies && c.replies.length > 0) {
-            const visibleReplies = c.replies.slice(0, 3);
-            const remainingReplies = c.replies.slice(3);
-
-            repliesHtml = visibleReplies.map(r => {
-              const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
-              return `
-                    <div class="reply-card d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: flex;">
-                      <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-                      <div class="flex-grow-1">
-                        <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
-                        <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
-                        <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
-                        
-                        ${isReplyOwner ? `
-                            <div class="d-flex gap-2">
-                               <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
-                               <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
-                            </div>
-                        ` : ''}
-                      </div>
-                    </div>
-                    `;
-            }).join('');
-
-            if (remainingReplies.length > 0) {
-              repliesHtml += remainingReplies.map(r => {
-                const isReplyOwner = currentUID && currentUID === (r.user && r.user._id ? r.user._id : r.user);
-                return `
-                    <div class="reply-card hidden-reply-${c._id} d-flex align-items-start mt-2 ps-4 ms-2 border-start border-secondary" style="display: none;">
-                      <img src="${(r.user && r.user.profileImage) ? r.user.profileImage : '/images/default-profile.svg'}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
-                      <div class="flex-grow-1">
-                        <strong>${r.user && r.user.name ? escapeHtmlViewer(r.user.name) : 'Anonymous'}</strong> 
-                        <small class="text-muted ms-2">${new Date(r.createdAt).toLocaleDateString()}</small>
-                        <p class="mb-1" style="word-break: break-word; font-size: 0.9rem;" id="reply-text-${c._id}-${r._id}">${escapeHtmlViewer(r.text)}</p>
-                        
-                        ${isReplyOwner ? `
-                            <div class="d-flex gap-2">
-                               <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="editReplyViewer('${c._id}', '${r._id}')">Edit</button>
-                               <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem;" onclick="deleteReplyViewer('${c._id}', '${r._id}')">Delete</button>
-                            </div>
-                        ` : ''}
-                      </div>
-                    </div>
-                    `;
-              }).join('');
-              repliesHtml += `<div class="mt-2 ps-4 ms-2"><button id="btn-show-replies-${c._id}" class="btn btn-link p-0 text-muted" style="font-size: 0.85rem;" onclick="showMoreReplies('${c._id}')">Show ${remainingReplies.length} more replies</button></div>`;
-            }
-          }
-
-          return `
-            <div class="comment-card hidden-comment d-flex align-items-start ${c.isPinned ? 'p-2 rounded bg-success bg-opacity-10 border border-success' : ''}" style="display: none !important;">
-              <img src="${(c.user && c.user.profileImage) ? c.user.profileImage : '/images/default-profile.svg'}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
-              <div class="flex-grow-1 w-100 pr-2">
-                <strong>${c.user && c.user.name ? escapeHtmlViewer(c.user.name) : 'Anonymous'}</strong> 
-                ${c.isPinned ? '<span class="badge bg-success ms-1"><i class="bi bi-pin-angle-fill"></i> Pinned</span>' : ''}
-                <small class="text-muted ms-2">${new Date(c.createdAt).toLocaleDateString()}</small>
-                <p class="mb-1 mt-1" style="word-break: break-word;" id="comment-text-${c._id}">${escapeHtmlViewer(c.text)}</p>
-                
-                <div class="d-flex gap-3 mb-2 align-items-center">
-                  ${currentUID ? `<button class="btn btn-link text-success p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="toggleReplyBox('${c._id}')">Reply</button>` : ''}
-                  ${isOwner ? `
-                     <button class="btn btn-link text-info p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="editCommentViewer('${c._id}')">Edit</button>
-                     <button class="btn btn-link text-danger p-0 text-decoration-none" style="font-size: 0.85rem;" onclick="deleteCommentViewer('${c._id}')">Delete</button>
-                  ` : ''}
-                </div>
-    
-                <!-- Reply Box (Hidden by default) -->
-                <div id="reply-box-${c._id}" class="d-none mt-2 d-flex gap-2">
-                   <input type="text" id="reply-input-${c._id}" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Write a reply...">
-                   <button class="btn btn-sm btn-success" onclick="submitReplyViewer('${c._id}')"><i class="bi bi-send"></i></button>
-                </div>
-    
-                <!-- Nested Replies -->
-                ${repliesHtml}
-              </div>
-            </div>
-          `;
-        }).join('');
-
+        contentHtml += remainingComments.map(c => renderComment(c, true)).join('');
         contentHtml += `<div class="text-center mt-3"><button id="btn-show-comments" class="btn btn-outline-secondary btn-sm" onclick="showMoreComments()">View ${remainingComments.length} more comments...</button></div>`;
       }
 
@@ -1183,11 +964,23 @@ window.toggleReplyBox = function (commentId) {
   }
 };
 
+window.handleReplyKeydown = function (event, commentId) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    submitReplyViewer(commentId);
+  }
+};
+
 window.submitReplyViewer = async function (commentId) {
   if (!currentPost) return;
   const input = document.getElementById(`reply-input-${commentId}`);
-  const text = input.value.trim();
+  const btn = document.getElementById(`reply-submit-btn-${commentId}`);
+  const text = input ? input.value.trim() : '';
   if (!text) return;
+
+  if (btn) btn.disabled = true;
+  if (input) input.disabled = true;
+
   try {
     const res = await fetch(`/posts/${currentPost._id}/comments/${commentId}/replies`, {
       method: 'POST',
@@ -1197,12 +990,22 @@ window.submitReplyViewer = async function (commentId) {
     });
     const data = await res.json();
     if (data.success) {
+      if (input) input.value = '';
+      showToast('Reply added', 'success');
       await loadPostViewerComments();
     } else {
-      showToast(data.message || 'Failed to reply', 'error');
+      if (res.status === 401) {
+        showToast('Please log in to reply', 'info');
+        setTimeout(() => window.location.href = '/auth/login', 1500);
+      } else {
+        showToast(data.message || 'Failed to reply', 'error');
+      }
     }
   } catch (err) {
     showToast('Error replying', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (input) input.disabled = false;
   }
 };
 
@@ -1313,15 +1116,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Comments submit
   const commentBtn = document.getElementById('submitPostViewerCommentBtn');
+  const commentInput = document.getElementById('postViewerNewComment');
+
+  if (commentInput && commentBtn) {
+    commentInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        commentBtn.click();
+      }
+    });
+  }
+
   if (commentBtn) {
     commentBtn.addEventListener('click', async function () {
       if (!currentPost) return;
 
-      const text = document.getElementById('postViewerNewComment').value.trim();
+      const text = commentInput ? commentInput.value.trim() : '';
       if (!text) return;
 
       const btn = this;
+      const originalHtml = btn.innerHTML;
       btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 1rem; height: 1rem; border-width: 2px;"></span>';
+      if (commentInput) commentInput.disabled = true;
 
       try {
         const res = await fetch(`/posts/${currentPost._id}/comments`, {
@@ -1333,11 +1150,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const data = await res.json();
 
         if (data.success) {
-          document.getElementById('postViewerNewComment').value = '';
+          if (commentInput) commentInput.value = '';
           showToast('Comment posted', 'success');
-          loadPostViewerComments();
+          await loadPostViewerComments();
         } else {
-
           if (res.status === 401) {
             showToast('You must be logged in to comment.', 'info');
             setTimeout(() => window.location.href = '/auth/login', 1500);
@@ -1349,6 +1165,11 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('Error posting comment', 'error');
       } finally {
         btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        if (commentInput) {
+          commentInput.disabled = false;
+          commentInput.focus();
+        }
       }
     });
   }
@@ -1399,16 +1220,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Stop media playback when modal closes
+  // Stop media playback immediately when modal starts hiding or finishes closing
   const modalElement = document.getElementById('post-viewer');
   if (modalElement) {
+    modalElement.addEventListener('show.bs.modal', function () {
+      document.body.classList.add('rh-viewer-open-lock');
+    });
+    modalElement.addEventListener('hide.bs.modal', function () {
+      stopMediaPlayback();
+    });
     modalElement.addEventListener('hidden.bs.modal', function () {
       stopMediaPlayback();
+      document.body.classList.remove('rh-viewer-open-lock');
       console.log('[POST VIEWER] Modal closed, media stopped');
     });
   }
 
-  // Add animations
+  // Add animations and hover states in Rapira Palette
   const style = document.createElement('style');
   style.textContent = `
     @keyframes slideIn {
@@ -1419,18 +1247,17 @@ document.addEventListener('DOMContentLoaded', function () {
       from { transform: translateX(0); opacity: 1; }
       to { transform: translateX(400px); opacity: 0; }
     }
-    #post-modal-like-btn:hover, #post-modal-share-btn:hover, #post-modal-comments-btn:hover, #post-modal-report-btn:hover {
-      transform: scale(1.15);
+    .rh-viewer-open-lock {
+      overflow: hidden !important;
     }
-    #post-modal-like-btn:active, #post-modal-share-btn:active, #post-modal-comments-btn:active, #post-modal-report-btn:active {
-      transform: scale(0.95);
+    #post-artist-link:hover #post-artist-name,
+    #post-artist-link-mobile:hover #post-artist-name-mobile {
+      color: #9F190E !important;
     }
-    #post-artist-link:hover #post-artist-name {
-      color: #00d4ff !important;
-    }
-    #post-artist-img:hover {
+    #post-artist-img:hover,
+    #post-artist-img-mobile:hover {
       transform: scale(1.05);
-      border-color: #00d4ff;
+      border-color: #9F190E;
     }
   `;
   document.head.appendChild(style);

@@ -1,662 +1,781 @@
 <!-- Stories Bar -->
 <%- include('partials/stories') %>
 
-<!-- Main Slider Section -->
-<section class="main-slider-section">
-  <% 
-    const currentYear = new Date().getFullYear();
-    const heroCarouselConfig = (typeof heroCarouselSettings !== 'undefined' && heroCarouselSettings)
-      ? heroCarouselSettings
-      : ((typeof websiteSettings !== 'undefined' && websiteSettings && websiteSettings.heroCarouselSettings)
-        ? websiteSettings.heroCarouselSettings
-        : null);
-    const heroSlides = heroCarouselConfig && Array.isArray(heroCarouselConfig.slides)
-      ? heroCarouselConfig.slides.filter(slide => slide && slide.isActive !== false && slide.imageUrl)
-      : [];
-    const carouselInterval = heroCarouselConfig && heroCarouselConfig.intervalMs ? heroCarouselConfig.intervalMs : 5000;
-    const carouselRide = heroCarouselConfig && heroCarouselConfig.autoplay === false ? 'false' : 'carousel';
-  %>
-  <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="<%= carouselRide %>" data-bs-interval="<%= carouselInterval %>">
-    <% if (heroSlides.length > 0) { %>
-      <div class="carousel-indicators">
-        <% heroSlides.forEach((slide, index) => { %>
-          <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" <%= index === 0 ? 'aria-current="true"' : '' %> aria-label="Slide <%= index + 1 %>"></button>
-        <% }); %>
+<!-- Dynamic Homepage Stylesheet & Motion Script Loader -->
+<svg width="0" height="0" style="position:absolute;visibility:hidden;" onload="
+  document.documentElement.classList.add('rh-homepage-active');
+  document.body.classList.add('rh-homepage-active');
+  if (!document.getElementById('rapira-homepage-css')) {
+    const l = document.createElement('link');
+    l.id = 'rapira-homepage-css';
+    l.rel = 'stylesheet';
+    l.href = '/css/homepage.css';
+    document.head.appendChild(l);
+  }
+  if (!document.getElementById('rapira-motion-js')) {
+    const m = document.createElement('script');
+    m.id = 'rapira-motion-js';
+    m.src = '/js/motion.min.js';
+    m.onload = function() {
+      if (!document.getElementById('rapira-homepage-motion-js')) {
+        const hm = document.createElement('script');
+        hm.id = 'rapira-homepage-motion-js';
+        hm.src = '/js/homepage-motion.js';
+        document.body.appendChild(hm);
+      }
+    };
+    document.body.appendChild(m);
+  }
+  // Navbar search icon removed per specification
+  window.scrollReelsTrack = function(distance) {
+    const c = document.getElementById('homeReelsContainer');
+    if (c) c.scrollBy({ left: distance, behavior: 'smooth' });
+  };
+"></svg>
+<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3C/svg%3E" 
+     width="1" height="1" 
+     style="position:fixed;bottom:0;left:0;opacity:0.01;pointer-events:none;z-index:-999;" 
+     onload="document.documentElement.classList.add('rh-homepage-active');document.body.classList.add('rh-homepage-active');if(!document.getElementById('rapira-homepage-css')){const l=document.createElement('link');l.id='rapira-homepage-css';l.rel='stylesheet';l.href='/css/homepage.css';document.head.appendChild(l);}" 
+     alt="" />
+
+<div class="rapira-homepage">
+  <!-- Section 1: Hero Opening Viewport -->
+  <header class="rh-hero-section">
+    <div class="container text-center position-relative">
+      
+      <!-- Row 1: Main Display Headline (Full width, zero lateral collisions) -->
+      <div class="rh-hero-headline-wrap" data-aos="fade-up">
+        <h1 class="rh-hero-headline"><span class="rh-headline-chunk">MUSIC NEVER</span> <span class="rh-headline-chunk">SLEEPS</span></h1>
       </div>
 
-      <div class="carousel-inner">
-        <% heroSlides.forEach((slide, index) => { 
-             const targetLink = slide.linkUrl || '/';
-             const isExternal = /^https?:\/\//i.test(targetLink);
-        %>
-          <div class="carousel-item hero-image-slide <%= index === 0 ? 'active' : '' %>">
-            <a href="<%= targetLink %>" class="text-decoration-none text-white d-block" <%= isExternal ? 'target="_blank" rel="noopener noreferrer"' : '' %>>
-              <div class="carousel-overlay"></div>
-              <div class="hero-svg-overlay hero-svg-theme-<%= (index % 7) + 1 %>" aria-hidden="true">
-                <svg class="hero-svg hero-svg-top" viewBox="0 0 1200 200" preserveAspectRatio="none">
-                  <path d="M0,120 C220,40 420,190 620,120 C820,50 980,170 1200,100 L1200,0 L0,0 Z"></path>
-                </svg>
-                <svg class="hero-svg hero-svg-mid" viewBox="0 0 1200 300" preserveAspectRatio="none">
-                  <circle cx="180" cy="160" r="60"></circle>
-                  <circle cx="520" cy="90" r="35"></circle>
-                  <circle cx="860" cy="180" r="70"></circle>
-                  <circle cx="1080" cy="110" r="45"></circle>
-                </svg>
-                <svg class="hero-svg hero-svg-bottom" viewBox="0 0 1200 220" preserveAspectRatio="none">
-                  <path d="M0,140 C260,210 420,20 660,90 C900,160 1040,60 1200,130 L1200,220 L0,220 Z"></path>
-                </svg>
-              </div>
-              <div class="carousel-bg" style="height: 80vh; min-height: 500px; width: 100%;">
-                <img src="<%= slide.imageUrl %>" alt="" style="display: block; width: 100%; height: 100%; object-fit: contain; object-position: center;">
-              </div>
-              <div class="carousel-caption">
-                <div class="container">
-                  <div class="row justify-content-center">
-                    <div class="col-lg-8 text-center">
-                      <% if (slide.badge) { %>
-                        <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown"><%= slide.badge %></div>
-                      <% } %>
-                      <% if (slide.title) { %>
-                        <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown"><%= slide.title %></h2>
-                      <% } %>
-                      <% if (slide.description) { %>
-                        <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s"><%= slide.description %></p>
-                      <% } %>
-                      <% if (slide.buttonText || slide.dateText) { %>
-                        <div class="d-flex justify-content-center align-items-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                          <% if (slide.buttonText) { %>
-                            <span class="btn btn-glass btn-lg"><%= slide.buttonText %></span>
-                          <% } %>
-                          <% if (slide.dateText) { %>
-                            <div class="d-flex align-items-center"><i class="bi bi-calendar-event me-2"></i><%= slide.dateText %></div>
-                          <% } %>
-                        </div>
-                      <% } %>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- Row 2: Flanking Hero Sub-Row (Left Stamp, Center Taglines & CTAs, Right Script) -->
+      <div class="rh-hero-sub-row position-relative" data-aos="fade-up" data-aos-delay="100">
+        
+        <!-- Left Editorial Stamp Badge (Noticeably Larger Reference Scale) -->
+        <div class="rh-hero-stamp" title="RAPIRA Culture Stamp">
+          <svg viewBox="0 0 160 160" width="100%" height="100%" class="rh-stamp-svg">
+            <defs>
+              <path id="rhCirclePath" d="M 80, 80 m -60, 0 a 60,60 0 1,1 120,0 a 60,60 0 1,1 -120,0" />
+            </defs>
+            <circle cx="80" cy="80" r="74" fill="none" stroke="#9F190E" stroke-width="1.2" stroke-opacity="0.5" stroke-dasharray="3,2" />
+            <circle cx="80" cy="80" r="50" fill="none" stroke="#9F190E" stroke-width="1" stroke-opacity="0.4" />
+            <text class="rh-stamp-text">
+              <textPath href="#rhCirclePath" startOffset="0%">
+                INDIAN ARTISTS • LIVE EXP • RAPIRA • CULTURE • 
+              </textPath>
+            </text>
+            <!-- 4-point star in center -->
+            <path d="M80 62 L83.5 76.5 L98 80 L83.5 83.5 L80 98 L76.5 83.5 L62 80 L76.5 76.5 Z" fill="#9F190E" />
+          </svg>
+        </div>
+
+        <!-- Center: Tagline & 2 Capsule Buttons -->
+        <div class="rh-hero-center-content">
+          <div class="rh-hero-tagline-wrap">
+            <div class="rh-tagline-line1">DISCOVER &mdash; CONNECT &mdash; EXPERIENCE</div>
+            <div class="rh-tagline-line2">A PLATFORM FOR ARTISTS, FANS, EVENTS AND MORE.</div>
+          </div>
+
+          <div class="rh-hero-cta-group">
+            <a href="/concerts" class="rh-btn-crimson-solid">
+              Explore Music &rarr;
+            </a>
+            <a href="/artists/register" class="rh-btn-outline-pill">
+              Join as Artist
             </a>
           </div>
-        <% }); %>
-      </div>
-    <% } else { %>
-      <div class="carousel-indicators">
-        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-        <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
-      </div>
-
-      <div class="carousel-inner">
-        <div class="carousel-item active">
-          <div class="carousel-overlay"></div>
-          <div class="carousel-bg bg-dark" style="height: 80vh; min-height: 500px;">
-            <div class="carousel-pattern pattern-dots"></div>
-          </div>
-          <div class="carousel-caption">
-            <div class="container">
-              <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                  <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInDown">Experience the Best of <span class="gradient-text-purple">Indian Rap</span></h1>
-                  <p class="lead mb-5 animate__animated animate__fadeInUp animate__delay-1s">Discover artists, book concerts, and connect with the hip-hop community</p>
-                  <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                    <a href="/concerts" class="btn btn-gradient-purple btn-lg">Explore Concerts</a>
-                    <a href="/artists" class="btn btn-glass btn-lg">Discover Artists</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <div class="carousel-item">
-          <div class="carousel-overlay"></div>
-          <div class="carousel-bg bg-primary" style="height: 80vh; min-height: 500px;">
-            <div class="carousel-pattern pattern-waves"></div>
-          </div>
-          <div class="carousel-caption">
-            <div class="container">
-              <div class="row justify-content-start">
-                <div class="col-lg-6 text-start">
-                  <div class="badge bg-danger mb-3 animate__animated animate__fadeInDown">FEATURED EVENT</div>
-                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Summer Rap Festival <%= currentYear %></h2>
-                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Join the biggest hip-hop event of the year with top artists performing live!</p>
-                  <div class="d-flex gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                    <a href="/concerts" class="btn btn-danger btn-lg">Book Now</a>
-                    <div class="d-flex align-items-center">
-                      <i class="bi bi-calendar-event me-2"></i> June 14-16, <%= currentYear %>
+        <!-- Right Handwritten Cursive Accent with Angled Underline -->
+        <div class="rh-hero-script">
+          <span>Artists</span>
+          <span>Fans</span>
+          <span>Events</span>
+          <span>Community</span>
+          <svg class="rh-script-underline" viewBox="0 0 130 18" width="105" height="15">
+            <path d="M 4 8 Q 65 18 126 4" fill="none" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+      </div>
+
+      <!-- Main Panoramic Hero Banner Carousel -->
+      <% 
+        const currentYear = new Date().getFullYear();
+        const heroCarouselConfig = (typeof heroCarouselSettings !== 'undefined' && heroCarouselSettings)
+          ? heroCarouselSettings
+          : ((typeof websiteSettings !== 'undefined' && websiteSettings && websiteSettings.heroCarouselSettings)
+            ? websiteSettings.heroCarouselSettings
+            : null);
+        const dbSlides = heroCarouselConfig && Array.isArray(heroCarouselConfig.slides)
+          ? heroCarouselConfig.slides.filter(slide => slide && slide.isActive !== false && slide.imageUrl)
+          : [];
+        
+        const heroSlides = dbSlides;
+        const carouselInterval = heroCarouselConfig && heroCarouselConfig.intervalMs ? Math.max(heroCarouselConfig.intervalMs, 5000) : 5000;
+        const carouselRide = heroCarouselConfig && heroCarouselConfig.autoplay === false ? 'false' : 'carousel';
+      %>
+      <div class="rh-hero-banner-container" data-aos="fade-up" data-aos-delay="300">
+        <div id="mainCarousel" class="carousel slide carousel-fade" data-bs-ride="<%= carouselRide %>" data-bs-interval="<%= carouselInterval %>">
+          <% if (heroSlides.length > 0) { %>
+            <div class="carousel-indicators">
+              <% heroSlides.forEach((slide, index) => { %>
+                <button type="button" data-bs-target="#mainCarousel" data-bs-slide-to="<%= index %>" class="<%= index === 0 ? 'active' : '' %>" <%= index === 0 ? 'aria-current="true"' : '' %> aria-label="Slide <%= index + 1 %>"></button>
+              <% }); %>
+            </div>
+
+            <div class="carousel-inner">
+              <% heroSlides.forEach((slide, index) => { 
+                   const targetLink = slide.linkUrl || '/';
+                   const isExternal = /^https?:\/\//i.test(targetLink);
+                   
+                   let slideClass = 'rh-slide-custom';
+                   let slideBg = '#141414';
+                   let isEmbeddedArt = false;
+
+                   if (slide.imageUrl && slide.imageUrl.includes('ijl3ds')) {
+                     slideClass = 'rh-slide-artist-register';
+                     slideBg = '#3B115D';
+                     isEmbeddedArt = true;
+                   } else if (slide.imageUrl && slide.imageUrl.includes('kdfqrs')) {
+                     slideClass = 'rh-slide-album-us';
+                     slideBg = '#43213F';
+                   } else if (slide.imageUrl && slide.imageUrl.includes('tps9ck')) {
+                     slideClass = 'rh-slide-circlebound';
+                     slideBg = '#11100C';
+                     isEmbeddedArt = true;
+                   }
+
+                   const hasCaption = !isEmbeddedArt && (Boolean(slide.title) || Boolean(slide.badge));
+              %>
+                <div class="carousel-item <%= index === 0 ? 'active' : '' %> <%= slideClass %> <%= hasCaption ? 'rh-slide-has-caption' : 'rh-slide-no-caption' %>" style="background-color: <%= slideBg %>;" data-slide-index="<%= index %>">
+                  <a href="<%= targetLink %>" class="rh-slide-link text-decoration-none d-flex flex-column w-100 h-100" <%= isExternal ? 'target="_blank" rel="noopener noreferrer"' : '' %>>
+                    <!-- Top Area: Crisp, pristine foreground image with zero dark overlays and zero filters -->
+                    <div class="rh-slide-media-wrap <%= hasCaption ? 'rh-media-with-caption' : 'rh-media-full' %>">
+                      <img src="<%= slide.imageUrl %>" alt="<%= slide.title || 'Slide' %>" class="rh-slide-img" loading="eager">
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="carousel-item">
-          <div class="carousel-overlay"></div>
-          <div class="carousel-bg bg-warning" style="height: 80vh; min-height: 500px;">
-            <div class="carousel-pattern pattern-grid"></div>
-          </div>
-          <div class="carousel-caption">
-            <div class="container">
-              <div class="row justify-content-end">
-                <div class="col-lg-6 text-end">
-                  <div class="badge bg-warning text-dark mb-3 animate__animated animate__fadeInDown">NEW FEATURE</div>
-                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Go Premium</h2>
-                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Get exclusive access to VIP tickets, backstage passes, and special discounts!</p>
-                  <div class="animate__animated animate__fadeInUp animate__delay-2s">
-                    <a href="/subscriptions" class="btn btn-warning btn-lg text-dark">Upgrade Now</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="carousel-item">
-          <div class="carousel-overlay"></div>
-          <div class="carousel-bg bg-info" style="height: 80vh; min-height: 500px;">
-            <div class="carousel-pattern pattern-circles"></div>
-          </div>
-          <div class="carousel-caption">
-            <div class="container">
-              <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                  <div class="badge bg-info mb-3 animate__animated animate__fadeInDown">ARTIST SPOTLIGHT</div>
-                  <h2 class="display-4 fw-bold mb-3 animate__animated animate__fadeInDown">Become a Featured Artist</h2>
-                  <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Showcase your talent and reach thousands of fans on our platform!</p>
-                  <div class="animate__animated animate__fadeInUp animate__delay-2s">
-                    <a href="/artists/register" class="btn btn-info btn-lg">Join as Artist</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    <% } %>
-
-    <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Previous</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Next</span>
-    </button>
-  </div>
-</section>
-
-
-
-
-
-<!-- Upcoming Concerts Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text">Upcoming Concerts</h2>
-      <a href="/concerts" class="btn btn-outline-primary">View All</a>
-    </div>
-
-    <div class="row g-4">
-      <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
-        <% upcomingConcerts.forEach((concert, index) => { %>
-          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
-            <div class="glass-card-dark card card-concert h-100">
-              <div class="position-relative overflow-hidden">
-                <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>">
-                <div class="position-absolute top-0 end-0 m-3">
-                  <span class="badge <%= concert.isPaid ? 'bg-gradient-primary' : 'bg-gradient-success' %> px-3 py-2">
-                    <%= concert.isPaid ? (concert.price !== null && concert.price !== undefined ? `₹${concert.price}` : '₹ 0') : 'Free' %>
-                  </span>
-                </div>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title fw-bold"><%= concert.title %></h5>
-                <p class="card-text mb-2">
-                  <i class="bi bi-geo-alt me-2"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
-                </p>
-                <p class="card-text mb-3">
-                  <i class="bi bi-calendar3 me-2"></i> <%= toISTDateString(concert.date) %> • <%= concert.time %>
-                </p>
-                <p class="card-text mb-3">By
-                <% if (concert.artist) { %>
-                  <a href="/artists/<%= concert.artist._id %>" class="text-decoration-none fw-medium gradient-text">
-                    <%= concert.artist.user ? concert.artist.user.name : 'Unknown Artist' %>
+                    
+                    <!-- Bottom Area: Separate cream-colored caption area for slide title/badge -->
+                    <% if (hasCaption) { %>
+                      <div class="rh-slide-caption-bar">
+                        <% if (slide.badge) { %>
+                          <span class="rh-slide-badge"><%= slide.badge %></span>
+                        <% } %>
+                        <% if (slide.title) { %>
+                          <h2 class="rh-slide-title"><%= slide.title %></h2>
+                        <% } %>
+                      </div>
+                    <% } %>
                   </a>
-                <% } else { %>
-                  <span class="fw-medium">Unknown Artist</span>
-                <% } %>
-                </p>
-              </div>
-              <div class="card-footer">
-                <a href="/concerts/<%= concert._id %>" class="btn btn-gradient-purple w-100">View Details</a>
-              </div>
+                </div>
+              <% }); %>
             </div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5" data-aos="fade-up">
-          <div class="glass-card-dark p-5 rounded-4">
-            <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
-            <p class="text-muted">No upcoming concerts at the moment. Check back soon!</p>
-          </div>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
 
-<!-- Featured Artists Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text-blue">Featured Artists</h2>
-      <a href="/artists" class="btn btn-outline-primary">View All</a>
-    </div>
-
-    <div class="row g-4">
-      <% if (featuredArtists && featuredArtists.length > 0) { %>
-        <% featuredArtists.forEach((artist, index) => { %>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
-            <div class="glass-card-dark card card-artist h-100">
-              <div class="position-relative overflow-hidden">
-                <img src="<%= artist.user.profileImage %>" class="card-img-top" alt="<%= artist.user.name %>">
-                <% if (artist.verified) { %>
-                  <div class="position-absolute top-0 end-0 m-3">
-                    <span class="badge bg-gradient-blue px-3 py-2">
-                      <i class="bi bi-patch-check-fill me-1"></i> Verified
-                    </span>
+            <!-- Carousel Navigation Arrows (Prev & Next) -->
+            <button class="carousel-control-prev rh-carousel-btn" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev" aria-label="Previous Slide">
+              <span class="rh-carousel-icon"><i class="bi bi-chevron-left"></i></span>
+            </button>
+            <button class="carousel-control-next rh-carousel-btn" type="button" data-bs-target="#mainCarousel" data-bs-slide="next" aria-label="Next Slide">
+              <span class="rh-carousel-icon"><i class="bi bi-chevron-right"></i></span>
+            </button>
+          <% } else { %>
+            <div class="carousel-inner">
+              <div class="carousel-item active rh-slide-artist-register rh-slide-no-caption" style="background-color: #3B115D;">
+                <a href="/artist-applications/select-level" class="rh-slide-link text-decoration-none d-flex flex-column w-100 h-100">
+                  <div class="rh-slide-media-wrap rh-media-full">
+                    <img src="https://res.cloudinary.com/dlbwyl1ci/image/upload/v1771789986/rapira/admin/home-hero-carousel/file_ijl3ds.jpg" alt="Become a Featured Artist" class="rh-slide-img" loading="eager">
                   </div>
-                <% } %>
-              </div>
-              <div class="card-body text-center">
-                <h5 class="card-title mb-2"><%= artist.user.name %></h5>
-                <p class="card-text text-muted mb-3"><%= artist.genre %></p>
-              </div>
-              <div class="card-footer text-center">
-                <a href="/artists/<%= artist._id %>" class="btn btn-gradient-blue w-100">View Profile</a>
-              </div>
-            </div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5" data-aos="fade-up">
-          <div class="glass-card-dark p-5 rounded-4">
-            <i class="bi bi-person-x display-1 text-muted mb-3"></i>
-            <p class="text-muted">No featured artists at the moment. Check back soon!</p>
-          </div>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
-
-<!-- Latest Content Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text-orange">Latest Releases</h2>
-      <a href="/content" class="btn btn-outline-primary">View All <i class="bi bi-arrow-right ms-1"></i></a>
-    </div>
-
-    <div class="row g-4">
-      <% if (latestContent && latestContent.length > 0) { %>
-        <% latestContent.forEach((content, index) => { %>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
-            <div class="glass-card-dark card content-card h-100">
-              <div class="position-relative overflow-hidden">
-                <img src="<%= content.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= content.title %>">
-                <span class="badge <%= content.type === 'song' ? 'bg-gradient-primary' : content.type === 'video' ? 'bg-gradient-danger' : 'bg-gradient-blue' %> content-type-badge px-3 py-2">
-                  <i class="bi <%= content.type === 'song' ? 'bi-music-note' : content.type === 'video' ? 'bi-camera-video' : 'bi-file-text' %> me-1"></i>
-                  <%= content.type.charAt(0).toUpperCase() + content.type.slice(1) %>
-                </span>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title"><%= content.title %></h5>
-                <p class="card-text text-muted">
-                  By <span class="gradient-text-orange"><%= content.artist && content.artist.user ? content.artist.user.name : 'Unknown Artist' %></span>
-                </p>
-                <p class="card-text">
-                  <small class="text-muted">
-                    <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(content.releaseDate) %>
-                  </small>
-                </p>
-              </div>
-              <div class="card-footer bg-transparent border-0 pb-3">
-                <a href="/content/<%= content._id %>"
-                   class="btn btn-outline-light btn-sm w-100">
-                  <%= content.type === 'song' ? 'Listen' : content.type === 'video' ? 'Watch' : 'Read' %>
                 </a>
               </div>
             </div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5" data-aos="fade-up">
-          <div class="glass-card-dark p-5 rounded-4">
-            <i class="bi bi-music-note-list display-1 text-muted mb-3"></i>
-            <p class="text-muted">No content available at the moment. Check back soon!</p>
-          </div>
+          <% } %>
         </div>
-      <% } %>
-    </div>
-  </div>
-</section>
-
-<!-- Trending Reels Section -->
-<section class="py-5 bg-dark position-relative overflow-hidden">
-  <!-- Subtle Background Pattern -->
-  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.1) 0%, rgba(0, 0, 0, 0) 70%); z-index: 0;"></div>
-  
-  <div class="container position-relative" style="z-index: 1;">
-    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
-      <div>
-        <h2 class="fw-bold text-white mb-1"><i class="bi bi-camera-reels me-2 text-danger"></i>Trending Reels</h2>
-        <p class="text-muted small mb-0">Short music and video clips from our artists</p>
       </div>
-      <a href="/reels" class="btn btn-outline-danger btn-sm rounded-pill px-3">Open Reels <i class="bi bi-play-circle ms-1"></i></a>
+      <script>
+        (function() {
+          const carouselEl = document.getElementById('mainCarousel');
+          if (!carouselEl) return;
+          const bannerContainer = carouselEl.closest('.rh-hero-banner-container');
+          function syncCaptionState() {
+            const activeSlide = carouselEl.querySelector('.carousel-item.active');
+            if (bannerContainer && activeSlide) {
+              bannerContainer.classList.toggle('rh-active-has-caption', activeSlide.classList.contains('rh-slide-has-caption'));
+            }
+          }
+          carouselEl.addEventListener('slide.bs.carousel', function(e) {
+            if (bannerContainer && e.relatedTarget) {
+              bannerContainer.classList.toggle('rh-active-has-caption', e.relatedTarget.classList.contains('rh-slide-has-caption'));
+            }
+          });
+          carouselEl.addEventListener('slid.bs.carousel', syncCaptionState);
+          syncCaptionState();
+        })();
+      </script>
     </div>
+  </header>
 
-    <div class="reels-scroll-container d-flex gap-3 overflow-auto pb-3" style="scrollbar-width: none; -ms-overflow-style: none;">
-      <% if (typeof homeReels !== 'undefined' && homeReels && homeReels.length > 0) { %>
-        <% homeReels.forEach((reel, index) => { %>
-          <div class="home-reel-card flex-shrink-0" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>" onclick="window.location.href='/reels?id=<%= reel._id %>'">
-            <div class="reel-thumb-wrapper overflow-hidden rounded-4 position-relative" style="width: 180px; height: 320px; cursor: pointer;">
-              <% if (reel.media.mediaType === 'video') { %>
-                <video src="<%= reel.media.url %>" class="w-100 h-100 object-fit-cover" muted loop onmouseover="this.play()" onmouseout="this.pause(); this.currentTime = 0;"></video>
-                <div class="reel-type-icon position-absolute top-2 end-2 p-1 bg-dark bg-opacity-50 rounded-circle">
-                    <i class="bi bi-camera-video-fill text-white" style="font-size: 0.8rem;"></i>
+  <!-- Main Content Body -->
+  <div class="container py-4">
+    <!-- Section 2: Upcoming Concerts -->
+    <section class="py-3">
+      <div class="rh-section-header" data-aos="fade-up">
+        <h2 class="rh-section-title">Upcoming Concerts</h2>
+        <a href="/concerts" class="rh-section-btn">View All &rarr;</a>
+      </div>
+
+      <div class="row g-4">
+        <% if (upcomingConcerts && upcomingConcerts.length > 0) { %>
+          <% upcomingConcerts.forEach((concert, index) => { 
+               const concertPoster = concert.posterImage || '/images/default-concert.jpg';
+               const artistName = (concert.artist && concert.artist.user && concert.artist.user.name) 
+                 ? concert.artist.user.name 
+                 : (concert.artist && concert.artist.stageName ? concert.artist.stageName : 'Featured Artist');
+          %>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+              <div class="rh-concert-card">
+                <div class="rh-concert-card-frame">
+                  <!-- Ambient blurred backdrop for letterbox artwork -->
+                  <div class="rh-concert-poster-blur" style="background-image: url('<%= concertPoster %>');" aria-hidden="true"></div>
+                  <!-- Crisp foreground poster -->
+                  <img src="<%= concertPoster %>" alt="<%= concert.title %>" class="rh-concert-card-img" onerror="this.onerror=null; this.src='/images/default-concert.jpg';">
+                  <div class="position-absolute top-0 end-0 m-2" style="z-index: 3;">
+                    <span class="rh-concert-price-pill small">
+                      <%= concert.isPaid ? (concert.price !== null && concert.price !== undefined ? `₹${concert.price}` : '₹ 0') : 'FREE' %>
+                    </span>
+                  </div>
                 </div>
-              <% } else { %>
-                <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-gradient-purple">
-                  <i class="bi bi-music-note-beamed text-white display-4"></i>
-                </div>
-                <div class="reel-type-icon position-absolute top-2 end-2 p-1 bg-dark bg-opacity-50 rounded-circle">
-                    <i class="bi bi-music-note text-white" style="font-size: 0.8rem;"></i>
-                </div>
-              <% } %>
-              
-              <!-- Overlay with artist info -->
-              <div class="position-absolute bottom-0 start-0 w-100 p-3 bg-gradient-to-t from-black to-transparent">
-                <div class="d-flex align-items-center gap-2">
-                  <img src="<%= reel.artist.profileImage %>" class="rounded-circle border border-white" style="width: 24px; height: 24px; object-fit: cover;">
-                  <span class="text-white small fw-bold text-truncate" style="max-width: 120px;">@<%= reel.artist.stageName %></span>
+                <div class="rh-artist-card-body align-items-start text-start p-3">
+                  <div class="rh-concert-meta-row mb-1">
+                    <i class="bi bi-calendar3"></i>
+                    <span><%= toISTDateString(concert.date) %> • <%= concert.time %></span>
+                  </div>
+                  <h3 class="rh-concert-card-title mb-1 text-truncate w-100" title="<%= concert.title %>"><%= concert.title %></h3>
+                  <div class="rh-concert-meta-row mb-3">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span class="text-truncate"><%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venue || 'Venue TBA') %>, <%= concert.city %></span>
+                  </div>
+                  <a href="/concerts/<%= concert._id %>" class="rh-btn-outline-pill w-100 text-center justify-content-center">View Details &rarr;</a>
                 </div>
               </div>
             </div>
-          </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-4">
-          <p class="text-muted">Discover artistic reels soon!</p>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
-
-<style>
-  .reels-scroll-container::-webkit-scrollbar {
-    display: none;
-  }
-  .home-reel-card {
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  .home-reel-card:hover {
-    transform: translateY(-10px) scale(1.05);
-  }
-  .bg-gradient-to-t {
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-  }
-  .bg-gradient-purple {
-    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-  }
-  .top-2 { top: 10px; }
-  .end-2 { right: 10px; }
-</style>
-
-<!-- Featured Merchandise Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text-green">Featured Merchandise</h2>
-      <a href="/shop" class="btn btn-outline-primary">Shop All <i class="bi bi-bag ms-1"></i></a>
-    </div>
-
-    <div class="row g-4">
-      <% if (featuredProducts && featuredProducts.length > 0) { %>
-        <% featuredProducts.forEach((product, index) => { %>
-          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
-            <div class="glass-card-dark card product-card h-100">
-              <div class="position-relative overflow-hidden">
-                <img src="<%= product.images[0] %>" class="card-img-top product-image" alt="<%= product.name %>" style="height: 250px; object-fit: cover;">
-
-                <!-- Featured Badge -->
-                <div class="position-absolute top-0 start-0 m-3">
-                  <span class="badge bg-gradient-green px-3 py-2">
-                    <i class="bi bi-star-fill me-1"></i> Featured
-                  </span>
+          <% }); %>
+        <% } else { %>
+          <div class="col-12" data-aos="fade-up">
+            <div class="rh-empty-state-card">
+              <div class="rh-empty-state-icon">
+                <div class="rh-calendar-box" aria-hidden="true">
+                  <!-- Red Calendar Box with 'x' icon matching reference -->
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <line x1="10" y1="14" x2="14" y2="18"></line>
+                    <line x1="14" y1="14" x2="10" y2="18"></line>
+                  </svg>
                 </div>
-
-                <!-- Stock Status -->
-                <% if (product.totalStock === 0) { %>
-                  <div class="position-absolute top-0 end-0 m-3">
-                    <span class="badge bg-danger px-3 py-2">Out of Stock</span>
-                  </div>
-                <% } else if (product.totalStock < 10) { %>
-                  <div class="position-absolute top-0 end-0 m-3">
-                    <span class="badge bg-warning px-3 py-2">Low Stock</span>
-                  </div>
-                <% } %>
-
-                <!-- Discount Badge -->
-                <% if (product.comparePrice && product.comparePrice > product.price) { %>
-                  <div class="position-absolute bottom-0 start-0 m-3">
-                    <span class="badge bg-gradient-danger px-3 py-2">
-                      <%= Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) %>% OFF
-                    </span>
-                  </div>
-                <% } %>
               </div>
+              <div class="rh-empty-state-text">
+                <h4>No upcoming concerts at the moment.</h4>
+                <p>Check back soon!</p>
+              </div>
+              <!-- Right Watermark Crowd Hands Silhouette Matching Reference -->
+              <div class="rh-empty-watermark rh-crowd-watermark" aria-hidden="true">
+                <svg viewBox="0 0 380 120" preserveAspectRatio="xMaxYMid meet" width="360" height="110">
+                  <defs>
+                    <linearGradient id="rhCrowdGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#9F190E" stop-opacity="0" />
+                      <stop offset="30%" stop-color="#9F190E" stop-opacity="0.03" />
+                      <stop offset="65%" stop-color="#9F190E" stop-opacity="0.09" />
+                      <stop offset="100%" stop-color="#9F190E" stop-opacity="0.14" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Crowd silhouettes with raised arms, cheering hands & festival energy -->
+                  <path fill="url(#rhCrowdGrad)" d="M0,120 L380,120 L380,45 C376,42 374,32 371,20 C369,12 365,10 363,16 C361,22 360,35 357,40 C352,32 348,15 344,8 C341,3 338,6 337,14 C336,22 334,35 330,42 C326,30 323,18 320,12 C318,8 315,10 314,18 C313,26 312,38 308,46 C304,38 300,24 296,16 C293,10 290,12 289,22 C288,32 286,45 281,50 C276,42 272,28 268,22 C265,18 262,20 261,30 C260,40 258,54 252,60 C247,52 243,36 240,30 C237,25 234,28 233,38 C232,48 230,62 224,68 C218,60 214,46 210,42 C207,38 204,42 203,52 C202,62 199,74 192,78 C185,72 180,58 176,55 C173,52 170,58 169,68 C168,78 163,85 155,88 C145,82 138,90 125,92 C110,88 95,98 80,102 C60,98 35,108 0,120 Z" />
+                  <!-- Fine detail lines of raised arms & cheering hands -->
+                  <g stroke="#9F190E" stroke-opacity="0.13" stroke-width="1.2" fill="none">
+                    <path d="M363,40 L363,16 C363,12 367,10 369,14 L371,28" />
+                    <path d="M340,45 L340,14 C340,8 344,8 346,14 L347,35" />
+                    <path d="M317,48 L317,16 C317,10 321,12 322,20 L323,40" />
+                    <path d="M292,52 L292,20 C292,14 295,16 296,24 L298,45" />
+                    <path d="M264,60 L264,28 C264,22 267,24 268,32 L270,55" />
+                    <path d="M236,68 L236,34 C236,28 239,30 240,40 L242,65" />
+                    <path d="M206,75 L206,46 C206,40 209,42 210,52 L212,72" />
+                    <!-- Cheering hands and fingers gestures -->
+                    <path d="M362,14 C360,10 363,6 366,8 C368,10 366,14 362,14" />
+                    <path d="M339,12 C337,8 340,4 343,6 C345,8 343,12 339,12" />
+                    <path d="M291,18 C289,14 292,10 295,12 C297,14 295,18 291,18" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </section>
 
-              <div class="card-body">
-                <h5 class="card-title mb-2"><%= product.name %></h5>
-                <p class="card-text text-muted mb-2">
-                  <small><%= product.category %></small>
-                </p>
+    <!-- Section 3: Featured Artists (Strict Editorial Reference Alignment) -->
+    <section class="py-4 rh-artists-section">
+      <div class="rh-section-header" data-aos="fade-up">
+        <h2 class="rh-section-title">Featured Artists</h2>
+        <a href="/artists" class="rh-section-btn">View All &rarr;</a>
+      </div>
 
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                  <div class="price-section">
-                    <span class="h5 mb-0 text-success fw-bold">₹<%= product.price.toLocaleString() %></span>
-                    <% if (product.comparePrice && product.comparePrice > product.price) { %>
-                      <span class="text-muted text-decoration-line-through ms-2">₹<%= product.comparePrice.toLocaleString() %></span>
-                    <% } %>
-                  </div>
-
-                  <% if (product.averageRating > 0) { %>
-                    <div class="rating">
-                      <span class="text-warning">
-                        <% for (let i = 1; i <= 5; i++) { %>
-                          <i class="bi <%= i <= Math.round(product.averageRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
-                        <% } %>
-                      </span>
-                      <small class="text-muted">(<%= product.totalReviews %>)</small>
+      <div class="row g-4 rh-artists-track-row" id="homeArtistsContainer">
+        <% if (featuredArtists && featuredArtists.length > 0) { %>
+          <% featuredArtists.forEach((artist, index) => { 
+               const artistName = (artist.user && artist.user.name) ? artist.user.name.trim() : (artist.stageName ? artist.stageName.trim() : 'Artist');
+               let artistImg = (artist.user && artist.user.profileImage && !artist.user.profileImage.includes('default-profile')) ? artist.user.profileImage : null;
+               
+               // Reference photo fallback: match Vashu to reference photo
+               if (!artistImg && (artistName.toLowerCase().includes('vashu') || (artist.stageName && artist.stageName.toLowerCase().includes('vashu')))) {
+                 artistImg = '/images/artists/vashu.jpg';
+               }
+               
+               const artistGenre = artist.genre || 'Hip Hop';
+          %>
+            <div class="col-xl-3 col-lg-3 col-md-6 col-12 rh-artist-col" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+              <div class="rh-artist-card">
+                <div class="rh-artist-img-frame">
+                  <% if (artistImg) { %>
+                    <img src="<%= artistImg %>" class="rh-artist-img" alt="<%= artistName %>" onerror="this.onerror=null; this.src='/images/artists/vashu.jpg';">
+                  <% } else { %>
+                    <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light text-center p-3">
+                      <i class="bi bi-person-fill fs-1 text-muted"></i>
+                      <span class="small text-muted mt-2 fw-bold"><%= artistName %></span>
+                    </div>
+                  <% } %>
+                  
+                  <% if (artist.verified) { %>
+                    <div class="rh-verified-pill" title="Verified Artist">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.875-.195a2.89 2.89 0 0 0-3.411 2.478l-.117.887-.723.523a2.89 2.89 0 0 0 0 4.208l.723.523.117.887a2.89 2.89 0 0 0 3.411 2.478l.875-.195.622.638a2.89 2.89 0 0 0 4.134 0l.622-.638.875.195a2.89 2.89 0 0 0 3.411-2.478l.117-.887.723-.523a2.89 2.89 0 0 0 0-4.208l-.723-.523-.117-.887a2.89 2.89 0 0 0-3.411-2.478l-.875.195-.622-.638zm-1.07 9.872l-3.25-3.25 1.06-1.06 2.19 2.19 4.38-4.38 1.06 1.06-5.44 5.44z"/>
+                      </svg>
+                      <span>Verified</span>
                     </div>
                   <% } %>
                 </div>
-
-                <% if (product.totalSales > 0) { %>
-                  <p class="card-text">
-                    <small class="text-muted">
-                      <i class="bi bi-bag-check me-1"></i> <%= product.totalSales %> sold
-                    </small>
-                  </p>
-                <% } %>
+                <div class="rh-artist-card-body">
+                  <h3 class="rh-artist-name text-truncate" title="<%= artistName %>"><%= artistName %></h3>
+                  <p class="rh-artist-genre text-truncate"><%= artistGenre %></p>
+                  <a href="/artists/<%= artist._id %>" class="rh-artist-btn">View Profile &rarr;</a>
+                </div>
               </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="col-12" data-aos="fade-up">
+            <div class="rh-empty-state-card">
+              <div class="rh-empty-state-icon">
+                <i class="bi bi-people-fill fs-1 text-crimson"></i>
+              </div>
+              <div class="rh-empty-state-text">
+                <h4>No featured artists currently highlighted.</h4>
+                <p>Check back soon as we curate our official artist roster!</p>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
 
-              <div class="card-footer bg-transparent border-0 pb-3">
-                <% if (product.totalStock > 0) { %>
-                  <a href="/shop/product/<%= product._id %>" class="btn btn-gradient-green w-100">
-                    <i class="bi bi-eye me-1"></i> View Product
+      <!-- Understated Mobile Pagination Indicators & Hint -->
+      <% if (featuredArtists && featuredArtists.length > 1) { %>
+        <div class="rh-artists-carousel-controls d-block d-md-none mt-3 px-1" aria-hidden="true">
+          <div class="rh-artists-controls-row">
+            <span class="rh-artists-swipe-label"><i class="bi bi-arrow-left-right me-1"></i> Swipe to explore artists</span>
+          </div>
+          <div class="rh-artists-dots" id="homeArtistsDots">
+            <% featuredArtists.forEach((_, i) => { %>
+              <button type="button" class="rh-dot <%= i === 0 ? 'active' : '' %>" data-index="<%= i %>" aria-label="Go to artist <%= i + 1 %>"></button>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- Section 4: Latest Releases -->
+    <section class="py-4">
+      <div class="rh-section-header" data-aos="fade-up">
+        <h2 class="rh-section-title">Latest Releases</h2>
+        <a href="/content" class="rh-section-btn">View All &rarr;</a>
+      </div>
+
+      <div class="row g-4">
+        <% if (latestContent && latestContent.length > 0) { %>
+          <% latestContent.forEach((content, index) => { 
+               const contentThumb = content.thumbnailUrl || '/images/default-thumbnail.jpg';
+               const artistName = (content.artist && content.artist.user && content.artist.user.name) ? content.artist.user.name : 'Unknown Artist';
+          %>
+            <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+              <div class="rh-artist-card">
+                <div class="rh-artist-img-frame" style="aspect-ratio: 16/9; max-height: 180px;">
+                  <img src="<%= contentThumb %>" alt="<%= content.title %>" class="rh-artist-img" onerror="this.onerror=null; this.src='/images/default-thumbnail.jpg';">
+                  <div class="position-absolute top-0 start-0 m-2">
+                    <span class="badge bg-crimson font-subdisplay px-2 py-1 small">
+                      <i class="bi <%= content.type === 'song' ? 'bi-music-note' : (content.type === 'video' ? 'bi-camera-video' : 'bi-file-text') %> me-1"></i>
+                      <%= content.type.toUpperCase() %>
+                    </span>
+                  </div>
+                </div>
+                <div class="rh-artist-card-body align-items-start text-start p-3">
+                  <h3 class="rh-artist-name text-start fs-6 text-truncate w-100 mb-1" title="<%= content.title %>"><%= content.title %></h3>
+                  <p class="small text-muted mb-2 text-truncate w-100">By <span class="text-crimson fw-bold"><%= artistName %></span></p>
+                  <a href="/content/<%= content._id %>" class="rh-artist-btn w-100">
+                    <%= content.type === 'song' ? 'Listen' : (content.type === 'video' ? 'Watch' : 'Read') %> &rarr;
                   </a>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="col-12" data-aos="fade-up">
+            <div class="rh-empty-state-card">
+              <div class="rh-empty-state-icon">
+                <div class="rh-calendar-box" aria-hidden="true">
+                  <!-- Musical note with speed lines SVG matching reference -->
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="2" y1="7" x2="9" y2="7"></line>
+                    <line x1="2" y1="12" x2="7" y2="12"></line>
+                    <line x1="2" y1="17" x2="9" y2="17"></line>
+                    <path d="M12 17V5l8-2v12"></path>
+                    <circle cx="10" cy="17" r="2.5" fill="#9F190E"></circle>
+                    <circle cx="18" cy="15" r="2.5" fill="#9F190E"></circle>
+                  </svg>
+                </div>
+              </div>
+              <div class="rh-empty-state-text">
+                <h4>No content available at the moment.</h4>
+                <p>Check back soon!</p>
+              </div>
+              <!-- Right Watermark Concentric Vinyl Grooves matching reference -->
+              <div class="rh-empty-watermark rh-vinyl-watermark" aria-hidden="true">
+                <svg viewBox="0 0 180 180" width="170" height="170" fill="none">
+                  <defs>
+                    <linearGradient id="rhVinylGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#9F190E" stop-opacity="0.03" />
+                      <stop offset="50%" stop-color="#9F190E" stop-opacity="0.07" />
+                      <stop offset="100%" stop-color="#9F190E" stop-opacity="0.12" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Delicate vinyl record concentric grooves -->
+                  <circle cx="135" cy="90" r="120" stroke="url(#rhVinylGrad)" stroke-width="1.2" />
+                  <circle cx="135" cy="90" r="105" stroke="url(#rhVinylGrad)" stroke-width="1.1" />
+                  <circle cx="135" cy="90" r="90" stroke="url(#rhVinylGrad)" stroke-width="1.2" />
+                  <circle cx="135" cy="90" r="75" stroke="url(#rhVinylGrad)" stroke-width="1.1" />
+                  <circle cx="135" cy="90" r="60" stroke="url(#rhVinylGrad)" stroke-width="1.2" />
+                  <circle cx="135" cy="90" r="46" stroke="url(#rhVinylGrad)" stroke-width="1.4" />
+                  <circle cx="135" cy="90" r="32" fill="#9F190E" fill-opacity="0.05" stroke="#9F190E" stroke-opacity="0.10" stroke-width="1" />
+                  <circle cx="135" cy="90" r="7" fill="#9F190E" fill-opacity="0.15" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- Section 5: Trending Reels (Medium-Height 3:4 Feed Grid) -->
+    <section class="py-4">
+      <div class="rh-section-header rh-reels-header align-items-start" data-aos="fade-up">
+        <div>
+          <h2 class="rh-section-title">
+            <i class="bi bi-camera-video me-2 text-crimson"></i>Trending Reels
+          </h2>
+          <p class="rh-section-subtitle">Short music and video clips from our artists.</p>
+        </div>
+        <a href="/reels" class="rh-section-btn">Open Reels &rarr;</a>
+      </div>
+
+      <div class="rh-reels-scroll-wrapper position-relative" data-aos="fade-up">
+        <button class="rh-reel-nav-btn rh-reel-nav-prev" onclick="window.scrollReelsTrack(-320)" aria-label="Previous Reels">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="rh-reel-nav-btn rh-reel-nav-next" onclick="window.scrollReelsTrack(320)" aria-label="Next Reels">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+
+        <div id="homeReelsContainer" class="rh-reels-track">
+          <% if (typeof homeReels !== 'undefined' && homeReels && homeReels.length > 0) { %>
+            <% homeReels.forEach((reel, index) => { 
+                 const reelArtistName = (reel.artist && reel.artist.stageName) ? reel.artist.stageName : 'Artist';
+                 const reelArtistImg = (reel.artist && reel.artist.profileImage) ? reel.artist.profileImage : '/images/default-profile.svg';
+                 const mediaUrl = (reel.media && reel.media.url) ? reel.media.url : '';
+                 const mediaType = (reel.media && reel.media.mediaType) ? reel.media.mediaType : 'video';
+                 
+                 // Determine authentic thumbnail poster
+                 let posterUrl = (reel.media && reel.media.thumbnailUrl) ? reel.media.thumbnailUrl : '';
+                 if (!posterUrl && mediaUrl && mediaType === 'video' && mediaUrl.includes('cloudinary.com')) {
+                   posterUrl = mediaUrl.replace(/\.[^/.]+$/, '.jpg');
+                 }
+                 if (!posterUrl && mediaType === 'audio') {
+                   posterUrl = (reelArtistImg && reelArtistImg !== '/images/default-profile.svg')
+                     ? reelArtistImg
+                     : '/images/default-thumbnail.jpg';
+                 }
+                 if (!posterUrl && mediaType === 'video') {
+                   posterUrl = '/images/default-thumbnail.jpg';
+                 }
+                 const captionStr = reel.caption || '';
+                 const safeCaption = captionStr.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\r?\n/g, ' ');
+            %>
+              <div class="rh-reel-card" 
+                   role="button"
+                   tabindex="0"
+                   aria-label="Play reel by <%= reelArtistName %>"
+                   data-reel-index="<%= index %>"
+                   data-reel-id="<%= reel._id %>"
+                   data-media-url="<%= mediaUrl %>"
+                   data-media-type="<%= mediaType %>"
+                   data-artist-name="<%= reelArtistName %>"
+                   data-artist-img="<%= reelArtistImg %>"
+                   data-artist-id="<%= (reel.artist && reel.artist._id) ? reel.artist._id : '' %>"
+                   data-verified="<%= (reel.artist && reel.artist.verified) ? 'true' : 'false' %>"
+                   data-poster-url="<%= posterUrl %>"
+                   data-caption="<%= safeCaption %>"
+                   data-likes="<%= reel.likesCount || 0 %>"
+                   data-comments="<%= reel.commentsCount || 0 %>"
+                   onclick="window.openRapiraReelCard(this)"
+                   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.openRapiraReelCard(this);}">
+                
+                <% if (posterUrl) { %>
+                  <img src="<%= posterUrl %>" class="rh-reel-media" alt="Reel by <%= reelArtistName %>" loading="lazy" onerror="this.onerror=null; this.src='/images/default-thumbnail.jpg';">
+                <% } else if (mediaType === 'video' && mediaUrl) { %>
+                  <video src="<%= mediaUrl %>" class="rh-reel-media" muted preload="metadata"></video>
                 <% } else { %>
-                  <button class="btn btn-secondary w-100" disabled>
-                    <i class="bi bi-x-circle me-1"></i> Out of Stock
-                  </button>
+                  <!-- Designed Editorial Audio/Reel Fallback -->
+                  <div class="rh-reel-fallback">
+                    <div class="rh-fallback-bars">
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <span class="rh-fallback-badge">AUDIO REEL</span>
+                  </div>
                 <% } %>
+                
+                <!-- Center Play Button Overlay (Rock-Solid Centered with inset:0; margin:auto) -->
+                <div class="rh-reel-play-btn" aria-hidden="true">
+                  <div class="rh-reel-play-icon"></div>
+                </div>
+
+                <!-- Bottom Artist Avatar & Handle -->
+                <div class="rh-reel-bottom">
+                  <img src="<%= reelArtistImg %>" class="rh-reel-avatar" alt="<%= reelArtistName %>" onerror="this.onerror=null; this.src='/images/default-profile.svg';">
+                  <span class="rh-reel-handle">@<%= reelArtistName %></span>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <!-- 6 Editorial Reference-Matched Reels Placeholders -->
+            <% 
+              const mockReels = [
+                { img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1771783781/rapira/artist-posts/videos/file_i4o4zn.mp4' },
+                { img: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1772370075/rapira/artist-posts/videos/file_lueitr.mp4' },
+                { img: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1772882951/rapira/artist-posts/videos/file_jgs8ey.mp4' },
+                { img: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1772883353/rapira/artist-posts/videos/file_rhulqk.mp4' },
+                { img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1773255019/rapira/artist-posts/videos/file_kdchpp.mp4' },
+                { img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=80', artist: 'Riona', video: 'https://res.cloudinary.com/dlbwyl1ci/video/upload/v1771783781/rapira/artist-posts/videos/file_i4o4zn.mp4' }
+              ];
+            %>
+            <% mockReels.forEach((mReel, idx) => { %>
+              <div class="rh-reel-card"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Play reel by <%= mReel.artist %>"
+                   data-reel-index="<%= idx %>"
+                   data-reel-id="mock-<%= idx %>"
+                   data-media-url="<%= mReel.video %>"
+                   data-media-type="video"
+                   data-artist-name="<%= mReel.artist %>"
+                   data-artist-img="/images/default-profile.svg"
+                   data-artist-id=""
+                   data-verified="true"
+                   data-poster-url="<%= mReel.img %>"
+                   data-caption="Rapira festival reel"
+                   data-likes="1200"
+                   data-comments="24"
+                   onclick="window.openRapiraReelCard(this)"
+                   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); window.openRapiraReelCard(this);}">
+                <img src="<%= mReel.img %>" class="rh-reel-media" alt="Reel <%= idx + 1 %>">
+                <div class="rh-reel-play-btn" aria-hidden="true">
+                  <div class="rh-reel-play-icon"></div>
+                </div>
+                <div class="rh-reel-bottom">
+                  <img src="/images/default-profile.svg" class="rh-reel-avatar" alt="<%= mReel.artist %>">
+                  <span class="rh-reel-handle">@<%= mReel.artist %></span>
+                </div>
+              </div>
+            <% }); %>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Featured Merchandise (Rendered if products are present) -->
+    <% if (featuredProducts && featuredProducts.length > 0) { %>
+    <section class="py-4">
+      <div class="rh-section-header" data-aos="fade-up">
+        <h2 class="rh-section-title">Featured Merchandise</h2>
+        <a href="/shop" class="rh-section-btn">Explore Shop &rarr;</a>
+      </div>
+
+      <div class="row g-4">
+        <% featuredProducts.forEach((product, index) => { 
+             const productImg = (product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/images/default-thumbnail.jpg';
+        %>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="<%= index * 100 %>">
+            <div class="rh-merch-card">
+              <div class="rh-merch-img-wrap">
+                <img src="<%= productImg %>" alt="<%= product.name %>" onerror="this.onerror=null; this.src='/images/default-thumbnail.jpg';">
+              </div>
+              <div class="rh-merch-body">
+                <h3 class="rh-merch-title text-truncate" title="<%= product.name %>"><%= product.name %></h3>
+                <div class="d-flex align-items-center justify-content-between mt-auto pt-2">
+                  <span class="rh-merch-price">₹<%= product.price.toLocaleString() %></span>
+                  <a href="/shop/product/<%= product._id %>" class="rh-section-btn py-1 px-3">View &rarr;</a>
+                </div>
               </div>
             </div>
           </div>
         <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center py-5" data-aos="fade-up">
-          <div class="glass-card-dark p-5 rounded-4">
-            <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
-            <p class="text-muted">No featured merchandise at the moment. Check back soon!</p>
-            <a href="/shop" class="btn btn-outline-primary mt-3">Browse All Products</a>
-          </div>
-        </div>
-      <% } %>
-    </div>
-  </div>
-</section>
-
-
-
-
-
-<!-- How It Works Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="text-center mb-5" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text">How RAPIRA Works</h2>
-      <p class="lead text-muted">Discover, connect, and experience music like never before</p>
-    </div>
-
-    <div class="row g-4">
-      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="0">
-        <div class="glass-card-dark text-center p-4 h-100">
-          <div class="mb-4">
-            <div class="bg-gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-              <i class="bi bi-search text-white" style="font-size: 2rem;"></i>
-            </div>
-          </div>
-          <h4 class="fw-bold mb-3">Discover</h4>
-          <p class="text-muted">Explore a vast library of music, videos, and live concerts from talented artists across genres.</p>
-        </div>
       </div>
-
-      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="glass-card-dark text-center p-4 h-100">
-          <div class="mb-4">
-            <div class="bg-gradient-blue rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-              <i class="bi bi-heart-fill text-white" style="font-size: 2rem;"></i>
-            </div>
-          </div>
-          <h4 class="fw-bold mb-3">Connect</h4>
-          <p class="text-muted">Follow your favorite artists, interact with their content, and be part of an engaged music community.</p>
-        </div>
-      </div>
-
-      <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="glass-card-dark text-center p-4 h-100">
-          <div class="mb-4">
-            <div class="bg-gradient-orange rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-              <i class="bi bi-ticket-perforated-fill text-white" style="font-size: 2rem;"></i>
-            </div>
-          </div>
-          <h4 class="fw-bold mb-3">Experience</h4>
-          <p class="text-muted">Book tickets for live concerts, attend virtual events, and enjoy exclusive artist merchandise.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-
-
-
-
-
-<!-- Quick Links Section -->
-<section class="py-5">
-  <div class="container">
-    <div class="text-center mb-5" data-aos="fade-up">
-      <h2 class="fw-bold gradient-text">Explore More</h2>
-      <p class="lead text-muted">Quick access to all the amazing features RAPIRA has to offer</p>
-    </div>
-
-    <div class="row g-4">
-      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="0">
-        <a href="/content" class="text-decoration-none">
-          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
-            <div class="mb-3">
-              <i class="bi bi-music-note-list display-4 gradient-text-orange"></i>
-            </div>
-            <h5 class="fw-bold mb-2">Content Library</h5>
-            <p class="text-muted mb-0">Discover songs, videos, and exclusive content from your favorite artists.</p>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
-        <a href="/concerts" class="text-decoration-none">
-          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
-            <div class="mb-3">
-              <i class="bi bi-calendar-event display-4 gradient-text-purple"></i>
-            </div>
-            <h5 class="fw-bold mb-2">Live Concerts</h5>
-            <p class="text-muted mb-0">Book tickets for amazing live performances and virtual events.</p>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
-        <a href="/team-requirement" class="text-decoration-none">
-          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
-            <div class="mb-3">
-              <i class="bi bi-people display-4 gradient-text-blue"></i>
-            </div>
-            <h5 class="fw-bold mb-2">Team Booking</h5>
-            <p class="text-muted mb-0">Book complete teams of artists for your events and venues.</p>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
-        <a href="/subscriptions" class="text-decoration-none">
-          <div class="glass-card-dark p-4 h-100 text-center quick-link-card">
-            <div class="mb-3">
-              <i class="bi bi-star display-4 gradient-text-green"></i>
-            </div>
-            <h5 class="fw-bold mb-2">Subscriptions</h5>
-            <p class="text-muted mb-0">Get premium access to exclusive content and special features.</p>
-          </div>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Join as Artist CTA - Only show if user is not an artist -->
-<% if (!user || user.role !== 'artist') { %>
-<section class="py-5 text-white text-center position-relative overflow-hidden" data-aos="fade-up">
-  <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient-purple" style="z-index: -1;"></div>
-  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('/images/pattern.svg'); opacity: 0.2; z-index: -1;"></div>
-  <div class="container py-4">
-    <h2 class="fw-bold mb-4 animate-pulse">Are You an Artist?</h2>
-    <p class="lead mb-4">Join Rapira to showcase your music, organize concerts, and connect with fans</p>
-    <% if (!user) { %>
-      <a href="/auth/register" class="btn btn-glass-dark btn-lg px-5">Join as Artist</a>
-    <% } else { %>
-      <a href="/artist-applications/select-level" class="btn btn-glass-dark btn-lg px-5">Apply to Become Artist</a>
+    </section>
     <% } %>
-  </div>
-</section>
-<% } %>
 
+    <!-- Section 7: "How RAPIRA Works" Editorial Feature Section -->
+    <section class="py-5 rh-how-works-section" data-aos="fade-up">
+      <!-- Section Header -->
+      <div class="rh-how-works-header text-center mb-4 mb-md-5">
+        <div class="rh-how-kicker">HOW RAPIRA WORKS</div>
+        <h2 class="rh-how-headline">DISCOVER. CONNECT. EXPERIENCE.</h2>
+        <p class="rh-how-subtitle">A home for Indian artists, fans, and live music experiences.</p>
+      </div>
+
+      <!-- 3 Feature Cards Carousel / Row -->
+      <div class="rh-how-cards-track" id="howWorksTrack">
+        
+        <!-- Card 01: DISCOVER -->
+        <div class="rh-how-card rh-card-discover">
+          <div class="rh-how-card-inner">
+            <!-- Left Text Content -->
+            <div class="rh-card-content">
+              <!-- Large Translucent Number in Upper-Left -->
+              <div class="rh-card-number" aria-hidden="true">01</div>
+              
+              <!-- Icon Badge Positioned Separately Below the Number -->
+              <div class="rh-card-badge">
+                <i class="bi bi-search"></i>
+              </div>
+              <h3 class="rh-card-title">DISCOVER</h3>
+              <p class="rh-card-desc">
+                Explore a vast library of music, videos, and live concerts from talented artists across genres.
+              </p>
+              <a href="/content" class="rh-card-cta-btn" aria-label="Discover Music">
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+
+            <!-- Right Artwork Motif: Large Vinyl Record & Doodle -->
+            <div class="rh-card-art rh-art-discover" aria-hidden="true">
+              <picture>
+                <source srcset="/images/how-it-works/card1-vinyl.webp" type="image/webp">
+                <img src="/images/how-it-works/card1-vinyl.png" alt="" class="rh-art-img" width="800" height="800" />
+              </picture>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 02: CONNECT (Centerpiece) -->
+        <div class="rh-how-card rh-card-connect">
+          <div class="rh-how-card-inner">
+            <!-- Left Text Content -->
+            <div class="rh-card-content">
+              <!-- Large Translucent Number in Upper-Left -->
+              <div class="rh-card-number" aria-hidden="true">02</div>
+              
+              <!-- Icon Badge Positioned Separately Below the Number -->
+              <div class="rh-card-badge">
+                <i class="bi bi-people-fill"></i>
+              </div>
+              <h3 class="rh-card-title">CONNECT</h3>
+              <p class="rh-card-desc">
+                Follow your favorite artists, interact with their content, and be part of an engaged music community.
+              </p>
+              <a href="/artists" class="rh-card-cta-btn" aria-label="Connect with Artists">
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+
+            <!-- Right Artwork Motif: Concert Crowd Silhouette & Spotlight -->
+            <div class="rh-card-art rh-art-connect" aria-hidden="true">
+              <picture>
+                <source srcset="/images/how-it-works/card2-crowd.webp" type="image/webp">
+                <img src="/images/how-it-works/card2-crowd.png" alt="" class="rh-art-img" width="800" height="800" />
+              </picture>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 03: EXPERIENCE -->
+        <div class="rh-how-card rh-card-experience">
+          <div class="rh-how-card-inner">
+            <!-- Left Text Content -->
+            <div class="rh-card-content">
+              <!-- Large Translucent Number in Upper-Left -->
+              <div class="rh-card-number" aria-hidden="true">03</div>
+              
+              <!-- Icon Badge Positioned Separately Below the Number -->
+              <div class="rh-card-badge">
+                <i class="bi bi-ticket-perforated-fill"></i>
+              </div>
+              <h3 class="rh-card-title">EXPERIENCE</h3>
+              <p class="rh-card-desc">
+                Book tickets for live concerts, attend virtual events, and enjoy exclusive artist merchandise.
+              </p>
+              <a href="/concerts" class="rh-card-cta-btn" aria-label="Experience Live Music">
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+
+            <!-- Right Artwork Motif: Hand Holding Concert Ticket with Starburst -->
+            <div class="rh-card-art rh-art-experience" aria-hidden="true">
+              <picture>
+                <source srcset="/images/how-it-works/card3-ticket.webp" type="image/webp">
+                <img src="/images/how-it-works/card3-ticket.png" alt="" class="rh-art-img" width="800" height="1000" />
+              </picture>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mobile Pagination Indicators (Visible only on mobile) -->
+      <div class="rh-how-pagination" id="howWorksPagination" role="tablist" aria-label="How RAPIRA Works pagination">
+        <button type="button" class="rh-how-dot active" data-index="0" aria-label="Go to slide 1"></button>
+        <button type="button" class="rh-how-dot" data-index="1" aria-label="Go to slide 2"></button>
+        <button type="button" class="rh-how-dot" data-index="2" aria-label="Go to slide 3"></button>
+      </div>
+    </section>
+
+    <!-- Section 8: "Are You an Artist?" Editorial Artist Invitation Panel -->
+    <section class="rh-artist-cta-section my-5" data-aos="fade-up">
+      <div class="rh-artist-cta-card">
+        <div class="rh-artist-cta-content text-start">
+          <div class="rh-cta-kicker">FOR CREATORS &amp; PERFORMERS</div>
+          <h2 class="rh-artist-cta-title">ARE YOU AN ARTIST?</h2>
+          <p class="rh-artist-cta-desc">
+            Join Rapira to showcase your music, organize live concerts, build your fanbase, and connect with thousands of Indian hip-hop enthusiasts.
+          </p>
+          <div class="rh-artist-cta-action">
+            <a href="/artists/register" class="rh-btn-crimson-solid rh-cta-action-btn">
+              Join as Artist &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <%- include('./partials/reel-modal') %>
+</div>
+<script src="/js/reel-viewer.js?v=20261107a"></script>
+<script src="/js/homepage-motion.js"></script>

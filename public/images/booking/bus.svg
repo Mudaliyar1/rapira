@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <filter id="bus-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#9F190E" flood-opacity="0.16" />
+    </filter>
+    <linearGradient id="bus-yellow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDB432" />
+      <stop offset="60%" stop-color="#F5A623" />
+      <stop offset="100%" stop-color="#E58F12" />
+    </linearGradient>
+    <linearGradient id="bus-crimson" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BA2114" />
+      <stop offset="100%" stop-color="#801209" />
+    </linearGradient>
+    <linearGradient id="bus-glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EBF8FF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#BEE3F8" stop-opacity="0.5" />
+    </linearGradient>
+    <linearGradient id="bus-beam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F5A623" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#F5A623" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse cx="160" cy="174" rx="126" ry="10" fill="#EAC8B7" opacity="0.65" />
+
+  <g filter="url(#bus-shadow)">
+    <!-- Back Wheel -->
+    <g transform="translate(86, 144)">
+      <circle cx="0" cy="0" r="27" fill="#25211F" />
+      <circle cx="0" cy="0" r="19" fill="#FCF0E4" stroke="#EAC8B7" stroke-width="2" />
+      <circle cx="0" cy="0" r="9" fill="#BA2114" />
+      <circle cx="0" cy="0" r="3.5" fill="#FCF0E4" />
+    </g>
+
+    <!-- Front Wheel -->
+    <g transform="translate(236, 144)">
+      <circle cx="0" cy="0" r="27" fill="#25211F" />
+      <circle cx="0" cy="0" r="19" fill="#FCF0E4" stroke="#EAC8B7" stroke-width="2" />
+      <circle cx="0" cy="0" r="9" fill="#BA2114" />
+      <circle cx="0" cy="0" r="3.5" fill="#FCF0E4" />
+    </g>
+
+    <!-- Bus Main Body Box -->
+    <path d="M 40 136 L 40 68 C 40 54, 52 48, 68 48 L 244 48 C 262 48, 276 56, 280 74 L 286 112 C 288 122, 288 132, 286 140 C 284 144, 278 146, 270 146 L 264 146 C 262 130, 249 120, 236 120 C 223 120, 210 130, 208 146 L 114 146 C 112 130, 99 120, 86 120 C 73 120, 60 130, 58 146 L 46 146 C 42 146, 40 142, 40 136 Z" fill="url(#bus-yellow)" stroke="#DE8C12" stroke-width="1.5" />
+
+    <!-- Crimson Middle Accent Belt & Lower Skirt -->
+    <path d="M 40 96 L 284 96 L 285 116 L 40 116 Z" fill="url(#bus-crimson)" />
+    <path d="M 40 126 L 40 142 L 58 142 C 60 128, 73 122, 86 122 C 99 122, 112 128, 114 142 L 208 142 C 210 128, 223 122, 236 122 C 249 122, 262 128, 264 142 L 282 142 L 284 126 Z" fill="url(#bus-crimson)" />
+
+    <!-- Front & Rear Bumpers -->
+    <rect x="34" y="134" width="8" height="12" rx="3" fill="#4A4A4F" />
+    <rect x="282" y="132" width="8" height="14" rx="3" fill="#4A4A4F" />
+
+    <!-- Passenger Windows Row (Group travel!) -->
+    <!-- Window 1 (Rear) -->
+    <rect x="52" y="56" width="34" height="34" rx="5" fill="url(#bus-glass)" stroke="#4A4A4F" stroke-width="1.8" />
+    <!-- Window 2 (Mid-Rear) -->
+    <rect x="92" y="56" width="34" height="34" rx="5" fill="url(#bus-glass)" stroke="#4A4A4F" stroke-width="1.8" />
+    <!-- Window 3 (Mid-Front) -->
+    <rect x="132" y="56" width="34" height="34" rx="5" fill="url(#bus-glass)" stroke="#4A4A4F" stroke-width="1.8" />
+    <!-- Window 4 (Door Window) -->
+    <rect x="172" y="56" width="34" height="34" rx="5" fill="url(#bus-glass)" stroke="#4A4A4F" stroke-width="1.8" />
+    <!-- Window 5 (Front Windshield / Driver) -->
+    <path d="M 212 56 L 244 56 C 255 56, 264 62, 268 74 L 274 90 L 212 90 Z" fill="url(#bus-glass)" stroke="#4A4A4F" stroke-width="1.8" />
+
+    <!-- Passenger Silhouettes inside windows (Concert crew!) -->
+    <circle cx="69" cy="70" r="5" fill="#8D5B4C" />
+    <path d="M 62 86 C 62 78, 76 78, 76 86 Z" fill="#6B3724" />
+
+    <circle cx="109" cy="70" r="5" fill="#BA2114" />
+    <path d="M 102 86 C 102 78, 116 78, 116 86 Z" fill="#9F190E" />
+
+    <circle cx="149" cy="70" r="5" fill="#8D5B4C" />
+    <path d="M 142 86 C 142 78, 156 78, 156 86 Z" fill="#6B3724" />
+
+    <!-- Driver silhouette -->
+    <circle cx="236" cy="70" r="5" fill="#25211F" />
+    <path d="M 228 88 C 228 80, 244 80, 244 88 Z" fill="#25211F" />
+    <ellipse cx="250" cy="80" rx="3" ry="7" fill="#4A4A4F" />
+
+    <!-- Bus Folding Door Lines -->
+    <rect x="170" y="54" width="38" height="88" rx="2" fill="none" stroke="#25211F" stroke-width="1.5" />
+    <line x1="189" y1="54" x2="189" y2="142" stroke="#25211F" stroke-width="1.5" />
+
+    <!-- Headlight Assembly -->
+    <path d="M 276 114 C 284 114, 288 118, 288 124 C 288 128, 280 128, 274 126 Z" fill="#FFFBEB" stroke="#68615D" stroke-width="1.5" />
+    <ellipse cx="282" cy="120" rx="4" ry="5" fill="#FDB432" />
+
+    <!-- Headlight Beam -->
+    <polygon points="288,120 318,104 318,138" fill="url(#bus-beam)" />
+    <line x1="290" y1="114" x2="314" y2="108" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+    <line x1="292" y1="120" x2="318" y2="120" stroke="#F5A623" stroke-width="2.5" stroke-linecap="round" opacity="0.95" />
+    <line x1="290" y1="126" x2="314" y2="132" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+
+    <!-- Tail lights -->
+    <rect x="40" y="100" width="4" height="6" fill="#FDB432" />
+    <rect x="40" y="108" width="4" height="6" fill="#BA2114" />
+
+    <!-- Roof Luggage Rack with Speakers / Tour luggage -->
+    <line x1="60" y1="48" x2="60" y2="40" stroke="#68615D" stroke-width="2.5" />
+    <line x1="120" y1="48" x2="120" y2="40" stroke="#68615D" stroke-width="2.5" />
+    <line x1="180" y1="48" x2="180" y2="40" stroke="#68615D" stroke-width="2.5" />
+    <line x1="240" y1="48" x2="240" y2="40" stroke="#68615D" stroke-width="2.5" />
+    <line x1="56" y1="40" x2="244" y2="40" stroke="#68615D" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Roof luggage bags -->
+    <rect x="70" y="32" width="28" height="8" rx="2" fill="#BA2114" stroke="#801209" stroke-width="1" />
+    <rect x="104" y="30" width="34" height="10" rx="3" fill="#8D5B4C" stroke="#5A3326" stroke-width="1" />
+    <!-- Bass speaker on roof -->
+    <rect x="144" y="28" width="22" height="12" rx="2" fill="#25211F" stroke="#FDB432" stroke-width="1" />
+    <circle cx="155" cy="34" r="3.5" fill="#BA2114" />
+
+    <!-- Rapira Crew Destination Sign -->
+    <rect x="190" y="38" width="54" height="9" rx="2" fill="#25211F" stroke="#FDB432" stroke-width="1" />
+    <text x="217" y="44.5" font-size="5" font-weight="bold" fill="#38EF7D" font-family="sans-serif" text-anchor="middle">RAPIRA CREW</text>
+  </g>
+
+  <!-- Big party / group energy music notes -->
+  <g opacity="0.85">
+    <path d="M 45 28 Q 53 18 61 24" fill="none" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" />
+    <circle cx="45" cy="28" r="3" fill="#9F190E" />
+    <path d="M 270 24 Q 280 14 290 22" fill="none" stroke="#F5A623" stroke-width="2.2" stroke-linecap="round" />
+    <circle cx="270" cy="24" r="3" fill="#F5A623" />
+  </g>
+</svg>

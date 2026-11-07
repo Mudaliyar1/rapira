@@ -1,214 +1,480 @@
-﻿<link rel="stylesheet" href="/css/ticket-details.css">
+<link rel="stylesheet" href="/css/ticket-details.css">
 
-<section class="ticket-stage py-5">
-  <div class="container ticket-shell">
-    <div class="ticket-topbar mb-4">
-      <div>
-        <p class="ticket-kicker mb-1">Rapira Pass</p>
-        <h1 class="ticket-page-title mb-0">Ticket Details</h1>
-      </div>
-      <a href="/tickets" class="btn btn-outline-light btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back to My Tickets
-      </a>
-    </div>
+<% 
+  const qty = ticket.quantity || 1;
+  const validatedCount = ticket.validatedTicketsCount || 0;
+  const remaining = Math.max(0, qty - validatedCount);
 
+  let bookingHours = (concert && concert.durationHours) ? concert.durationHours : ((concert && concert.venueBooking && concert.venueBooking.bookingHours && concert.venueBooking.bookingHours > 1) ? concert.venueBooking.bookingHours : 2);
+  let startTime12hr = concert ? String(concert.time || '').trim() : '';
+  let endTime12hr = '';
+
+  const to12 = (h, m) => {
+    const p = h >= 12 ? 'PM' : 'AM';
+    let hh = h % 12;
+    if (hh === 0) hh = 12;
+    return `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')} ${p}`;
+  };
+
+  if (concert) {
+    const rawTime = String(concert.time || '').trim();
+    const plainMatch = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+    const amPmMatch = rawTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+
+    if (plainMatch || amPmMatch) {
+      let h = plainMatch ? parseInt(plainMatch[1], 10) : parseInt(amPmMatch[1], 10);
+      const m = plainMatch ? parseInt(plainMatch[2], 10) : parseInt(amPmMatch[2], 10);
+
+      if (amPmMatch) {
+        const period = amPmMatch[3].toUpperCase();
+        if (period === 'PM' && h < 12) h += 12;
+        if (period === 'AM' && h === 12) h = 0;
+      }
+
+      startTime12hr = to12(h, m);
+      let endHour = h + bookingHours;
+      if (endHour >= 24) {
+        endHour -= 24;
+        endTime12hr = `${to12(endHour, m)} (+1 day)`;
+      } else {
+        endTime12hr = to12(endHour, m);
+      }
+    } else {
+      endTime12hr = rawTime || 'Not set';
+    }
+  }
+
+  const formatPassDate = (d) => {
+    if (!d) return 'Date TBD';
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return String(d);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${days[dateObj.getUTCDay()]}, ${dateObj.getUTCDate()} ${months[dateObj.getUTCMonth()]}, ${dateObj.getUTCFullYear()}`;
+  };
+
+  let venueDisplayName = 'Vijay Mudaliyar';
+  let venueCityName = concert ? (concert.city || 'Ahmedabad') : 'Ahmedabad';
+  let venueMapsLink = '';
+
+  if (concert) {
+    if (concert.venue && typeof concert.venue === 'object') {
+      venueDisplayName = concert.venue.name || concert.venueName || venueDisplayName;
+      venueCityName = concert.venue.city || concert.city || venueCityName;
+      venueMapsLink = concert.venue.googleMapsLink || '';
+    } else if (concert.venueName) {
+      venueDisplayName = concert.venueName;
+    }
+  }
+
+  let concertBannerSrc = (concert && concert.posterImage && !concert.posterImage.includes('file_k8fatj')) 
+    ? concert.posterImage 
+    : '/images/festival-hero.jpg';
+
+  const attendeesList = (ticket.attendees && ticket.attendees.length > 0) 
+    ? ticket.attendees 
+    : [{ name: (ticket.user && ticket.user.name) || 'Guest', age: (ticket.user && ticket.user.age) || '-' }];
+
+  const cardStatus = ticket.paymentStatus === 'completed' 
+    ? 'CONFIRMED' 
+    : (ticket.paymentStatus === 'refunded' ? 'REFUNDED' : (ticket.paymentStatus || 'CONFIRMED').toUpperCase());
+
+  const canAskRefund = !ticket.attended && ticket.paymentStatus !== 'refunded' && (!refundRequest || refundRequest.status !== 'approved');
+  const canDeleteTicket = concert && isPastConcert;
+%>
+
+<section class="rapira-ticket-stage">
+  <div class="rapira-ticket-shell">
+
+    <!-- Status Alerts -->
     <% if (concert && concert.status === 'cancelled' && ticket.paymentStatus !== 'refunded' && (!refundRequest || refundRequest.status !== 'approved')) { %>
-      <div class="ticket-alert ticket-alert-warning mb-4">
-        <h5 class="mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Concert Cancelled</h5>
-        <p class="mb-0">This event was cancelled. You can request a refund below.</p>
+      <div class="rapira-ticket-alert rapira-ticket-alert-warning">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning"></i>
+        <div>
+          <h6 class="fw-bold mb-1">Concert Cancelled</h6>
+          <p class="mb-0 small">This event was cancelled. You can request a full refund below.</p>
+        </div>
       </div>
     <% } %>
 
     <% if (ticket.paymentStatus === 'refunded' || (typeof refundRequest !== 'undefined' && refundRequest && refundRequest.status === 'approved')) { %>
-      <div class="ticket-alert ticket-alert-danger mb-4">
-        <h5 class="mb-1"><i class="bi bi-x-octagon-fill me-2"></i>Ticket Refunded</h5>
-        <p class="mb-0">This ticket is refunded and cannot be used for entry.</p>
+      <div class="rapira-ticket-alert rapira-ticket-alert-danger">
+        <i class="bi bi-x-octagon-fill fs-4 text-danger"></i>
+        <div>
+          <h6 class="fw-bold mb-1">Ticket Refunded</h6>
+          <p class="mb-0 small">This ticket has been refunded and cannot be used for entry at the event gate.</p>
+        </div>
       </div>
     <% } %>
 
-    <% 
-      const qty = ticket.quantity || 1;
-      const validatedCount = ticket.validatedTicketsCount || 0;
-      const remaining = Math.max(0, qty - validatedCount);
-
-      let bookingHours = (concert && concert.venueBooking && concert.venueBooking.bookingHours) ? concert.venueBooking.bookingHours : 1;
-      let startTime12hr = concert ? String(concert.time || '').trim() : '';
-      let endTime12hr = '';
-
-      const to12 = (h, m) => {
-        const p = h >= 12 ? 'PM' : 'AM';
-        let hh = h % 12;
-        if (hh === 0) hh = 12;
-        return `${hh}:${String(m).padStart(2, '0')} ${p}`;
-      };
-
-      if (concert) {
-        const rawTime = String(concert.time || '').trim();
-        const plainMatch = rawTime.match(/^(\d{1,2}):(\d{2})$/);
-        const amPmMatch = rawTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-
-        if (plainMatch || amPmMatch) {
-          let h = plainMatch ? parseInt(plainMatch[1], 10) : parseInt(amPmMatch[1], 10);
-          const m = plainMatch ? parseInt(plainMatch[2], 10) : parseInt(amPmMatch[2], 10);
-
-          if (amPmMatch) {
-            const period = amPmMatch[3].toUpperCase();
-            if (period === 'PM' && h < 12) h += 12;
-            if (period === 'AM' && h === 12) h = 0;
-          }
-
-          startTime12hr = to12(h, m);
-          let endHour = h + bookingHours;
-          if (endHour >= 24) {
-            endHour -= 24;
-            endTime12hr = `${to12(endHour, m)} (+1 day)`;
-          } else {
-            endTime12hr = to12(endHour, m);
-          }
-        } else {
-          endTime12hr = rawTime || 'Not set';
-        }
-      }
-
-      const cardStatus = ticket.paymentStatus === 'completed' ? 'Confirmed' : (ticket.paymentStatus === 'refunded' ? 'Refunded' : ticket.paymentStatus);
-      const canAskRefund = !ticket.attended;
-      const canDeleteTicket = concert && isPastConcert;
-    %>
-
-    <div class="ticket-main-card">
-      <div class="ticket-main-head">
-        <div>
-          <p class="ticket-kicker mb-1">Entry Pass</p>
-          <h2 class="ticket-title mb-1"><%= isDeletedConcert ? 'Concert Unavailable' : concert.title %></h2>
-          <p class="ticket-subtitle mb-0"><%= isDeletedConcert ? 'This concert record was removed.' : 'Keep this page ready at entry gate.' %></p>
+    <!-- Header Confirmation Badge & Title -->
+    <div class="rapira-confirmed-wrap">
+      <div class="rapira-confirmed-header-row">
+        <div class="rapira-scallop-badge-wrap">
+          <svg class="rapira-scalloped-badge" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Booking Confirmed Badge">
+            <path d="M30 3 C32 3 33.5 5 35.5 5.5 C37.5 6 39.5 5 41.5 6 C43.5 7 44.5 9 46.5 10.5 C48.5 12 50.5 12 51.8 14 C53 16 53 18.2 54 20.3 C55 22.4 56.5 24.2 56.8 26.5 C57.1 28.8 56 31 56 33.3 C56 35.5 57.1 37.7 56.5 40 C55.9 42.3 54.2 44 53 46 C51.8 48 51.5 50.3 49.8 52 C48.1 53.7 45.8 54 43.8 55 C41.8 56 39.8 55.5 37.8 56.5 C35.8 57.5 34 59 31.8 59 C29.6 59 27.8 57.5 25.8 56.5 C23.8 55.5 21.8 56 19.8 55 C17.8 54 15.5 53.7 13.8 52 C12.1 50.3 11.8 48 10.6 46 C9.4 44 7.7 42.3 7.1 40 C6.5 37.7 7.6 35.5 7.6 33.3 C7.6 31 6.5 28.8 6.8 26.5 C7.1 24.2 8.6 22.4 9.6 20.3 C10.6 18.2 10.6 16 11.8 14 C13 12 15.1 12 17.1 10.5 C19.1 9 20.1 7 22.1 6 C24.1 5 26.1 6 28.1 5.5 C30.1 5 30 3 30 3 Z" fill="#9F190E"/>
+            <path d="M22 30.5L27.5 36L38 24.5" stroke="#FFFDF8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="ticket-status-stack">
-          <% if (typeof refundRequest !== 'undefined' && refundRequest) { %>
-            <span class="status-pill refund-pill">Refund: <%= refundRequest.status.charAt(0).toUpperCase() + refundRequest.status.slice(1) %></span>
-          <% } %>
-          <span class="status-pill"><%= cardStatus %></span>
+
+        <div class="rapira-confirmed-title-wrap">
+          <svg class="rapira-celebration-rays" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 12H1" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M9 5L4 2" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M11 20L7 23" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+
+          <h1 class="rapira-confirmed-title">Booking Confirmed!</h1>
+
+          <svg class="rapira-celebration-rays" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 12H23" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M15 5L20 2" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M13 20L17 23" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
         </div>
       </div>
 
-      <% if (!isDeletedConcert) { %>
-      <div class="ticket-schedule-grid">
-        <div class="schedule-box">
-          <span class="label">Date</span>
-          <span class="value"><%= toISTDateString(concert.date) %></span>
-        </div>
-        <div class="schedule-box">
-          <span class="label">Starts At</span>
-          <span class="value"><%= startTime12hr %></span>
-        </div>
-        <div class="schedule-box">
-          <span class="label">Ends At</span>
-          <span class="value"><%= endTime12hr %></span>
-        </div>
-        <div class="schedule-box">
-          <span class="label">Duration</span>
-          <span class="value"><%= bookingHours %> hour<%= bookingHours > 1 ? 's' : '' %></span>
-        </div>
-      </div>
-      <% } %>
+      <p class="rapira-confirmed-subtitle">Your tickets have been booked successfully.</p>
+      <p class="rapira-confirmed-note">A confirmation email has been sent to your registered email address.</p>
+    </div>
 
-      <div class="ticket-info-grid mt-4">
-        <div class="info-panel">
-          <h5 class="panel-title">Ticket Info</h5>
-          <div class="row-line"><span>Ticket Number</span><strong><%= ticket.ticketNumber %></strong></div>
-          <div class="row-line"><span>Quantity</span><strong><%= qty %> ticket<%= qty > 1 ? 's' : '' %></strong></div>
-          <div class="row-line"><span>Booked On</span><strong><%= toISTDateString(ticket.purchaseDate) %></strong></div>
-          <% if (!isDeletedConcert) { %>
-            <div class="row-line"><span>Venue</span><strong><%= concert.venue && concert.venue.name ? concert.venue.name : (concert.venueName || 'Venue') %>, <%= concert.city %></strong></div>
-            <% if (concert.venue && concert.venue.googleMapsLink) { %>
-              <div class="row-line"><span>Google Location</span><strong><a href="<%= concert.venue.googleMapsLink %>" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></strong></div>
-            <% } %>
-          <% } %>
-        </div>
+    <!-- DIGITAL BOARDING PASS CARD -->
+    <div class="rapira-pass-container">
+      <div class="rapira-notch-outer-left" aria-hidden="true"></div>
+      <div class="rapira-notch-outer-right" aria-hidden="true"></div>
 
-        <div class="info-panel">
-          <h5 class="panel-title">Who Can Enter</h5>
-          <% if (ticket.attendees && ticket.attendees.length > 0) { %>
-            <% ticket.attendees.forEach((attendee, i) => { %>
-              <div class="attendee-chip">
-                <div>
-                  <div class="attendee-name">Attendee <%= i + 1 %>: <%= attendee.name %></div>
-                  <small>Age: <%= attendee.age %></small>
+      <div class="rapira-boarding-pass">
+
+        <!-- LEFT / MAIN TICKET BODY -->
+        <div class="rapira-pass-main">
+
+          <!-- Top Row: RAPIRA Brand & Confirmation Status -->
+          <div class="rapira-pass-header-row">
+            <div>
+              <span class="rapira-pass-brand">RAPIRA</span>
+              <span class="rapira-pass-kicker">CONCERT ENTRY PASS</span>
+            </div>
+
+            <span class="rapira-pass-status-pill <%= ticket.paymentStatus === 'refunded' ? 'refunded' : '' %>">
+              <i class="bi <%= ticket.paymentStatus === 'refunded' ? 'bi-x-circle-fill' : 'bi-check-circle-fill' %>"></i>
+              <%= cardStatus %>
+            </span>
+          </div>
+
+          <!-- Mobile Banner Artwork (visible only on mobile) -->
+          <div class="rapira-pass-art-mobile">
+            <img src="<%= concertBannerSrc %>" alt="<%= concert ? concert.title : 'Concert' %>" class="rapira-pass-art-img" onerror="this.onerror=null;this.src='/images/festival-hero.jpg';">
+          </div>
+
+          <!-- Middle Content: Concert Title, Soundwave, Schedule, Location & Desktop Artwork -->
+          <div class="rapira-pass-middle">
+            <div class="rapira-pass-info-col">
+              <div class="rapira-pass-title-row">
+                <h2 class="rapira-pass-concert-title"><%= isDeletedConcert ? 'Concert Unavailable' : concert.title %></h2>
+                
+                <!-- Audio Soundwave Graphic -->
+                <svg class="rapira-soundwave" viewBox="0 0 44 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="0" y="7" width="2" height="8" rx="1" fill="#C47D68"/>
+                  <rect x="4" y="4" width="2" height="14" rx="1" fill="#9F190E"/>
+                  <rect x="8" y="2" width="2" height="18" rx="1" fill="#9F190E"/>
+                  <rect x="12" y="6" width="2" height="10" rx="1" fill="#C47D68"/>
+                  <rect x="16" y="3" width="2" height="16" rx="1" fill="#9F190E"/>
+                  <rect x="20" y="0" width="2" height="22" rx="1" fill="#9F190E"/>
+                  <rect x="24" y="3" width="2" height="16" rx="1" fill="#9F190E"/>
+                  <rect x="28" y="5" width="2" height="12" rx="1" fill="#C47D68"/>
+                  <rect x="32" y="1" width="2" height="20" rx="1" fill="#9F190E"/>
+                  <rect x="36" y="4" width="2" height="14" rx="1" fill="#9F190E"/>
+                  <rect x="40" y="7" width="2" height="8" rx="1" fill="#C47D68"/>
+                </svg>
+              </div>
+
+              <span class="rapira-pass-subtitle"><%= isDeletedConcert ? 'This concert record was removed.' : 'Live Music Concert' %></span>
+
+              <!-- Event Schedule & Location List -->
+              <div class="rapira-pass-meta-list">
+                <% if (!isDeletedConcert && concert) { %>
+                  <div class="rapira-pass-meta-item">
+                    <i class="bi bi-calendar3 rapira-pass-meta-icon"></i>
+                    <span><%= formatPassDate(concert.date) %></span>
+                  </div>
+
+                  <div class="rapira-pass-meta-item">
+                    <i class="bi bi-clock rapira-pass-meta-icon"></i>
+                    <span><%= startTime12hr %> – <%= endTime12hr %></span>
+                  </div>
+
+                  <div class="rapira-pass-meta-item">
+                    <i class="bi bi-geo-alt rapira-pass-meta-icon"></i>
+                    <% if (venueMapsLink) { %>
+                      <a href="<%= venueMapsLink %>" target="_blank" rel="noopener noreferrer" class="rapira-pass-meta-link">
+                        <%= venueDisplayName %>, <%= venueCityName %>
+                        <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+                      </a>
+                    <% } else { %>
+                      <span><%= venueDisplayName %>, <%= venueCityName %></span>
+                    <% } %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Desktop Banner Artwork (visible only on desktop) -->
+            <div class="rapira-pass-art-desktop">
+              <img src="<%= concertBannerSrc %>" alt="<%= concert ? concert.title : 'Concert' %>" class="rapira-pass-art-img" onerror="this.onerror=null;this.src='/images/festival-hero.jpg';">
+            </div>
+          </div>
+
+          <!-- Bottom Data Grid -->
+          <div class="rapira-pass-data-strip">
+            <div class="rapira-data-cell">
+              <span class="label">Ticket Type</span>
+              <span class="value"><%= ticket.ticketType || 'General' %></span>
+            </div>
+
+            <div class="rapira-data-cell">
+              <span class="label">Quantity</span>
+              <span class="value"><%= qty %></span>
+            </div>
+
+            <div class="rapira-data-cell">
+              <span class="label">Attendee</span>
+              <span class="value"><%= attendeesList[0].name %></span>
+            </div>
+
+            <div class="rapira-data-cell">
+              <span class="label">Age</span>
+              <span class="value"><%= attendeesList[0].age %></span>
+            </div>
+
+            <% if (attendeesList.length > 1) { %>
+              <div class="rapira-multi-attendees-wrap">
+                <span class="label">All Attendees (<%= attendeesList.length %>):</span>
+                <div class="rapira-attendee-chip-list">
+                  <% attendeesList.forEach(function(att, idx) { %>
+                    <span class="rapira-attendee-chip">
+                      <i class="bi bi-person-fill"></i>
+                      <span>Attendee <%= idx + 1 %>: <%= att.name %> (<%= att.age %> yrs)</span>
+                    </span>
+                  <% }); %>
                 </div>
               </div>
-            <% }); %>
-          <% } else { %>
-            <p class="mb-0 text-light">No attendee details found.</p>
-          <% } %>
-        </div>
-
-        <div class="info-panel">
-          <h5 class="panel-title">Payment</h5>
-          <% if (ticket.paymentId) { %>
-            <div class="row-line"><span>Payment ID</span><strong><%= ticket.paymentId %></strong></div>
-          <% } %>
-          <div class="row-line"><span>Paid</span><strong>₹<%= ticket.totalAmount %></strong></div>
-          <% if (ticket.discountApplied && ticket.discountType === 'subscription' && ticket.originalAmount) { %>
-            <div class="row-line"><span>Original</span><strong><s>₹<%= ticket.originalAmount %></s></strong></div>
-            <div class="row-line"><span>Discount</span><strong class="text-success"><%= ticket.discountPercentage %>%</strong></div>
-            <div class="row-line"><span>You Saved</span><strong class="text-success">₹<%= ticket.originalAmount - ticket.totalAmount %></strong></div>
-          <% } %>
-          <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
-            <div class="row-line"><span>Platform Fee</span><strong class="text-warning">₹<%= ticket.commissionAmount %> (<%= ticket.commissionPercentage %>%)</strong></div>
-          <% } %>
-        </div>
-
-        <div class="info-panel qr-panel">
-          <h5 class="panel-title">Gate QR</h5>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=<%= ticket._id %>" alt="Ticket QR" class="qr-image">
-          <p class="qr-note mb-0">Show this at the entry gate.</p>
-        </div>
-      </div>
-
-      <div class="attendance-strip mt-4">
-        <div>
-          <h6 class="mb-1">Attendance</h6>
-          <p class="mb-0">
-            <%= validatedCount %> validated / <%= qty %> total
-            <% if (remaining > 0) { %>
-              | <%= remaining %> left
             <% } %>
-          </p>
-        </div>
-        <div class="attendance-badge <%= validatedCount > 0 ? 'ok' : 'pending' %>">
-          <%= validatedCount > 0 ? 'Used' : 'Not Used Yet' %>
-        </div>
-      </div>
+          </div>
 
-      <div class="ticket-actions mt-4">
-        <% if (canAskRefund) { %>
-          <a href="/refund-requests/request/<%= ticket._id %>" class="btn btn-warning action-btn">
-            <i class="bi bi-arrow-counterclockwise me-2"></i><%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
-          </a>
-        <% } %>
-        <a href="/tickets/<%= ticket._id %>/download" class="btn btn-primary action-btn">
-          <i class="bi bi-download me-2"></i>Download
-        </a>
-        <% if (canDeleteTicket) { %>
-          <a href="/tickets/<%= ticket._id %>/delete" class="btn btn-danger action-btn" onclick="return confirm('Download ticket first as backup. Continue to delete?')">
-            <i class="bi bi-trash me-2"></i>Delete
-          </a>
-        <% } %>
-        <a href="/tickets" class="btn btn-light action-btn">
-          <i class="bi bi-arrow-left me-2"></i>Back
-        </a>
+        </div>
+
+        <!-- PERFORATION DIVIDER -->
+        <div class="rapira-pass-divider">
+          <div class="rapira-notch-top" aria-hidden="true"></div>
+          <div class="rapira-notch-bottom" aria-hidden="true"></div>
+        </div>
+
+        <!-- RIGHT / ENTRY PASS STUB (Deep Crimson) -->
+        <div class="rapira-pass-stub">
+          <div class="rapira-stub-title">ENTRY PASS</div>
+
+          <!-- White container for Scannable QR Code -->
+          <div class="rapira-qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=<%= ticket._id %>" 
+                 alt="Concert Entry QR Pass" 
+                 class="rapira-qr-img" 
+                 crossorigin="anonymous"
+                 width="154" 
+                 height="154">
+          </div>
+
+          <!-- Ticket Number -->
+          <div class="rapira-stub-ticket-no"><%= ticket.ticketNumber || ('RPR-' + ticket._id) %></div>
+
+          <!-- Barcode Graphic -->
+          <svg class="rapira-stub-barcode" viewBox="0 0 160 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="0" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="5" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="9" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="15" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="19" y="0" width="1" height="30" fill="#FFFFFF"/>
+            <rect x="22" y="0" width="5" height="30" fill="#FFFFFF"/>
+            <rect x="29" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="33" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="38" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="42" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="48" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="52" y="0" width="1" height="30" fill="#FFFFFF"/>
+            <rect x="55" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="60" y="0" width="5" height="30" fill="#FFFFFF"/>
+            <rect x="67" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="71" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="75" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="81" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="85" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="90" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="94" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="100" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="104" y="0" width="5" height="30" fill="#FFFFFF"/>
+            <rect x="111" y="0" width="1" height="30" fill="#FFFFFF"/>
+            <rect x="114" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="119" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="123" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="129" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="133" y="0" width="3" height="30" fill="#FFFFFF"/>
+            <rect x="138" y="0" width="5" height="30" fill="#FFFFFF"/>
+            <rect x="145" y="0" width="2" height="30" fill="#FFFFFF"/>
+            <rect x="149" y="0" width="1.5" height="30" fill="#FFFFFF"/>
+            <rect x="153" y="0" width="4" height="30" fill="#FFFFFF"/>
+            <rect x="159" y="0" width="1" height="30" fill="#FFFFFF"/>
+          </svg>
+        </div>
+
       </div>
     </div>
 
-    <% if (!isDeletedConcert && concert && concert.artist && concert.artist.user) { %>
-      <div class="artist-mini-card mt-4">
-        <img src="<%= concert.artist.user.profileImage %>" alt="<%= concert.artist.user.name %>" class="artist-avatar" onerror="this.onerror=null;this.src='/images/default-profile.svg';">
-        <div>
-          <h6 class="mb-1"><%= concert.artist.user.name %></h6>
-          <small class="text-white-50">Performer</small>
+    <!-- ACTION BUTTONS -->
+    <div class="rapira-ticket-actions">
+      <!-- Download Button -->
+      <a href="/tickets/<%= ticket._id %>/download" class="rapira-ticket-btn rapira-ticket-btn-primary">
+        <i class="bi bi-download"></i> Download Ticket
+      </a>
+
+      <!-- Split Actions: Add to Wallet & Share Ticket -->
+      <div class="rapira-mobile-split-actions">
+        <button type="button" class="rapira-ticket-btn rapira-ticket-btn-outline js-rapira-wallet-btn" data-ticket-no="<%= ticket.ticketNumber %>">
+          <i class="bi bi-wallet2"></i> Add to Wallet
+        </button>
+
+        <button type="button" class="rapira-ticket-btn rapira-ticket-btn-outline js-rapira-share-btn" data-ticket-no="<%= ticket.ticketNumber %>">
+          <i class="bi bi-share"></i> Share Ticket
+        </button>
+      </div>
+
+      <!-- Refund Option (if eligible) -->
+      <% if (canAskRefund) { %>
+        <a href="/refund-requests/request/<%= ticket._id %>" class="rapira-ticket-btn rapira-ticket-btn-refund">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          <%= concert && concert.status === 'cancelled' ? 'Issue Refund Request' : 'Refund' %>
+        </a>
+      <% } %>
+
+      <!-- Delete Ticket (if past concert) -->
+      <% if (canDeleteTicket) { %>
+        <a href="/tickets/<%= ticket._id %>/delete" class="rapira-ticket-btn rapira-ticket-btn-danger" onclick="return confirm('Download ticket first as backup. Continue to delete?')">
+          <i class="bi bi-trash"></i> Delete
+        </a>
+      <% } %>
+    </div>
+
+    <!-- HELPER / SUPPORT CARDS -->
+    <div class="rapira-ticket-helpers">
+      <div class="rapira-helper-card">
+        <div class="rapira-helper-icon">
+          <i class="bi bi-ticket-perforated"></i>
         </div>
-        <a href="/artists/<%= concert.artist._id %>" class="btn btn-outline-light btn-sm ms-auto">View Artist</a>
+        <div>
+          <div class="rapira-helper-title">Important</div>
+          <p class="rapira-helper-text">Show this QR code at the entry gate for seamless access.</p>
+        </div>
+      </div>
+
+      <div class="rapira-helper-card">
+        <div class="rapira-helper-icon">
+          <i class="bi bi-info-circle"></i>
+        </div>
+        <div>
+          <div class="rapira-helper-title">Need Help?</div>
+          <p class="rapira-helper-text">Contact our support team if you have any issues with your booking.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURED PERFORMER CARD -->
+    <% if (!isDeletedConcert && concert && concert.artist) { 
+        const performerUser = concert.artist.user || {};
+        const performerName = concert.artist.stageName || performerUser.name || 'Featured Performer';
+        let performerImg = '/images/default-profile.svg';
+        if (performerUser && performerUser.profileImage && typeof performerUser.profileImage === 'string' && performerUser.profileImage.trim() && performerUser.profileImage !== 'null') {
+          performerImg = performerUser.profileImage.trim();
+        }
+        const performerGenre = (concert.artist.genre && typeof concert.artist.genre === 'string') ? concert.artist.genre.trim() : '';
+    %>
+      <div class="rapira-performer-card">
+        <div class="rapira-performer-main">
+          <div class="rapira-performer-avatar-box">
+            <img src="<%= performerImg %>" alt="<%= performerName %>" class="rapira-performer-avatar-img" onerror="this.onerror=null;this.src='/images/default-profile.svg';">
+            <span class="rapira-performer-verified-badge" title="Verified Artist"><i class="bi bi-patch-check-fill"></i></span>
+          </div>
+          <div class="rapira-performer-info">
+            <div class="rapira-performer-tag">
+              <i class="bi bi-stars"></i> Featured Performer
+            </div>
+            <h4 class="rapira-performer-heading"><%= performerName %></h4>
+            <% if (performerGenre) { %>
+              <div class="rapira-performer-meta-row">
+                <span class="rapira-performer-genre-chip"><i class="bi bi-music-note me-1"></i><%= performerGenre %></span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+        <div class="rapira-performer-action">
+          <a href="/artists/<%= concert.artist._id %>" class="rapira-performer-btn">
+            <span>View Artist</span>
+            <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
       </div>
     <% } %>
+
+    <!-- RECEIPT & PAYMENT DETAILS DRAWER -->
+    <div class="rapira-receipt-drawer">
+      <button type="button" class="rapira-receipt-toggle-btn" id="rapiraReceiptToggleBtn" aria-expanded="false">
+        <span><i class="bi bi-receipt me-2"></i> Payment & Verification Details</span>
+        <i class="bi bi-chevron-down ms-1" id="rapiraReceiptChevron"></i>
+      </button>
+
+      <div class="rapira-receipt-content" id="rapiraReceiptContent">
+        <div class="rapira-receipt-grid">
+          <% if (ticket.paymentId) { %>
+            <div class="rapira-receipt-cell">
+              <span class="r-label">Payment ID</span>
+              <span class="r-val"><%= ticket.paymentId %></span>
+            </div>
+          <% } %>
+
+          <div class="rapira-receipt-cell">
+            <span class="r-label">Amount Paid</span>
+            <span class="r-val">₹<%= ticket.totalAmount %></span>
+          </div>
+
+          <div class="rapira-receipt-cell">
+            <span class="r-label">Booking Date</span>
+            <span class="r-val"><%= toISTDateString(ticket.purchaseDate) %></span>
+          </div>
+
+          <% if (ticket.commissionApplied && ticket.commissionPercentage) { %>
+            <div class="rapira-receipt-cell">
+              <span class="r-label">Platform Charges</span>
+              <span class="r-val">₹<%= ticket.commissionAmount %> (<%= ticket.commissionPercentage %>%)</span>
+            </div>
+          <% } %>
+
+          <div class="rapira-receipt-cell">
+            <span class="r-label">Gate Attendance</span>
+            <span class="r-val">
+              <%= validatedCount %> of <%= qty %> validated
+              (<%= validatedCount > 0 ? 'Entry Used' : 'Not Used Yet' %>)
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back to My Tickets Navigation Pill -->
+    <div class="rapira-ticket-back-wrap">
+      <a href="/tickets" class="rapira-ticket-back-pill">
+        <i class="bi bi-arrow-left"></i> Back to My Tickets
+      </a>
+    </div>
+
   </div>
 </section>
 
+<!-- Dynamic Script Loader for ticket interactions -->
+<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'></svg>" style="display:none;" alt="" onload="if(!window.__rapiraTicketLoaded){window.__rapiraTicketLoaded=true;var s=document.createElement('script');s.src='/js/ticket-details.js';document.body.appendChild(s);}">

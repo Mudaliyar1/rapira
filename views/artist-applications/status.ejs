@@ -1,97 +1,123 @@
 <%- contentFor('body') %>
 
-<style>
-  .table td, .table th {
-    color: #fff !important;
-    font-weight: 500;
-  }
-  .badge {
-    color: white !important;
-    font-weight: bold !important;
-  }
-</style>
-
-<section class="py-5">
+<div class="rapira-profile-page">
   <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="glass-card-dark" style="background-color: white;">
-          <div class="card-header border-bottom border-secondary" style="background-color: white;">
-            <h2 class="card-title mb-0 text-black">Your Artist Applications</h2>
-          </div>
-          <div class="card-body p-4">
-            <% if (applications && applications.length > 0) { %>
-              <div class="table-responsive">
-                <table class="table align-middle" style="background-color: white; border-radius: 8px; border: 1px solid #dee2e6;">
-                  <thead style="background-color: #f8f9fa;">
-                    <tr>
-                      <th style="color: #fff !important; font-weight: 600;">Artist Level</th>
-                      <th style="color: #fff !important; font-weight: 600;">Submitted</th>
-                      <th style="color: #fff !important; font-weight: 600;">Status</th>
-                      <th style="color: #fff !important; font-weight: 600;">Comments</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% applications.forEach(application => { %>
-                      <tr>
-                        <td style="color: #fff !important; font-weight: 500;"><%= application.artistLevel %></td>
-                        <td style="color: #fff !important; font-weight: 500;"><%= toISTLocaleString(application.createdAt) %></td>
-                        <td style="color: #fff !important; font-weight: 500;">
-                          <% if (application.status === 'pending') { %>
-                            <span class="badge" style="background-color: #fd7e14; color: white !important;">Pending</span>
-                          <% } else if (application.status === 'approved') { %>
-                            <span class="badge bg-success">Approved</span>
-                          <% } else if (application.status === 'rejected') { %>
-                            <span class="badge bg-danger">Rejected</span>
-                          <% } %>
-                        </td>
-                        <td style="color: #fff !important; font-weight: 500;">
-                          <% if (application.adminComments) { %>
-                            <span style="color: #fff !important; font-weight: 500;"><%= application.adminComments %></span>
-                          <% } else { %>
-                            <span style="color: #fff !important; font-weight: 500;">No comments</span>
-                          <% } %>
-                        </td>
-                      </tr>
-                    <% }); %>
-                  </tbody>
-                </table>
-              </div>
+    <div class="rh-subpage-container" style="max-width: 920px;">
+      
+      <!-- Page Navigation Header -->
+      <div class="rh-page-header-nav">
+        <div class="rh-page-header-left">
+          <a href="/users/profile" class="rh-back-circle-btn" title="Back to Profile">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+          <h1 class="rh-page-title">Artist Applications</h1>
+        </div>
+        <a href="/artist-applications/select-level" class="rh-btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> New Application
+        </a>
+      </div>
 
+      <!-- Main Status Card -->
+      <div class="rh-profile-card">
+        <div class="rh-profile-card-header">
+          <div class="rh-profile-card-title-wrap">
+            <i class="bi bi-hourglass-split text-danger fs-5"></i>
+            <h2 class="rh-profile-card-title">Application Status</h2>
+          </div>
+        </div>
+
+        <div class="rh-profile-card-body p-0">
+          <% if (applications && applications.length > 0) { %>
+            <div class="rh-profile-table-wrap">
+              <table class="rh-profile-table">
+                <thead>
+                  <tr>
+                    <th>Artist Tier</th>
+                    <th>Submitted On</th>
+                    <th>Status</th>
+                    <th>Review Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% applications.forEach(application => { %>
+                    <tr>
+                      <td class="fw-bold text-dark"><%= application.artistLevel %></td>
+                      <td><%= toISTLocaleString(application.createdAt) %></td>
+                      <td>
+                        <% if (application.status === 'pending') { %>
+                          <span class="rh-badge-pending">
+                            <i class="bi bi-clock-fill"></i> Pending Review
+                          </span>
+                        <% } else if (application.status === 'approved') { %>
+                          <span class="rh-badge-completed">
+                            <i class="bi bi-check-circle-fill"></i> Approved
+                          </span>
+                        <% } else if (application.status === 'rejected') { %>
+                          <span class="rh-badge-rejected">
+                            <i class="bi bi-x-circle-fill"></i> Rejected
+                          </span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="small text-muted"><%= application.adminComments || 'No review notes provided yet.' %></span>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-4 border-top">
               <% if (applications.some(app => app.status === 'pending')) { %>
-                <div class="alert alert-info mt-4" style="background-color: #cff4fc; color: #055160; border: 1px solid #b6effb;">
-                  <h5 class="alert-heading text-black"><i class="bi bi-info-circle-fill me-2"></i> Application Pending</h5>
-                  <p class="mb-0 text-black">Your application is currently under review. You will be notified via email once a decision has been made.</p>
+                <div class="rh-profile-complete-banner mb-0">
+                  <div class="rh-profile-complete-left">
+                    <div class="rh-profile-complete-icon"><i class="bi bi-clock-history fs-5"></i></div>
+                    <div class="rh-profile-complete-text">
+                      <strong>Application Under Review:</strong> Your submission is being carefully assessed by the RAPIRA A&R team. Decisions are typically emailed within 24–48 hours.
+                    </div>
+                  </div>
                 </div>
               <% } else if (applications.some(app => app.status === 'approved')) { %>
-                <div class="alert alert-success mt-4" style="background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;">
-                  <h5 class="alert-heading text-black"><i class="bi bi-check-circle-fill me-2"></i> Application Approved</h5>
-                  <p class="mb-0 text-black">Congratulations! Your artist application has been approved. You can now access your artist dashboard.</p>
-                  <div class="mt-3">
-                    <a href="/artists/dashboard" class="btn btn-success">Go to Artist Dashboard</a>
+                <div class="rh-profile-complete-banner mb-0" style="background-color: #EBF8F0; border-color: #A3E0BA;">
+                  <div class="rh-profile-complete-left">
+                    <div class="rh-profile-complete-icon text-success"><i class="bi bi-check-circle-fill fs-5"></i></div>
+                    <div class="rh-profile-complete-text">
+                      <strong class="text-success">Congratulations!</strong> Your artist application has been approved. You now have full access to your artist dashboard and concert creation tools.
+                    </div>
+                  </div>
+                  <div class="rh-profile-complete-actions">
+                    <a href="/artists/dashboard" class="rh-btn-primary-sm">Go to Artist Dashboard &rarr;</a>
                   </div>
                 </div>
               <% } else if (applications.every(app => app.status === 'rejected')) { %>
-                <div class="alert alert-warning mt-4" style="background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5;">
-                  <h5 class="alert-heading text-black"><i class="bi bi-exclamation-triangle-fill me-2"></i> Application Rejected</h5>
-                  <p class="text-black">Your application has been rejected. Please review the comments above for more information.</p>
-                  <p class="mb-0 text-black">You can submit a new application with updated information.</p>
-                  <div class="mt-3">
-                    <a href="/artist-applications/select-level" class="btn btn-primary">Apply Again</a>
+                <div class="rh-profile-complete-banner mb-0" style="background-color: #FEECEC; border-color: #F7B5B5;">
+                  <div class="rh-profile-complete-left">
+                    <div class="rh-profile-complete-icon text-danger"><i class="bi bi-exclamation-triangle-fill fs-5"></i></div>
+                    <div class="rh-profile-complete-text">
+                      <strong class="text-danger">Application Not Approved:</strong> Please review the administrator feedback notes above and submit an updated application.
+                    </div>
+                  </div>
+                  <div class="rh-profile-complete-actions">
+                    <a href="/artist-applications/select-level" class="rh-btn-primary-sm">Apply Again</a>
                   </div>
                 </div>
               <% } %>
-            <% } else { %>
-              <div class="text-center py-5">
-                <i class="bi bi-file-earmark-x display-1 text-black mb-3"></i>
-                <h3 class="text-black">No Applications Found</h3>
-                <p class="text-black mb-4">You haven't submitted any artist applications yet.</p>
-                <a href="/artist-applications/select-level" class="btn btn-primary">Apply Now</a>
+            </div>
+
+          <% } else { %>
+            <!-- Empty State -->
+            <div class="rh-sub-empty-box">
+              <div class="rh-sub-sketch-icon mb-3" aria-hidden="true">
+                <i class="bi bi-file-earmark-x text-danger display-4"></i>
               </div>
-            <% } %>
-          </div>
+              <h3 class="fs-4 fw-bold text-dark mb-2">No Applications Found</h3>
+              <p class="text-muted mb-4">You haven't submitted any artist verification applications yet.</p>
+              <a href="/artist-applications/select-level" class="rh-btn-primary">Apply Now</a>
+            </div>
+          <% } %>
         </div>
       </div>
+
     </div>
   </div>
-</section>
+</div>

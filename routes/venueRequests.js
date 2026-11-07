@@ -32,7 +32,7 @@ router.get('/', isLoggedIn, async (req, res) => {
     const venueRequests = await VenueRequest.getByUser(req.session.user.id);
 
     res.render('users/venue-requests/index', {
-      layout: 'layouts/venue',
+      layout: 'layouts/main',
       title: 'My Venue Requests',
       currentPath: '/users/venue-requests',
       currentUser: req.session.user,

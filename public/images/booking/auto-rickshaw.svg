@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <filter id="rickshaw-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#9F190E" flood-opacity="0.16" />
+    </filter>
+    <linearGradient id="rickshaw-yellow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDB432" />
+      <stop offset="100%" stop-color="#E58F12" />
+    </linearGradient>
+    <linearGradient id="rickshaw-crimson" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BA2114" />
+      <stop offset="100%" stop-color="#801209" />
+    </linearGradient>
+    <linearGradient id="rickshaw-canopy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2825" />
+      <stop offset="60%" stop-color="#3D3632" />
+      <stop offset="100%" stop-color="#1C1816" />
+    </linearGradient>
+    <linearGradient id="rickshaw-glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EBF8FF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#BEE3F8" stop-opacity="0.5" />
+    </linearGradient>
+    <linearGradient id="rickshaw-beam" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F5A623" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#F5A623" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ground shadow -->
+  <ellipse cx="160" cy="174" rx="116" ry="10" fill="#EAC8B7" opacity="0.65" />
+
+  <g filter="url(#rickshaw-shadow)">
+    <!-- Rear Wheel -->
+    <g transform="translate(92, 144)">
+      <circle cx="0" cy="0" r="26" fill="#25211F" />
+      <circle cx="0" cy="0" r="18" fill="#FCF0E4" stroke="#EAC8B7" stroke-width="2" />
+      <circle cx="0" cy="0" r="9" fill="#9F190E" />
+      <circle cx="0" cy="0" r="3.5" fill="#FCF0E4" />
+    </g>
+
+    <!-- Front Wheel -->
+    <g transform="translate(236, 144)">
+      <circle cx="0" cy="0" r="26" fill="#25211F" />
+      <circle cx="0" cy="0" r="18" fill="#FCF0E4" stroke="#EAC8B7" stroke-width="2" />
+      <circle cx="0" cy="0" r="9" fill="#9F190E" />
+      <circle cx="0" cy="0" r="3.5" fill="#FCF0E4" />
+    </g>
+
+    <!-- Lower Body (Crimson metal skirt) -->
+    <path d="M 68 126 L 68 144 L 115 144 L 118 136 L 210 136 L 214 144 L 244 144 C 255 144, 258 132, 252 120 L 246 108 L 226 108 L 222 126 L 158 126 L 158 108 L 68 108 Z" fill="url(#rickshaw-crimson)" stroke="#801209" stroke-width="1.5" />
+
+    <!-- Mid Body Band (Warm Yellow) -->
+    <path d="M 66 108 L 66 84 L 158 84 L 158 108 Z" fill="url(#rickshaw-yellow)" stroke="#DE8C12" stroke-width="1" />
+    <!-- Front Cabin (Warm Yellow) -->
+    <path d="M 188 126 L 208 84 L 236 84 L 248 108 L 244 126 Z" fill="url(#rickshaw-yellow)" stroke="#DE8C12" stroke-width="1" />
+
+    <!-- Passenger Cabin Opening / Interior -->
+    <rect x="94" y="60" width="76" height="52" rx="4" fill="#1F1B1A" />
+    <!-- Leather Passenger Bench for 3 people! -->
+    <rect x="88" y="96" width="34" height="24" rx="4" fill="#8D5B4C" stroke="#5A3326" stroke-width="1" />
+    <path d="M 72 74 C 72 70, 80 68, 88 68 L 88 100 L 72 100 Z" fill="#6B3724" />
+    <!-- Trio friendly back cushion seams -->
+    <line x1="72" y1="80" x2="88" y2="80" stroke="#4A2315" stroke-width="1.5" />
+    <line x1="72" y1="90" x2="88" y2="90" stroke="#4A2315" stroke-width="1.5" />
+
+    <!-- Driver Seat -->
+    <rect x="180" y="102" width="22" height="18" rx="3" fill="#8D5B4C" />
+    <!-- Handlebar Stem & Handlebars inside cabin -->
+    <line x1="218" y1="110" x2="225" y2="92" stroke="#68615D" stroke-width="3" stroke-linecap="round" />
+    <line x1="218" y1="92" x2="232" y2="92" stroke="#25211F" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- Rickshaw Meter Box (Iconic Indian auto feature!) -->
+    <rect x="228" y="96" width="10" height="8" rx="1.5" fill="#9F190E" stroke="#FCF0E4" stroke-width="0.8" />
+    <rect x="230" y="98" width="6" height="4" fill="#25211F" />
+    <text x="233" y="101.5" font-size="3" fill="#38EF7D" font-family="monospace" text-anchor="middle">HIRE</text>
+
+    <!-- Windshield -->
+    <polygon points="208,84 220,52 245,52 236,84" fill="url(#rickshaw-glass)" stroke="#4A4A4F" stroke-width="2" />
+    <!-- Windshield wiper -->
+    <line x1="230" y1="82" x2="225" y2="60" stroke="#25211F" stroke-width="1.8" stroke-linecap="round" />
+
+    <!-- Roof / Canopy (Black/Charcoal Hood with sleek yellow trim) -->
+    <path d="M 62 82 C 60 52, 75 42, 108 42 L 205 42 C 220 42, 235 46, 246 52 C 248 53, 246 56, 240 56 L 218 56 L 68 56 Z" fill="url(#rickshaw-canopy)" />
+    <!-- Canopy side curtain / window frame -->
+    <path d="M 64 68 C 64 56, 75 52, 92 52 L 180 52 C 188 52, 192 58, 192 68 L 192 84 L 184 84 L 184 62 L 96 62 L 96 84 L 64 84 Z" fill="url(#rickshaw-yellow)" />
+    <!-- Canopy ribs / folds -->
+    <line x1="108" y1="42" x2="108" y2="52" stroke="#DE8C12" stroke-width="2" />
+    <line x1="152" y1="42" x2="152" y2="52" stroke="#DE8C12" stroke-width="2" />
+
+    <!-- Front Mudguard & Wheel Fork -->
+    <path d="M 224 132 C 228 124, 244 124, 252 134" fill="none" stroke="url(#rickshaw-crimson)" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Front Headlamp & Turn Signal -->
+    <circle cx="248" cy="112" r="8" fill="#FFFBEB" stroke="#68615D" stroke-width="2" />
+    <circle cx="248" cy="112" r="5" fill="#FDB432" />
+    <!-- Turn indicator -->
+    <circle cx="242" cy="122" r="3" fill="#F5A623" />
+
+    <!-- Headlight Beam -->
+    <polygon points="256,112 305,92 305,132" fill="url(#rickshaw-beam)" />
+    <line x1="258" y1="106" x2="288" y2="98" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+    <line x1="260" y1="112" x2="296" y2="112" stroke="#F5A623" stroke-width="2.5" stroke-linecap="round" opacity="0.95" />
+    <line x1="258" y1="118" x2="288" y2="126" stroke="#F5A623" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+
+    <!-- Rear Tail lamp & Bumper -->
+    <rect x="62" y="128" width="5" height="10" rx="1.5" fill="#BA2114" />
+    <line x1="60" y1="144" x2="68" y2="144" stroke="#68615D" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- Trio friendship vibe / bass vibes -->
+  <g opacity="0.8">
+    <path d="M 125 32 Q 133 24 141 30" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" />
+    <circle cx="125" cy="32" r="2.5" fill="#9F190E" />
+    <path d="M 175 28 Q 183 20 191 26" fill="none" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
+    <circle cx="175" cy="28" r="2.5" fill="#F5A623" />
+  </g>
+</svg>

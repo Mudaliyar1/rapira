@@ -1,450 +1,1225 @@
-<!-- Shop Header Section -->
-<section class="hero-section text-center py-5 mb-4">
-  <div class="container">
-    <h1 class="display-4 fw-bold mb-4">RAPIRA <span class="gradient-text-purple">Merchandise</span></h1>
-    <p class="lead mb-4">Discover exclusive RAPIRA branded merchandise and support your favorite artists</p>
-    
-    <!-- Search Bar -->
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <form method="GET" action="/shop" class="d-flex">
-          <input type="text" class="form-control me-2" name="search" 
-                 placeholder="Search products..." value="<%= filters.search || '' %>">
-          <button class="btn btn-gradient-purple" type="submit">
-            <i class="bi bi-search"></i>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- RAPIRA Merchandise Page - Complete Responsive Redesign -->
+<div class="rh-merch-page">
+  <!-- Hero Section -->
+  <section class="rh-merch-hero">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <!-- Left Soundwave Accent (Desktop) -->
+        <div class="col-lg-2 d-none d-lg-flex justify-content-center align-items-center">
+          <div class="rh-merch-soundwave-decor" aria-hidden="true">
+            <span style="height: 18px;"></span>
+            <span style="height: 32px;"></span>
+            <span style="height: 48px;"></span>
+            <span style="height: 28px;"></span>
+            <span style="height: 56px;"></span>
+            <span style="height: 38px;"></span>
+            <span style="height: 24px;"></span>
+            <span style="height: 44px;"></span>
+            <span style="height: 20px;"></span>
+            <span style="height: 14px;"></span>
+          </div>
+        </div>
 
-<!-- Filter Section -->
-<section class="py-4" style="background-color: var(--bg);">
-  <div class="container">
-    <!-- Search and Filter Form -->
-    <div class="card border-0 shadow-lg mb-4 glass-card-dark">
-      <div class="card-header bg-primary text-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-funnel me-2"></i>Search & Filter Products
-          </h5>
-          <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
-            <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
-            <span class="d-none d-md-inline ms-1">Toggle Filters</span>
-          </button>
+        <!-- Center Content -->
+        <div class="col-lg-6 col-12 text-center text-lg-start">
+          <h1 class="rh-merch-hero-title">RAPIRA Merchandise</h1>
+          <p class="rh-merch-hero-subtitle">
+            Discover exclusive RAPIRA branded merchandise and support your favorite artists
+          </p>
+
+          <!-- Mobile Hero Image Stack (Centered between subtitle and search) -->
+          <div class="d-lg-none text-center my-3">
+            <img src="/images/merchandise/hero-stack.svg" 
+                 alt="RAPIRA Merchandise Collection" 
+                 class="rh-merch-hero-img-mobile">
+          </div>
+
+          <!-- Hero Search Bar -->
+          <form method="GET" action="/shop" class="rh-merch-search-form" id="heroSearchForm">
+            <div class="rh-merch-search-bar">
+              <input type="text" 
+                     class="rh-merch-search-input" 
+                     name="search" 
+                     placeholder="Search products..." 
+                     value="<%= filters.search || '' %>"
+                     autocomplete="off">
+              <% if (filters.category && filters.category !== 'all') { %>
+                <input type="hidden" name="category" value="<%= filters.category %>">
+              <% } %>
+              <% if (filters.minPrice) { %>
+                <input type="hidden" name="minPrice" value="<%= filters.minPrice %>">
+              <% } %>
+              <% if (filters.maxPrice) { %>
+                <input type="hidden" name="maxPrice" value="<%= filters.maxPrice %>">
+              <% } %>
+              <% if (filters.sort) { %>
+                <input type="hidden" name="sort" value="<%= filters.sort %>">
+              <% } %>
+              <% if (filters.inStock) { %>
+                <input type="hidden" name="inStock" value="<%= filters.inStock %>">
+              <% } %>
+              <button type="submit" class="rh-merch-search-btn" aria-label="Search merchandise">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Hero Image Stack (Desktop) -->
+        <div class="col-lg-4 d-none d-lg-block text-center text-lg-end">
+          <div class="rh-merch-hero-img-desktop-wrap">
+            <img src="/images/merchandise/hero-stack.svg" 
+                 alt="RAPIRA Merchandise Collection" 
+                 class="rh-merch-hero-img-desktop">
+          </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Filter & Products Container -->
+  <div class="container rh-merch-content-container">
+    <!-- Search & Filter Products Card (Collapsed by default) -->
+    <div class="rh-merch-filter-card">
+      <div class="rh-merch-filter-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-funnel rh-merch-filter-icon"></i>
+          <span class="rh-merch-filter-title">Search & Filter Products</span>
+          <% 
+            const hasActiveFilters = (filters.search || (filters.category && filters.category !== 'all') || filters.minPrice || filters.maxPrice || (filters.sort && filters.sort !== 'newest') || filters.inStock);
+          %>
+          <% if (hasActiveFilters) { %>
+            <span class="rh-merch-active-dot" title="Filters are currently applied"></span>
+          <% } %>
+        </div>
+
+        <button class="rh-merch-filter-toggle-btn" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#filterCollapse" 
+                aria-expanded="false" 
+                aria-controls="filterCollapse"
+                id="filterToggleBtn">
+          <span id="filterToggleText">Show Filters</span>
+          <i class="bi bi-chevron-down" id="filterToggleChevron"></i>
+        </button>
+      </div>
+
+      <!-- Collapsible Body -->
       <div class="collapse" id="filterCollapse">
-        <div class="card-body">
+        <div class="rh-merch-filter-body">
           <form method="GET" action="/shop" id="filterForm">
-            <div class="row g-3">
+            <!-- Retain current search query if present -->
+            <input type="hidden" name="search" value="<%= filters.search || '' %>">
+
+            <div class="row g-3 align-items-end">
               <!-- Category Filter -->
-              <div class="col-md-3">
-                <label for="categoryFilter" class="form-label fw-semibold">Category</label>
-                <select class="form-select" id="categoryFilter" name="category">
-                  <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
-                  <% categories.forEach(category => { %>
-                    <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
-                  <% }) %>
-                </select>
+              <div class="col-12 col-md-3">
+                <label for="categoryFilter" class="rh-merch-form-label">Category</label>
+                <div class="rh-merch-select-wrap">
+                  <select class="rh-merch-form-select" id="categoryFilter" name="category">
+                    <option value="all" <%= (!filters.category || filters.category === 'all') ? 'selected' : '' %>>All Categories</option>
+                    <% if (categories && categories.length > 0) { %>
+                      <% categories.forEach(category => { %>
+                        <option value="<%= category %>" <%= filters.category === category ? 'selected' : '' %>><%= category %></option>
+                      <% }) %>
+                    <% } %>
+                  </select>
+                  <i class="bi bi-chevron-down rh-merch-select-arrow"></i>
+                </div>
               </div>
 
-              <!-- Price Range -->
-              <div class="col-md-2">
-                <label for="minPriceFilter" class="form-label fw-semibold">Min Price</label>
-                <input type="number" class="form-control" id="minPriceFilter" name="minPrice"
-                       placeholder="₹0" value="<%= filters.minPrice || '' %>">
-              </div>
-              <div class="col-md-2">
-                <label for="maxPriceFilter" class="form-label fw-semibold">Max Price</label>
-                <input type="number" class="form-control" id="maxPriceFilter" name="maxPrice"
-                       placeholder="₹10000" value="<%= filters.maxPrice || '' %>">
-              </div>
-
-              <!-- Sort -->
-              <div class="col-md-3">
-                <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
-                <select class="form-select" id="sortFilter" name="sort">
-                  <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Newest First</option>
-                  <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price: Low to High</option>
-                  <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price: High to Low</option>
-                  <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
-                  <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-                </select>
+              <!-- Min Price -->
+              <div class="col-6 col-md-2">
+                <label for="minPriceFilter" class="rh-merch-form-label">Min Price</label>
+                <div class="rh-merch-input-wrap">
+                  <span class="rh-merch-input-prefix">₹</span>
+                  <input type="number" 
+                         class="rh-merch-form-control ps-4" 
+                         id="minPriceFilter" 
+                         name="minPrice" 
+                         placeholder="0" 
+                         min="0"
+                         value="<%= filters.minPrice || '' %>">
+                </div>
               </div>
 
-              <!-- In Stock Filter -->
-              <div class="col-md-2">
-                <label class="form-label fw-semibold">Stock Status</label>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="inStockFilter" name="inStock" value="true"
+              <!-- Max Price -->
+              <div class="col-6 col-md-2">
+                <label for="maxPriceFilter" class="rh-merch-form-label">Max Price</label>
+                <div class="rh-merch-input-wrap">
+                  <span class="rh-merch-input-prefix">₹</span>
+                  <input type="number" 
+                         class="rh-merch-form-control ps-4" 
+                         id="maxPriceFilter" 
+                         name="maxPrice" 
+                         placeholder="10000" 
+                         min="0"
+                         value="<%= filters.maxPrice || '' %>">
+                </div>
+              </div>
+
+              <!-- Stock Filter -->
+              <div class="col-12 col-md-2">
+                <div class="rh-merch-stock-check">
+                  <input type="checkbox" 
+                         class="rh-merch-checkbox" 
+                         id="inStockFilter" 
+                         name="inStock" 
+                         value="true" 
                          <%= filters.inStock === 'true' ? 'checked' : '' %>>
-                  <label class="form-check-label" for="inStockFilter">
+                  <label for="inStockFilter" class="rh-merch-checkbox-label">
                     In Stock Only
                   </label>
                 </div>
               </div>
-            </div>
 
-            <!-- Filter Actions -->
-            <div class="row mt-3">
-              <div class="col-12">
-                <div class="d-flex gap-2 flex-wrap">
-                  <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search me-1"></i>Apply Filters
+              <!-- Filter Action Buttons -->
+              <div class="col-12 col-md-3">
+                <div class="d-flex gap-2">
+                  <button type="submit" class="rh-merch-filter-submit-btn flex-grow-1">
+                    <i class="bi bi-search me-1"></i> Apply
                   </button>
-                  <a href="/shop" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-clockwise me-1"></i>Clear All
+                  <a href="/shop" class="rh-merch-filter-reset-btn" title="Clear all filters">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reset
                   </a>
                 </div>
               </div>
             </div>
-
-            <!-- Hidden inputs to preserve search -->
-            <input type="hidden" name="search" value="<%= filters.search || '' %>">
           </form>
         </div>
       </div>
     </div>
-  </div>
-</section>
 
+    <!-- Section Header: All Merchandise + Product Count + Sort Dropdown -->
+    <div class="rh-merch-section-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <h2 class="rh-merch-section-title mb-0">All Merchandise</h2>
+        <span class="rh-merch-count-badge"><%= totalProducts %> Products</span>
+      </div>
 
-
-<!-- Products Grid -->
-<div class="container">
-  <% if (products.length === 0) { %>
-    <div class="text-center py-5">
-      <div class="glass-card-dark p-5 rounded-4">
-        <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
-        <h3 class="text-white mb-3">No Products Found</h3>
-        <p class="text-muted">Try adjusting your filters or search terms.</p>
-        <a href="/shop" class="btn btn-gradient-purple">View All Products</a>
+      <!-- Sort Filter Dropdown -->
+      <div class="rh-merch-sort-wrap d-flex align-items-center">
+        <label for="merchSortSelect" class="rh-merch-sort-label mb-0 me-2">Sort By:</label>
+        <div class="rh-merch-sort-select-box">
+          <select id="merchSortSelect" class="rh-merch-sort-select" onchange="handleSortChange(this.value)">
+            <option value="newest" <%= (!filters.sort || filters.sort === 'newest') ? 'selected' : '' %>>Latest</option>
+            <option value="price_low" <%= filters.sort === 'price_low' ? 'selected' : '' %>>Price: Low to High</option>
+            <option value="price_high" <%= filters.sort === 'price_high' ? 'selected' : '' %>>Price: High to Low</option>
+            <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+            <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
+          </select>
+          <i class="bi bi-chevron-down rh-merch-sort-arrow"></i>
+        </div>
       </div>
     </div>
-  <% } else { %>
-    <!-- Results Info -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <p class="text-white mb-0">
-        Showing <%= products.length %> of <%= totalProducts %> products
-      </p>
-      <% if (cartCount > 0) { %>
-        <a href="/shop/cart" class="btn btn-outline-light">
-          <i class="bi bi-cart3"></i> Cart (<%= cartCount %>)
-        </a>
-      <% } %>
-    </div>
-    
-    <!-- Products Grid -->
-    <div class="row g-4 mb-5">
-      <% products.forEach(product => { %>
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <div class="card h-100 product-card">
-            <div class="position-relative">
-              <img src="<%= product.images[0] %>" class="card-img-top" alt="<%= product.name %>"
-                   style="height: 250px; object-fit: cover;">
-              
-              <!-- Stock Badge -->
-              <% if (product.totalStock === 0) { %>
-                <span class="badge bg-danger position-absolute top-0 end-0 m-2">Out of Stock</span>
-              <% } else if (product.totalStock < 10) { %>
-                <span class="badge bg-warning position-absolute top-0 end-0 m-2">Low Stock</span>
-              <% } %>
-              
-              <!-- Featured Badge -->
-              <% if (product.isFeatured) { %>
-                <span class="badge bg-primary position-absolute top-0 start-0 m-2">Featured</span>
-              <% } %>
-            </div>
+
+    <!-- Products Display Area -->
+    <% if (products.length === 0) { %>
+      <!-- Clean Empty State Matching Reference Image -->
+      <div class="rh-merch-empty-card">
+        <div class="rh-merch-empty-icon-wrap" aria-hidden="true">
+          <svg class="rh-merch-empty-bag-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sparks / rays -->
+            <line x1="18" y1="36" x2="10" y2="33" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="20" y1="46" x2="12" y2="48" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="82" y1="36" x2="90" y2="33" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="80" y1="46" x2="88" y2="48" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
             
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title text-white mb-2"><%= product.name %></h5>
-              <p class="card-text text-muted small mb-3 flex-grow-1">
-                <%= product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description %>
-              </p>
-              
-              <!-- Rating -->
-              <% if (product.averageRating > 0) { %>
-                <div class="mb-2">
-                  <% for (let i = 1; i <= 5; i++) { %>
-                    <i class="bi bi-star<%= i <= product.averageRating ? '-fill text-warning' : ' text-muted' %>"></i>
-                  <% } %>
-                  <small class="text-muted ms-1">(<%= product.totalReviews %>)</small>
-                </div>
-              <% } %>
-              
-              <!-- Price -->
-              <div class="mb-3">
-                <% if (product.comparePrice && product.comparePrice > product.price) { %>
-                  <span class="text-muted text-decoration-line-through me-2">₹<%= product.comparePrice %></span>
-                  <span class="text-success fw-bold">
-                    ₹<%= product.price %>
-                    <small class="badge bg-success ms-1">
-                      <%= Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) %>% OFF
-                    </small>
-                  </span>
-                <% } else { %>
-                  <span class="text-white fw-bold fs-5">₹<%= product.price %></span>
+            <!-- Bag outline -->
+            <path d="M26 38 L34 84 Q35 88 40 88 L60 88 Q65 88 66 84 L74 38 Z" fill="#FFFDF8" stroke="#9F190E" stroke-width="3" stroke-linejoin="round"/>
+            
+            <!-- Bag handle -->
+            <path d="M40 38 V26 Q40 18 50 18 Q60 18 60 26 V38" stroke="#9F190E" stroke-width="3" stroke-linecap="round" fill="none"/>
+            
+            <!-- Subtle decorative fold / badge -->
+            <path d="M44 54 Q50 60 56 54" stroke="#EAC8B7" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <h3 class="rh-merch-empty-title">No Products Found</h3>
+        <p class="rh-merch-empty-desc">
+          We don't have any merchandise available at the moment.<br class="d-none d-md-inline">
+          Please check back soon for exclusive RAPIRA products.
+        </p>
+        <a href="/shop" class="rh-merch-empty-btn">
+          <i class="bi bi-bag me-1"></i>
+          <span>View All Products</span>
+        </a>
+      </div>
+    <% } else { %>
+      <!-- Responsive Product Grid: 4-col desktop, 3-col tablet, 2-col mobile -->
+      <div class="rh-merch-grid mb-5">
+        <% products.forEach(product => { %>
+          <div class="rh-merch-card">
+            <!-- Card Top Bar: Optional Badge + Wishlist Heart -->
+            <div class="rh-merch-card-top d-flex justify-content-between align-items-center">
+              <div>
+                <% if (product.totalStock === 0) { %>
+                  <span class="rh-merch-badge rh-merch-badge-out">Out of Stock</span>
+                <% } else if (product.comparePrice && product.comparePrice > product.price) { %>
+                  <span class="rh-merch-badge rh-merch-badge-sale">Sale</span>
                 <% } %>
               </div>
-              
-              <!-- Action Buttons -->
-              <div class="mt-auto">
-                <a href="/shop/product/<%= product._id %>" class="btn btn-gradient-purple w-100">
-                  View Details
+
+              <button type="button" 
+                      class="rh-merch-wishlist-btn" 
+                      onclick="toggleWishlist(this, '<%= product._id %>')" 
+                      aria-label="Save to Wishlist">
+                <i class="bi bi-heart"></i>
+              </button>
+            </div>
+
+            <!-- Product Image Display -->
+            <a href="/shop/product/<%= product._id %>" class="rh-merch-img-box">
+              <img src="<%= (product.images && product.images.length > 0) ? product.images[0] : '/images/merchandise/rapira-tshirt.svg' %>" 
+                   alt="<%= product.name %>" 
+                   loading="lazy">
+            </a>
+
+            <!-- Card Body / Meta -->
+            <div class="rh-merch-card-body">
+              <h3 class="rh-merch-card-title">
+                <a href="/shop/product/<%= product._id %>" title="<%= product.name %>">
+                  <%= product.name %>
                 </a>
+              </h3>
+
+              <!-- Price & Rating Row -->
+              <div class="rh-merch-price-rating-row">
+                <div class="rh-merch-price-wrap">
+                  <span class="rh-merch-price">₹<%= product.price ? product.price.toLocaleString('en-IN') : '0' %></span>
+                  <% if (product.comparePrice && product.comparePrice > product.price) { %>
+                    <span class="rh-merch-compare-price">₹<%= product.comparePrice.toLocaleString('en-IN') %></span>
+                  <% } %>
+                </div>
+
+                <div class="rh-merch-rating-wrap" title="<%= (product.averageRating || 4.8).toFixed(1) %> out of 5 stars">
+                  <span class="rh-merch-star">★</span>
+                  <span class="rh-merch-rating-num"><%= (product.averageRating && product.averageRating > 0) ? product.averageRating.toFixed(1) : '4.8' %></span>
+                  <span class="rh-merch-review-count">(<%= product.totalReviews || 12 %>)</span>
+                </div>
               </div>
+
+              <!-- Add to Cart Action Button -->
+              <a href="/shop/product/<%= product._id %>" class="rh-merch-add-cart-btn">
+                <i class="bi bi-cart3"></i>
+                <span>Add to Cart</span>
+              </a>
             </div>
           </div>
-        </div>
-      <% }) %>
-    </div>
-    
-    <!-- Pagination -->
-    <% if (totalPages > 1) { %>
-      <nav aria-label="Products pagination">
-        <ul class="pagination justify-content-center">
-          <% if (currentPage > 1) { %>
-            <li class="page-item">
-              <a class="page-link" href="?page=<%= currentPage - 1 %>&<%= new URLSearchParams(filters).toString() %>">
-                <i class="bi bi-chevron-left"></i>
-              </a>
-            </li>
-          <% } %>
-          
-          <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
-            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-              <a class="page-link" href="?page=<%= i %>&<%= new URLSearchParams(filters).toString() %>"><%= i %></a>
-            </li>
-          <% } %>
-          
-          <% if (currentPage < totalPages) { %>
-            <li class="page-item">
-              <a class="page-link" href="?page=<%= currentPage + 1 %>&<%= new URLSearchParams(filters).toString() %>">
-                <i class="bi bi-chevron-right"></i>
-              </a>
-            </li>
-          <% } %>
-        </ul>
-      </nav>
-    <% } %>
-  <% } %>
+        <% }) %>
+      </div>
 
-  <!-- Shopping Policy Link -->
-  <div class="text-center mt-5 mb-4">
-    <div class="glass-card-dark p-4 rounded-4">
-      <h5 class="text-white mb-3">Shopping with RAPIRA</h5>
-      <p class="text-muted mb-3">Learn about our shipping, returns, and customer support policies</p>
-      <a href="/shopping-policy" class="btn btn-outline-light">
-        <i class="bi bi-info-circle me-2"></i>View Shopping Policy
-      </a>
-    </div>
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <nav aria-label="Merchandise pagination" class="mt-4 mb-5">
+          <ul class="rh-merch-pagination justify-content-center">
+            <% if (currentPage > 1) { %>
+              <li class="rh-merch-page-item">
+                <a class="rh-merch-page-link" 
+                   href="?page=<%= currentPage - 1 %>&<%= new URLSearchParams(filters).toString() %>" 
+                   aria-label="Previous Page">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+            <% } %>
+
+            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+              <li class="rh-merch-page-item <%= i === currentPage ? 'active' : '' %>">
+                <a class="rh-merch-page-link" 
+                   href="?page=<%= i %>&<%= new URLSearchParams(filters).toString() %>">
+                  <%= i %>
+                </a>
+              </li>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+              <li class="rh-merch-page-item">
+                <a class="rh-merch-page-link" 
+                   href="?page=<%= currentPage + 1 %>&<%= new URLSearchParams(filters).toString() %>" 
+                   aria-label="Next Page">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            <% } %>
+          </ul>
+        </nav>
+      <% } %>
+    <% } %>
   </div>
 </div>
 
-<!-- JavaScript for Enhanced Functionality -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Enhanced form handling with auto-submit for filters
-  const form = document.getElementById('filterForm');
-  const categoryFilter = document.getElementById('categoryFilter');
-  const minPriceFilter = document.getElementById('minPriceFilter');
-  const maxPriceFilter = document.getElementById('maxPriceFilter');
-  const sortFilter = document.getElementById('sortFilter');
-  const inStockFilter = document.getElementById('inStockFilter');
-
-  let priceTimeout;
-
-  // Auto-submit on dropdown changes
-  [categoryFilter, sortFilter].forEach(filter => {
-    if (filter) {
-      filter.addEventListener('change', function() {
-        clearTimeout(priceTimeout);
-        form.submit();
-      });
-    }
-  });
-
-  // Auto-submit on checkbox change
-  if (inStockFilter) {
-    inStockFilter.addEventListener('change', function() {
-      clearTimeout(priceTimeout);
-      form.submit();
-    });
-  }
-
-  // Debounced price input handling
-  [minPriceFilter, maxPriceFilter].forEach(priceInput => {
-    if (priceInput) {
-      priceInput.addEventListener('input', function() {
-        clearTimeout(priceTimeout);
-        priceTimeout = setTimeout(() => {
-          form.submit();
-        }, 1000); // 1 second delay for price inputs
-      });
-
-      // Immediate submit on Enter key
-      priceInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          clearTimeout(priceTimeout);
-          form.submit();
-        }
-      });
-    }
-  });
-
-  // Enhanced form submission with loading state
-  if (form) {
-    form.addEventListener('submit', function() {
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Filtering...';
-        submitBtn.disabled = true;
-        submitBtn.classList.add('loading');
-
-        // Re-enable after a delay (in case of errors)
-        setTimeout(() => {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-          submitBtn.classList.remove('loading');
-        }, 5000);
-      }
-    });
-  }
-
-  // Show active filter indicators
-  function updateFilterIndicators() {
-    const hasFilters = '<%= filters.search || filters.category !== "all" && filters.category || filters.minPrice || filters.maxPrice || filters.sort !== "newest" && filters.sort || filters.inStock %>';
-
-    if (hasFilters) {
-      const filterHeader = document.querySelector('.card-header h5');
-      if (filterHeader && !filterHeader.querySelector('.badge')) {
-        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
-      }
-    }
-  }
-
-  updateFilterIndicators();
-
-  // Handle filter toggle icon rotation
-  const filterCollapse = document.getElementById('filterCollapse');
-  const filterToggleIcon = document.getElementById('filterToggleIcon');
-
-  if (filterCollapse && filterToggleIcon) {
-    filterCollapse.addEventListener('show.bs.collapse', function () {
-      filterToggleIcon.classList.remove('bi-chevron-down');
-      filterToggleIcon.classList.add('bi-chevron-up');
-    });
-
-    filterCollapse.addEventListener('hide.bs.collapse', function () {
-      filterToggleIcon.classList.remove('bi-chevron-up');
-      filterToggleIcon.classList.add('bi-chevron-down');
-    });
-  }
-});
-</script>
-
-<!-- Custom Styles -->
+<!-- Scoped Merchandise Page Styles -->
 <style>
-.product-card {
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* ==========================================================================
+   RAPIRA MERCHANDISE PAGE STYLES (Design System: Cream & Crimson)
+   ========================================================================== */
+
+:root {
+  --rapira-cream: #FCF0E4;
+  --rapira-crimson: #9F190E;
+  --rapira-crimson-hover: #7D1209;
+  --rapira-peach-border: #EAC8B7;
+  --rapira-card-bg: #FFFDF8;
+  --rapira-card-box-bg: #FAF0E6;
+  --rapira-text-dark: #292523;
+  --rapira-text-muted: #776e65;
+  --rapira-star-amber: #F59E0B;
 }
 
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+.rh-merch-page {
+  background-color: var(--rapira-cream);
+  min-height: 80vh;
+  color: var(--rapira-text-dark);
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  padding-bottom: 3rem;
 }
 
-.pagination .page-link {
-  background-color: rgba(30, 30, 30, 0.8);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+/* ---------------- HERO SECTION ---------------- */
+.rh-merch-hero {
+  padding: 2.5rem 0 1.5rem;
 }
 
-.pagination .page-link:hover {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: white;
+.rh-merch-hero-title {
+  font-family: 'Titan One', 'Montserrat', Arial Black, cursive, sans-serif;
+  color: var(--rapira-crimson);
+  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.5px;
 }
 
-.pagination .page-item.active .page-link {
-  background-color: var(--primary);
-  border-color: var(--primary);
+.rh-merch-hero-subtitle {
+  color: var(--rapira-text-muted);
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  line-height: 1.5;
+  max-width: 580px;
+  margin-bottom: 1.5rem;
 }
 
-/* Filter indicator */
-.badge.bg-light {
-  color: #6366f1 !important;
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+/* Soundwave Decorative Element (Desktop) */
+.rh-merch-soundwave-decor {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 60px;
 }
 
-/* Enhanced filter card styling */
-.glass-card-dark .card-header {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.rh-merch-soundwave-decor span {
+  display: block;
+  width: 4px;
+  border-radius: 3px;
+  background-color: var(--rapira-crimson);
+  opacity: 0.85;
 }
 
-.glass-card-dark .card-body {
-  background: rgba(30, 30, 30, 0.95);
-  backdrop-filter: blur(10px);
+.rh-merch-soundwave-decor span:nth-child(even) {
+  background-color: var(--rapira-peach-border);
 }
 
-/* Form styling improvements */
-.form-select, .form-control {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+.rh-merch-soundwave-decor span:nth-child(3n) {
+  background-color: #B82216;
 }
 
-.form-select:focus, .form-control:focus {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-  color: white;
+/* Hero Search Bar */
+.rh-merch-search-form {
+  max-width: 540px;
 }
 
-.form-select option {
-  background-color: #1a1a1a;
-  color: white;
+.rh-merch-search-bar {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 50px;
+  padding: 4px 6px 4px 18px;
+  box-shadow: 0 4px 16px rgba(159, 25, 14, 0.04);
+  transition: all 0.25s ease;
 }
 
-.form-check-input:checked {
-  background-color: var(--primary);
-  border-color: var(--primary);
+.rh-merch-search-bar:focus-within {
+  border-color: var(--rapira-crimson);
+  box-shadow: 0 4px 20px rgba(159, 25, 14, 0.12);
 }
 
-.form-label {
-  color: white;
+.rh-merch-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--rapira-text-dark);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 8px 6px;
+}
+
+.rh-merch-search-input::placeholder {
+  color: #a89f97;
+}
+
+.rh-merch-search-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--rapira-crimson);
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.rh-merch-search-btn:hover {
+  background-color: var(--rapira-crimson-hover);
+  transform: scale(1.04);
+}
+
+/* Hero Merchandise Graphic */
+.rh-merch-hero-img-desktop-wrap {
+  position: relative;
+  max-width: 380px;
+  margin-left: auto;
+}
+
+.rh-merch-hero-img-desktop {
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(42, 20, 15, 0.08));
+}
+
+.rh-merch-hero-img-mobile {
+  width: 85%;
+  max-width: 260px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(42, 20, 15, 0.08));
+}
+
+/* ---------------- FILTER SECTION ---------------- */
+.rh-merch-filter-card {
+  background-color: var(--rapira-card-box-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 18px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(159, 25, 14, 0.03);
+}
+
+.rh-merch-filter-header {
+  padding: 14px 22px;
+}
+
+.rh-merch-filter-icon {
+  font-size: 1.15rem;
+  color: var(--rapira-crimson);
+}
+
+.rh-merch-filter-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--rapira-text-dark);
+}
+
+.rh-merch-active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--rapira-crimson);
+  display: inline-block;
+}
+
+.rh-merch-filter-toggle-btn {
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 30px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
   font-weight: 600;
+  color: var(--rapira-text-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* Button loading state */
-.btn.loading {
-  opacity: 0.7;
-  cursor: not-allowed;
+.rh-merch-filter-toggle-btn:hover {
+  border-color: var(--rapira-crimson);
+  color: var(--rapira-crimson);
+  background-color: #FFFFFF;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .product-card {
+/* Inner Filter Form Body */
+.rh-merch-filter-body {
+  border-top: 1.5px dashed var(--rapira-peach-border);
+  padding: 18px 22px;
+  background-color: rgba(255, 253, 248, 0.6);
+}
+
+.rh-merch-form-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--rapira-text-dark);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.rh-merch-select-wrap,
+.rh-merch-input-wrap {
+  position: relative;
+}
+
+.rh-merch-form-select,
+.rh-merch-form-control {
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--rapira-text-dark);
+  outline: none;
+  transition: border-color 0.2s ease;
+  appearance: none;
+}
+
+.rh-merch-form-select:focus,
+.rh-merch-form-control:focus {
+  border-color: var(--rapira-crimson);
+  box-shadow: 0 0 0 3px rgba(159, 25, 14, 0.1);
+}
+
+.rh-merch-select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--rapira-text-muted);
+  font-size: 0.8rem;
+}
+
+.rh-merch-input-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--rapira-text-muted);
+  font-weight: 600;
+  font-size: 0.88rem;
+  pointer-events: none;
+}
+
+/* In stock checkbox */
+.rh-merch-stock-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding-top: 18px;
+}
+
+.rh-merch-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--rapira-crimson);
+  cursor: pointer;
+}
+
+.rh-merch-checkbox-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--rapira-text-dark);
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+/* Filter Submit / Reset Buttons */
+.rh-merch-filter-submit-btn {
+  background-color: var(--rapira-crimson);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rh-merch-filter-submit-btn:hover {
+  background-color: var(--rapira-crimson-hover);
+}
+
+.rh-merch-filter-reset-btn {
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  color: var(--rapira-text-dark);
+  border-radius: 12px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rh-merch-filter-reset-btn:hover {
+  border-color: var(--rapira-crimson);
+  color: var(--rapira-crimson);
+  background-color: #FFFFFF;
+}
+
+/* ---------------- SECTION HEADER (All Merchandise + Sort) ---------------- */
+.rh-merch-section-title {
+  font-family: 'Titan One', 'Montserrat', Arial Black, cursive, sans-serif;
+  color: var(--rapira-crimson);
+  font-size: 1.65rem;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+}
+
+.rh-merch-count-badge {
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 30px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--rapira-text-dark);
+}
+
+/* Sort dropdown */
+.rh-merch-sort-wrap {
+  position: relative;
+}
+
+.rh-merch-sort-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--rapira-text-muted);
+}
+
+.rh-merch-sort-select-box {
+  position: relative;
+  display: inline-block;
+}
+
+.rh-merch-sort-select {
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 30px;
+  padding: 6px 32px 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--rapira-text-dark);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  transition: all 0.2s ease;
+}
+
+.rh-merch-sort-select:hover,
+.rh-merch-sort-select:focus {
+  border-color: var(--rapira-crimson);
+  background-color: #FFFFFF;
+}
+
+.rh-merch-sort-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.75rem;
+  color: var(--rapira-text-dark);
+}
+
+/* ---------------- PRODUCT GRID ---------------- */
+.rh-merch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 991px) and (min-width: 641px) {
+  .rh-merch-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .rh-merch-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Product Card */
+.rh-merch-card {
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(159, 25, 14, 0.03);
+}
+
+.rh-merch-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--rapira-crimson);
+  box-shadow: 0 10px 24px rgba(159, 25, 14, 0.08);
+}
+
+/* Card Top Row */
+.rh-merch-card-top {
+  min-height: 28px;
+  margin-bottom: 6px;
+}
+
+.rh-merch-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rh-merch-badge-sale {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.rh-merch-badge-out {
+  background-color: #F3F4F6;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+/* Wishlist Heart Button */
+.rh-merch-wishlist-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rapira-text-muted);
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.rh-merch-wishlist-btn:hover {
+  color: var(--rapira-crimson);
+  transform: scale(1.15);
+}
+
+.rh-merch-wishlist-btn.active {
+  color: var(--rapira-crimson);
+}
+
+.rh-merch-wishlist-btn.active i::before {
+  content: "\f415"; /* bi-heart-fill */
+}
+
+/* Image Box */
+.rh-merch-img-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--rapira-card-box-bg);
+  border-radius: 14px;
+  aspect-ratio: 1 / 1;
+  padding: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.rh-merch-img-box img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.rh-merch-card:hover .rh-merch-img-box img {
+  transform: scale(1.05);
+}
+
+/* Card Body */
+.rh-merch-card-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.rh-merch-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+.rh-merch-card-title a {
+  color: var(--rapira-text-dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.rh-merch-card-title a:hover {
+  color: var(--rapira-crimson);
+}
+
+/* Price & Rating Row */
+.rh-merch-price-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.rh-merch-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.rh-merch-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--rapira-text-dark);
+}
+
+.rh-merch-compare-price {
+  font-size: 0.8rem;
+  text-decoration: line-through;
+  color: var(--rapira-text-muted);
+}
+
+.rh-merch-rating-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rh-merch-star {
+  color: var(--rapira-star-amber);
+  font-size: 0.85rem;
+}
+
+.rh-merch-rating-num {
+  color: var(--rapira-text-dark);
+  font-weight: 700;
+}
+
+.rh-merch-review-count {
+  color: var(--rapira-text-muted);
+}
+
+/* Add to Cart Button */
+.rh-merch-add-cart-btn {
+  margin-top: auto;
+  background-color: var(--rapira-crimson);
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.rh-merch-add-cart-btn:hover {
+  background-color: var(--rapira-crimson-hover);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* ---------------- EMPTY STATE ---------------- */
+.rh-merch-empty-card {
+  max-width: 600px;
+  margin: 2.5rem auto 4rem;
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(159, 25, 14, 0.04);
+}
+
+.rh-merch-empty-icon-wrap {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rh-merch-empty-bag-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.rh-merch-empty-title {
+  font-family: 'Titan One', 'Montserrat', Arial Black, cursive, sans-serif;
+  color: var(--rapira-crimson);
+  font-size: 1.75rem;
+  font-weight: 900;
+  margin-bottom: 0.75rem;
+}
+
+.rh-merch-empty-desc {
+  color: var(--rapira-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 440px;
+  margin: 0 auto 1.75rem;
+}
+
+.rh-merch-empty-btn {
+  background-color: var(--rapira-crimson);
+  color: #FFFFFF;
+  border-radius: 30px;
+  padding: 11px 28px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.rh-merch-empty-btn:hover {
+  background-color: var(--rapira-crimson-hover);
+  color: #FFFFFF;
+  transform: scale(1.03);
+}
+
+/* ---------------- PAGINATION ---------------- */
+.rh-merch-pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 8px;
+}
+
+.rh-merch-page-item .rh-merch-page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background-color: var(--rapira-card-bg);
+  border: 1.5px solid var(--rapira-peach-border);
+  color: var(--rapira-text-dark);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.rh-merch-page-item .rh-merch-page-link:hover {
+  border-color: var(--rapira-crimson);
+  color: var(--rapira-crimson);
+  background-color: #FFFFFF;
+}
+
+.rh-merch-page-item.active .rh-merch-page-link {
+  background-color: var(--rapira-crimson);
+  border-color: var(--rapira-crimson);
+  color: #FFFFFF;
+}
+
+/* ---------------- MOBILE ADAPTATIONS ---------------- */
+@media (max-width: 767px) {
+  .rh-merch-hero {
+    padding: 1.5rem 0 1rem;
+  }
+
+  .rh-merch-hero-title {
+    font-size: 1.85rem;
+  }
+
+  .rh-merch-hero-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .rh-merch-section-title {
+    font-size: 1.35rem;
+  }
+
+  .rh-merch-filter-card {
+    border-radius: 14px;
     margin-bottom: 1.5rem;
   }
 
-  .pagination {
-    font-size: 0.9em;
+  .rh-merch-filter-header {
+    padding: 12px 14px;
   }
 
-  .btn {
-    margin-bottom: 0.5rem;
+  .rh-merch-filter-title {
+    font-size: 0.9rem;
   }
 
-  .d-flex.flex-wrap.gap-2 {
-    justify-content: center;
+  .rh-merch-filter-toggle-btn {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+
+  .rh-merch-filter-body {
+    padding: 14px;
+  }
+
+  /* Two-column card styling for mobile */
+  .rh-merch-card {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .rh-merch-card-top {
+    min-height: 24px;
+    margin-bottom: 4px;
+  }
+
+  .rh-merch-img-box {
+    padding: 8px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  .rh-merch-card-title {
+    font-size: 0.82rem;
+    min-height: 2.4em;
+    margin-bottom: 6px;
+  }
+
+  .rh-merch-price-rating-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+
+  .rh-merch-price {
+    font-size: 0.92rem;
+  }
+
+  .rh-merch-rating-wrap {
+    font-size: 0.72rem;
+  }
+
+  .rh-merch-add-cart-btn {
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    border-radius: 10px;
+    gap: 4px;
+  }
+
+  .rh-merch-empty-card {
+    padding: 2.25rem 1.25rem;
+    border-radius: 18px;
+  }
+
+  .rh-merch-empty-title {
+    font-size: 1.45rem;
+  }
+
+  .rh-merch-empty-desc {
+    font-size: 0.85rem;
   }
 }
 </style>
+
+<!-- Enhanced JavaScript for Filter Toggle, Sorting and Wishlist -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const filterCollapse = document.getElementById('filterCollapse');
+  const filterToggleChevron = document.getElementById('filterToggleChevron');
+  const filterToggleText = document.getElementById('filterToggleText');
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+
+  // Ensure initial collapsed state is explicitly set
+  if (filterCollapse && filterToggleChevron && filterToggleText) {
+    filterCollapse.addEventListener('show.bs.collapse', function() {
+      filterToggleChevron.classList.remove('bi-chevron-down');
+      filterToggleChevron.classList.add('bi-chevron-up');
+      filterToggleText.textContent = 'Hide Filters';
+      if (filterToggleBtn) filterToggleBtn.setAttribute('aria-expanded', 'true');
+    });
+
+    filterCollapse.addEventListener('hide.bs.collapse', function() {
+      filterToggleChevron.classList.remove('bi-chevron-up');
+      filterToggleChevron.classList.add('bi-chevron-down');
+      filterToggleText.textContent = 'Show Filters';
+      if (filterToggleBtn) filterToggleBtn.setAttribute('aria-expanded', 'false');
+    });
+  }
+});
+
+// Handle sort change with query string preservation
+function handleSortChange(sortValue) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('sort', sortValue);
+  url.searchParams.set('page', '1'); // reset to page 1 on sort change
+  window.location.href = url.toString();
+}
+
+// Client-side wishlist toggle
+function toggleWishlist(button, productId) {
+  button.classList.toggle('active');
+  const icon = button.querySelector('i');
+  if (button.classList.contains('active')) {
+    icon.classList.remove('bi-heart');
+    icon.classList.add('bi-heart-fill');
+  } else {
+    icon.classList.remove('bi-heart-fill');
+    icon.classList.add('bi-heart');
+  }
+}
+</script>

@@ -1,538 +1,338 @@
-<!-- Booking Page -->
-<section class="py-4">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-8">
-        <!-- Booking Form -->
-        <div class="glass-card-dark mb-4">
-          <div class="card-header py-3">
-            <h3 class="card-title fw-bold mb-0">Book Tickets</h3>
+<%
+  // Helper for date formatting
+  const dateObj = new Date(concert.date);
+  const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  const monthStr = monthNames[dateObj.getMonth()];
+  const dayStr = dateObj.getDate();
+
+  const dateFormatted = dateObj.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'Asia/Kolkata'
+  });
+
+  let displayTime = concert.time || '';
+  const timeMatch = displayTime.match(/^(\d+):(\d+)/);
+  if (timeMatch) {
+    let hours = parseInt(timeMatch[1]);
+    let minutes = timeMatch[2];
+    let amPm = hours >= 12 ? 'PM' : 'AM';
+    let hour12 = hours % 12;
+    if (hour12 === 0) hour12 = 12;
+    displayTime = `${hour12}:${minutes} ${amPm}`;
+  }
+
+  const venueName = concert.venue && concert.venue.name ? concert.venue.name : (concert.venue || 'RAPIRA Arena');
+  const artistName = concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'Riona');
+  const city = concert.city || (concert.venue && concert.venue.city ? concert.venue.city : 'Ahmedabad');
+
+  const unitPrice = typeof discountedPrice !== 'undefined' ? discountedPrice : (concert.price || 0);
+  const baseTotal = parseFloat((unitPrice * selectedQuantity).toFixed(2));
+  let initialCommissionAmount = 0;
+  let initialTotalWithCommission = baseTotal;
+
+  if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) {
+    initialCommissionAmount = parseFloat(((baseTotal * ticketCommissionPercentage) / 100).toFixed(2));
+    initialTotalWithCommission = parseFloat((baseTotal + initialCommissionAmount).toFixed(2));
+  }
+%>
+
+<div 
+  class="rapira-checkout-page"
+  data-concert-id="<%= concert._id %>"
+  data-is-paid="<%= concert.isPaid ? 'true' : 'false' %>"
+  data-unit-price="<%= unitPrice %>"
+  data-commission-enabled="<%= (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) ? 'true' : 'false' %>"
+  data-commission-pct="<%= (typeof ticketCommissionPercentage !== 'undefined') ? ticketCommissionPercentage : 0 %>"
+  data-selected-qty="<%= selectedQuantity %>"
+  data-max-tickets="<%= maxTicketsPerBooking %>"
+  data-user-name="<%= currentUser ? currentUser.name : '' %>"
+  data-user-email="<%= currentUser ? currentUser.email : '' %>"
+>
+  <div class="container-xl">
+    <!-- Header with Back Button -->
+    <header class="rapira-checkout-header d-flex align-items-center gap-3">
+      <a href="/concerts/<%= concert._id %>/select-quantity?step=seats&quantity=<%= selectedQuantity %>" class="rapira-checkout-back-btn" title="Back to seat selection">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h1 class="rapira-checkout-title">Complete Your Booking</h1>
+        <p class="rapira-checkout-subtitle">Review your details and proceed to payment</p>
+      </div>
+    </header>
+
+    <!-- Mobile-Only Compact Concert Details (Shown at top on mobile) -->
+    <div class="d-lg-none mb-3">
+      <div class="rapira-checkout-card p-3 mb-0">
+        <div class="rapira-mobile-concert-card">
+          <div class="rapira-mobile-thumb-wrap">
+            <img src="<%= concert.posterImage || '/images/festival-hero.jpg' %>" alt="<%= concert.title %>" class="rapira-mobile-thumb-img">
+            <div class="rapira-mobile-thumb-date-badge"><%= monthStr %> <%= dayStr %></div>
           </div>
-          <div class="card-body p-4">
-            <div class="mb-4">
-              <div class="d-flex align-items-center mb-2">
-                <h5 class="fw-bold mb-0"><%= concert.title %></h5>
-                <span class="badge <%= concert.isPaid ? 'bg-primary' : 'bg-success' %> ms-2">
-                  <%= concert.isPaid ? `₹${concert.price}` : 'Free' %>
-                </span>
-              </div>
-              <p class="text-white mb-0">
-                <% 
-                  // Convert time to 12-hour format with AM/PM
-                  let timeMatch = concert.time.match(/^(\d{1,2}):(\d{2})$/);
-                  let displayTime = concert.time;
-                  if (timeMatch) {
-                    let hours = parseInt(timeMatch[1]);
-                    let minutes = timeMatch[2];
-                    let amPm = hours >= 12 ? 'PM' : 'AM';
-                    let hour12 = hours % 12;
-                    if (hour12 === 0) hour12 = 12;
-                    displayTime = `${hour12}:${minutes} ${amPm}`;
-                  }
-                %>
-                <i class="bi bi-calendar3 me-1 text-primary"></i> <%= toISTDateString(concert.date) %> • <%= displayTime %>
-              </p>
-              <p class="text-white mb-0">
-                <i class="bi bi-geo-alt me-1 text-primary"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %>
-              </p>
+          <div class="rapira-concert-info-wrap">
+            <h3 class="rapira-concert-title-right mb-1"><%= concert.title %></h3>
+            <div class="rapira-concert-detail-line">
+              <i class="bi bi-calendar3"></i>
+              <span><%= dateFormatted %> • <%= displayTime %></span>
             </div>
-
-            <hr class="my-4">
-
-            <% if (concert.isPaid) { %>
-              <!-- Paid Concert Booking Form -->
-              <form id="razorpayForm" method="POST">
-                <input type="hidden" name="concertId" value="<%= concert._id %>">
-                <input type="hidden" id="userName" value="<%= currentUser.name %>">
-                <input type="hidden" id="userEmail" value="<%= currentUser.email %>">
-                <input type="hidden" id="ticketQuantity" name="quantity" value="<%= selectedQuantity %>">
-                <!-- This div will hold the attendee data inputs -->
-                <div id="attendeeDataInputs"></div>
-
-                <div class="mb-4">
-                  <div class="alert alert-info">
-                    <i class="bi bi-ticket-perforated me-2"></i>
-                    <strong>Booking <%= selectedQuantity %> <%= selectedQuantity === 1 ? 'Ticket' : 'Tickets' %></strong>
-                    <% if (ticketsRemaining !== 'Unlimited') { %>
-                      • <%= ticketsRemaining %> tickets remaining
-                    <% } %>
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <label class="form-label fw-medium text-white">Attendee Details</label>
-                  <div id="attendeesContainer">
-                    <!-- Attendee forms will be dynamically added here -->
-                  </div>
-                </div>
-
-                <!-- Price Summary & Payment Instructions - Side by Side -->
-                <div class="row g-3 mb-4">
-                  <!-- Left Column: Price Summary -->
-                  <div class="col-lg-6">
-                    <div class="glass-card-dark border-gradient h-100">
-                      <div class="border-gradient-content">
-                        <div class="card-body">
-                          <h5 class="card-title fw-bold mb-3 text-white" style="color: white !important;">Price Summary</h5>
-                          <div class="d-flex justify-content-between mb-2">
-                            <span class="text-white">Ticket Price:</span>
-                            <span class="text-white">₹<span id="ticketPrice" data-price="<%= discountedPrice %>"><%= discountedPrice %></span></span>
-                          </div>
-
-                          <div class="d-flex justify-content-between mb-2">
-                            <span class="text-white">Quantity:</span>
-                            <span class="text-white"><span id="ticketCount" class="text-primary fw-bold"><%= selectedQuantity %></span></span>
-                          </div>
-
-                          <div class="d-flex justify-content-between mb-2 small text-muted">
-                            <span>Subtotal:</span>
-                            <span class="text-white">₹<span id="subtotalAmount"><%= (discountedPrice * selectedQuantity).toFixed(2) %></span></span>
-                          </div>
-
-                          <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
-                          <div class="d-flex justify-content-between mb-2 text-success">
-                            <span><i class="bi bi-star-fill me-1"></i> Subscription Discount:</span>
-                            <span><%= subscriptionDiscount %>% off</span>
-                          </div>
-                          <div class="d-flex justify-content-between mb-2 small text-muted">
-                            <span>Original Price:</span>
-                            <span><s>₹<%= originalPrice * selectedQuantity %></s></span>
-                          </div>
-                          <% } %>
-
-                          <% 
-                            const baseTotal = parseFloat((discountedPrice * selectedQuantity).toFixed(2));
-                            let initialCommissionAmount = 0;
-                            let initialTotalWithCommission = baseTotal;
-                            
-                            if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) {
-                              initialCommissionAmount = parseFloat(((baseTotal * ticketCommissionPercentage) / 100).toFixed(2));
-                              initialTotalWithCommission = parseFloat((baseTotal + initialCommissionAmount).toFixed(2));
-                            }
-                            
-                            console.log('Debug - baseTotal:', baseTotal);
-                            console.log('Debug - initialCommissionAmount:', initialCommissionAmount);
-                            console.log('Debug - initialTotalWithCommission:', initialTotalWithCommission);
-                            console.log('Debug - ticketCommissionEnabled:', typeof ticketCommissionEnabled !== 'undefined' ? ticketCommissionEnabled : 'undefined');
-                          %>
-
-                          <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
-                          <div class="d-flex justify-content-between mb-2 small text-muted">
-                            <span>
-                              Platform Charges:
-                              <i class="bi bi-info-circle ms-1" 
-                                 style="cursor: pointer; color: var(--primary);"
-                                 data-bs-toggle="tooltip" 
-                                 data-bs-placement="top" 
-                                 title="Platform charges help us maintain and improve the quality of our service, including payment processing, security, and platform features.">
-                              </i>
-                            </span>
-                            <span id="platformChargesAmount">₹<span id="chargesAmount"><%= initialCommissionAmount.toFixed(2) %></span> (<%= ticketCommissionPercentage %>%)</span>
-                          </div>
-                          <% } else { %>
-                          <!-- Show No Platform Charges Message when commission is disabled -->
-                          <div class="alert alert-success mb-2 py-2 px-3 d-flex align-items-center" style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px;">
-                            <i class="bi bi-check-circle-fill me-2" style="color: #10b981; font-size: 1.1rem;"></i>
-                            <small class="mb-0" style="color: #10b981; font-weight: 500;">
-                              No platform charges! You pay exactly what you see - no hidden fees.
-                            </small>
-                          </div>
-                          <% } %>
-
-                          <hr class="border-secondary">
-                          <div class="d-flex justify-content-between fw-bold">
-                            <span class="text-white">Total Amount:</span>
-                            <span class="gradient-text-purple fs-5">
-                              ₹<%= Number(initialTotalWithCommission).toFixed(2) %>
-                            </span>
-                          </div>
-                          <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= Number(initialTotalWithCommission).toFixed(2) %>">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Right Column: Payment Instructions -->
-                  <div class="col-lg-6">
-                    <div class="payment-instruction-card h-100">
-                      <div class="instruction-header">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <h5 class="mb-0">Important Payment Instructions</h5>
-                      </div>
-                      
-                      <div class="instruction-content">
-                        <div class="instruction-item">
-                          <div class="item-icon">⚠️</div>
-                          <div class="item-text">
-                            <strong>Do not refresh</strong> this page during payment
-                          </div>
-                        </div>
-                        
-                        <div class="instruction-item">
-                          <div class="item-icon">⚠️</div>
-                          <div class="item-text">
-                            <strong>Do not close</strong> this tab until payment completes
-                          </div>
-                        </div>
-                        
-                        <div class="instruction-item">
-                          <div class="item-icon">⚠️</div>
-                          <div class="item-text">
-                            <strong>Keep your browser open</strong> for automatic redirect
-                          </div>
-                        </div>
-                        
-                        <div class="instruction-item info-item">
-                          <div class="item-icon">ℹ️</div>
-                          <div class="item-text">
-                            You will be automatically redirected after successful payment
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Checkbox Confirmation - REDESIGNED -->
-                <div class="payment-agreement-section mb-4">
-                  <div class="agreement-box">
-                    <input class="form-check-input agreement-checkbox" type="checkbox" id="paymentAgreement" name="paymentAgreement" required>
-                    <label class="agreement-label" for="paymentAgreement">
-                      I understand the payment instructions and will not close, refresh, or navigate away from this page until the payment is complete
-                    </label>
-                  </div>
-                  <small class="agreement-error text-danger d-none" id="checkboxError">
-                    <i class="bi bi-exclamation-circle-fill me-2"></i>
-                    You must confirm the payment instructions to proceed
-                  </small>
-                </div>
-
-                <button type="submit" class="btn btn-gradient-purple btn-lg w-100 animate-pulse"><i class="bi bi-credit-card me-2"></i>Proceed to Payment</button>
-                
-                <!-- Refund Policy Link -->
-                <div class="text-center mt-3">
-                  <small class="text-muted">
-                    By proceeding, you agree to our 
-                    <a href="/refund-policy" target="_blank" class="gradient-text-blue text-decoration-none fw-bold">
-                      Refund Policy
-                    </a>
-                  </small>
-                </div>
-              </form>
-            <% } else { %>
-              <!-- Free Concert Booking Form -->
-              <form action="/tickets/book-free" method="POST">
-                <input type="hidden" name="concertId" value="<%= concert._id %>">
-                <!-- This div will hold the attendee data inputs -->
-                <div id="attendeeDataInputs"></div>
-
-                <div class="mb-4">
-                  <label for="ticketQuantity" class="form-label fw-medium text-white">Number of Tickets</label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
-                    <select class="form-select" id="ticketQuantity" name="quantity" required>
-                      <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
-                        <option value="<%= i %>"><%= i %></option>
-                      <% } %>
-                    </select>
-                  </div>
-                  <div class="form-text text-primary mt-2">
-                    <i class="bi bi-info-circle me-1"></i>
-                    <% if (ticketsRemaining === 'Unlimited') { %>
-                      Unlimited tickets available
-                    <% } else { %>
-                      <%= ticketsRemaining %> tickets remaining
-                    <% } %>
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <label class="form-label fw-medium text-white">Attendee Details</label>
-                  <div id="attendeesContainer">
-                    <!-- Attendee forms will be dynamically added here -->
-                  </div>
-                </div>
-
-                <button type="submit" class="btn btn-gradient-purple btn-lg w-100 animate-pulse"><i class="bi bi-ticket-perforated me-2"></i>Book Free Tickets</button>
-              </form>
+            <div class="rapira-concert-detail-line">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span><%= venueName %>, <%= city %></span>
+            </div>
+            <div class="rapira-concert-detail-line">
+              <i class="bi bi-person-fill"></i>
+              <span>By <%= artistName %></span>
+            </div>
+            <% if (typeof selectedSeats !== 'undefined' && selectedSeats) { 
+              const mobileSeatList = selectedSeats.split(',').filter(Boolean);
+            %>
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                <% mobileSeatList.forEach(s => { %>
+                  <span class="badge px-2 py-1" style="background-color: #FAF0E6; color: #9F190E; border: 1px solid #EAC8B7; font-size: 0.72rem;"><%= s %></span>
+                <% }); %>
+              </div>
             <% } %>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="col-lg-4">
-        <!-- Concert Summary -->
-        <div class="glass-card-dark mb-4 sticky-top" style="top: 20px; z-index: 100;">
-          <img src="<%= concert.posterImage %>" class="card-img-top" alt="<%= concert.title %>" style="max-height: 200px; object-fit: cover;">
-          <div class="card-body p-4">
-            <h5 class="card-title fw-bold mb-3" style="color: white !important;">Concert Details</h5>
+    <!-- Main Checkout Grid -->
+    <div class="row g-4">
+      <!-- Left Column: Attendee Forms, Instructions & Payment Action -->
+      <div class="col-lg-7">
+        <% if (concert.isPaid) { %>
+          <form id="razorpayForm" method="POST" novalidate>
+        <% } else { %>
+          <form id="freeConcertForm" action="/tickets/book-free" method="POST" novalidate>
+        <% } %>
 
-            <div class="d-flex align-items-center mb-3">
-              <div class="concert-date me-3">
-                <%
-                  const date = new Date(concert.date);
-                  const day = date.getDate();
-                  const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-                  const month = monthNames[date.getMonth()];
-                %>
-                <div class="month"><%= month %></div>
-                <div class="day"><%= day %></div>
+          <input type="hidden" name="concertId" value="<%= concert._id %>">
+          <input type="hidden" id="userName" value="<%= currentUser ? currentUser.name : '' %>">
+          <input type="hidden" id="userEmail" value="<%= currentUser ? currentUser.email : '' %>">
+          <input type="hidden" id="ticketQuantity" name="quantity" value="<%= selectedQuantity %>">
+          <input type="hidden" id="totalAmountInput" name="totalAmount" value="<%= Number(initialTotalWithCommission).toFixed(2) %>">
+          
+          <!-- Hidden attendee data container for form submit fallback -->
+          <div id="attendeeDataInputs"></div>
+
+          <!-- Card 1: Attendee Details -->
+          <section class="rapira-checkout-card" aria-label="Attendee Details">
+            <div class="rapira-checkout-card-header">
+              <div class="rapira-checkout-icon-badge">
+                <i class="bi bi-person"></i>
               </div>
               <div>
-                <h6 class="mb-0 text-white"><%= concert.title %></h6>
-                <p class="text-white-50 mb-0"><%= displayTime %></p>
-                <% 
-                  let bookingHours = concert.bookingHours || 2;
-                  // Calculate end time using the same logic
-                  let endDisplayTime = concert.time;
-                  if (timeMatch) {
-                    let startHours = parseInt(timeMatch[1]);
-                    let minutes = timeMatch[2];
-                    let endHours = startHours + bookingHours;
-                    let endAmPm = endHours >= 12 ? 'PM' : 'AM';
-                    let endHour12 = endHours % 12;
-                    if (endHour12 === 0) endHour12 = 12;
-                    
-                    if (endHours >= 24) {
-                      endHours = endHours - 24;
-                      endAmPm = endHours >= 12 ? 'PM' : 'AM';
-                      endHour12 = endHours % 12;
-                      if (endHour12 === 0) endHour12 = 12;
-                      endDisplayTime = `${endHour12}:${minutes} ${endAmPm} (+1 day)`;
-                    } else {
-                      endDisplayTime = `${endHour12}:${minutes} ${endAmPm}`;
-                    }
-                  }
-                %>
-                <small class="text-white-50">Duration: <%= bookingHours %> hours</small><br>
-                <small class="text-success">Start: <%= displayTime %></small><br>
-                <small class="text-danger">End: <%= endDisplayTime %></small>
+                <h2 class="rapira-checkout-card-title">Attendee Details</h2>
+                <p class="rapira-checkout-card-subtitle">Enter details for each ticket holder.</p>
               </div>
             </div>
 
-            <div class="mb-3">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-geo-alt text-primary me-2"></i>
-                <span class="text-white"><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>, <%= concert.city %></span>
+            <!-- Dynamic Attendee Forms Generated by JS -->
+            <div id="rapiraAttendeesContainer">
+              <!-- Attendee #1, #2, etc. dynamically rendered -->
+            </div>
+          </section>
+
+          <!-- Card 2: Important Payment Instructions -->
+          <section class="rapira-checkout-card" aria-label="Payment Instructions">
+            <div class="rapira-checkout-card-header">
+              <div class="rapira-checkout-icon-badge">
+                <i class="bi bi-exclamation-triangle"></i>
               </div>
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-person text-primary me-2"></i>
-                <span class="text-white">By <%= concert.artist && concert.artist.user ? concert.artist.user.name : 'Artist' %></span>
-              </div>
-              <div class="d-flex align-items-center">
-                <i class="bi bi-ticket-perforated text-primary me-2"></i>
-                <span class="text-white">
-                  <% if (ticketsRemaining === 'Unlimited') { %>
-                    Unlimited tickets available
-                  <% } else { %>
-                    <%= ticketsRemaining %> tickets remaining
-                  <% } %>
-                </span>
+              <div>
+                <h2 class="rapira-checkout-card-title">Important Payment Instructions</h2>
+                <p class="rapira-checkout-card-subtitle">Please read before initiating your transaction.</p>
               </div>
             </div>
 
-            <div class="glass-card-dark p-3 mb-0 border-start border-4 border-info">
-              <i class="bi bi-info-circle-fill me-2 text-info"></i>
-              <span class="text-white">
-                <% if (concert.isPaid) { %>
-                  Payment will be processed securely via Razorpay.
-                <% } else { %>
-                  This is a free concert. No payment required.
-                <% } %>
-              </span>
+            <div class="rapira-instructions-list">
+              <div class="rapira-instruction-item warn">
+                <i class="bi bi-exclamation-triangle-fill rapira-instruction-icon"></i>
+                <span><strong>Do not refresh</strong> this page during payment.</span>
+              </div>
+              <div class="rapira-instruction-item warn">
+                <i class="bi bi-exclamation-triangle-fill rapira-instruction-icon"></i>
+                <span><strong>Do not close</strong> this tab until payment completes.</span>
+              </div>
+              <div class="rapira-instruction-item info">
+                <i class="bi bi-info-circle-fill rapira-instruction-icon"></i>
+                <span>You will be automatically redirected after successful payment.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mobile-Only Price Summary Position (Placed below Payment Instructions on mobile) -->
+          <div class="d-lg-none mb-3">
+            <section class="rapira-checkout-card" aria-label="Mobile Price Summary">
+              <h2 class="rapira-checkout-card-title mb-3">Price Summary</h2>
+              <div class="rapira-price-line">
+                <span class="label">Ticket Price:</span>
+                <span class="val">₹<%= Number(unitPrice).toFixed(2) %></span>
+              </div>
+              <div class="rapira-price-line">
+                <span class="label">Quantity:</span>
+                <span class="val"><span id="mobileSummaryQuantity"><%= selectedQuantity %></span></span>
+              </div>
+              <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+                <div class="rapira-price-line">
+                  <span class="label">Platform Charges (<%= ticketCommissionPercentage %>%):</span>
+                  <span class="val">₹<span id="mobileSummaryCharges"><%= initialCommissionAmount.toFixed(2) %></span></span>
+                </div>
+              <% } %>
+
+              <div class="rapira-price-total-box">
+                <span class="rapira-price-total-label">Total Amount:</span>
+                <span class="rapira-price-total-amount" id="mobileSummaryTotal">₹<%= Number(initialTotalWithCommission).toFixed(2) %></span>
+              </div>
+            </section>
+          </div>
+
+          <!-- Card 3: Payment Agreement Checkbox -->
+          <div class="rapira-agreement-card">
+            <input 
+              type="checkbox" 
+              class="rapira-agreement-checkbox" 
+              id="paymentAgreement" 
+              name="paymentAgreement" 
+              required
+            >
+            <label class="rapira-agreement-label" for="paymentAgreement">
+              I understand the payment instructions and will not close, refresh, or navigate away from this page until the payment is complete.
+            </label>
+          </div>
+          <div class="rapira-agreement-error" id="checkboxError">
+            <i class="bi bi-exclamation-circle-fill me-1"></i> You must confirm the payment instructions to proceed
+          </div>
+
+          <!-- Card 4: Action Button & Policy Link -->
+          <div class="mt-3">
+            <button type="submit" class="rapira-payment-btn" id="proceedPaymentBtn">
+              <i class="bi bi-credit-card me-2"></i>
+              <span><%= concert.isPaid ? 'Proceed to Payment' : 'Confirm Free Booking' %></span>
+              <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+
+            <div class="rapira-refund-notice">
+              By proceeding, you agree to our 
+              <a href="/refund-policy" target="_blank" class="rapira-refund-link">Refund Policy</a>
             </div>
           </div>
+
+        </form>
+      </div>
+
+      <!-- Right Column: Desktop Concert Details & Price Summary -->
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="sticky-top" style="top: 24px; z-index: 10;">
+          <!-- Desktop Concert Details Card -->
+          <section class="rapira-checkout-card" aria-label="Desktop Concert Summary">
+            <!-- Concert Banner Image -->
+            <img 
+              src="<%= concert.posterImage || '/images/festival-hero.jpg' %>" 
+              alt="<%= concert.title %>" 
+              class="rapira-concert-banner-img"
+            >
+
+            <h2 class="rapira-checkout-card-title mb-3">Concert Details</h2>
+
+            <!-- Meta Row: Date Badge + Information -->
+            <div class="rapira-concert-meta-row">
+              <div class="rapira-date-badge" aria-label="Concert Date">
+                <span class="rapira-date-badge-month"><%= monthStr %></span>
+                <span class="rapira-date-badge-day"><%= dayStr %></span>
+              </div>
+              <div class="rapira-concert-info-wrap">
+                <h3 class="rapira-concert-title-right"><%= concert.title %></h3>
+                <div class="rapira-concert-detail-line">
+                  <i class="bi bi-calendar3"></i>
+                  <span><%= dateFormatted %> • <%= displayTime %></span>
+                </div>
+                <div class="rapira-concert-detail-line">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span><%= venueName %>, <%= city %></span>
+                </div>
+                <div class="rapira-concert-detail-line">
+                  <i class="bi bi-person-fill"></i>
+                  <span>By <%= artistName %></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Optional Selected Seats Pill -->
+            <% if (typeof selectedSeats !== 'undefined' && selectedSeats) { 
+              const seatList = selectedSeats.split(',').filter(Boolean);
+            %>
+              <div class="mt-3 pt-3 border-top" style="border-color: #F0D9CC !important;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <span class="small fw-semibold text-muted">Selected Seats:</span>
+                  <% if (typeof selectedVehicle !== 'undefined' && selectedVehicle) { %>
+                    <span class="badge rounded-pill px-2 py-1 text-capitalize" style="background-color: #FAF0E6; color: #9F190E; border: 1px solid #EAC8B7;">
+                      <%= selectedVehicle %>
+                    </span>
+                  <% } %>
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                  <% seatList.forEach(s => { %>
+                    <span class="badge px-2 py-1" style="background-color: #FAF0E6; color: #9F190E; border: 1px solid #EAC8B7;"><%= s %></span>
+                  <% }); %>
+                </div>
+              </div>
+            <% } %>
+            <div class="rapira-selected-seats-strip" id="selectedSeatsDisplay" style="display: none;"></div>
+          </section>
+
+          <!-- Desktop Price Summary Card -->
+          <section class="rapira-checkout-card" aria-label="Desktop Price Summary">
+            <h2 class="rapira-checkout-card-title mb-3">Price Summary</h2>
+            
+            <div class="rapira-price-line">
+              <span class="label">Ticket Price:</span>
+              <span class="val">₹<%= Number(unitPrice).toFixed(2) %></span>
+            </div>
+
+            <div class="rapira-price-line">
+              <span class="label">Quantity:</span>
+              <span class="val"><span id="summaryQuantity"><%= selectedQuantity %></span></span>
+            </div>
+
+            <% if (typeof subscriptionDiscount !== 'undefined' && subscriptionDiscount > 0) { %>
+              <div class="rapira-price-line text-success">
+                <span class="label"><i class="bi bi-star-fill me-1"></i> Subscription Discount:</span>
+                <span class="val"><%= subscriptionDiscount %>% off</span>
+              </div>
+            <% } %>
+
+            <% if (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled) { %>
+              <div class="rapira-price-line">
+                <span class="label">
+                  Platform Charges (<%= ticketCommissionPercentage %>%):
+                  <i class="bi bi-info-circle ms-1 small text-muted" title="Platform maintenance & payment processing charges"></i>
+                </span>
+                <span class="val">₹<span id="summaryCharges"><%= initialCommissionAmount.toFixed(2) %></span></span>
+              </div>
+            <% } %>
+
+            <!-- Total Amount Highlight Box -->
+            <div class="rapira-price-total-box">
+              <span class="rapira-price-total-label">Total Amount:</span>
+              <span class="rapira-price-total-amount" id="summaryTotal">₹<%= Number(initialTotalWithCommission).toFixed(2) %></span>
+            </div>
+          </section>
         </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- Razorpay Script -->
-<% if (concert.isPaid) { %>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-
-
-
-
-
-
-
-
-
-
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    const ticketQuantityInput = document.getElementById('ticketQuantity');
-    const razorpayForm = document.getElementById('razorpayForm');
-
-    // Get the selected quantity
-    const quantity = parseInt(ticketQuantityInput.value);
-
-    // Initialize attendee forms with the selected quantity
-    updateAttendeeForms(quantity);
-
-    // Function to update attendee forms
-    function updateAttendeeForms(count) {
-      const container = document.getElementById('attendeesContainer');
-      const dataInputs = document.getElementById('attendeeDataInputs');
-
-      // Clear existing forms
-      container.innerHTML = '';
-      dataInputs.innerHTML = '';
-
-      // Add forms for each attendee
-      for (let i = 1; i <= count; i++) {
-        const attendeeForm = document.createElement('div');
-        attendeeForm.className = 'glass-card-dark p-3 mb-3';
-        attendeeForm.innerHTML = `
-          <h6 class="mb-3 text-white">Attendee #${i}</h6>
-          <div class="mb-3">
-            <label for="attendeeName${i}" class="form-label">Name</label>
-            <input type="text" class="form-control" id="attendeeName${i}" name="attendeeName${i}" required>
-          </div>
-          <div class="mb-0">
-            <label for="attendeeEmail${i}" class="form-label">Email</label>
-            <input type="email" class="form-control" id="attendeeEmail${i}" name="attendeeEmail${i}" required>
-          </div>
-        `;
-
-        container.appendChild(attendeeForm);
-
-        // Add hidden inputs for form submission
-        const nameInput = document.createElement('input');
-        nameInput.type = 'hidden';
-        nameInput.name = `attendeeName${i}`;
-        nameInput.id = `attendeeNameHidden${i}`;
-
-        const emailInput = document.createElement('input');
-        emailInput.type = 'hidden';
-        emailInput.name = `attendeeEmail${i}`;
-        emailInput.id = `attendeeEmailHidden${i}`;
-
-        dataInputs.appendChild(nameInput);
-        dataInputs.appendChild(emailInput);
-      }
-    }
-
-    // Handle form submission for paid concerts
-    if (razorpayForm) {
-      razorpayForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        // Validate the form
-        if (!this.checkValidity()) {
-          this.reportValidity();
-          return;
-        }
-
-        // Get form data
-        const concertId = this.querySelector('input[name="concertId"]').value;
-        const quantity = parseInt(ticketQuantitySelect.value);
-        const totalAmount = parseFloat(totalAmountInput.value);
-
-        // Collect attendee data
-        const attendeeData = [];
-        for (let i = 1; i <= quantity; i++) {
-          const name = document.getElementById(`attendeeName${i}`).value;
-          const email = document.getElementById(`attendeeEmail${i}`).value;
-
-          // Update hidden inputs
-          document.getElementById(`attendeeNameHidden${i}`).value = name;
-          document.getElementById(`attendeeEmailHidden${i}`).value = email;
-
-          attendeeData.push({ name, email });
-        }
-
-        try {
-          // Create order
-          const response = await fetch('/tickets/create-order', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              concertId,
-              quantity,
-              totalAmount,
-              attendeeData
-            })
-          });
-
-          const data = await response.json();
-
-          if (!data.success) {
-            throw new Error(data.message || 'Failed to create order');
-          }
-
-          // Initialize Razorpay
-          const options = {
-            key: data.key,
-            amount: data.order.amount,
-            currency: data.order.currency,
-            name: 'Rapira',
-            description: 'Concert Ticket Purchase',
-            order_id: data.order.id,
-            handler: function(response) {
-              console.log('Ticket payment successful:', response);
-              
-              // Create hidden form for payment verification
-              const form = document.createElement('form');
-              form.method = 'POST';
-              form.action = '/tickets/verify-payment';
-
-              const fields = {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                ticket_id: data.ticket
-              };
-
-              for (const key in fields) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                form.appendChild(input);
-              }
-
-              // Submit form after payment verification
-              document.body.appendChild(form);
-              form.submit();
-            },
-            prefill: {
-              name: document.getElementById('userName').value,
-              email: document.getElementById('userEmail').value
-            },
-            theme: {
-              color: '#6366f1'
-            }
-          };
-
-          const rzp = new Razorpay(options);
-          rzp.open();
-
-        } catch (error) {
-          console.error('Payment error:', error);
-          alert('Payment failed: ' + error.message);
-        }
-      });
-    }
-
-
-  });
-</script>
-
-<style>
-
-
-
-</style>
-<% } %>
-
+<!-- ========================================================
+     CLIENT-SIDE INTERACTIVE CHECKOUT LOADER
+     ======================================================== -->
+<img 
+  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+  onload="if(!window.__rapiraCheckoutLoaded){window.__rapiraCheckoutLoaded=true;const s=document.createElement('script');s.src='/js/checkout-payment.js?v=20261106a';document.body.appendChild(s);}" 
+  style="display:none;" 
+  alt=""
+>

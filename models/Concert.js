@@ -65,6 +65,22 @@ const ConcertSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  hasAssignedSeating: {
+    type: Boolean,
+    default: true
+  },
+  seatingCategories: [{
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    description: String,
+    rows: [String],
+    seatsPerRow: { type: Number, default: 15 },
+    soldSeats: [String],
+    bestsellerSeats: [String]
+  }],
+  seatingLayout: {
+    type: mongoose.Schema.Types.Mixed
+  },
   paymentId: {
     type: String // Razorpay payment ID (root level for easy access)
   },

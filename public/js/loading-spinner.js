@@ -126,6 +126,14 @@ class LoadingSpinnerManager {
       }
       overlay.classList.add('active');
       this.isLoading = true;
+
+      // Safety watchdog: prevent loader from ever hanging indefinitely
+      clearTimeout(this._safetyTimer);
+      this._safetyTimer = setTimeout(() => {
+        if (this.isLoading) {
+          this.hide();
+        }
+      }, 7000);
     }
   }
 
@@ -133,20 +141,16 @@ class LoadingSpinnerManager {
    * Hide the loading spinner
    */
   hide() {
+    clearTimeout(this._safetyTimer);
     const overlay = document.getElementById('loading-overlay');
     if (overlay) {
-      // Only hide if document is complete or we're forcing it
-      if (document.readyState === 'complete' || this.isDownloading) {
-        overlay.classList.remove('active');
-        this.isLoading = false;
-      } else {
-        // If document not ready, wait a bit and try again
-        setTimeout(() => {
-          overlay.classList.remove('active');
-          this.isLoading = false;
-        }, 500);
-      }
+      overlay.classList.remove('active');
     }
+    this.isLoading = false;
+    // Clean up any lingering loading classes on elements
+    document.querySelectorAll('.is-loading, .btn-loading').forEach((el) => {
+      this.removeLoadingStateFromElement(el);
+    });
   }
 
   /**
@@ -164,16 +168,20 @@ class LoadingSpinnerManager {
    * Attach event listeners to redirect buttons
    */
   attachRedirectListeners() {
-    // Find all elements that can redirect
+    // Find all elements that can redirect, excluding elements marked no-loader
     const redirectElements = document.querySelectorAll(
-      'a[href]:not([href^="#"]):not([target="_blank"]):not([href^="mailto"]):not([href^="tel"]), ' +
-      'button[onclick], ' +
-      'form[action]'
+      'a[href]:not([href^="#"]):not([target="_blank"]):not([href^="mailto"]):not([href^="tel"]):not([data-no-loader="true"]), ' +
+      'button[onclick]:not([data-no-loader="true"]), ' +
+      'form[action]:not([data-no-loader="true"])'
     );
 
     redirectElements.forEach((element) => {
-      // Skip if already has a listener or shouldn't show loader
-      if (element.dataset.loaderAttached === 'true' || element.dataset.noLoader === 'true') {
+      // Skip if already has a listener, shouldn't show loader, or is inside modal/viewer
+      if (
+        element.dataset.loaderAttached === 'true' ||
+        element.dataset.noLoader === 'true' ||
+        element.closest('#rhReelModal, .rh-reel-modal, .modal, [role="dialog"]')
+      ) {
         return;
       }
 
@@ -224,8 +232,11 @@ class LoadingSpinnerManager {
       return;
     }
 
-    // Skip if element has data-no-loader attribute
-    if (element.dataset.noLoader === 'true') {
+    // Skip if element has data-no-loader attribute or is inside modal
+    if (
+      element.dataset.noLoader === 'true' ||
+      element.closest('#rhReelModal, .rh-reel-modal, .modal, [role="dialog"]')
+    ) {
       return;
     }
 
@@ -270,15 +281,22 @@ class LoadingSpinnerManager {
    * Handle button click events for navigation
    */
   handleButtonClick(e, element) {
-    // Skip if element has data-no-loader attribute
-    if (element.dataset.noLoader === 'true') {
+    // Skip if element has data-no-loader attribute or is inside modal/dialog
+    if (
+      element.dataset.noLoader === 'true' ||
+      element.closest('#rhReelModal, .rh-reel-modal, .modal, [role="dialog"]')
+    ) {
       return;
     }
 
     const onclick = element.getAttribute('onclick');
 
-    // Only show loader if it's a navigation action
-    if (onclick && (onclick.includes('location') || onclick.includes('window'))) {
+    // Only show loader if it explicitly performs page redirection/navigation
+    const isExplicitNavigation =
+      onclick &&
+      /(?:window\.)?location(?:\.href)?\s*=|location\.(?:assign|replace)/i.test(onclick);
+
+    if (isExplicitNavigation) {
       if (!this.isDebounceValid()) {
         e.preventDefault();
         return;
@@ -539,35 +557,29 @@ document.addEventListener('DOMContentLoaded', function () {
  * Handle browser back/forward buttons - using pageshow event
  */
 window.addEventListener('pageshow', function (event) {
-  // If page is loaded from cache (back/forward navigation)
-  if (event.persisted) {
-    window.location.reload();
+  // Always ensure loading spinner is dismissed on pageshow (e.g. Back/Forward or bfcache)
+  if (window.loaderManager) {
+    window.loaderManager.hide();
+  }
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
   }
 });
 
 /**
- * Handle browser navigation - alternative approach
+ * Handle browser navigation - popstate
  */
 window.addEventListener('popstate', function (event) {
-  // Show loading spinner
+  // Ensure any lingering loader overlay is dismissed during popstate navigation
   if (window.loaderManager) {
-    window.loaderManager.show('Navigating...');
+    window.loaderManager.hide();
   }
-
-  // Reload the page
-  window.location.reload();
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
 });
-
-/**
- * Detect browser navigation and force reload
- */
-(function () {
-  // Store the current page in performance navigation
-  if (performance.navigation.type === 2) {
-    // Page accessed from back/forward button
-    window.location.reload();
-  }
-})();
 
 /**
  * Handle page visibility changes (tab switching)

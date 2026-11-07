@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+  <defs>
+    <filter id="hoodieShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#3d1d16" flood-opacity="0.14"/>
+    </filter>
+    <linearGradient id="hoodieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2928"/>
+      <stop offset="50%" stop-color="#1B1716"/>
+      <stop offset="100%" stop-color="#0E0C0B"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#hoodieShadow)">
+    <!-- Main Body & Sleeves -->
+    <path d="M120 95 L65 190 Q60 215 80 215 L105 160 L105 340 Q105 355 120 355 L280 355 Q295 355 295 340 L295 160 L320 215 Q340 215 335 190 L280 95 Q240 70 200 70 Q160 70 120 95 Z" fill="url(#hoodieGrad)"/>
+    
+    <!-- Hood -->
+    <path d="M145 90 Q200 35 255 90 Q225 125 200 125 Q175 125 145 90 Z" fill="#24201F" stroke="#12100F" stroke-width="2"/>
+    
+    <!-- Drawstrings -->
+    <path d="M185 125 Q183 175 180 200" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+    <path d="M215 125 Q217 175 220 200" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+    
+    <!-- Front Kangaroo Pocket -->
+    <path d="M135 265 L160 220 L240 220 L265 265 Q265 320 240 320 L160 320 Q135 320 135 265 Z" fill="#151211" stroke="#2D2928" stroke-width="1.5"/>
+
+    <!-- Ribbed Hem -->
+    <rect x="110" y="338" width="180" height="15" rx="3" fill="#13100F"/>
+
+    <!-- Front Logo -->
+    <text x="200" y="165" font-family="'Titan One', 'Montserrat', Arial Black, sans-serif" font-weight="900" font-size="22" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">RAPIRA</text>
+    
+    <!-- Soundwave -->
+    <g transform="translate(170, 178)">
+      <rect x="0" y="4" width="3.5" height="10" rx="1.5" fill="#9F190E"/>
+      <rect x="8" y="1" width="3.5" height="16" rx="1.5" fill="#B82216"/>
+      <rect x="16" y="5" width="3.5" height="8" rx="1.5" fill="#EAC8B7"/>
+      <rect x="24" y="0" width="3.5" height="18" rx="1.5" fill="#FFFFFF"/>
+      <rect x="32" y="2" width="3.5" height="14" rx="1.5" fill="#B82216"/>
+      <rect x="40" y="6" width="3.5" height="6" rx="1.5" fill="#9F190E"/>
+      <rect x="48" y="2" width="3.5" height="14" rx="1.5" fill="#FFFFFF"/>
+      <rect x="56" y="5" width="3.5" height="8" rx="1.5" fill="#EAC8B7"/>
+    </g>
+  </g>
+</svg>
+

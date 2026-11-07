@@ -1,462 +1,898 @@
 <%- contentFor('body') %>
 
-<style>
-  .gradient-purple-btn {
-    background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
-    background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important;
-    border: 0 !important;
-    color: #fff !important;
-    text-decoration: none !important;
-    box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;
-  }
+<div class="rapira-content-library-page">
+  <!-- 1. Hero Section -->
+  <section class="rh-cl-hero-section">
+    <div class="container">
+      <div class="row align-items-center g-4 g-lg-5">
+        <!-- Left: Typography & Editorial Accents -->
+        <div class="col-lg-6 col-12 rh-cl-hero-text-col">
+          <div class="rh-cl-eyebrow-container">
+            <span class="rh-cl-eyebrow">CONTENT LIBRARY</span>
+            <svg class="rh-cl-eyebrow-underline" viewBox="0 0 130 9" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 7C38 3 88 3 128 6.5" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
 
-  .gradient-purple-btn:hover,
-  .gradient-purple-btn:focus {
-    background: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
-    background-image: linear-gradient(135deg, #5b21b6 0%, #9333ea 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 12px 28px rgba(109, 40, 217, 0.35) !important;
-  }
-</style>
+          <div class="rh-cl-title-wrap">
+            <h1 class="rh-cl-hero-title">Content<br>Library</h1>
+            <!-- Crown Doodle -->
+            <svg class="rh-cl-crown-doodle" viewBox="0 0 44 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M4 25L9 11L18 19L27 6L36 19L41 11L41 25H4Z" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9" cy="8" r="1.5" fill="#9F190E"/>
+              <circle cx="27" cy="3.5" r="1.5" fill="#9F190E"/>
+              <circle cx="41" cy="8" r="1.5" fill="#9F190E"/>
+            </svg>
+          </div>
 
-<!-- Hero Section -->
-<section class="py-5 bg-gradient-primary text-white">
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-lg-6">
-        <h1 class="display-4 fw-bold mb-3">Content Library</h1>
-        <p class="lead mb-4">Discover music, videos, and more from our talented artists.</p>
-      </div>
-      <div class="col-lg-6">
-        <img src="/images/content-library.svg" alt="Content Library" class="img-fluid d-none d-lg-block">
+          <p class="rh-cl-hero-subtitle">
+            Discover music, videos, and more from our talented artists.
+          </p>
+
+          <!-- Flourish double stroke underline -->
+          <div class="rh-cl-flourish-wrap">
+            <svg class="rh-cl-flourish-stroke" viewBox="0 0 155 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 6C42 2 105 3 153 8" stroke="#9F190E" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M12 12.5C52 8.5 112 9.5 142 13" stroke="#9F190E" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Right: Studio Recording Microphone Photo -->
+        <div class="col-lg-6 col-12 rh-cl-hero-media-col">
+          <div class="rh-cl-hero-media-card">
+            <picture>
+              <source srcset="/images/content-library/hero-mic.webp" type="image/webp">
+              <img src="/images/content-library/hero-mic.jpg" alt="Music Recording Studio Setup" class="rh-cl-hero-img img-fluid" loading="eager" width="640" height="360">
+            </picture>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Filter Section -->
-<section class="py-4" style="background-color: var(--bg);">
-  <div class="container">
-    <!-- Search and Filter Form -->
-    <div class="card border-0 shadow-lg mb-4 glass-card-dark">
-      <div class="card-header bg-primary text-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-funnel me-2"></i>Search & Filter Content
-          </h5>
-          <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
-            <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
-            <span class="d-none d-md-inline ms-1">Toggle Filters</span>
+  <!-- 2. Search & Filter Section -->
+  <section class="rh-cl-filter-section mb-4">
+    <div class="container">
+      <div class="rh-cl-filter-container">
+        <div class="rh-cl-filter-header d-flex align-items-center justify-content-between">
+          <div class="rh-cl-filter-heading d-flex align-items-center">
+            <svg class="rh-cl-funnel-icon me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9F190E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span class="rh-cl-filter-title">Search &amp; Filter Content</span>
+          </div>
+          <!-- Mobile Filter Collapse Button -->
+          <button class="rh-cl-filter-toggle-btn d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#clFilterCollapse" aria-expanded="true" aria-controls="clFilterCollapse" aria-label="Toggle Filters">
+            <i class="bi bi-chevron-up" id="clFilterToggleIcon"></i>
           </button>
         </div>
-      </div>
-      <div class="collapse" id="filterCollapse">
-        <div class="card-body">
-        <form action="/content" method="GET" id="contentFilterForm">
-          <div class="row g-3">
-            <!-- Media Type Filter -->
-            <div class="col-md-3">
-              <label for="mediaTypeFilter" class="form-label fw-semibold">Media Type</label>
-              <select class="form-select" id="mediaTypeFilter" name="mediaType">
-                <option value="">All Types</option>
-                <option value="image" <%= currentFilters.mediaType === 'image' ? 'selected' : '' %>>Images</option>
-                <option value="video" <%= currentFilters.mediaType === 'video' ? 'selected' : '' %>>Videos</option>
-                <option value="audio" <%= currentFilters.mediaType === 'audio' ? 'selected' : '' %>>Audio</option>
-                <option value="youtube_video" <%= currentFilters.mediaType === 'youtube_video' ? 'selected' : '' %>>YouTube Video</option>
-                <option value="youtube_audio" <%= currentFilters.mediaType === 'youtube_audio' ? 'selected' : '' %>>YouTube Audio</option>
-              </select>
-            </div>
 
-            <!-- Artist Filter -->
-            <div class="col-md-4">
-              <label for="artistFilter" class="form-label fw-semibold">Artist</label>
-              <select class="form-select" id="artistFilter" name="artist">
-                <option value="">All Artists</option>
-                <% if (artists && artists.length > 0) { %>
-                  <% artists.forEach(artist => { %>
-                    <option value="<%= artist._id %>" <%= currentFilters.artist === artist._id.toString() ? 'selected' : '' %>>
-                      <%= artist.user ? artist.user.name : 'Unknown Artist' %>
-                    </option>
-                  <% }); %>
-                <% } %>
-              </select>
-            </div>
-
-            <!-- Sort Filter -->
-            <div class="col-md-3">
-              <label for="sortFilter" class="form-label fw-semibold">Sort By</label>
-              <select class="form-select" id="sortFilter" name="sort">
-                <option value="latest" <%= currentFilters.sort === 'latest' ? 'selected' : '' %>>Latest First</option>
-                <option value="oldest" <%= currentFilters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
-                <option value="popular" <%= currentFilters.sort === 'popular' ? 'selected' : '' %>>Most Popular</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="d-flex flex-wrap gap-2">
-                <button type="submit" class="btn btn-primary px-4">
-                  <i class="bi bi-filter me-1"></i> Filter
+        <div class="collapse show" id="clFilterCollapse">
+          <form action="/content" method="GET" id="contentFilterForm" class="rh-cl-filter-form mt-2 mt-md-0">
+            <% if (typeof currentFilters !== 'undefined' && currentFilters.artist) { %>
+              <input type="hidden" name="artist" value="<%= currentFilters.artist %>">
+            <% } %>
+            <div class="rh-cl-filter-controls">
+              <!-- Search Input with Live Filter -->
+              <div class="rh-cl-search-box">
+                <i class="bi bi-search rh-cl-search-icon" aria-hidden="true"></i>
+                <input type="text" 
+                       id="contentSearchInput" 
+                       name="search" 
+                       value="<%= (typeof currentFilters !== 'undefined' && currentFilters.search) ? currentFilters.search : '' %>" 
+                       placeholder="Search by title, artist or keyword..." 
+                       class="rh-cl-search-field"
+                       autocomplete="off"
+                       aria-label="Search content library">
+                <button type="button" class="rh-cl-clear-btn d-none" id="contentSearchClear" aria-label="Clear search input">
+                  <i class="bi bi-x-circle-fill"></i>
                 </button>
-                <a href="/content" class="btn btn-outline-secondary px-4">
-                  <i class="bi bi-x-circle me-1"></i> Clear
-                </a>
               </div>
-            </div>
-          </div>
 
+              <!-- Filter Dropdowns Group -->
+              <%
+                const mediaFilterOptions = [
+                  { value: '', label: 'All Types' },
+                  { value: 'audio', label: 'Audio' },
+                  { value: 'video', label: 'Videos' },
+                  { value: 'image', label: 'Images' },
+                  { value: 'youtube_video', label: 'YouTube Video' },
+                  { value: 'youtube_audio', label: 'YouTube Audio' }
+                ];
+                const activeMedia = (typeof currentFilters !== 'undefined' && currentFilters.mediaType) ? currentFilters.mediaType : '';
+                const activeMediaOpt = mediaFilterOptions.find(o => o.value === activeMedia) || mediaFilterOptions[0];
 
-        </form>
-        </div>
-      </div>
-    </div>
+                const sortFilterOptions = [
+                  { value: 'latest', label: 'Latest' },
+                  { value: 'oldest', label: 'Oldest' },
+                  { value: 'popular', label: 'Most Popular' }
+                ];
+                const activeSort = (typeof currentFilters !== 'undefined' && currentFilters.sort) ? currentFilters.sort : 'latest';
+                const activeSortOpt = sortFilterOptions.find(o => o.value === activeSort) || sortFilterOptions[0];
+              %>
+              <div class="rh-cl-dropdowns-group">
+                <!-- Hidden inputs for server submission -->
+                <input type="hidden" id="mediaTypeFilter" name="mediaType" value="<%= activeMedia %>">
+                <input type="hidden" id="sortFilter" name="sort" value="<%= activeSort %>">
 
+                <!-- Custom Media Type Dropdown -->
+                <div class="rh-cl-custom-dropdown" id="mediaTypeCustomDropdown" data-name="mediaType">
+                  <button type="button" 
+                          class="rh-cl-custom-dropdown-btn" 
+                          id="mediaTypeDropdownBtn" 
+                          aria-haspopup="listbox" 
+                          aria-expanded="false"
+                          aria-controls="mediaTypeMenu"
+                          aria-label="Filter by media type: <%= activeMediaOpt.label %>">
+                    <span class="rh-cl-dropdown-btn-inner">
+                      <i class="bi bi-layers rh-cl-dropdown-icon" aria-hidden="true"></i>
+                      <span class="rh-cl-dropdown-current-label" id="mediaTypeLabel"><%= activeMediaOpt.label %></span>
+                    </span>
+                    <i class="bi bi-chevron-down rh-cl-caret-icon" aria-hidden="true"></i>
+                  </button>
+                  <ul class="rh-cl-custom-dropdown-menu" id="mediaTypeMenu" role="listbox" aria-labelledby="mediaTypeDropdownBtn">
+                    <% mediaFilterOptions.forEach(opt => { %>
+                      <li class="rh-cl-dropdown-option <%= activeMedia === opt.value ? 'selected' : '' %>" 
+                          role="option" 
+                          data-value="<%= opt.value %>" 
+                          aria-selected="<%= activeMedia === opt.value ? 'true' : 'false' %>"
+                          tabindex="0">
+                        <span class="rh-cl-option-text"><%= opt.label %></span>
+                        <i class="bi bi-check2 rh-cl-option-check" aria-hidden="true"></i>
+                      </li>
+                    <% }); %>
+                  </ul>
+                </div>
 
-  </div>
-</section>
-
-<!-- Content Grid -->
-<section class="py-5">
-  <div class="container">
-    <% if (posts && posts.length > 0) { %>
-      <div class="row g-4">
-        <% posts.forEach(item => { %>
-          <div class="col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 shadow-sm content-card">
-              <div class="position-relative">
-                <% if (item.isYoutube && item.youtubeThumbnail) { %>
-                  <%/* YouTube post — show thumbnail with red play button overlay */%>
-                  <div class="position-relative" style="height:200px;overflow:hidden;background:#000;">
-                    <img src="<%= item.youtubeThumbnail %>" alt="<%= item.title || 'YouTube' %>" class="w-100 h-100" style="object-fit:cover;">
-                    <div class="position-absolute top-50 start-50 translate-middle" style="pointer-events:none;">
-                      <div style="width:56px;height:56px;background:rgba(255,0,0,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.5);">
-                        <i class="bi bi-play-fill text-white" style="font-size:1.6rem;margin-left:4px;"></i>
-                      </div>
-                    </div>
-                  </div>
-                  <span class="badge content-type-badge" style="background:rgba(255,0,0,0.9);color:#fff;">
-                    <i class="bi bi-youtube"></i>
-                    <%= item.media && item.media.mediaType === 'audio' ? 'YT Audio' : 'YT Video' %>
-                  </span>
-                <% } else if (item.media && item.media.thumbnailUrl && (item.media.mediaType === 'audio' || item.media.mediaType === 'video')) { %>
-                  <img src="<%= item.media.thumbnailUrl %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
-                  <span class="badge <%= item.media.mediaType === 'audio' ? 'bg-success' : 'bg-danger' %> content-type-badge">
-                    <i class="bi <%= item.media.mediaType === 'audio' ? 'bi-music-note-beamed' : 'bi-camera-video' %>"></i>
-                    <%= item.media.mediaType === 'audio' ? 'Audio' : 'Video' %>
-                  </span>
-                <% } else if (item.media && item.media.mediaType === 'audio') { %>
-                  <div class="card-img-top content-thumbnail d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <i class="bi bi-music-note-beamed text-white" style="font-size: 4rem;"></i>
-                  </div>
-                  <span class="badge bg-success content-type-badge"><i class="bi bi-music-note-beamed"></i> Audio</span>
-                <% } else if (item.media && item.media.mediaType === 'video') { %>
-                  <video class="card-img-top content-thumbnail" preload="metadata" muted playsinline>
-                    <source src="<%= item.media && item.media.url ? item.media.url : '' %>#t=0.1">
-                  </video>
-                  <span class="badge bg-danger content-type-badge"><i class="bi bi-camera-video"></i> Video</span>
-                <% } else { %>
-                  <img src="<%= item.media && item.media.url ? item.media.url : '/images/placeholder.jpg' %>" class="card-img-top content-thumbnail" alt="<%= item.title || 'Post' %>">
-                  <% if (item.media && item.media.mediaType) { %>
-                    <span class="badge bg-primary content-type-badge"><i class="bi bi-image"></i> Image</span>
-                  <% } %>
-                <% } %>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title text-truncate-2" style="color:#fff !important;" title="<%= item.title %>">
-                  <%= item.title.length > 50 ? item.title.substring(0, 50) + '...' : item.title %>
-                </h5>
-                <p class="card-text text-muted small">
-                  <% if (item.artist && item.artist.user) { %>
-                    By <a href="/artists/<%= item.artist._id %>" class="text-decoration-none">
-                      <%= item.artist.user.name %>
-                    </a>
-                  <% } else { %>
-                    By Unknown Artist
-                  <% } %>
-                </p>
-                <% if (item.description) { %>
-                  <p class="card-text text-truncate-3 m-0" style="font-size: 0.9rem;">
-                    <%= item.description.length > 80 ? item.description.substring(0, 80) + '...' : item.description %>
-                  </p>
-                <% } %>
-                <p class="card-text">
-                  <small class="text-muted">
-                    <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
-                    <span class="ms-2"><i class="bi bi-eye"></i> <%= item.viewsDisplay || item.views || 0 %> views</span>
-                    <% if ((item.likesDisplay && String(item.likesDisplay).trim()) || item.likesCount || (item.likes && item.likes.length > 0)) { %>
-                      <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= item.likesDisplay || item.likesCount || (item.likes ? item.likes.length : 0) %> likes</span>
-                    <% } %>
-                  </small>
-                </p>
-              </div>
-              <div class="card-footer bg-white border-top-0">
-                <div class="d-grid gap-2">
-                  <% if (item.sourceModel === 'Content' || item.isYoutube) { %>
-                      <a href="<%= item.sourceModel === 'Content' ? '/content/' + item._id : '/posts/view/' + item._id %>" 
-                        class="btn"
-                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
-                      <% if (item.isYoutube) { %>
-                        <i class="bi bi-youtube me-1" style="color:#f00;"></i> Watch on YouTube
-                      <% } else if (item.media && item.media.mediaType === 'video') { %>
-                        <i class="bi bi-play-circle me-1"></i> Watch
-                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
-                        <i class="bi bi-headphones me-1"></i> Listen
-                      <% } else if (item.media && item.media.mediaType === 'image') { %>
-                        <i class="bi bi-eye me-1"></i> View
-                      <% } else { %>
-                        Open
-                      <% } %>
-                    </a>
-                  <% } else { %>
-                      <button onclick="viewPost('<%= item._id %>', '<%= item.sourceModel %>')"
-                        class="btn"
-                        style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
-                      <% if (item.media && item.media.mediaType === 'video') { %>
-                        <i class="bi bi-play-circle me-1"></i> Watch
-                      <% } else if (item.media && item.media.mediaType === 'audio') { %>
-                        <i class="bi bi-headphones me-1"></i> Listen
-                      <% } else if (item.media && item.media.mediaType === 'image') { %>
-                        <i class="bi bi-eye me-1"></i> View
-                      <% } else { %>
-                        Open
-                      <% } %>
-                    </button>
-                  <% } %>
-
-                  <% if (!item.isYoutube && item.media && item.media.url) { %>
-                    <a href="/content/download?sourceModel=<%= item.sourceModel %>&id=<%= item._id %>" class="btn"
-                      style="background: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; background-image: linear-gradient(135deg, #6d28d9 0%, #a855f7 100%) !important; border: 0 !important; color: #fff !important; text-decoration: none !important; box-shadow: 0 10px 24px rgba(109, 40, 217, 0.25) !important;">
-                      <i class="bi bi-download me-1"></i> Download
-                    </a>
-                  <% } %>
+                <!-- Custom Sort Filter Dropdown -->
+                <div class="rh-cl-custom-dropdown" id="sortCustomDropdown" data-name="sort">
+                  <button type="button" 
+                          class="rh-cl-custom-dropdown-btn" 
+                          id="sortDropdownBtn" 
+                          aria-haspopup="listbox" 
+                          aria-expanded="false"
+                          aria-controls="sortMenu"
+                          aria-label="Sort content: <%= activeSortOpt.label %>">
+                    <span class="rh-cl-dropdown-btn-inner">
+                      <i class="bi bi-calendar3 rh-cl-dropdown-icon" aria-hidden="true"></i>
+                      <span class="rh-cl-dropdown-current-label" id="sortLabel"><%= activeSortOpt.label %></span>
+                    </span>
+                    <i class="bi bi-chevron-down rh-cl-caret-icon" aria-hidden="true"></i>
+                  </button>
+                  <ul class="rh-cl-custom-dropdown-menu" id="sortMenu" role="listbox" aria-labelledby="sortDropdownBtn">
+                    <% sortFilterOptions.forEach(opt => { %>
+                      <li class="rh-cl-dropdown-option <%= activeSort === opt.value ? 'selected' : '' %>" 
+                          role="option" 
+                          data-value="<%= opt.value %>" 
+                          aria-selected="<%= activeSort === opt.value ? 'true' : 'false' %>"
+                          tabindex="0">
+                        <span class="rh-cl-option-text"><%= opt.label %></span>
+                        <i class="bi bi-check2 rh-cl-option-check" aria-hidden="true"></i>
+                      </li>
+                    <% }); %>
+                  </ul>
                 </div>
               </div>
             </div>
-          </div>
-        <% }); %>
+          </form>
+        </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Pagination -->
-      <% if (pagination.totalPages > 1) { %>
-        <%
-          // Build query string for pagination links
-          const buildPaginationUrl = (page) => {
-            const params = new URLSearchParams();
-            if (currentFilters.mediaType) params.set('mediaType', currentFilters.mediaType);
-            if (currentFilters.artist) params.set('artist', currentFilters.artist);
-            if (currentFilters.sort) params.set('sort', currentFilters.sort);
-            params.set('page', page);
-            return '?' + params.toString();
-          };
-        %>
-        <nav aria-label="Content pagination" class="mt-5">
-          <ul class="pagination justify-content-center">
-            <li class="page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
-              <a class="page-link" href="<%= buildPaginationUrl(pagination.page - 1) %>" aria-label="Previous">
-                <span aria-hidden="true">&laquo;</span>
-              </a>
-            </li>
-
+  <!-- 3. Content Cards Grid -->
+  <section class="rh-cl-grid-section py-2">
+    <div class="container">
+      <% if (posts && posts.length > 0) { %>
+        <div class="row g-4" id="contentCardsGrid">
+          <% posts.forEach(item => { %>
             <%
-              // Show pagination with smart truncation
-              const startPage = Math.max(1, pagination.page - 2);
-              const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+              const artistName = (item.artist && item.artist.user && item.artist.user.name) 
+                ? item.artist.user.name 
+                : ((item.artist && item.artist.stageName) ? item.artist.stageName : 'Unknown Artist');
+              const rawTitle = item.title || item.caption || 'Untitled';
+              const cleanTitle = rawTitle.replace(/\s+/g, ' ').trim();
+              const itemTitle = cleanTitle;
+              const displayTitle = cleanTitle.length > 55 ? cleanTitle.substring(0, 52).trim() + '...' : cleanTitle;
+              const mediaType = (item.media && item.media.mediaType) ? item.media.mediaType : (item.type === 'song' ? 'audio' : 'image');
+              const likesCount = item.likesDisplay || item.likesCount || (item.likes ? item.likes.length : 0);
+              const viewsCount = item.viewsDisplay || item.views || 0;
+              const hasAudioThumb = item.media && item.media.thumbnailUrl;
+              const isAudioWithoutThumb = mediaType === 'audio' && !hasAudioThumb && !item.isYoutube;
             %>
-
-            <% if (startPage > 1) { %>
-              <li class="page-item">
-                <a class="page-link" href="<%= buildPaginationUrl(1) %>">1</a>
-              </li>
-              <% if (startPage > 2) { %>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-              <% } %>
-            <% } %>
-
-            <% for (let i = startPage; i <= endPage; i++) { %>
-              <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
-                <a class="page-link" href="<%= buildPaginationUrl(i) %>">
-                  <%= i %>
-                </a>
-              </li>
-            <% } %>
-
-            <% if (endPage < pagination.totalPages) { %>
-              <% if (endPage < pagination.totalPages - 1) { %>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-              <% } %>
-              <li class="page-item">
-                <a class="page-link" href="<%= buildPaginationUrl(pagination.totalPages) %>"><%= pagination.totalPages %></a>
-              </li>
-            <% } %>
-
-            <li class="page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
-              <a class="page-link" href="<%= buildPaginationUrl(pagination.page + 1) %>" aria-label="Next">
-                <span aria-hidden="true">&raquo;</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      <% } %>
-    <% } else if (posts && posts.length > 0) { %>
-      <h3 class="mb-4">Latest Artist Posts</h3>
-      <div class="row g-4">
-        <% posts.forEach(p => { %>
-          <div class="col-md-6 col-lg-4 col-xl-3">
-            <div class="card h-100 shadow-sm content-card">
-              <div class="position-relative" style="background:#000;display:flex;align-items:center;justify-content:center;height:200px;overflow:hidden;">
-                <% if (p.media && p.media.mediaType === 'image') { %>
-                  <img src="<%= p.media.url %>" alt="post" class="content-thumbnail" style="object-fit:contain;background:#000;">
-                <% } else if (p.media && p.media.mediaType === 'video') { %>
-                  <video class="content-thumbnail" style="object-fit:contain;background:#000;" muted>
-                    <source src="<%= p.media.url %>" type="video/mp4">
-                  </video>
-                <% } %>
-                <span class="badge bg-info content-type-badge">
-                  <i class="bi <%= (p.media && p.media.mediaType === 'video') ? 'bi-camera-video' : 'bi-image' %>"></i>
-                  <%= (p.media && p.media.mediaType) ? p.media.mediaType.charAt(0).toUpperCase() + p.media.mediaType.slice(1) : 'Post' %>
-                </span>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title" style="color:#fff !important;"><%= (p.caption && p.caption.length > 0) ? (p.caption.length > 60 ? p.caption.substring(0,60)+'...' : p.caption) : 'Artist Post' %></h5>
-                <p class="card-text text-muted small">
-                  <% if (p.artist && p.artist.user) { %>
-                    By <a href="/artists/<%= p.artist._id %>" class="text-decoration-none"><%= p.artist.user.name %></a>
+            <div class="col-xl-3 col-lg-4 col-md-6 col-12 rh-cl-grid-item"
+                 data-title="<%= itemTitle.toLowerCase() %>"
+                 data-artist="<%= artistName.toLowerCase() %>">
+              <div class="rh-cl-card">
+                <!-- 16:9 Thumbnail Area with Media Badge -->
+                <div class="rh-cl-thumb-container">
+                  <% if (item.isYoutube && item.youtubeThumbnail) { %>
+                    <img src="<%= item.youtubeThumbnail %>" alt="<%= itemTitle %>" class="rh-cl-thumb-media" loading="lazy">
+                    <div class="rh-cl-yt-play-wrap">
+                      <div class="rh-cl-yt-play-btn">
+                        <i class="bi bi-play-fill"></i>
+                      </div>
+                    </div>
+                    <span class="rh-cl-type-badge rh-cl-badge-video">
+                      <i class="bi bi-camera-video me-1"></i>Video
+                    </span>
+                  <% } else if (item.media && item.media.thumbnailUrl && (mediaType === 'audio' || mediaType === 'video')) { %>
+                    <img src="<%= item.media.thumbnailUrl %>" alt="<%= itemTitle %>" class="rh-cl-thumb-media" loading="lazy">
+                    <% if (mediaType === 'audio') { %>
+                      <span class="rh-cl-type-badge rh-cl-badge-audio">
+                        <i class="bi bi-music-note-beamed me-1"></i>Audio
+                      </span>
+                    <% } else { %>
+                      <span class="rh-cl-type-badge rh-cl-badge-video">
+                        <i class="bi bi-camera-video me-1"></i>Video
+                      </span>
+                    <% } %>
+                  <% } else if (isAudioWithoutThumb) { %>
+                    <!-- Audio without image: Violet Soundwave Visual (Card 2 Reference) -->
+                    <div class="rh-cl-soundwave-surface">
+                      <svg viewBox="0 0 240 80" class="rh-cl-soundwave-graphic" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <line x1="16" y1="40" x2="16" y2="40" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="24" y1="38" x2="24" y2="42" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="32" y1="34" x2="32" y2="46" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="40" y1="28" x2="40" y2="52" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="48" y1="20" x2="48" y2="60" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="56" y1="12" x2="56" y2="68" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="64" y1="22" x2="64" y2="58" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="72" y1="30" x2="72" y2="50" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="80" y1="14" x2="80" y2="66" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="88" y1="6" x2="88" y2="74" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="96" y1="18" x2="96" y2="62" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="104" y1="10" x2="104" y2="70" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="112" y1="24" x2="112" y2="56" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="120" y1="8" x2="120" y2="72" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="128" y1="16" x2="128" y2="64" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="136" y1="26" x2="136" y2="54" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="144" y1="12" x2="144" y2="68" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="152" y1="18" x2="152" y2="62" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="160" y1="28" x2="160" y2="52" stroke="rgba(255,255,255,0.8)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="168" y1="20" x2="168" y2="60" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="176" y1="32" x2="176" y2="48" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="184" y1="36" x2="184" y2="44" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="192" y1="39" x2="192" y2="41" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <span class="rh-cl-type-badge rh-cl-badge-audio">
+                      <i class="bi bi-music-note-beamed me-1"></i>Audio
+                    </span>
+                  <% } else if (mediaType === 'video') { %>
+                    <video class="rh-cl-thumb-media" preload="metadata" muted playsinline>
+                      <source src="<%= item.media && item.media.url ? item.media.url : '' %>#t=0.1">
+                    </video>
+                    <span class="rh-cl-type-badge rh-cl-badge-video">
+                      <i class="bi bi-camera-video me-1"></i>Video
+                    </span>
                   <% } else { %>
-                    By Artist
+                    <img src="<%= item.media && item.media.url ? item.media.url : '/images/placeholder.jpg' %>" alt="<%= itemTitle %>" class="rh-cl-thumb-media" loading="lazy">
+                    <span class="rh-cl-type-badge rh-cl-badge-image">
+                      <i class="bi bi-image me-1"></i>Image
+                    </span>
                   <% } %>
-                </p>
-                <p class="card-text">
-                  <small class="text-muted">
-                    <i class="bi bi-clock-history"></i>
-                    <%= toISTDateString(p.createdAt) %>
-                    <span class="ms-2"><i class="bi bi-eye"></i> <%= p.viewsDisplay || p.views || 0 %> views</span>
-                    <span class="ms-2"><i class="bi bi-heart-fill"></i> <%= p.likesDisplay || p.likesCount || 0 %></span>
-                    <span class="ms-2"><i class="bi bi-share"></i> <%= p.shares || 0 %></span>
-                  </small>
-                </p>
-              </div>
-              <div class="card-footer bg-white border-top-0">
-                <button onclick="viewPost('<%= p._id %>')" class="btn btn-outline-primary w-100">View Post</button>
+                </div>
+
+                <!-- Content Info -->
+                <div class="rh-cl-card-info">
+                  <h3 class="rh-cl-item-title" title="<%= cleanTitle %>">
+                    <%= displayTitle %>
+                  </h3>
+                  <p class="rh-cl-item-artist">
+                    By <% if (item.artist && item.artist._id) { %>
+                      <a href="/artists/<%= item.artist._id %>" class="rh-cl-artist-anchor"><%= artistName %></a>
+                    <% } else { %>
+                      <span class="rh-cl-artist-anchor"><%= artistName %></span>
+                    <% } %>
+                  </p>
+                  <div class="rh-cl-item-meta">
+                    <span class="rh-cl-meta-tag">
+                      <i class="bi bi-calendar3"></i> <%= toISTDateString(item.createdAt) %>
+                    </span>
+                    <span class="rh-cl-meta-tag">
+                      <i class="bi bi-eye"></i> <%= viewsCount %> <%= Number(viewsCount) === 1 ? 'view' : 'views' %>
+                    </span>
+                    <% if (likesCount || Number(likesCount) > 0) { %>
+                      <span class="rh-cl-meta-tag">
+                        <i class="bi bi-heart-fill"></i> <%= likesCount %> <%= Number(likesCount) === 1 ? 'like' : 'likes' %>
+                      </span>
+                    <% } %>
+                  </div>
+                </div>
+
+                <!-- Action Buttons: Side-by-side equal width -->
+                <div class="rh-cl-card-footer">
+                  <div class="rh-cl-action-btns">
+                    <!-- Primary Action Button (Listen / Watch / View) -->
+                    <% if (item.sourceModel === 'Content' || item.isYoutube) { %>
+                      <a href="<%= item.sourceModel === 'Content' ? '/content/' + item._id : '/posts/view/' + item._id %>" class="rh-cl-btn rh-cl-btn-primary">
+                        <% if (item.isYoutube || mediaType === 'video') { %>
+                          <i class="bi bi-play-circle me-1"></i>Watch
+                        <% } else if (mediaType === 'audio') { %>
+                          <i class="bi bi-headphones me-1"></i>Listen
+                        <% } else if (mediaType === 'image') { %>
+                          <i class="bi bi-eye me-1"></i>View
+                        <% } else { %>
+                          Open
+                        <% } %>
+                      </a>
+                    <% } else { %>
+                      <button onclick="viewPost('<%= item._id %>', '<%= item.sourceModel %>')" class="rh-cl-btn rh-cl-btn-primary" type="button">
+                        <% if (mediaType === 'video') { %>
+                          <i class="bi bi-play-circle me-1"></i>Watch
+                        <% } else if (mediaType === 'audio') { %>
+                          <i class="bi bi-headphones me-1"></i>Listen
+                        <% } else if (mediaType === 'image') { %>
+                          <i class="bi bi-eye me-1"></i>View
+                        <% } else { %>
+                          Open
+                        <% } %>
+                      </button>
+                    <% } %>
+
+                    <!-- Download Button -->
+                    <% if (!item.isYoutube && item.media && item.media.url) { %>
+                      <a href="/content/download?sourceModel=<%= item.sourceModel %>&id=<%= item._id %>" 
+                         class="rh-cl-btn rh-cl-btn-outline rh-cl-download-btn" 
+                         data-download-id="<%= item._id %>" 
+                         data-download-title="<%= itemTitle.replace(/"/g, '&quot;') %>"
+                         download>
+                        <i class="bi bi-download me-1"></i>Download
+                      </a>
+                    <% } else if (item.isYoutube) { %>
+                      <a href="<%= item.media && item.media.url ? item.media.url : ('https://www.youtube.com/watch?v=' + item.youtubeId) %>" target="_blank" rel="noopener noreferrer" class="rh-cl-btn rh-cl-btn-outline">
+                        <i class="bi bi-download me-1"></i>Download
+                      </a>
+                    <% } else { %>
+                      <button class="rh-cl-btn rh-cl-btn-outline" disabled type="button">
+                        <i class="bi bi-download me-1"></i>Download
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        <% }); %>
-      </div>
-    <% } else { %>
-      <div class="text-center py-5">
-        <div class="mb-4">
-          <i class="bi bi-search display-1 text-muted"></i>
+          <% }); %>
         </div>
-        <h3>No content found</h3>
-        <p class="text-muted">Try adjusting your filters or check back later for new content.</p>
-      </div>
-    <% } %>
-  </div>
-</section>
 
-<%- contentFor('title') %>Content Library
+        <!-- No Matching Search Results State -->
+        <div id="noSearchMatches" class="text-center py-5 d-none">
+          <i class="bi bi-search display-3 mb-3 d-block" style="color: #9F190E;"></i>
+          <h4 style="font-family: 'Titan One', sans-serif; color: #9F190E;">No Content Found</h4>
+          <p class="text-muted">No content matches your search term on this page. Try searching for a different keyword or clear your search.</p>
+        </div>
 
-<!-- JavaScript for Enhanced Functionality -->
-<%- contentFor('extraScripts') %>
-<script>
+        <!-- 4. Pagination Section -->
+        <% if (pagination.totalPages > 1) { %>
+          <%
+            const buildPaginationUrl = (page) => {
+              const params = new URLSearchParams();
+              if (currentFilters.mediaType) params.set('mediaType', currentFilters.mediaType);
+              if (currentFilters.artist) params.set('artist', currentFilters.artist);
+              if (currentFilters.sort) params.set('sort', currentFilters.sort);
+              if (currentFilters.search) params.set('search', currentFilters.search);
+              params.set('page', page);
+              return '?' + params.toString();
+            };
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+          %>
+          <nav aria-label="Content pagination" class="rh-cl-pagination-container my-5">
+            <ul class="rh-cl-pagination-list">
+              <!-- Previous Arrow Button -->
+              <li class="rh-cl-page-item <%= !pagination.hasPrev ? 'disabled' : '' %>">
+                <a class="rh-cl-page-link rh-cl-nav-arrow" href="<%= pagination.hasPrev ? buildPaginationUrl(pagination.page - 1) : '#' %>" aria-label="Previous page">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+
+              <!-- First page if needed -->
+              <% if (startPage > 1) { %>
+                <li class="rh-cl-page-item">
+                  <a class="rh-cl-page-link" href="<%= buildPaginationUrl(1) %>">1</a>
+                </li>
+                <% if (startPage > 2) { %>
+                  <li class="rh-cl-page-item disabled">
+                    <span class="rh-cl-page-ellipsis">…</span>
+                  </li>
+                <% } %>
+              <% } %>
+
+              <!-- Numbered Pages -->
+              <% for (let p = startPage; p <= endPage; p++) { %>
+                <li class="rh-cl-page-item <%= pagination.page === p ? 'active' : '' %>">
+                  <a class="rh-cl-page-link" href="<%= buildPaginationUrl(p) %>"><%= p %></a>
+                </li>
+              <% } %>
+
+              <!-- Last page if needed -->
+              <% if (endPage < pagination.totalPages) { %>
+                <% if (endPage < pagination.totalPages - 1) { %>
+                  <li class="rh-cl-page-item disabled">
+                    <span class="rh-cl-page-ellipsis">…</span>
+                  </li>
+                <% } %>
+                <li class="rh-cl-page-item">
+                  <a class="rh-cl-page-link" href="<%= buildPaginationUrl(pagination.totalPages) %>"><%= pagination.totalPages %></a>
+                </li>
+              <% } %>
+
+              <!-- Next Arrow Button -->
+              <li class="rh-cl-page-item <%= !pagination.hasNext ? 'disabled' : '' %>">
+                <a class="rh-cl-page-link rh-cl-nav-arrow" href="<%= pagination.hasNext ? buildPaginationUrl(pagination.page + 1) : '#' %>" aria-label="Next page">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        <% } %>
+
+      <% } else { %>
+        <!-- Empty State Container -->
+        <div class="text-center py-5">
+          <div class="mb-3">
+            <i class="bi bi-search display-2" style="color: #9F190E;"></i>
+          </div>
+          <h3 style="font-family: 'Titan One', sans-serif; color: #9F190E;">No Content Found</h3>
+          <p class="text-muted">Try adjusting your filters or check back later for new content from our artists.</p>
+          <a href="/content" class="rh-cl-btn rh-cl-btn-primary d-inline-block px-4 py-2 mt-2">Clear All Filters</a>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Floating Download Dock (Desktop bottom-right / Mobile bottom-sheet) -->
+  <div id="rh-download-dock" class="rh-download-dock" aria-live="polite"></div>
+
+  <!-- Custom Dropdowns, Live Filtering & Download Experience Script -->
+  <script>
 document.addEventListener('DOMContentLoaded', function() {
-
-
-  // Enhanced form handling with auto-submit for filters
   const form = document.getElementById('contentFilterForm');
   const mediaTypeFilter = document.getElementById('mediaTypeFilter');
-  const artistFilter = document.getElementById('artistFilter');
   const sortFilter = document.getElementById('sortFilter');
+  const searchInput = document.getElementById('contentSearchInput');
+  const searchClear = document.getElementById('contentSearchClear');
+  const filterCollapse = document.getElementById('clFilterCollapse');
+  const filterToggleIcon = document.getElementById('clFilterToggleIcon');
+  const cardsGrid = document.getElementById('contentCardsGrid');
+  const noMatchesBox = document.getElementById('noSearchMatches');
+  const downloadDock = document.getElementById('rh-download-dock');
 
-  let searchTimeout;
+  // Active download tracking (to prevent duplicate clicks)
+  const activeDownloads = new Set();
 
-  // Auto-submit on filter changes
-  [mediaTypeFilter, artistFilter, sortFilter].forEach(filter => {
-    if (filter) {
-      filter.addEventListener('change', function() {
-        clearTimeout(searchTimeout);
-        form.submit();
+  /* ==========================================================================
+     1. CUSTOM ACCESSIBLE DROPDOWNS
+     ========================================================================== */
+  const customDropdowns = document.querySelectorAll('.rh-cl-custom-dropdown');
+
+  function closeAllDropdowns() {
+    customDropdowns.forEach(dropdown => {
+      dropdown.classList.remove('open');
+      const btn = dropdown.querySelector('.rh-cl-custom-dropdown-btn');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function adjustDropdownPosition(dropdown) {
+    const menu = dropdown.querySelector('.rh-cl-custom-dropdown-menu');
+    if (!menu) return;
+    
+    // Check if right edge overflows viewport
+    menu.classList.remove('align-right');
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth - 12) {
+      menu.classList.add('align-right');
+    }
+  }
+
+  customDropdowns.forEach(dropdown => {
+    const btn = dropdown.querySelector('.rh-cl-custom-dropdown-btn');
+    const menu = dropdown.querySelector('.rh-cl-custom-dropdown-menu');
+    const options = dropdown.querySelectorAll('.rh-cl-dropdown-option');
+    const fieldName = dropdown.getAttribute('data-name');
+    const hiddenInput = fieldName === 'mediaType' ? mediaTypeFilter : sortFilter;
+    const labelSpan = dropdown.querySelector('.rh-cl-dropdown-current-label');
+
+    if (!btn || !menu) return;
+
+    // Toggle dropdown open/closed
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      closeAllDropdowns();
+
+      if (!isOpen) {
+        dropdown.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        adjustDropdownPosition(dropdown);
+
+        // Focus currently selected option or first option
+        const selectedOpt = dropdown.querySelector('.rh-cl-dropdown-option.selected') || options[0];
+        if (selectedOpt) selectedOpt.focus();
+      }
+    });
+
+    // Keyboard support on the trigger button
+    btn.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!dropdown.classList.contains('open')) {
+          closeAllDropdowns();
+          dropdown.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+          adjustDropdownPosition(dropdown);
+        }
+        const selectedOpt = dropdown.querySelector('.rh-cl-dropdown-option.selected') || options[0];
+        if (selectedOpt) selectedOpt.focus();
+      } else if (e.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    });
+
+    // Option selection
+    options.forEach(opt => {
+      const selectOption = () => {
+        const value = opt.getAttribute('data-value');
+        const text = opt.querySelector('.rh-cl-option-text')?.textContent || '';
+
+        // Update hidden input
+        if (hiddenInput) {
+          hiddenInput.value = value;
+        }
+
+        // Update display label
+        if (labelSpan) {
+          labelSpan.textContent = text;
+        }
+
+        // Update selected class
+        options.forEach(o => {
+          o.classList.remove('selected');
+          o.setAttribute('aria-selected', 'false');
+        });
+        opt.classList.add('selected');
+        opt.setAttribute('aria-selected', 'true');
+
+        closeAllDropdowns();
+        btn.focus();
+
+        // Submit form
+        if (form) form.submit();
+      };
+
+      opt.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectOption();
       });
+
+      opt.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectOption();
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = opt.nextElementSibling;
+          if (next && next.classList.contains('rh-cl-dropdown-option')) {
+            next.focus();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = opt.previousElementSibling;
+          if (prev && prev.classList.contains('rh-cl-dropdown-option')) {
+            prev.focus();
+          } else {
+            btn.focus();
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeAllDropdowns();
+          btn.focus();
+        }
+      });
+    });
+  });
+
+  // Close custom dropdowns on outside click or Escape
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.rh-cl-custom-dropdown')) {
+      closeAllDropdowns();
     }
   });
 
-  // Enhanced form submission with loading state
-  if (form) {
-    form.addEventListener('submit', function() {
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Searching...';
-        submitBtn.disabled = true;
-        submitBtn.classList.add('loading');
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAllDropdowns();
+    }
+  });
 
-        // Re-enable after a delay (in case of errors)
-        setTimeout(() => {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-          submitBtn.classList.remove('loading');
-        }, 5000);
-      }
-    });
+  /* ==========================================================================
+     2. DOWNLOAD MANAGER (Progress UI, Floating Dock, No Screen Blocking)
+     ========================================================================== */
+  function formatBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 B';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return mb.toFixed(1) + ' MB';
+    const kb = bytes / 1024;
+    return kb.toFixed(0) + ' KB';
   }
 
-  // Highlight search terms in results
-  const searchTerm = '<%= currentFilters.search || "" %>';
-  if (searchTerm.trim()) {
-    highlightSearchTerms(searchTerm.trim());
+  function getFilenameFromHeader(header, fallbackTitle) {
+    if (!header) return fallbackTitle;
+    const match = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(header);
+    if (match && match[1]) {
+      try {
+        return decodeURIComponent(match[1].trim());
+      } catch(e) {
+        return match[1].trim();
+      }
+    }
+    return fallbackTitle;
   }
 
-  // Function to highlight search terms
-  function highlightSearchTerms(term) {
-    if (!term) return;
+  function renderDownloadDock(state, data) {
+    if (!downloadDock) return;
 
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const contentCards = document.querySelectorAll('.content-card');
+    if (state === 'hidden') {
+      downloadDock.classList.remove('active', 'completed', 'failed');
+      downloadDock.innerHTML = '';
+      return;
+    }
 
-    contentCards.forEach(card => {
-      const title = card.querySelector('.card-title');
-      const description = card.querySelector('.card-text');
+    downloadDock.classList.add('active');
+    downloadDock.classList.remove('completed', 'failed');
 
-      if (title && !title.querySelector('mark')) {
-        const originalText = title.textContent;
-        if (regex.test(originalText)) {
-          title.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
-        }
+    const cleanTitle = (data.title || 'Rapira Media').length > 36
+      ? (data.title || 'Rapira Media').substring(0, 34) + '...'
+      : (data.title || 'Rapira Media');
+
+    if (state === 'starting') {
+      downloadDock.innerHTML = `
+        <div class="rh-dl-content">
+          <div class="rh-dl-header">
+            <div class="rh-dl-icon-badge">
+              <i class="bi bi-arrow-down-circle-fill rh-dl-spin-pulse"></i>
+            </div>
+            <div class="rh-dl-meta">
+              <span class="rh-dl-title" title="${data.title}">${cleanTitle}</span>
+              <span class="rh-dl-status">Preparing download...</span>
+            </div>
+            <button type="button" class="rh-dl-close-btn" aria-label="Dismiss">&times;</button>
+          </div>
+          <div class="rh-dl-progress-track">
+            <div class="rh-dl-progress-fill rh-dl-indeterminate"></div>
+          </div>
+        </div>
+      `;
+    } else if (state === 'downloading') {
+      const hasLength = data.lengthComputable && data.total > 0;
+      const percent = hasLength ? Math.min(100, Math.max(0, Math.floor((data.loaded / data.total) * 100))) : null;
+      const sizeText = hasLength 
+        ? `${formatBytes(data.loaded)} / ${formatBytes(data.total)}`
+        : `${formatBytes(data.loaded)} downloaded`;
+
+      downloadDock.innerHTML = `
+        <div class="rh-dl-content">
+          <div class="rh-dl-header">
+            <div class="rh-dl-icon-badge">
+              <i class="bi bi-cloud-arrow-down-fill rh-dl-icon-accent"></i>
+            </div>
+            <div class="rh-dl-meta">
+              <span class="rh-dl-title" title="${data.title}">${cleanTitle}</span>
+              <div class="rh-dl-metrics">
+                <span class="rh-dl-status">Downloading...</span>
+                <span class="rh-dl-size">${sizeText}</span>
+              </div>
+            </div>
+            ${percent !== null ? `<span class="rh-dl-percentage">${percent}%</span>` : ''}
+            <button type="button" class="rh-dl-close-btn" aria-label="Dismiss">&times;</button>
+          </div>
+          <div class="rh-dl-progress-track">
+            <div class="rh-dl-progress-fill ${percent === null ? 'rh-dl-indeterminate' : ''}" style="${percent !== null ? 'width: ' + percent + '%;' : ''}"></div>
+          </div>
+        </div>
+      `;
+    } else if (state === 'completed') {
+      downloadDock.classList.add('completed');
+      downloadDock.innerHTML = `
+        <div class="rh-dl-content">
+          <div class="rh-dl-header">
+            <div class="rh-dl-icon-badge rh-dl-success">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="rh-dl-meta">
+              <span class="rh-dl-title" title="${data.title}">${cleanTitle}</span>
+              <span class="rh-dl-status rh-dl-status-success">Download complete</span>
+            </div>
+            <button type="button" class="rh-dl-close-btn" aria-label="Dismiss">&times;</button>
+          </div>
+          <div class="rh-dl-progress-track">
+            <div class="rh-dl-progress-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      `;
+    } else if (state === 'failed') {
+      downloadDock.classList.add('failed');
+      downloadDock.innerHTML = `
+        <div class="rh-dl-content">
+          <div class="rh-dl-header">
+            <div class="rh-dl-icon-badge rh-dl-error">
+              <i class="bi bi-exclamation-circle-fill"></i>
+            </div>
+            <div class="rh-dl-meta">
+              <span class="rh-dl-title" title="${data.title}">${cleanTitle}</span>
+              <span class="rh-dl-status rh-dl-status-error">Download failed</span>
+            </div>
+            <button type="button" class="rh-dl-retry-btn" id="rhDlRetryBtn"><i class="bi bi-arrow-clockwise me-1"></i>Retry</button>
+            <button type="button" class="rh-dl-close-btn" aria-label="Dismiss">&times;</button>
+          </div>
+        </div>
+      `;
+
+      const retryBtn = document.getElementById('rhDlRetryBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          startDownload(data.url, data.title, data.id);
+        });
       }
+    }
 
-      if (description && !description.querySelector('mark')) {
-        const originalText = description.textContent;
-        if (regex.test(originalText)) {
-          description.innerHTML = originalText.replace(regex, '<mark class="bg-warning text-dark rounded px-1">$1</mark>');
-        }
-      }
-    });
-  }
-
-  // Show active filter indicators
-  function updateFilterIndicators() {
-    const hasFilters = '<%= currentFilters.mediaType || currentFilters.artist || currentFilters.sort !== "latest" %>';
-
-    if (hasFilters) {
-      const filterHeader = document.querySelector('.card-header h5');
-      if (filterHeader && !filterHeader.querySelector('.badge')) {
-        filterHeader.innerHTML += ' <span class="badge bg-light text-primary ms-2">Filters Active</span>';
-      }
+    // Attach close button
+    const closeBtn = downloadDock.querySelector('.rh-dl-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        renderDownloadDock('hidden', {});
+      });
     }
   }
 
-  updateFilterIndicators();
+  function startDownload(url, title, id) {
+    if (activeDownloads.has(id)) {
+      // Flash dock to show already downloading
+      downloadDock.classList.add('rh-dl-pulse');
+      setTimeout(() => downloadDock.classList.remove('rh-dl-pulse'), 400);
+      return;
+    }
 
-  // Handle filter toggle icon rotation
-  const filterCollapse = document.getElementById('filterCollapse');
-  const filterToggleIcon = document.getElementById('filterToggleIcon');
+    activeDownloads.add(id);
+    renderDownloadDock('starting', { url, title, id });
 
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'blob';
+
+    xhr.onprogress = function(e) {
+      renderDownloadDock('downloading', {
+        url,
+        title,
+        id,
+        loaded: e.loaded,
+        total: e.total,
+        lengthComputable: e.lengthComputable
+      });
+    };
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const disposition = xhr.getResponseHeader('Content-Disposition');
+        const filename = getFilenameFromHeader(disposition, title + '.mp4');
+        const blob = xhr.response;
+
+        // Trigger browser save
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 20000);
+
+        renderDownloadDock('completed', { url, title, id });
+        activeDownloads.delete(id);
+
+        // Auto dismiss after 3.5s
+        setTimeout(() => {
+          if (!activeDownloads.size && downloadDock.classList.contains('completed')) {
+            renderDownloadDock('hidden', {});
+          }
+        }, 3500);
+      } else {
+        renderDownloadDock('failed', { url, title, id });
+        activeDownloads.delete(id);
+      }
+    };
+
+    xhr.onerror = function() {
+      renderDownloadDock('failed', { url, title, id });
+      activeDownloads.delete(id);
+    };
+
+    xhr.onabort = function() {
+      renderDownloadDock('hidden', {});
+      activeDownloads.delete(id);
+    };
+
+    xhr.send();
+  }
+
+  // Intercept clicks on download buttons
+  document.querySelectorAll('.rh-cl-download-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const url = this.getAttribute('href');
+      const title = this.getAttribute('data-download-title') || 'Rapira Media';
+      const id = this.getAttribute('data-download-id') || url;
+
+      if (url && url.startsWith('/content/download')) {
+        e.preventDefault();
+        startDownload(url, title, id);
+      }
+    });
+  });
+
+  // Export trigger for other components if needed
+  window.triggerRapiraDownload = startDownload;
+
+  /* ==========================================================================
+     3. CLIENT-SIDE LIVE SEARCH FILTER
+     ========================================================================== */
+  if (searchInput && cardsGrid) {
+    const cardItems = cardsGrid.querySelectorAll('.rh-cl-grid-item');
+
+    function performLiveFilter() {
+      const query = searchInput.value.trim().toLowerCase();
+      let matchCount = 0;
+
+      if (searchClear) {
+        if (query.length > 0) {
+          searchClear.classList.remove('d-none');
+        } else {
+          searchClear.classList.add('d-none');
+        }
+      }
+
+      cardItems.forEach(item => {
+        const title = item.getAttribute('data-title') || '';
+        const artist = item.getAttribute('data-artist') || '';
+        const isMatch = !query || title.includes(query) || artist.includes(query);
+
+        if (isMatch) {
+          item.classList.remove('d-none');
+          matchCount++;
+        } else {
+          item.classList.add('d-none');
+        }
+      });
+
+      if (noMatchesBox) {
+        if (matchCount === 0 && cardItems.length > 0) {
+          noMatchesBox.classList.remove('d-none');
+        } else {
+          noMatchesBox.classList.add('d-none');
+        }
+      }
+    }
+
+    searchInput.addEventListener('input', performLiveFilter);
+
+    if (searchClear) {
+      searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        performLiveFilter();
+        searchInput.focus();
+      });
+    }
+
+    if (searchInput.value.trim().length > 0) {
+      performLiveFilter();
+    }
+  }
+
+  // Mobile filter collapse chevron rotation
   if (filterCollapse && filterToggleIcon) {
     filterCollapse.addEventListener('show.bs.collapse', function () {
       filterToggleIcon.classList.remove('bi-chevron-down');
@@ -470,190 +906,4 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
-
-<style>
-/* Multi-line truncation */
-.text-truncate-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 2.8em; /* Fixed height for 2 lines */
-  line-height: 1.4em;
-}
-
-.text-truncate-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  height: 4.2em; /* Fixed height for 3 lines */
-  line-height: 1.4em;
-}
-
-/* Enhanced styles for content library */
-.content-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.content-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.content-thumbnail {
-  height: 200px;
-  object-fit: cover;
-  transition: all 0.3s ease;
-}
-
-.content-card:hover .content-thumbnail {
-  transform: scale(1.05);
-}
-
-.content-type-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 0.75em;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Enhanced form styling */
-.form-control:focus, .form-select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
-}
-
-.input-group-text {
-  border-color: #dee2e6;
-}
-
-.form-label {
-  color: #495057;
-  margin-bottom: 0.5rem;
-}
-
-/* Button enhancements */
-.btn {
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
-}
-
-/* Card enhancements */
-.card {
-  transition: all 0.3s ease;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.card-header {
-  border-radius: 12px 12px 0 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-
-
-.form-check-input:checked {
-  background-color: #6366f1;
-  border-color: #6366f1;
-}
-
-.form-check-label {
-  color: #495057;
-}
-
-/* Badge styling */
-.badge {
-  font-size: 0.75em;
-  padding: 0.5em 0.75em;
-  border-radius: 6px;
-}
-
-/* Search highlighting */
-mark {
-  padding: 0.1em 0.3em;
-  border-radius: 4px;
-  background-color: #fff3cd;
-  color: #856404;
-  font-weight: 500;
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-.loading {
-  animation: pulse 1.5s infinite;
-}
-
-/* Filter indicator */
-.badge.bg-light {
-  color: #6366f1 !important;
-  background-color: rgba(99, 102, 241, 0.1) !important;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .content-card {
-    margin-bottom: 1.5rem;
-  }
-
-  .pagination {
-    font-size: 0.9em;
-  }
-
-  .content-thumbnail {
-    height: 150px;
-  }
-
-  .btn {
-    margin-bottom: 0.5rem;
-  }
-
-  .d-flex.flex-wrap.gap-2 {
-    justify-content: center;
-  }
-
-  #statsSection .row.g-3 > .col-md-2 {
-    margin-bottom: 1rem;
-  }
-}
-
-/* Smooth transitions for all interactive elements */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-</style>
+</div>

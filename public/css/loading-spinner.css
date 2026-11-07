@@ -146,67 +146,102 @@
   }
 }
 
-/* Page Transition Loader (Top Bar) - Now Center Progress with Percentage */
+/* Page Transition Loader / Download Bar - Polished Cream & Crimson Floating Dock */
 .page-loader-bar {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 400px;
-  max-width: 80%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  padding: 30px;
-  border-radius: 15px;
+  bottom: 24px;
+  right: 24px;
+  top: auto;
+  left: auto;
+  transform: translateY(20px) scale(0.96);
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: #FFFDF8;
+  border: 1.5px solid #EAC8B7;
+  padding: 16px 20px;
+  border-radius: 16px;
   z-index: 99999;
   display: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 36px rgba(159, 25, 14, 0.12), 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 0;
 }
 
 .page-loader-bar.active {
   display: block !important;
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
 }
 
 .page-loader-bar-content {
-  text-align: center;
+  text-align: left;
 }
 
 .page-loader-bar-title {
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  letter-spacing: 1px;
+  color: #25211F;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-loader-bar-title::before {
+  content: '↓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #FCF0E4;
+  color: #9F190E;
+  border-radius: 50%;
+  margin-right: 8px;
+  font-weight: 900;
+  font-size: 13px;
 }
 
 .page-loader-bar-track {
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  height: 6px;
+  background: #FCF0E4;
   border-radius: 10px;
   overflow: hidden;
   position: relative;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
 .page-loader-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #a855f7, #ec4899, #f59e0b);
+  background: #9F190E;
   border-radius: 10px;
   width: 0%;
   transition: width 0.3s ease;
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
+  box-shadow: none;
   animation: progress-fill 1.5s ease-in-out forwards;
 }
 
 .page-loader-bar-percentage {
-  color: white;
-  font-size: 24px;
+  color: #9F190E;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  background: linear-gradient(135deg, #a855f7, #ec4899, #f59e0b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: none;
+  -webkit-text-fill-color: initial;
+  text-align: right;
+}
+
+@media (max-width: 575px) {
+  .page-loader-bar {
+    bottom: 16px;
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-width: none;
+  }
 }
 
 @keyframes progress-fill {

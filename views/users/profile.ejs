@@ -1,414 +1,535 @@
-<div class="container py-5">
-  <div class="row">
+<div class="rapira-profile-page">
+  <div class="container">
+    
+    <!-- Profile Completion Banner (Shown if age or heardFrom is missing) -->
     <% if (!user.age || !user.heardFrom) { %>
-      <div class="col-12 mb-3">
-        <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
-          <div>
-            <strong>Complete your profile:</strong> Add your age and where you heard about us (optional) to help us personalize your experience. 
-            <a href="/users/edit-profile" class="alert-link fw-bold">Click here to add details</a>
+      <div class="rh-profile-complete-banner" id="profileCompleteBanner">
+        <div class="rh-profile-complete-left">
+          <div class="rh-profile-complete-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+            </svg>
           </div>
-          <a href="/users/edit-profile" class="btn btn-sm btn-outline-dark">Update now</a>
+          <div class="rh-profile-complete-text">
+            <strong>Complete your profile:</strong> Add your age and where you heard about us (optional) to help us personalize your experience.
+          </div>
+        </div>
+        <div class="rh-profile-complete-actions">
+          <a href="/users/edit-profile" class="rh-btn-secondary-sm">Add Details</a>
+          <a href="/users/edit-profile" class="rh-btn-primary-sm">Update Now</a>
+          <button type="button" class="rh-profile-banner-close" aria-label="Close" onclick="document.getElementById('profileCompleteBanner').style.display='none';">&times;</button>
         </div>
       </div>
     <% } %>
 
-    <div class="col-lg-4 mb-4 mb-lg-0">
-      <div class="card">
-        <div class="card-body text-center p-4">
-          <img src="<%= (user.profileImage && user.profileImage !== '/images/default-profile.svg') ? user.profileImage : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(user.name.charAt(0).toUpperCase()) + '&background=4ECDC4&color=fff&bold=true&size=200') %>"
-               alt="<%= user.name %>"
-               class="rounded-circle img-thumbnail mb-3"
-               width="150" height="150"
-               style="object-fit: cover;"
-               onerror="this.onerror=null; this.src='/images/default-profile.svg';">
+    <div class="row g-4">
+      <!-- Profile Sidebar (Desktop) & Top Header (Mobile) -->
+      <div class="col-lg-4 col-xl-3">
+        <div class="rh-profile-sidebar">
+          
+          <!-- User Profile Card -->
+          <div class="rh-profile-user-card">
+            <!-- Wavy Crimson Decorative Top Banner -->
+            <div class="rh-profile-user-card-banner">
+              <svg viewBox="0 0 100 28" preserveAspectRatio="none">
+                <path d="M0,0 L100,0 L100,12 Q50,28 0,12 Z" fill="#9F190E"></path>
+              </svg>
+            </div>
 
-          <h3 class="fw-bold mb-1"><%= user.name %></h3>
-          <p class="text-muted mb-3">
-            <span class="badge <%= user.role === 'admin' ? 'bg-danger' : user.role === 'artist' ? 'bg-primary' : 'bg-secondary' %>">
-              <%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>
-            </span>
-          </p>
+            <!-- Avatar -->
+            <div class="rh-profile-avatar-wrap">
+              <%
+                const hasValidDP = user.profileImage && 
+                                   user.profileImage !== '/images/default-profile.svg' && 
+                                   !user.profileImage.includes('default-profile');
+                const userInitial = (user.name && user.name.trim()) ? user.name.trim().charAt(0).toUpperCase() : 'U';
+              %>
+              <% if (hasValidDP) { %>
+                <img src="<%= user.profileImage %>"
+                     alt="<%= user.name %>"
+                     class="rh-profile-avatar-img"
+                     onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                <div class="rh-profile-avatar-fallback" style="display: none;">
+                  <%= userInitial %>
+                </div>
+              <% } else { %>
+                <div class="rh-profile-avatar-fallback">
+                  <%= userInitial %>
+                </div>
+              <% } %>
+              
+              <a href="/users/edit-profile" class="rh-profile-avatar-edit-badge" title="Edit Profile">
+                <i class="bi bi-pencil-fill"></i>
+              </a>
+            </div>
 
-          <% if (user.city) { %>
-            <p class="mb-3">
-              <i class="bi bi-geo-alt text-primary me-1"></i> <%= user.city %>
-            </p>
-          <% } %>
+            <!-- User Info Details -->
+            <div class="rh-profile-user-info">
+              <h2 class="rh-profile-user-name"><%= user.name %></h2>
+              <span class="rh-profile-role-badge">
+                <%= user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'User' %>
+              </span>
 
-          <div class="d-flex justify-content-center gap-3 mb-4">
-            <% if (user.socialLinks.instagram) { %>
-              <a href="<%= user.socialLinks.instagram %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
-                <i class="bi bi-instagram"></i>
-              </a>
-            <% } %>
-            <% if (user.socialLinks.twitter) { %>
-              <a href="<%= user.socialLinks.twitter %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
-                <i class="bi bi-twitter-x"></i>
-              </a>
-            <% } %>
-            <% if (user.socialLinks.youtube) { %>
-              <a href="<%= user.socialLinks.youtube %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
-                <i class="bi bi-youtube"></i>
-              </a>
-            <% } %>
-            <% if (user.socialLinks.spotify) { %>
-              <a href="<%= user.socialLinks.spotify %>" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle">
-                <i class="bi bi-spotify"></i>
-              </a>
-            <% } %>
+              <% if (user.city) { %>
+                <div class="rh-profile-location-text">
+                  <i class="bi bi-geo-alt-fill text-danger me-1"></i> <%= user.city %>
+                </div>
+              <% } %>
+
+              <% if (user.socialLinks && (user.socialLinks.instagram || user.socialLinks.twitter || user.socialLinks.youtube || user.socialLinks.spotify)) { %>
+                <div class="rh-profile-social-strip">
+                  <% if (user.socialLinks.instagram) { %>
+                    <a href="<%= user.socialLinks.instagram %>" target="_blank" rel="noopener noreferrer" class="rh-profile-social-btn" title="Instagram">
+                      <i class="bi bi-instagram"></i>
+                    </a>
+                  <% } %>
+                  <% if (user.socialLinks.twitter) { %>
+                    <a href="<%= user.socialLinks.twitter %>" target="_blank" rel="noopener noreferrer" class="rh-profile-social-btn" title="Twitter / X">
+                      <i class="bi bi-twitter-x"></i>
+                    </a>
+                  <% } %>
+                  <% if (user.socialLinks.youtube) { %>
+                    <a href="<%= user.socialLinks.youtube %>" target="_blank" rel="noopener noreferrer" class="rh-profile-social-btn" title="YouTube">
+                      <i class="bi bi-youtube"></i>
+                    </a>
+                  <% } %>
+                  <% if (user.socialLinks.spotify) { %>
+                    <a href="<%= user.socialLinks.spotify %>" target="_blank" rel="noopener noreferrer" class="rh-profile-social-btn" title="Spotify">
+                      <i class="bi bi-spotify"></i>
+                    </a>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
           </div>
 
-          <div class="d-grid gap-2">
-            <a href="/users/edit-profile" class="btn btn-primary">
-              <i class="bi bi-pencil-square me-1"></i> Edit Profile
+          <!-- Desktop Navigation List (d-none d-lg-flex) -->
+          <div class="rh-profile-nav-list d-none d-lg-flex">
+            <a href="/users/profile" class="rh-profile-nav-pill active">
+              <i class="bi bi-house-door-fill"></i>
+              <span>My Profile</span>
             </a>
-            <a href="/users/change-password" class="btn btn-secondary">
-              <i class="bi bi-lock me-1"></i> Change Password
+            
+            <a href="/users/edit-profile" class="rh-profile-nav-pill">
+              <i class="bi bi-pencil-square"></i>
+              <span>Edit Profile</span>
             </a>
-            <a href="/users/venue-requests" class="btn btn-info text-white">
-              <i class="bi bi-building me-1"></i> My Venue Requests
+
+            <a href="/users/change-password" class="rh-profile-nav-pill">
+              <i class="bi bi-lock-fill"></i>
+              <span>Change Password</span>
             </a>
-            <a href="/users/venues" class="btn btn-success">
-              <i class="bi bi-buildings me-1"></i> My Venues
+
+            <a href="/users/venue-requests" class="rh-profile-nav-pill">
+              <i class="bi bi-building"></i>
+              <span>My Venue Requests</span>
             </a>
-            <a href="/refund-requests/my-requests" class="btn btn-warning text-dark">
-              <i class="bi bi-arrow-counterclockwise me-1"></i> My Refund Requests
+
+            <a href="/users/venues" class="rh-profile-nav-pill">
+              <i class="bi bi-buildings-fill"></i>
+              <span>My Venues</span>
             </a>
+
+            <a href="/refund-requests/my-requests" class="rh-profile-nav-pill">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>My Refund Requests</span>
+            </a>
+
             <% if (canBecomeArtist) { %>
-              <a href="/artist-applications/select-level" class="btn btn-primary">
-                <i class="bi bi-music-note-beamed me-1"></i> Become an Artist
+              <a href="/artist-applications/select-level" class="rh-profile-nav-pill">
+                <i class="bi bi-music-note-beamed"></i>
+                <span>Become an Artist</span>
+                <i class="bi bi-box-arrow-up-right ms-auto small text-muted"></i>
               </a>
             <% } %>
 
-            <a href="/users/job-portal" class="btn btn-info text-white">
-              <i class="bi bi-briefcase me-1"></i> Job Portal
+            <a href="/users/job-portal" class="rh-profile-nav-pill">
+              <i class="bi bi-briefcase-fill"></i>
+              <span>Job Portal</span>
             </a>
 
             <% if (pendingApplication) { %>
-              <a href="/artist-applications/status" class="btn btn-info text-white">
-                <i class="bi bi-hourglass-split me-1"></i> View Artist status
+              <a href="/artist-applications/status" class="rh-profile-nav-pill">
+                <i class="bi bi-hourglass-split"></i>
+                <span>View Artist Status</span>
               </a>
             <% } %>
+
             <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'producer')) { %>
-              <a href="/producer-dashboard" class="btn btn-dark">
-                <i class="bi bi-mic-fill me-1"></i> Producer Dashboard
+              <a href="/producer-dashboard" class="rh-profile-nav-pill">
+                <i class="bi bi-mic-fill"></i>
+                <span>Producer Dashboard</span>
               </a>
             <% } %>
 
             <% if (typeof userRoles !== 'undefined' && Array.isArray(userRoles) && userRoles.some(role => role && role.toLowerCase() === 'distributor')) { %>
-              <a href="/distributor-dashboard" class="btn btn-purple" style="background-color: #6f42c1; color: white;">
-                <i class="bi bi-broadcast me-1"></i> Distributor Dashboard
+              <a href="/distributor-dashboard" class="rh-profile-nav-pill">
+                <i class="bi bi-broadcast"></i>
+                <span>Distributor Dashboard</span>
               </a>
             <% } %>
 
-            <a href="/users/confirm-delete-account" class="btn btn-danger mt-3">
-              <i class="bi bi-trash me-1"></i> Delete Account
+            <a href="/users/confirm-delete-account" class="rh-profile-nav-pill rh-profile-nav-pill-danger">
+              <i class="bi bi-trash-fill"></i>
+              <span>Delete Account</span>
             </a>
           </div>
-        </div>
-      </div>
 
-      <% if (user.bio || user.age || user.heardFrom) { %>
-        <div class="card mt-4">
-          <div class="card-body p-4">
-            <h5 class="card-title fw-bold mb-3">About</h5>
-            <% if (user.bio) { %>
-              <p class="card-text mb-2"><%= user.bio %></p>
-            <% } %>
-            <ul class="list-unstyled mb-0">
-              <% if (user.age) { %>
-                <li><strong>Age:</strong> <%= user.age %></li>
-              <% } %>
-              <% if (user.heardFrom) { %>
-                <li><strong>Heard about us:</strong> <%= user.heardFrom %></li>
-              <% } %>
-            </ul>
-          </div>
-        </div>
-      <% } %>
+          <!-- Mobile Action Navigation Grid (d-lg-none) -->
+          <div class="rh-profile-mobile-nav-grid d-lg-none">
+            <a href="/users/edit-profile" class="rh-profile-mobile-nav-item">
+              <i class="bi bi-pencil-square"></i>
+              <span class="rh-profile-mobile-nav-label">Edit Profile</span>
+            </a>
 
-      <% if (user.role === 'artist' && artist) { %>
-        <div class="card mt-4">
-          <div class="card-body p-4">
-            <h5 class="card-title fw-bold mb-3">Artist Profile</h5>
-            <p class="mb-2"><strong>Stage Name:</strong> <%= artist.stageName || user.name %></p>
-            <p class="mb-2"><strong>Genre:</strong> <%= artist.genre %></p>
-            <p class="mb-2"><strong>Years Active:</strong> <%= artist.yearsActive %></p>
-            <div class="d-grid mt-3">
-              <a href="/artists/<%= artist._id %>" class="btn btn-outline-primary">
-                <i class="bi bi-eye me-1"></i> View Artist Profile
+            <a href="/users/change-password" class="rh-profile-mobile-nav-item">
+              <i class="bi bi-lock-fill"></i>
+              <span class="rh-profile-mobile-nav-label">Change Password</span>
+            </a>
+
+            <a href="/users/venue-requests" class="rh-profile-mobile-nav-item">
+              <i class="bi bi-building"></i>
+              <span class="rh-profile-mobile-nav-label">My Venue Requests</span>
+            </a>
+
+            <a href="/users/venues" class="rh-profile-mobile-nav-item">
+              <i class="bi bi-buildings-fill"></i>
+              <span class="rh-profile-mobile-nav-label">My Venues</span>
+            </a>
+
+            <a href="/refund-requests/my-requests" class="rh-profile-mobile-nav-item">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span class="rh-profile-mobile-nav-label">My Refund Requests</span>
+            </a>
+
+            <% if (canBecomeArtist) { %>
+              <a href="/artist-applications/select-level" class="rh-profile-mobile-nav-item">
+                <i class="bi bi-music-note-beamed"></i>
+                <span class="rh-profile-mobile-nav-label">Become an Artist</span>
               </a>
-            </div>
-          </div>
-        </div>
-      <% } %>
-
-    </div>
-
-    <div class="col-lg-8">
-      <div class="card mb-4">
-        <div class="card-header bg-white py-3">
-          <h5 class="card-title fw-bold mb-0 text-dark">My Tickets</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th class="text-dark">Concert</th>
-                  <th class="text-dark">Date</th>
-                  <th class="text-dark">Venue</th>
-                  <th class="text-dark">Tickets</th>
-                  <th class="text-dark">Status</th>
-                  <th class="text-dark">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="ticketsTableBody">
-                <% if (typeof tickets !== 'undefined' && tickets.length > 0) { %>
-                  <!-- Server-side rendered tickets -->
-                  <% tickets.forEach(ticket => { %>
-                    <tr>
-                      <td><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
-                      <td><%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></td>
-                      <td><%= ticket.concert && ticket.concert.venue ? (ticket.concert.venue.name || ticket.concert.venue) : 'N/A' %></td>
-                      <td><%= ticket.quantity %></td>
-                      <td>
-                        <span class="badge <%= ticket.paymentStatus === 'completed' ? 'bg-success' : 'bg-warning' %>">
-                          <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
-                        </span>
-                      </td>
-                      <td>
-                        <a href="/tickets/<%= ticket._id %>" class="btn btn-sm btn-outline-primary">
-                          <i class="bi bi-ticket-perforated me-1"></i> View
-                        </a>
-                      </td>
-                    </tr>
-                  <% }); %>
-                <% } else { %>
-                  <!-- No tickets message -->
-                  <tr>
-                    <td colspan="6" class="text-center py-4">
-                      <p class="mb-0 text-dark">You haven't booked any tickets yet.</p>
-                      <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
-                    </td>
-                  </tr>
-                <% } %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Subscription Status (moved under My Tickets) -->
-      <div class="card mb-4 bg-dark text-white border-0">
-        <div class="card-body p-4">
-          <h5 class="card-title fw-bold mb-3 text-white" style="color: #fff !important;">Subscription Status</h5>
-
-          <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
-            <div class="d-flex align-items-center mb-3">
-              <div class="badge bg-success me-2">Active</div>
-              <div class="fw-bold"><%= activeSubscription.plan ? activeSubscription.plan.name : 'Unknown' %> Plan</div>
-            </div>
-
-            <%
-              const daysRemaining = Math.ceil((new Date(activeSubscription.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-            %>
-
-            <p class="mb-2">
-              <strong>Expires:</strong>
-              <%= toISTDateString(activeSubscription.expiryDate) %>
-              <span class="<%= daysRemaining < 7 ? 'text-warning' : 'text-success' %>">
-                (<%= daysRemaining %> days left)
-              </span>
-            </p>
-
-            <% if (activeSubscription.plan && activeSubscription.plan.discountPercentage > 0) { %>
-              <p class="mb-2 text-success">
-                <i class="bi bi-tag-fill me-1"></i>
-                <strong><%= activeSubscription.plan.discountPercentage %>% discount</strong> on all ticket purchases
-              </p>
-            <% } %>
-
-            <div class="d-grid mt-3">
-              <a href="/subscriptions/my-subscriptions" class="btn btn-outline-primary">
-                <i class="bi bi-star me-1"></i> Manage Subscription
+            <% } else if (pendingApplication) { %>
+              <a href="/artist-applications/status" class="rh-profile-mobile-nav-item">
+                <i class="bi bi-hourglass-split"></i>
+                <span class="rh-profile-mobile-nav-label">Artist Status</span>
               </a>
-            </div>
-          <% } else { %>
-            <div class="text-center py-3">
-              <div class="mb-3">
-                <i class="bi bi-star text-muted" style="font-size: 2rem;"></i>
+            <% } else { %>
+              <a href="/users/job-portal" class="rh-profile-mobile-nav-item">
+                <i class="bi bi-briefcase-fill"></i>
+                <span class="rh-profile-mobile-nav-label">Job Portal</span>
+              </a>
+            <% } %>
+          </div>
+
+          <!-- About User Box (Optional) -->
+          <% if (user.bio || user.age || user.heardFrom) { %>
+            <div class="rh-profile-card d-none d-lg-block">
+              <div class="rh-profile-card-header">
+                <div class="rh-profile-card-title-wrap">
+                  <i class="bi bi-info-circle-fill text-danger fs-5"></i>
+                  <h3 class="rh-profile-card-title fs-5">About</h3>
+                </div>
               </div>
-              <p class="mb-3">You don't have an active subscription.</p>
-              <a href="/subscriptions" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Browse Subscription Plans
-              </a>
+              <div class="rh-profile-card-body p-3">
+                <% if (user.bio) { %>
+                  <p class="mb-2 text-muted small"><%= user.bio %></p>
+                <% } %>
+                <div class="d-flex flex-column gap-1 small text-muted">
+                  <% if (user.age) { %>
+                    <div><strong>Age:</strong> <%= user.age %></div>
+                  <% } %>
+                  <% if (user.heardFrom) { %>
+                    <div><strong>Heard about us:</strong> <%= user.heardFrom %></div>
+                  <% } %>
+                </div>
+              </div>
             </div>
           <% } %>
+
+          <!-- Artist Profile Shortcut (If user is an artist) -->
+          <% if (user.role === 'artist' && artist) { %>
+            <div class="rh-profile-card d-none d-lg-block">
+              <div class="rh-profile-card-header">
+                <div class="rh-profile-card-title-wrap">
+                  <i class="bi bi-mic-fill text-danger fs-5"></i>
+                  <h3 class="rh-profile-card-title fs-5">Artist Profile</h3>
+                </div>
+              </div>
+              <div class="rh-profile-card-body p-3">
+                <div class="small text-muted mb-2"><strong>Stage Name:</strong> <%= artist.stageName || user.name %></div>
+                <div class="small text-muted mb-2"><strong>Genre:</strong> <%= artist.genre || 'Hip-Hop' %></div>
+                <% if (artist.yearsActive) { %>
+                  <div class="small text-muted mb-3"><strong>Years Active:</strong> <%= artist.yearsActive %></div>
+                <% } %>
+                <a href="/artists/<%= artist._id %>" class="rh-btn-secondary w-100 py-2 fs-6">
+                  <i class="bi bi-eye me-1"></i> View Artist Profile
+                </a>
+              </div>
+            </div>
+          <% } %>
+
         </div>
       </div>
 
-      <% if (user.role === 'artist' && artist) { %>
-        <div class="card">
-          <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="card-title fw-bold mb-0 text-dark">My Concerts</h5>
-            <a href="/artists/dashboard" class="btn btn-sm btn-primary">
-              <i class="bi bi-speedometer2 me-1"></i> Artist Dashboard
-            </a>
+      <!-- Main Content Area (Right Column on Desktop, Bottom on Mobile) -->
+      <div class="col-lg-8 col-xl-9">
+        
+        <!-- 1. My Tickets Card -->
+        <div class="rh-profile-card">
+          <div class="rh-profile-card-header">
+            <div class="rh-profile-card-title-wrap">
+              <svg class="rh-profile-card-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5V6a.5.5 0 0 1-.5.5 1.5 1.5 0 0 0 0 3 .5.5 0 0 1 .5.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 11.5V10a.5.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 11.5V10a.5.5 0 0 1 .5-.5 1.5 1.5 0 1 0 0-3A.5.5 0 0 1 0 6V4.5zM1.5 4a.5.5 0 0 0-.5.5v1.05a2.5 2.5 0 0 1 0 4.9v1.05a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-1.05a2.5 2.5 0 0 1 0-4.9V4.5a.5.5 0 0 0-.5-.5h-13z"/>
+              </svg>
+              <h2 class="rh-profile-card-title">My Tickets</h2>
+            </div>
+            <a href="/tickets" class="rh-profile-card-link">View All Tickets &rarr;</a>
           </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th class="text-dark">Title</th>
-                    <th class="text-dark">Date</th>
-                    <th class="text-dark">Venue</th>
-                    <th class="text-dark">Status</th>
-                    <th class="text-dark">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="concertsTableBody">
-                  <% if (typeof concerts !== 'undefined' && concerts.length > 0) { %>
-                    <!-- Server-side rendered concerts -->
-                    <% concerts.forEach(concert => { %>
+
+          <div class="rh-profile-card-body p-0">
+            <% if (typeof tickets !== 'undefined' && tickets.length > 0) { %>
+              
+              <!-- Desktop Tickets Table (d-none d-md-block) -->
+              <div class="rh-profile-table-wrap d-none d-md-block">
+                <table class="rh-profile-table">
+                  <thead>
+                    <tr>
+                      <th>Concert</th>
+                      <th>Date</th>
+                      <th>Venue</th>
+                      <th>Tickets</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% tickets.forEach(ticket => { %>
                       <tr>
-                        <td><%= concert.title %></td>
-                      <td><%= toISTDateString(concert.date) %></td>
-                        <td><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
+                        <td class="fw-bold"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></td>
                         <td>
-                          <span class="badge <%= concert.status === 'approved' ? 'bg-success' : 'bg-warning' %>">
-                            <%= concert.status.charAt(0).toUpperCase() + concert.status.slice(1) %>
+                          <span class="text-nowrap">
+                            <i class="bi bi-calendar-event text-danger me-1"></i>
+                            <%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %>
                           </span>
                         </td>
                         <td>
-                          <a href="/concerts/<%= concert._id %>" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye me-1"></i> View
+                          <span class="text-nowrap">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                            <%= ticket.concert && ticket.concert.venue ? (ticket.concert.venue.name || ticket.concert.venue) : 'N/A' %>
+                          </span>
+                        </td>
+                        <td class="fw-semibold"><%= ticket.quantity %></td>
+                        <td>
+                          <% if (ticket.paymentStatus === 'completed') { %>
+                            <span class="rh-badge-completed">
+                              <i class="bi bi-check-circle-fill"></i> Completed
+                            </span>
+                          <% } else { %>
+                            <span class="rh-badge-pending">
+                              <i class="bi bi-clock-fill"></i> <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
+                            </span>
+                          <% } %>
+                        </td>
+                        <td>
+                          <a href="/tickets/<%= ticket._id %>" class="rh-btn-outline-view">
+                            <i class="bi bi-ticket-perforated"></i> View
                           </a>
                         </td>
                       </tr>
                     <% }); %>
-                  <% } else { %>
-                    <!-- No concerts message -->
-                    <tr>
-                      <td colspan="5" class="text-center py-4">
-                        <p class="mb-0 text-dark">You haven't created any concerts yet.</p>
-                        <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
-                      </td>
-                    </tr>
-                  <% } %>
-                </tbody>
-              </table>
-            </div>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile Ticket Cards (d-md-none) -->
+              <div class="rh-profile-ticket-cards-mobile d-md-none p-3">
+                <% tickets.forEach(ticket => { %>
+                  <div class="rh-profile-ticket-card-mobile">
+                    <div class="rh-profile-tc-top">
+                      <h4 class="rh-profile-tc-title"><%= ticket.concert ? ticket.concert.title : 'Concert Unavailable' %></h4>
+                      <% if (ticket.paymentStatus === 'completed') { %>
+                        <span class="rh-badge-completed">
+                          <i class="bi bi-check-circle-fill"></i> Completed
+                        </span>
+                      <% } else { %>
+                        <span class="rh-badge-pending">
+                          <i class="bi bi-clock-fill"></i> <%= ticket.paymentStatus.charAt(0).toUpperCase() + ticket.paymentStatus.slice(1) %>
+                        </span>
+                      <% } %>
+                    </div>
+                    
+                    <div class="rh-profile-tc-meta">
+                      <div class="rh-profile-tc-meta-row">
+                        <i class="bi bi-calendar-event"></i>
+                        <span><%= ticket.concert ? toISTDateString(ticket.concert.date) : 'N/A' %></span>
+                      </div>
+                      <div class="rh-profile-tc-meta-row">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <span><%= ticket.concert && ticket.concert.venue ? (ticket.concert.venue.name || ticket.concert.venue) : 'N/A' %></span>
+                      </div>
+                    </div>
+
+                    <div class="rh-profile-tc-bottom">
+                      <div class="small text-muted fw-semibold">
+                        <i class="bi bi-ticket-detailed me-1"></i> <%= ticket.quantity %> Ticket<%= ticket.quantity > 1 ? 's' : '' %>
+                      </div>
+                      <a href="/tickets/<%= ticket._id %>" class="rh-btn-outline-view">
+                        <i class="bi bi-ticket-perforated"></i> View
+                      </a>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+
+            <% } else { %>
+              <!-- Empty Tickets State -->
+              <div class="rh-sub-empty-box">
+                <div class="rh-sub-sketch-icon" aria-hidden="true">
+                  <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M0 4.5A1.5 1.5 0 0 1 1.5 3h13A1.5 1.5 0 0 1 16 4.5V6a.5.5 0 0 1-.5.5 1.5 1.5 0 0 0 0 3 .5.5 0 0 1 .5.5v1.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 11.5V10a.5.5 0 0 1 .5-.5 1.5 1.5 0 1 0 0-3A.5.5 0 0 1 0 6V4.5zM1.5 4a.5.5 0 0 0-.5.5v1.05a2.5 2.5 0 0 1 0 4.9v1.05a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-1.05a2.5 2.5 0 0 1 0-4.9V4.5a.5.5 0 0 0-.5-.5h-13z"/>
+                  </svg>
+                </div>
+                <div class="rh-sub-empty-text">You haven't booked any tickets yet.</div>
+                <a href="/concerts" class="rh-btn-primary">Explore Concerts</a>
+              </div>
+            <% } %>
           </div>
         </div>
-      <% } %>
+
+        <!-- 2. Subscription Status Card -->
+        <div class="rh-profile-card">
+          <div class="rh-profile-card-header">
+            <div class="rh-profile-card-title-wrap">
+              <svg class="rh-profile-card-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0l2.35 4.76 5.26.76-3.8 3.71.9 5.24L8 12l-4.71 2.47.9-5.24-3.8-3.71 5.26-.76L8 0z"/>
+              </svg>
+              <h2 class="rh-profile-card-title">Subscription Status</h2>
+            </div>
+            <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
+              <a href="/subscriptions/my-subscriptions" class="rh-profile-card-link">Manage &rarr;</a>
+            <% } %>
+          </div>
+
+          <div class="rh-profile-card-body">
+            <% if (typeof hasActiveSubscription !== 'undefined' && hasActiveSubscription && activeSubscription) { %>
+              <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="rh-badge-completed">
+                    <i class="bi bi-check-circle-fill"></i> Active
+                  </span>
+                  <h3 class="fs-5 fw-bold mb-0 text-dark"><%= activeSubscription.plan ? activeSubscription.plan.name : 'VIP' %> Plan</h3>
+                </div>
+                <%
+                  const daysRemaining = Math.ceil((new Date(activeSubscription.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                %>
+                <span class="badge bg-light text-dark border">
+                  <%= daysRemaining > 0 ? (daysRemaining + ' days left') : 'Expires today' %>
+                </span>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                  <div class="p-3 bg-light rounded-3 border">
+                    <small class="text-muted d-block mb-1">Expires On</small>
+                    <div class="fw-semibold text-dark"><%= toISTDateString(activeSubscription.expiryDate) %></div>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="p-3 bg-light rounded-3 border">
+                    <small class="text-muted d-block mb-1">Benefits</small>
+                    <div class="fw-semibold text-success">
+                      <i class="bi bi-tag-fill me-1"></i>
+                      <%= activeSubscription.plan && activeSubscription.plan.discountPercentage ? (activeSubscription.plan.discountPercentage + '% discount on tickets') : 'Exclusive Member Discounts' %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-end">
+                <a href="/subscriptions/my-subscriptions" class="rh-btn-secondary">
+                  <i class="bi bi-star me-1"></i> View Subscription Details
+                </a>
+              </div>
+            <% } else { %>
+              <!-- Empty Subscription State (As depicted in Reference Design) -->
+              <div class="rh-sub-empty-box">
+                <div class="rh-sub-sketch-icon" aria-hidden="true">
+                  <!-- Playful Hand-drawn style ticket sketch SVG -->
+                  <svg width="68" height="42" viewBox="0 0 68 42" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 14C8 14 11 11 11 7C11 3 8 0 4 0H64C60 0 57 3 57 7C57 11 60 14 64 14V35C60 35 57 38 57 42H4C8 42 11 38 11 35C11 31 8 28 4 28V14Z" fill="#FAF2EC" stroke-dasharray="1 0" />
+                    <line x1="22" y1="8" x2="22" y2="34" stroke-dasharray="3 3"/>
+                    <path d="M38 15L40 21L46 22L41 26L43 32L38 28L33 32L35 26L30 22L36 21L38 15Z" stroke="#9F190E" fill="#FFF"/>
+                    <line x1="14" y1="5" x2="16" y2="3" />
+                    <line x1="12" y1="9" x2="15" y2="9" />
+                  </svg>
+                </div>
+                <div class="rh-sub-empty-text">You don't have an active subscription.</div>
+                <a href="/subscriptions" class="rh-btn-primary">
+                  <i class="bi bi-crown me-1"></i> Browse Subscription Plans
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- 3. Artist Concerts Card (If user is an artist) -->
+        <% if (user.role === 'artist' && artist) { %>
+          <div class="rh-profile-card">
+            <div class="rh-profile-card-header">
+              <div class="rh-profile-card-title-wrap">
+                <i class="bi bi-music-player-fill text-danger fs-5"></i>
+                <h2 class="rh-profile-card-title">My Concerts</h2>
+              </div>
+              <a href="/artists/dashboard" class="rh-profile-card-link">Artist Dashboard &rarr;</a>
+            </div>
+
+            <div class="rh-profile-card-body p-0">
+              <% if (typeof concerts !== 'undefined' && concerts.length > 0) { %>
+                <div class="rh-profile-table-wrap">
+                  <table class="rh-profile-table">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% concerts.forEach(concert => { %>
+                        <tr>
+                          <td class="fw-bold"><%= concert.title %></td>
+                          <td><%= toISTDateString(concert.date) %></td>
+                          <td><%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %></td>
+                          <td>
+                            <% if (concert.status === 'approved') { %>
+                              <span class="rh-badge-completed">Approved</span>
+                            <% } else { %>
+                              <span class="rh-badge-pending"><%= concert.status %></span>
+                            <% } %>
+                          </td>
+                          <td>
+                            <a href="/concerts/<%= concert._id %>" class="rh-btn-outline-view">
+                              <i class="bi bi-eye"></i> View
+                            </a>
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } else { %>
+                <div class="rh-sub-empty-box">
+                  <div class="rh-sub-empty-text">You haven't created any concerts yet.</div>
+                  <a href="/concerts/create" class="rh-btn-primary">Create Concert</a>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+
+      </div>
     </div>
   </div>
 </div>
-
-<script>
-  // Load tickets
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, fetching tickets data...');
-
-    // Get the tickets table body element
-    const ticketsTableBody = document.getElementById('ticketsTableBody');
-    if (!ticketsTableBody) {
-      console.error('Tickets table body element not found!');
-      return;
-    }
-
-    // Set a timeout to show a message if the AJAX request takes too long
-    const ticketsTimeout = setTimeout(function() {
-      if (ticketsTableBody.innerHTML.includes('spinner-border')) {
-        ticketsTableBody.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-4">
-              <p class="mb-0">Loading tickets is taking longer than expected.</p>
-              <p class="mb-0">You can <a href="/tickets">view your tickets here</a> or try refreshing the page.</p>
-            </td>
-          </tr>
-        `;
-      }
-    }, 5000); // 5 seconds timeout
-
-    // Function to update tickets table with no tickets message
-    function showNoTicketsMessage() {
-      ticketsTableBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-4">
-            <p class="mb-0">You haven't booked any tickets yet.</p>
-            <a href="/concerts" class="btn btn-primary mt-2">Explore Concerts</a>
-          </td>
-        </tr>
-      `;
-    }
-
-    // Function to update tickets table with error message
-    function showTicketsErrorMessage() {
-      ticketsTableBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-4">
-            <p class="text-danger mb-0">Failed to load tickets. Please try again later.</p>
-          </td>
-        </tr>
-      `;
-    }
-
-    // We don't need to fetch tickets via AJAX anymore since we're showing the message server-side
-    // This code is kept for reference but won't execute
-    console.log('Server-side rendering of tickets is now used instead of AJAX');
-
-    // Load concerts for artists
-    const concertsTableBody = document.getElementById('concertsTableBody');
-    if (concertsTableBody) {
-      console.log('Concerts table body found, fetching concerts data...');
-
-      // Set a timeout to show a message if the AJAX request takes too long
-      const concertsTimeout = setTimeout(function() {
-        if (concertsTableBody.innerHTML.includes('spinner-border')) {
-          concertsTableBody.innerHTML = `
-            <tr>
-              <td colspan="5" class="text-center py-4">
-                <p class="mb-0">Loading concerts is taking longer than expected.</p>
-                <p class="mb-0">You can <a href="/artists/dashboard">view your concerts here</a> or try refreshing the page.</p>
-              </td>
-            </tr>
-          `;
-        }
-      }, 5000); // 5 seconds timeout
-
-      // Function to update concerts table with no concerts message
-      function showNoConcertsMessage() {
-        concertsTableBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="text-center py-4">
-              <p class="mb-0">You haven't created any concerts yet.</p>
-              <a href="/concerts/create" class="btn btn-primary mt-2">Create Concert</a>
-            </td>
-          </tr>
-        `;
-      }
-
-      // Function to update concerts table with error message
-      function showConcertsErrorMessage() {
-        concertsTableBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="text-center py-4">
-              <p class="text-danger mb-0">Failed to load concerts. Please try again later.</p>
-            </td>
-          </tr>
-        `;
-      }
-
-      // We don't need to fetch concerts via AJAX anymore since we're showing the message server-side
-      // This code is kept for reference but won't execute
-      console.log('Server-side rendering of concerts is now used instead of AJAX');
-    } else {
-      console.error('Concerts table body element not found!');
-    }
-  });
-</script>
-
-

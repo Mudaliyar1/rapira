@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+  <defs>
+    <filter id="jacketShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#3d1d16" flood-opacity="0.14"/>
+    </filter>
+    <linearGradient id="jacketDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2928"/>
+      <stop offset="50%" stop-color="#1B1716"/>
+      <stop offset="100%" stop-color="#0E0C0B"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#jacketShadow)">
+    <!-- Main Body & Sleeves -->
+    <path d="M125 90 L65 180 Q60 205 85 205 L110 150 L110 335 Q110 350 125 350 L275 350 Q290 350 290 335 L290 150 L315 205 Q340 205 335 180 L275 90 Q240 70 200 70 Q160 70 125 90 Z" fill="url(#jacketDark)"/>
+    
+    <!-- Crimson Shoulder / Sleeve Stripes -->
+    <path d="M125 90 L85 150 L100 160 L135 110 Z" fill="#9F190E"/>
+    <path d="M275 90 L315 150 L300 160 L265 110 Z" fill="#9F190E"/>
+    
+    <!-- Ribbed Collar -->
+    <path d="M150 75 Q200 100 250 75 Q235 65 200 65 Q165 65 150 75 Z" fill="#9F190E" stroke="#12100F" stroke-width="2"/>
+    
+    <!-- Zipper -->
+    <line x1="200" y1="85" x2="200" y2="340" stroke="#EAC8B7" stroke-width="3" stroke-dasharray="3 1"/>
+    
+    <!-- Chest Patch -->
+    <rect x="145" y="145" width="45" height="28" rx="6" fill="#9F190E"/>
+    <text x="167" y="163" font-family="'Titan One', sans-serif" font-size="10" fill="#FFFFFF" text-anchor="middle">RAPIRA</text>
+
+    <!-- Side Pockets -->
+    <line x1="140" y1="260" x2="165" y2="285" stroke="#9F190E" stroke-width="4" stroke-linecap="round"/>
+    <line x1="260" y1="260" x2="235" y2="285" stroke="#9F190E" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Ribbed Hem -->
+    <rect x="115" y="335" width="170" height="15" rx="3" fill="#9F190E"/>
+  </g>
+</svg>

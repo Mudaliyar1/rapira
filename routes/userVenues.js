@@ -70,7 +70,7 @@ router.get('/', isLoggedIn, async (req, res) => {
     }));
 
     res.render('users/venues/index', {
-      layout: 'layouts/venue',
+      layout: 'layouts/main',
       title: 'My Registered Venues',
       currentPath: '/users/venues',
       currentUser: req.session.user,

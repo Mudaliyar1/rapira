@@ -1,52 +1,98 @@
 <%- contentFor('title') %>Login - Rapira
 
 <%- contentFor('body') %>
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-      <div class="glass-card-dark shadow-sm">
-        <div class="card-body p-4 p-md-5">
-          <div class="text-center mb-4">
-            <h2 class="fw-bold">Welcome Back</h2>
-            <p class="text-muted">Sign in to your Rapira account</p>
+<div class="rapira-auth-page">
+  <!-- Subtle Topographic Contour Art -->
+  <div class="rapira-auth-bg-art" aria-hidden="true">
+    <svg viewBox="0 0 1440 900" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M-100 220 C 140 260, 210 460, -40 700" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.38"/>
+      <path d="M-150 140 C 210 190, 280 430, -70 770" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.28"/>
+      <path d="M-200 60 C 280 120, 350 400, -90 840" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.18"/>
+      <path d="M 1540 260 C 1290 320, 1220 540, 1480 790" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.38"/>
+      <path d="M 1590 190 C 1220 250, 1160 520, 1530 860" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.28"/>
+      <path d="M 1640 110 C 1150 180, 1090 500, 1570 930" stroke="#EAC8B7" stroke-width="1.2" stroke-opacity="0.18"/>
+    </svg>
+  </div>
+
+  <div class="rapira-auth-layout-container">
+    <!-- Left: Authentic Rotating Culture Stamp -->
+    <div class="rapira-auth-side-stamp d-none d-lg-block">
+      <div class="rh-auth-stamp-wrap" title="RAPIRA Culture Stamp">
+        <svg viewBox="0 0 160 160" width="100%" height="100%" class="rh-stamp-svg">
+          <defs>
+            <path id="rhCirclePathLogin" d="M 80, 80 m -60, 0 a 60,60 0 1,1 120,0 a 60,60 0 1,1 -120,0" />
+          </defs>
+          <circle cx="80" cy="80" r="74" fill="none" stroke="#9F190E" stroke-width="1.2" stroke-opacity="0.5" stroke-dasharray="3,2" />
+          <circle cx="80" cy="80" r="50" fill="none" stroke="#9F190E" stroke-width="1" stroke-opacity="0.4" />
+          <text class="rh-stamp-text">
+            <textPath href="#rhCirclePathLogin" startOffset="0%">
+              INDIAN ARTISTS • LIVE EXP • RAPIRA • CULTURE • 
+            </textPath>
+          </text>
+          <!-- 4-point star in center -->
+          <path d="M80 62 L83.5 76.5 L98 80 L83.5 83.5 L80 98 L76.5 83.5 L62 80 L76.5 76.5 Z" fill="#9F190E" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Center: Authentic Redesigned Login Card -->
+    <div class="rapira-auth-card">
+      <div class="rapira-auth-header">
+        <h1 class="rapira-auth-title">Welcome Back</h1>
+        <p class="rapira-auth-subtitle">Sign in to your Rapira account</p>
+      </div>
+
+      <form action="/auth/login" method="POST">
+        <!-- Email Field -->
+        <div class="rapira-auth-field">
+          <label for="email" class="rapira-auth-label">Email Address</label>
+          <div class="rapira-auth-input-wrap">
+            <span class="rapira-auth-input-icon"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="rapira-auth-input" id="email" name="email" placeholder="Enter your email" required autocomplete="email">
           </div>
-
-          <form action="/auth/login" method="POST">
-            <div class="mb-3">
-              <label for="email" class="form-label">Email Address</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
-              </div>
-            </div>
-
-            <div class="mb-4">
-              <label for="password" class="form-label">Password</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
-                <button class="btn btn-outline-secondary password-toggle-btn" type="button" data-target="password">
-                  <i class="bi bi-eye"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                <label class="form-check-label" for="remember">Remember me</label>
-              </div>
-              <a href="/auth/forgot-password" class="text-decoration-none">Forgot password?</a>
-            </div>
-
-
-            <button type="submit" class="btn btn-primary w-100 py-2 mb-4">Sign In</button>
-
-            <div class="text-center">
-              <p class="mb-0">Don't have an account? <a href="/auth/register" class="text-decoration-none">Sign up</a></p>
-            </div>
-          </form>
         </div>
+
+        <!-- Password Field -->
+        <div class="rapira-auth-field">
+          <label for="password" class="rapira-auth-label">Password</label>
+          <div class="rapira-auth-input-wrap">
+            <span class="rapira-auth-input-icon"><i class="bi bi-lock"></i></span>
+            <input type="password" class="rapira-auth-input" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+            <button class="btn rapira-auth-toggle-btn password-toggle-btn" type="button" data-target="password" aria-label="Show password">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me and Forgot Password -->
+        <div class="rapira-auth-row-options">
+          <label class="rapira-auth-check-label" for="remember">
+            <input class="rapira-auth-checkbox" type="checkbox" id="remember" name="remember">
+            <span>Remember me</span>
+          </label>
+          <a href="/auth/forgot-password" class="rapira-auth-forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="rapira-auth-btn-primary">Sign In</button>
+
+        <!-- Footer Link -->
+        <p class="rapira-auth-footer-text">
+          Don't have an account?<a href="/auth/register" class="rapira-auth-accent-link">Sign up</a>
+        </p>
+      </form>
+    </div>
+
+    <!-- Right: Editorial Script Accent -->
+    <div class="rapira-auth-side-script d-none d-lg-block">
+      <div class="rh-auth-script-inner">
+        <span>Artists</span>
+        <span>Fans</span>
+        <span>Events</span>
+        <span>Community</span>
+        <svg class="rh-script-underline" viewBox="0 0 130 18" width="105" height="15" aria-hidden="true">
+          <path d="M 4 8 Q 65 18 126 4" fill="none" stroke="#9F190E" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
       </div>
     </div>
   </div>

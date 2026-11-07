@@ -1,8 +1,14 @@
+<%
+  const currentPath = typeof path !== 'undefined' && path ? path : '';
+  const isAdminPath = currentPath.startsWith('/admin');
+  const isCreamPageLayout = !isAdminPath;
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preload" href="/fonts/titan-one.woff2" as="font" type="font/woff2" crossorigin>
   <meta name="theme-color" content="#121212">
   <meta name="description" content="<%= typeof description !== 'undefined' ? description : (typeof siteSettings !== 'undefined' && siteSettings ? siteSettings.siteDescription : 'Rapira - The ultimate platform for Indian rap artists and fans to connect, discover, and experience the best of hip-hop culture.') %>">
   <title><%= typeof title !== 'undefined' ? title : (typeof siteSettings !== 'undefined' && siteSettings ? siteSettings.siteName : 'Rapira - Indian Rap Music Platform') %></title>
@@ -37,15 +43,16 @@
     }
   </style>
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20261107e">
+  <link rel="stylesheet" href="/css/homepage.css?v=20261107j">
   <link rel="stylesheet" href="/css/profile-images.css">
-  <link rel="stylesheet" href="/css/chatbot.css">
+  <link rel="stylesheet" href="/css/chatbot.css?v=20261105c">
   <link rel="stylesheet" href="/css/theme-animations.css">
   <!-- Loading Spinner CSS -->
   <link rel="stylesheet" href="/css/loading-spinner.css">
 
   <!-- Dynamic Theme Colors -->
-  <% if (typeof themeSettings !== 'undefined' && themeSettings) { %>
+  <% if (!isCreamPageLayout && typeof themeSettings !== 'undefined' && themeSettings) { %>
   <style>
     :root {
       --primary: <%= themeSettings.primaryColor %> !important;
@@ -96,10 +103,39 @@
   </style>
   <% } %>
 
+  <% if (isCreamPageLayout) { %>
+  <style>
+    body.rapira-cream-theme-page {
+      --primary: #9F190E !important;
+      --primary-dark: #8A1710 !important;
+      --primary-light: #B82519 !important;
+    }
+    body.rapira-cream-theme-page .btn-primary {
+      background-color: #9F190E !important;
+      border-color: #9F190E !important;
+      color: #FFFFFF !important;
+    }
+    body.rapira-cream-theme-page .btn-primary:hover,
+    body.rapira-cream-theme-page .btn-primary:focus {
+      background-color: #8A1710 !important;
+      border-color: #8A1710 !important;
+      color: #FFFFFF !important;
+    }
+    body.rapira-cream-theme-page .text-primary {
+      color: #9F190E !important;
+    }
+    body.rapira-cream-theme-page .bg-primary {
+      background-color: #9F190E !important;
+    }
+  </style>
+  <% } %>
+
   <!-- Favicon -->
   <link rel="icon" href="<%= typeof siteSettings !== 'undefined' && siteSettings && siteSettings.favicon ? siteSettings.favicon : '/images/favicon.ico' %>" type="image/x-icon">
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <%- typeof style !== 'undefined' ? style : '' %>
 
 
 
@@ -108,7 +144,7 @@
     <%- extraScripts %>
   <% } %>
 </head>
-<body data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? (currentUser._id || currentUser.id) : '' %>">
+<body class="<%= isCreamPageLayout ? 'rapira-cream-theme-page' : '' %>" data-user-id="<%= typeof currentUser !== 'undefined' && currentUser ? (currentUser._id || currentUser.id) : '' %>">
   <!-- Header -->
   <%- include('../partials/navbar') %>
 
@@ -116,7 +152,7 @@
   <%- include('../partials/messages') %>
 
   <!-- Main Content -->
-  <main class="container-fluid py-4">
+  <main class="container-fluid <%= isCreamPageLayout ? 'p-0' : 'py-4' %>">
     <%- body %>
   </main>
 
@@ -158,7 +194,7 @@
   <script src="/js/loading-spinner.js"></script>
   <script src="/js/media-player.js"></script>
   <script src="/js/profile-image-handler.js"></script>
-  <script src="/js/chatbot.js"></script></script>
+  <script src="/js/chatbot.js?v=20261105c"></script>
   <script src="/scripts/stories.js"></script>
   <script src="/scripts/post-viewer.js?v=20260327b"></script>
   <script src="/js/button-sound.js"></script>
@@ -290,5 +326,8 @@
   
   <!-- Account Monitor (Real-time Deletion Detection) -->
   <script src="/js/account-monitor.js"></script>
+
+  <!-- Extracted View Scripts -->
+  <%- typeof script !== 'undefined' ? script : '' %>
 </body>
 </html>

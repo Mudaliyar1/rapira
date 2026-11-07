@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 380" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Shadow filter -->
+    <filter id="heroShadow" x="-10%" y="-10%" width="130%" height="130%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#2a140f" flood-opacity="0.16"/>
+    </filter>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+    </filter>
+    <!-- Cap Gradients -->
+    <linearGradient id="capCrimson" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B82216"/>
+      <stop offset="50%" stop-color="#9F190E"/>
+      <stop offset="100%" stop-color="#6F0C05"/>
+    </linearGradient>
+    <linearGradient id="capBrim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9F190E"/>
+      <stop offset="100%" stop-color="#550A04"/>
+    </linearGradient>
+    <!-- Hoodie Gradients -->
+    <linearGradient id="hoodieDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2928"/>
+      <stop offset="50%" stop-color="#1C1817"/>
+      <stop offset="100%" stop-color="#0E0C0B"/>
+    </linearGradient>
+    <linearGradient id="hoodieFold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3A3432"/>
+      <stop offset="100%" stop-color="#151211"/>
+    </linearGradient>
+    <!-- Tote Gradients -->
+    <linearGradient id="toteCanvas" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDF4EA"/>
+      <stop offset="50%" stop-color="#F4E6D6"/>
+      <stop offset="100%" stop-color="#E2D0BE"/>
+    </linearGradient>
+    <linearGradient id="toteStrap" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#EAD9C6"/>
+      <stop offset="100%" stop-color="#D5C0A9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Ground Shadows -->
+  <ellipse cx="270" cy="345" rx="230" ry="24" fill="#6A4638" opacity="0.12" filter="url(#softGlow)"/>
+  <ellipse cx="230" cy="340" rx="130" ry="18" fill="#42251B" opacity="0.18" filter="url(#softGlow)"/>
+  <ellipse cx="105" cy="345" rx="80" ry="14" fill="#3D1A12" opacity="0.22" filter="url(#softGlow)"/>
+
+  <!-- ==================== HOODIE (Back / Center) ==================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Shoulders & Body -->
+    <path d="M140 135 L190 75 Q235 60 280 75 L330 135 L345 285 Q345 320 310 320 L160 320 Q125 320 125 285 Z" fill="url(#hoodieDark)"/>
+    <!-- Arms -->
+    <path d="M140 135 L100 240 Q105 265 125 260 L145 200 Z" fill="#1C1817"/>
+    <path d="M330 135 L370 240 Q365 265 345 260 L325 200 Z" fill="#1C1817"/>
+    <!-- Hood -->
+    <path d="M185 85 Q235 40 285 85 Q255 120 235 120 Q215 120 185 85 Z" fill="url(#hoodieFold)" stroke="#110F0E" stroke-width="2"/>
+    <!-- Hood Drawstrings -->
+    <path d="M220 122 Q218 160 216 185" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+    <path d="M250 122 Q252 160 254 185" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+    <!-- Front Pocket -->
+    <path d="M175 250 L195 215 L275 215 L295 250 Q295 295 275 295 L195 295 Q175 295 175 250 Z" fill="#151312" stroke="#2D2928" stroke-width="1.5"/>
+    <!-- Ribbed Hem -->
+    <rect x="155" y="305" width="160" height="15" rx="4" fill="#151312"/>
+    
+    <!-- RAPIRA Logo on Hoodie -->
+    <text x="235" y="165" font-family="'Titan One', 'Montserrat', Arial Black, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" text-anchor="middle" letter-spacing="3">RAPIRA</text>
+    <!-- Mini Soundwave below logo -->
+    <g transform="translate(205, 175)">
+      <rect x="0" y="4" width="3" height="8" rx="1.5" fill="#9F190E"/>
+      <rect x="6" y="2" width="3" height="12" rx="1.5" fill="#B82216"/>
+      <rect x="12" y="0" width="3" height="16" rx="1.5" fill="#EAC8B7"/>
+      <rect x="18" y="3" width="3" height="10" rx="1.5" fill="#FFFFFF"/>
+      <rect x="24" y="0" width="3" height="16" rx="1.5" fill="#EAC8B7"/>
+      <rect x="30" y="2" width="3" height="12" rx="1.5" fill="#B82216"/>
+      <rect x="36" y="4" width="3" height="8" rx="1.5" fill="#9F190E"/>
+    </g>
+  </g>
+
+  <!-- ==================== TOTE BAG (Right) ==================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Handles -->
+    <path d="M400 130 C400 60 445 60 445 130" stroke="url(#toteStrap)" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <path d="M385 130 C385 70 430 70 430 130" stroke="#C9B6A1" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.7"/>
+    <!-- Bag Body -->
+    <path d="M355 130 L475 130 Q485 130 488 145 L500 320 Q502 335 485 335 L350 335 Q333 335 335 320 L347 145 Q350 130 355 130 Z" fill="url(#toteCanvas)" stroke="#DFCABE" stroke-width="1.5"/>
+    <!-- Canvas Seam lines -->
+    <line x1="395" y1="130" x2="390" y2="180" stroke="#D3BFA9" stroke-width="3" stroke-dasharray="2 3"/>
+    <line x1="440" y1="130" x2="445" y2="180" stroke="#D3BFA9" stroke-width="3" stroke-dasharray="2 3"/>
+    <!-- Tote RAPIRA text -->
+    <text x="420" y="235" font-family="'Titan One', 'Montserrat', Arial Black, sans-serif" font-weight="900" font-size="22" fill="#9F190E" text-anchor="middle" letter-spacing="2">RAPIRA</text>
+    <rect x="390" y="248" width="60" height="2.5" rx="1.2" fill="#9F190E" opacity="0.4"/>
+  </g>
+
+  <!-- ==================== CAP (Left / Front) ==================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Crown of Cap -->
+    <path d="M55 275 C55 210 100 180 160 185 C195 188 215 220 220 275 Z" fill="url(#capCrimson)"/>
+    <!-- Cap Panel Seam lines -->
+    <path d="M145 185 Q135 230 130 275" stroke="#7A0F07" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <path d="M110 190 Q90 230 75 275" stroke="#7A0F07" stroke-width="1.5" stroke-dasharray="3 2"/>
+    <!-- Top Button -->
+    <ellipse cx="148" cy="186" rx="6" ry="4" fill="#6F0C05"/>
+    
+    <!-- Visor / Brim -->
+    <path d="M40 280 C35 295 65 315 110 325 C160 335 215 325 230 295 C220 280 180 270 120 272 C70 274 45 275 40 280 Z" fill="url(#capBrim)"/>
+    <path d="M48 290 C75 310 135 322 195 308" stroke="#420602" stroke-width="2" fill="none"/>
+
+    <!-- Embroidered RAPIRA text on Cap -->
+    <g transform="rotate(-6 135 235)">
+      <text x="135" y="242" font-family="'Titan One', 'Montserrat', Arial Black, sans-serif" font-weight="900" font-size="17" fill="#FFFFFF" text-anchor="middle" letter-spacing="2.5" filter="drop-shadow(0 2px 3px rgba(0,0,0,0.5))">RAPIRA</text>
+    </g>
+  </g>
+</svg>
+

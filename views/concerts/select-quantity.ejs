@@ -1,105 +1,435 @@
-<section class="py-5" style="min-height: auto;">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-md-7 col-lg-6">
-        <div class="glass-card-dark border-gradient">
-          <div class="border-gradient-content">
-            <div class="card-body p-3 p-md-4">
-              <!-- Back Button -->
-              <a href="/concerts/<%= concert._id %>" class="btn btn-outline-secondary btn-sm mb-3">
-                <i class="bi bi-arrow-left me-1"></i>Back
-              </a>
+<%
+  // Helper for IST date formatting
+  function toISTDateString(dateString) {
+    const date = new Date(dateString);
+    const options = { 
+      weekday: 'short',
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      timeZone: 'Asia/Kolkata'
+    };
+    return date.toLocaleDateString('en-IN', options);
+  }
 
-              <!-- Concert Info - Compact -->
-              <div class="text-center mb-3">
-                <h4 class="gradient-text-purple mb-2 fw-bold"><%= concert.title %></h4>
-                <p class="text-muted small mb-1">
-                  <%
-                    function toISTDateString(dateString) {
-                      const date = new Date(dateString);
-                      const options = { 
-                        weekday: 'short',
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric',
-                        timeZone: 'Asia/Kolkata'
-                      };
-                      return date.toLocaleDateString('en-IN', options);
-                    }
-                    
-                    let displayTime = concert.time || '';
-                    const timeMatch = displayTime.match(/^(\d+):(\d+)/);
-                    if (timeMatch) {
-                      let hours = parseInt(timeMatch[1]);
-                      let minutes = timeMatch[2];
-                      let amPm = hours >= 12 ? 'PM' : 'AM';
-                      let hour12 = hours % 12;
-                      if (hour12 === 0) hour12 = 12;
-                      displayTime = `${hour12}:${minutes} ${amPm}`;
-                    }
-                  %>
-                  <i class="bi bi-calendar3 me-1"></i> <%= toISTDateString(concert.date) %> • <%= displayTime %>
-                </p>
-                <p class="text-muted small mb-0">
-                  <i class="bi bi-geo-alt me-1"></i> <%= concert.venue && concert.venue.name ? concert.venue.name : concert.venue %>
-                </p>
-              </div>
+  // Format 12-hour time
+  let displayTime = concert.time || '';
+  const timeMatch = displayTime.match(/^(\d+):(\d+)/);
+  if (timeMatch) {
+    let hours = parseInt(timeMatch[1]);
+    let minutes = timeMatch[2];
+    let amPm = hours >= 12 ? 'PM' : 'AM';
+    let hour12 = hours % 12;
+    if (hour12 === 0) hour12 = 12;
+    displayTime = `${hour12}:${minutes} ${amPm}`;
+  }
 
-              <div class="d-flex justify-content-between align-items-center mb-3 small">
-                <div>
-                  <% if (concert.isPaid) { %>
-                    <span class="text-white">₹<%= concert.price %>/ticket</span>
-                  <% } else { %>
-                    <span class="gradient-text-blue fw-bold">FREE</span>
-                  <% } %>
-                </div>
-                <% if (ticketsRemaining !== 'Unlimited') { %>
-                  <span class="text-warning"><%= ticketsRemaining %> left</span>
-                <% } %>
-              </div>
+  const venueName = concert.venue && concert.venue.name ? concert.venue.name : (concert.venue || 'RAPIRA Arena');
+  const artistName = concert.artist && concert.artist.user ? concert.artist.user.name : (concert.artist ? concert.artist.name : 'Riona');
+  const city = concert.city || (concert.venue && concert.venue.city ? concert.venue.city : 'Ahmedabad');
+  const concertDateFormatted = toISTDateString(concert.date);
+  const maxAllowed = typeof maxTicketsPerBooking !== 'undefined' ? maxTicketsPerBooking : 10;
+  
+  const unitPrice = typeof discountedPrice !== 'undefined' ? discountedPrice : (concert.price || 0);
+  const hasCommission = (typeof ticketCommissionEnabled !== 'undefined' && ticketCommissionEnabled);
+  const commissionPct = (typeof ticketCommissionPercentage !== 'undefined') ? ticketCommissionPercentage : 0;
 
-              <hr class="border-secondary my-3">
+  // Seating configuration: read admin configured categories if available, else default to 1 category at unitPrice
+  let categoriesToRender = [];
+  if (concert.seatingCategories && Array.isArray(concert.seatingCategories) && concert.seatingCategories.length > 0) {
+    categoriesToRender = concert.seatingCategories;
+  } else {
+    categoriesToRender = [
+      {
+        name: 'General Admission',
+        price: unitPrice,
+        description: 'Standard comfortable auditorium seating with great stage visibility',
+        rows: ['A', 'B', 'C', 'D'],
+        seatsPerRow: 14,
+        soldSeats: ['A-03', 'A-04', 'B-01', 'B-02', 'B-06', 'B-07', 'C-04', 'C-05', 'D-08', 'D-09'],
+        bestsellerSeats: ['B-03', 'C-03']
+      }
+    ];
+  }
+%>
 
-              <!-- Quantity Selection -->
-              <div class="mb-3">
-                <p class="text-white small fw-bold mb-2">Select Tickets:</p>
-                <div class="row g-2 mb-3">
-                  <% for (let i = 1; i <= maxTicketsPerBooking; i++) { %>
-                    <div class="col-4 col-md-3">
-                      <a href="/concerts/<%= concert._id %>/book?quantity=<%= i %>" class="btn btn-outline-primary w-100 py-2 quantity-btn">
-                        <%= i %>
-                      </a>
-                    </div>
-                  <% } %>
-                </div>
-              </div>
+<link rel="stylesheet" href="/css/booking-selection.css?v=20261107b">
 
-              <% if (concert.isPaid) { %>
-                <div class="alert alert-info alert-sm py-2 px-3 mb-0" style="font-size: 12px;">
-                  <i class="bi bi-info-circle me-1"></i> Platform charges added at checkout
-                </div>
-              <% } %>
+<div 
+  class="rapira-booking-page" 
+  data-concert-id="<%= concert._id %>" 
+  data-unit-price="<%= unitPrice %>"
+  data-max-tickets="<%= Math.min(10, maxAllowed) %>"
+  data-commission-enabled="<%= hasCommission ? 'true' : 'false' %>"
+  data-commission-pct="<%= commissionPct %>"
+  data-initial-step="<%= (typeof initialStep !== 'undefined') ? initialStep : 'vehicle' %>"
+  data-initial-qty="<%= (typeof initialQuantity !== 'undefined') ? initialQuantity : 2 %>"
+  data-initial-vehicle="<%= (typeof initialVehicle !== 'undefined') ? initialVehicle : 'scooter' %>"
+>
+  <div class="container-xl">
+    <!-- Top Navigation & Concert Info Header -->
+    <header class="rapira-booking-header">
+      <div class="rapira-booking-header-inner">
+        <!-- Back Button: First Row on Mobile, Inline Left on Desktop -->
+        <div class="rapira-booking-back-row">
+          <a href="/concerts/<%= concert._id %>" class="rapira-booking-back-btn" title="Back to Concert Details" aria-label="Back to Concert Details">
+            <i class="bi bi-arrow-left"></i>
+          </a>
+        </div>
+
+        <!-- Event Details Wrap: Second Row on Mobile (Full Width), Inline Left on Desktop -->
+        <div class="rapira-booking-details-wrap">
+          <img src="<%= concert.posterImage || '/images/festival-hero.jpg' %>" alt="<%= concert.title %>" class="rapira-booking-thumb d-none d-md-block">
+          <div class="rapira-booking-text-wrap">
+            <h1 class="rapira-booking-concert-title"><%= concert.title %></h1>
+            
+            <div class="rapira-booking-concert-meta">
+              <span class="rapira-booking-meta-artist">By <%= artistName %></span>
+              
+              <span class="rapira-meta-bullet-desktop d-none d-md-inline">•</span>
+              
+              <span class="rapira-booking-meta-location">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span><%= venueName %>, <%= city %></span>
+              </span>
+              
+              <span class="rapira-meta-bullet-desktop d-none d-md-inline">•</span>
+              
+              <span class="rapira-booking-meta-datetime">
+                <span class="rapira-meta-date"><i class="bi bi-calendar3"></i> <%= concertDateFormatted %></span>
+                <span class="rapira-meta-sep">·</span>
+                <span class="rapira-meta-time"><i class="bi bi-clock-fill"></i> <%= displayTime %></span>
+              </span>
             </div>
           </div>
         </div>
+
+        <!-- Right: 3-Step Breadcrumb / Stepper (Desktop Only) -->
+        <nav class="rapira-booking-stepper d-none d-md-flex" aria-label="Booking steps">
+          <div class="rapira-stepper-step is-clickable active" id="stepperStep1" title="Go to vehicle & quantity selection">
+            <span class="rapira-stepper-num">1</span>
+            <span class="rapira-stepper-label">Vehicle & Tickets</span>
+          </div>
+          <div class="rapira-stepper-line"></div>
+          <div class="rapira-stepper-step" id="stepperStep2">
+            <span class="rapira-stepper-num">2</span>
+            <span class="rapira-stepper-label">Select Seats</span>
+          </div>
+          <div class="rapira-stepper-line"></div>
+          <div class="rapira-stepper-step" id="stepperStep3">
+            <span class="rapira-stepper-num">3</span>
+            <span class="rapira-stepper-label">Checkout</span>
+          </div>
+        </nav>
       </div>
-    </div>
+    </header>
+
+    <!-- ========================================================
+         STEP 1: VEHICLE SELECTION SCREEN
+         Single Source of Truth: Section 3 Requirements & Approved RAPIRA Identity
+         ======================================================== -->
+    <section class="rapira-vehicle-selection-card" id="stepVehicleSection" aria-label="Vehicle & Ticket Quantity Selection">
+      <div class="rapira-vehicle-card-header">
+        <h2 class="rapira-vehicle-heading">How are you arriving?</h2>
+        <p class="rapira-vehicle-subtitle">Choose your vehicle type to set ticket count, or customize tickets below.</p>
+      </div>
+
+      <!-- Five Vehicle Selection Cards in Clean Responsive Grid -->
+      <div class="rapira-vehicle-grid" role="radiogroup" aria-label="Arriving vehicle choices">
+        <!-- 1. Cycle -->
+        <button type="button" class="rapira-vehicle-btn" data-vehicle="cycle" data-qty="1" role="radio" aria-checked="false" aria-label="Cycle - 1 Ticket">
+          <span class="rapira-vehicle-check-badge"><i class="bi bi-check-lg"></i></span>
+          <img src="/images/booking/bicycle.svg" alt="Cycle" class="rapira-vehicle-icon">
+          <span class="rapira-vehicle-title">Cycle</span>
+          <span class="rapira-vehicle-ticket-badge">1 Ticket</span>
+        </button>
+
+        <!-- 2. Scooter (Default Selected) -->
+        <button type="button" class="rapira-vehicle-btn active" data-vehicle="scooter" data-qty="2" role="radio" aria-checked="true" aria-label="Scooter - 2 Tickets">
+          <span class="rapira-vehicle-check-badge"><i class="bi bi-check-lg"></i></span>
+          <img src="/images/booking/scooter.svg" alt="Scooter" class="rapira-vehicle-icon">
+          <span class="rapira-vehicle-title">Scooter</span>
+          <span class="rapira-vehicle-ticket-badge">2 Tickets</span>
+        </button>
+
+        <!-- 3. Rickshaw -->
+        <button type="button" class="rapira-vehicle-btn" data-vehicle="rickshaw" data-qty="3" role="radio" aria-checked="false" aria-label="Rickshaw - 3 Tickets">
+          <span class="rapira-vehicle-check-badge"><i class="bi bi-check-lg"></i></span>
+          <img src="/images/booking/auto-rickshaw.svg" alt="Rickshaw" class="rapira-vehicle-icon">
+          <span class="rapira-vehicle-title">Rickshaw</span>
+          <span class="rapira-vehicle-ticket-badge">3 Tickets</span>
+        </button>
+
+        <!-- 4. Car / Cab -->
+        <button type="button" class="rapira-vehicle-btn" data-vehicle="car" data-qty="4" role="radio" aria-checked="false" aria-label="Car or Cab - 4 Tickets">
+          <span class="rapira-vehicle-check-badge"><i class="bi bi-check-lg"></i></span>
+          <img src="/images/booking/car.svg" alt="Car / Cab" class="rapira-vehicle-icon">
+          <span class="rapira-vehicle-title">Car / Cab</span>
+          <span class="rapira-vehicle-ticket-badge">4 Tickets</span>
+        </button>
+
+        <!-- 5. Bus -->
+        <button type="button" class="rapira-vehicle-btn" data-vehicle="bus" data-qty="5" role="radio" aria-checked="false" aria-label="Bus - 5 to 10 Tickets">
+          <span class="rapira-vehicle-check-badge"><i class="bi bi-check-lg"></i></span>
+          <img src="/images/booking/bus.svg" alt="Bus" class="rapira-vehicle-icon">
+          <span class="rapira-vehicle-title">Bus</span>
+          <span class="rapira-vehicle-ticket-badge">5-10 Tickets</span>
+        </button>
+      </div>
+
+      <!-- Ticket Quantity Selector Directly Below Vehicle Cards -->
+      <div class="rapira-vehicle-qty-strip">
+        <div class="rapira-qty-label-wrap">
+          <i class="bi bi-ticket-perforated-fill text-danger fs-5"></i>
+          <div>
+            <h3 class="rapira-qty-label">Selected Ticket Quantity</h3>
+            <span class="rapira-qty-sublabel">Synced with vehicle type: <strong id="vehicleSyncName" class="text-danger">Scooter</strong></span>
+          </div>
+        </div>
+
+        <div class="rapira-stepper-box" aria-label="Adjust ticket quantity">
+          <button type="button" class="rapira-stepper-btn" id="vehicleStepperMinus" aria-label="Decrease tickets">−</button>
+          <span class="rapira-stepper-num-val" id="vehicleStepperVal">2</span>
+          <button type="button" class="rapira-stepper-btn" id="vehicleStepperPlus" aria-label="Increase tickets">+</button>
+        </div>
+      </div>
+
+      <!-- Action Button: Continue to Seat Selection -->
+      <div class="rapira-vehicle-continue-wrap">
+        <button type="button" class="rapira-btn-primary-action" id="continueToSeatsBtn">
+          <span>Continue to Seat Selection</span>
+          <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         STEP 2: SEAT SELECTION SCREEN
+         Single Source of Truth: Approved Reference media_1793943955695_32f0bc54.jpg
+         ======================================================== -->
+    <section class="rapira-seat-selection-card-wrap" id="stepSeatsSection" style="display: none;" aria-label="Seat Selection">
+      <div class="row g-4">
+        <!-- Left Column: Interactive Seat Map Card -->
+        <div class="col-lg-8">
+          <div class="rapira-seat-map-card">
+            <!-- Card Header -->
+            <div class="rapira-seat-map-card-header">
+              <div class="rapira-seat-map-title-wrap">
+                <div class="rapira-seat-map-icon-box">
+                  <i class="bi bi-person-workspace"></i>
+                </div>
+                <div>
+                  <h2 class="rapira-seat-map-title">Select your seats</h2>
+                  <p class="rapira-seat-map-subtitle">Choose your preferred seats from the layout below.</p>
+                </div>
+              </div>
+
+              <!-- Switch Vehicle / Quantity Action -->
+              <button type="button" class="rapira-change-step-btn" id="backToVehicleBtn" title="Change vehicle or ticket quantity">
+                <i class="bi bi-sliders"></i>
+                <span>Change Vehicle</span>
+              </button>
+            </div>
+
+            <!-- Floating Zoom Toolbar -->
+            <div class="rapira-zoom-toolbar" aria-label="Seat map zoom controls">
+              <button type="button" class="rapira-zoom-btn" id="zoomInBtn" title="Zoom in" aria-label="Zoom in">+</button>
+              <button type="button" class="rapira-zoom-btn" id="zoomOutBtn" title="Zoom out" aria-label="Zoom out">−</button>
+              <button type="button" class="rapira-zoom-btn" id="zoomResetBtn" title="Fit to screen" aria-label="Fit to screen">
+                <i class="bi bi-arrows-fullscreen"></i>
+              </button>
+            </div>
+
+            <!-- Curved Stage Indicator -->
+            <div class="rapira-stage-wrap">
+              <div class="rapira-stage-curve">
+                <span class="rapira-stage-text">S T A G E</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Admin-Configured Seating Categories Viewport -->
+            <div class="rapira-seat-map-viewport" id="seatMapViewport">
+              <div class="rapira-seat-map-content" id="seatMapContent">
+
+                <% categoriesToRender.forEach((category, catIdx) => { 
+                  const catRows = category.rows || ['A', 'B', 'C'];
+                  const seatsPerRow = category.seatsPerRow || 14;
+                  const soldSeats = category.soldSeats || [];
+                  const bestsellerSeats = category.bestsellerSeats || [];
+                  const catPriceFormatted = Number(category.price || unitPrice).toFixed(2);
+                %>
+                  <div class="rapira-seat-category-section" data-cat-name="<%= category.name %>" data-cat-price="<%= category.price || unitPrice %>">
+                    <div class="rapira-category-header">
+                      <span><%= category.name %> — <span class="rapira-category-price">₹<%= catPriceFormatted %></span></span>
+                      <% if (category.description) { %>
+                        <i class="bi bi-info-circle rapira-category-info-icon" title="<%= category.description %>" data-bs-toggle="tooltip"></i>
+                      <% } %>
+                    </div>
+
+                    <% catRows.forEach(rowLetter => { %>
+                      <div class="rapira-seat-row" data-row="<%= rowLetter %>">
+                        <span class="rapira-row-label"><%= rowLetter %></span>
+
+                        <!-- Left Block of Seats (Seats 01 to 05) -->
+                        <div class="rapira-seat-block">
+                          <% for (let seatNum = 1; seatNum <= Math.min(5, seatsPerRow); seatNum++) { 
+                            const seatNumStr = seatNum < 10 ? '0' + seatNum : '' + seatNum;
+                            const seatId = `${rowLetter}-${seatNumStr}`;
+                            const isSold = soldSeats.includes(seatId);
+                            const isBestseller = bestsellerSeats.includes(seatId);
+                          %>
+                            <button 
+                              type="button" 
+                              class="rapira-seat <%= isSold ? 'is-sold' : '' %> <%= isBestseller ? 'is-bestseller' : '' %>"
+                              data-seat-id="<%= seatId %>" 
+                              data-price="<%= category.price || unitPrice %>" 
+                              data-cat="<%= category.name %>"
+                              <%= isSold ? 'disabled aria-disabled="true"' : '' %>
+                              title="<%= isSold ? `${seatId} (Sold)` : `${seatId} • ${category.name} • ₹${catPriceFormatted}` %>"
+                            ><%= seatNumStr %></button>
+                          <% } %>
+                        </div>
+
+                        <!-- Center Aisle Gap -->
+                        <% if (seatsPerRow > 5) { %>
+                          <div class="rapira-seat-aisle"></div>
+
+                          <!-- Right Block of Seats (Seats 06 to seatsPerRow) -->
+                          <div class="rapira-seat-block">
+                            <% for (let seatNum = 6; seatNum <= seatsPerRow; seatNum++) { 
+                              const seatNumStr = seatNum < 10 ? '0' + seatNum : '' + seatNum;
+                              const seatId = `${rowLetter}-${seatNumStr}`;
+                              const isSold = soldSeats.includes(seatId);
+                              const isBestseller = bestsellerSeats.includes(seatId);
+                            %>
+                              <button 
+                                type="button" 
+                                class="rapira-seat <%= isSold ? 'is-sold' : '' %> <%= isBestseller ? 'is-bestseller' : '' %>"
+                                data-seat-id="<%= seatId %>" 
+                                data-price="<%= category.price || unitPrice %>" 
+                                data-cat="<%= category.name %>"
+                                <%= isSold ? 'disabled aria-disabled="true"' : '' %>
+                                title="<%= isSold ? `${seatId} (Sold)` : `${seatId} • ${category.name} • ₹${catPriceFormatted}` %>"
+                              ><%= seatNumStr %></button>
+                            <% } %>
+                          </div>
+                        <% } %>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% }); %>
+
+              </div>
+            </div>
+
+            <!-- Bottom Legend Strip (Cream background, NOT black!) -->
+            <div class="rapira-seat-legend" aria-label="Seat Map Legend">
+              <div class="rapira-legend-item">
+                <span class="rapira-legend-box box-available"></span>
+                <span>Available</span>
+              </div>
+              <div class="rapira-legend-item">
+                <span class="rapira-legend-box box-sold"></span>
+                <span>Sold</span>
+              </div>
+              <div class="rapira-legend-item">
+                <span class="rapira-legend-box box-bestseller"></span>
+                <span>Bestseller</span>
+              </div>
+              <div class="rapira-legend-item">
+                <span class="rapira-legend-box box-selected"></span>
+                <span>Selected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Your Selection Summary Card -->
+        <div class="col-lg-4">
+          <aside class="rapira-selection-card" aria-label="Selected Seats Summary">
+            <h2 class="rapira-selection-title">Your Selection</h2>
+
+            <!-- Tickets & Vehicle Row -->
+            <div class="rapira-selection-stat-row">
+              <div>
+                <span class="rapira-selection-stat-label">Tickets</span>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                  <div class="rapira-stepper-box">
+                    <button type="button" class="rapira-stepper-btn" id="sideStepperMinus" aria-label="Decrease quantity">−</button>
+                    <span class="rapira-stepper-num-val" id="sideStepperVal">2</span>
+                    <button type="button" class="rapira-stepper-btn" id="sideStepperPlus" aria-label="Increase quantity">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-end">
+                <span class="rapira-selection-stat-label">Vehicle</span>
+                <div class="rapira-selection-vehicle-wrap mt-1">
+                  <img src="/images/booking/scooter.svg" alt="Scooter" id="sideVehicleIcon">
+                  <span id="sideVehicleName">Scooter</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selected Seats Chips List -->
+            <div>
+              <span class="rapira-selection-stat-label">Selected Seats (<span id="seatCountLabel">0</span>/<span id="seatTargetLabel">2</span>)</span>
+              <div class="rapira-selected-seats-badge-wrap" id="selectedSeatsContainer">
+                <span class="text-muted small" style="align-self: center;">No seats selected yet. Please pick your seats.</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Price Breakdown (Computed from actual concert.price!) -->
+            <div class="rapira-selection-price-divider"></div>
+
+            <div class="rapira-price-row">
+              <span id="summaryCategoryBreakdown">Subtotal</span>
+              <span id="summarySubtotalVal">₹0.00</span>
+            </div>
+
+            <% if (hasCommission) { %>
+              <div class="rapira-price-row" id="summaryCommissionRow">
+                <span>Platform Charges (<%= commissionPct %>%):</span>
+                <span id="summaryCommissionVal">₹0.00</span>
+              </div>
+            <% } %>
+
+            <div class="rapira-price-row total-row">
+              <span class="rapira-total-label">Total Amount:</span>
+              <span class="rapira-total-amount" id="summaryTotalAmount">₹0.00</span>
+            </div>
+
+            <!-- Proceed to Checkout Action -->
+            <button type="button" class="rapira-btn-primary-action rapira-checkout-btn" id="proceedCheckoutBtn" disabled>
+              <span>Proceed to Checkout</span>
+              <i class="bi bi-arrow-right"></i>
+            </button>
+
+            <p class="text-center small text-muted mt-3 mb-0" style="font-size: 0.78rem;">
+              <i class="bi bi-shield-check text-success me-1"></i> 100% Secure Checkout via Razorpay
+            </p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
   </div>
-</section>
 
-<style>
-.quantity-btn {
-  transition: all 0.3s ease;
-  border: 2px solid var(--primary);
-  cursor: pointer;
-  font-size: 14px;
-}
+  <!-- Mobile Sticky Bottom Checkout Bar (<992px) -->
+  <aside class="rapira-mobile-checkout-bar" id="mobileStickyBar" aria-label="Mobile Checkout Bar">
+    <div class="rapira-mobile-summary-col">
+      <span class="rapira-mobile-summary-vehicle">
+        <img src="/images/booking/scooter.svg" alt="Vehicle" id="mobileSummaryIcon" style="width: 20px; height: 16px; object-fit: contain;">
+        <span id="mobileSummaryCount">2 Seats</span>
+      </span>
+      <span class="rapira-mobile-summary-total" id="mobileSummaryTotal">₹0.00</span>
+    </div>
+    <button type="button" class="rapira-mobile-checkout-btn" id="mobileProceedCheckoutBtn" disabled>
+      <span>Proceed to Checkout</span>
+      <i class="bi bi-arrow-right"></i>
+    </button>
+  </aside>
+</div>
 
-.quantity-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  border-color: var(--secondary);
-  color: white !important;
-}
-</style>
+<!-- Interactive Client-side Controller -->
+<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(!window.__rapiraBookingLoaded){window.__rapiraBookingLoaded=true;const s=document.createElement('script');s.src='/js/booking-selection.js?v=20261107a';document.body.appendChild(s);}" style="display:none;" alt="">

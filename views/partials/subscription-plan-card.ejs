@@ -1,0 +1,115 @@
+<%
+  let durationLabel = '';
+  if (plan.durationUnit === 'days' && plan.duration >= 30) {
+    const months = Math.floor(plan.duration / 30);
+    durationLabel = `/ ${months} month${months > 1 ? 's' : ''}`;
+  } else {
+    durationLabel = `/ ${plan.duration} ${plan.durationUnit}`;
+  }
+
+  let benefitsList = [];
+  if (plan.benefits && plan.benefits.trim()) {
+    if (plan.benefits.includes('\n')) {
+      benefitsList = plan.benefits.split('\n').map(b => b.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+    } else if (plan.benefits.includes(',')) {
+      benefitsList = plan.benefits.split(',').map(b => b.trim().replace(/^[-*•]\s*/, '')).filter(Boolean);
+    } else {
+      benefitsList = [plan.benefits.trim().replace(/^[-*•]\s*/, '')];
+    }
+  }
+
+  // Highlight as popular only when existing admin data supports that designation
+  const isPopular = Boolean(plan.isPopular || plan.popular || plan.isFeatured || plan.featured);
+%>
+<div class="rh-sub-card">
+  <div class="rh-sub-card-header">
+    <% if (isPopular) { %>
+      <div class="rh-sub-popular-badge">
+        <span>★</span> Most Popular
+      </div>
+    <% } %>
+    <h3 class="rh-sub-plan-name"><%= plan.name %></h3>
+    <svg class="rh-sub-header-wave" viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,0 L400,0 L400,8 C280,20 120,20 0,8 Z" fill="#9F190E"/>
+    </svg>
+  </div>
+
+  <div class="rh-sub-card-body">
+    <div class="rh-sub-price-row">
+      <span class="rh-sub-currency">₹</span>
+      <span class="rh-sub-price"><%= plan.price %></span>
+      <span class="rh-sub-duration"><%= durationLabel %></span>
+    </div>
+
+    <% if (plan.description && plan.description.trim()) { %>
+      <p class="rh-sub-plan-desc"><%= plan.description.trim() %></p>
+    <% } %>
+
+    <div class="rh-sub-benefits-title">Benefits:</div>
+
+    <% if (benefitsList.length === 0) { %>
+      <div class="rh-sub-no-benefits">
+        <i class="bi bi-info-circle me-1"></i> Standard plan benefits included.
+      </div>
+    <% } else { %>
+      <ul class="rh-sub-benefits-list">
+        <% benefitsList.forEach(benefit => { %>
+          <li class="rh-sub-benefit-item">
+            <span class="rh-sub-check-icon" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </span>
+            <span class="rh-sub-benefit-text"><%= benefit %></span>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+
+    <% if ((plan.duration && plan.durationUnit) || plan.discountPercentage > 0) { %>
+      <ul class="rh-sub-benefits-list <%= benefitsList.length === 0 ? '' : 'mt-2' %>">
+        <% if (plan.duration && plan.durationUnit) { %>
+          <li class="rh-sub-benefit-item">
+            <span class="rh-sub-check-icon" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </span>
+            <span class="rh-sub-benefit-text"><%= plan.duration %> <%= plan.durationUnit %> of access</span>
+          </li>
+        <% } %>
+
+        <% if (plan.discountPercentage > 0) { %>
+          <li class="rh-sub-benefit-item">
+            <span class="rh-sub-check-icon" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </span>
+            <span class="rh-sub-benefit-text"><strong><%= plan.discountPercentage %>% discount</strong> on ticket purchases</span>
+          </li>
+        <% } %>
+      </ul>
+    <% } %>
+
+    <div class="rh-sub-btn-wrap">
+      <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <a href="/subscriptions/purchase/<%= plan._id %>" class="rh-sub-btn-primary">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z"/>
+            <path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z"/>
+          </svg>
+          <span>Subscribe Now</span>
+        </a>
+      <% } else { %>
+        <a href="/auth/login" class="rh-sub-btn-primary">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+            <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+          </svg>
+          <span>Login to Subscribe</span>
+        </a>
+      <% } %>
+    </div>
+  </div>
+</div>

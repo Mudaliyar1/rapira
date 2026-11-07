@@ -1,113 +1,84 @@
-<div class="container py-5">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h1 class="display-5 fw-bold text-center mb-4">Subscription Plans</h1>
-      <p class="lead text-center mb-5">Enhance your Rapira experience with exclusive benefits and discounts</p>
+<div class="rapira-subscriptions-page">
+  <!-- Warm Wave Background Overlay -->
+  <div class="rh-sub-bg-wave" aria-hidden="true"></div>
+
+  <div class="container rh-sub-container">
+    <!-- Hero Header -->
+    <div class="rh-sub-hero">
+      <div class="rh-sub-crown-icon" aria-hidden="true">
+        <svg width="42" height="34" viewBox="0 0 24 20" fill="none" stroke="#9F190E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 18h20v2H2v-2z"/>
+          <path d="M4 18l-2-12 6 4 4-7 4 7 6-4-2 12H4z"/>
+          <circle cx="12" cy="13" r="1.5" fill="#9F190E"/>
+        </svg>
+      </div>
+      <h1 class="rh-sub-hero-title">Subscription Plans</h1>
+      <p class="rh-sub-hero-subtitle">ENHANCE YOUR RAPIRA EXPERIENCE WITH EXCLUSIVE BENEFITS AND DISCOUNTS</p>
     </div>
-  </div>
 
-  <% if (!currentUser) { %>
-    <div class="alert alert-info text-center mb-5">
-      <i class="bi bi-info-circle me-2"></i>
-      You need to <a href="/auth/login" class="alert-link">log in</a> to purchase a subscription.
-    </div>
-  <% } %>
+    <!-- Login Notice for Guests -->
+    <% if (typeof currentUser === 'undefined' || !currentUser) { %>
+      <div class="alert text-center mb-4 mx-auto" style="max-width: 680px; background-color: #FAF0E6; border: 1px solid #EAC8B7; color: #5C524C; border-radius: 14px;">
+        <i class="bi bi-info-circle me-2" style="color: #9F190E;"></i>
+        You need to <a href="/auth/login" class="rh-sub-help-link">log in</a> to purchase a subscription.
+      </div>
+    <% } %>
 
-  <% if (plans.length === 0) { %>
-    <div class="alert alert-warning text-center">
-      <i class="bi bi-exclamation-triangle me-2"></i>
-      No subscription plans are currently available. Please check back later.
-    </div>
-  <% } else { %>
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-center">
-      <% plans.forEach(plan => { %>
-        <div class="col">
-          <div class="card h-100 glass-card-dark border border-secondary">
-            <div class="card-header bg-primary text-white text-center py-3">
-              <h3 class="card-title mb-0"><%= plan.name %></h3>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <div class="text-center mb-3">
-                <span class="display-5 fw-bold text-white">₹<%= plan.price %></span>
-                <% if (plan.durationUnit === 'days' && plan.duration >= 30) { %>
-                  <span class="text-muted">/ <%= Math.floor(plan.duration / 30) %> month<%= Math.floor(plan.duration / 30) > 1 ? 's' : '' %></span>
-                <% } else { %>
-                  <span class="text-muted">/ <%= plan.duration %> <%= plan.durationUnit %></span>
-                <% } %>
-              </div>
+    <%
+      const planCount = (typeof plans !== 'undefined' && plans) ? plans.length : 0;
+    %>
 
-              <div class="mb-4">
-                <h5 class="text-white mb-3">Benefits:</h5>
-                <div class="text-white-50">
-                  <%= plan.benefits %>
-                </div>
-              </div>
-
-              <% if (plan.discountPercentage > 0) { %>
-                <div class="alert alert-success mb-4">
-                  <i class="bi bi-tag-fill me-2"></i>
-                  <strong><%= plan.discountPercentage %>% discount</strong> on all ticket purchases
-                </div>
-              <% } %>
-
-              <div class="mt-auto">
-                <ul class="list-group list-group-flush mb-4">
-                  <li class="list-group-item bg-transparent text-white-50 border-secondary">
-                    <i class="bi bi-calendar-check me-2"></i>
-                    <%= plan.duration %> <%= plan.durationUnit %> of access
-                  </li>
-                  <% if (plan.discountPercentage > 0) { %>
-                    <li class="list-group-item bg-transparent text-white-50 border-secondary">
-                      <i class="bi bi-percent me-2"></i>
-                      <%= plan.discountPercentage %>% off on tickets
-                    </li>
-                  <% } %>
-                </ul>
-
-                <% if (currentUser) { %>
-                  <a href="/subscriptions/purchase/<%= plan._id %>" class="btn btn-primary w-100">
-                    <i class="bi bi-credit-card me-2"></i>
-                    Subscribe Now
-                  </a>
-                <% } else { %>
-                  <a href="/auth/login" class="btn btn-outline-primary w-100">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                    Login to Subscribe
-                  </a>
-                <% } %>
-              </div>
-            </div>
-          </div>
+    <!-- Adaptive Plans Layout -->
+    <% if (planCount === 0) { %>
+      <!-- Zero Plans: Polished Empty State -->
+      <div class="rh-sub-empty-state">
+        <div class="rh-sub-empty-icon" aria-hidden="true">
+          <i class="bi bi-calendar-x"></i>
         </div>
-      <% }) %>
-    </div>
-  <% } %>
-
-  <div class="row mt-5">
-    <div class="col-md-8 mx-auto">
-      <div class="card glass-card-dark border border-secondary">
-        <div class="card-header bg-dark text-white">
-          <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>Subscription Information</h4>
+        <h3 class="rh-sub-empty-title">No Subscription Plans Available</h3>
+        <p class="rh-sub-empty-desc">There are currently no active subscription plans. Please check back later or contact our support team.</p>
+        <a href="/" class="rh-sub-btn-primary" style="display: inline-flex; width: auto; padding: 10px 28px;">
+          Back to Home
+        </a>
+      </div>
+    <% } else if (planCount === 1) { %>
+      <!-- 1 Plan: Balanced 2-column layout matching reference image side-by-side -->
+      <div class="row g-4 align-items-stretch justify-content-center">
+        <div class="col-lg-5 col-xl-5">
+          <%- include('../partials/subscription-plan-card', { plan: plans[0] }) %>
         </div>
-        <div class="card-body text-white-50">
-          <h5 class="text-white">How Subscriptions Work</h5>
-          <ul>
-            <li>Subscriptions are active from the moment of purchase until the expiry date.</li>
-            <li>You can view your active subscription details in your user dashboard.</li>
-            <li>Subscription benefits apply automatically to your account.</li>
-            <li>Ticket discounts are applied automatically during checkout.</li>
-            <li>You will receive an email confirmation after subscribing.</li>
-          </ul>
-
-          <h5 class="text-white mt-4">Renewal Policy</h5>
-          <p>Subscriptions do not auto-renew. You will need to manually renew your subscription before or after it expires.</p>
-
-          <h5 class="text-white mt-4">Need Help?</h5>
-          <p>If you have any questions about our subscription plans, please <a href="/contact" class="text-primary">contact our support team</a>.</p>
+        <div class="col-lg-7 col-xl-7">
+          <%- include('../partials/subscription-info-card') %>
         </div>
       </div>
-    </div>
+    <% } else if (planCount === 2) { %>
+      <!-- 2 Plans: Equal side-by-side cards, Info Card below -->
+      <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center mb-5">
+        <% plans.forEach(plan => { %>
+          <div class="col">
+            <%- include('../partials/subscription-plan-card', { plan }) %>
+          </div>
+        <% }); %>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+          <%- include('../partials/subscription-info-card') %>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- 3 or More Plans: 3-column responsive grid (wrapping automatically for 4, 5, 6+ plans), Info Card below -->
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-center mb-5">
+        <% plans.forEach(plan => { %>
+          <div class="col">
+            <%- include('../partials/subscription-plan-card', { plan }) %>
+          </div>
+        <% }); %>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+          <%- include('../partials/subscription-info-card') %>
+        </div>
+      </div>
+    <% } %>
   </div>
 </div>
-
-
